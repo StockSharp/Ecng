@@ -53,6 +53,201 @@ public class NumericCircularBufferExFactory : ICircularBufferExFactory
 	public CircularBuffer<int> AsCircularBufferInt(ICircularBufferEx<int> buf) => (CircularBuffer<int>)buf;
 	public CircularBuffer<decimal> AsCircularBufferDecimal(ICircularBufferEx<decimal> buf) => (CircularBuffer<decimal>)buf;
 }
+
+/// <summary>
+/// Helper that runs operations on multiple buffer implementations and compares results.
+/// </summary>
+public class MultiBufferInt
+{
+	private static readonly CircularBufferExFactory _operatorFactory = new();
+	private static readonly NumericCircularBufferExFactory _numericFactory = new();
+
+	public ICircularBufferEx<int> Buf1 { get; }
+	public ICircularBufferEx<int> Buf2 { get; }
+	public CircularBuffer<int> Cb1 { get; }
+	public CircularBuffer<int> Cb2 { get; }
+
+	public MultiBufferInt(int capacity, CircularBufferStats stats = CircularBufferStats.All)
+	{
+		Buf1 = _operatorFactory.CreateInt(capacity);
+		Buf1.Stats = stats;
+		Cb1 = _operatorFactory.AsCircularBufferInt(Buf1);
+
+		Buf2 = _numericFactory.CreateInt(capacity);
+		Buf2.Stats = stats;
+		Cb2 = _numericFactory.AsCircularBufferInt(Buf2);
+	}
+
+	public void PushBack(int value)
+	{
+		Cb1.PushBack(value);
+		Cb2.PushBack(value);
+		AssertEqual();
+	}
+
+	public void PushFront(int value)
+	{
+		Cb1.PushFront(value);
+		Cb2.PushFront(value);
+		AssertEqual();
+	}
+
+	public void PopBack()
+	{
+		Cb1.PopBack();
+		Cb2.PopBack();
+		AssertEqual();
+	}
+
+	public void PopFront()
+	{
+		Cb1.PopFront();
+		Cb2.PopFront();
+		AssertEqual();
+	}
+
+	public void Clear()
+	{
+		Cb1.Clear();
+		Cb2.Clear();
+		AssertEqual();
+	}
+
+	public void SetAt(int index, int value)
+	{
+		Cb1[index] = value;
+		Cb2[index] = value;
+		AssertEqual();
+	}
+
+	public int Capacity
+	{
+		get => Cb1.Capacity;
+		set
+		{
+			Cb1.Capacity = value;
+			Cb2.Capacity = value;
+			AssertEqual();
+		}
+	}
+
+	public void AssertEqual(string context = null)
+	{
+		var ctx = context != null ? $" ({context})" : "";
+
+		Cb1.Count.AssertEqual(Cb2.Count, $"Count mismatch{ctx}");
+		Buf1.Sum.AssertEqual(Buf2.Sum, $"Sum mismatch{ctx}");
+		Buf1.Max.HasValue.AssertEqual(Buf2.Max.HasValue, $"Max.HasValue mismatch{ctx}");
+		Buf1.Min.HasValue.AssertEqual(Buf2.Min.HasValue, $"Min.HasValue mismatch{ctx}");
+
+		if (Buf1.Max.HasValue)
+			Buf1.Max.Value.AssertEqual(Buf2.Max.Value, $"Max.Value mismatch{ctx}");
+
+		if (Buf1.Min.HasValue)
+			Buf1.Min.Value.AssertEqual(Buf2.Min.Value, $"Min.Value mismatch{ctx}");
+
+		if (Cb1.Count > 0)
+			Buf1.SumNoFirst.AssertEqual(Buf2.SumNoFirst, $"SumNoFirst mismatch{ctx}");
+
+		Cb1.ToArray().AssertEqual(Cb2.ToArray(), $"Content mismatch{ctx}");
+	}
+
+	// Assert expected values (checks both implementations against expected)
+	public void AssertSum(int expected) => Buf1.Sum.AssertEqual(expected);
+	public void AssertMax(int expected) => Buf1.Max.Value.AssertEqual(expected);
+	public void AssertMin(int expected) => Buf1.Min.Value.AssertEqual(expected);
+	public void AssertSumNoFirst(int expected) => Buf1.SumNoFirst.AssertEqual(expected);
+	public void AssertMaxHasValue(bool expected) => Buf1.Max.HasValue.AssertEqual(expected);
+	public void AssertMinHasValue(bool expected) => Buf1.Min.HasValue.AssertEqual(expected);
+	public void AssertCount(int expected) => Cb1.Count.AssertEqual(expected);
+	public void AssertContent(int[] expected) => Cb1.ToArray().AssertEqual(expected);
+}
+
+/// <summary>
+/// Helper that runs operations on multiple decimal buffer implementations and compares results.
+/// </summary>
+public class MultiBufferDecimal
+{
+	private static readonly CircularBufferExFactory _operatorFactory = new();
+	private static readonly NumericCircularBufferExFactory _numericFactory = new();
+
+	public ICircularBufferEx<decimal> Buf1 { get; }
+	public ICircularBufferEx<decimal> Buf2 { get; }
+	public CircularBuffer<decimal> Cb1 { get; }
+	public CircularBuffer<decimal> Cb2 { get; }
+
+	public MultiBufferDecimal(int capacity, CircularBufferStats stats = CircularBufferStats.All)
+	{
+		Buf1 = _operatorFactory.CreateDecimal(capacity);
+		Buf1.Stats = stats;
+		Cb1 = _operatorFactory.AsCircularBufferDecimal(Buf1);
+
+		Buf2 = _numericFactory.CreateDecimal(capacity);
+		Buf2.Stats = stats;
+		Cb2 = _numericFactory.AsCircularBufferDecimal(Buf2);
+	}
+
+	public void PushBack(decimal value)
+	{
+		Cb1.PushBack(value);
+		Cb2.PushBack(value);
+		AssertEqual();
+	}
+
+	public void PushFront(decimal value)
+	{
+		Cb1.PushFront(value);
+		Cb2.PushFront(value);
+		AssertEqual();
+	}
+
+	public void Clear()
+	{
+		Cb1.Clear();
+		Cb2.Clear();
+		AssertEqual();
+	}
+
+	public int Capacity
+	{
+		get => Cb1.Capacity;
+		set
+		{
+			Cb1.Capacity = value;
+			Cb2.Capacity = value;
+			AssertEqual();
+		}
+	}
+
+	public void AssertEqual(string context = null)
+	{
+		var ctx = context != null ? $" ({context})" : "";
+
+		Cb1.Count.AssertEqual(Cb2.Count, $"Count mismatch{ctx}");
+		Buf1.Sum.AssertEqual(Buf2.Sum, $"Sum mismatch{ctx}");
+		Buf1.Max.HasValue.AssertEqual(Buf2.Max.HasValue, $"Max.HasValue mismatch{ctx}");
+		Buf1.Min.HasValue.AssertEqual(Buf2.Min.HasValue, $"Min.HasValue mismatch{ctx}");
+
+		if (Buf1.Max.HasValue)
+			Buf1.Max.Value.AssertEqual(Buf2.Max.Value, $"Max.Value mismatch{ctx}");
+
+		if (Buf1.Min.HasValue)
+			Buf1.Min.Value.AssertEqual(Buf2.Min.Value, $"Min.Value mismatch{ctx}");
+
+		if (Cb1.Count > 0)
+			Buf1.SumNoFirst.AssertEqual(Buf2.SumNoFirst, $"SumNoFirst mismatch{ctx}");
+
+		Cb1.ToArray().AssertEqual(Cb2.ToArray(), $"Content mismatch{ctx}");
+	}
+
+	public void AssertSum(decimal expected) => Buf1.Sum.AssertEqual(expected);
+	public void AssertMax(decimal expected) => Buf1.Max.Value.AssertEqual(expected);
+	public void AssertMin(decimal expected) => Buf1.Min.Value.AssertEqual(expected);
+	public void AssertSumNoFirst(decimal expected) => Buf1.SumNoFirst.AssertEqual(expected);
+	public void AssertMaxHasValue(bool expected) => Buf1.Max.HasValue.AssertEqual(expected);
+	public void AssertMinHasValue(bool expected) => Buf1.Min.HasValue.AssertEqual(expected);
+	public void AssertCount(int expected) => Cb1.Count.AssertEqual(expected);
+}
 #endif
 
 #endregion
@@ -256,900 +451,415 @@ public class CircularBufferTests : BaseTestClass
 
 	#endregion
 
-	#region CircularBufferEx Factories
-
-	private static IEnumerable<ICircularBufferExFactory> GetFactories()
-	{
-		yield return new CircularBufferExFactory();
-#if NET7_0_OR_GREATER
-		yield return new NumericCircularBufferExFactory();
-#endif
-	}
+	#region CircularBufferEx Tests
 
 #if NET7_0_OR_GREATER
-	private static readonly ICircularBufferExFactory _operatorFactory = new CircularBufferExFactory();
-	private static readonly ICircularBufferExFactory _numericFactory = new NumericCircularBufferExFactory();
-
-	/// <summary>
-	/// Helper to run action on both implementations and compare results.
-	/// </summary>
-	private static void RunAndCompare<T>(
-		Func<ICircularBufferExFactory, T> action,
-		string description = null)
-	{
-		var result1 = action(_operatorFactory);
-		var result2 = action(_numericFactory);
-
-		if (!EqualityComparer<T>.Default.Equals(result1, result2))
-		{
-			throw new AssertFailedException(
-				$"Results differ between implementations{(description != null ? $" ({description})" : "")}. " +
-				$"{_operatorFactory.Name}: {result1}, {_numericFactory.Name}: {result2}");
-		}
-	}
-
-	/// <summary>
-	/// Helper to run action on both implementations and compare complex results.
-	/// </summary>
-	private static void RunAndCompareBuffers(
-		Action<ICircularBufferExFactory, ICircularBufferEx<int>, CircularBuffer<int>> setup,
-		Action<ICircularBufferEx<int>, CircularBuffer<int>, ICircularBufferEx<int>, CircularBuffer<int>> compare)
-	{
-		var buf1 = _operatorFactory.CreateInt(10);
-		var cb1 = _operatorFactory.AsCircularBufferInt(buf1);
-
-		var buf2 = _numericFactory.CreateInt(10);
-		var cb2 = _numericFactory.AsCircularBufferInt(buf2);
-
-		setup(_operatorFactory, buf1, cb1);
-		setup(_numericFactory, buf2, cb2);
-
-		compare(buf1, cb1, buf2, cb2);
-	}
-#endif
-
-	#endregion
-
-	#region CircularBufferEx Tests - All Implementations
+	// .NET 7+: test both implementations and compare results
 
 	[TestMethod]
 	public void CircularBufferEx_PushBack_Sum()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum);
 
-			var cb = factory.AsCircularBufferInt(buf);
+		mb.PushBack(1);
+		mb.AssertSum(1);
 
-			cb.PushBack(1);
-			buf.Sum.AssertEqual(1, $"{factory.Name}: Sum after first push");
+		mb.PushBack(2);
+		mb.AssertSum(3);
 
-			cb.PushBack(2);
-			buf.Sum.AssertEqual(3, $"{factory.Name}: Sum after second push");
+		mb.PushBack(3);
+		mb.AssertSum(6);
 
-			cb.PushBack(3);
-			buf.Sum.AssertEqual(6, $"{factory.Name}: Sum after third push");
-
-			// Overflow - first element (1) should be removed
-			cb.PushBack(4);
-			buf.Sum.AssertEqual(9, $"{factory.Name}: Sum after overflow"); // 2 + 3 + 4
-			cb.ToArray().AssertEqual([2, 3, 4], $"{factory.Name}: Array after overflow");
-		}
-
-#if NET7_0_OR_GREATER
-		// Compare implementations directly
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			cb.PushBack(4);
-			return buf.Sum;
-		}, "PushBack_Sum final value");
-#endif
+		// Overflow - first element (1) should be removed
+		mb.PushBack(4);
+		mb.AssertSum(9); // 2 + 3 + 4
+		mb.AssertContent([2, 3, 4]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Sum()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum);
 
-			cb.PushFront(1);
-			buf.Sum.AssertEqual(1, $"{factory.Name}");
+		mb.PushFront(1);
+		mb.AssertSum(1);
 
-			cb.PushFront(2);
-			buf.Sum.AssertEqual(3, $"{factory.Name}");
+		mb.PushFront(2);
+		mb.AssertSum(3);
 
-			cb.PushFront(3);
-			buf.Sum.AssertEqual(6, $"{factory.Name}");
-			cb.ToArray().AssertEqual([3, 2, 1], $"{factory.Name}");
+		mb.PushFront(3);
+		mb.AssertSum(6);
+		mb.AssertContent([3, 2, 1]);
 
-			// Overflow - LAST element (1) should be removed, not first
-			cb.PushFront(4);
-			buf.Sum.AssertEqual(9, $"{factory.Name}"); // 4 + 3 + 2
-			cb.ToArray().AssertEqual([4, 3, 2], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushFront(1);
-			cb.PushFront(2);
-			cb.PushFront(3);
-			cb.PushFront(4);
-			return (buf.Sum, string.Join(",", cb.ToArray()));
-		}, "PushFront_Sum");
-#endif
+		// Overflow - LAST element (1) should be removed
+		mb.PushFront(4);
+		mb.AssertSum(9); // 4 + 3 + 2
+		mb.AssertContent([4, 3, 2]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Max()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Max);
 
-			cb.PushBack(5);
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
+		mb.PushBack(5);
+		mb.AssertMax(5);
 
-			cb.PushBack(10);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
+		mb.PushBack(10);
+		mb.AssertMax(10);
 
-			cb.PushBack(3);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
+		mb.PushBack(3);
+		mb.AssertMax(10);
 
-			// Remove 5, max still 10
-			cb.PushBack(1);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
+		// Remove 5, max still 10
+		mb.PushBack(1);
+		mb.AssertMax(10);
 
-			// Remove 10, should recalc max = 3
-			cb.PushBack(2);
-			buf.Max.Value.AssertEqual(3, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(5);
-			cb.PushBack(10);
-			cb.PushBack(3);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			return buf.Max.Value;
-		}, "Max value");
-#endif
+		// Remove 10, should recalc max = 3
+		mb.PushBack(2);
+		mb.AssertMax(3);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Max()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Max);
 
-			cb.PushFront(5);
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
+		mb.PushFront(5);
+		mb.AssertMax(5);
 
-			cb.PushFront(10);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
+		mb.PushFront(10);
+		mb.AssertMax(10);
 
-			cb.PushFront(3);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
-			cb.ToArray().AssertEqual([3, 10, 5], $"{factory.Name}");
+		mb.PushFront(3);
+		mb.AssertMax(10);
+		mb.AssertContent([3, 10, 5]);
 
-			// PushFront removes LAST element (5)
-			cb.PushFront(1);
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
-			cb.ToArray().AssertEqual([1, 3, 10], $"{factory.Name}");
+		// PushFront removes LAST element (5)
+		mb.PushFront(1);
+		mb.AssertMax(10);
+		mb.AssertContent([1, 3, 10]);
 
-			// PushFront removes LAST element (10) - should recalc
-			cb.PushFront(2);
-			buf.Max.Value.AssertEqual(3, $"{factory.Name}");
-			cb.ToArray().AssertEqual([2, 1, 3], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushFront(5);
-			cb.PushFront(10);
-			cb.PushFront(3);
-			cb.PushFront(1);
-			cb.PushFront(2);
-			return (buf.Max.Value, string.Join(",", cb.ToArray()));
-		}, "PushFront_Max");
-#endif
+		// PushFront removes LAST element (10) - should recalc
+		mb.PushFront(2);
+		mb.AssertMax(3);
+		mb.AssertContent([2, 1, 3]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PushBack_Min()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Min);
 
-			cb.PushBack(5);
-			buf.Min.Value.AssertEqual(5, $"{factory.Name}");
+		mb.PushBack(5);
+		mb.AssertMin(5);
 
-			cb.PushBack(2);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
+		mb.PushBack(2);
+		mb.AssertMin(2);
 
-			cb.PushBack(8);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
+		mb.PushBack(8);
+		mb.AssertMin(2);
 
-			// Remove 5, min still 2
-			cb.PushBack(10);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
+		// Remove 5, min still 2
+		mb.PushBack(10);
+		mb.AssertMin(2);
 
-			// Remove 2, recalc min = 8
-			cb.PushBack(15);
-			buf.Min.Value.AssertEqual(8, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(5);
-			cb.PushBack(2);
-			cb.PushBack(8);
-			cb.PushBack(10);
-			cb.PushBack(15);
-			return buf.Min.Value;
-		}, "PushBack_Min");
-#endif
+		// Remove 2, recalc min = 8
+		mb.PushBack(15);
+		mb.AssertMin(8);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Min()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Min);
 
-			cb.PushFront(5);
-			buf.Min.Value.AssertEqual(5, $"{factory.Name}");
+		mb.PushFront(5);
+		mb.AssertMin(5);
 
-			cb.PushFront(2);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
+		mb.PushFront(2);
+		mb.AssertMin(2);
 
-			cb.PushFront(8);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
-			cb.ToArray().AssertEqual([8, 2, 5], $"{factory.Name}");
+		mb.PushFront(8);
+		mb.AssertMin(2);
+		mb.AssertContent([8, 2, 5]);
 
-			// PushFront removes LAST (5), min still 2
-			cb.PushFront(10);
-			buf.Min.Value.AssertEqual(2, $"{factory.Name}");
-			cb.ToArray().AssertEqual([10, 8, 2], $"{factory.Name}");
+		// PushFront removes LAST (5), min still 2
+		mb.PushFront(10);
+		mb.AssertMin(2);
+		mb.AssertContent([10, 8, 2]);
 
-			// PushFront removes LAST (2), recalc min = 8
-			cb.PushFront(15);
-			buf.Min.Value.AssertEqual(8, $"{factory.Name}");
-			cb.ToArray().AssertEqual([15, 10, 8], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushFront(5);
-			cb.PushFront(2);
-			cb.PushFront(8);
-			cb.PushFront(10);
-			cb.PushFront(15);
-			return (buf.Min.Value, string.Join(",", cb.ToArray()));
-		}, "PushFront_Min");
-#endif
+		// PushFront removes LAST (2), recalc min = 8
+		mb.PushFront(15);
+		mb.AssertMin(8);
+		mb.AssertContent([15, 10, 8]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_SumNoFirst()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.PushBack(3);
 
-			buf.Sum.AssertEqual(6, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(5, $"{factory.Name}"); // 2 + 3
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			return (buf.Sum, buf.SumNoFirst);
-		}, "SumNoFirst");
-#endif
+		mb.AssertSum(6);
+		mb.AssertSumNoFirst(5); // 2 + 3
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_SumNoFirst_Empty()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			buf.SumNoFirst.AssertEqual(0, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			return buf.SumNoFirst;
-		}, "SumNoFirst_Empty");
-#endif
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum);
+		mb.AssertSumNoFirst(0);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Clear()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.All);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.PushBack(3);
 
-			cb.Clear();
+		mb.Clear();
 
-			buf.Sum.AssertEqual(0, $"{factory.Name}");
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
-			cb.Count.AssertEqual(0, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			cb.Clear();
-			return (buf.Sum, buf.Max.HasValue, buf.Min.HasValue, cb.Count);
-		}, "Clear");
-#endif
+		mb.AssertSum(0);
+		mb.AssertMaxHasValue(false);
+		mb.AssertMinHasValue(false);
+		mb.AssertCount(0);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PopBack()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum | CircularBufferStats.Max);
 
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(5);
+		mb.PushBack(3);
 
-			cb.PopBack();
+		mb.PopBack();
 
-			buf.Sum.AssertEqual(6, $"{factory.Name}"); // 1 + 5
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
-			cb.ToArray().AssertEqual([1, 5], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			cb.PopBack();
-			return (buf.Sum, buf.Max.Value, string.Join(",", cb.ToArray()));
-		}, "PopBack");
-#endif
+		mb.AssertSum(6); // 1 + 5
+		mb.AssertMax(5);
+		mb.AssertContent([1, 5]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_PopFront()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum | CircularBufferStats.Max);
 
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			cb.PopFront();
+		mb.PushBack(1);
+		mb.PushBack(5);
+		mb.PushBack(3);
+		mb.PopFront();
 
-			buf.Sum.AssertEqual(8, $"{factory.Name}"); // 5 + 3
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
-			cb.ToArray().AssertEqual([5, 3], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			cb.PopFront();
-			return (buf.Sum, buf.Max.Value, string.Join(",", cb.ToArray()));
-		}, "PopFront");
-#endif
+		mb.AssertSum(8); // 5 + 3
+		mb.AssertMax(5);
+		mb.AssertContent([5, 3]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_IndexerSet()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum | CircularBufferStats.Max);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.PushBack(3);
 
-			cb[1] = 10;
+		mb.SetAt(1, 10);
 
-			buf.Sum.AssertEqual(14, $"{factory.Name}"); // 1 + 10 + 3
-			buf.Max.Value.AssertEqual(10, $"{factory.Name}");
-			cb.ToArray().AssertEqual([1, 10, 3], $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			cb[1] = 10;
-			return (buf.Sum, buf.Max.Value, string.Join(",", cb.ToArray()));
-		}, "IndexerSet");
-#endif
+		mb.AssertSum(14); // 1 + 10 + 3
+		mb.AssertMax(10);
+		mb.AssertContent([1, 10, 3]);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_CapacityChange()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(5);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(5, CircularBufferStats.Sum | CircularBufferStats.Max);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.PushBack(3);
 
-			cb.Capacity = 3;
+		mb.Capacity = 3;
 
-			// After capacity change, buffer is cleared
-			buf.Sum.AssertEqual(0, $"{factory.Name}");
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
-			cb.Count.AssertEqual(0, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(5);
-			buf.Stats = CircularBufferStats.Sum | CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			cb.Capacity = 3;
-			return (buf.Sum, buf.Max.HasValue, buf.Min.HasValue, cb.Count);
-		}, "CapacityChange");
-#endif
+		// After capacity change, buffer is cleared
+		mb.AssertSum(0);
+		mb.AssertMaxHasValue(false);
+		mb.AssertMinHasValue(false);
+		mb.AssertCount(0);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_WithDecimal()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateDecimal(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferDecimal(buf);
+		var mb = new MultiBufferDecimal(3, CircularBufferStats.All);
 
-			cb.PushBack(1.5m);
-			cb.PushBack(2.5m);
-			cb.PushBack(3.0m);
+		mb.PushBack(1.5m);
+		mb.PushBack(2.5m);
+		mb.PushBack(3.0m);
 
-			buf.Sum.AssertEqual(7.0m, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(3.0m, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(1.5m, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateDecimal(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferDecimal(buf);
-			cb.PushBack(1.5m);
-			cb.PushBack(2.5m);
-			cb.PushBack(3.0m);
-			return (buf.Sum, buf.Max.Value, buf.Min.Value);
-		}, "WithDecimal");
-#endif
-	}
-
-	[TestMethod]
-	public void CircularBufferEx_DefaultStats_None()
-	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			// Stats = None by default (or Sum for CircularBufferEx with Operator)
-			var cb = factory.AsCircularBufferInt(buf);
-
-			cb.PushBack(1);
-			cb.PushBack(2);
-
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
-		}
+		mb.AssertSum(7.0m);
+		mb.AssertMax(3.0m);
+		mb.AssertMin(1.5m);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Stats_SumOnly()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Sum);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.PushBack(3);
 
-			buf.Sum.AssertEqual(6, $"{factory.Name}");
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Sum;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.PushBack(3);
-			return (buf.Sum, buf.Max.HasValue, buf.Min.HasValue);
-		}, "Stats_SumOnly");
-#endif
+		mb.AssertSum(6);
+		mb.AssertMaxHasValue(false);
+		mb.AssertMinHasValue(false);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Stats_MinMaxOnly()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min | CircularBufferStats.Max;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.Min | CircularBufferStats.Max);
 
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(5);
+		mb.PushBack(3);
 
-			buf.Sum.AssertEqual(0, $"{factory.Name}"); // Not calculated
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(1, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.Min | CircularBufferStats.Max;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			return (buf.Sum, buf.Max.Value, buf.Min.Value);
-		}, "Stats_MinMaxOnly");
-#endif
+		mb.AssertSum(0); // Not calculated
+		mb.AssertMax(5);
+		mb.AssertMin(1);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Stats_None()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.None;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.None);
 
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(5);
+		mb.PushBack(3);
 
-			buf.Sum.AssertEqual(0, $"{factory.Name}");
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.None;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			return (buf.Sum, buf.Max.HasValue, buf.Min.HasValue);
-		}, "Stats_None");
-#endif
+		mb.AssertSum(0);
+		mb.AssertMaxHasValue(false);
+		mb.AssertMinHasValue(false);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_Stats_All()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(3, CircularBufferStats.All);
 
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
+		mb.PushBack(1);
+		mb.PushBack(5);
+		mb.PushBack(3);
 
-			buf.Sum.AssertEqual(9, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(5, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(1, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(5);
-			cb.PushBack(3);
-			return (buf.Sum, buf.Max.Value, buf.Min.Value);
-		}, "Stats_All");
-#endif
+		mb.AssertSum(9);
+		mb.AssertMax(5);
+		mb.AssertMin(1);
 	}
 
 	[TestMethod]
 	public void StatsComputation()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateDecimal(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferDecimal(buf);
+		var mb = new MultiBufferDecimal(3, CircularBufferStats.All);
 
-			cb.PushBack(1m);
-			cb.PushBack(2m);
-			cb.PushBack(3m);
-			buf.Sum.AssertEqual(6m, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(3m, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(1m, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(5m, $"{factory.Name}");
-			cb.PushBack(4m);
-			buf.Sum.AssertEqual(9m, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(4m, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(2m, $"{factory.Name}");
-			cb.Clear();
-			buf.Sum.AssertEqual(0m, $"{factory.Name}");
-			buf.Max.HasValue.AssertFalse($"{factory.Name}");
-			buf.Min.HasValue.AssertFalse($"{factory.Name}");
+		mb.PushBack(1m);
+		mb.PushBack(2m);
+		mb.PushBack(3m);
+		mb.AssertSum(6m);
+		mb.AssertMax(3m);
+		mb.AssertMin(1m);
+		mb.AssertSumNoFirst(5m);
 
-			cb.PushFront(4m);
-			cb.PushFront(2m);
-			buf.Sum.AssertEqual(6m, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(4m, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(2m, $"{factory.Name}");
-		}
+		mb.PushBack(4m);
+		mb.AssertSum(9m);
+		mb.AssertMax(4m);
+		mb.AssertMin(2m);
 
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateDecimal(3);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferDecimal(buf);
-			cb.PushBack(1m);
-			cb.PushBack(2m);
-			cb.PushBack(3m);
-			var r1 = (buf.Sum, buf.Max.Value, buf.Min.Value, buf.SumNoFirst);
-			cb.PushBack(4m);
-			var r2 = (buf.Sum, buf.Max.Value, buf.Min.Value);
-			cb.Clear();
-			var r3 = (buf.Sum, buf.Max.HasValue, buf.Min.HasValue);
-			cb.PushFront(4m);
-			cb.PushFront(2m);
-			var r4 = (buf.Sum, buf.Max.Value, buf.Min.Value);
-			return (r1, r2, r3, r4);
-		}, "StatsComputation");
-#endif
+		mb.Clear();
+		mb.AssertSum(0m);
+		mb.AssertMaxHasValue(false);
+		mb.AssertMinHasValue(false);
+
+		mb.PushFront(4m);
+		mb.PushFront(2m);
+		mb.AssertSum(6m);
+		mb.AssertMax(4m);
+		mb.AssertMin(2m);
 	}
 
 	[TestMethod]
 	public void CapacityReset()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateInt(2);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferInt(buf);
+		var mb = new MultiBufferInt(2, CircularBufferStats.All);
 
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.Capacity = 3;
-			cb.PushBack(3);
-			buf.Sum.AssertEqual(3, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(3, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(3, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateInt(2);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferInt(buf);
-			cb.PushBack(1);
-			cb.PushBack(2);
-			cb.Capacity = 3;
-			cb.PushBack(3);
-			return (buf.Sum, buf.Max.Value, buf.Min.Value);
-		}, "CapacityReset");
-#endif
+		mb.PushBack(1);
+		mb.PushBack(2);
+		mb.Capacity = 3;
+		mb.PushBack(3);
+		mb.AssertSum(3);
+		mb.AssertMax(3);
+		mb.AssertMin(3);
 	}
 
 	[TestMethod]
 	public void CollectionCompatibilityEx()
 	{
-		foreach (var factory in GetFactories())
-		{
-			var buf = factory.CreateDecimal(4);
-			buf.Stats = CircularBufferStats.All;
-			var cb = factory.AsCircularBufferDecimal(buf);
+		var mb = new MultiBufferDecimal(4, CircularBufferStats.All);
 
-			var icol = (ICollection<decimal>)cb;
-			var ilist = (IList<decimal>)cb;
+		var icol1 = (ICollection<decimal>)mb.Cb1;
+		var ilist1 = (IList<decimal>)mb.Cb1;
+		var icol2 = (ICollection<decimal>)mb.Cb2;
+		var ilist2 = (IList<decimal>)mb.Cb2;
 
-			icol.Add(10);
-			icol.Add(20);
-			icol.Add(30);
-			buf.Sum.AssertEqual(60, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(30, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(10, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(50, $"{factory.Name}");
+		icol1.Add(10); icol2.Add(10);
+		icol1.Add(20); icol2.Add(20);
+		icol1.Add(30); icol2.Add(30);
+		mb.AssertEqual();
+		mb.AssertSum(60);
+		mb.AssertMax(30);
+		mb.AssertMin(10);
+		mb.AssertSumNoFirst(50);
 
-			// Remove
-			icol.Remove(20).AssertTrue($"{factory.Name}");
-			buf.Sum.AssertEqual(40, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(30, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(10, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(30, $"{factory.Name}");
+		// Remove
+		icol1.Remove(20); icol2.Remove(20);
+		mb.AssertEqual();
+		mb.AssertSum(40);
 
-			// Insert
-			ilist.Insert(1, 25);
-			buf.Sum.AssertEqual(65, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(30, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(10, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(55, $"{factory.Name}");
+		// Insert
+		ilist1.Insert(1, 25); ilist2.Insert(1, 25);
+		mb.AssertEqual();
+		mb.AssertSum(65);
 
-			// RemoveAt
-			ilist.RemoveAt(0);
-			buf.Sum.AssertEqual(55, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(30, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(25, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(30, $"{factory.Name}");
+		// RemoveAt
+		ilist1.RemoveAt(0); ilist2.RemoveAt(0);
+		mb.AssertEqual();
+		mb.AssertSum(55);
+		mb.AssertMin(25);
 
-			// Set by index
-			ilist[0] = 100;
-			buf.Sum.AssertEqual(130, $"{factory.Name}");
-			buf.Max.Value.AssertEqual(100, $"{factory.Name}");
-			buf.Min.Value.AssertEqual(30, $"{factory.Name}");
-			buf.SumNoFirst.AssertEqual(30, $"{factory.Name}");
-		}
-
-#if NET7_0_OR_GREATER
-		RunAndCompare(f =>
-		{
-			var buf = f.CreateDecimal(4);
-			buf.Stats = CircularBufferStats.All;
-			var cb = f.AsCircularBufferDecimal(buf);
-			var icol = (ICollection<decimal>)cb;
-			var ilist = (IList<decimal>)cb;
-			icol.Add(10);
-			icol.Add(20);
-			icol.Add(30);
-			icol.Remove(20);
-			ilist.Insert(1, 25);
-			ilist.RemoveAt(0);
-			ilist[0] = 100;
-			return (buf.Sum, buf.Max.Value, buf.Min.Value, buf.SumNoFirst);
-		}, "CollectionCompatibilityEx");
-#endif
+		// Set by index
+		ilist1[0] = 100; ilist2[0] = 100;
+		mb.AssertEqual();
+		mb.AssertSum(130);
+		mb.AssertMax(100);
 	}
 
-	#endregion
-
-	#region Stress Test - Compare Implementations
-
-#if NET7_0_OR_GREATER
 	[TestMethod]
 	public void RandomOperations_CompareImplementations()
 	{
 		const int capacity = 17;
 		const int iterations = 5_000;
 
-		var buf1 = _operatorFactory.CreateInt(capacity);
-		buf1.Stats = CircularBufferStats.All;
-		var cb1 = _operatorFactory.AsCircularBufferInt(buf1);
-
-		var buf2 = _numericFactory.CreateInt(capacity);
-		buf2.Stats = CircularBufferStats.All;
-		var cb2 = _numericFactory.AsCircularBufferInt(buf2);
+		var mb = new MultiBufferInt(capacity, CircularBufferStats.All);
 
 		for (int i = 0; i < iterations; i++)
 		{
@@ -1158,62 +868,29 @@ public class CircularBufferTests : BaseTestClass
 
 			switch (operation)
 			{
-				case 0: // PushBack
-					cb1.PushBack(val);
-					cb2.PushBack(val);
+				case 0:
+					mb.PushBack(val);
 					break;
-				case 1: // PushFront
-					cb1.PushFront(val);
-					cb2.PushFront(val);
+				case 1:
+					mb.PushFront(val);
 					break;
-				case 2: // PopBack (if not empty)
-					if (cb1.Count > 0)
-					{
-						cb1.PopBack();
-						cb2.PopBack();
-					}
+				case 2:
+					if (mb.Cb1.Count > 0)
+						mb.PopBack();
 					break;
-				case 3: // PopFront (if not empty)
-					if (cb1.Count > 0)
-					{
-						cb1.PopFront();
-						cb2.PopFront();
-					}
+				case 3:
+					if (mb.Cb1.Count > 0)
+						mb.PopFront();
 					break;
-				case 4: // Set by index (if not empty)
-					if (cb1.Count > 0)
-					{
-						var idx = RandomGen.GetInt() % cb1.Count;
-						cb1[idx] = val;
-						cb2[idx] = val;
-					}
+				case 4:
+					if (mb.Cb1.Count > 0)
+						mb.SetAt(RandomGen.GetInt() % mb.Cb1.Count, val);
 					break;
-				case 5: // Clear (occasionally)
+				case 5:
 					if (RandomGen.GetInt() % 100 == 0)
-					{
-						cb1.Clear();
-						cb2.Clear();
-					}
+						mb.Clear();
 					break;
 			}
-
-			// Compare results
-			cb1.Count.AssertEqual(cb2.Count, $"Iteration {i}: Count mismatch");
-			buf1.Sum.AssertEqual(buf2.Sum, $"Iteration {i}: Sum mismatch");
-			buf1.Max.HasValue.AssertEqual(buf2.Max.HasValue, $"Iteration {i}: Max.HasValue mismatch");
-			buf1.Min.HasValue.AssertEqual(buf2.Min.HasValue, $"Iteration {i}: Min.HasValue mismatch");
-
-			if (buf1.Max.HasValue)
-				buf1.Max.Value.AssertEqual(buf2.Max.Value, $"Iteration {i}: Max.Value mismatch");
-
-			if (buf1.Min.HasValue)
-				buf1.Min.Value.AssertEqual(buf2.Min.Value, $"Iteration {i}: Min.Value mismatch");
-
-			if (cb1.Count > 0)
-				buf1.SumNoFirst.AssertEqual(buf2.SumNoFirst, $"Iteration {i}: SumNoFirst mismatch");
-
-			// Compare content
-			cb1.ToArray().AssertEqual(cb2.ToArray(), $"Iteration {i}: Content mismatch");
 		}
 	}
 
@@ -1223,41 +900,402 @@ public class CircularBufferTests : BaseTestClass
 		const int capacity = 17;
 		const int iterations = 10_000;
 
-		var buf1 = _operatorFactory.CreateInt(capacity);
-		buf1.Stats = CircularBufferStats.All;
-		var cb1 = _operatorFactory.AsCircularBufferInt(buf1);
-
-		var buf2 = _numericFactory.CreateInt(capacity);
-		buf2.Stats = CircularBufferStats.All;
-		var cb2 = _numericFactory.AsCircularBufferInt(buf2);
+		var mb = new MultiBufferInt(capacity, CircularBufferStats.All);
 
 		for (int i = 0; i < iterations; i++)
 		{
-			var val = RandomGen.GetInt();
-
-			cb1.PushBack(val);
-			cb2.PushBack(val);
-
-			// Compare stats
-			buf1.Sum.AssertEqual(buf2.Sum, $"Iteration {i}: Sum");
-			buf1.Max.Value.AssertEqual(buf2.Max.Value, $"Iteration {i}: Max");
-			buf1.Min.Value.AssertEqual(buf2.Min.Value, $"Iteration {i}: Min");
-
-			// Compare content
-			cb1.ToArray().AssertEqual(cb2.ToArray(), $"Iteration {i}: Content");
+			mb.PushBack(RandomGen.GetInt());
 		}
 	}
-#endif
 
-	#endregion
+#else
+	// .NET 6: test only CircularBufferEx
 
-	#region CircularBufferEx-specific Legacy Tests (Only for CircularBufferEx)
+	[TestMethod]
+	public void CircularBufferEx_PushBack_Sum()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum, Operator = new IntOperator() };
 
-#if !NET7_0_OR_GREATER
+		buf.PushBack(1);
+		buf.Sum.AssertEqual(1);
+
+		buf.PushBack(2);
+		buf.Sum.AssertEqual(3);
+
+		buf.PushBack(3);
+		buf.Sum.AssertEqual(6);
+
+		buf.PushBack(4);
+		buf.Sum.AssertEqual(9);
+		buf.ToArray().AssertEqual([2, 3, 4]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PushFront_Sum()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum, Operator = new IntOperator() };
+
+		buf.PushFront(1);
+		buf.Sum.AssertEqual(1);
+
+		buf.PushFront(2);
+		buf.Sum.AssertEqual(3);
+
+		buf.PushFront(3);
+		buf.Sum.AssertEqual(6);
+		buf.ToArray().AssertEqual([3, 2, 1]);
+
+		buf.PushFront(4);
+		buf.Sum.AssertEqual(9);
+		buf.ToArray().AssertEqual([4, 3, 2]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Max()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(5);
+		buf.Max.Value.AssertEqual(5);
+
+		buf.PushBack(10);
+		buf.Max.Value.AssertEqual(10);
+
+		buf.PushBack(3);
+		buf.Max.Value.AssertEqual(10);
+
+		buf.PushBack(1);
+		buf.Max.Value.AssertEqual(10);
+
+		buf.PushBack(2);
+		buf.Max.Value.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PushFront_Max()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushFront(5);
+		buf.Max.Value.AssertEqual(5);
+
+		buf.PushFront(10);
+		buf.Max.Value.AssertEqual(10);
+
+		buf.PushFront(3);
+		buf.Max.Value.AssertEqual(10);
+		buf.ToArray().AssertEqual([3, 10, 5]);
+
+		buf.PushFront(1);
+		buf.Max.Value.AssertEqual(10);
+		buf.ToArray().AssertEqual([1, 3, 10]);
+
+		buf.PushFront(2);
+		buf.Max.Value.AssertEqual(3);
+		buf.ToArray().AssertEqual([2, 1, 3]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PushBack_Min()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min, Operator = new IntOperator() };
+
+		buf.PushBack(5);
+		buf.Min.Value.AssertEqual(5);
+
+		buf.PushBack(2);
+		buf.Min.Value.AssertEqual(2);
+
+		buf.PushBack(8);
+		buf.Min.Value.AssertEqual(2);
+
+		buf.PushBack(10);
+		buf.Min.Value.AssertEqual(2);
+
+		buf.PushBack(15);
+		buf.Min.Value.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PushFront_Min()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min, Operator = new IntOperator() };
+
+		buf.PushFront(5);
+		buf.Min.Value.AssertEqual(5);
+
+		buf.PushFront(2);
+		buf.Min.Value.AssertEqual(2);
+
+		buf.PushFront(8);
+		buf.Min.Value.AssertEqual(2);
+		buf.ToArray().AssertEqual([8, 2, 5]);
+
+		buf.PushFront(10);
+		buf.Min.Value.AssertEqual(2);
+		buf.ToArray().AssertEqual([10, 8, 2]);
+
+		buf.PushFront(15);
+		buf.Min.Value.AssertEqual(8);
+		buf.ToArray().AssertEqual([15, 10, 8]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_SumNoFirst()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(6);
+		buf.SumNoFirst.AssertEqual(5);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_SumNoFirst_Empty()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum, Operator = new IntOperator() };
+		buf.SumNoFirst.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Clear()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.All, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Clear();
+
+		buf.Sum.AssertEqual(0);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+		buf.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PopBack()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.PopBack();
+
+		buf.Sum.AssertEqual(6);
+		buf.Max.Value.AssertEqual(5);
+		buf.ToArray().AssertEqual([1, 5]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_PopFront()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+		buf.PopFront();
+
+		buf.Sum.AssertEqual(8);
+		buf.Max.Value.AssertEqual(5);
+		buf.ToArray().AssertEqual([5, 3]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_IndexerSet()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf[1] = 10;
+
+		buf.Sum.AssertEqual(14);
+		buf.Max.Value.AssertEqual(10);
+		buf.ToArray().AssertEqual([1, 10, 3]);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_CapacityChange()
+	{
+		var buf = new CircularBufferEx<int>(5) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Capacity = 3;
+
+		buf.Sum.AssertEqual(0);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+		buf.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_WithDecimal()
+	{
+		var buf = new CircularBufferEx<decimal>(3) { Stats = CircularBufferStats.All, Operator = new DecimalOperator() };
+
+		buf.PushBack(1.5m);
+		buf.PushBack(2.5m);
+		buf.PushBack(3.0m);
+
+		buf.Sum.AssertEqual(7.0m);
+		buf.Max.Value.AssertEqual(3.0m);
+		buf.Min.Value.AssertEqual(1.5m);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_SumOnly()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(6);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_MinMaxOnly()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min | CircularBufferStats.Max, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(0);
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_None()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.None, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(0);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_All()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.All, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(9);
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void StatsComputation()
+	{
+		var buf = new CircularBufferEx<decimal>(3) { Stats = CircularBufferStats.All, Operator = new DecimalOperator() };
+
+		buf.PushBack(1m);
+		buf.PushBack(2m);
+		buf.PushBack(3m);
+		buf.Sum.AssertEqual(6m);
+		buf.Max.Value.AssertEqual(3m);
+		buf.Min.Value.AssertEqual(1m);
+		buf.SumNoFirst.AssertEqual(5m);
+		buf.PushBack(4m);
+		buf.Sum.AssertEqual(9m);
+		buf.Max.Value.AssertEqual(4m);
+		buf.Min.Value.AssertEqual(2m);
+		buf.Clear();
+		buf.Sum.AssertEqual(0m);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+
+		buf.PushFront(4m);
+		buf.PushFront(2m);
+		buf.Sum.AssertEqual(6m);
+		buf.Max.Value.AssertEqual(4m);
+		buf.Min.Value.AssertEqual(2m);
+	}
+
+	[TestMethod]
+	public void CapacityReset()
+	{
+		var buf = new CircularBufferEx<int>(2) { Stats = CircularBufferStats.All, Operator = new IntOperator() };
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.Capacity = 3;
+		buf.PushBack(3);
+		buf.Sum.AssertEqual(3);
+		buf.Max.Value.AssertEqual(3);
+		buf.Min.Value.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void CollectionCompatibilityEx()
+	{
+		var buf = new CircularBufferEx<decimal>(4) { Stats = CircularBufferStats.All, Operator = new DecimalOperator() };
+		var icol = (ICollection<decimal>)buf;
+		var ilist = (IList<decimal>)buf;
+
+		icol.Add(10);
+		icol.Add(20);
+		icol.Add(30);
+		buf.Sum.AssertEqual(60);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(50);
+
+		icol.Remove(20).AssertTrue();
+		buf.Sum.AssertEqual(40);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(30);
+
+		ilist.Insert(1, 25);
+		buf.Sum.AssertEqual(65);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(55);
+
+		ilist.RemoveAt(0);
+		buf.Sum.AssertEqual(55);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(25);
+		buf.SumNoFirst.AssertEqual(30);
+
+		ilist[0] = 100;
+		buf.Sum.AssertEqual(130);
+		buf.Max.Value.AssertEqual(100);
+		buf.Min.Value.AssertEqual(30);
+		buf.SumNoFirst.AssertEqual(30);
+	}
+
 	[TestMethod]
 	public void CircularBufferEx_BackwardCompatibility_OperatorOnly()
 	{
-		// Old code that sets only Operator should calculate Sum
 		var buf = new CircularBufferEx<int>(3) { Operator = new IntOperator() };
 
 		buf.PushBack(1);
@@ -1265,18 +1303,17 @@ public class CircularBufferTests : BaseTestClass
 		buf.PushBack(3);
 
 		buf.Sum.AssertEqual(6);
-		buf.Max.HasValue.AssertFalse(); // No MaxComparer set
-		buf.Min.HasValue.AssertFalse(); // No MinComparer set
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_BackwardCompatibility_AllComparers()
 	{
-		// Old code that sets all comparers
 		var buf = new CircularBufferEx<int>(3)
 		{
 			Operator = new IntOperator(),
-#pragma warning disable CS0618 // Type or member is obsolete
+#pragma warning disable CS0618
 			MaxComparer = Comparer<int>.Default,
 			MinComparer = Comparer<int>.Default
 #pragma warning restore CS0618
@@ -1294,50 +1331,45 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_BackwardCompatibility_OperatorAsComparer()
 	{
-        // Old code that uses Operator as comparer fallback
-        var buf = new CircularBufferEx<int>(3)
-        {
-            Operator = new IntOperator(),
-#pragma warning disable CS0618 // Type or member is obsolete
-			MaxComparer = null, // Explicitly null, should use Operator
-            MinComparer = null, // Explicitly null, should use Operator
+		var buf = new CircularBufferEx<int>(3)
+		{
+			Operator = new IntOperator(),
+#pragma warning disable CS0618
+			MaxComparer = null,
+			MinComparer = null,
 #pragma warning restore CS0618
+			Stats = CircularBufferStats.All
+		};
 
-            // Stats not set - should infer from properties
-            Stats = CircularBufferStats.All
-        };
-
-        buf.PushBack(1);
+		buf.PushBack(1);
 		buf.PushBack(5);
 		buf.PushBack(3);
 
 		buf.Sum.AssertEqual(9);
-		buf.Max.Value.AssertEqual(5); // Uses Operator as comparer
-		buf.Min.Value.AssertEqual(1); // Uses Operator as comparer
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_StatsOverridesProperties()
 	{
-        // When Stats is explicitly set, it overrides property-based inference
-        var buf = new CircularBufferEx<int>(3)
-        {
-            Operator = new IntOperator(),
-#pragma warning disable CS0618 // Type or member is obsolete
+		var buf = new CircularBufferEx<int>(3)
+		{
+			Operator = new IntOperator(),
+#pragma warning disable CS0618
 			MaxComparer = Comparer<int>.Default,
-            MinComparer = Comparer<int>.Default,
+			MinComparer = Comparer<int>.Default,
 #pragma warning restore CS0618
+			Stats = CircularBufferStats.Sum
+		};
 
-            Stats = CircularBufferStats.Sum // Only Sum, ignore Max/Min
-        };
-
-        buf.PushBack(1);
+		buf.PushBack(1);
 		buf.PushBack(5);
 		buf.PushBack(3);
 
 		buf.Sum.AssertEqual(9);
-		buf.Max.HasValue.AssertFalse(); // Not calculated due to Stats
-		buf.Min.HasValue.AssertFalse(); // Not calculated due to Stats
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
 	}
 
 	[TestMethod]
@@ -1386,11 +1418,11 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_Stats_AutoSetCombination()
 	{
-        var buf = new CircularBufferEx<int>(3)
-        {
-            Operator = new IntOperator()
-        };
-        buf.Stats.AssertEqual(CircularBufferStats.Sum);
+		var buf = new CircularBufferEx<int>(3)
+		{
+			Operator = new IntOperator()
+		};
+		buf.Stats.AssertEqual(CircularBufferStats.Sum);
 
 #pragma warning disable CS0618
 		buf.MinComparer = Comparer<int>.Default;
@@ -1407,23 +1439,22 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_Stats_ExplicitOverridesAuto()
 	{
-        var buf = new CircularBufferEx<int>(3)
-        {
-            Operator = new IntOperator()
-        };
-        buf.Stats.AssertEqual(CircularBufferStats.Sum);
+		var buf = new CircularBufferEx<int>(3)
+		{
+			Operator = new IntOperator()
+		};
+		buf.Stats.AssertEqual(CircularBufferStats.Sum);
 
-		// Explicitly set Stats - now setters should not change it
 		buf.Stats = CircularBufferStats.Max;
 		buf.Stats.AssertEqual(CircularBufferStats.Max);
 
 #pragma warning disable CS0618
-		buf.MinComparer = Comparer<int>.Default; // Should NOT add Min to Stats
-		buf.Stats.AssertEqual(CircularBufferStats.Max); // Still Max only
+		buf.MinComparer = Comparer<int>.Default;
+		buf.Stats.AssertEqual(CircularBufferStats.Max);
 #pragma warning restore CS0618
 
-		buf.Operator = null; // Should NOT remove Sum from Stats
-		buf.Stats.AssertEqual(CircularBufferStats.Max); // Still Max only
+		buf.Operator = null;
+		buf.Stats.AssertEqual(CircularBufferStats.Max);
 	}
 #endif
 
