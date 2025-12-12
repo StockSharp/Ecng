@@ -1,6 +1,8 @@
 namespace Ecng.Tests.Nuget;
 
 using System.Net.Http;
+using System.Linq;
+using System.Xml.Linq;
 
 using Ecng.Nuget;
 
@@ -223,6 +225,38 @@ public class NugetExtensionsTests : BaseTestClass
 
 		// Act & Assert
 		ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
+	}
+
+	[TestMethod]
+	public async Task GetNuspecAsync_RealPackage_ReturnsValidNuspec()
+	{
+		// Arrange
+		const string packageId = "Ecng.Common";
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		var baseUrl = await repo.GetBaseUrl(CancellationToken);
+		var lastVersion = await repo.GetLastVersionAsync(packageId, allowPreview: false, logger, cache, CancellationToken);
+
+		// Act
+		using var http = new HttpClient();
+		using var nuspecStream = await http.GetNuspecAsync(baseUrl, packageId, lastVersion, CancellationToken);
+
+		// Assert
+		nuspecStream.AssertNotNull();
+		if (nuspecStream.CanSeek)
+			nuspecStream.Position = 0;
+
+		var doc = XDocument.Load(nuspecStream);
+		var metadata = doc.Root?.Elements().FirstOrDefault(e => e.Name.LocalName == "metadata");
+		metadata.AssertNotNull();
+
+		var id = metadata.Elements().FirstOrDefault(e => e.Name.LocalName == "id")?.Value;
+		id.AssertEqual(packageId);
+
+		var versionStr = metadata.Elements().FirstOrDefault(e => e.Name.LocalName == "version")?.Value;
+		versionStr.AssertEqual(lastVersion.ToNormalizedString());
 	}
 
 	[TestMethod]
