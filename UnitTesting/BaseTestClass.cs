@@ -222,47 +222,47 @@ public abstract class BaseTestClass
 	/// <summary>
 	/// Tests whether a string contains a specified substring.
 	/// </summary>
-	/// <param name="value">The string to search.</param>
 	/// <param name="substring">Substring expected to be present.</param>
+	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
-	protected static void Contains(string value, string substring, string message = "")
-		=> StringAssert.Contains(value, substring, message);
+	protected static void Contains(string substring, string value, string message = "")
+		=> Assert.Contains(substring, value, message);
 
 	/// <summary>
 	/// Tests whether a string starts with the specified substring.
 	/// </summary>
-	/// <param name="value">The string to search.</param>
 	/// <param name="substring">Substring expected at the beginning.</param>
+	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
-	protected static void StartsWith(string value, string substring, string message = "")
-		=> StringAssert.StartsWith(value, substring, message);
+	protected static void StartsWith(string substring, string value, string message = "")
+		=> Assert.StartsWith(substring, value, message);
 
 	/// <summary>
 	/// Tests whether a string ends with the specified substring.
 	/// </summary>
-	/// <param name="value">The string to search.</param>
 	/// <param name="substring">Substring expected at the end.</param>
+	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
-	protected static void EndsWith(string value, string substring, string message = "")
-		=> StringAssert.EndsWith(value, substring, message);
+	protected static void EndsWith(string substring, string value, string message = "")
+		=> Assert.EndsWith(substring, value, message);
 
 	/// <summary>
 	/// Tests whether a string matches the specified regular expression.
 	/// </summary>
-	/// <param name="value">The string to match.</param>
 	/// <param name="pattern">Regex pattern.</param>
+	/// <param name="value">The string to match.</param>
 	/// <param name="message">Error message.</param>
-	protected static void Matches(string value, string pattern, string message = "")
-		=> StringAssert.Matches(value, new Regex(pattern), message);
+	protected static void MatchesRegex(Regex pattern, string value, string message = "")
+		=> Assert.MatchesRegex(pattern, value, message);
 
 	/// <summary>
 	/// Tests whether a string does not match the specified regular expression.
 	/// </summary>
-	/// <param name="value">The string to test.</param>
 	/// <param name="pattern">Regex pattern.</param>
+	/// <param name="value">The string to test.</param>
 	/// <param name="message">Error message.</param>
-	protected static void DoesNotMatch(string value, string pattern, string message = "")
-		=> StringAssert.DoesNotMatch(value, new Regex(pattern), message);
+	protected static void DoesNotMatch(Regex pattern, string value, string message = "")
+		=> Assert.DoesNotMatchRegex(pattern, value, message);
 
 	/// <summary>
 	/// Asserts that two collections are equal.
@@ -303,19 +303,11 @@ public abstract class BaseTestClass
 	/// <summary>
 	/// Asserts that the collection has the specified number of elements.
 	/// </summary>
-	/// <param name="collection">Collection to check.</param>
 	/// <param name="count">Expected number of elements.</param>
+	/// <param name="collection">Collection to check.</param>
 	/// <param name="message">Error message.</param>
-	protected static void HasCount(ICollection collection, int count, string message = "")
-	{
-		Assert.IsNotNull(collection, message);
-
-#if NET10_0_OR_GREATER
-		Assert.HasCount(count, collection, message);
-#else
-		Assert.AreEqual(count, collection.Count, message);
-#endif
-	}
+	protected static void HasCount(int count, ICollection collection, string message = "")
+		=> Assert.HasCount(count, collection, message);
 
 	/// <summary>
 	/// Asserts that all elements are non-null.
