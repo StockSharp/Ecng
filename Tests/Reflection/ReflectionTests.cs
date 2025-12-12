@@ -321,8 +321,12 @@ public class ReflectionTests : BaseTestClass
 	private class TestClass
 	{
 		public int PublicField;
+#pragma warning disable CS0169
 		private int _privateField;
+#pragma warning restore CS0169
+#pragma warning disable CS0649
 		public static int StaticField;
+#pragma warning restore CS0649
 
 		public int PublicProperty { get; set; }
 		private int PrivateProperty { get; set; }

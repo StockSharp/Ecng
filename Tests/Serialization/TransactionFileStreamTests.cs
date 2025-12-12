@@ -341,7 +341,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		try
 		{
 			using var tfs = new TransactionFileStream(target, FileMode.Create);
-			ThrowsExactly<NotSupportedException>(() => tfs.Read(new byte[10], 0, 10));
+			ThrowsExactly<NotSupportedException>(() => tfs.ReadBytes(new byte[10], 10));
 		}
 		finally
 		{
