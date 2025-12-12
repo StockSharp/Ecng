@@ -1,7 +1,6 @@
 namespace Ecng.Tests.Backup;
 
 using System.IO;
-using System.Text.Json;
 
 using Ecng.Backup;
 using Ecng.Backup.Amazon;
@@ -112,27 +111,19 @@ public class BackupServicesTests : BaseTestClass
 	{
 		var explicitPath = Environment.GetEnvironmentVariable("BACKUP_SECRETS_FILE");
 		if (!explicitPath.IsEmpty() && File.Exists(explicitPath))
-			return DeserializeSecrets(explicitPath);
+			return explicitPath.DeserializeSecrets<Secrets>();
 
 		var dir = new DirectoryInfo(AppContext.BaseDirectory);
 		for (var i = 0; i < 8 && dir != null; i++)
 		{
 			var candidate = Path.Combine(dir.FullName, _secretsFileName);
 			if (File.Exists(candidate))
-				return DeserializeSecrets(candidate);
+				return candidate.DeserializeSecrets<Secrets>();
 			dir = dir.Parent;
 		}
 
 		return null;
 	}
-
-	private static readonly JsonSerializerOptions _opts = new()
-	{
-		PropertyNameCaseInsensitive = true
-	};
-
-	private static Secrets DeserializeSecrets(string path)
-		=> JsonSerializer.Deserialize<Secrets>(File.ReadAllText(path), _opts);
 
 	private static async Task RoundtripAsync(IBackupService service, string serviceName, CancellationToken cancellationToken)
 	{
