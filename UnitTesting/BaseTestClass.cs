@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,90 +40,138 @@ public abstract class BaseTestClass
 	/// <summary>
 	/// Tests whether the specified condition is true.
 	/// </summary>
+	/// <param name="condition">Condition.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsTrue(bool condition, string message = "")
 		=> Assert.IsTrue(condition, message);
 
 	/// <summary>
 	/// Tests whether the specified condition is false.
 	/// </summary>
+	/// <param name="condition">Condition.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsFalse(bool condition, string message = "")
 		=> Assert.IsFalse(condition, message);
 
 	/// <summary>
 	/// Tests whether the specified value is null.
 	/// </summary>
+	/// <param name="value">Value.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsNull(object value, string message = "")
 		=> Assert.IsNull(value, message);
 
 	/// <summary>
 	/// Tests whether the specified value is not null.
 	/// </summary>
+	/// <param name="value">Value.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsNotNull(object value, string message = "")
 		=> Assert.IsNotNull(value, message);
 
 	/// <summary>
 	/// Tests whether two values are equal.
 	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="expected">Expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEqual<T>(T expected, T actual, string message = "")
 		=> Assert.AreEqual(expected, actual, message);
 
 	/// <summary>
 	/// Tests whether two values are not equal.
 	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="notExpected">Not expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotEqual<T>(T notExpected, T actual, string message = "")
 		=> Assert.AreNotEqual(notExpected, actual, message);
 
 	/// <summary>
 	/// Tests whether two objects refer to the same instance.
 	/// </summary>
+	/// <param name="expected">Expected instance.</param>
+	/// <param name="actual">Actual instance.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreSame(object expected, object actual, string message = "")
 		=> Assert.AreSame(expected, actual, message);
 
 	/// <summary>
 	/// Tests whether two objects do not refer to the same instance.
 	/// </summary>
+	/// <param name="notExpected">Not expected instance.</param>
+	/// <param name="actual">Actual instance.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotSame(object notExpected, object actual, string message = "")
 		=> Assert.AreNotSame(notExpected, actual, message);
 
 	/// <summary>
 	/// Tests whether the specified object is an instance of the expected type.
 	/// </summary>
+	/// <param name="value">Value.</param>
+	/// <param name="expectedType">Expected type.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsInstanceOfType(object value, Type expectedType, string message = "")
 		=> Assert.IsInstanceOfType(value, expectedType, message);
 
 	/// <summary>
 	/// Tests whether the specified object is not an instance of the expected type.
 	/// </summary>
+	/// <param name="value">Value.</param>
+	/// <param name="wrongType">Wrong type.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsNotInstanceOfType(object value, Type wrongType, string message = "")
 		=> Assert.IsNotInstanceOfType(value, wrongType, message);
 
 	/// <summary>
 	/// Tests whether two strings are equal, ignoring case.
 	/// </summary>
+	/// <param name="expected">Expected string.</param>
+	/// <param name="actual">Actual string.</param>
+	/// <param name="ignoreCase">Ignore case.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEqual(string expected, string actual, bool ignoreCase, string message = "")
 		=> Assert.AreEqual(expected, actual, ignoreCase, message);
 
 	/// <summary>
 	/// Tests whether two doubles are equal within the specified delta.
 	/// </summary>
+	/// <param name="expected">Expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="delta">Delta.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEqual(double expected, double actual, double delta, string message = "")
 		=> Assert.AreEqual(expected, actual, delta, message);
 
 	/// <summary>
 	/// Tests whether two floats are equal within the specified delta.
 	/// </summary>
+	/// <param name="expected">Expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="delta">Delta.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEqual(float expected, float actual, float delta, string message = "")
 		=> Assert.AreEqual(expected, actual, delta, message);
 
 	/// <summary>
 	/// Tests whether two doubles are not equal within the specified delta.
 	/// </summary>
+	/// <param name="notExpected">Not expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="delta">Delta.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotEqual(double notExpected, double actual, double delta, string message = "")
 		=> Assert.AreNotEqual(notExpected, actual, delta, message);
 
 	/// <summary>
 	/// Tests whether two floats are not equal within the specified delta.
 	/// </summary>
+	/// <param name="notExpected">Not expected value.</param>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="delta">Delta.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotEqual(float notExpected, float actual, float delta, string message = "")
 		=> Assert.AreNotEqual(notExpected, actual, delta, message);
 
@@ -173,84 +222,159 @@ public abstract class BaseTestClass
 	/// <summary>
 	/// Tests whether a string contains a specified substring.
 	/// </summary>
+	/// <param name="value">The string to search.</param>
+	/// <param name="substring">Substring expected to be present.</param>
+	/// <param name="message">Error message.</param>
 	protected static void Contains(string value, string substring, string message = "")
-		=> Assert.Contains(value, substring, message);
+		=> StringAssert.Contains(value, substring, message);
 
 	/// <summary>
 	/// Tests whether a string starts with the specified substring.
 	/// </summary>
+	/// <param name="value">The string to search.</param>
+	/// <param name="substring">Substring expected at the beginning.</param>
+	/// <param name="message">Error message.</param>
 	protected static void StartsWith(string value, string substring, string message = "")
-		=> Assert.StartsWith(value, substring, message);
+		=> StringAssert.StartsWith(value, substring, message);
 
 	/// <summary>
 	/// Tests whether a string ends with the specified substring.
 	/// </summary>
+	/// <param name="value">The string to search.</param>
+	/// <param name="substring">Substring expected at the end.</param>
+	/// <param name="message">Error message.</param>
 	protected static void EndsWith(string value, string substring, string message = "")
-		=> Assert.EndsWith(value, substring, message);
+		=> StringAssert.EndsWith(value, substring, message);
+
+	/// <summary>
+	/// Tests whether a string matches the specified regular expression.
+	/// </summary>
+	/// <param name="value">The string to match.</param>
+	/// <param name="pattern">Regex pattern.</param>
+	/// <param name="message">Error message.</param>
+	protected static void Matches(string value, string pattern, string message = "")
+		=> StringAssert.Matches(value, new Regex(pattern), message);
+
+	/// <summary>
+	/// Tests whether a string does not match the specified regular expression.
+	/// </summary>
+	/// <param name="value">The string to test.</param>
+	/// <param name="pattern">Regex pattern.</param>
+	/// <param name="message">Error message.</param>
+	protected static void DoesNotMatch(string value, string pattern, string message = "")
+		=> StringAssert.DoesNotMatch(value, new Regex(pattern), message);
 
 	/// <summary>
 	/// Asserts that two collections are equal.
 	/// </summary>
+	/// <param name="expected">Expected collection.</param>
+	/// <param name="actual">Actual collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEqual(ICollection expected, ICollection actual, string message = "")
 		=> CollectionAssert.AreEqual(expected, actual, message);
 
 	/// <summary>
 	/// Asserts that two collections are not equal.
 	/// </summary>
+	/// <param name="notExpected">Not expected collection.</param>
+	/// <param name="actual">Actual collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotEqual(ICollection notExpected, ICollection actual, string message = "")
 		=> CollectionAssert.AreNotEqual(notExpected, actual, message);
 
 	/// <summary>
 	/// Asserts that two collections contain the same elements.
 	/// </summary>
+	/// <param name="expected">Expected collection.</param>
+	/// <param name="actual">Actual collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreEquivalent(ICollection expected, ICollection actual, string message = "")
 		=> CollectionAssert.AreEquivalent(expected, actual, message);
 
 	/// <summary>
 	/// Asserts that two collections do not contain the same elements.
 	/// </summary>
+	/// <param name="notExpected">Not expected collection.</param>
+	/// <param name="actual">Actual collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AreNotEquivalent(ICollection notExpected, ICollection actual, string message = "")
 		=> CollectionAssert.AreNotEquivalent(notExpected, actual, message);
 
 	/// <summary>
+	/// Asserts that the collection has the specified number of elements.
+	/// </summary>
+	/// <param name="collection">Collection to check.</param>
+	/// <param name="count">Expected number of elements.</param>
+	/// <param name="message">Error message.</param>
+	protected static void HasCount(ICollection collection, int count, string message = "")
+	{
+		Assert.IsNotNull(collection, message);
+
+#if NET10_0_OR_GREATER
+		Assert.HasCount(count, collection, message);
+#else
+		Assert.AreEqual(count, collection.Count, message);
+#endif
+	}
+
+	/// <summary>
 	/// Asserts that all elements are non-null.
 	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreNotNull(ICollection collection, string message = "")
 		=> CollectionAssert.AllItemsAreNotNull(collection, message);
 
 	/// <summary>
 	/// Asserts that all elements are unique.
 	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreUnique(ICollection collection, string message = "")
 		=> CollectionAssert.AllItemsAreUnique(collection, message);
 
 	/// <summary>
 	/// Asserts that all elements are instances of the specified type.
 	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="expectedType">Expected type.</param>
+	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreInstancesOfType(ICollection collection, Type expectedType, string message = "")
 		=> CollectionAssert.AllItemsAreInstancesOfType(collection, expectedType, message);
 
 	/// <summary>
 	/// Asserts that the collection contains the specified element.
 	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="element">Element expected to be present.</param>
+	/// <param name="message">Error message.</param>
 	protected static void Contains(ICollection collection, object element, string message = "")
 		=> CollectionAssert.Contains(collection, element, message);
 
 	/// <summary>
 	/// Asserts that the collection does not contain the specified element.
 	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="element">Element expected to be absent.</param>
+	/// <param name="message">Error message.</param>
 	protected static void DoesNotContain(ICollection collection, object element, string message = "")
 		=> CollectionAssert.DoesNotContain(collection, element, message);
 
 	/// <summary>
 	/// Asserts that one collection is a subset of another.
 	/// </summary>
+	/// <param name="subset">Subset.</param>
+	/// <param name="superset">Superset.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsSubsetOf(ICollection subset, ICollection superset, string message = "")
 		=> CollectionAssert.IsSubsetOf(subset, superset, message);
 
 	/// <summary>
 	/// Asserts that one collection is not a subset of another.
 	/// </summary>
+	/// <param name="subset">Subset.</param>
+	/// <param name="superset">Superset.</param>
+	/// <param name="message">Error message.</param>
 	protected static void IsNotSubsetOf(ICollection subset, ICollection superset, string message = "")
 		=> CollectionAssert.IsNotSubsetOf(subset, superset, message);
 }
