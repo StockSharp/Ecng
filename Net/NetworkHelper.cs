@@ -9,7 +9,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
-using System.Reflection;
 
 using System.Diagnostics;
 
@@ -248,7 +247,7 @@ public static class NetworkHelper
 	/// </summary>
 	/// <param name="client">The <see cref="TcpClient"/> instance.</param>
 	/// <param name="address">The endpoint to connect to.</param>
-	[Obsolete("Use async methods with CancellationToken instead.")]
+	[Obsolete("Use ConnectAsync instead.")]
 	public static void Connect(this TcpClient client, EndPoint address)
 	{
 		if (client is null)
@@ -258,6 +257,29 @@ public static class NetworkHelper
 			throw new ArgumentNullException(nameof(address));
 
 		client.Connect(address.GetHost(), address.GetPort());
+	}
+
+	/// <summary>
+	/// Connects the <see cref="TcpClient"/> to the specified endpoint.
+	/// </summary>
+	/// <param name="client">The <see cref="TcpClient"/> instance.</param>
+	/// <param name="address">The endpoint to connect to.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public static ValueTask ConnectAsync(this TcpClient client, EndPoint address, CancellationToken cancellationToken)
+	{
+		if (client is null)
+			throw new ArgumentNullException(nameof(client));
+
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
+		return client.ConnectAsync(address.GetHost(), address.GetPort()
+#if NET5_0_OR_GREATER
+		, cancellationToken);
+#else
+		).AsValueTask();
+#endif
 	}
 
 	/// <summary>
