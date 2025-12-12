@@ -141,18 +141,16 @@ public class DummyDispatcher : IDispatcher
 		}
 	}
 
-	private class Subscription(DummyDispatcher owner, Action action) : IDisposable
+	private class Subscription(DummyDispatcher owner, Action action) : Disposable
 	{
-		private readonly DummyDispatcher _owner = owner;
-		private readonly Action _action = action;
-		private int _disposed;
+		private readonly DummyDispatcher _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+		private readonly Action _action = action ?? throw new ArgumentNullException(nameof(action));
 
-		void IDisposable.Dispose()
-		{
-			if (Interlocked.Exchange(ref _disposed, 1) == 1)
-				return;
-
+		protected override void DisposeManaged()
+        {
 			_owner.UnregisterPeriodic(_action);
-		}
+
+			base.DisposeManaged();
+        }
 	}
 }
