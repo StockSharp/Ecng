@@ -7,6 +7,10 @@ using System.Text;
 
 using Ecng.Net;
 
+using Nito.AsyncEx;
+
+using SixLabors.ImageSharp;
+
 [TestClass]
 public class NetworkHelperTests : BaseTestClass
 {
@@ -91,6 +95,31 @@ public class NetworkHelperTests : BaseTestClass
 
 		ThrowsExactly<ArgumentNullException>(() => "".GetGravatarToken());
 		ThrowsExactly<ArgumentNullException>(() => "".GetGravatarUrl(10));
+	}
+
+	[TestMethod]
+	public async Task GravatarDownload_Works_ForDifferentSizes()
+	{
+		// Arrange
+		var token = "info@stocksharp.com".GetGravatarToken();
+		using var http = new HttpClient();
+		var sizes = new[] { 16, 80, 200 };
+		var ct = CancellationToken;
+
+		await sizes.Select(async size =>
+		{
+			var url = token.GetGravatarUrl(size);
+
+			// Act
+			var bytes = await http.GetByteArrayAsync(url, ct);
+
+			// Assert
+			bytes.Length.AssertGreater(0);
+
+			using var image = Image.Load(bytes);
+			image.Width.AssertEqual(size);
+			image.Height.AssertEqual(size);
+		}).WhenAll();
 	}
 
 	[TestMethod]

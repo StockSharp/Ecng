@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="$(ImageSharpVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Compilation.FSharp\Compilation.FSharp.csproj" />

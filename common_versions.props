@@ -34,5 +34,6 @@
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>7.0.1</NuGetApiVer>
+    <ImageSharpVer>3.*</ImageSharpVer>
   </PropertyGroup>
 </Project>
