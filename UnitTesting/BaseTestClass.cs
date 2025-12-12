@@ -369,4 +369,389 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNotSubsetOf(ICollection subset, ICollection superset, string message = "")
 		=> CollectionAssert.IsNotSubsetOf(subset, superset, message);
+
+	/// <summary>
+	/// Tests whether the specified object is an instance of the expected type.
+	/// </summary>
+	/// <typeparam name="T">Expected type.</typeparam>
+	/// <param name="value">Value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsInstanceOfType<T>(object value, string message = "")
+		=> Assert.IsInstanceOfType<T>(value, message);
+
+	/// <summary>
+	/// Tests whether the specified object is not an instance of the expected type.
+	/// </summary>
+	/// <typeparam name="T">Wrong type.</typeparam>
+	/// <param name="value">Value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotInstanceOfType<T>(object value, string message = "")
+		=> Assert.IsNotInstanceOfType<T>(value, message);
+
+	/// <summary>
+	/// Tests whether the first value is greater than the second value.
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="comparand">Value to compare against.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsGreater<T>(T actual, T comparand, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(comparand) <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be greater than {comparand}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the first value is greater than or equal to the second value.
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="comparand">Value to compare against.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsGreaterOrEqual<T>(T actual, T comparand, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(comparand) < 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be greater than or equal to {comparand}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the first value is less than the second value.
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="comparand">Value to compare against.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsLess<T>(T actual, T comparand, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(comparand) >= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be less than {comparand}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the first value is less than or equal to the second value.
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="comparand">Value to compare against.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsLessOrEqual<T>(T actual, T comparand, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(comparand) > 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be less than or equal to {comparand}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is within the specified range (inclusive).
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="min">Minimum value (inclusive).</param>
+	/// <param name="max">Maximum value (inclusive).</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsInRange<T>(T actual, T min, T max, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(min) < 0 || actual.CompareTo(max) > 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be in range [{min}, {max}]." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is outside the specified range.
+	/// </summary>
+	/// <typeparam name="T">Type of values.</typeparam>
+	/// <param name="actual">Actual value.</param>
+	/// <param name="min">Minimum value.</param>
+	/// <param name="max">Maximum value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotInRange<T>(T actual, T min, T max, string message = "")
+		where T : IComparable<T>
+	{
+		if (actual.CompareTo(min) >= 0 && actual.CompareTo(max) <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be outside range [{min}, {max}]." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is empty.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsEmpty(string value, string message = "")
+	{
+		if (value is null)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected empty string but was null." : message);
+		if (value.Length != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected empty string but was \"{value}\"." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is not empty.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotEmpty(string value, string message = "")
+	{
+		if (value is null)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty string but was null." : message);
+		if (value.Length == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty string but was empty." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the collection is empty.
+	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsEmpty(ICollection collection, string message = "")
+	{
+		if (collection is null)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected empty collection but was null." : message);
+		if (collection.Count != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected empty collection but had {collection.Count} elements." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the collection is not empty.
+	/// </summary>
+	/// <param name="collection">Collection.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotEmpty(ICollection collection, string message = "")
+	{
+		if (collection is null)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty collection but was null." : message);
+		if (collection.Count == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty collection but was empty." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string does not contain the specified substring.
+	/// </summary>
+	/// <param name="substring">Substring expected to be absent.</param>
+	/// <param name="value">The string to search.</param>
+	/// <param name="message">Error message.</param>
+	protected static void DoesNotContain(string substring, string value, string message = "")
+		=> Assert.DoesNotContain(substring, value, message);
+
+	/// <summary>
+	/// Tests whether the value is positive (greater than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsPositive(int value, string message = "")
+	{
+		if (value <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is positive (greater than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsPositive(long value, string message = "")
+	{
+		if (value <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is positive (greater than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsPositive(double value, string message = "")
+	{
+		if (value <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is positive (greater than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsPositive(decimal value, string message = "")
+	{
+		if (value <= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is negative (less than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNegative(int value, string message = "")
+	{
+		if (value >= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is negative (less than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNegative(long value, string message = "")
+	{
+		if (value >= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is negative (less than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNegative(double value, string message = "")
+	{
+		if (value >= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is negative (less than zero).
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNegative(decimal value, string message = "")
+	{
+		if (value >= 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsZero(int value, string message = "")
+	{
+		if (value != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsZero(long value, string message = "")
+	{
+		if (value != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsZero(double value, string message = "")
+	{
+		if (value != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsZero(decimal value, string message = "")
+	{
+		if (value != 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is not zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotZero(int value, string message = "")
+	{
+		if (value == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is not zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotZero(long value, string message = "")
+	{
+		if (value == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is not zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotZero(double value, string message = "")
+	{
+		if (value == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the value is not zero.
+	/// </summary>
+	/// <param name="value">Value to check.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotZero(decimal value, string message = "")
+	{
+		if (value == 0)
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is null or empty.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNullOrEmpty(string value, string message = "")
+	{
+		if (!string.IsNullOrEmpty(value))
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected null or empty string but was \"{value}\"." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is not null or empty.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotNullOrEmpty(string value, string message = "")
+	{
+		if (string.IsNullOrEmpty(value))
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-null and non-empty string." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is null or whitespace.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNullOrWhiteSpace(string value, string message = "")
+	{
+		if (!string.IsNullOrWhiteSpace(value))
+			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected null or whitespace string but was \"{value}\"." : message);
+	}
+
+	/// <summary>
+	/// Tests whether the string is not null or whitespace.
+	/// </summary>
+	/// <param name="value">String value.</param>
+	/// <param name="message">Error message.</param>
+	protected static void IsNotNullOrWhiteSpace(string value, string message = "")
+	{
+		if (string.IsNullOrWhiteSpace(value))
+			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-null and non-whitespace string." : message);
+	}
 }
