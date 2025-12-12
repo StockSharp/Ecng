@@ -1,6 +1,7 @@
 namespace Ecng.ComponentModel;
 
 using System;
+using System.ComponentModel;
 
 /// <summary>
 /// Represents a range with a minimum and maximum value.
@@ -43,6 +44,11 @@ public interface IRange<T> : IRange
 	/// Gets the maximum value of the range.
 	/// </summary>
 	T Max { get; }
+
+	/// <summary>
+	/// Gets the difference between the maximum and minimum values of the range.
+	/// </summary>
+	T Length { get; }
 
 	/// <summary>
 	/// Determines whether the specified value is within the current range.
