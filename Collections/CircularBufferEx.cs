@@ -64,6 +64,10 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 		}
 	}
 
+#if NET7_0_OR_GREATER
+	private IComparer<TItem> GetMinComparer() => _operator;
+	private IComparer<TItem> GetMaxComparer() => _operator;
+#else
 	private IComparer<TItem> _minComparer;
 
 	/// <summary>
@@ -112,6 +116,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 	private IComparer<TItem> GetMinComparer() => _minComparer ?? _operator;
 	private IComparer<TItem> GetMaxComparer() => _maxComparer ?? _operator;
+#endif
 
 	/// <summary>
 	/// Max value.
