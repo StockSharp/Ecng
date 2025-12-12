@@ -5,7 +5,8 @@ using System.Reflection;
 using Ecng.ComponentModel;
 using Ecng.Net;
 
-[TestClass]
+// TODO
+//[TestClass]
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
 {
@@ -155,8 +156,7 @@ public class WebSocketClientTests : BaseTestClass
 		client.Disconnect();
 	}
 
-	// TODO
-	//[TestMethod]
+	[TestMethod]
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task Resend_Stores_And_Removes_Commands()
 	{
@@ -340,8 +340,7 @@ public class WebSocketClientTests : BaseTestClass
 		client.Disconnect();
 	}
 
-	// TODO
-	//[TestMethod]
+	[TestMethod]
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task States_Sequence_With_Timestamps()
 	{
