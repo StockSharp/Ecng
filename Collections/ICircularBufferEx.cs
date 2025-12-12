@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Collections;
 
 using System;
+using System.Collections.Generic;
 
 using Ecng.Common;
 
@@ -40,7 +41,7 @@ public enum CircularBufferStats
 /// Common interface for statistic circular buffers.
 /// </summary>
 /// <typeparam name="TItem">The type of elements in the buffer.</typeparam>
-public interface ICircularBufferEx<TItem>
+public interface ICircularBufferEx<TItem> : IList<TItem>
 {
 	/// <summary>
 	/// Specifies which statistics to calculate.
