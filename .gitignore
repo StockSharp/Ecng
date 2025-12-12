@@ -169,3 +169,6 @@ pub/
 /TestConsole
 /TestWPF
 /.claude
+
+# Local integration secrets
+*secrets.json

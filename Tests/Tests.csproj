@@ -16,6 +16,11 @@
     <ProjectReference Include="..\Compilation.FSharp\Compilation.FSharp.csproj" />
     <ProjectReference Include="..\Compilation.Python\Compilation.Python.csproj" />
     <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
+    <ProjectReference Include="..\Backup.Azure\Backup.Azure.csproj" />
+    <ProjectReference Include="..\Backup.Mega\Backup.Mega.csproj" />
+    <ProjectReference Include="..\Backup.Yandex\Backup.Yandex.csproj" />
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />

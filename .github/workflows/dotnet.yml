@@ -31,4 +31,18 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
+        env:
+          BACKUP_AWS_REGION: ${{ secrets.BACKUP_AWS_REGION }}
+          BACKUP_AWS_BUCKET: ${{ secrets.BACKUP_AWS_BUCKET }}
+          BACKUP_AWS_ACCESS_KEY: ${{ secrets.BACKUP_AWS_ACCESS_KEY }}
+          BACKUP_AWS_SECRET_KEY: ${{ secrets.BACKUP_AWS_SECRET_KEY }}
+          BACKUP_AZURE_CONNECTION_STRING: ${{ secrets.BACKUP_AZURE_CONNECTION_STRING }}
+          BACKUP_AZURE_CONTAINER: ${{ secrets.BACKUP_AZURE_CONTAINER }}
+          BACKUP_MEGA_EMAIL: ${{ secrets.BACKUP_MEGA_EMAIL }}
+          BACKUP_MEGA_PASSWORD: ${{ secrets.BACKUP_MEGA_PASSWORD }}
+          BACKUP_YANDEX_TOKEN: ${{ secrets.BACKUP_YANDEX_TOKEN }}
+          NUGET_PRIVATE_URL: ${{ secrets.NUGET_PRIVATE_URL }}
+          NUGET_PRIVATE_API_KEY: ${{ secrets.NUGET_PRIVATE_API_KEY }}
+          NUGET_PRIVATE_PACKAGE_ID: ${{ secrets.NUGET_PRIVATE_PACKAGE_ID }}
+          NUGET_PRIVATE_PACKAGE_VERSION: ${{ secrets.NUGET_PRIVATE_PACKAGE_VERSION }}
         run: dotnet test Ecng.sln --no-build --configuration Release --settings Tests/test.runsettings
