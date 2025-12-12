@@ -241,6 +241,7 @@ public class CompilerCache : ICompilerCache
 /// <summary>
 /// Backward-compatible wrapper for legacy usage; uses local file system under the hood.
 /// </summary>
+[Obsolete("Use CompilerCache with LocalFileSystem instead.")]
 public class FileCompilerCache(string path, TimeSpan timeout)
 	: CompilerCache(new LocalFileSystem(), path, timeout)
 {

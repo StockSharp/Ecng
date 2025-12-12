@@ -46,27 +46,28 @@ public class ExpressionTests : BaseTestClass
 	[TestMethod]
 	public void FileCache()
 	{
-		var cache = new FileCompilerCache(_cacheDir, TimeSpan.MaxValue);
+		var fs = new LocalFileSystem();
+		var cache = new CompilerCache(fs, _cacheDir, TimeSpan.MaxValue);
 		cache.Init();
 
-		Directory.GetFiles(_cacheDir).Length.AssertEqual(0);
+		fs.EnumerateFiles(_cacheDir).Count().AssertEqual(0);
 
 		var formula = Compile("RI@FORTS - SBER@TQBR", cache);
 		formula.Calculate([6, 4]).AssertEqual(2);
 
 		cache.Count.AssertEqual(1);
-		Directory.GetFiles(_cacheDir).Length.AssertEqual(1);
+		fs.EnumerateFiles(_cacheDir).Count().AssertEqual(1);
 
 		formula = Compile("RI@FORTS - SBER@TQBR", cache);
 		formula.Calculate([6, 5]).AssertEqual(1);
 
 		cache.Count.AssertEqual(1);
-		Directory.GetFiles(_cacheDir).Length.AssertEqual(1);
+		fs.EnumerateFiles(_cacheDir).Count().AssertEqual(1);
 
 		cache.Clear();
 		cache.Count.AssertEqual(0);
 
-		Directory.Exists(_cacheDir).AssertFalse();
+		fs.DirectoryExists(_cacheDir).AssertFalse();
 	}
 
 	[TestMethod]

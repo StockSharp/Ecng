@@ -17,6 +17,15 @@ public class AssemblyReference : BaseCodeReference
 	/// Initializes a new instance of the <see cref="AssemblyReference"/>.
 	/// </summary>
 	public AssemblyReference()
+		: this(new LocalFileSystem())
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="AssemblyReference"/> with a custom file system.
+	/// </summary>
+	public AssemblyReference(IFileSystem fileSystem)
+		: base(fileSystem)
 	{
 	}
 
@@ -28,7 +37,7 @@ public class AssemblyReference : BaseCodeReference
 	/// <summary>
 	/// Determines whether the assembly reference is valid.
 	/// </summary>
-	public override bool IsValid => File.Exists(Location);
+	public override bool IsValid => FileSystem.FileExists(Location);
 
 	/// <summary>
 	/// Gets or sets the file name of the assembly reference.
@@ -53,7 +62,7 @@ public class AssemblyReference : BaseCodeReference
 			{
 				var tmp = Path.Combine(ICompilerExtensions.RuntimePath, fileName);
 
-				if (File.Exists(tmp))
+				if (FileSystem.FileExists(tmp))
 					return tmp;
 			}
 

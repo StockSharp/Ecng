@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
 using Ecng.Serialization;
 
 /// <summary>
@@ -11,6 +12,22 @@ using Ecng.Serialization;
 /// </summary>
 public class NuGetReference : BaseCodeReference
 {
+	/// <summary>
+	/// Initializes a new instance of the <see cref="NuGetReference"/>.
+	/// </summary>
+	public NuGetReference()
+		: this(new LocalFileSystem())
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="NuGetReference"/> with a custom file system.
+	/// </summary>
+	public NuGetReference(IFileSystem fileSystem)
+		: base(fileSystem)
+	{
+	}
+
 	/// <summary>
 	/// Gets or sets the NuGet package identifier.
 	/// </summary>

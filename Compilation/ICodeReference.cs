@@ -1,9 +1,11 @@
 ﻿namespace Ecng.Compilation;
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
 using Ecng.Serialization;
 
 /// <summary>
@@ -32,6 +34,11 @@ public interface ICodeReference : IPersistable
 	bool IsValid { get; }
 
 	/// <summary>
+	/// File system abstraction available to derived classes.
+	/// </summary>
+	IFileSystem FileSystem { get; }
+
+	/// <summary>
 	/// Asynchronously retrieves the images associated with the code reference.
 	/// </summary>
 	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -42,8 +49,17 @@ public interface ICodeReference : IPersistable
 /// <summary>
 /// Provides a base implementation for a code reference with persistence support.
 /// </summary>
-public abstract class BaseCodeReference : ICodeReference
+/// <remarks>
+/// Initializes a new instance of the <see cref="BaseCodeReference"/>.
+/// </remarks>
+/// <param name="fileSystem">File system abstraction to use.</param>
+public abstract class BaseCodeReference(IFileSystem fileSystem) : ICodeReference
 {
+	/// <summary>
+	/// File system abstraction available to derived classes.
+	/// </summary>
+	public IFileSystem FileSystem { get; } = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+
 	/// <summary>
 	/// Gets the identifier of the code reference. Defaults to the location.
 	/// </summary>
