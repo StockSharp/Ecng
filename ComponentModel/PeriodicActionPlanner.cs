@@ -17,16 +17,50 @@ using Ecng.Common;
 /// </remarks>
 public class PeriodicActionPlanner
 {
-	private class Entry(Action action, TimeSpan interval)
+	private class Entry(PeriodicActionPlanner owner, Action action, TimeSpan interval)
 	{
-		public Action Action { get; } = action ?? throw new ArgumentNullException(nameof(action));
+		private readonly PeriodicActionPlanner _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+		private readonly Action _action = action ?? throw new ArgumentNullException(nameof(action));
+		private int _consecutiveErrors;
+
 		public TimeSpan Interval { get; } = interval;
 		public DateTime NextRun = DateTime.UtcNow + interval;
+
+		public void Invoke()
+		{
+			try
+			{
+				_action();
+				_consecutiveErrors = 0;
+			}
+			catch
+			{
+				_consecutiveErrors++;
+
+				var maxErrors = _owner.MaxErrors;
+				if (maxErrors <= 0)
+					return;
+
+				if (_consecutiveErrors < maxErrors)
+					return;
+
+				_owner.Unregister(this);
+			}
+		}
 	}
 
 	private readonly Lock _lock = new();
 	private readonly List<Entry> _entries = [];
 	private TimeSpan? _minInterval;
+
+	/// <summary>
+	/// Gets or sets the maximum number of consecutive errors allowed for a registered action.
+	/// </summary>
+	/// <value>
+	/// If the value is greater than <c>0</c>, then an action is automatically removed when its consecutive error counter
+	/// reaches this value. If the value is <c>0</c>, automatic removal is disabled.
+	/// </value>
+	public int MaxErrors { get; set; }
 
 	/// <summary>
 	/// Gets the minimal interval among all registered actions.
@@ -59,7 +93,7 @@ public class PeriodicActionPlanner
 		if (interval <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(interval), interval, "Interval must be positive.");
 
-		var entry = new Entry(action, interval);
+		var entry = new Entry(this, action, interval);
 
 		using (_lock.EnterScope())
 		{
@@ -81,6 +115,7 @@ public class PeriodicActionPlanner
 	/// </returns>
 	/// <remarks>
 	/// For each returned action this method advances the next run time by its configured interval.
+	/// The returned actions are wrapped by the planner to track consecutive errors for <see cref="MaxErrors"/>.
 	/// </remarks>
 	public Action[] GetDueActions(DateTime utcNow)
 	{
@@ -97,7 +132,7 @@ public class PeriodicActionPlanner
 				continue;
 
 			entry.NextRun = utcNow + entry.Interval;
-			due.Add(entry.Action);
+			due.Add(entry.Invoke);
 		}
 
 		return [.. due];
@@ -107,10 +142,8 @@ public class PeriodicActionPlanner
 	{
 		using var _ = _lock.EnterScope();
 
-		if (!_entries.Remove(entry))
-			return;
-
-		UpdateMinInterval();
+		if (_entries.Remove(entry))
+			UpdateMinInterval();
 	}
 
 	private void UpdateMinInterval()
