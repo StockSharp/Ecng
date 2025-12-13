@@ -1,10 +1,9 @@
 ﻿namespace Ecng.ComponentModel;
 
 using System;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Ecng.Common;
 
@@ -45,112 +44,91 @@ public interface IDispatcher
 /// </summary>
 public class DummyDispatcher : IDispatcher
 {
+	private readonly PeriodicActionPlanner _periodic = new();
+	private readonly Lock _timerLock = new();
+	private ControllablePeriodicTimer _timer;
+	private TimeSpan _timerInterval = TimeSpan.Zero;
+
+	/// <inheritdoc />
 	bool IDispatcher.CheckAccess() => true;
+
+	/// <inheritdoc />
 	void IDispatcher.Invoke(Action action) => action();
+
+	/// <inheritdoc />
 	void IDispatcher.InvokeAsync(Action action) => Task.Run(action);
 
-	// Single timer for all periodic actions on this dispatcher. Created on first use.
-	private readonly Lock _periodicLock = new();
-	private readonly List<PeriodicEntry> _periodicActions = [];
-	private ControllablePeriodicTimer _periodicTimer;
-	private TimeSpan _periodicInterval = TimeSpan.Zero;
-
-	private class PeriodicEntry(Action action, TimeSpan interval)
-	{
-		public Action Action = action;
-		public TimeSpan Interval = interval;
-		public DateTime NextRun = DateTime.UtcNow + interval;
-	}
-
+	/// <inheritdoc />
 	IDisposable IDispatcher.InvokePeriodically(Action action, TimeSpan interval)
 	{
-		if (action == null)
-			throw new ArgumentNullException(nameof(action));
+		var sub = _periodic.Register(action, interval);
+		EnsureTimerUpToDate();
+		return new PeriodicSubscription(this, sub);
+	}
 
-		using (_periodicLock.EnterScope())
+	private void EnsureTimerUpToDate()
+	{
+		using (_timerLock.EnterScope())
 		{
-			_periodicActions.Add(new(action, interval));
+			var minInterval = _periodic.MinInterval;
 
-			// determine minimal interval among registered actions
-			var minInterval = _periodicActions.Min(e => e.Interval);
-
-			if (_periodicTimer == null)
+			if (minInterval == null)
 			{
-				_periodicInterval = minInterval;
-				_periodicTimer = new ControllablePeriodicTimer(() =>
+				_timer?.Dispose();
+				_timer = null;
+				_timerInterval = TimeSpan.Zero;
+				return;
+			}
+
+			if (_timer == null)
+			{
+				_timerInterval = minInterval.Value;
+				_timer = new ControllablePeriodicTimer(() =>
 				{
-					PeriodicEntry[] toRun;
-					using (_periodicLock.EnterScope())
+					var actions = _periodic.GetDueActions(DateTime.UtcNow);
+					foreach (var action in actions)
 					{
-						toRun = [.. _periodicActions];
-					}
-
-					var now = DateTime.UtcNow;
-					foreach (var e in toRun)
-					{
-						if (now < e.NextRun)
-							continue;
-
-						try { e.Action(); } catch { }
-						// schedule next run relative to now to avoid drift
-						e.NextRun = now + e.Interval;
+						try
+						{
+							((IDispatcher)this).Invoke(action);
+						}
+						catch (Exception ex)
+						{
+							Trace.WriteLine(ex);
+						}
 					}
 
 					return Task.CompletedTask;
 				});
 
-				_periodicTimer.Start(_periodicInterval);
+				_timer.Start(_timerInterval);
+				return;
 			}
-			else
-			{
-				if (minInterval < _periodicInterval)
-				{
-					_periodicInterval = minInterval;
-					_periodicTimer.ChangeInterval(minInterval);
-				}
-			}
-		}
 
-		return new Subscription(this, action);
-	}
-
-	private void UnregisterPeriodic(Action action)
-	{
-		using (_periodicLock.EnterScope())
-		{
-			var idx = _periodicActions.FindIndex(e => e.Action == action);
-			if (idx >= 0)
-				_periodicActions.RemoveAt(idx);
-
-			if (_periodicActions.Count == 0 && _periodicTimer != null)
+			if (minInterval.Value != _timerInterval)
 			{
-				_periodicTimer.Dispose();
-				_periodicTimer = null;
-				_periodicInterval = TimeSpan.Zero;
-			}
-			else if (_periodicActions.Count > 0 && _periodicTimer != null)
-			{
-				// Recalculate interval - it may increase if a fast action was removed
-				var minInterval = _periodicActions.Min(e => e.Interval);
-				if (minInterval != _periodicInterval)
-				{
-					_periodicInterval = minInterval;
-					_periodicTimer.ChangeInterval(minInterval);
-				}
+				_timerInterval = minInterval.Value;
+				_timer.ChangeInterval(_timerInterval);
 			}
 		}
 	}
 
-	private class Subscription(DummyDispatcher owner, Action action) : Disposable
+	private class PeriodicSubscription(DummyDispatcher owner, IDisposable inner) : Disposable
 	{
 		private readonly DummyDispatcher _owner = owner ?? throw new ArgumentNullException(nameof(owner));
-		private readonly Action _action = action ?? throw new ArgumentNullException(nameof(action));
+		private IDisposable _inner = inner ?? throw new ArgumentNullException(nameof(inner));
 
 		protected override void DisposeManaged()
-        {
-			_owner.UnregisterPeriodic(_action);
+		{
+			var inner = Interlocked.Exchange(ref _inner, null);
+
+			if (inner is not null)
+			{
+				inner.Dispose();
+				_owner.EnsureTimerUpToDate();
+			}
 
 			base.DisposeManaged();
-        }
+		}
 	}
 }

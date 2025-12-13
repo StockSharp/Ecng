@@ -1,4 +1,4 @@
-namespace Ecng.Tests.ComponentModel;
+﻿namespace Ecng.Tests.ComponentModel;
 
 using System;
 using System.Threading;
@@ -399,5 +399,36 @@ public class DummyDispatcherTests : BaseTestClass
 		var slowTicks = slow - slowBefore;
 		(slowTicks >= 1 && slowTicks <= 2).AssertTrue($"Expected slowTicks >= 1 && <= 2 (300ms interval, 400ms wait), but slowBefore={slowBefore}, slow={slow}, slowTicks={slowTicks}");
 	}
-}
 
+	[TestMethod]
+	public void InvokePeriodically_InvalidInterval_Throws()
+	{
+		IDispatcher d = new DummyDispatcher();
+
+		ThrowsExactly<ArgumentOutOfRangeException>(() => d.InvokePeriodically(() => { }, TimeSpan.Zero));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => d.InvokePeriodically(() => { }, TimeSpan.FromMilliseconds(-1)));
+	}
+
+	[TestMethod]
+	public async Task InvokePeriodically_SameActionDifferentIntervals_UnsubscribeRemovesCorrectSubscription()
+	{
+		IDispatcher d = new DummyDispatcher();
+
+		var counter = 0;
+		Action action = () => Interlocked.Increment(ref counter);
+
+		using var fastSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(30));
+		var slowSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(300));
+
+		await Task.Delay(200, CancellationToken);
+		(counter >= 3).AssertTrue($"Expected counter >= 3 after 200ms with 30ms interval, but was {counter}");
+
+		// Dispose the slow subscription and ensure the fast one continues.
+		slowSub.Dispose();
+
+		var before = counter;
+		await Task.Delay(200, CancellationToken);
+
+		(counter - before >= 3).AssertTrue($"Expected fast subscription to continue after disposing slow subscription, but counterBefore={before}, counter={counter}, diff={counter - before}");
+	}
+}
