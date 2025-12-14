@@ -555,8 +555,8 @@ public class LoggableStreamTests : BaseTestClass
 		var logReceiver = new TestLogReceiver();
 
 		using var loggable = new LoggableStream(ms, logReceiver,
-			data => Encoding.UTF8.GetString(data),
-			data => Encoding.UTF8.GetString(data),
+			data => data.UTF8(),
+			data => data.UTF8(),
 			LogLevels.Debug);
 
 		var buffer = new byte[5];

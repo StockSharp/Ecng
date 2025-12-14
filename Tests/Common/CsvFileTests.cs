@@ -64,7 +64,7 @@ public class CsvFileTests : BaseTestClass
 		var content = "a,b\n\n c,d\n"; // note: space before c to ensure trimming not applied by reader
 
 		// NoColumns
-		using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+		using (var ms = new MemoryStream(content.UTF8()))
 		{
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.NoColumns);
 			r.Delimiter = ',';
@@ -79,7 +79,7 @@ public class CsvFileTests : BaseTestClass
 		}
 
 		// EmptyColumn
-		using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+		using (var ms = new MemoryStream(content.UTF8()))
 		{
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EmptyColumn);
 			r.Delimiter = ',';
@@ -95,7 +95,7 @@ public class CsvFileTests : BaseTestClass
 		}
 
 		// Ignore
-		using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+		using (var ms = new MemoryStream(content.UTF8()))
 		{
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.Ignore);
 			r.Delimiter = ',';
@@ -108,7 +108,7 @@ public class CsvFileTests : BaseTestClass
 		}
 
 		// EndOfFile
-		using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+		using (var ms = new MemoryStream(content.UTF8()))
 		{
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EndOfFile);
 			r.Delimiter = ',';

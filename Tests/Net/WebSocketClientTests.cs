@@ -73,7 +73,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		await client.SendAsync(payload, cts.Token);
 
-		var completed = await Task.WhenAny(receivedTcs.Task, errorTcs.Task, Task.Delay(TimeSpan.FromSeconds(20), cts.Token));
+		var completed = await Task.WhenAny(receivedTcs.Task, errorTcs.Task, TimeSpan.FromSeconds(20).Delay(cts.Token));
 		if (completed == errorTcs.Task)
 			Fail($"WebSocket client error: {errorTcs.Task.Result}");
 
@@ -233,9 +233,9 @@ public class WebSocketClientTests : BaseTestClass
 
 		client.PreProcess2 += (input, output) =>
 		{
-			var str = System.Text.Encoding.UTF8.GetString(input.Span);
+			var str = input.Span.UTF8();
 			var upper = str.ToUpperInvariant();
-			var bytes = System.Text.Encoding.UTF8.GetBytes(upper);
+			var bytes = upper.UTF8();
 			bytes.CopyTo(output.Span);
 			return bytes.Length;
 		};
@@ -244,7 +244,7 @@ public class WebSocketClientTests : BaseTestClass
 		client.IsConnected.AssertTrue();
 
 		await client.SendAsync(original, cts.Token);
-		var received = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(10), cts.Token));
+		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(10).Delay(cts.Token));
 		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
 		tcs.Task.Result.AreEqual(transformed);
 

@@ -95,7 +95,7 @@ public static class AssertHelper
 	{
 		if (value is SecureString str)
 			str.IsEqualTo(expected.To<SecureString>()).AssertTrue(message);
-		else if (value is IEnumerable enu1)
+		else if (value is IEnumerable enu1 && value is not string)
 			enu1.AssertEqual((IEnumerable)expected, message);
 		else
 			Assert.AreEqual(expected, value, message);
