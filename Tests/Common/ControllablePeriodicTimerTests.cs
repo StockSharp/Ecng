@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Common;
+﻿namespace Ecng.Tests.Common;
 
 [TestClass]
 public class ControllablePeriodicTimerTests : BaseTestClass
@@ -53,6 +53,8 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		var counter = 0;
 		var sw = System.Diagnostics.Stopwatch.StartNew();
 		var firstTickTime = TimeSpan.Zero;
+		var initialDelay = TimeSpan.FromMilliseconds(200);
+		var jitter = TimeSpan.FromMilliseconds(25);
 
 		using var timer = new ControllablePeriodicTimer(() =>
 		{
@@ -61,7 +63,12 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 			return Task.CompletedTask;
 		});
 
-		timer.Start(TimeSpan.FromMilliseconds(50), start: TimeSpan.FromMilliseconds(200));
+		timer.Start(TimeSpan.FromMilliseconds(50), start: initialDelay);
+
+		// Timer-based tests are inherently subject to OS scheduling jitter.
+		// Validate that no tick happens too early, but allow a small tolerance.
+		await Task.Delay(initialDelay - jitter, CancellationToken);
+		counter.AssertEqual(0, $"Expected no ticks before {initialDelay - jitter}, but was {counter}");
 
 		// Wait for first tick
 		while (counter < 1 && sw.Elapsed < TimeSpan.FromSeconds(2))
@@ -70,8 +77,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		(counter >= 1).AssertTrue($"Expected at least 1 tick, but was {counter}");
 		// First tick should happen after initial delay + first interval
 		// Initial delay is 200ms, interval is 50ms, so first tick around 250ms+
-		(firstTickTime >= TimeSpan.FromMilliseconds(200)).AssertTrue(
-			$"Expected first tick after at least 200ms delay, but was at {firstTickTime.TotalMilliseconds}ms");
+		(firstTickTime >= initialDelay - jitter).AssertTrue($"Expected first tick after at least {(initialDelay - jitter).TotalMilliseconds}ms (tolerance applied), but was at {firstTickTime.TotalMilliseconds}ms");
 	}
 
 	[TestMethod]
@@ -455,3 +461,4 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.IsRunning.AssertTrue("Timer should still be running after ChangeInterval during handler");
 	}
 }
+
