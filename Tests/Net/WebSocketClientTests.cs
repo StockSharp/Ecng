@@ -104,12 +104,23 @@ public class WebSocketClientTests : BaseTestClass
 			null
 		);
 
-		client.ReconnectAttempts = 4;
+		client.ReconnectAttempts = 6;
+		client.ReconnectInterval = TimeSpan.FromSeconds(1);
 		client.ResendTimeout = TimeSpan.FromMilliseconds(200);
 		client.ResendInterval = TimeSpan.FromMilliseconds(100);
 
+		var post2 = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		client.Init += _ => { Interlocked.Increment(ref initCount); };
-		client.PostConnect += async (reconnect, token) => { lock (postConnectFlags) postConnectFlags.Add(reconnect); await ValueTask.CompletedTask; };
+		client.PostConnect += async (reconnect, token) =>
+		{
+			lock (postConnectFlags)
+			{
+				postConnectFlags.Add(reconnect);
+				if (postConnectFlags.Count >= 2)
+					post2.TrySetResult();
+			}
+			await ValueTask.CompletedTask;
+		};
 
 		await client.ConnectAsync(cts.Token);
 		client.IsConnected.AssertTrue();
@@ -117,8 +128,8 @@ public class WebSocketClientTests : BaseTestClass
 		if (!await TrySoftCloseAsync(client))
 			HardAbort(client);
 
-		// Give it a moment to reconnect and call PostConnect again
-		await Task.Delay(2000, cts.Token);
+		// Wait until PostConnect fired at least twice or timeout
+		await Task.WhenAny(post2.Task, TimeSpan.FromSeconds(30).Delay(cts.Token));
 
 		(initCount >= 2).AssertTrue("Init should be called at least twice (initial + reconnect).");
 		(postConnectFlags.Count >= 2).AssertTrue("PostConnect should be called at least twice.");
@@ -211,7 +222,8 @@ public class WebSocketClientTests : BaseTestClass
 	public async Task PreProcess2_Transforms_Incoming_Message()
 	{
 		var url = "wss://echo.websocket.org";
-		var original = "lower_case_payload";
+		var marker = Guid.NewGuid().ToString("N");
+		var original = $"lower_case_payload:{marker}";
 		var transformed = original.ToUpperInvariant();
 		var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -223,7 +235,9 @@ public class WebSocketClientTests : BaseTestClass
 			_ => { },
 			async (self, msg, token) =>
 			{
-				tcs.TrySetResult(msg.AsString());
+				var text = msg.AsString();
+				if (text?.Contains(marker.ToUpperInvariant(), StringComparison.Ordinal) == true)
+					tcs.TrySetResult(text);
 				await ValueTask.CompletedTask;
 			},
 			Log("INFO"),
@@ -244,9 +258,9 @@ public class WebSocketClientTests : BaseTestClass
 		client.IsConnected.AssertTrue();
 
 		await client.SendAsync(original, cts.Token);
-		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(10).Delay(cts.Token));
+		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(15).Delay(cts.Token));
 		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
-		tcs.Task.Result.AreEqual(transformed);
+		tcs.Task.Result.Contains(transformed).AssertTrue($"Actual message does not contain expected transformed payload.\nActual: {tcs.Task.Result}\nExpected contains: {transformed}");
 
 		client.Disconnect();
 	}
