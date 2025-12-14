@@ -2,11 +2,12 @@ namespace Ecng.Tests.Net;
 
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Diagnostics;
+
 using Ecng.ComponentModel;
 using Ecng.Net;
 
-// TODO
-//[TestClass]
+[TestClass]
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
 {
@@ -197,11 +198,21 @@ public class WebSocketClientTests : BaseTestClass
 		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
 
 		await client.ResendAsync(cts.Token);
+
+		// Wait for echo after resend
+		var sw1 = Stopwatch.StartNew();
+		while (sw1.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 2)
+			await Task.Delay(100, cts.Token);
+
 		var occ1 = Volatile.Read(ref occurrences);
 		(occ1 >= 2).AssertTrue("Resend did not echo payload.");
 
 		client.RemoveResend(subId);
 		await client.ResendAsync(cts.Token);
+
+		// Wait a bit to ensure no echo comes
+		await Task.Delay(500, cts.Token);
+
 		var occ2 = Volatile.Read(ref occurrences);
 		occ2.AreEqual(occ1, "Payload was echoed after RemoveResend, expected no change.");
 
@@ -368,14 +379,20 @@ public class WebSocketClientTests : BaseTestClass
 		if (!await TrySoftCloseAsync(client))
 			HardAbort(client);
 
-		// Wait for Restored and then disconnect
+		// Collect all states while waiting for Restored
+		var list = new List<(ConnectionStates, DateTime)>();
 		var sawRestored = false;
 		var sw = System.Diagnostics.Stopwatch.StartNew();
 		while (sw.Elapsed < TimeSpan.FromSeconds(40) && !sawRestored)
 		{
 			while (states.TryDequeue(out var item))
+			{
+				list.Add(item);
+
 				if (item.state == ConnectionStates.Restored)
 					sawRestored = true;
+			}
+
 			await Task.Delay(100, cts.Token);
 		}
 
@@ -386,8 +403,7 @@ public class WebSocketClientTests : BaseTestClass
 		// Drain remaining states
 		await Task.Delay(300, cts.Token);
 
-		// Validate order and monotonic timestamps
-		var list = new List<(ConnectionStates, DateTime)>();
+		// Collect any remaining states after disconnect
 		while (states.TryDequeue(out var s))
 			list.Add(s);
 
