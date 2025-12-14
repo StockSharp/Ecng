@@ -130,7 +130,8 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 	/// </summary>
 	/// <param name="sort">The sort with which to associate the new value.</param>
 	/// <param name="value">The value to add to the queue.</param>
-	protected void Enqueue(TSort sort, TValue value)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	protected ValueTask Enqueue(TSort sort, TValue value, CancellationToken cancellationToken)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
@@ -145,17 +146,24 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		}
 
 		if (closed || channel is null)
-			return;
+			return default;
 
 		try
 		{
 			if (!channel.Writer.TryWrite((sort, value)))
-				AsyncHelper.Run(() => channel.Writer.WriteAsync((sort, value)));
+				return channel.Writer.WriteAsync((sort, value), cancellationToken);
 		}
 		catch (ChannelClosedException)
 		{
 			// Queue was closed concurrently; value is dropped by design.
 		}
+		catch
+		{
+			if (!cancellationToken.IsCancellationRequested)
+				throw;
+		}
+
+		return default;
 	}
 
 	/// <summary>
