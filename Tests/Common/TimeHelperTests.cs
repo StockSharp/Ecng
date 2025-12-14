@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Common;
+﻿namespace Ecng.Tests.Common;
 
 [TestClass]
 public class TimeHelperTests : BaseTestClass
@@ -84,6 +84,63 @@ public class TimeHelperTests : BaseTestClass
 		ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
 	}
 
+
+	[TestMethod]
+	public void DateTime_Add_PreservesKind()
+	{
+		var utc = DateTime.UtcNow;
+		(utc + TimeSpan.FromSeconds(1)).Kind.AssertEqual(DateTimeKind.Utc);
+
+		var local = DateTime.Now;
+		(local + TimeSpan.FromSeconds(1)).Kind.AssertEqual(DateTimeKind.Local);
+
+		var unspecified = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+		(unspecified + TimeSpan.FromSeconds(1)).Kind.AssertEqual(DateTimeKind.Unspecified);
+	}
+
+	[TestMethod]
+	public void UtcKind_DoesNotConvertLocalToUtc()
+	{
+		var local = DateTime.Now;
+		var fakeUtc = local.UtcKind();
+		var realUtc = local.ToUniversalTime();
+
+		fakeUtc.Kind.AssertEqual(DateTimeKind.Utc);
+		realUtc.Kind.AssertEqual(DateTimeKind.Utc);
+
+		var offset = TimeZoneInfo.Local.GetUtcOffset(local);
+		var diff = fakeUtc - realUtc;
+
+		// UtcKind changes only DateTime.Kind, it does not convert the clock.
+		// If applied to local time, the resulting value differs from the true UTC time by approximately the local offset.
+		(Math.Abs((diff - offset).TotalSeconds) < 2).AssertTrue(
+			$"fakeUtc-realUtc={diff} should be approximately offset={offset} (local={local}, fakeUtc={fakeUtc}, realUtc={realUtc})");
+	}
+
+	[TestMethod]
+	public void Now_IsUtcAndCloseToUtcNow()
+	{
+		var prevOffset = TimeHelper.NowOffset;
+
+		try
+		{
+			TimeHelper.NowOffset = TimeSpan.Zero;
+
+			var before = DateTime.UtcNow;
+			var now = TimeHelper.Now;
+			var after = DateTime.UtcNow;
+
+			now.Kind.AssertEqual(DateTimeKind.Utc, $"Expected TimeHelper.Now.Kind to be Utc, but was {now.Kind}");
+
+			var afterPlusOne = after.AddSeconds(1);
+			(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
+			(now >= before.AddSeconds(-1)).AssertTrue($"now={now} should be >={before.AddSeconds(-1)}");
+		}
+		finally
+		{
+			TimeHelper.NowOffset = prevOffset;
+		}
+	}
 	[TestMethod]
 	public void NowAndNowOffset()
 	{
@@ -1972,3 +2029,4 @@ public class TimeHelperTests : BaseTestClass
 
 	#endregion
 }
+
