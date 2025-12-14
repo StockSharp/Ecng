@@ -44,7 +44,7 @@ public interface IDispatcher
 /// </summary>
 public class DummyDispatcher : IDispatcher
 {
-	private readonly PeriodicActionPlanner _periodic = new();
+	private readonly PeriodicActionPlanner _periodic = new(ex => Trace.WriteLine(ex));
 	private readonly Lock _timerLock = new();
 	private ControllablePeriodicTimer _timer;
 	private TimeSpan _timerInterval = TimeSpan.Zero;
@@ -53,10 +53,22 @@ public class DummyDispatcher : IDispatcher
 	bool IDispatcher.CheckAccess() => true;
 
 	/// <inheritdoc />
-	void IDispatcher.Invoke(Action action) => action();
+	public void Invoke(Action action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		action();
+	}
 
 	/// <inheritdoc />
-	void IDispatcher.InvokeAsync(Action action) => Task.Run(action);
+	void IDispatcher.InvokeAsync(Action action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		Task.Run(action);
+	}
 
 	/// <inheritdoc />
 	IDisposable IDispatcher.InvokePeriodically(Action action, TimeSpan interval)
@@ -83,19 +95,12 @@ public class DummyDispatcher : IDispatcher
 			if (_timer == null)
 			{
 				_timerInterval = minInterval.Value;
-				_timer = new ControllablePeriodicTimer(() =>
+				_timer = new(() =>
 				{
 					var actions = _periodic.GetDueActions(DateTime.UtcNow);
 					foreach (var action in actions)
 					{
-						try
-						{
-							((IDispatcher)this).Invoke(action);
-						}
-						catch (Exception ex)
-						{
-							Trace.WriteLine(ex);
-						}
+						Invoke(action);
 					}
 
 					return Task.CompletedTask;

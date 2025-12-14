@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Diagnostics;
 
 using Ecng.Common;
 
@@ -15,7 +16,14 @@ using Ecng.Common;
 /// Intended to be used from a host that owns a timer (for example, a background timer or a WPF <c>DispatcherTimer</c>).
 /// On each timer tick, call <see cref="GetDueActions"/> and then execute/marshal returned actions as appropriate.
 /// </remarks>
-public class PeriodicActionPlanner
+/// <remarks>
+/// Initializes a new instance of the <see cref="PeriodicActionPlanner"/> class.
+/// </remarks>
+/// <param name="errorHandler">
+/// An callback invoked when a periodic action throws an exception.
+/// Handler exceptions are ignored.
+/// </param>
+public class PeriodicActionPlanner(Action<Exception> errorHandler)
 {
 	private class Entry(PeriodicActionPlanner owner, Action action, TimeSpan interval)
 	{
@@ -33,8 +41,17 @@ public class PeriodicActionPlanner
 				_action();
 				_consecutiveErrors = 0;
 			}
-			catch
+			catch (Exception ex)
 			{
+				try
+				{
+					_owner._errorHandler(ex);
+				}
+				catch (Exception ex2)
+				{
+					Trace.WriteLine(ex2);
+				}
+
 				_consecutiveErrors++;
 
 				var maxErrors = _owner.MaxErrors;
@@ -53,6 +70,22 @@ public class PeriodicActionPlanner
 	private readonly List<Entry> _entries = [];
 	private TimeSpan? _minInterval;
 
+	private readonly Action<Exception> _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
+
+	/// <summary>
+	/// Gets the number of currently registered actions.
+	/// </summary>
+	public int Count
+	{
+		get
+		{
+			using (_lock.EnterScope())
+				return _entries.Count;
+		}
+	}
+
+	private int _maxErrors;
+
 	/// <summary>
 	/// Gets or sets the maximum number of consecutive errors allowed for a registered action.
 	/// </summary>
@@ -60,7 +93,18 @@ public class PeriodicActionPlanner
 	/// If the value is greater than <c>0</c>, then an action is automatically removed when its consecutive error counter
 	/// reaches this value. If the value is <c>0</c>, automatic removal is disabled.
 	/// </value>
-	public int MaxErrors { get; set; }
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when the value is negative.</exception>
+	public int MaxErrors
+	{
+		get => _maxErrors;
+		set
+		{
+			if (value < 0)
+				throw new ArgumentOutOfRangeException(nameof(value), value, "MaxErrors cannot be negative.");
+
+			_maxErrors = value;
+		}
+	}
 
 	/// <summary>
 	/// Gets the minimal interval among all registered actions.

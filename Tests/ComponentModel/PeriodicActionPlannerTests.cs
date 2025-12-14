@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
+using System.Diagnostics;
+
 using Ecng.ComponentModel;
 
 [TestClass]
@@ -8,7 +10,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void MaxErrors_RemovesActionAfterThreshold()
 	{
-		var planner = new PeriodicActionPlanner { MaxErrors = 2 };
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex)) { MaxErrors = 2 };
 
 		var calls = 0;
 		using var sub = planner.Register(() =>
@@ -45,7 +47,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void MaxErrors_ResetsAfterSuccess()
 	{
-		var planner = new PeriodicActionPlanner { MaxErrors = 2 };
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex)) { MaxErrors = 2 };
 
 		var call = 0;
 		using var sub = planner.Register(() =>
@@ -80,14 +82,14 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void Register_NullAction_Throws()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 		ThrowsExactly<ArgumentNullException>(() => planner.Register(null, TimeSpan.FromSeconds(1)));
 	}
 
 	[TestMethod]
 	public void Register_InvalidInterval_Throws()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 		ThrowsExactly<ArgumentOutOfRangeException>(() => planner.Register(() => { }, TimeSpan.Zero));
 		ThrowsExactly<ArgumentOutOfRangeException>(() => planner.Register(() => { }, TimeSpan.FromMilliseconds(-1)));
 	}
@@ -95,7 +97,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void EmptyPlanner_MinIntervalIsNull_AndNoDueActions()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 		planner.MinInterval.AssertNull();
 		planner.GetDueActions(DateTime.UtcNow).Length.AssertEqual(0);
 	}
@@ -103,7 +105,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void Scheduling_BasicAdvanceAndNoEarlyRun()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 		var calls = 0;
 
 		using var sub = planner.Register(() => calls++, TimeSpan.FromSeconds(10));
@@ -131,7 +133,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void MinInterval_TracksAndUpdatesOnUnsubscribe()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 
 		var sub200 = planner.Register(() => { }, TimeSpan.FromMilliseconds(200));
 		planner.MinInterval.AssertNotNull();
@@ -156,7 +158,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void SameActionRegisteredTwice_DisposeOneKeepsOther()
 	{
-		var planner = new PeriodicActionPlanner();
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
 
 		var calls = 0;
 		void action() => calls++;
@@ -177,7 +179,7 @@ public class PeriodicActionPlannerTests : BaseTestClass
 	[TestMethod]
 	public void MaxErrors_Disabled_DoesNotAutoRemove()
 	{
-		var planner = new PeriodicActionPlanner { MaxErrors = 0 };
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex)) { MaxErrors = 0 };
 
 		var calls = 0;
 		using var sub = planner.Register(() =>
@@ -201,6 +203,56 @@ public class PeriodicActionPlannerTests : BaseTestClass
 
 		calls.AssertEqual(5);
 	}
+	[TestMethod]
+	public void Count_TracksRegistrationsAndAutoRemoval()
+	{
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex)) { MaxErrors = 1 };
+		planner.Count.AssertEqual(0);
+
+		using var ok = planner.Register(() => { }, TimeSpan.FromMilliseconds(100));
+		planner.Count.AssertEqual(1);
+
+		using var bad = planner.Register(() => throw new InvalidOperationException("boom"), TimeSpan.FromMilliseconds(1));
+		planner.Count.AssertEqual(2);
+
+		var due = planner.GetDueActions(DateTime.UtcNow.AddSeconds(1));
+		(due.Length >= 2).AssertTrue("Expected both actions to be due.");
+
+		foreach (var a in due)
+		{
+			try { a(); } catch (InvalidOperationException) { }
+		}
+
+		planner.Count.AssertEqual(1, "Expected throwing action to be auto-removed.");
+	}
+
+	[TestMethod]
+	public void MaxErrors_Negative_Throws()
+	{
+		var planner = new PeriodicActionPlanner(ex => Trace.WriteLine(ex));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => planner.MaxErrors = -1);
+	}
+
+	[TestMethod]
+	public void ErrorHandler_IsCalledOnException()
+	{
+		var errors = new List<Exception>();
+		var planner = new PeriodicActionPlanner(errors.Add) { MaxErrors = 2 };
+
+		using var sub = planner.Register(() => throw new InvalidOperationException("boom"), TimeSpan.FromMilliseconds(1));
+
+		var now = DateTime.UtcNow.AddSeconds(1);
+
+		for (var i = 0; i < 2; i++)
+		{
+			var due = planner.GetDueActions(now);
+			due.Length.AssertEqual(1);
+			due[0]();
+			now = now.AddSeconds(1);
+		}
+
+		errors.Count.AssertEqual(2);
+		errors[0].AssertOfType<InvalidOperationException>();
+		planner.MinInterval.AssertNull("Expected auto-removal after reaching MaxErrors.");
+	}
 }
-
-
