@@ -242,6 +242,92 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
+	/// Wrap the specified async action in a try/catch clause with logging.
+	/// </summary>
+	/// <param name="action">The async action to execute.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	public static async Task DoWithLogAsync(this Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
+	{
+		if (action == null)
+			throw new ArgumentNullException(nameof(action));
+
+		try
+		{
+			await action(cancellationToken);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			ex.LogError();
+		}
+	}
+
+	/// <summary>
+	/// Wrap the specified async function in a try/catch clause with logging.
+	/// </summary>
+	/// <typeparam name="T">The type of the returned result.</typeparam>
+	/// <param name="action">The async function to execute.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The resulting value, or the default value of T if an error occurs.</returns>
+	public static async Task<T> DoWithLogAsync<T>(this Func<CancellationToken, Task<T>> action, CancellationToken cancellationToken = default)
+	{
+		if (action == null)
+			throw new ArgumentNullException(nameof(action));
+
+		try
+		{
+			return await action(cancellationToken);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			ex.LogError();
+			return default;
+		}
+	}
+
+	/// <summary>
+	/// Wrap the specified async action in a try/catch clause with logging.
+	/// </summary>
+	/// <param name="action">The async action to execute.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	public static async ValueTask DoWithLogAsync(this Func<CancellationToken, ValueTask> action, CancellationToken cancellationToken = default)
+	{
+		if (action == null)
+			throw new ArgumentNullException(nameof(action));
+
+		try
+		{
+			await action(cancellationToken);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			ex.LogError();
+		}
+	}
+
+	/// <summary>
+	/// Wrap the specified async function in a try/catch clause with logging.
+	/// </summary>
+	/// <typeparam name="T">The type of the returned result.</typeparam>
+	/// <param name="action">The async function to execute.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The resulting value, or the default value of T if an error occurs.</returns>
+	public static async ValueTask<T> DoWithLogAsync<T>(this Func<CancellationToken, ValueTask<T>> action, CancellationToken cancellationToken = default)
+	{
+		if (action == null)
+			throw new ArgumentNullException(nameof(action));
+
+		try
+		{
+			return await action(cancellationToken);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			ex.LogError();
+			return default;
+		}
+	}
+
+	/// <summary>
 	/// Executes the function that returns a dictionary, logs any exceptions, and logs a specific error for each key/value pair.
 	/// </summary>
 	/// <typeparam name="T">The type of the dictionary key.</typeparam>
