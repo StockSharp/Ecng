@@ -972,7 +972,7 @@ public static class AsyncEnumerable
 	/// <param name="source">The source enumerable.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{TSource}"/> that yields items from the source sequence.</returns>
-	public static IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	public static IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source, CancellationToken cancellationToken = default)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));

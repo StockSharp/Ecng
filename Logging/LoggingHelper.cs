@@ -1,6 +1,7 @@
 namespace Ecng.Logging;
 
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -255,9 +256,10 @@ public static class LoggingHelper
 		{
 			await action(cancellationToken);
 		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
+		catch (Exception ex)
 		{
-			ex.LogError();
+			if (!cancellationToken.IsCancellationRequested)
+				ex.LogError();
 		}
 	}
 
@@ -277,9 +279,11 @@ public static class LoggingHelper
 		{
 			return await action(cancellationToken);
 		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
+		catch (Exception ex)
 		{
-			ex.LogError();
+			if (!cancellationToken.IsCancellationRequested)
+				ex.LogError();
+
 			return default;
 		}
 	}
@@ -298,9 +302,10 @@ public static class LoggingHelper
 		{
 			await action(cancellationToken);
 		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
+		catch (Exception ex)
 		{
-			ex.LogError();
+			if (!cancellationToken.IsCancellationRequested)
+				ex.LogError();
 		}
 	}
 
@@ -320,9 +325,11 @@ public static class LoggingHelper
 		{
 			return await action(cancellationToken);
 		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
+		catch (Exception ex)
 		{
-			ex.LogError();
+			if (!cancellationToken.IsCancellationRequested)
+				ex.LogError();
+
 			return default;
 		}
 	}
