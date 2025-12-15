@@ -1,15 +1,18 @@
 namespace Ecng.Common;
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Numerics;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Provides fast CSV reading capabilities from various input sources.
 /// </summary>
-public class FastCsvReader
+public class FastCsvReader : IDisposable
 {
 	private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
 	private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
@@ -24,6 +27,8 @@ public class FastCsvReader
 	private readonly char[] _lineSeparatorChars;
 
 	private int _lineSeparatorCharPos;
+	private readonly bool _disposeReader;
+	private bool _disposed;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a stream, encoding, and line separator.
@@ -32,7 +37,19 @@ public class FastCsvReader
 	/// <param name="encoding">The character encoding to use.</param>
 	/// <param name="lineSeparator">The string that separates lines.</param>
 	public FastCsvReader(Stream stream, Encoding encoding, string lineSeparator)
-		: this(new StreamReader(stream, encoding), lineSeparator)
+		: this(stream, encoding, lineSeparator, leaveOpen: true)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a stream, encoding, and line separator.
+	/// </summary>
+	/// <param name="stream">The input stream to read CSV data from.</param>
+	/// <param name="encoding">The character encoding to use.</param>
+	/// <param name="lineSeparator">The string that separates lines.</param>
+	/// <param name="leaveOpen">Specifies whether the stream should remain open after the <see cref="FastCsvReader"/> is disposed.</param>
+	public FastCsvReader(Stream stream, Encoding encoding, string lineSeparator, bool leaveOpen)
+		: this(new StreamReader(stream ?? throw new ArgumentNullException(nameof(stream)), encoding, true, _buffSize, leaveOpen), lineSeparator, leaveOpen: false)
 	{
 	}
 
@@ -42,7 +59,7 @@ public class FastCsvReader
 	/// <param name="content">The string content to read CSV data from.</param>
 	/// <param name="lineSeparator">The string that separates lines.</param>
 	public FastCsvReader(string content, string lineSeparator)
-		: this(new StringReader(content), lineSeparator)
+		: this(new StringReader(content), lineSeparator, leaveOpen: false)
 	{
 	}
 
@@ -52,11 +69,23 @@ public class FastCsvReader
 	/// <param name="reader">The TextReader to read CSV data from.</param>
 	/// <param name="lineSeparator">The string that separates lines.</param>
 	public FastCsvReader(TextReader reader, string lineSeparator)
+		: this(reader, lineSeparator, leaveOpen: true)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a TextReader and line separator.
+	/// </summary>
+	/// <param name="reader">The TextReader to read CSV data from.</param>
+	/// <param name="lineSeparator">The string that separates lines.</param>
+	/// <param name="leaveOpen">Specifies whether the reader should remain open after the <see cref="FastCsvReader"/> is disposed.</param>
+	public FastCsvReader(TextReader reader, string lineSeparator, bool leaveOpen)
 	{
 		if (lineSeparator.IsEmpty())
 			throw new ArgumentNullException(nameof(lineSeparator));
 
 		Reader = reader ?? throw new ArgumentNullException(nameof(reader));
+		_disposeReader = !leaveOpen;
 		_lineSeparatorChars = [.. lineSeparator];
 
 		for (var i = 0; i < _columnPos.Length; i++)
@@ -122,8 +151,12 @@ public class FastCsvReader
 	/// Reads the next CSV line from the underlying stream or reader.
 	/// </summary>
 	/// <returns><c>true</c> if a new line was successfully read; otherwise, <c>false</c>.</returns>
+	[Obsolete("Use NextLineAsync(CancellationToken) instead.")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public bool NextLine()
 	{
+		ThrowIfDisposed();
+
 		_lineLen = 0;
 		_columnCount = 0;
 		_columnCurr = -1;
@@ -231,6 +264,131 @@ public class FastCsvReader
 		else if (_lineLen > 0)
 		{
 			// If there are no column separators, treat the whole line as a single column
+			var pair = GetColumnPos();
+			pair.First = 0;
+			pair.Second = _lineLen;
+			_columnCount = 1;
+		}
+
+		return _lineLen > 0;
+	}
+
+	/// <summary>
+	/// Asynchronously reads the next CSV line from the underlying stream or reader.
+	/// </summary>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns><c>true</c> if a new line was successfully read; otherwise, <c>false</c>.</returns>
+	public async ValueTask<bool> NextLineAsync(CancellationToken cancellationToken = default)
+	{
+		ThrowIfDisposed();
+
+		_lineLen = 0;
+		_columnCount = 0;
+		_columnCurr = -1;
+
+		var inQuote = false;
+		var columnStart = 0;
+
+		while (true)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+
+			if (_bufferPos >= _bufferLen)
+			{
+				_bufferPos = 0;
+				_bufferLen = 0;
+
+				while (_bufferLen < _buffer.Length)
+				{
+					cancellationToken.ThrowIfCancellationRequested();
+
+					var read = await Reader.ReadBlockAsync(_buffer, _bufferLen, _buffer.Length - _bufferLen).NoWait();
+
+					if (read == 0)
+						break;
+
+					_bufferLen += read;
+				}
+
+				if (_bufferLen == 0)
+					break;
+			}
+
+			var c = _buffer[_bufferPos++];
+
+			if (!inQuote)
+			{
+				if (c == _lineSeparatorChars[_lineSeparatorCharPos])
+				{
+					_lineSeparatorCharPos++;
+
+					if (_lineSeparatorCharPos == _lineSeparatorChars.Length)
+					{
+						_lineSeparatorCharPos = 0;
+						break;
+					}
+
+					continue;
+				}
+				else if (_lineSeparatorCharPos > 0)
+				{
+					if ((_lineLen + _lineSeparatorCharPos) >= _line.Length)
+						Array.Resize(ref _line, _line.Length + _buffSize);
+
+					Array.Copy(_lineSeparatorChars, 0, _line, _lineLen, _lineSeparatorCharPos);
+
+					_lineLen += _lineSeparatorCharPos;
+					_lineSeparatorCharPos = 0;
+				}
+
+				if (c == ColumnSeparator)
+				{
+					if (columnStart > _lineLen)
+						throw new InvalidOperationException();
+
+					var pair = GetColumnPos();
+
+					pair.First = columnStart;
+					pair.Second = _lineLen;
+
+					columnStart = _lineLen + 1;
+
+					_columnCount++;
+				}
+			}
+
+			if (c == '\"')
+			{
+				inQuote = !inQuote;
+
+				if (inQuote && _bufferPos > 1 && _buffer[_bufferPos - 2] == '\"')
+				{
+					if (_lineLen >= _line.Length)
+						Array.Resize(ref _line, _line.Length + _buffSize);
+
+					_line[_lineLen++] = c;
+				}
+
+				continue;
+			}
+
+			if (_lineLen >= _line.Length)
+				Array.Resize(ref _line, _line.Length + _buffSize);
+
+			_line[_lineLen++] = c;
+		}
+
+		if (_columnCount > 0)
+		{
+			var pair = GetColumnPos();
+
+			pair.First = columnStart;
+			pair.Second = _lineLen;
+
+			_columnCount++;
+		}
+		else if (_lineLen > 0)
+		{
 			var pair = GetColumnPos();
 			pair.First = 0;
 			pair.Second = _lineLen;
@@ -604,9 +762,39 @@ public class FastCsvReader
 
 	private RefPair<int, int> GetNextColumnPos()
 	{
+		ThrowIfDisposed();
+
 		if (_columnCurr >= _columnCount)
 			throw new InvalidOperationException();
 
 		return _columnPos[++_columnCurr];
+	}
+
+	/// <inheritdoc />
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	/// <summary>
+	/// Releases resources used by the reader.
+	/// </summary>
+	/// <param name="disposing">True to dispose managed resources.</param>
+	protected virtual void Dispose(bool disposing)
+	{
+		if (_disposed)
+			return;
+
+		_disposed = true;
+
+		if (disposing && _disposeReader)
+			Reader.Dispose();
+	}
+
+	private void ThrowIfDisposed()
+	{
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(FastCsvReader));
 	}
 }

@@ -1,12 +1,54 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class CsvTest : BaseTestClass
+public class FastCsvReaderTests : BaseTestClass
 {
 	[TestMethod]
-	public void DoubleQuotes()
+	public void Dispose_DefaultCtor_DoesNotDisposeTextReader()
 	{
-		Assert(@"AFKS@TQBR;""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+		var tr = new TrackingTextReader("A" + StringHelper.N);
+
+		using (new FastCsvReader(tr, StringHelper.N))
+		{
+		}
+
+		tr.IsDisposed.AssertFalse();
+	}
+
+	[TestMethod]
+	public void Dispose_LeaveOpenFalse_DisposesTextReader()
+	{
+		var tr = new TrackingTextReader("A" + StringHelper.N);
+
+		using (new FastCsvReader(tr, StringHelper.N, leaveOpen: false))
+		{
+		}
+
+		tr.IsDisposed.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Dispose_StreamLeaveOpen_Works()
+	{
+		var stream = new TrackingStream(System.Text.Encoding.UTF8.GetBytes("A" + StringHelper.N));
+
+		using (new FastCsvReader(stream, System.Text.Encoding.UTF8, StringHelper.N, leaveOpen: true))
+		{
+		}
+
+		stream.IsDisposed.AssertFalse();
+
+		using (new FastCsvReader(stream, System.Text.Encoding.UTF8, StringHelper.N, leaveOpen: false))
+		{
+		}
+
+		stream.IsDisposed.AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task DoubleQuotes()
+	{
+		await AssertAsync(@"AFKS@TQBR;""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
 ""AFLT@TQBR"";Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
 AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 			(i, r) =>
@@ -35,9 +77,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void DoubleQuotes2()
+	public async Task DoubleQuotes2()
 	{
-		Assert(@"""""""AFKS@TQBR"""""";""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+		await AssertAsync(@"""""""AFKS@TQBR"""""";""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
 AFLT@TQ""""BR;Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
 AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 			(i, r) =>
@@ -66,9 +108,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void SingleQuotes()
+	public async Task SingleQuotes()
 	{
-		Assert(@"AFKS@TQBR;""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+		await AssertAsync(@"AFKS@TQBR;""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
 ""AFLT@TQBR"";Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
 AGRO@TQ'BR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 			(i, r) =>
@@ -97,9 +139,9 @@ AGRO@TQ'BR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;
 	}
 
 	[TestMethod]
-	public void SingleQuotes2()
+	public async Task SingleQuotes2()
 	{
-		Assert(@"""'AFKS@TQBR'"";""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+		await AssertAsync(@"""'AFKS@TQBR'"";""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
 AFLT@TQBR;Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
 AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 			(i, r) =>
@@ -134,9 +176,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void NegativeDecimals()
+	public async Task NegativeDecimals()
 	{
-		Assert(@"210000000;+03:00;-10;-1;-1;-0.1;Buy
+		await AssertAsync(@"210000000;+03:00;-10;-1;-1;-0.1;Buy
 210000000;-03:30;-0.1;-1;-1;-0.1;Sell", 2,
 			(i, r) =>
 			{
@@ -167,9 +209,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void PositiveDecimals()
+	public async Task PositiveDecimals()
 	{
-		Assert(@"210000000;+03:00;+10;+1;+1;+0.1;Buy
+		await AssertAsync(@"210000000;+03:00;+10;+1;+1;+0.1;Buy
 210000000;-03:30;+0.1;+1;+1;+0.1;Sell", 2,
 			(i, r) =>
 			{
@@ -200,9 +242,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void BigNumber()
+	public async Task BigNumber()
 	{
-		Assert($@"210000001;+03:00;{decimal.MaxValue};{decimal.MinValue};0;Buy", 1,
+		await AssertAsync($@"210000001;+03:00;{decimal.MaxValue};{decimal.MinValue};0;Buy", 1,
 			(i, r) =>
 			{
 				switch (i)
@@ -222,9 +264,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void BigFractal()
+	public async Task BigFractal()
 	{
-		Assert("1;3.3333333333;2;3.3333333333333333;3.3333333333333333333333333333", 1,
+		await AssertAsync("1;3.3333333333;2;3.3333333333333333;3.3333333333333333333333333333", 1,
 			(i, r) =>
 			{
 				switch (i)
@@ -243,9 +285,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 	}
 
 	[TestMethod]
-	public void SingleDecimal()
+	public async Task SingleDecimal()
 	{
-		Assert("3.3", 1,
+		await AssertAsync("3.3", 1,
 			(i, r) =>
 			{
 				switch (i)
@@ -259,15 +301,42 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 			});
 	}
 
-	private static void Assert(string value, int lineCount, Action<int, FastCsvReader> assertLine)
+	[TestMethod]
+	public async Task ReadBlockSmall()
 	{
-		Do.Invariant(() =>
+		var separator = StringHelper.N;
+
+		var line1 = new string('A', 4000);
+		var line2 = new string('B', 4000);
+		var csv = line1 + separator + line2 + separator;
+
+		var tr = new FragmentingTextReader(csv, chunkSize: 128);
+
+		using var reader = new FastCsvReader(tr, separator)
 		{
-			var csvReader = new FastCsvReader(new StringReader(value), StringHelper.N);
+			ColumnSeparator = ','
+		};
+
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		var first = reader.CurrentLine;
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		var second = reader.CurrentLine;
+
+		first.AssertEqual(line1);
+		second.AssertEqual(line2);
+	}
+
+	private Task AssertAsync(string value, int lineCount, Action<int, FastCsvReader> assertLine)
+	{
+		return Do.InvariantAsync(async () =>
+		{
+			var token = CancellationToken;
+
+			using var csvReader = new FastCsvReader(new StringReader(value), StringHelper.N, leaveOpen: false);
 
 			var lines = 0;
 
-			while (csvReader.NextLine())
+			while (await csvReader.NextLineAsync(token))
 			{
 				assertLine(lines, csvReader);
 				lines++;
@@ -277,63 +346,11 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 		});
 	}
 
-	[TestMethod]
-	public void TwoDigitYear()
-	{
-		var parser = new FastDateTimeParser("yy-MM-dd");
-		var dt = parser.Parse("98-01-01");
-
-		dt.Year.AssertEqual(1998);
-		dt.Month.AssertEqual(1);
-		dt.Day.AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void ShortInput()
-	{
-		var parser = new FastDateTimeParser("yyyy-MM-dd HH:mm:ss.fff");
-		var shortInput = "2024-01-02 03:04:0"; // too short for seconds+millis
-
-		ThrowsExactly<FormatException>(() => parser.Parse(shortInput));
-	}
-
-	[TestMethod]
-	public void ReadBlockSmall()
-	{
-		var separator = StringHelper.N;
-
-		// Create 2 lines long enough so that our fragmenting reader will require
-		// multiple non-zero ReadBlock calls while FastCsvReader tries to fill its buffer.
-		var line1 = new string('A', 4000);
-		var line2 = new string('B', 4000);
-		var csv = line1 + separator + line2 + separator;
-
-		// Force TextReader.ReadBlock to return small chunks each time
-		// so FastCsvReader's inner while loop calls ReadBlock repeatedly
-		// with index=0 and overwrites previous data in its internal buffer.
-		var tr = new FragmentingTextReader(csv, chunkSize: 128);
-		var reader = new FastCsvReader(tr, separator)
-		{
-			ColumnSeparator = ','
-		};
-
-		reader.NextLine().AssertTrue();
-		var first = reader.CurrentLine;
-		reader.NextLine().AssertTrue();
-		var second = reader.CurrentLine;
-
-		// Expect exact lines, but due to the overwrite bug they will not match
-		first.AssertEqual(line1);
-		second.AssertEqual(line2);
-	}
-
-	// A TextReader that deliberately returns small chunks from ReadBlock to reproduce
-	// FastCsvReader's buffer overwrite issue (multiple non-zero ReadBlock calls).
 	private class FragmentingTextReader(string content, int chunkSize) : TextReader
 	{
 		private readonly string _content = content ?? throw new ArgumentNullException(nameof(content));
 		private readonly int _chunkSize = chunkSize > 0 ? chunkSize : throw new ArgumentOutOfRangeException(nameof(chunkSize));
-		private int _pos = 0;
+		private int _pos;
 
 		public override int ReadBlock(char[] buffer, int index, int count)
 		{
@@ -350,5 +367,31 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 			_pos += toCopy;
 			return toCopy;
 		}
+
+		public override Task<int> ReadBlockAsync(char[] buffer, int index, int count)
+			=> Task.FromResult(ReadBlock(buffer, index, count));
+	}
+
+	private sealed class TrackingTextReader(string content) : StringReader(content)
+	{
+		public bool IsDisposed { get; private set; }
+
+		protected override void Dispose(bool disposing)
+		{
+			IsDisposed = true;
+			base.Dispose(disposing);
+		}
+	}
+
+	private sealed class TrackingStream(byte[] buffer) : MemoryStream(buffer)
+	{
+		public bool IsDisposed { get; private set; }
+
+		protected override void Dispose(bool disposing)
+		{
+			IsDisposed = true;
+			base.Dispose(disposing);
+		}
 	}
 }
+
