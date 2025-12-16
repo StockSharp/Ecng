@@ -3,7 +3,6 @@ namespace Ecng.Tests.Backup;
 using System.IO;
 
 using Ecng.Backup.Mega.Native;
-using Ecng.Tests;
 
 [TestClass]
 [TestCategory("Integration")]
@@ -32,7 +31,7 @@ public class MegaNativeClientTests : BaseTestClass
 		email ??= fromFile?.Email;
 		password ??= fromFile?.Password;
 
-		if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+		if (email.IsEmpty() || password.IsEmpty())
 			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
 
 		return new MegaSecrets { Email = email, Password = password };
@@ -163,7 +162,7 @@ public class MegaNativeClientTests : BaseTestClass
 				fileNode = await client.UploadAsync(folder.Id, fileName, uploadStream, modificationDate: null, progress: null, CancellationToken);
 
 			var url = await client.PublishAsync(fileNode, CancellationToken);
-			string.IsNullOrEmpty(url).AssertFalse();
+			url.IsEmpty().AssertFalse();
 
 			url.Contains("/file/", StringComparison.OrdinalIgnoreCase).AssertTrue(url);
 			url.Contains('#', StringComparison.Ordinal).AssertTrue(url);
@@ -176,10 +175,10 @@ public class MegaNativeClientTests : BaseTestClass
 			(hashPos > phStart).AssertTrue(url);
 
 			var publicHandle = url.Substring(phStart, hashPos - phStart);
-			string.IsNullOrEmpty(publicHandle).AssertFalse();
+			publicHandle.IsEmpty().AssertFalse();
 
 			var dl = await client.GetPublicDownloadUrlAsync(publicHandle, CancellationToken);
-			string.IsNullOrEmpty(dl.Url).AssertFalse();
+			dl.Url.IsEmpty().AssertFalse();
 			(dl.Size > 0).AssertTrue();
 
 			await client.UnpublishAsync(fileNode.Id, CancellationToken);

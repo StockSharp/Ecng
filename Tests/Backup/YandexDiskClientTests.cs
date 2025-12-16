@@ -2,7 +2,7 @@ namespace Ecng.Tests.Backup;
 
 using System.IO;
 
-using Ecng.Tests;
+using Ecng.Common;
 
 using YandexDisk.Client.Clients;
 using YandexDisk.Client.Http;
@@ -29,7 +29,7 @@ public class YandexDiskClientTests : BaseTestClass
 		var fromFile = TryLoadSecretsFile()?.Yandex?.Token;
 		token ??= fromFile;
 
-		if (string.IsNullOrEmpty(token))
+		if (token.IsEmpty())
 			Assert.Inconclusive("Yandex secrets missing. Set BACKUP_YANDEX_TOKEN or provide secrets.json.");
 
 		return token;
@@ -40,7 +40,7 @@ public class YandexDiskClientTests : BaseTestClass
 		const string secretsFileName = "secrets.json";
 
 		var explicitPath = Environment.GetEnvironmentVariable("BACKUP_SECRETS_FILE");
-		if (!string.IsNullOrEmpty(explicitPath) && File.Exists(explicitPath))
+		if (!explicitPath.IsEmpty() && File.Exists(explicitPath))
 			return explicitPath.DeserializeSecrets<Secrets>();
 
 		var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -132,7 +132,7 @@ public class YandexDiskClientTests : BaseTestClass
 				await api.Files.UploadAsync(link, uploadStream, CancellationToken);
 
 			var published = await api.MetaInfo.PublishFolderAsync(filePath, CancellationToken);
-			string.IsNullOrEmpty(published?.Href).AssertFalse();
+			published?.Href.IsEmpty().AssertFalse();
 
 			await api.MetaInfo.UnpublishFolderAsync(filePath, CancellationToken);
 		}
