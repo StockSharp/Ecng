@@ -261,10 +261,26 @@ public class DummyDispatcherTests : BaseTestClass
 		(counter1 >= 1).AssertTrue($"Expected counter1 >= 1 after 600ms with 200ms interval, but was {counter1}");
 
 		// Add faster action with 50ms interval - timer should speed up
-		var sub2 = d.InvokePeriodically(() => Interlocked.Increment(ref counter2), TimeSpan.FromMilliseconds(50));
+		long firstTickTs = 0;
+		long tenthTickTs = 0;
 
-		await Task.Delay(250, CancellationToken);
-		(counter2 >= 2).AssertTrue($"Expected counter2 >= 2 after 250ms with 50ms interval, but was {counter2}");
+		var sub2 = d.InvokePeriodically(() =>
+		{
+			var count = Interlocked.Increment(ref counter2);
+			var ts = System.Diagnostics.Stopwatch.GetTimestamp();
+
+			if (count == 1)
+				Interlocked.Exchange(ref firstTickTs, ts);
+			else if (count == 10)
+				Interlocked.Exchange(ref tenthTickTs, ts);
+		}, TimeSpan.FromMilliseconds(50));
+
+		await WaitForAsync(() => Volatile.Read(ref firstTickTs) != 0 && Volatile.Read(ref tenthTickTs) != 0,
+			TimeSpan.FromSeconds(3), "Expected 10 counter2 ticks with 50ms interval");
+
+		var elapsedTicks = Volatile.Read(ref tenthTickTs) - Volatile.Read(ref firstTickTs);
+		var elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)System.Diagnostics.Stopwatch.Frequency);
+		(elapsed < TimeSpan.FromMilliseconds(1750)).AssertTrue($"Expected 10 counter2 ticks to take <1750ms after switching to 50ms interval, but took {elapsed.TotalMilliseconds:F0}ms");
 
 		// Remove fast action - timer should slow down to 200ms
 		var c1Before = counter1;
