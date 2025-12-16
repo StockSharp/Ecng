@@ -24,10 +24,10 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Cache()
+	public async Task Cache()
 	{
 		var cache = new CompilerCache(new MemoryFileSystem(), "compiler-cache", TimeSpan.MaxValue);
-		cache.Init();
+		await cache.InitAsync(CancellationToken);
 
 		var formula = Compile("RI@FORTS - SBER@TQBR", cache);
 		formula.Calculate([6, 4]).AssertEqual(2);
@@ -44,11 +44,11 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void FileCache()
+	public async Task FileCache()
 	{
 		var fs = new LocalFileSystem();
 		var cache = new CompilerCache(fs, _cacheDir, TimeSpan.MaxValue);
-		cache.Init();
+		await cache.InitAsync(CancellationToken);
 
 		fs.EnumerateFiles(_cacheDir).Count().AssertEqual(0);
 

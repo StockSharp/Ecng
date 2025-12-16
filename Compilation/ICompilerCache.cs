@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
@@ -54,7 +56,9 @@ public interface ICompilerCache
 	/// <summary>
 	/// Initializes the cache.
 	/// </summary>
-	void Init();
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A task representing the asynchronous operation.</returns>
+	ValueTask InitAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -210,7 +214,7 @@ public class CompilerCache : ICompilerCache
 	}
 
 	/// <inheritdoc />
-	public virtual void Init()
+	public virtual async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
 		_fileSystem.CreateDirectory(_path);
 
@@ -218,6 +222,8 @@ public class CompilerCache : ICompilerCache
 
 		foreach (var fileName in _fileSystem.EnumerateFiles(_path, "*.bin"))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			if ((till - _fileSystem.GetLastWriteTimeUtc(fileName)) > Timeout)
 			{
 				_fileSystem.DeleteFile(fileName);
@@ -229,7 +235,7 @@ public class CompilerCache : ICompilerCache
 			using var stream = _fileSystem.OpenRead(fileName);
 			using var ms = new MemoryStream();
 
-			stream.CopyTo(ms);
+			await stream.CopyToAsync(ms, cancellationToken);
 			Set(key, ms.ToArray());
 		}
 	}
