@@ -425,6 +425,7 @@ public sealed class Client : IDisposable
 
 		var payload = JsonSerializer.Serialize(new object[] { request });
 		var attempt = 0;
+		const int maxAttempts = 10;
 
 		while (true)
 		{
@@ -440,18 +441,38 @@ public sealed class Client : IDisposable
 				var text = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
 				if (text.IsEmpty())
-					throw new InvalidOperationException("Empty API response.");
+				{
+					attempt++;
+
+					if (attempt >= maxAttempts)
+						throw new InvalidOperationException("Empty API response.");
+
+					await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).ConfigureAwait(false);
+					continue;
+				}
 
 				using var doc = JsonDocument.Parse(text);
 				var root = doc.RootElement;
 
 				if (root.ValueKind == JsonValueKind.Number)
 				{
-					var code = root.GetInt32();
-					if (code == 0)
+					var rawCode = root.GetInt32();
+					var errorCode = (MegaErrorCode)rawCode;
+					if (errorCode == MegaErrorCode.Ok)
 						return root.Clone();
 
-					throw new InvalidOperationException($"Mega API error: {code}.");
+					if (IsRetryableErrorCode(errorCode))
+					{
+						attempt++;
+
+						if (attempt >= maxAttempts)
+							throw new MegaApiException(rawCode);
+
+						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).ConfigureAwait(false);
+						continue;
+					}
+
+					throw new MegaApiException(rawCode);
 				}
 
 				if (root.ValueKind == JsonValueKind.Object)
@@ -464,13 +485,14 @@ public sealed class Client : IDisposable
 
 				if (first.ValueKind == JsonValueKind.Number)
 				{
-					var code = first.GetInt32();
+					var rawCode = first.GetInt32();
+					var errorCode = (MegaErrorCode)rawCode;
 
-					if (code == 0)
+					if (errorCode == MegaErrorCode.Ok)
 						return first.Clone();
 
 					// Hashcash required: [-27, "<challenge>"]
-					if (code == -27 && root.GetArrayLength() >= 2)
+					if (errorCode == MegaErrorCode.HashcashRequired && root.GetArrayLength() >= 2)
 					{
 						var challenge = root[1].GetString();
 						hashcash = Crypto.GenerateHashcashToken(challenge);
@@ -478,21 +500,46 @@ public sealed class Client : IDisposable
 						continue;
 					}
 
-					throw new InvalidOperationException($"Mega API error: {code}.");
+					if (IsRetryableErrorCode(errorCode))
+					{
+						attempt++;
+
+						if (attempt >= maxAttempts)
+							throw new MegaApiException(rawCode);
+
+						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).ConfigureAwait(false);
+						continue;
+					}
+
+					throw new MegaApiException(rawCode);
 				}
 
 				return first.Clone();
 			}
-			catch (Exception ex) when (ex is HttpRequestException or IOException or JsonException or InvalidOperationException)
+			catch (Exception ex) when (ex is HttpRequestException or IOException or JsonException)
 			{
 				attempt++;
 
-				if (attempt >= 3)
+				if (attempt >= maxAttempts)
 					throw;
 
-				await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt), cancellationToken).ConfigureAwait(false);
+				await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).ConfigureAwait(false);
 			}
 		}
+	}
+
+	private static bool IsRetryableErrorCode(MegaErrorCode code)
+		=> code is MegaErrorCode.Again or MegaErrorCode.RateLimit or MegaErrorCode.TempUnavailable;
+
+	private static TimeSpan GetRetryDelay(MegaErrorCode? errorCode, int attempt)
+	{
+		var baseMs = errorCode == MegaErrorCode.RateLimit ? 1000 : 200;
+		var maxMs = errorCode == MegaErrorCode.RateLimit ? 15000 : 3000;
+
+		var ms = baseMs * Math.Pow(2, Math.Min(6, Math.Max(0, attempt - 1)));
+		ms = Math.Min(ms, maxMs);
+
+		return TimeSpan.FromMilliseconds(ms);
 	}
 
 	private static string TrimForError(string value)

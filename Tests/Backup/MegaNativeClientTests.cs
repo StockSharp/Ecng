@@ -131,7 +131,7 @@ public class MegaNativeClientTests : BaseTestClass
 		await client.LogoutAsync(CancellationToken);
 
 		client.IsLoggedIn.AssertFalse();
-		await ThrowsExactlyAsync<InvalidOperationException>(() => client.GetNodesAsync(CancellationToken));
+		await ThrowsAsync<InvalidOperationException>(() => client.GetNodesAsync(CancellationToken));
 
 		await client.LoginAsync(s.Email, s.Password, CancellationToken);
 		client.IsLoggedIn.AssertTrue();

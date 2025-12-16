@@ -279,7 +279,7 @@ public class BackupServicesTests : BaseTestClass
 		using (var native = new Ecng.Backup.Mega.Native.Client())
 		{
 			await native.LoginAsync(s.Email, s.Password, CancellationToken);
-			await ThrowsExactlyAsync<InvalidOperationException>(() => native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken));
+			await ThrowsAsync<InvalidOperationException>(() => native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken));
 		}
 
 		await svc.DeleteAsync(entry, CancellationToken);
