@@ -67,17 +67,17 @@ public class AmazonS3Service : Disposable, IBackupService
 		var request = new ListObjectsV2Request
 		{
 			BucketName = _bucket,
-			Prefix = parent?.GetFullPath(),
+			Prefix = parent?.GetFullPath() ?? string.Empty,
 		};
 
 		if (!criteria.IsEmpty())
-			request.Prefix += "/" + criteria;
+			request.Prefix = request.Prefix.IsEmpty() ? criteria : request.Prefix + "/" + criteria;
 
 		do
 		{
 			var response = await _client.ListObjectsV2Async(request, cancellationToken).NoWait();
 
-			foreach (var entry in response.S3Objects)
+			foreach (var entry in response.S3Objects ?? [])
 			{
 				if (entry.LastModified is null || entry.Size is null)
 					continue;
@@ -90,7 +90,7 @@ public class AmazonS3Service : Disposable, IBackupService
 				yield return be;
 			}
 
-			foreach (var commonPrefix in response.CommonPrefixes)
+			foreach (var commonPrefix in response.CommonPrefixes ?? [])
 			{
 				yield return new()
 				{
@@ -260,32 +260,66 @@ public class AmazonS3Service : Disposable, IBackupService
 	{
 		var key = entry.GetFullPath();
 
-		var response = await _client.PutObjectAclAsync(new()
+		try
 		{
-			BucketName = _bucket,
-			Key = key,
-			ACL = S3CannedACL.PublicRead,
-		}, cancellationToken).NoWait();
+			var response = await _client.PutObjectAclAsync(new()
+			{
+				BucketName = _bucket,
+				Key = key,
+				ACL = S3CannedACL.PublicRead,
+			}, cancellationToken).NoWait();
 
-		if (response.HttpStatusCode != HttpStatusCode.OK)
-			throw new InvalidOperationException(response.HttpStatusCode.To<string>());
-		
-		return $"https://{_bucket}.s3.{_endpoint.SystemName}.amazonaws.com/{key}";
+			if (response.HttpStatusCode != HttpStatusCode.OK)
+				throw new InvalidOperationException(response.HttpStatusCode.To<string>());
+
+			return $"https://{_bucket}.s3.{_endpoint.SystemName}.amazonaws.com/{key}";
+		}
+		catch (AmazonS3Exception ex) when (IsPublicAclNotAllowed(ex))
+		{
+			return _client.GetPreSignedURL(new GetPreSignedUrlRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+				Verb = HttpVerb.GET,
+				Expires = DateTime.UtcNow.AddHours(1),
+			});
+		}
 	}
 
 	async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
 		var key = entry.GetFullPath();
 
-		var response = await _client.PutObjectAclAsync(new()
+		try
 		{
-			BucketName = _bucket,
-			Key = key,
-			ACL = S3CannedACL.Private,
-		}, cancellationToken).NoWait();
+			var response = await _client.PutObjectAclAsync(new()
+			{
+				BucketName = _bucket,
+				Key = key,
+				ACL = S3CannedACL.Private,
+			}, cancellationToken).NoWait();
 
-		if (response.HttpStatusCode != HttpStatusCode.OK)
-			throw new InvalidOperationException(response.HttpStatusCode.To<string>());
+			if (response.HttpStatusCode != HttpStatusCode.OK)
+				throw new InvalidOperationException(response.HttpStatusCode.To<string>());
+		}
+		catch (AmazonS3Exception ex) when (IsPublicAclNotAllowed(ex))
+		{
+			// Best-effort unpublish. Pre-signed links cannot be revoked.
+		}
+	}
+
+	private static bool IsPublicAclNotAllowed(AmazonS3Exception ex)
+	{
+		if (ex is null)
+			return false;
+
+		if (ex.ErrorCode == "AccessControlListNotSupported")
+			return true;
+
+		if (ex.ErrorCode == "AccessDenied")
+			return ex.Message?.Contains("BlockPublicAcls", StringComparison.OrdinalIgnoreCase) == true;
+
+		return false;
 	}
 
 	private static BackupEntry GetPath(string key)

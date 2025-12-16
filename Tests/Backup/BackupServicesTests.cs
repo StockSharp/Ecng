@@ -173,6 +173,43 @@ public class BackupServicesTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task AwsS3_Publish_Unpublish()
+	{
+		var s = LoadSecrets().Aws;
+		if (s?.Region.IsEmpty() != false || s.Bucket.IsEmpty() || s.AccessKey.IsEmpty() || s.SecretKey.IsEmpty())
+			Assert.Inconclusive("AWS secrets missing. Set BACKUP_AWS_REGION, BACKUP_AWS_BUCKET, BACKUP_AWS_ACCESS_KEY, BACKUP_AWS_SECRET_KEY or provide secrets.json.");
+
+		using IBackupService svc = new AmazonS3Service(s.Region, s.Bucket, s.AccessKey, s.SecretKey);
+
+		var entry = new BackupEntry { Name = $"publish-{Guid.NewGuid():N}.txt" };
+		var data = "hello " + Guid.NewGuid();
+
+		using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(data), writable: false))
+			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
+
+		try
+		{
+			string url;
+
+			url = await svc.PublishAsync(entry, CancellationToken);
+
+			url.IsEmpty().AssertFalse();
+
+			using (var http = new System.Net.Http.HttpClient())
+			{
+				var downloaded = await http.GetByteArrayAsync(url, CancellationToken);
+				System.Text.Encoding.UTF8.GetString(downloaded).AssertEqual(data);
+			}
+
+			await svc.UnPublishAsync(entry, CancellationToken);
+		}
+		finally
+		{
+			await svc.DeleteAsync(entry, CancellationToken);
+		}
+	}
+
+	[TestMethod]
 	public async Task AzureBlob_Roundtrip()
 	{
 		var s = LoadSecrets().Azure;
