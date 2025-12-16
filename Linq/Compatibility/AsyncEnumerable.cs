@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.Linq;
 
 /// <summary>
 /// The extensions for <see cref="IAsyncEnumerable{T}"/>.
@@ -970,65 +971,20 @@ public static class AsyncEnumerable
 	/// </summary>
 	/// <typeparam name="TSource">The type of the elements.</typeparam>
 	/// <param name="source">The source enumerable.</param>
-	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{TSource}"/> that yields items from the source sequence.</returns>
-	public static IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source, CancellationToken cancellationToken = default)
+	public static IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
 
 		return source switch
 		{
-			TSource[] array => array.Length == 0 ? Empty<TSource>() : FromArray(array, cancellationToken),
-			List<TSource> list => FromList(list, cancellationToken),
-			IList<TSource> list => FromIList(list, cancellationToken),
+			TSource[] array => array.Length == 0 ? Empty<TSource>() : new SyncAsyncEnumerable<TSource>(array),
+			List<TSource> list => new SyncAsyncEnumerable<TSource>(list),
+			IList<TSource> list => new SyncAsyncEnumerable<TSource>(list),
 			_ when source == Enumerable.Empty<TSource>() => Empty<TSource>(),
-			_ => FromIterator(source, cancellationToken),
+			_ => new SyncAsyncEnumerable<TSource>(source),
 		};
-
-		static async IAsyncEnumerable<TSource> FromArray(TSource[] source, [EnumeratorCancellation]CancellationToken cancellationToken)
-		{
-			for (var i = 0; ; i++)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-
-				var localI = i;
-				var localSource = source;
-				if ((uint)localI >= (uint)localSource.Length)
-				{
-					break;
-				}
-				yield return localSource[localI];
-			}
-		}
-
-		static async IAsyncEnumerable<TSource> FromList(List<TSource> source, [EnumeratorCancellation]CancellationToken cancellationToken)
-		{
-			for (var i = 0; i < source.Count; i++)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-				yield return source[i];
-			}
-		}
-
-		static async IAsyncEnumerable<TSource> FromIList(IList<TSource> source, [EnumeratorCancellation]CancellationToken cancellationToken)
-		{
-			var count = source.Count;
-			for (var i = 0; i < count; i++)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-				yield return source[i];
-			}
-		}
-
-		static async IAsyncEnumerable<TSource> FromIterator(IEnumerable<TSource> source, [EnumeratorCancellation]CancellationToken cancellationToken)
-		{
-			foreach (var element in source)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-				yield return element;
-			}
-		}
 	}
 }
 #endif
