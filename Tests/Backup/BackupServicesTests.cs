@@ -8,8 +8,8 @@ using Ecng.Backup.Azure;
 using Ecng.Backup.Mega;
 using Ecng.Backup.Yandex;
 
-// TODO
-//[TestClass]
+[TestClass]
+[TestCategory("Integration")]
 public class BackupServicesTests : BaseTestClass
 {
 	private const string _secretsFileName = "secrets.json";
@@ -137,8 +137,7 @@ public class BackupServicesTests : BaseTestClass
 			Parent = folder,
 		};
 
-		var data = new byte[4096];
-		new Random().NextBytes(data);
+		var data = RandomGen.GetBytes(4096);
 
 		using (var uploadStream = new MemoryStream(data, writable: false))
 			await service.UploadAsync(entry, uploadStream, _ => { }, cancellationToken);
@@ -191,8 +190,63 @@ public class BackupServicesTests : BaseTestClass
 		if (s?.Email.IsEmpty() != false || s.Password.IsEmpty())
 			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
 
-		using var svc = new MegaService(s.Email, s.Password.Secure());
+		using IBackupService svc = new MegaService(s.Email, s.Password.Secure());
 		await RoundtripAsync(svc, "Mega", cancellationToken: CancellationToken);
+	}
+
+	[TestMethod]
+	public async Task Mega_Publish_Unpublish()
+	{
+		var s = LoadSecrets().Mega;
+		if (s?.Email.IsEmpty() != false || s.Password.IsEmpty())
+			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
+
+		using IBackupService svc = new MegaService(s.Email, s.Password.Secure());
+
+		var folder = new BackupEntry { Name = "ecng-publish-tests-" + Guid.NewGuid().ToString("N") };
+		await svc.CreateFolder(folder, CancellationToken);
+
+		var entry = new BackupEntry
+		{
+			Name = $"publish-{Guid.NewGuid():N}.bin",
+			Parent = folder,
+		};
+
+		var data = RandomGen.GetBytes(1024);
+
+		using (var uploadStream = new MemoryStream(data, writable: false))
+			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
+
+		var url = await svc.PublishAsync(entry, CancellationToken);
+		url.IsEmpty().AssertFalse();
+
+		var phStart = url.IndexOf("/file/", StringComparison.OrdinalIgnoreCase);
+		(phStart >= 0).AssertTrue(url);
+		phStart += "/file/".Length;
+
+		var hashPos = url.IndexOf('#', phStart);
+		(hashPos > phStart).AssertTrue(url);
+
+		var publicHandle = url.Substring(phStart, hashPos - phStart);
+		publicHandle.IsEmpty().AssertFalse();
+
+		using (var native = new Ecng.Backup.Mega.Native.Client())
+		{
+			await native.LoginAsync(s.Email, s.Password, CancellationToken);
+			var dl = await native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken);
+			dl.Url.IsEmpty().AssertFalse();
+		}
+
+		await svc.UnPublishAsync(entry, CancellationToken);
+
+		using (var native = new Ecng.Backup.Mega.Native.Client())
+		{
+			await native.LoginAsync(s.Email, s.Password, CancellationToken);
+			await ThrowsExactlyAsync<InvalidOperationException>(() => native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken));
+		}
+
+		await svc.DeleteAsync(entry, CancellationToken);
+		await svc.DeleteAsync(folder, CancellationToken);
 	}
 
 	[TestMethod]
@@ -205,5 +259,48 @@ public class BackupServicesTests : BaseTestClass
 		using var svc = new YandexDiskService(s.Token.Secure());
 		await RoundtripAsync(svc, "Yandex Disk", cancellationToken: CancellationToken);
 	}
-}
 
+	[TestMethod]
+	public async Task YandexDisk_Publish_Unpublish()
+	{
+		var s = LoadSecrets().Yandex;
+		if (s?.Token.IsEmpty() != false)
+			Assert.Inconclusive("Yandex secrets missing. Set BACKUP_YANDEX_TOKEN or provide secrets.json.");
+
+		using IBackupService svc = new YandexDiskService(s.Token.Secure());
+
+		var folder = new BackupEntry { Name = "ecng-yandex-publish-tests-" + Guid.NewGuid().ToString("N") };
+		await svc.CreateFolder(folder, CancellationToken);
+
+		var entry = new BackupEntry
+		{
+			Name = $"publish-{Guid.NewGuid():N}.txt",
+			Parent = folder,
+		};
+
+		using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("hello " + Guid.NewGuid()), writable: false))
+			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
+
+		var url = await svc.PublishAsync(entry, CancellationToken);
+		url.IsEmpty().AssertFalse();
+
+		var fullPath = entry.GetFullPath();
+
+		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
+		{
+			var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+			info.PublicUrl.IsEmpty().AssertFalse();
+		}
+
+		await svc.UnPublishAsync(entry, CancellationToken);
+
+		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
+		{
+			var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+			info.PublicUrl.IsEmpty().AssertTrue();
+		}
+
+		await svc.DeleteAsync(entry, CancellationToken);
+		await svc.DeleteAsync(folder, CancellationToken);
+	}
+}
