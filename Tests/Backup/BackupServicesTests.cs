@@ -49,7 +49,7 @@ public class BackupServicesTests : BaseTestClass
 
 	private static Secrets LoadSecrets()
 	{
-        static string Env(string name) => Environment.GetEnvironmentVariable(name);
+		static string Env(string name) => Environment.GetEnvironmentVariable(name);
 
 		var fromEnv = new Secrets
 		{

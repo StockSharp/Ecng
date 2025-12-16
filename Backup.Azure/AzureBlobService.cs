@@ -20,6 +20,9 @@ public class AzureBlobService : Disposable, IBackupService
 	private readonly BlobContainerClient _container;
 	private const int _bufferSize = FileSizes.MB * 4;
 
+	private Task EnsureContainerAsync(CancellationToken cancellationToken)
+		=> _container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="AzureBlobService"/>.
 	/// </summary>
@@ -46,6 +49,8 @@ public class AzureBlobService : Disposable, IBackupService
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
+		await EnsureContainerAsync(cancellationToken).NoWait();
+
 		var prefix = parent?.GetFullPath();
 
 		await foreach (var item in _container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
@@ -72,6 +77,8 @@ public class AzureBlobService : Disposable, IBackupService
 
 	async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
+		await EnsureContainerAsync(cancellationToken).NoWait();
+
 		var blob = _container.GetBlobClient(entry.GetFullPath());
 		var props = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
 
@@ -87,6 +94,8 @@ public class AzureBlobService : Disposable, IBackupService
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(progress);
+
+		await EnsureContainerAsync(cancellationToken).NoWait();
 
         var blob = _container.GetBlobClient(entry.GetFullPath());
 		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken);
@@ -125,6 +134,8 @@ public class AzureBlobService : Disposable, IBackupService
 		ArgumentNullException.ThrowIfNull(entry);
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(progress);
+
+		await EnsureContainerAsync(cancellationToken).NoWait();
 
 		var blob = _container.GetBlockBlobClient(entry.GetFullPath());
 		var buffer = new byte[_bufferSize];
