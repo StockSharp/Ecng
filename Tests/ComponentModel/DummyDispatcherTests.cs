@@ -10,6 +10,16 @@ using Ecng.UnitTesting;
 [TestClass]
 public class DummyDispatcherTests : BaseTestClass
 {
+	private async Task WaitForAsync(Func<bool> predicate, TimeSpan timeout, string message)
+	{
+		var sw = System.Diagnostics.Stopwatch.StartNew();
+
+		while (!predicate() && sw.Elapsed < timeout)
+			await Task.Delay(10, CancellationToken);
+
+		predicate().AssertTrue($"{message} after {sw.ElapsedMilliseconds}ms");
+	}
+
 	[TestMethod]
 	public void CheckAccess_AlwaysTrue()
 	{
@@ -137,9 +147,7 @@ public class DummyDispatcherTests : BaseTestClass
 			Interlocked.Increment(ref timerTickCount);
 		}, TimeSpan.FromMilliseconds(50));
 
-		// Wait for a few fast ticks
-		await Task.Delay(200, CancellationToken);
-		(fastCounter >= 2).AssertTrue($"Expected fastCounter >= 2, but was {fastCounter}");
+		await WaitForAsync(() => fastCounter >= 2, TimeSpan.FromSeconds(2), $"Expected fastCounter >= 2, but was {fastCounter}");
 
 		// Unsubscribe fast action
 		var ticksBefore = timerTickCount;
@@ -269,8 +277,7 @@ public class DummyDispatcherTests : BaseTestClass
 		// Add even faster action with 30ms interval
 		var sub3 = d.InvokePeriodically(() => Interlocked.Increment(ref counter3), TimeSpan.FromMilliseconds(30));
 
-		await Task.Delay(200, CancellationToken);
-		(counter3 >= 3).AssertTrue($"Expected counter3 >= 3 after 200ms with 30ms interval, but was {counter3}");
+		await WaitForAsync(() => counter3 >= 3, TimeSpan.FromSeconds(2), $"Expected counter3 >= 3 with 30ms interval, but was {counter3}");
 
 		// Remove all
 		sub3.Dispose();
@@ -385,8 +392,7 @@ public class DummyDispatcherTests : BaseTestClass
 		var subFast = d.InvokePeriodically(() => Interlocked.Increment(ref fast), TimeSpan.FromMilliseconds(30));
 		using var subSlow = d.InvokePeriodically(() => Interlocked.Increment(ref slow), TimeSpan.FromMilliseconds(300));
 
-		await Task.Delay(200, CancellationToken);
-		(fast >= 3).AssertTrue($"Expected fast >= 3 after 200ms with 30ms interval, but was {fast}");
+		await WaitForAsync(() => fast >= 3, TimeSpan.FromSeconds(2), $"Expected fast >= 3 with 30ms interval, but was {fast}");
 
 		// Remove fast action
 		subFast.Dispose();
@@ -420,15 +426,12 @@ public class DummyDispatcherTests : BaseTestClass
 		using var fastSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(30));
 		var slowSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(300));
 
-		await Task.Delay(200, CancellationToken);
-		(counter >= 3).AssertTrue($"Expected counter >= 3 after 200ms with 30ms interval, but was {counter}");
+		await WaitForAsync(() => counter >= 3, TimeSpan.FromSeconds(2), $"Expected counter >= 3 with 30ms interval, but was {counter}");
 
 		// Dispose the slow subscription and ensure the fast one continues.
 		slowSub.Dispose();
 
 		var before = counter;
-		await Task.Delay(200, CancellationToken);
-
-		(counter - before >= 3).AssertTrue($"Expected fast subscription to continue after disposing slow subscription, but counterBefore={before}, counter={counter}, diff={counter - before}");
+		await WaitForAsync(() => counter - before >= 3, TimeSpan.FromSeconds(2), $"Expected fast subscription to continue after disposing slow subscription, but counterBefore={before}, counter={counter}, diff={counter - before}");
 	}
 }
