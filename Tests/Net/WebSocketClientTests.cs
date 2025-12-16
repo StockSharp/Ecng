@@ -11,6 +11,9 @@ using Ecng.Net;
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
 {
+	protected override bool SkipInGitHubActions => true;
+	protected override string SkipInGitHubActionsReason => "Public WebSocket echo endpoint is flaky in CI (HTTP 429).";
+
 	private static Action<string, object> Log(string tag)
 		=> (fmt, arg) => System.Diagnostics.Debug.WriteLine($"[{tag}] " + string.Format(fmt ?? string.Empty, arg));
 

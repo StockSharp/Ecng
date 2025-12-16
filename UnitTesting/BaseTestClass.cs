@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
@@ -22,6 +24,27 @@ public abstract class BaseTestClass
 	/// Cancellation token for the test.
 	/// </summary>
 	protected CancellationToken CancellationToken => TestContext.CancellationToken;
+
+	/// <summary>
+	/// Skip all tests in this class when running in GitHub Actions.
+	/// </summary>
+	protected virtual bool SkipInGitHubActions => false;
+
+	/// <summary>
+	/// Reason for skipping tests in GitHub Actions.
+	/// </summary>
+	protected virtual string SkipInGitHubActionsReason => null;
+
+	[TestInitialize]
+	public void BaseTestInitialize()
+	{
+		if (!SkipInGitHubActions)
+			return;
+
+		var isGitHubActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS");
+		if (!isGitHubActions.IsEmpty() && isGitHubActions.EqualsIgnoreCase("true"))
+			Inconclusive(SkipInGitHubActionsReason ?? "Skipped in GitHub Actions.");
+	}
 
 	/// <summary>
 	/// Fails the test without checking any conditions.
