@@ -9,7 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 
-using CG.Web.MegaApiClient;
+using Ecng.Backup.Mega.Native;
 
 using Ecng.Common;
 using Ecng.Collections;
@@ -30,10 +30,10 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		void IProgress<double>.Report(double value) => _progress((int)value);
 	}
 
-	private readonly MegaApiClient _client = new();
+	private readonly Client _client = new();
 	private readonly string _email = email.ThrowIfEmpty(nameof(email));
 	private readonly SecureString _password = password ?? throw new ArgumentNullException(nameof(password));
-	private readonly CachedSynchronizedList<INode> _nodes = [];
+	private readonly CachedSynchronizedList<Node> _nodes = [];
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()
@@ -44,23 +44,23 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		base.DisposeManaged();
 	}
 
-	private async Task<MegaApiClient> EnsureLogin(CancellationToken cancellationToken)
+	private async Task<Client> EnsureLogin(CancellationToken cancellationToken)
 	{
 		if (!_client.IsLoggedIn)
 		{
-			await _client.LoginAsync(_email, _password.UnSecure(), default).NoWait();
+			await _client.LoginAsync(_email, _password.UnSecure(), cancellationToken).NoWait();
 
-			_nodes.AddRange(await _client.GetNodesAsync().NoWait());
+			_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
 		}
 
 		return _client;
 	}
 
-	bool IBackupService.CanPublish => false;
 	bool IBackupService.CanFolders => true;
 	bool IBackupService.CanPartialDownload => false;
+	bool IBackupService.CanPublish => true;
 
-	private INode Find(BackupEntry entry)
+	private Node Find(BackupEntry entry)
 	{
 		if (entry is null)
 			throw new ArgumentNullException(nameof(entry));
@@ -89,9 +89,9 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		return curr;
 	}
 
-	private INode GetRoot() => _nodes.Cache.First(n => n.Type == NodeType.Root);
+	private Node GetRoot() => _nodes.Cache.First(n => n.Type == NodeType.Root);
 
-	private IEnumerable<INode> GetChild(INode parent)
+	private IEnumerable<Node> GetChild(Node parent)
 	{
 		if (parent is null)
 			throw new ArgumentNullException(nameof(parent));
@@ -128,7 +128,7 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 				if (found is null)
 				{
 					needCheck = false;
-					curr = await client.CreateFolderAsync(name, curr).NoWait();
+					curr = await client.CreateFolderAsync(curr.Id, name, cancellationToken).NoWait();
 					_nodes.Add(curr);
 				}
 				else
@@ -136,14 +136,22 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 			}
 			else
 			{
-				curr = await client.CreateFolderAsync(name, curr).NoWait();
+				curr = await client.CreateFolderAsync(curr.Id, name, cancellationToken).NoWait();
 				_nodes.Add(curr);
 			}
 		}
 	}
 
 	async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
-		=> await (await EnsureLogin(cancellationToken)).DeleteAsync(Find(entry)).NoWait();
+	{
+		var node = Find(entry);
+
+		if (node is null)
+			return;
+
+		await (await EnsureLogin(cancellationToken)).DeleteAsync(node.Id, cancellationToken).NoWait();
+		_nodes.Remove(node);
+	}
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
@@ -151,8 +159,12 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(progress);
 
-		using var temp = await (await EnsureLogin(cancellationToken)).DownloadAsync(Find(entry), new ProgressHandler(progress), cancellationToken).NoWait();
-		await temp.CopyToAsync(stream, cancellationToken).NoWait();
+		if (offset is not null || length is not null)
+			throw new NotSupportedException("Partial download is not supported.");
+
+		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
+
+		await (await EnsureLogin(cancellationToken)).DownloadAsync(node, stream, new ProgressHandler(progress), cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
@@ -161,16 +173,20 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(progress);
 
-		await (await EnsureLogin(cancellationToken)).UploadAsync(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), new ProgressHandler(progress), cancellationToken: cancellationToken).NoWait();
+		var parent = (entry.Parent is null ? GetRoot() : Find(entry.Parent))
+			?? throw new ArgumentOutOfRangeException(nameof(entry), "Parent entry not found.");
+
+		var node = await (await EnsureLogin(cancellationToken)).UploadAsync(parent.Id, entry.Name, stream, modificationDate: null, new ProgressHandler(progress), cancellationToken).NoWait();
+		_nodes.Add(node);
 	}
 
 	async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
 		await EnsureLogin(cancellationToken);
 
-		var node = Find(entry);
+		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
 
-		entry.LastModified = node.ModificationDate ?? default;
+		entry.LastModified = node.ModificationDate ?? node.CreationDate ?? default;
 		entry.Size = node.Size;
 	}
 
@@ -194,12 +210,34 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 			{
 				Name = item.Name,
 				Parent = parent,
-				LastModified = item.ModificationDate ?? default,
+				LastModified = item.ModificationDate ?? item.CreationDate ?? default,
 				Size = item.Size,
 			};
 		}
 	}
 
-	Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
-	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
+	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	{
+		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
+
+		var url = await (await EnsureLogin(cancellationToken)).PublishAsync(node, cancellationToken).NoWait();
+
+		_nodes.Clear();
+		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
+
+		return url;
+	}
+
+	async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	{
+		var node = Find(entry);
+
+		if (node is null)
+			return;
+
+		await (await EnsureLogin(cancellationToken)).UnpublishAsync(node.Id, cancellationToken).NoWait();
+
+		_nodes.Clear();
+		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
+	}
 }
