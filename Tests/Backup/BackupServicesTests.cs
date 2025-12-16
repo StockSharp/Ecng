@@ -191,7 +191,7 @@ public class BackupServicesTests : BaseTestClass
 		{
 			string url;
 
-			url = await svc.PublishAsync(entry, CancellationToken);
+			url = await svc.PublishAsync(entry, expiresIn: TimeSpan.FromMinutes(5), cancellationToken: CancellationToken);
 
 			url.IsEmpty().AssertFalse();
 
@@ -254,7 +254,7 @@ public class BackupServicesTests : BaseTestClass
 		using (var uploadStream = new MemoryStream(data, writable: false))
 			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
 
-		var url = await svc.PublishAsync(entry, CancellationToken);
+		var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
 		url.IsEmpty().AssertFalse();
 
 		var phStart = url.IndexOf("/file/", StringComparison.OrdinalIgnoreCase);
@@ -318,23 +318,41 @@ public class BackupServicesTests : BaseTestClass
 		using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("hello " + Guid.NewGuid()), writable: false))
 			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
 
-		var url = await svc.PublishAsync(entry, CancellationToken);
+		var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
 		url.IsEmpty().AssertFalse();
 
 		var fullPath = entry.GetFullPath();
 
 		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
 		{
-			var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
-			info.PublicUrl.IsEmpty().AssertFalse();
+			for (var i = 0; i < 40; i++)
+			{
+				var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+
+				if (!info.PublicUrl.IsEmpty())
+					return;
+
+				await Task.Delay(500, CancellationToken);
+			}
+
+			Assert.Fail("Published resource did not get PublicUrl.");
 		}
 
 		await svc.UnPublishAsync(entry, CancellationToken);
 
 		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
 		{
-			var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
-			info.PublicUrl.IsEmpty().AssertTrue();
+			for (var i = 0; i < 40; i++)
+			{
+				var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+
+				if (info.PublicUrl.IsEmpty())
+					return;
+
+				await Task.Delay(500, CancellationToken);
+			}
+
+			Assert.Fail("Unpublished resource still has PublicUrl.");
 		}
 
 		await svc.DeleteAsync(entry, CancellationToken);

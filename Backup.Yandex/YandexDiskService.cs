@@ -43,6 +43,7 @@ public class YandexDiskService : Disposable, IBackupService
 
 	bool IBackupService.CanFolders => true;
 	bool IBackupService.CanPublish => true;
+	bool IBackupService.CanExpirable => false;
 	bool IBackupService.CanPartialDownload => false;
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
@@ -170,8 +171,11 @@ public class YandexDiskService : Disposable, IBackupService
 		}
 	}
 
-	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	async Task<string> IBackupService.PublishAsync(BackupEntry entry, TimeSpan? expiresIn, CancellationToken cancellationToken)
 	{
+		if (expiresIn is not null)
+			throw new NotSupportedException("Expiring links are not supported by Yandex.Disk publish API.");
+
 		var link = await _client.MetaInfo.PublishFolderAsync(entry.GetFullPath(), cancellationToken).NoWait();
 		return link.Href;
 	}

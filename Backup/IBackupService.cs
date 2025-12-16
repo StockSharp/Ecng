@@ -17,6 +17,11 @@ public interface IBackupService : IDisposable
 	bool CanPublish { get; }
 
 	/// <summary>
+	/// Is expirable publishing feature available (via <see cref="PublishAsync"/> with <c>expiresIn</c>).
+	/// </summary>
+	bool CanExpirable { get; }
+
+	/// <summary>
 	/// Is folders feature available.
 	/// </summary>
 	bool CanFolders { get; }
@@ -85,9 +90,10 @@ public interface IBackupService : IDisposable
 	/// Get public url for the specified element.
 	/// </summary>
 	/// <param name="entry">Element.</param>
+	/// <param name="expiresIn">Link expiration. If null, means infinite.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns>Public url.</returns>
-	Task<string> PublishAsync(BackupEntry entry, CancellationToken cancellationToken = default);
+	Task<string> PublishAsync(BackupEntry entry, TimeSpan? expiresIn = null, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Remove public url for the specified element.

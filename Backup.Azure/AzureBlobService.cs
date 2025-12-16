@@ -38,6 +38,7 @@ public class AzureBlobService : Disposable, IBackupService
 
 	bool IBackupService.CanFolders => false;
 	bool IBackupService.CanPublish => false;
+	bool IBackupService.CanExpirable => false;
 	bool IBackupService.CanPartialDownload => true;
 
 	Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
@@ -161,6 +162,6 @@ public class AzureBlobService : Disposable, IBackupService
 			progress(100);
 	}
 
-	Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
+	Task<string> IBackupService.PublishAsync(BackupEntry entry, TimeSpan? expiresIn, CancellationToken cancellationToken) => throw new NotSupportedException();
 	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
 }

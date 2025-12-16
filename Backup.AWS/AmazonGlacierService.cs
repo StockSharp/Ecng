@@ -71,6 +71,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 	bool IBackupService.CanFolders => false;
 	bool IBackupService.CanPublish => false;
+	bool IBackupService.CanExpirable => false;
 	bool IBackupService.CanPartialDownload => true;
 
 	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
@@ -203,7 +204,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 		progress(100);
 	}
 
-	Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	Task<string> IBackupService.PublishAsync(BackupEntry entry, TimeSpan? expiresIn, CancellationToken cancellationToken)
 		=> throw new NotSupportedException();
 
 	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)

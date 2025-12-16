@@ -57,6 +57,7 @@ public class AmazonS3Service : Disposable, IBackupService
 
 	bool IBackupService.CanFolders => false;
 	bool IBackupService.CanPublish => true;
+	bool IBackupService.CanExpirable => true;
 	bool IBackupService.CanPartialDownload => true;
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
@@ -256,9 +257,26 @@ public class AmazonS3Service : Disposable, IBackupService
 		entry.LastModified = response.LastModified ?? default;
 	}
 
-	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	async Task<string> IBackupService.PublishAsync(BackupEntry entry, TimeSpan? expiresIn, CancellationToken cancellationToken)
 	{
 		var key = entry.GetFullPath();
+
+		if (expiresIn is not null)
+		{
+			if (expiresIn.Value <= TimeSpan.Zero)
+				throw new ArgumentOutOfRangeException(nameof(expiresIn));
+
+			if (expiresIn.Value > TimeSpan.FromDays(7))
+				throw new ArgumentOutOfRangeException(nameof(expiresIn), "S3 pre-signed URLs cannot exceed 7 days.");
+
+			return _client.GetPreSignedURL(new GetPreSignedUrlRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+				Verb = HttpVerb.GET,
+				Expires = DateTime.UtcNow.Add(expiresIn.Value),
+			});
+		}
 
 		try
 		{
@@ -276,13 +294,7 @@ public class AmazonS3Service : Disposable, IBackupService
 		}
 		catch (AmazonS3Exception ex) when (IsPublicAclNotAllowed(ex))
 		{
-			return _client.GetPreSignedURL(new GetPreSignedUrlRequest
-			{
-				BucketName = _bucket,
-				Key = key,
-				Verb = HttpVerb.GET,
-				Expires = DateTime.UtcNow.AddHours(1),
-			});
+			throw new InvalidOperationException("Infinite publish is not supported for this bucket/account (public ACLs are blocked). Specify expiresIn to get a pre-signed URL instead.", ex);
 		}
 	}
 

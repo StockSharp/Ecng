@@ -59,6 +59,7 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 	bool IBackupService.CanFolders => true;
 	bool IBackupService.CanPartialDownload => false;
 	bool IBackupService.CanPublish => true;
+	bool IBackupService.CanExpirable => false;
 
 	private Node Find(BackupEntry entry)
 	{
@@ -216,8 +217,11 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		}
 	}
 
-	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
+	async Task<string> IBackupService.PublishAsync(BackupEntry entry, TimeSpan? expiresIn, CancellationToken cancellationToken)
 	{
+		if (expiresIn is not null)
+			throw new NotSupportedException("Expiring links are not supported by MEGA export links.");
+
 		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
 
 		var url = await (await EnsureLogin(cancellationToken)).PublishAsync(node, cancellationToken).NoWait();
