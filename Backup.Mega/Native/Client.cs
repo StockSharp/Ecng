@@ -13,6 +13,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 /// <summary>
 /// Minimal MEGA client implementation used by <c>Ecng.Backup</c>.
 /// </summary>
@@ -109,9 +111,9 @@ public sealed class Client : IDisposable
 	/// </summary>
 	public async Task LoginAsync(string email, string password, CancellationToken cancellationToken = default)
 	{
-		if (string.IsNullOrEmpty(email))
+		if (email.IsEmpty())
 			throw new ArgumentNullException(nameof(email));
-		if (string.IsNullOrEmpty(password))
+		if (password.IsEmpty())
 			throw new ArgumentNullException(nameof(password));
 		if (IsLoggedIn)
 			throw new InvalidOperationException("Already logged in.");
@@ -241,7 +243,7 @@ public sealed class Client : IDisposable
 				progress?.Report((double)sent / total * 100d);
 			}
 
-			if (string.IsNullOrEmpty(completionHandle))
+			if (completionHandle.IsEmpty())
 				throw new InvalidOperationException("Upload did not return completion handle.");
 
 			var attrs = MegaAttributes.Create(name, stream, modificationDate);
@@ -306,7 +308,7 @@ public sealed class Client : IDisposable
 		else
 			publicHandle = null;
 
-		if (string.IsNullOrEmpty(publicHandle))
+		if (publicHandle.IsEmpty())
 			throw new InvalidOperationException($"Export link response is missing public handle: {TrimForError(el.GetRawText())}");
 
 		var key = node.NodeKey.ToBase64Url();
@@ -319,7 +321,7 @@ public sealed class Client : IDisposable
 	/// </summary>
 	public async Task UnpublishAsync(string nodeId, CancellationToken cancellationToken = default)
 	{
-		if (string.IsNullOrEmpty(nodeId))
+		if (nodeId.IsEmpty())
 			throw new ArgumentNullException(nameof(nodeId));
 
 		EnsureLoggedIn();
@@ -365,7 +367,7 @@ public sealed class Client : IDisposable
 	/// </summary>
 	public Task<DownloadUrlResponse> GetPublicDownloadUrlAsync(string publicHandle, CancellationToken cancellationToken = default)
 	{
-		if (string.IsNullOrEmpty(publicHandle))
+		if (publicHandle.IsEmpty())
 			throw new ArgumentNullException(nameof(publicHandle));
 
 		return RequestAsync<DownloadUrlResponse>(new DownloadUrlRequest { PublicHandle = publicHandle }, hashcash: null, cancellationToken);
@@ -437,7 +439,7 @@ public sealed class Client : IDisposable
 
 				var text = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
-				if (string.IsNullOrEmpty(text))
+				if (text.IsEmpty())
 					throw new InvalidOperationException("Empty API response.");
 
 				using var doc = JsonDocument.Parse(text);
@@ -526,7 +528,7 @@ public sealed class Client : IDisposable
 			{
 				var id = item.GetProperty("h").GetString();
 				var key = item.GetProperty("k").GetString();
-				if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(key))
+				if (!id.IsEmpty() && !key.IsEmpty())
 					sharedKeys[id] = key;
 			}
 		}
@@ -541,7 +543,7 @@ public sealed class Client : IDisposable
 				continue;
 
 			var id = n.GetProperty("h").GetString();
-			if (string.IsNullOrEmpty(id))
+			if (id.IsEmpty())
 				continue;
 
 			var parentId = n.TryGetProperty("p", out var p) ? p.GetString() : null;
@@ -562,7 +564,7 @@ public sealed class Client : IDisposable
 					continue;
 
 				var keyText = kprop.GetString();
-				if (string.IsNullOrEmpty(keyText))
+				if (keyText.IsEmpty())
 					continue;
 
 				var keyPart = keyText.Split('/')[0];
@@ -589,7 +591,7 @@ public sealed class Client : IDisposable
 				if (n.TryGetProperty("a", out var aprop))
 				{
 					var attrsEnc = aprop.GetString();
-					if (!string.IsNullOrEmpty(attrsEnc))
+					if (!attrsEnc.IsEmpty())
 					{
 						var attrs = Crypto.DecryptAttributes(attrsEnc.FromBase64Url(), type == NodeType.File ? fileKey : fullKey);
 						attrs.HydrateAfterDeserialize();
