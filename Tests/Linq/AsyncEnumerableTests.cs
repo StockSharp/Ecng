@@ -412,7 +412,7 @@ public class AsyncEnumerableTests : BaseTestClass
 	public async Task Select()
 	{
 		var token = CancellationToken;
-		var doubled = await GetAsyncData(token).Select(x => x * 2, token).ToArrayAsync(token);
+		var doubled = await GetAsyncData(token).Select(x => x * 2).ToArrayAsync(token);
 		doubled.Length.AssertEqual(3);
 		doubled[0].AssertEqual(2);
 		doubled[1].AssertEqual(4);
@@ -495,7 +495,7 @@ public class AsyncEnumerableTests : BaseTestClass
 		var token = CancellationToken;
 		var result = await GetAsyncData(token)
 			.Where(x => x > 1, token)
-			.Select(x => x * 10, token)
+			.Select(x => x * 10)
 			.ToListAsync(token);
 
 		result.Count.AssertEqual(2);
