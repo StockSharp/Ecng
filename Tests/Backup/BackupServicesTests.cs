@@ -307,55 +307,109 @@ public class BackupServicesTests : BaseTestClass
 		using IBackupService svc = new YandexDiskService(s.Token.Secure());
 
 		var folder = new BackupEntry { Name = "ecng-yandex-publish-tests-" + Guid.NewGuid().ToString("N") };
-		await svc.CreateFolder(folder, CancellationToken);
-
 		var entry = new BackupEntry
 		{
 			Name = $"publish-{Guid.NewGuid():N}.txt",
 			Parent = folder,
 		};
 
-		using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("hello " + Guid.NewGuid()), writable: false))
-			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
-
-		var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
-		url.IsEmpty().AssertFalse();
-
 		var fullPath = entry.GetFullPath();
 
-		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
+		try
 		{
-			for (var i = 0; i < 40; i++)
+			await svc.CreateFolder(folder, CancellationToken);
+
+			using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("hello " + Guid.NewGuid()), writable: false))
+				await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
+
+			var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
+			url.IsEmpty().AssertFalse();
+
+			using var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token);
+
+			var published = false;
+
+			for (var i = 0; i < 120; i++)
 			{
-				var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+				YandexDisk.Client.Protocol.Resource info;
+
+				try
+				{
+					info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+				}
+				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.TooManyRequests or System.Net.HttpStatusCode.ServiceUnavailable)
+				{
+					await Task.Delay(500, CancellationToken);
+					continue;
+				}
 
 				if (!info.PublicUrl.IsEmpty())
-					return;
+				{
+					published = true;
+					break;
+				}
 
 				await Task.Delay(500, CancellationToken);
 			}
 
-			Assert.Fail("Published resource did not get PublicUrl.");
-		}
+			if (!published)
+				Assert.Fail("Published resource did not get PublicUrl.");
 
-		await svc.UnPublishAsync(entry, CancellationToken);
+			await svc.UnPublishAsync(entry, CancellationToken);
 
-		using (var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token))
-		{
-			for (var i = 0; i < 40; i++)
+			var unpublished = false;
+
+			for (var i = 0; i < 120; i++)
 			{
-				var info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+				YandexDisk.Client.Protocol.Resource info;
+
+				try
+				{
+					info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
+				}
+				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.TooManyRequests or System.Net.HttpStatusCode.ServiceUnavailable)
+				{
+					await Task.Delay(500, CancellationToken);
+					continue;
+				}
 
 				if (info.PublicUrl.IsEmpty())
-					return;
+				{
+					unpublished = true;
+					break;
+				}
 
 				await Task.Delay(500, CancellationToken);
 			}
 
-			Assert.Fail("Unpublished resource still has PublicUrl.");
+			if (!unpublished)
+				Assert.Fail("Unpublished resource still has PublicUrl.");
 		}
+		finally
+		{
+			try
+			{
+				await svc.UnPublishAsync(entry, CancellationToken);
+			}
+			catch
+			{
+			}
 
-		await svc.DeleteAsync(entry, CancellationToken);
-		await svc.DeleteAsync(folder, CancellationToken);
+			try
+			{
+				await svc.DeleteAsync(entry, CancellationToken);
+			}
+			catch
+			{
+			}
+
+			try
+			{
+				await svc.DeleteAsync(folder, CancellationToken);
+			}
+			catch
+			{
+			}
+		}
 	}
 }
