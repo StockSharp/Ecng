@@ -56,15 +56,7 @@ public class TransactionFileStream : Stream
 
 		// Clean up any stale .tmp file from previous crashed operations
 		// This is done for ALL modes to prevent inheriting garbage data
-		try
-		{
-			if (_fs.FileExists(_nameTemp))
-				_fs.DeleteFile(_nameTemp);
-		}
-		catch (Exception ex)
-		{
-			Trace.WriteLine(ex);
-		}
+		TryDeleteTempFile();
 
 		var preload = false;
 
@@ -118,6 +110,19 @@ public class TransactionFileStream : Stream
 				rs.CopyTo(_temp);
 			}
 			_temp.Seek(0, SeekOrigin.Begin);
+		}
+	}
+
+	private void TryDeleteTempFile()
+	{
+		try
+		{
+			if (_fs.FileExists(_nameTemp))
+				_fs.DeleteFile(_nameTemp);
+		}
+		catch (Exception ex)
+		{
+			Trace.WriteLine(ex);
 		}
 	}
 
@@ -194,15 +199,7 @@ public class TransactionFileStream : Stream
 			else
 			{
 				// Rollback: delete temp file, preserve original
-				try
-				{
-					if (_fs.FileExists(_nameTemp))
-						_fs.DeleteFile(_nameTemp);
-				}
-				catch (Exception ex)
-				{
-					Trace.WriteLine(ex);
-				}
+				TryDeleteTempFile();
 			}
 		}
 
