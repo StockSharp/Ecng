@@ -41,6 +41,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "hello".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			File.Exists(target).AssertTrue();
@@ -83,6 +84,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "abc".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("abc");
@@ -110,6 +112,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "+end".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("start+end");
@@ -137,6 +140,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "short".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("short");
@@ -197,6 +201,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "new".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("new");
@@ -243,6 +248,7 @@ public class TransactionFileStreamTests : BaseTestClass
 
 				// Truncate to match new size
 				tfs.SetLength(data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("XX");
@@ -301,6 +307,7 @@ public class TransactionFileStreamTests : BaseTestClass
 
 				tfs.SetLength(5);
 				tfs.Length.AssertEqual(5);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("hello");
@@ -482,6 +489,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			{
 				var data = "new-file".UTF8();
 				tfs.Write(data, 0, data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("new-file");
@@ -512,9 +520,79 @@ public class TransactionFileStreamTests : BaseTestClass
 
 				// Truncate to match new size
 				tfs.SetLength(data.Length);
+				tfs.Commit();
 			}
 
 			ReadAllText(target).AssertEqual("new");
+			File.Exists(tmp).AssertFalse();
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
+
+	[TestMethod]
+	public void Commit_AfterDispose_Throws()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			var tfs = new TransactionFileStream(target, FileMode.Create);
+			tfs.Dispose();
+			ThrowsExactly<ObjectDisposedException>(() => tfs.Commit());
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
+
+	[TestMethod]
+	public void DoubleCommit_Throws()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			using var tfs = new TransactionFileStream(target, FileMode.Create);
+			tfs.Write("test".UTF8(), 0, 4);
+			tfs.Commit();
+			ThrowsExactly<InvalidOperationException>(() => tfs.Commit());
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
+
+	[TestMethod]
+	public void DisposeWithoutCommit_Rollback()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			WriteAllText(target, "original");
+
+			using (var tfs = new TransactionFileStream(target, FileMode.Create))
+			{
+				tfs.Write("new".UTF8(), 0, 3);
+				// No Commit() - should rollback
+			}
+
+			// Original should be preserved
+			ReadAllText(target).AssertEqual("original");
 			File.Exists(tmp).AssertFalse();
 		}
 		finally
@@ -555,6 +633,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "hello".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		fs.FileExists(target).AssertTrue();
@@ -586,6 +665,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "new".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("new");
@@ -615,6 +695,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			var data = "NEW".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.SetLength(data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("NEW");
@@ -632,6 +713,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "created".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("created");
@@ -653,6 +735,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			var data = "XX".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.SetLength(data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("XX");
@@ -681,6 +764,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "short".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("short");
@@ -698,6 +782,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "new-file".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("new-file");
@@ -717,6 +802,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "+end".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("start+end");
@@ -724,7 +810,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MemoryFs_Dispose_CommitsChanges()
+	public void MemoryFs_CommitRequired_ForChangesToPersist()
 	{
 		var fs = new MemoryFileSystem();
 		var target = "/data/file.txt";
@@ -736,11 +822,32 @@ public class TransactionFileStreamTests : BaseTestClass
 		// Before dispose, target should not exist (only tmp)
 		fs.FileExists(target).AssertFalse();
 
+		// Commit marks transaction for persistence
+		tfs.Commit();
 		tfs.Dispose();
 
-		// After dispose, target should exist
+		// After dispose with commit, target should exist
 		fs.FileExists(target).AssertTrue();
 		ReadAllText(fs, target).AssertEqual("test");
+	}
+
+	[TestMethod]
+	public void MemoryFs_DisposeWithoutCommit_NoTarget()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		var data = "test".UTF8();
+		tfs.Write(data, 0, data.Length);
+
+		// No Commit() - rollback expected
+		tfs.Dispose();
+
+		// Target should NOT exist (rollback)
+		fs.FileExists(target).AssertFalse();
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
@@ -787,6 +894,7 @@ public class TransactionFileStreamTests : BaseTestClass
 			tfs.Write(data, 0, data.Length);
 			tfs.SetLength(5);
 			tfs.Length.AssertEqual(5);
+			tfs.Commit();
 		}
 
 		ReadAllText(fs, target).AssertEqual("hello");
@@ -817,9 +925,23 @@ public class TransactionFileStreamTests : BaseTestClass
 		ThrowsExactly<ObjectDisposedException>(() => { tfs.Position = 0; });
 	}
 
+	[TestMethod]
+	public void MemoryFs_IsCommitted_Property()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		tfs.Write("test".UTF8(), 0, 4);
+
+		tfs.IsCommitted.AssertFalse();
+		tfs.Commit();
+		tfs.IsCommitted.AssertTrue();
+	}
+
 	#endregion
 
-	#region Issue Tests - Expected Behavior (will fail until code is fixed)
+	#region Rollback and Recovery Tests
 
 	/// <summary>
 	/// Decorator over IFileSystem that allows injecting faults for testing.
@@ -853,7 +975,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// When exception is thrown inside using block, original file should remain unchanged (rollback).
+	/// When exception is thrown inside using block (before Commit), original file should remain unchanged (rollback).
 	/// </summary>
 	[TestMethod]
 	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved()
@@ -870,6 +992,7 @@ public class TransactionFileStreamTests : BaseTestClass
 				var data = "PARTIAL".UTF8();
 				tfs.Write(data, 0, data.Length);
 				throw new InvalidOperationException("Simulated crash");
+				// No Commit() reached
 			}
 		}
 		catch (InvalidOperationException)
@@ -900,6 +1023,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			var data = "newdata".UTF8();
 			tfs.Write(data, 0, data.Length);
+			tfs.Commit();
 		}
 
 		// Should be fresh file without stale garbage
@@ -923,6 +1047,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
 		var data = "NEW_IMPORTANT_DATA".UTF8();
 		tfs.Write(data, 0, data.Length);
+		tfs.Commit();
 
 		try
 		{
@@ -963,6 +1088,7 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
 		tfs.Write("test".UTF8(), 0, 4);
+		tfs.Commit();
 
 		var callsBeforeFirstDispose = fileExistsCallsOnTmp;
 

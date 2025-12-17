@@ -1,4 +1,4 @@
-﻿namespace Ecng.Serialization;
+namespace Ecng.Serialization;
 
 using System;
 using System.Diagnostics;
@@ -7,8 +7,21 @@ using System.IO;
 using Ecng.Common;
 
 /// <summary>
-/// Represents a transactional file stream that writes data to a temporary file and, upon disposal, commits the changes to the target file.
+/// Represents a transactional file stream that writes data to a temporary file.
+/// Changes are only committed to the target file when <see cref="Commit"/> is called.
+/// If disposed without commit, changes are rolled back (temporary file is deleted).
 /// </summary>
+/// <remarks>
+/// Usage pattern:
+/// <code>
+/// using (var tfs = new TransactionFileStream("file.txt", FileMode.Create))
+/// {
+///     // write data...
+///     tfs.Commit(); // explicitly commit changes
+/// }
+/// // If exception occurs before Commit(), original file is preserved (rollback)
+/// </code>
+/// </remarks>
 public class TransactionFileStream : Stream
 {
 	private readonly string _name;
@@ -17,6 +30,7 @@ public class TransactionFileStream : Stream
 	private readonly IFileSystem _fs;
 	private Stream _temp;
 	private bool _disposed;
+	private bool _committed;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TransactionFileStream"/> class.
@@ -40,17 +54,16 @@ public class TransactionFileStream : Stream
 		_name = name.ThrowIfEmpty(nameof(name));
 		_nameTemp = _name + ".tmp";
 
-		if (mode is FileMode.Create or FileMode.CreateNew)
+		// Clean up any stale .tmp file from previous crashed operations
+		// This is done for ALL modes to prevent inheriting garbage data
+		try
 		{
-			try
-			{
-				if (_fs.FileExists(_nameTemp))
-					_fs.DeleteFile(_nameTemp);
-			}
-			catch (Exception ex)
-			{
-				Trace.WriteLine(ex);
-			}
+			if (_fs.FileExists(_nameTemp))
+				_fs.DeleteFile(_nameTemp);
+		}
+		catch (Exception ex)
+		{
+			Trace.WriteLine(ex);
 		}
 
 		var preload = false;
@@ -120,14 +133,39 @@ public class TransactionFileStream : Stream
 	}
 
 	/// <summary>
+	/// Gets a value indicating whether the transaction has been committed.
+	/// </summary>
+	public bool IsCommitted => _committed;
+
+	/// <summary>
+	/// Commits the transaction, moving the temporary file to the target location.
+	/// This method must be called before disposal to persist changes.
+	/// </summary>
+	/// <exception cref="ObjectDisposedException">The stream has been disposed.</exception>
+	/// <exception cref="InvalidOperationException">The transaction has already been committed.</exception>
+	public void Commit()
+	{
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(TransactionFileStream));
+
+		if (_committed)
+			throw new InvalidOperationException("Transaction has already been committed.");
+
+		_committed = true;
+	}
+
+	/// <summary>
 	/// Releases the unmanaged resources used by the <see cref="TransactionFileStream"/> and optionally releases the managed resources.
-	/// Copies the temporary file to the target file and then deletes the temporary file.
+	/// If <see cref="Commit"/> was called, moves the temporary file to the target file.
+	/// Otherwise, performs rollback by deleting the temporary file.
 	/// </summary>
 	/// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
 	protected override void Dispose(bool disposing)
 	{
 		if (_disposed)
 			return;
+
+		_disposed = true;
 
 		if (disposing)
 		{
@@ -143,18 +181,19 @@ public class TransactionFileStream : Stream
 			_temp?.Dispose();
 			_temp = null;
 
-			// Commit: atomically replace destination when possible
-			try
+			if (_committed)
 			{
+				// Commit: atomically replace destination when possible
 				if (_fs.FileExists(_nameTemp))
 				{
 					// move temp into place (overwrite allowed)
+					// If this fails, .tmp is preserved for manual recovery
 					_fs.MoveFile(_nameTemp, _name, overwrite: true);
 				}
 			}
-			finally
+			else
 			{
-				// Best-effort cleanup of temp
+				// Rollback: delete temp file, preserve original
 				try
 				{
 					if (_fs.FileExists(_nameTemp))
@@ -167,7 +206,6 @@ public class TransactionFileStream : Stream
 			}
 		}
 
-		_disposed = true;
 		base.Dispose(disposing);
 	}
 
