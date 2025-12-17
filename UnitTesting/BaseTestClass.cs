@@ -35,6 +35,9 @@ public abstract class BaseTestClass
 	/// </summary>
 	protected virtual string SkipInGitHubActionsReason => null;
 
+	/// <summary>
+	/// Initializes the test.
+	/// </summary>
 	[TestInitialize]
 	public void BaseTestInitialize()
 	{

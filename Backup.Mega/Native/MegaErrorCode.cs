@@ -5,7 +5,14 @@ namespace Ecng.Backup.Mega.Native;
 /// </summary>
 public enum MegaErrorCode
 {
+	/// <summary>
+	/// No error.
+	/// </summary>
 	Ok = 0,
+
+	/// <summary>
+	/// Unknown or unsupported error code.
+	/// </summary>
 	Unknown = int.MinValue,
 
 	/// <summary>Internal error.</summary>
@@ -101,21 +108,37 @@ public enum MegaErrorCode
 	/// <summary>Subuser has not yet encrypted their master key for the admin user.</summary>
 	SubUserKeyMissing = -30,
 
+	/// <summary>Local error: not enough disk space.</summary>
 	LocalNoSpace = -1000,
+	/// <summary>Local error: operation timed out.</summary>
 	LocalTimeout = -1001,
+	/// <summary>Local error: operation was abandoned.</summary>
 	LocalAbandoned = -1002,
+	/// <summary>Local error: network error.</summary>
 	LocalNetwork = -1003,
+	/// <summary>Local error: client is not logged in.</summary>
 	LocalLoggedOut = -1004,
 
+	/// <summary>FUSE: bad file descriptor.</summary>
 	FuseBadFileDescriptor = -2000,
+	/// <summary>FUSE: is a directory.</summary>
 	FuseIsDirectory = -2001,
+	/// <summary>FUSE: name too long.</summary>
 	FuseNameTooLong = -2002,
+	/// <summary>FUSE: not a directory.</summary>
 	FuseNotDirectory = -2003,
+	/// <summary>FUSE: directory not empty.</summary>
 	FuseNotEmpty = -2004,
+	/// <summary>FUSE: not found.</summary>
 	FuseNotFound = -2005,
+	/// <summary>FUSE: permission denied.</summary>
 	FusePermission = -2006,
+	/// <summary>FUSE: read-only file system.</summary>
 	FuseReadOnlyFileSystem = -2007,
+	/// <summary>FUSE: already exists.</summary>
 	FuseAlready = -2008,
+	/// <summary>FUSE: operation cancelled.</summary>
 	FuseCancelled = -2009,
+	/// <summary>FUSE: duplicate.</summary>
 	FuseDuplicate = -2010,
 }
