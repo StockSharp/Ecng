@@ -682,6 +682,14 @@ public class WebSocketClient : Disposable, IConnection
 	public void RemoveResend()
 		=> _reConnectCommands.Clear();
 
+	/// <summary>
+	/// Aborts the WebSocket connection immediately.
+	/// </summary>
+	public void Abort()
+	{
+		_ws?.Abort();
+	}
+
 	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
