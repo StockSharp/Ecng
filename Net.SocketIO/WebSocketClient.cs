@@ -251,7 +251,7 @@ public class WebSocketClient : Disposable, IConnection
 
 		RaiseStateChanged(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected);
 
-		_ = Task.Run(() => OnReceive(source), token);
+		_ = Task.Run(() => OnReceive(source));
 
 		if (reconnect && !DisableAutoResend && _reConnectCommands.Count > 0)
 		{
@@ -286,14 +286,15 @@ public class WebSocketClient : Disposable, IConnection
 	/// <exception cref="InvalidOperationException">Thrown if the client is not connected.</exception>
 	public void Disconnect()
 	{
-		if (_source is null)
+		var source = _source;
+
+		if (source is null)
 			throw new InvalidOperationException("Not connected.");
 
 		RaiseStateChanged(ConnectionStates.Disconnecting);
 
-		_disconnectionStates[_source] = true;
-		_source.Cancel();
-		try { _source.Dispose(); } catch { }
+		_disconnectionStates[source] = true;
+		source.Cancel();
 		_source = null;
 
 		// Immediately make further sends fail deterministically
@@ -493,7 +494,14 @@ public class WebSocketClient : Disposable, IConnection
 			_infoLog("websocket disconnected, {0}", $"expected={expected}, attempts={attempts}");
 
 			if (expected == true)
+			{
 				RaiseStateChanged(ConnectionStates.Disconnected);
+
+				if (ReferenceEquals(_source, source))
+					_source = null;
+
+				try { source.Dispose(); } catch { }
+			}
 			else
 			{
 				if (attempts > 0 || attempts == -1)
@@ -515,6 +523,11 @@ public class WebSocketClient : Disposable, IConnection
 				}
 
 				RaiseStateChanged(ConnectionStates.Failed);
+
+				if (ReferenceEquals(_source, source))
+					_source = null;
+
+				try { source.Dispose(); } catch { }
 			}
 		}
 		catch (Exception ex)
