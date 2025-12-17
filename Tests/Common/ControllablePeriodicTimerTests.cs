@@ -65,18 +65,13 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.Start(TimeSpan.FromMilliseconds(50), start: initialDelay);
 
-		// Timer-based tests are inherently subject to OS scheduling jitter.
-		// Validate that no tick happens too early, but allow a small tolerance.
-		await Task.Delay(initialDelay - jitter, CancellationToken);
-		counter.AssertEqual(0, $"Expected no ticks before {initialDelay - jitter}, but was {counter}");
-
 		// Wait for first tick
 		while (counter < 1 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
 		(counter >= 1).AssertTrue($"Expected at least 1 tick, but was {counter}");
-		// First tick should happen after initial delay + first interval
-		// Initial delay is 200ms, interval is 50ms, so first tick around 250ms+
+		// Timer-based tests are inherently subject to OS scheduling jitter.
+		// Validate that the first tick doesn't happen too early, but allow a small tolerance.
 		(firstTickTime >= initialDelay - jitter).AssertTrue($"Expected first tick after at least {(initialDelay - jitter).TotalMilliseconds}ms (tolerance applied), but was at {firstTickTime.TotalMilliseconds}ms");
 	}
 
@@ -201,18 +196,19 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Start(TimeSpan.FromMilliseconds(200));
 
 		await Task.Delay(300, CancellationToken);
-		var countAtSlowRate = counter;
 
 		// Change to faster interval
 		timer.ChangeInterval(TimeSpan.FromMilliseconds(30));
 
 		var counterAfterChange = counter;
-		await Task.Delay(200, CancellationToken);
+		var sw = System.Diagnostics.Stopwatch.StartNew();
+		while ((counter - counterAfterChange) < 10 && sw.Elapsed < TimeSpan.FromSeconds(1.5))
+			await Task.Delay(10, CancellationToken);
 
 		var ticksAtFastRate = counter - counterAfterChange;
-		// With 30ms interval, expect at least 3 ticks in 200ms
-		(ticksAtFastRate >= 3).AssertTrue(
-			$"Expected at least 3 ticks at fast rate (30ms) in 200ms, but got {ticksAtFastRate}");
+		// With 30ms interval, expect multiple ticks well within ~1.5s (tolerate scheduler jitter under parallel test load).
+		(ticksAtFastRate >= 10).AssertTrue(
+			$"Expected at least 10 ticks at fast rate (30ms) within 1.5s, but got {ticksAtFastRate}");
 	}
 
 	[TestMethod]
@@ -347,11 +343,13 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(30));
 
 		var counterAfterRestart = counter;
-		await Task.Delay(200, CancellationToken);
+		var sw = System.Diagnostics.Stopwatch.StartNew();
+		while ((counter - counterAfterRestart) < 10 && sw.Elapsed < TimeSpan.FromSeconds(1.5))
+			await Task.Delay(10, CancellationToken);
 
 		var ticksAfterRestart = counter - counterAfterRestart;
-		(ticksAfterRestart >= 3).AssertTrue(
-			$"Expected at least 3 ticks with new fast interval, but got {ticksAfterRestart}");
+		(ticksAfterRestart >= 10).AssertTrue(
+			$"Expected at least 10 ticks with new fast interval within 1.5s, but got {ticksAfterRestart}");
 	}
 
 	[TestMethod]
@@ -423,10 +421,10 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
 		var sw = System.Diagnostics.Stopwatch.StartNew();
-		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
+		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(5))
 			await Task.Delay(10, CancellationToken);
 
-		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter}");
+		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter} after {sw.ElapsedMilliseconds}ms");
 	}
 
 	[TestMethod]

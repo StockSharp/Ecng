@@ -72,56 +72,56 @@ public class DelegateTests : BaseTestClass
 
 #pragma warning disable CS0618 // Type or member is obsolete
 	[TestMethod]
-	public void DoAsync_ExecutesActionAsynchronously()
+	public async Task DoAsync_ExecutesActionAsynchronously()
 	{
 		// Arrange
 		var executed = false;
 		Exception caughtError = null;
-		var waitHandle = new ManualResetEvent(false);
+		var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		Action action = () =>
 		{
 			executed = true;
-			waitHandle.Set();
+			tcs.TrySetResult();
 		};
 
 		Action<Exception> errorHandler = ex =>
 		{
 			caughtError = ex;
-			waitHandle.Set();
+			tcs.TrySetResult();
 		};
 
 		// Act
 		action.DoAsync(errorHandler);
-		var signaled = waitHandle.WaitOne(TimeSpan.FromSeconds(5));
+		var completed = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(5).Delay(CancellationToken));
 
 		// Assert
-		signaled.AssertTrue();
+		(completed == tcs.Task).AssertTrue();
 		executed.AssertTrue();
 		caughtError.AssertNull();
 	}
 
 	[TestMethod]
-	public void DoAsync_CatchesExceptionAndCallsErrorHandler()
+	public async Task DoAsync_CatchesExceptionAndCallsErrorHandler()
 	{
 		// Arrange
 		var expectedException = new InvalidOperationException("Async test error");
 		Exception caughtError = null;
-		var waitHandle = new ManualResetEvent(false);
+		var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		Action action = () => throw expectedException;
 		Action<Exception> errorHandler = ex =>
 		{
 			caughtError = ex;
-			waitHandle.Set();
+			tcs.TrySetResult();
 		};
 
 		// Act
 		action.DoAsync(errorHandler);
-		var signaled = waitHandle.WaitOne(TimeSpan.FromSeconds(5));
+		var completed = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(5).Delay(CancellationToken));
 
 		// Assert
-		signaled.AssertTrue();
+		(completed == tcs.Task).AssertTrue();
 		caughtError.AssertNotNull();
 		caughtError.AssertSame(expectedException);
 	}

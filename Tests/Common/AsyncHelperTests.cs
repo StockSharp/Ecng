@@ -83,8 +83,12 @@ public class AsyncHelperTests : BaseTestClass
 	{
 		using var cts = TimeSpan.FromMilliseconds(50).CreateTimeout();
 		cts.Token.IsCancellationRequested.AssertFalse();
-		await Task.Delay(100, CancellationToken);
-		cts.Token.IsCancellationRequested.AssertTrue();
+		var sw = System.Diagnostics.Stopwatch.StartNew();
+
+		while (!cts.Token.IsCancellationRequested && sw.Elapsed < TimeSpan.FromSeconds(2))
+			await Task.Delay(10, CancellationToken);
+
+		cts.Token.IsCancellationRequested.AssertTrue($"Expected token cancellation within 2s, but was not cancelled after {sw.ElapsedMilliseconds}ms.");
 	}
 
 	[TestMethod]

@@ -3,6 +3,8 @@
 [TestClass]
 public class TimeHelperTests : BaseTestClass
 {
+	private static readonly Lock _nowOffsetSync = new();
+
 	[TestMethod]
 	public void Microseconds()
 	{
@@ -120,52 +122,67 @@ public class TimeHelperTests : BaseTestClass
 	[TestMethod]
 	public void Now_IsUtcAndCloseToUtcNow()
 	{
-		var prevOffset = TimeHelper.NowOffset;
-
-		try
+		using (_nowOffsetSync.EnterScope())
 		{
-			TimeHelper.NowOffset = TimeSpan.Zero;
+			var prevOffset = TimeHelper.NowOffset;
 
-			var before = DateTime.UtcNow;
-			var now = TimeHelper.Now;
-			var after = DateTime.UtcNow;
+			try
+			{
+				TimeHelper.NowOffset = TimeSpan.Zero;
 
-			now.Kind.AssertEqual(DateTimeKind.Utc, $"Expected TimeHelper.Now.Kind to be Utc, but was {now.Kind}");
+				var before = DateTime.UtcNow;
+				var now = TimeHelper.Now;
+				var after = DateTime.UtcNow;
 
-			var afterPlusOne = after.AddSeconds(1);
-			(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
-			(now >= before.AddSeconds(-1)).AssertTrue($"now={now} should be >={before.AddSeconds(-1)}");
-		}
-		finally
-		{
-			TimeHelper.NowOffset = prevOffset;
+				now.Kind.AssertEqual(DateTimeKind.Utc, $"Expected TimeHelper.Now.Kind to be Utc, but was {now.Kind}");
+
+				var afterPlusOne = after.AddSeconds(1);
+				(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
+				(now >= before.AddSeconds(-1)).AssertTrue($"now={now} should be >={before.AddSeconds(-1)}");
+			}
+			finally
+			{
+				TimeHelper.NowOffset = prevOffset;
+			}
 		}
 	}
+
 	[TestMethod]
 	public void NowAndNowOffset()
 	{
-		// Test that Now returns current time
-		var before = DateTime.UtcNow;
-		var now = TimeHelper.Now;
-		var after = DateTime.UtcNow;
+		using (_nowOffsetSync.EnterScope())
+		{
+			var prevOffset = TimeHelper.NowOffset;
 
-		//(now >= before).AssertTrue();
-		var afterPlusOne = after.AddSeconds(1);
-		(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
+			try
+			{
+				TimeHelper.NowOffset = TimeSpan.Zero;
 
-		// Test NowOffset setter
-		var offset = TimeSpan.FromHours(3);
-		TimeHelper.NowOffset = offset;
-		var nowWithOffset = TimeHelper.Now;
-		var expectedMin = DateTime.UtcNow + offset;
-		var expectedMax = DateTime.UtcNow + offset + TimeSpan.FromSeconds(1);
+				// Test that Now returns current time
+				var before = DateTime.UtcNow;
+				var now = TimeHelper.Now;
+				var after = DateTime.UtcNow;
 
-		var minMinusOne = expectedMin.AddSeconds(-1);
-		(nowWithOffset >= minMinusOne).AssertTrue($"nowWithOffset={nowWithOffset} should be >={minMinusOne}");
-		(nowWithOffset <= expectedMax).AssertTrue($"nowWithOffset={nowWithOffset} should be <={expectedMax}");
+				//(now >= before).AssertTrue();
+				var afterPlusOne = after.AddSeconds(1);
+				(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
 
-		// Reset offset
-		TimeHelper.NowOffset = TimeSpan.Zero;
+				// Test NowOffset setter
+				var offset = TimeSpan.FromHours(3);
+				TimeHelper.NowOffset = offset;
+				var nowWithOffset = TimeHelper.Now;
+				var expectedMin = DateTime.UtcNow + offset;
+				var expectedMax = DateTime.UtcNow + offset + TimeSpan.FromSeconds(1);
+
+				var minMinusOne = expectedMin.AddSeconds(-1);
+				(nowWithOffset >= minMinusOne).AssertTrue($"nowWithOffset={nowWithOffset} should be >={minMinusOne}");
+				(nowWithOffset <= expectedMax).AssertTrue($"nowWithOffset={nowWithOffset} should be <={expectedMax}");
+			}
+			finally
+			{
+				TimeHelper.NowOffset = prevOffset;
+			}
+		}
 	}
 
 	[TestMethod]
@@ -178,13 +195,20 @@ public class TimeHelperTests : BaseTestClass
 	[TestMethod]
 	public void TimeZoneOffsetTest()
 	{
-		var original = TimeHelper.TimeZoneOffset;
+		using (_nowOffsetSync.EnterScope())
+		{
+			var original = TimeHelper.TimeZoneOffset;
 
-		TimeHelper.TimeZoneOffset = TimeSpan.FromHours(5);
-		TimeHelper.TimeZoneOffset.AssertEqual(TimeSpan.FromHours(5));
-
-		// Reset to original
-		TimeHelper.TimeZoneOffset = original;
+			try
+			{
+				TimeHelper.TimeZoneOffset = TimeSpan.FromHours(5);
+				TimeHelper.TimeZoneOffset.AssertEqual(TimeSpan.FromHours(5));
+			}
+			finally
+			{
+				TimeHelper.TimeZoneOffset = original;
+			}
+		}
 	}
 
 	[TestMethod]
@@ -941,38 +965,55 @@ public class TimeHelperTests : BaseTestClass
 	[TestMethod]
 	public void Now_ShouldReturnCurrentTime()
 	{
-		var before = DateTime.UtcNow;
-		var now = TimeHelper.Now;
-		var after = DateTime.UtcNow;
+		using (_nowOffsetSync.EnterScope())
+		{
+			var prevOffset = TimeHelper.NowOffset;
 
-		// Now should be between before and after (with some tolerance)
-		var beforeMinusOne = before.AddSeconds(-1);
-		(now >= beforeMinusOne).AssertTrue($"now={now} should be >={beforeMinusOne}");
-		var afterPlusOne = after.AddSeconds(1);
-		(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
+			try
+			{
+				TimeHelper.NowOffset = TimeSpan.Zero;
+
+				var before = DateTime.UtcNow;
+				var now = TimeHelper.Now;
+				var after = DateTime.UtcNow;
+
+				// Now should be between before and after (with some tolerance)
+				var beforeMinusOne = before.AddSeconds(-1);
+				(now >= beforeMinusOne).AssertTrue($"now={now} should be >={beforeMinusOne}");
+				var afterPlusOne = after.AddSeconds(1);
+				(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
+			}
+			finally
+			{
+				TimeHelper.NowOffset = prevOffset;
+			}
+		}
 	}
 
 	[TestMethod]
 	public void NowOffset_WhenSet_ShouldOffsetNowProperty()
 	{
-		var originalOffset = TimeHelper.NowOffset;
-
-		try
+		using (_nowOffsetSync.EnterScope())
 		{
-			// Set 5 hour offset
-			TimeHelper.NowOffset = TimeSpan.FromHours(5);
+			var originalOffset = TimeHelper.NowOffset;
 
-			var utcNow = DateTime.UtcNow;
-			var now = TimeHelper.Now;
+			try
+			{
+				// Set 5 hour offset
+				TimeHelper.NowOffset = TimeSpan.FromHours(5);
 
-			// Now should be approximately UTC + 5 hours
-			var expected = utcNow.AddHours(5);
-			var diff = Math.Abs((now - expected).TotalSeconds);
-			(diff < 2).AssertTrue(); // Within 2 seconds tolerance
-		}
-		finally
-		{
-			TimeHelper.NowOffset = originalOffset;
+				var utcNow = DateTime.UtcNow;
+				var now = TimeHelper.Now;
+
+				// Now should be approximately UTC + 5 hours
+				var expected = utcNow.AddHours(5);
+				var diff = Math.Abs((now - expected).TotalSeconds);
+				(diff < 2).AssertTrue(); // Within 2 seconds tolerance
+			}
+			finally
+			{
+				TimeHelper.NowOffset = originalOffset;
+			}
 		}
 	}
 
@@ -988,17 +1029,20 @@ public class TimeHelperTests : BaseTestClass
 	[TestMethod]
 	public void TimeZoneOffset_CanGetAndSet()
 	{
-		var original = TimeHelper.TimeZoneOffset;
+		using (_nowOffsetSync.EnterScope())
+		{
+			var original = TimeHelper.TimeZoneOffset;
 
-		try
-		{
-			var newOffset = TimeSpan.FromHours(8);
-			TimeHelper.TimeZoneOffset = newOffset;
-			TimeHelper.TimeZoneOffset.AssertEqual(newOffset);
-		}
-		finally
-		{
-			TimeHelper.TimeZoneOffset = original;
+			try
+			{
+				var newOffset = TimeSpan.FromHours(8);
+				TimeHelper.TimeZoneOffset = newOffset;
+				TimeHelper.TimeZoneOffset.AssertEqual(newOffset);
+			}
+			finally
+			{
+				TimeHelper.TimeZoneOffset = original;
+			}
 		}
 	}
 
