@@ -1,21 +1,136 @@
 namespace Ecng.Tests.Net;
 
 using System.Collections.Concurrent;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Diagnostics;
 
 using Ecng.ComponentModel;
 using Ecng.Net;
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
 [TestClass]
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
 {
-	protected override bool SkipInGitHubActions => true;
-	protected override string SkipInGitHubActionsReason => "Public WebSocket echo endpoint is flaky in CI (HTTP 429).";
-
 	private static Action<string, object> Log(string tag)
-		=> (fmt, arg) => System.Diagnostics.Debug.WriteLine($"[{tag}] " + string.Format(fmt ?? string.Empty, arg));
+		=> (fmt, arg) => Debug.WriteLine($"[{tag}] " + string.Format(fmt ?? string.Empty, arg));
+
+	private sealed class LocalWebSocketEchoServer(IHost host, string url) : IAsyncDisposable
+	{
+		private readonly IHost _host = host ?? throw new ArgumentNullException(nameof(host));
+
+        public string Url { get; } = url.ThrowIfEmpty(nameof(url));
+
+        public static async Task<LocalWebSocketEchoServer> StartAsync(CancellationToken cancellationToken = default)
+		{
+			var builder = WebApplication.CreateBuilder();
+			builder.Logging.ClearProviders();
+
+			builder.WebHost.ConfigureKestrel(options => options.Listen(System.Net.IPAddress.Loopback, 0));
+
+			var app = builder.Build();
+
+			app.UseWebSockets();
+
+			app.Map("/ws", async context =>
+			{
+				if (!context.WebSockets.IsWebSocketRequest)
+				{
+					context.Response.StatusCode = StatusCodes.Status400BadRequest;
+					return;
+				}
+
+				using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+
+				var buffer = new byte[16 * 1024];
+				var segment = new ArraySegment<byte>(buffer);
+
+				try
+				{
+					while (webSocket.State == WebSocketState.Open && !context.RequestAborted.IsCancellationRequested)
+					{
+						var result = await webSocket.ReceiveAsync(segment, context.RequestAborted);
+
+						if (result.MessageType == WebSocketMessageType.Close)
+						{
+							try
+							{
+								await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+							}
+							catch
+							{
+							}
+
+							break;
+						}
+
+						var messageType = result.MessageType;
+
+						using var ms = new MemoryStream();
+						ms.Write(buffer, 0, result.Count);
+
+						while (!result.EndOfMessage && !context.RequestAborted.IsCancellationRequested)
+						{
+							result = await webSocket.ReceiveAsync(segment, context.RequestAborted);
+							ms.Write(buffer, 0, result.Count);
+						}
+
+						var payload = ms.ToArray();
+						await webSocket.SendAsync(new ArraySegment<byte>(payload), messageType, endOfMessage: true, context.RequestAborted);
+					}
+				}
+				catch (OperationCanceledException)
+				{
+				}
+				catch (WebSocketException)
+				{
+				}
+				catch (IOException)
+				{
+				}
+			});
+
+			await app.StartAsync(cancellationToken);
+
+			var addresses = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+			addresses.AssertNotNull();
+
+			var httpAddress = addresses.Addresses.FirstOrDefault();
+			httpAddress.IsEmpty().AssertFalse("Failed to get local server address.");
+
+			var httpUri = new Uri(httpAddress, UriKind.Absolute);
+			var wsUri = new UriBuilder(httpUri)
+			{
+				Scheme = "ws",
+				Port = httpUri.Port,
+				Path = "/ws",
+			}.Uri.ToString();
+
+			return new LocalWebSocketEchoServer(app, wsUri);
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			try
+			{
+				await _host.StopAsync(TimeSpan.FromSeconds(5));
+			}
+			catch
+			{
+			}
+
+			_host.Dispose();
+		}
+	}
 
 	private static async Task<bool> TrySoftCloseAsync(WebSocketClient client)
 	{
@@ -30,26 +145,17 @@ public class WebSocketClientTests : BaseTestClass
 		}
 	}
 
-	private static void HardAbort(WebSocketClient client)
-	{
-		var wsField = typeof(WebSocketClient).GetField("_ws", BindingFlags.NonPublic | BindingFlags.Instance);
-		wsField.AssertNotNull();
-		var ws = wsField.GetValue(client) as System.Net.WebSockets.ClientWebSocket;
-		ws.AssertNotNull();
-		ws.Abort();
-	}
-
 	[TestMethod]
 	[Timeout(60000, CooperativeCancellation = true)]
 	public async Task Connect_Send_Receive_Echo()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var payload = $"echo-test-{Guid.NewGuid():N}";
 
 		var receivedTcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 		var errorTcs = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
 		using var client = new WebSocketClient(
 			url,
@@ -91,11 +197,11 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(90000, CooperativeCancellation = true)]
 	public async Task Init_And_PostConnect_Are_Called_With_Correct_Flags()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var initCount = 0;
 		var postConnectFlags = new List<bool>();
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
 		using var client = new WebSocketClient(
 			url,
@@ -129,7 +235,7 @@ public class WebSocketClientTests : BaseTestClass
 		client.IsConnected.AssertTrue();
 
 		if (!await TrySoftCloseAsync(client))
-			HardAbort(client);
+			client.Abort();
 
 		// Wait until PostConnect fired at least twice or timeout
 		await Task.WhenAny(post2.Task, TimeSpan.FromSeconds(30).Delay(cts.Token));
@@ -146,10 +252,10 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(60000, CooperativeCancellation = true)]
 	public async Task Disconnect_Raises_Disconnecting_Then_Disconnected()
 	{
-		var url = "wss://echo.websocket.org";
-		var states = new ConcurrentQueue<ConnectionStates>();
-
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+		var states = new ConcurrentQueue<ConnectionStates>();
 
 		using var client = new WebSocketClient(
 			url,
@@ -181,11 +287,12 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(60000, CooperativeCancellation = true)]
 	public async Task NegativeSubId_Unsubscribe_Removes_From_Resend()
 	{
-		var url = "wss://echo.websocket.org";
-		var payload = $"unsub-{Guid.NewGuid():N}";
-		var occurrences = 0;
-
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+		var subscribePayload = $"sub-{Guid.NewGuid():N}";
+		var unsubscribePayload = $"unsub-{Guid.NewGuid():N}";
+		var occurrences = 0;
 
 		using var client = new WebSocketClient(
 			url,
@@ -193,7 +300,7 @@ public class WebSocketClientTests : BaseTestClass
 			_ => { },
 			async (self, msg, token) =>
 			{
-				if (msg.AsString() == payload)
+				if (msg.AsString() == subscribePayload)
 					Interlocked.Increment(ref occurrences);
 				await ValueTask.CompletedTask;
 			},
@@ -208,14 +315,25 @@ public class WebSocketClientTests : BaseTestClass
 		client.IsConnected.AssertTrue();
 
 		// Register
-		await client.SendAsync(payload, cts.Token, subId: 100);
+		await client.SendAsync(subscribePayload, cts.Token, subId: 100);
+
+		var sw0 = Stopwatch.StartNew();
+		while (sw0.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 1)
+			await Task.Delay(50, cts.Token);
+		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
+
 		// Unregister using negative subId
-		await client.SendAsync(payload, cts.Token, subId: -100);
+		await client.SendAsync(unsubscribePayload, cts.Token, subId: -100);
 		// Trigger resend explicitly: should not increase occurrences further
 		var before = Volatile.Read(ref occurrences);
 		await client.ResendAsync(cts.Token);
-		var after = Volatile.Read(ref occurrences);
-		after.AreEqual(before, "Unsubscribe via negative subId did not remove entry from resend queue.");
+
+		var sw = Stopwatch.StartNew();
+		while (sw.Elapsed < TimeSpan.FromSeconds(2))
+		{
+			await Task.Delay(100, cts.Token);
+			(Volatile.Read(ref occurrences) == before).AssertTrue("Unsubscribe via negative subId did not remove entry from resend queue.");
+		}
 
 		client.Disconnect();
 	}
@@ -224,13 +342,13 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(60000, CooperativeCancellation = true)]
 	public async Task PreProcess2_Transforms_Incoming_Message()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var marker = Guid.NewGuid().ToString("N");
 		var original = $"lower_case_payload:{marker}";
 		var transformed = original.ToUpperInvariant();
 		var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
 
 		using var client = new WebSocketClient(
 			url,
@@ -272,12 +390,12 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(90000, CooperativeCancellation = true)]
 	public async Task Resend_Timing_Respects_Timeouts()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(80));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var payload1 = $"t1-{Guid.NewGuid():N}";
 		var payload2 = $"t2-{Guid.NewGuid():N}";
 		var preTimes = new List<DateTime>();
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(80));
 
 		using var client = new WebSocketClient(
 			url,
@@ -302,7 +420,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		// Force reconnect to trigger auto-resend
 		if (!await TrySoftCloseAsync(client))
-			HardAbort(client);
+			client.Abort();
 
 		// Wait until two pre-callback timestamps are recorded
 		var sw = Stopwatch.StartNew();
@@ -322,7 +440,7 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(30000, CooperativeCancellation = true)]
 	public async Task Connect_Cancellation_Throws_And_No_Leak()
 	{
-		var url = "wss://echo.websocket.org";
+		var url = "ws://127.0.0.1:1/ws";
 		using var client = new WebSocketClient(
 			url,
 			_ => { },
@@ -343,9 +461,9 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(60000, CooperativeCancellation = true)]
 	public async Task Disconnect_Prevents_Sending()
 	{
-		var url = "wss://echo.websocket.org";
-
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 
 		using var client = new WebSocketClient(
 			url,
@@ -373,12 +491,12 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(90000, CooperativeCancellation = true)]
 	public async Task Streaming_SendsAndReceives_Batch()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var batch = 20;
 		var prefix = $"stream-{Guid.NewGuid():N}-";
 		var received = 0;
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
 		using var client = new WebSocketClient(
 			url,
@@ -403,7 +521,7 @@ public class WebSocketClientTests : BaseTestClass
 		for (var i = 0; i < batch; i++)
 			await client.SendAsync(prefix + i, cts.Token);
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (sw.Elapsed < TimeSpan.FromSeconds(20) && Volatile.Read(ref received) < batch)
 			await Task.Delay(200, cts.Token);
 
@@ -416,12 +534,12 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task Resend_Stores_And_Removes_Commands()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var subId = 42L;
 		var payload = $"resend-{Guid.NewGuid():N}";
 		var occurrences = 0;
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
 
 		using var client = new WebSocketClient(
 			url,
@@ -447,7 +565,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		await client.SendAsync(payload, cts.Token, subId: subId);
 
-		var sw0 = System.Diagnostics.Stopwatch.StartNew();
+		var sw0 = Stopwatch.StartNew();
 		while (sw0.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 1)
 			await Task.Delay(100, cts.Token);
 		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
@@ -478,11 +596,11 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task Reconnect_Resends_Stored_Commands_IfSupported()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var payload = $"reconnect-{Guid.NewGuid():N}";
 		var occurrences = 0;
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
 
 		using var client = new WebSocketClient(
 			url,
@@ -509,7 +627,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		await client.SendAsync(payload, cts.Token, subId: 1);
 
-		var sw0 = System.Diagnostics.Stopwatch.StartNew();
+		var sw0 = Stopwatch.StartNew();
 		while (sw0.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 1)
 			await Task.Delay(100, cts.Token);
 		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
@@ -521,7 +639,7 @@ public class WebSocketClientTests : BaseTestClass
 			return;
 		}
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (sw.Elapsed < TimeSpan.FromSeconds(40) && Volatile.Read(ref occurrences) < 2)
 			await Task.Delay(200, cts.Token);
 
@@ -534,11 +652,11 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task HardAbort_Forces_Reconnect_And_Resend()
 	{
-		var url = "wss://echo.websocket.org";
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 		var payload = $"abort-{Guid.NewGuid():N}";
 		var occurrences = 0;
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
 
 		var states = new ConcurrentQueue<ConnectionStates>();
 
@@ -567,22 +685,18 @@ public class WebSocketClientTests : BaseTestClass
 
 		await client.SendAsync(payload, cts.Token, subId: 7);
 
-		var sw0 = System.Diagnostics.Stopwatch.StartNew();
+		var sw0 = Stopwatch.StartNew();
 		while (sw0.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 1)
 			await Task.Delay(100, cts.Token);
 		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
 
-		// Force a hard abort using reflection to reach the underlying ClientWebSocket
-		var wsField = typeof(WebSocketClient).GetField("_ws", BindingFlags.NonPublic | BindingFlags.Instance);
-		wsField.AssertNotNull();
-		var ws = wsField.GetValue(client) as System.Net.WebSockets.ClientWebSocket;
-		ws.AssertNotNull();
-		ws.Abort();
+		// Force a hard
+		client.Abort();
 
 		// Wait for state transitions: Reconnecting -> Restored
 		var sawReconnecting = false;
 		var sawRestored = false;
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (sw.Elapsed < TimeSpan.FromSeconds(40) && !(sawReconnecting && sawRestored))
 		{
 			while (states.TryDequeue(out var st))
@@ -598,7 +712,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		// Ensure resend occurred. To be robust, also trigger an explicit resend
 		await client.ResendAsync(cts.Token);
-		var waitSw = System.Diagnostics.Stopwatch.StartNew();
+		var waitSw = Stopwatch.StartNew();
 		while (waitSw.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 2)
 			await Task.Delay(100, cts.Token);
 		(Volatile.Read(ref occurrences) >= 2).AssertTrue("Resent payload after hard abort was not received.");
@@ -610,10 +724,10 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task States_Sequence_With_Timestamps()
 	{
-		var url = "wss://echo.websocket.org";
-		var states = new ConcurrentQueue<(ConnectionStates state, DateTime ts)>();
-
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+		var states = new ConcurrentQueue<(ConnectionStates state, DateTime ts)>();
 
 		using var client = new WebSocketClient(
 			url,
@@ -632,12 +746,12 @@ public class WebSocketClientTests : BaseTestClass
 
 		// Force reconnect via Close opcode if supported, else hard abort
 		if (!await TrySoftCloseAsync(client))
-			HardAbort(client);
+			client.Abort();
 
 		// Collect all states while waiting for Restored
 		var list = new List<(ConnectionStates, DateTime)>();
 		var sawRestored = false;
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (sw.Elapsed < TimeSpan.FromSeconds(40) && !sawRestored)
 		{
 			while (states.TryDequeue(out var item))
@@ -684,11 +798,12 @@ public class WebSocketClientTests : BaseTestClass
 	[Timeout(120000, CooperativeCancellation = true)]
 	public async Task Reconnect_DoesNotResend_When_AutoResend_Disabled()
 	{
-		var url = "wss://echo.websocket.org";
 		var payload = $"no-resend-{Guid.NewGuid():N}";
 		var occurrences = 0;
 
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
 
 		using var client = new WebSocketClient(
 			url,
@@ -716,17 +831,17 @@ public class WebSocketClientTests : BaseTestClass
 
 		await client.SendAsync(payload, cts.Token, subId: 99);
 
-		var sw0 = System.Diagnostics.Stopwatch.StartNew();
+		var sw0 = Stopwatch.StartNew();
 		while (sw0.Elapsed < TimeSpan.FromSeconds(10) && Volatile.Read(ref occurrences) < 1)
 			await Task.Delay(100, cts.Token);
 		(Volatile.Read(ref occurrences) >= 1).AssertTrue("Initial echo not received.");
 
 		// Force reconnect
 		if (!await TrySoftCloseAsync(client))
-			HardAbort(client);
+			client.Abort();
 
 		// After reconnect, occurrences should remain the same since auto-resend is disabled
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		var before = Volatile.Read(ref occurrences);
 		while (sw.Elapsed < TimeSpan.FromSeconds(30))
 		{
@@ -770,7 +885,6 @@ public class WebSocketClientTests : BaseTestClass
 		{
 			if (predicate())
 				return true;
-			while (q.TryDequeue(out _)) { }
 			await Task.Delay(100, token);
 		}
 		return predicate();
