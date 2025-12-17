@@ -780,17 +780,28 @@ public static class AsyncEnumerable
 	/// <typeparam name="TResult">The type of the value returned by selector.</typeparam>
 	/// <param name="source">A sequence of values to invoke a transform function on.</param>
 	/// <param name="selector">A transform function to apply to each element.</param>
-	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{T}"/> whose elements are the result of invoking the transform function on each element of source.</returns>
-	public static async IAsyncEnumerable<TResult> Select<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, TResult> selector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	public static IAsyncEnumerable<TResult> Select<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, TResult> selector)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
 		if (selector is null)
 			throw new ArgumentNullException(nameof(selector));
 
-		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
-			yield return selector(item);
+		return
+			source == EmptyAsyncEnumerable<TResult>.Instance ? Empty<TResult>() :
+			Impl(source, selector, default);
+
+		static async IAsyncEnumerable<TResult> Impl(
+				IAsyncEnumerable<TSource> source,
+				Func<TSource, TResult> selector,
+				[EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			await foreach (var item in source.WithCancellation(cancellationToken))
+			{
+				yield return selector(item);
+			}
+		}
 	}
 
 	/// <summary>
