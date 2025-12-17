@@ -82,7 +82,7 @@ public class MailHelperTests : BaseTestClass
 
 		// QuotedPrintable encoding
 		using var ms2 = new MemoryStream(data);
-		var attQ = MailHelper.CreateAttachment(ms2, "���_�����_�_��������.txt", System.Net.Mime.TransferEncoding.QuotedPrintable);
+		var attQ = MailHelper.CreateAttachment(ms2, "имя_файла_с_юникодом.txt", TransferEncoding.QuotedPrintable);
 		attQ.AssertNotNull();
 		attQ.TransferEncoding.AssertEqual(TransferEncoding.QuotedPrintable);
 		attQ.NameEncoding.WebName.AssertEqual(Encoding.GetEncoding("ISO-8859-1").WebName);
@@ -112,7 +112,7 @@ public class MailHelperTests : BaseTestClass
 	{
 		using var ms = new MemoryStream("x".UTF8());
 		// SevenBit is not supported by CreateAttachment switch -> should throw
-		ThrowsExactly<ArgumentOutOfRangeException>(() => MailHelper.CreateAttachment(ms, "a.txt", System.Net.Mime.TransferEncoding.SevenBit));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => MailHelper.CreateAttachment(ms, "a.txt", TransferEncoding.SevenBit));
 	}
 
 	[TestMethod]
@@ -121,7 +121,7 @@ public class MailHelperTests : BaseTestClass
 		// Create a long display name to force splitting into multiple encoded parts.
 		var longName = new string('a', 100) + ".txt";
 		using var ms = new MemoryStream("x".UTF8());
-		var att = MailHelper.CreateAttachment(ms, longName, System.Net.Mime.TransferEncoding.Base64);
+		var att = MailHelper.CreateAttachment(ms, longName, TransferEncoding.Base64);
 		att.AssertNotNull();
 		// Encoded name should contain multiple soft breaks ("?=") because of splitting.
 		var occurrences = att.Name.Split(["?="], StringSplitOptions.None).Length - 1;
