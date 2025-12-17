@@ -508,7 +508,7 @@ public static class AsyncHelper
 
 		cancellationToken.ThrowIfCancellationRequested();
 
-		await foreach (var item in source)
+		await foreach (var item in source.WithCancellation(cancellationToken))
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			yield return item;
