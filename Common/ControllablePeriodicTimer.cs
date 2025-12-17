@@ -59,46 +59,77 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 
 			_interval = interval;
 			_cts = new();
-
-			var token = _cts.Token;
-
-			_timer = new(interval);
+			var cts = _cts;
+			var token = cts.Token;
 
 			_runningTask = Task.Run(async () =>
 			{
+				PeriodicTimer timer = null;
+
+				async Task<bool> TryInvokeHandler()
+				{
+					if (token.IsCancellationRequested)
+						return false;
+
+					try
+					{
+						await _handler().NoWait();
+						return true;
+					}
+					catch when (token.IsCancellationRequested)
+					{
+						return false;
+					}
+					catch (Exception ex)
+					{
+						Trace.WriteLine(ex);
+						// Ignore handler exceptions - don't stop timer
+						return true;
+					}
+				}
+
 				try
 				{
-					// Wait for initial delay if specified
 					if (start.HasValue && start.Value > TimeSpan.Zero)
 						await start.Value.Delay(token).NoWait();
 
+					timer = new(interval);
+
+					using (_lock.EnterScope())
+					{
+						if (!ReferenceEquals(_cts, cts))
+						{
+							timer.Dispose();
+							return;
+						}
+
+						_timer = timer;
+					}
+
+					if (start.HasValue && start.Value > TimeSpan.Zero)
+					{
+						if (!await TryInvokeHandler())
+							return;
+					}
+
 					while (!token.IsCancellationRequested)
 					{
-						// Wait for the next tick first
 						try
 						{
-							if (!await _timer.WaitForNextTickAsync(token).NoWait())
+							if (!await timer.WaitForNextTickAsync(token).NoWait())
 								break;
 						}
 						catch (OperationCanceledException)
 						{
 							break;
 						}
-
-						// Then execute handler
-						try
-						{
-							await _handler().NoWait();
-						}
-						catch when (token.IsCancellationRequested)
+						catch (ObjectDisposedException)
 						{
 							break;
 						}
-						catch (Exception ex)
-						{
-							Trace.WriteLine(ex);
-							// Ignore handler exceptions - don't stop timer
-						}
+
+						if (!await TryInvokeHandler())
+							break;
 					}
 				}
 				catch (OperationCanceledException)
