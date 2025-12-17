@@ -818,4 +818,204 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Issue Tests - Expected Behavior (will fail until code is fixed)
+
+	/// <summary>
+	/// Decorator over IFileSystem that allows injecting faults for testing.
+	/// </summary>
+	private class FaultyFileSystem(IFileSystem inner) : IFileSystem
+	{
+		public Func<string, Exception> OnMoveFile { get; set; }
+
+		public bool FileExists(string path) => inner.FileExists(path);
+		public bool DirectoryExists(string path) => inner.DirectoryExists(path);
+		public Stream OpenRead(string path) => inner.OpenRead(path);
+		public Stream OpenWrite(string path, bool append = false) => inner.OpenWrite(path, append);
+		public void CreateDirectory(string path) => inner.CreateDirectory(path);
+		public void DeleteDirectory(string path, bool recursive = false) => inner.DeleteDirectory(path, recursive);
+		public void DeleteFile(string path) => inner.DeleteFile(path);
+
+		public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
+		{
+			var ex = OnMoveFile?.Invoke(sourceFileName);
+			if (ex != null) throw ex;
+			inner.MoveFile(sourceFileName, destFileName, overwrite);
+		}
+
+		public void MoveDirectory(string sourceDirName, string destDirName) => inner.MoveDirectory(sourceDirName, destDirName);
+		public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false) => inner.CopyFile(sourceFileName, destFileName, overwrite);
+		public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateFiles(path, searchPattern, searchOption);
+		public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateDirectories(path, searchPattern, searchOption);
+		public DateTime GetCreationTimeUtc(string path) => inner.GetCreationTimeUtc(path);
+		public DateTime GetLastWriteTimeUtc(string path) => inner.GetLastWriteTimeUtc(path);
+		public long GetFileLength(string path) => inner.GetFileLength(path);
+	}
+
+	/// <summary>
+	/// When exception is thrown inside using block, original file should remain unchanged (rollback).
+	/// </summary>
+	[TestMethod]
+	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		WriteAllText(fs, target, "ORIGINAL_IMPORTANT_DATA");
+
+		try
+		{
+			using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
+			{
+				var data = "PARTIAL".UTF8();
+				tfs.Write(data, 0, data.Length);
+				throw new InvalidOperationException("Simulated crash");
+			}
+		}
+		catch (InvalidOperationException)
+		{
+		}
+
+		// Original file should be preserved on exception (rollback behavior)
+		ReadAllText(fs, target).AssertEqual("ORIGINAL_IMPORTANT_DATA");
+	}
+
+	/// <summary>
+	/// Stale .tmp file from previous crash should not affect new Append operation.
+	/// </summary>
+	[TestMethod]
+	public void Append_WithStaleTmpFile_ShouldStartFresh()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		// Leftover .tmp from previous crashed operation
+		WriteAllText(fs, tmp, "STALE_GARBAGE_");
+
+		// Target does NOT exist
+		fs.FileExists(target).AssertFalse();
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Append))
+		{
+			var data = "newdata".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		// Should be fresh file without stale garbage
+		ReadAllText(fs, target).AssertEqual("newdata");
+	}
+
+	/// <summary>
+	/// When MoveFile fails, written data should be preserved in .tmp for recovery.
+	/// </summary>
+	[TestMethod]
+	public void MoveFileFailure_ShouldPreserveTmpForRecovery()
+	{
+		var innerFs = new MemoryFileSystem();
+		var faultyFs = new FaultyFileSystem(innerFs);
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(innerFs, target, "ORIGINAL");
+		faultyFs.OnMoveFile = _ => new IOException("Disk full");
+
+		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
+		var data = "NEW_IMPORTANT_DATA".UTF8();
+		tfs.Write(data, 0, data.Length);
+
+		try
+		{
+			tfs.Dispose();
+			Fail("Should have thrown IOException");
+		}
+		catch (IOException)
+		{
+		}
+
+		// Original should be untouched
+		ReadAllText(innerFs, target).AssertEqual("ORIGINAL");
+
+		// .tmp should be preserved for manual recovery (not deleted!)
+		innerFs.FileExists(tmp).AssertTrue();
+		ReadAllText(innerFs, tmp).AssertEqual("NEW_IMPORTANT_DATA");
+	}
+
+	/// <summary>
+	/// After MoveFile failure, _disposed flag should be set so subsequent Dispose calls
+	/// don't try to do anything (not even check FileExists).
+	/// </summary>
+	[TestMethod]
+	public void MoveFileFailure_DisposedFlagShouldBeSet()
+	{
+		var innerFs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		// Track all FileExists calls on tmp
+		var fileExistsCallsOnTmp = 0;
+		var faultyFs = new TrackingFileSystem(innerFs, path =>
+		{
+			if (path == tmp) fileExistsCallsOnTmp++;
+		});
+
+		faultyFs.OnMoveFile = _ => new IOException("Error");
+
+		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
+		tfs.Write("test".UTF8(), 0, 4);
+
+		var callsBeforeFirstDispose = fileExistsCallsOnTmp;
+
+		try { tfs.Dispose(); } catch (IOException) { }
+
+		var callsAfterFirstDispose = fileExistsCallsOnTmp;
+
+		// Second Dispose - if _disposed was set correctly, no FileExists should be called
+		tfs.Dispose();
+
+		var callsAfterSecondDispose = fileExistsCallsOnTmp;
+
+		// _disposed should prevent any work in second Dispose
+		// If this fails, _disposed wasn't set on MoveFile failure
+		callsAfterSecondDispose.AssertEqual(callsAfterFirstDispose,
+			"Second Dispose should not check FileExists if _disposed was set correctly");
+	}
+
+	/// <summary>
+	/// Extended FaultyFileSystem that tracks FileExists calls.
+	/// </summary>
+	private class TrackingFileSystem(IFileSystem inner, Action<string> onFileExists) : IFileSystem
+	{
+		public Func<string, Exception> OnMoveFile { get; set; }
+
+		public bool FileExists(string path)
+		{
+			onFileExists?.Invoke(path);
+			return inner.FileExists(path);
+		}
+
+		public bool DirectoryExists(string path) => inner.DirectoryExists(path);
+		public Stream OpenRead(string path) => inner.OpenRead(path);
+		public Stream OpenWrite(string path, bool append = false) => inner.OpenWrite(path, append);
+		public void CreateDirectory(string path) => inner.CreateDirectory(path);
+		public void DeleteDirectory(string path, bool recursive = false) => inner.DeleteDirectory(path, recursive);
+		public void DeleteFile(string path) => inner.DeleteFile(path);
+
+		public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
+		{
+			var ex = OnMoveFile?.Invoke(sourceFileName);
+			if (ex != null) throw ex;
+			inner.MoveFile(sourceFileName, destFileName, overwrite);
+		}
+
+		public void MoveDirectory(string sourceDirName, string destDirName) => inner.MoveDirectory(sourceDirName, destDirName);
+		public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false) => inner.CopyFile(sourceFileName, destFileName, overwrite);
+		public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateFiles(path, searchPattern, searchOption);
+		public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateDirectories(path, searchPattern, searchOption);
+		public DateTime GetCreationTimeUtc(string path) => inner.GetCreationTimeUtc(path);
+		public DateTime GetLastWriteTimeUtc(string path) => inner.GetLastWriteTimeUtc(path);
+		public long GetFileLength(string path) => inner.GetFileLength(path);
+	}
+
+	#endregion
 }
