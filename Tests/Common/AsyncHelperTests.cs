@@ -133,7 +133,7 @@ public class AsyncHelperTests : BaseTestClass
 		var sum = 0;
 		using var cts = new CancellationTokenSource();
 
-		var timerTask = AsyncHelper.StartPeriodicTimer<int>(x => sum += x, 5, TimeSpan.FromMilliseconds(100), cts.Token);
+		var timerTask = AsyncHelper.StartPeriodicTimer(x => sum += x, 5, TimeSpan.FromMilliseconds(100), cts.Token);
 
 		await Task.Delay(350, CancellationToken);
 		cts.Cancel();

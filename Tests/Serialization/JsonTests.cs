@@ -1187,7 +1187,7 @@ public class JsonTests : BaseTestClass
 		var obj = new OB_WithStatic_Generic { Price = 1.1, Size = 2.2 };
 
 		var json = JsonConvert.SerializeObject(obj);
-		var arr = global::Newtonsoft.Json.Linq.JArray.Parse(json);
+		var arr = Newtonsoft.Json.Linq.JArray.Parse(json);
 
 		arr.Count.AssertEqual(2);
 		arr[0].ToObject<double>().AssertEqual(1.1);
@@ -1201,7 +1201,7 @@ public class JsonTests : BaseTestClass
 		var obj = new OB_WithStatic_NonGeneric { Price = 1.1, Size = 2.2 };
 
 		var json = JsonConvert.SerializeObject(obj);
-		var arr = global::Newtonsoft.Json.Linq.JArray.Parse(json);
+		var arr = Newtonsoft.Json.Linq.JArray.Parse(json);
 
 		arr.Count.AssertEqual(2);
 		arr[0].ToObject<double>().AssertEqual(1.1);

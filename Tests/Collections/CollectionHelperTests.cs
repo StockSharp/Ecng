@@ -1923,7 +1923,7 @@ public class CollectionHelperTests : BaseTestClass
 		// Act & Assert
 		ThrowsExactly<ArgumentNullException>(() =>
 		{
-			numbers.AsDuckTypedCollection<int, string>(
+			numbers.AsDuckTypedCollection(
 				n => n.ToString(),
 				null
 			);

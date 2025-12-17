@@ -191,7 +191,7 @@ public class NullableHelperTests : BaseTestClass
 
 		// Act & Assert
 		ThrowsExactly<ArgumentNullException>(() =>
-			value.Convert<string, int>(null, () => 0));
+			value.Convert(null, () => 0));
 	}
 
 	[TestMethod]
@@ -202,7 +202,7 @@ public class NullableHelperTests : BaseTestClass
 
 		// Act & Assert
 		ThrowsExactly<ArgumentNullException>(() =>
-			value.Convert<string, int>(v => v.Length, null));
+			value.Convert(v => v.Length, null));
 	}
 
 	[TestMethod]

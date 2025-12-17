@@ -276,7 +276,7 @@ public class DelegateTests : BaseTestClass
 	public void AddDelegate_CombinesTwoDelegates()
 	{
 		// Arrange
-		var results = new System.Collections.Generic.List<int>();
+		var results = new List<int>();
 		Action<int> action1 = x => results.Add(x);
 		Action<int> action2 = x => results.Add(x * 2);
 
@@ -294,7 +294,7 @@ public class DelegateTests : BaseTestClass
 	public void RemoveDelegate_RemovesDelegateFromCombined()
 	{
 		// Arrange
-		var results = new System.Collections.Generic.List<int>();
+		var results = new List<int>();
 		Action<int> action1 = x => results.Add(x);
 		Action<int> action2 = x => results.Add(x * 2);
 
@@ -376,7 +376,7 @@ public class DelegateTests : BaseTestClass
 	public void GetInvocationList_InvocationOrderIsPreserved()
 	{
 		// Arrange
-		var results = new System.Collections.Generic.List<int>();
+		var results = new List<int>();
 		Action<int> first = _ => results.Add(1);
 		Action<int> second = _ => results.Add(2);
 		var combined = first.AddDelegate(second);

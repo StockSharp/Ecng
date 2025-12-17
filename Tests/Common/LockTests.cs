@@ -6,7 +6,7 @@ public class LockTests : BaseTestClass
 	[TestMethod]
 	public void EnterExit_MutualExclusion()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 		var counter = 0;
 
 		Parallel.For(0, 1000, _ =>
@@ -21,7 +21,7 @@ public class LockTests : BaseTestClass
 	[TestMethod]
 	public void Reentrancy_SameThread()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 
 		l.Enter();
 		l.IsHeldByCurrentThread.AssertTrue();
@@ -39,7 +39,7 @@ public class LockTests : BaseTestClass
 	[TestMethod]
 	public void TryEnter_TimeoutsAndAcquisition()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 		var started = new ManualResetEventSlim();
 		var hold = new ManualResetEventSlim();
 		var acquired = false;
@@ -75,7 +75,7 @@ public class LockTests : BaseTestClass
 	[TestMethod]
 	public void EnterScope_ReleasesOnDispose()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 		using (l.EnterScope())
 		{
 			l.IsHeldByCurrentThread.AssertTrue();
@@ -94,14 +94,14 @@ public class LockTests : BaseTestClass
 	[TestMethod]
 	public void Exit_WithoutOwnership_Throws()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 		ThrowsExactly<SynchronizationLockException>(() => l.Exit());
 	}
 
 	[TestMethod]
 	public void Reentrancy_BlocksOtherThreadUntilFullExit()
 	{
-		var l = new System.Threading.Lock();
+		var l = new Lock();
 		using (l.EnterScope())
 		{
 			l.Enter(); // reenter
