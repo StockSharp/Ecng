@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Collections;
 
+using System.Collections.Concurrent;
+
 [TestClass]
 public class CollectionHelperTests : BaseTestClass
 {
@@ -1236,7 +1238,7 @@ public class CollectionHelperTests : BaseTestClass
 	public void Clear_ClearsConcurrentQueue()
 	{
 		// Arrange
-		var queue = new System.Collections.Concurrent.ConcurrentQueue<int>();
+		var queue = new ConcurrentQueue<int>();
 		queue.Enqueue(1);
 		queue.Enqueue(2);
 		queue.Enqueue(3);

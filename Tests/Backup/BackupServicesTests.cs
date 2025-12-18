@@ -1,6 +1,8 @@
 namespace Ecng.Tests.Backup;
 
 using System.IO;
+using System.Net;
+using System.Net.Http;
 
 using Ecng.Backup;
 using Ecng.Backup.Amazon;
@@ -184,7 +186,7 @@ public class BackupServicesTests : BaseTestClass
 		var entry = new BackupEntry { Name = $"publish-{Guid.NewGuid():N}.txt" };
 		var data = "hello " + Guid.NewGuid();
 
-		using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(data), writable: false))
+		using (var uploadStream = new MemoryStream(data.UTF8(), writable: false))
 			await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
 
 		try
@@ -195,10 +197,10 @@ public class BackupServicesTests : BaseTestClass
 
 			url.IsEmpty().AssertFalse();
 
-			using (var http = new System.Net.Http.HttpClient())
+			using (var http = new HttpClient())
 			{
 				var downloaded = await http.GetByteArrayAsync(url, CancellationToken);
-				System.Text.Encoding.UTF8.GetString(downloaded).AssertEqual(data);
+				downloaded.UTF8().AssertEqual(data);
 			}
 
 			await svc.UnPublishAsync(entry, CancellationToken);
@@ -322,7 +324,7 @@ public class BackupServicesTests : BaseTestClass
 		{
 			await svc.CreateFolder(folder, CancellationToken);
 
-			using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("hello " + Guid.NewGuid()), writable: false))
+			using (var uploadStream = new MemoryStream(("hello " + Guid.NewGuid()).UTF8(), writable: false))
 				await svc.UploadAsync(entry, uploadStream, _ => { }, CancellationToken);
 
 			var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
@@ -340,7 +342,7 @@ public class BackupServicesTests : BaseTestClass
 				{
 					info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
 				}
-				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.TooManyRequests or System.Net.HttpStatusCode.ServiceUnavailable)
+				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
 				{
 					await Task.Delay(500, CancellationToken);
 					continue;
@@ -370,7 +372,7 @@ public class BackupServicesTests : BaseTestClass
 				{
 					info = await api.MetaInfo.GetInfoAsync(new() { Path = fullPath }, CancellationToken);
 				}
-				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.TooManyRequests or System.Net.HttpStatusCode.ServiceUnavailable)
+				catch (YandexDisk.Client.YandexApiException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
 				{
 					await Task.Delay(500, CancellationToken);
 					continue;

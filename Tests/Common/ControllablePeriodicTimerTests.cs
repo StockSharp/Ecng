@@ -17,7 +17,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
 		// Wait for a few ticks
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -51,7 +51,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 	public async Task Start_WithInitialDelay()
 	{
 		var counter = 0;
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		var firstTickTime = TimeSpan.Zero;
 		var initialDelay = TimeSpan.FromMilliseconds(200);
 		var jitter = TimeSpan.FromMilliseconds(25);
@@ -101,7 +101,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
 		// Wait for a few ticks
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -149,9 +149,13 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Start(TimeSpan.FromMilliseconds(30));
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(30), "Initial interval should be 30ms");
 
-		await Task.Delay(150, CancellationToken);
+		var sw = Stopwatch.StartNew();
+		while (counter < 2 && sw.Elapsed < TimeSpan.FromSeconds(2))
+			await Task.Delay(10, CancellationToken);
+
 		var countAtFastRate = counter;
-		(countAtFastRate >= 2).AssertTrue($"Expected at least 2 ticks at fast rate, but was {countAtFastRate}");
+		(countAtFastRate >= 2).AssertTrue(
+			$"Expected at least 2 ticks at fast rate, but was {countAtFastRate} after {sw.ElapsedMilliseconds}ms");
 
 		// Change to slower interval
 		var newInterval = TimeSpan.FromMilliseconds(200);
@@ -201,7 +205,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.ChangeInterval(TimeSpan.FromMilliseconds(30));
 
 		var counterAfterChange = counter;
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while ((counter - counterAfterChange) < 10 && sw.Elapsed < TimeSpan.FromSeconds(1.5))
 			await Task.Delay(10, CancellationToken);
 
@@ -300,7 +304,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 2 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -343,7 +347,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(30));
 
 		var counterAfterRestart = counter;
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while ((counter - counterAfterRestart) < 10 && sw.Elapsed < TimeSpan.FromSeconds(1.5))
 			await Task.Delay(10, CancellationToken);
 
@@ -371,7 +375,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -399,7 +403,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -420,7 +424,7 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.Start(TimeSpan.FromMilliseconds(50));
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(5))
 			await Task.Delay(10, CancellationToken);
 

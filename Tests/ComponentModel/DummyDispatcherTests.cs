@@ -1,19 +1,15 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
-using System;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Ecng.ComponentModel;
-using Ecng.UnitTesting;
 
 [TestClass]
 public class DummyDispatcherTests : BaseTestClass
 {
 	private async Task WaitForAsync(Func<bool> predicate, TimeSpan timeout, string message)
 	{
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 
 		while (!predicate() && sw.Elapsed < timeout)
 			await Task.Delay(10, CancellationToken);
@@ -99,7 +95,7 @@ public class DummyDispatcherTests : BaseTestClass
 		using var sub = d.InvokePeriodically(() => Interlocked.Increment(ref counter), TimeSpan.FromMilliseconds(50));
 
 		// Wait until a few ticks arrive
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -123,7 +119,7 @@ public class DummyDispatcherTests : BaseTestClass
 		using var s1 = d.InvokePeriodically(() => Interlocked.Increment(ref c1), TimeSpan.FromMilliseconds(40));
 		using var s2 = d.InvokePeriodically(() => Interlocked.Increment(ref c2), TimeSpan.FromMilliseconds(120));
 
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while ((c1 < 3 || c2 < 2) && sw.Elapsed < TimeSpan.FromSeconds(3))
 			await Task.Delay(10, CancellationToken);
 
@@ -233,7 +229,7 @@ public class DummyDispatcherTests : BaseTestClass
 		}, TimeSpan.FromMilliseconds(50));
 
 		// Wait for multiple ticks
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 
@@ -252,7 +248,7 @@ public class DummyDispatcherTests : BaseTestClass
 		var sub = d.InvokePeriodically(() => Interlocked.Increment(ref counter), TimeSpan.FromMilliseconds(50));
 
 		// Wait for a few ticks
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);
 

@@ -83,7 +83,7 @@ public class AsyncHelperTests : BaseTestClass
 	{
 		using var cts = TimeSpan.FromMilliseconds(50).CreateTimeout();
 		cts.Token.IsCancellationRequested.AssertFalse();
-		var sw = System.Diagnostics.Stopwatch.StartNew();
+		var sw = Stopwatch.StartNew();
 
 		while (!cts.Token.IsCancellationRequested && sw.Elapsed < TimeSpan.FromSeconds(2))
 			await Task.Delay(10, CancellationToken);

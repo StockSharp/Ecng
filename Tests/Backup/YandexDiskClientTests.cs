@@ -128,7 +128,7 @@ public class YandexDiskClientTests : BaseTestClass
 		try
 		{
 			var link = await api.Files.GetUploadLinkAsync(filePath, overwrite: true, cancellationToken: CancellationToken);
-			using (var uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(data), writable: false))
+			using (var uploadStream = new MemoryStream(data.UTF8(), writable: false))
 				await api.Files.UploadAsync(link, uploadStream, CancellationToken);
 
 			var published = await api.MetaInfo.PublishFolderAsync(filePath, CancellationToken);

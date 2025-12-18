@@ -1,9 +1,9 @@
 namespace Ecng.Tests.Net;
 
 using System.Collections.Concurrent;
+using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
-using System.Diagnostics;
 
 using Ecng.ComponentModel;
 using Ecng.Net;
@@ -35,7 +35,7 @@ public class WebSocketClientTests : BaseTestClass
 			var builder = WebApplication.CreateBuilder();
 			builder.Logging.ClearProviders();
 
-			builder.WebHost.ConfigureKestrel(options => options.Listen(System.Net.IPAddress.Loopback, 0));
+			builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
 
 			var app = builder.Build();
 
