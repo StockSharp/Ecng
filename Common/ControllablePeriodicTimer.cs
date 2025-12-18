@@ -21,6 +21,35 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 	private TimeSpan _interval;
 	private readonly Lock _lock = new();
 
+	private PeriodicTimer CreateAndStoreTimer(CancellationTokenSource cts)
+	{
+		PeriodicTimer timer;
+		TimeSpan interval;
+
+		using (_lock.EnterScope())
+		{
+			if (!ReferenceEquals(_cts, cts))
+				return null;
+
+			interval = _interval;
+		}
+
+		timer = new(interval);
+
+		using (_lock.EnterScope())
+		{
+			if (!ReferenceEquals(_cts, cts))
+			{
+				timer.Dispose();
+				return null;
+			}
+
+			_timer = timer;
+		}
+
+		return timer;
+	}
+
 	/// <summary>
 	/// Gets the current interval between timer executions.
 	/// </summary>
@@ -93,18 +122,9 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 					if (start.HasValue && start.Value > TimeSpan.Zero)
 						await start.Value.Delay(token).NoWait();
 
-					timer = new(interval);
-
-					using (_lock.EnterScope())
-					{
-						if (!ReferenceEquals(_cts, cts))
-						{
-							timer.Dispose();
-							return;
-						}
-
-						_timer = timer;
-					}
+					timer = CreateAndStoreTimer(cts);
+					if (timer is null)
+						return;
 
 					if (start.HasValue && start.Value > TimeSpan.Zero)
 					{
@@ -117,7 +137,16 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 						try
 						{
 							if (!await timer.WaitForNextTickAsync(token).NoWait())
-								break;
+							{
+								if (token.IsCancellationRequested)
+									break;
+
+								timer = CreateAndStoreTimer(cts);
+								if (timer is null)
+									break;
+
+								continue;
+							}
 						}
 						catch (OperationCanceledException)
 						{
@@ -125,7 +154,14 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 						}
 						catch (ObjectDisposedException)
 						{
-							break;
+							if (token.IsCancellationRequested)
+								break;
+
+							timer = CreateAndStoreTimer(cts);
+							if (timer is null)
+								break;
+
+							continue;
 						}
 
 						if (!await TryInvokeHandler())
@@ -163,7 +199,7 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 	}
 
 	/// <summary>
-	/// Changes the interval of the running timer. The timer must be restarted for the change to take effect.
+	/// Changes the interval of the timer.
 	/// </summary>
 	/// <param name="interval">The new interval between timer executions.</param>
 	/// <returns>The ControllablePeriodicTimer instance for method chaining.</returns>
@@ -171,15 +207,10 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 	{
 		using (_lock.EnterScope())
 		{
+			_interval = interval;
+
 			if (IsRunning)
-			{
-				Stop();
-				Start(interval);
-			}
-			else
-			{
-				_interval = interval;
-			}
+				_timer?.Dispose();
 		}
 
 		return this;
