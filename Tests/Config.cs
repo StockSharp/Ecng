@@ -16,7 +16,7 @@ public static class Config
 		AttributeHelper.CacheEnabled = false;
 		ReflectionHelper.CacheEnabled = false;
 
-		_tempRoot = Path.Combine(AppContext.BaseDirectory, $"_temp_{Guid.NewGuid():N}");
+		_tempRoot = Path.Combine(AppContext.BaseDirectory, "_temp");
 		Directory.CreateDirectory(_tempRoot);
 	}
 
@@ -40,7 +40,7 @@ public static class Config
 
 	public static string GetTempPath(string folderName)
 	{
-		var path = Path.Combine(_tempRoot, folderName);
+		var path = Path.Combine(_tempRoot, Guid.NewGuid().ToString("N"), folderName);
 		Directory.CreateDirectory(path);
 		return path;
 	}
