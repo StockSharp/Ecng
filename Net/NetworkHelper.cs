@@ -892,28 +892,104 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
-	/// Determines the specified path is network.
+	/// Determines if the specified path is a UNC path (\\server\share or //server/share).
 	/// </summary>
-	/// <param name="path">Path.</param>
-	/// <returns>Check result.</returns>
+	/// <param name="path">Path to check.</param>
+	/// <returns><c>true</c> if the path is a UNC path; otherwise, <c>false</c>.</returns>
+	public static bool IsUncPath(this string path)
+	{
+		if (path.IsEmpty())
+			return false;
+
+		return path.StartsWith(@"\\") || path.StartsWith(@"//");
+	}
+
+	/// <summary>
+	/// Determines if the specified path is a URL with a scheme (http://, https://, ftp://).
+	/// </summary>
+	/// <param name="path">Path to check.</param>
+	/// <returns><c>true</c> if the path is a URL; otherwise, <c>false</c>.</returns>
+	public static bool IsUrlPath(this string path)
+	{
+		if (path.IsEmpty())
+			return false;
+
+		return path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+		       path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+		       path.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase);
+	}
+
+	/// <summary>
+	/// Determines if the specified path is a file:// URI.
+	/// </summary>
+	/// <param name="path">Path to check.</param>
+	/// <returns><c>true</c> if the path is a file:// URI; otherwise, <c>false</c>.</returns>
+	public static bool IsFileUriPath(this string path)
+	{
+		if (path.IsEmpty())
+			return false;
+
+		return path.StartsWith("file://", StringComparison.OrdinalIgnoreCase);
+	}
+
+	/// <summary>
+	/// Determines if the specified path is a WebDAV path (dav://, davs://).
+	/// </summary>
+	/// <param name="path">Path to check.</param>
+	/// <returns><c>true</c> if the path is a WebDAV path; otherwise, <c>false</c>.</returns>
+	public static bool IsWebDavPath(this string path)
+	{
+		if (path.IsEmpty())
+			return false;
+
+		return path.StartsWith("dav://", StringComparison.OrdinalIgnoreCase) ||
+		       path.StartsWith("davs://", StringComparison.OrdinalIgnoreCase);
+	}
+
+	/// <summary>
+	/// Determines if the specified string is a host:port address (e.g., 127.0.0.1:5001, localhost:5001).
+	/// </summary>
+	/// <param name="address">Address to check.</param>
+	/// <returns><c>true</c> if the string is a host:port address; otherwise, <c>false</c>.</returns>
+	public static bool IsHostPortAddress(this string address)
+	{
+		if (address.IsEmpty())
+			return false;
+
+		var colonIndex = address.LastIndexOf(':');
+
+		// No colon, or colon at the start/end
+		if (colonIndex <= 0 || colonIndex >= address.Length - 1)
+			return false;
+
+		// Exclude Windows drive paths like "C:\folder" (colon at position 1 after drive letter)
+		if (colonIndex == 1 && char.IsLetter(address[0]))
+			return false;
+
+		var portStr = address.Substring(colonIndex + 1);
+
+		// Port must be a valid number in range 1-65535
+		// Also reject if port part contains non-digits (e.g., paths like "C:\folder")
+		if (!ushort.TryParse(portStr, out var port) || port == 0)
+			return false;
+
+		return true;
+	}
+
+	/// <summary>
+	/// Determines if the specified path is a network path.
+	/// </summary>
+	/// <param name="path">Path to check.</param>
+	/// <returns><c>true</c> if the path is a network path; otherwise, <c>false</c>.</returns>
 	public static bool IsNetworkPath(this string path)
 	{
 		if (path.IsEmpty())
 			throw new ArgumentNullException(nameof(path));
 
-		if (path.Length < 3)
-			throw new ArgumentOutOfRangeException(nameof(path), path, "Wrong path.");
-
-		// UNC paths (\\server\share or //server/share)
-		if (path.StartsWith(@"\\") || path.StartsWith(@"//"))
-			return true;
-
-		// HTTP/HTTPS/FTP URLs (can be parsed as EndPoint)
-		if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-			path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
-			path.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase))
-			return true;
-
-		return false;
+		return path.IsUncPath() ||
+		       path.IsUrlPath() ||
+		       path.IsFileUriPath() ||
+		       path.IsWebDavPath() ||
+		       path.IsHostPortAddress();
 	}
 }

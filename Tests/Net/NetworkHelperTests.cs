@@ -342,8 +342,131 @@ public class NetworkHelperTests : BaseTestClass
 	[TestMethod]
 	public void IsNetworkPath_ShortPath()
 	{
-		// Paths shorter than 3 characters throw ArgumentOutOfRangeException
-		ThrowsExactly<ArgumentOutOfRangeException>(() => "C:".IsNetworkPath());
-		ThrowsExactly<ArgumentOutOfRangeException>(() => "ab".IsNetworkPath());
+		// Short paths should return false, not throw
+		"C:".IsNetworkPath().AssertFalse();
+		"ab".IsNetworkPath().AssertFalse();
+		"a".IsNetworkPath().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsNetworkPath_HostPort()
+	{
+		// IP:port addresses
+		"127.0.0.1:5001".IsNetworkPath().AssertTrue();
+		"192.168.1.1:8080".IsNetworkPath().AssertTrue();
+		"10.0.0.1:443".IsNetworkPath().AssertTrue();
+
+		// hostname:port addresses
+		"localhost:5001".IsNetworkPath().AssertTrue();
+		"example.com:80".IsNetworkPath().AssertTrue();
+		"my-server:9000".IsNetworkPath().AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsUncPath()
+	{
+		// Valid UNC paths
+		@"\\server\share".IsUncPath().AssertTrue();
+		@"\\192.168.1.1\share".IsUncPath().AssertTrue();
+		@"//server/share".IsUncPath().AssertTrue();
+
+		// Not UNC paths
+		@"C:\folder".IsUncPath().AssertFalse();
+		"http://example.com".IsUncPath().AssertFalse();
+		"localhost:5001".IsUncPath().AssertFalse();
+		string.Empty.IsUncPath().AssertFalse();
+		((string)null).IsUncPath().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsUrlPath()
+	{
+		// Valid URL paths
+		"http://example.com".IsUrlPath().AssertTrue();
+		"https://example.com/path".IsUrlPath().AssertTrue();
+		"ftp://ftp.example.com".IsUrlPath().AssertTrue();
+		"HTTP://EXAMPLE.COM".IsUrlPath().AssertTrue();
+
+		// Not URL paths
+		@"\\server\share".IsUrlPath().AssertFalse();
+		@"C:\folder".IsUrlPath().AssertFalse();
+		"localhost:5001".IsUrlPath().AssertFalse();
+		string.Empty.IsUrlPath().AssertFalse();
+		((string)null).IsUrlPath().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsHostPortAddress()
+	{
+		// Valid host:port
+		"127.0.0.1:5001".IsHostPortAddress().AssertTrue();
+		"localhost:8080".IsHostPortAddress().AssertTrue();
+		"example.com:443".IsHostPortAddress().AssertTrue();
+		"my-server:9000".IsHostPortAddress().AssertTrue();
+		"192.168.1.1:1".IsHostPortAddress().AssertTrue();
+		"host:65535".IsHostPortAddress().AssertTrue();
+
+		// Invalid - Windows paths
+		@"C:\folder".IsHostPortAddress().AssertFalse();
+		@"D:\file.txt".IsHostPortAddress().AssertFalse();
+
+		// Invalid - no port or invalid port
+		"localhost".IsHostPortAddress().AssertFalse();
+		"localhost:".IsHostPortAddress().AssertFalse();
+		":5001".IsHostPortAddress().AssertFalse();
+		"localhost:0".IsHostPortAddress().AssertFalse();
+		"localhost:99999".IsHostPortAddress().AssertFalse();
+		"localhost:abc".IsHostPortAddress().AssertFalse();
+
+		// Invalid - empty/null
+		string.Empty.IsHostPortAddress().AssertFalse();
+		((string)null).IsHostPortAddress().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsFileUriPath()
+	{
+		// Valid file:// URIs
+		"file://server/share".IsFileUriPath().AssertTrue();
+		"file:///C:/folder/file.txt".IsFileUriPath().AssertTrue();
+		"FILE://SERVER/SHARE".IsFileUriPath().AssertTrue();
+
+		// Not file:// URIs
+		@"\\server\share".IsFileUriPath().AssertFalse();
+		"http://example.com".IsFileUriPath().AssertFalse();
+		@"C:\folder".IsFileUriPath().AssertFalse();
+		string.Empty.IsFileUriPath().AssertFalse();
+		((string)null).IsFileUriPath().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsWebDavPath()
+	{
+		// Valid WebDAV paths
+		"dav://server/folder".IsWebDavPath().AssertTrue();
+		"davs://server/secure/folder".IsWebDavPath().AssertTrue();
+		"DAV://SERVER/FOLDER".IsWebDavPath().AssertTrue();
+		"DAVS://SERVER/FOLDER".IsWebDavPath().AssertTrue();
+
+		// Not WebDAV paths
+		"http://webdav.example.com".IsWebDavPath().AssertFalse();
+		"https://webdav.example.com".IsWebDavPath().AssertFalse();
+		@"\\server\share".IsWebDavPath().AssertFalse();
+		string.Empty.IsWebDavPath().AssertFalse();
+		((string)null).IsWebDavPath().AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsNetworkPath_FileUri()
+	{
+		"file://server/share".IsNetworkPath().AssertTrue();
+		"file:///C:/folder/file.txt".IsNetworkPath().AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsNetworkPath_WebDav()
+	{
+		"dav://server/folder".IsNetworkPath().AssertTrue();
+		"davs://server/secure/folder".IsNetworkPath().AssertTrue();
 	}
 }
