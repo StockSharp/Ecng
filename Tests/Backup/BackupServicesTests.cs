@@ -212,6 +212,9 @@ public class BackupServicesTests : BaseTestClass
 	[TestMethod]
 	public async Task AzureBlob_Roundtrip()
 	{
+		if (IsLocalHost)
+			Inconclusive("Azure tests are skipped on localhost.");
+
 		var s = LoadSecrets().Azure;
 		if (s?.ConnectionString.IsEmpty() != false || s.Container.IsEmpty())
 			Assert.Inconclusive("Azure secrets missing. Set BACKUP_AZURE_CONNECTION_STRING and BACKUP_AZURE_CONTAINER or provide secrets.json.");

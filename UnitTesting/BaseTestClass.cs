@@ -15,6 +15,37 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 /// </summary>
 public abstract class BaseTestClass
 {
+	private static bool? _isLocalHost;
+
+	/// <summary>
+	/// Gets a value indicating whether the tests are running on localhost (not in CI environment).
+	/// </summary>
+	protected static bool IsLocalHost
+	{
+		get
+		{
+			// Check common CI environment variables
+			_isLocalHost ??=
+				!IsEnvVarSet("CI") &&
+				!IsEnvVarSet("GITHUB_ACTIONS") &&
+				!IsEnvVarSet("GITLAB_CI") &&
+				!IsEnvVarSet("JENKINS_URL") &&
+				!IsEnvVarSet("TF_BUILD") &&
+				!IsEnvVarSet("TRAVIS") &&
+				!IsEnvVarSet("CIRCLECI") &&
+				!IsEnvVarSet("TEAMCITY_VERSION") &&
+				!IsEnvVarSet("BUILDKITE");
+
+			return _isLocalHost.Value;
+		}
+	}
+
+	private static bool IsEnvVarSet(string name)
+	{
+		var value = Environment.GetEnvironmentVariable(name);
+		return !value.IsEmpty();
+	}
+
 	/// <summary>
 	/// <see cref="TestContext"/>
 	/// </summary>
@@ -26,14 +57,14 @@ public abstract class BaseTestClass
 	protected CancellationToken CancellationToken => TestContext.CancellationToken;
 
 	/// <summary>
-	/// Skip all tests in this class when running in GitHub Actions.
+	/// Skip all tests in this class when running in CI environment.
 	/// </summary>
-	protected virtual bool SkipInGitHubActions => false;
+	protected virtual bool SkipInCI => false;
 
 	/// <summary>
-	/// Reason for skipping tests in GitHub Actions.
+	/// Reason for skipping tests in CI environment.
 	/// </summary>
-	protected virtual string SkipInGitHubActionsReason => null;
+	protected virtual string SkipInCIReason => null;
 
 	/// <summary>
 	/// Initializes the test.
@@ -41,12 +72,11 @@ public abstract class BaseTestClass
 	[TestInitialize]
 	public void BaseTestInitialize()
 	{
-		if (!SkipInGitHubActions)
+		if (!SkipInCI)
 			return;
 
-		var isGitHubActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS");
-		if (!isGitHubActions.IsEmpty() && isGitHubActions.EqualsIgnoreCase("true"))
-			Inconclusive(SkipInGitHubActionsReason ?? "Skipped in GitHub Actions.");
+		if (!IsLocalHost)
+			Inconclusive(SkipInCIReason ?? "Skipped in CI environment.");
 	}
 
 	/// <summary>
