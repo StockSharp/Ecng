@@ -165,7 +165,6 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		ThrowsExactly<ObjectDisposedException>(() => stream.Write([1], 0, 1));
 		ThrowsExactly<ObjectDisposedException>(() => { var _ = stream.Length; });
-		ThrowsExactly<ObjectDisposedException>(() => { stream.Position = 0; });
 	}
 
 	[TestMethod]
@@ -233,7 +232,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void OpenOrCreate_ExistingFile_PreservesContent()
+	public void OpenOrCreate_ExistingFile_AppendsContent()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
@@ -243,15 +242,12 @@ public class TransactionFileStreamTests : BaseTestClass
 
 			using (var tfs = new TransactionFileStream(target, FileMode.OpenOrCreate))
 			{
-				var data = "XX".UTF8();
+				var data = "-appended".UTF8();
 				tfs.Write(data, 0, data.Length);
-
-				// Truncate to match new size
-				tfs.SetLength(data.Length);
 				tfs.Commit();
 			}
 
-			ReadAllText(target).AssertEqual("XX");
+			ReadAllText(target).AssertEqual("existing-appended");
 			File.Exists(tmp).AssertFalse();
 		}
 		finally
@@ -264,25 +260,14 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Seek_UpdatesPosition()
+	public void Seek_ThrowsNotSupported()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
 		try
 		{
-			using (var tfs = new TransactionFileStream(target, FileMode.Create))
-			{
-				var data = "hello world".UTF8();
-				tfs.Write(data, 0, data.Length);
-
-				tfs.Position.AssertEqual(11);
-
-				tfs.Seek(0, SeekOrigin.Begin);
-				tfs.Position.AssertEqual(0);
-
-				tfs.Seek(5, SeekOrigin.Begin);
-				tfs.Position.AssertEqual(5);
-			}
+			using var tfs = new TransactionFileStream(target, FileMode.Create);
+			ThrowsExactly<NotSupportedException>(() => tfs.Seek(0, SeekOrigin.Begin));
 		}
 		finally
 		{
@@ -294,23 +279,33 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetLength_ChangesStreamLength()
+	public void SetLength_ThrowsNotSupported()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
 		try
 		{
-			using (var tfs = new TransactionFileStream(target, FileMode.Create))
-			{
-				var data = "hello world".UTF8();
-				tfs.Write(data, 0, data.Length);
+			using var tfs = new TransactionFileStream(target, FileMode.Create);
+			ThrowsExactly<NotSupportedException>(() => tfs.SetLength(5));
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
 
-				tfs.SetLength(5);
-				tfs.Length.AssertEqual(5);
-				tfs.Commit();
-			}
-
-			ReadAllText(target).AssertEqual("hello");
+	[TestMethod]
+	public void PositionSet_ThrowsNotSupported()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			using var tfs = new TransactionFileStream(target, FileMode.Create);
+			ThrowsExactly<NotSupportedException>(() => tfs.Position = 0);
 		}
 		finally
 		{
@@ -360,14 +355,14 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void CanSeek_ReturnsTrue()
+	public void CanSeek_ReturnsFalse()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
 		try
 		{
 			using var tfs = new TransactionFileStream(target, FileMode.Create);
-			tfs.CanSeek.AssertTrue();
+			tfs.CanSeek.AssertFalse();
 		}
 		finally
 		{
@@ -387,26 +382,6 @@ public class TransactionFileStreamTests : BaseTestClass
 		{
 			using var tfs = new TransactionFileStream(target, FileMode.Create);
 			tfs.CanWrite.AssertTrue();
-		}
-		finally
-		{
-			if (File.Exists(target))
-				File.Delete(target);
-			if (File.Exists(tmp))
-				File.Delete(tmp);
-		}
-	}
-
-	[TestMethod]
-	public void CanSeek_AfterDispose_ReturnsFalse()
-	{
-		var target = NewTempFilePath();
-		var tmp = target + ".tmp";
-		try
-		{
-			var tfs = new TransactionFileStream(target, FileMode.Create);
-			tfs.Dispose();
-			tfs.CanSeek.AssertFalse();
 		}
 		finally
 		{
@@ -505,7 +480,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_ExistingFile_PreservesContent()
+	public void Open_ExistingFile_AppendsContent()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
@@ -515,15 +490,12 @@ public class TransactionFileStreamTests : BaseTestClass
 
 			using (var tfs = new TransactionFileStream(target, FileMode.Open))
 			{
-				var data = "new".UTF8();
+				var data = "-new".UTF8();
 				tfs.Write(data, 0, data.Length);
-
-				// Truncate to match new size
-				tfs.SetLength(data.Length);
 				tfs.Commit();
 			}
 
-			ReadAllText(target).AssertEqual("new");
+			ReadAllText(target).AssertEqual("original-new");
 			File.Exists(tmp).AssertFalse();
 		}
 		finally
@@ -556,16 +528,102 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DoubleCommit_Throws()
+	public void MultipleCommits_AppendData()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			using (var tfs = new TransactionFileStream(target, FileMode.Create))
+			{
+				// First write and commit
+				tfs.Write("hello".UTF8(), 0, 5);
+				tfs.Commit();
+
+				ReadAllText(target).AssertEqual("hello");
+
+				// Second write appends and commit
+				tfs.Write(" world".UTF8(), 0, 6);
+				tfs.Commit();
+
+				ReadAllText(target).AssertEqual("hello world");
+
+				// Third write appends
+				tfs.Write("!".UTF8(), 0, 1);
+				tfs.Commit();
+
+				ReadAllText(target).AssertEqual("hello world!");
+			}
+
+			// After dispose, file should still have all committed data
+			ReadAllText(target).AssertEqual("hello world!");
+			File.Exists(tmp).AssertFalse();
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
+
+	[TestMethod]
+	public void MultipleCommits_PositionAndLengthPreserved()
 	{
 		var target = NewTempFilePath();
 		var tmp = target + ".tmp";
 		try
 		{
 			using var tfs = new TransactionFileStream(target, FileMode.Create);
-			tfs.Write("test".UTF8(), 0, 4);
+
+			tfs.Write("0123456789".UTF8(), 0, 10);
 			tfs.Commit();
-			ThrowsExactly<InvalidOperationException>(() => tfs.Commit());
+
+			// After commit, position and length preserved for appending
+			tfs.Position.AssertEqual(10);
+			tfs.Length.AssertEqual(10);
+
+			// New write appends
+			tfs.Write("ABC".UTF8(), 0, 3);
+			tfs.Commit();
+
+			ReadAllText(target).AssertEqual("0123456789ABC");
+		}
+		finally
+		{
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
+		}
+	}
+
+	[TestMethod]
+	public void MultipleCommits_RollbackUncommittedWrites()
+	{
+		var target = NewTempFilePath();
+		var tmp = target + ".tmp";
+		try
+		{
+			using (var tfs = new TransactionFileStream(target, FileMode.Create))
+			{
+				// First commit
+				tfs.Write("first".UTF8(), 0, 5);
+				tfs.Commit();
+
+				// Second commit
+				tfs.Write("-second".UTF8(), 0, 7);
+				tfs.Commit();
+
+				// Third write - NOT committed
+				tfs.Write("-garbage".UTF8(), 0, 8);
+				// No commit - this should be lost
+			}
+
+			// Should have only first two committed writes, no garbage
+			ReadAllText(target).AssertEqual("first-second");
+			File.Exists(tmp).AssertFalse();
 		}
 		finally
 		{
@@ -682,7 +740,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MemoryFs_Open_ExistingFile_PreservesAndOverwrites()
+	public void MemoryFs_Open_ExistingFile_AppendsContent()
 	{
 		var fs = new MemoryFileSystem();
 		var target = "/data/file.txt";
@@ -692,13 +750,12 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		using (var tfs = new TransactionFileStream(fs, target, FileMode.Open))
 		{
-			var data = "NEW".UTF8();
+			var data = "-NEW".UTF8();
 			tfs.Write(data, 0, data.Length);
-			tfs.SetLength(data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(fs, target).AssertEqual("NEW");
+		ReadAllText(fs, target).AssertEqual("original-NEW");
 		fs.FileExists(tmp).AssertFalse();
 	}
 
@@ -721,7 +778,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MemoryFs_OpenOrCreate_ExistingFile_PreservesContent()
+	public void MemoryFs_OpenOrCreate_ExistingFile_AppendsContent()
 	{
 		var fs = new MemoryFileSystem();
 		var target = "/data/file.txt";
@@ -731,14 +788,12 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		using (var tfs = new TransactionFileStream(fs, target, FileMode.OpenOrCreate))
 		{
-			// Write at beginning, then truncate
-			var data = "XX".UTF8();
+			var data = "-appended".UTF8();
 			tfs.Write(data, 0, data.Length);
-			tfs.SetLength(data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(fs, target).AssertEqual("XX");
+		ReadAllText(fs, target).AssertEqual("existing-appended");
 		fs.FileExists(tmp).AssertFalse();
 	}
 
@@ -864,40 +919,37 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MemoryFs_SeekAndPosition()
+	public void MemoryFs_Seek_ThrowsNotSupported()
 	{
 		var fs = new MemoryFileSystem();
 		var target = "/data/file.txt";
 
 		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
-		var data = "hello world".UTF8();
-		tfs.Write(data, 0, data.Length);
-
-		tfs.Position.AssertEqual(11);
-
-		tfs.Seek(0, SeekOrigin.Begin);
-		tfs.Position.AssertEqual(0);
-
-		tfs.Seek(5, SeekOrigin.Begin);
-		tfs.Position.AssertEqual(5);
+		ThrowsExactly<NotSupportedException>(() => tfs.Seek(0, SeekOrigin.Begin));
 	}
 
 	[TestMethod]
-	public void MemoryFs_SetLength()
+	public void MemoryFs_SetLength_ThrowsNotSupported()
 	{
 		var fs = new MemoryFileSystem();
 		var target = "/data/file.txt";
 
-		using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
-		{
-			var data = "hello world".UTF8();
-			tfs.Write(data, 0, data.Length);
-			tfs.SetLength(5);
-			tfs.Length.AssertEqual(5);
-			tfs.Commit();
-		}
+		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		ThrowsExactly<NotSupportedException>(() => tfs.SetLength(5));
+	}
 
-		ReadAllText(fs, target).AssertEqual("hello");
+	[TestMethod]
+	public void MemoryFs_PositionGet_ReturnsCurrentPosition()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		tfs.Position.AssertEqual(0);
+
+		var data = "hello".UTF8();
+		tfs.Write(data, 0, data.Length);
+		tfs.Position.AssertEqual(5);
 	}
 
 	[TestMethod]
@@ -922,7 +974,6 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		ThrowsExactly<ObjectDisposedException>(() => tfs.Write([1], 0, 1));
 		ThrowsExactly<ObjectDisposedException>(() => { var _ = tfs.Length; });
-		ThrowsExactly<ObjectDisposedException>(() => { tfs.Position = 0; });
 	}
 
 	[TestMethod]
@@ -937,6 +988,58 @@ public class TransactionFileStreamTests : BaseTestClass
 		tfs.IsCommitted.AssertFalse();
 		tfs.Commit();
 		tfs.IsCommitted.AssertTrue();
+	}
+
+	[TestMethod]
+	public void MemoryFs_MultipleCommits_AppendData()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
+		{
+			tfs.Write("first".UTF8(), 0, 5);
+			tfs.Commit();
+
+			ReadAllText(fs, target).AssertEqual("first");
+
+			// After commit, new write appends
+			tfs.Write("-second".UTF8(), 0, 7);
+			tfs.Commit();
+
+			ReadAllText(fs, target).AssertEqual("first-second");
+		}
+
+		ReadAllText(fs, target).AssertEqual("first-second");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_MultipleCommits_RollbackUncommittedWrites()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
+		{
+			// First commit
+			tfs.Write("first".UTF8(), 0, 5);
+			tfs.Commit();
+
+			// Second commit
+			tfs.Write("-second".UTF8(), 0, 7);
+			tfs.Commit();
+
+			// Third write - NOT committed
+			tfs.Write("-garbage".UTF8(), 0, 8);
+			// No commit - this should be lost
+		}
+
+		// Should have only first two committed writes, no garbage
+		ReadAllText(fs, target).AssertEqual("first-second");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	#endregion
@@ -1031,7 +1134,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// When MoveFile fails, written data should be preserved in .tmp for recovery.
+	/// When MoveFile fails in Commit, written data should be preserved in .tmp for recovery.
 	/// </summary>
 	[TestMethod]
 	public void MoveFileFailure_ShouldPreserveTmpForRecovery()
@@ -1044,14 +1147,13 @@ public class TransactionFileStreamTests : BaseTestClass
 		WriteAllText(innerFs, target, "ORIGINAL");
 		faultyFs.OnMoveFile = _ => new IOException("Disk full");
 
-		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
+		using var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
 		var data = "NEW_IMPORTANT_DATA".UTF8();
 		tfs.Write(data, 0, data.Length);
-		tfs.Commit();
 
 		try
 		{
-			tfs.Dispose();
+			tfs.Commit();
 			Fail("Should have thrown IOException");
 		}
 		catch (IOException)
@@ -1067,80 +1169,31 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// After MoveFile failure, _disposed flag should be set so subsequent Dispose calls
-	/// don't try to do anything (not even check FileExists).
+	/// After MoveFile failure in Commit, Dispose should not throw and should preserve .tmp.
 	/// </summary>
 	[TestMethod]
-	public void MoveFileFailure_DisposedFlagShouldBeSet()
+	public void MoveFileFailure_DisposeAfterFailedCommit_PreservesTmp()
 	{
 		var innerFs = new MemoryFileSystem();
+		var faultyFs = new FaultyFileSystem(innerFs);
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
-
-		// Track all FileExists calls on tmp
-		var fileExistsCallsOnTmp = 0;
-		var faultyFs = new TrackingFileSystem(innerFs, path =>
-		{
-			if (path == tmp) fileExistsCallsOnTmp++;
-		});
 
 		faultyFs.OnMoveFile = _ => new IOException("Error");
 
 		var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
 		tfs.Write("test".UTF8(), 0, 4);
-		tfs.Commit();
 
-		var callsBeforeFirstDispose = fileExistsCallsOnTmp;
+		try { tfs.Commit(); } catch (IOException) { }
 
-		try { tfs.Dispose(); } catch (IOException) { }
-
-		var callsAfterFirstDispose = fileExistsCallsOnTmp;
-
-		// Second Dispose - if _disposed was set correctly, no FileExists should be called
+		// Dispose should not throw after failed Commit
 		tfs.Dispose();
 
-		var callsAfterSecondDispose = fileExistsCallsOnTmp;
+		// .tmp should be preserved for recovery (Commit failed, so we keep it)
+		innerFs.FileExists(tmp).AssertTrue();
 
-		// _disposed should prevent any work in second Dispose
-		// If this fails, _disposed wasn't set on MoveFile failure
-		callsAfterSecondDispose.AssertEqual(callsAfterFirstDispose,
-			"Second Dispose should not check FileExists if _disposed was set correctly");
-	}
-
-	/// <summary>
-	/// Extended FaultyFileSystem that tracks FileExists calls.
-	/// </summary>
-	private class TrackingFileSystem(IFileSystem inner, Action<string> onFileExists) : IFileSystem
-	{
-		public Func<string, Exception> OnMoveFile { get; set; }
-
-		public bool FileExists(string path)
-		{
-			onFileExists?.Invoke(path);
-			return inner.FileExists(path);
-		}
-
-		public bool DirectoryExists(string path) => inner.DirectoryExists(path);
-		public Stream OpenRead(string path) => inner.OpenRead(path);
-		public Stream OpenWrite(string path, bool append = false) => inner.OpenWrite(path, append);
-		public void CreateDirectory(string path) => inner.CreateDirectory(path);
-		public void DeleteDirectory(string path, bool recursive = false) => inner.DeleteDirectory(path, recursive);
-		public void DeleteFile(string path) => inner.DeleteFile(path);
-
-		public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
-		{
-			var ex = OnMoveFile?.Invoke(sourceFileName);
-			if (ex != null) throw ex;
-			inner.MoveFile(sourceFileName, destFileName, overwrite);
-		}
-
-		public void MoveDirectory(string sourceDirName, string destDirName) => inner.MoveDirectory(sourceDirName, destDirName);
-		public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false) => inner.CopyFile(sourceFileName, destFileName, overwrite);
-		public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateFiles(path, searchPattern, searchOption);
-		public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => inner.EnumerateDirectories(path, searchPattern, searchOption);
-		public DateTime GetCreationTimeUtc(string path) => inner.GetCreationTimeUtc(path);
-		public DateTime GetLastWriteTimeUtc(string path) => inner.GetLastWriteTimeUtc(path);
-		public long GetFileLength(string path) => inner.GetFileLength(path);
+		// Multiple Dispose should not throw
+		tfs.Dispose();
 	}
 
 	#endregion

@@ -30,7 +30,7 @@ public class TransactionFileStream : Stream
 	private readonly IFileSystem _fs;
 	private Stream _temp;
 	private bool _disposed;
-	private bool _committed;
+	private bool _everCommitted;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TransactionFileStream"/> class.
@@ -104,13 +104,10 @@ public class TransactionFileStream : Stream
 
 		if (preload)
 		{
-			// write original data into temp and reset position to 0 so writes start from beginning
-			using (var rs = _fs.OpenRead(_name))
-			{
-				rs.CopyTo(_temp);
-			}
-			_temp.Seek(0, SeekOrigin.Begin);
-		}
+            // write original data into temp, position stays at end for appending
+            using var rs = _fs.OpenRead(_name);
+            rs.CopyTo(_temp);
+        }
 	}
 
 	private void TryDeleteTempFile()
@@ -138,31 +135,38 @@ public class TransactionFileStream : Stream
 	}
 
 	/// <summary>
-	/// Gets a value indicating whether the transaction has been committed.
+	/// Gets a value indicating whether the transaction has ever been committed.
 	/// </summary>
-	public bool IsCommitted => _committed;
+	public bool IsCommitted => _everCommitted;
 
 	/// <summary>
 	/// Commits the transaction, moving the temporary file to the target location.
-	/// This method must be called before disposal to persist changes.
+	/// Can be called multiple times. After commit, stream continues appending.
 	/// </summary>
 	/// <exception cref="ObjectDisposedException">The stream has been disposed.</exception>
-	/// <exception cref="InvalidOperationException">The transaction has already been committed.</exception>
 	public void Commit()
 	{
 		if (_disposed)
 			throw new ObjectDisposedException(nameof(TransactionFileStream));
 
-		if (_committed)
-			throw new InvalidOperationException("Transaction has already been committed.");
+		_temp.Flush();
+		_temp.Dispose();
+		_temp = null;
 
-		_committed = true;
-	}
+		_fs.MoveFile(_nameTemp, _name, overwrite: true);
+		_everCommitted = true;
+
+		// Reopen temp with committed data for continued appending
+		_temp = _fs.OpenWrite(_nameTemp, append: false);
+
+        using var rs = _fs.OpenRead(_name);
+        rs.CopyTo(_temp);
+    }
 
 	/// <summary>
 	/// Releases the unmanaged resources used by the <see cref="TransactionFileStream"/> and optionally releases the managed resources.
-	/// If <see cref="Commit"/> was called, moves the temporary file to the target file.
-	/// Otherwise, performs rollback by deleting the temporary file.
+	/// If <see cref="Commit"/> was never called, performs rollback by deleting the temporary file.
+	/// If Commit() failed, preserves .tmp file for manual recovery.
 	/// </summary>
 	/// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
 	protected override void Dispose(bool disposing)
@@ -174,33 +178,24 @@ public class TransactionFileStream : Stream
 
 		if (disposing)
 		{
+			var temp = _temp;
+			_temp = null;
+
 			try
 			{
-				_temp?.Flush();
+				temp?.Flush();
 			}
 			catch (Exception ex)
 			{
 				Trace.WriteLine(ex);
 			}
 
-			_temp?.Dispose();
-			_temp = null;
+			temp?.Dispose();
 
-			if (_committed)
-			{
-				// Commit: atomically replace destination when possible
-				if (_fs.FileExists(_nameTemp))
-				{
-					// move temp into place (overwrite allowed)
-					// If this fails, .tmp is preserved for manual recovery
-					_fs.MoveFile(_nameTemp, _name, overwrite: true);
-				}
-			}
-			else
-			{
-				// Rollback: delete temp file, preserve original
+			// Only delete temp file if we had an active stream
+			// If temp was null, Commit() failed mid-way - preserve .tmp for recovery
+			if (temp != null)
 				TryDeleteTempFile();
-			}
 		}
 
 		base.Dispose(disposing);
@@ -215,23 +210,21 @@ public class TransactionFileStream : Stream
 	}
 
 	/// <summary>
-	/// Sets the position within the temporary file stream.
+	/// Seeking is not supported. This is an append-only stream.
 	/// </summary>
-	/// <param name="offset">A byte offset relative to the origin parameter.</param>
-	/// <param name="origin">A value of type <see cref="SeekOrigin"/> indicating the reference point used to obtain the new position.</param>
-	/// <returns>The new position within the temporary file stream.</returns>
+	/// <exception cref="NotSupportedException">Always thrown.</exception>
 	public override long Seek(long offset, SeekOrigin origin)
 	{
-		return Temp.Seek(offset, origin);
+		throw new NotSupportedException();
 	}
 
 	/// <summary>
-	/// Sets the length of the underlying temporary file stream.
+	/// Setting length is not supported. This is an append-only stream.
 	/// </summary>
-	/// <param name="value">The desired length of the current stream in bytes.</param>
+	/// <exception cref="NotSupportedException">Always thrown.</exception>
 	public override void SetLength(long value)
 	{
-		Temp.SetLength(value);
+		throw new NotSupportedException();
 	}
 
 	/// <summary>
@@ -265,9 +258,10 @@ public class TransactionFileStream : Stream
 	public override bool CanRead => false;
 
 	/// <summary>
-	/// Gets a value indicating whether the underlying temporary file stream supports seeking.
+	/// Gets a value indicating whether the stream supports seeking.
+	/// Always returns false - this is an append-only stream.
 	/// </summary>
-	public override bool CanSeek => !_disposed && _temp?.CanSeek == true;
+	public override bool CanSeek => false;
 
 	/// <summary>
 	/// Gets a value indicating whether the underlying temporary file stream supports writing.
@@ -280,11 +274,13 @@ public class TransactionFileStream : Stream
 	public override long Length => Temp.Length;
 
 	/// <summary>
-	/// Gets or sets the current position within the underlying temporary file stream.
+	/// Gets the current position within the stream.
+	/// Setting position is not supported - this is an append-only stream.
 	/// </summary>
+	/// <exception cref="NotSupportedException">Thrown when attempting to set position.</exception>
 	public override long Position
 	{
 		get => Temp.Position;
-		set => Temp.Position = value;
+		set => throw new NotSupportedException();
 	}
 }
