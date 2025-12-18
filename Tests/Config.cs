@@ -8,17 +8,42 @@ using Ecng.Reflection;
 [TestClass]
 public static class Config
 {
+	private static string _tempRoot;
+
 	[AssemblyInitialize]
 	public static void GlobalInitialize(TestContext _)
 	{
 		AttributeHelper.CacheEnabled = false;
 		ReflectionHelper.CacheEnabled = false;
+
+		_tempRoot = Path.Combine(AppContext.BaseDirectory, $"_temp_{Guid.NewGuid():N}");
+		Directory.CreateDirectory(_tempRoot);
+	}
+
+	[AssemblyCleanup]
+	public static void GlobalCleanup()
+	{
+		if (_tempRoot.IsEmptyOrWhiteSpace() || !Directory.Exists(_tempRoot))
+			return;
+
+		try
+		{
+			Directory.Delete(_tempRoot, true);
+		}
+		catch
+		{
+			// ignore cleanup errors
+		}
 	}
 
 	public static readonly HttpClient HttpClient = new();
 
 	public static string GetTempPath(string folderName)
-		=> Path.Combine(IOHelper.CreateTempDir(), folderName);
+	{
+		var path = Path.Combine(_tempRoot, folderName);
+		Directory.CreateDirectory(path);
+		return path;
+	}
 
 	private static readonly JsonSerializerOptions _opts = new()
 	{
