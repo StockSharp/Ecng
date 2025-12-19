@@ -502,5 +502,333 @@ public class AsyncEnumerableTests : BaseTestClass
 		result[0].AssertEqual(20);
 		result[1].AssertEqual(30);
 	}
+
+	[TestMethod]
+	public async Task FirstAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var first = await GetAsyncData(token).FirstAsync(x => x > 1, token);
+		first.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public Task FirstAsync_WithPredicate_NoMatch_Throws()
+	{
+		var token = CancellationToken;
+		return ThrowsExactlyAsync<InvalidOperationException>(() =>
+			GetAsyncData(token).FirstAsync(x => x > 10, token).AsTask());
+	}
+
+	[TestMethod]
+	public async Task FirstOrDefaultAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var first = await GetAsyncData(token).FirstOrDefaultAsync(x => x > 1, token);
+		first.AssertEqual(2);
+
+		var noMatch = await GetAsyncData(token).FirstOrDefaultAsync(x => x > 10, token);
+		noMatch.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task LastAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var last = await GetAsyncData(token).LastAsync(x => x < 3, token);
+		last.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task LastOrDefaultAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var last = await GetAsyncData(token).LastOrDefaultAsync(x => x < 3, token);
+		last.AssertEqual(2);
+
+		var noMatch = await GetAsyncData(token).LastOrDefaultAsync(x => x > 10, token);
+		noMatch.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task SingleAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var single = await GetAsyncData(token).SingleAsync(x => x == 2, token);
+		single.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public Task SingleAsync_WithPredicate_MultipleMatch_Throws()
+	{
+		var token = CancellationToken;
+		return ThrowsExactlyAsync<InvalidOperationException>(() =>
+			GetAsyncData(token).SingleAsync(x => x > 1, token).AsTask());
+	}
+
+	[TestMethod]
+	public async Task SingleOrDefaultAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var single = await GetAsyncData(token).SingleOrDefaultAsync(x => x == 2, token);
+		single.AssertEqual(2);
+
+		var noMatch = await GetAsyncData(token).SingleOrDefaultAsync(x => x > 10, token);
+		noMatch.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task CountAsync_WithPredicate()
+	{
+		var token = CancellationToken;
+		var count = await GetAsyncData(token).CountAsync(x => x > 1, token);
+		count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task SelectMany_Sync()
+	{
+		var token = CancellationToken;
+		var source = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var result = await source.SelectMany(x => Enumerable.Range(0, x), token).ToArrayAsync(token);
+		result.AssertEqual([0, 0, 1, 0, 1, 2]);
+	}
+
+	[TestMethod]
+	public async Task SelectMany_Async()
+	{
+		var token = CancellationToken;
+		var source = new[] { 1, 2 }.ToAsyncEnumerable();
+
+		static async IAsyncEnumerable<int> GetMultiples(int x)
+		{
+			await Task.Yield();
+			yield return x;
+			yield return x * 10;
+		}
+
+		var result = await source.SelectMany(GetMultiples, token).ToArrayAsync(token);
+		result.AssertEqual([1, 10, 2, 20]);
+	}
+
+	[TestMethod]
+	public async Task SkipWhile()
+	{
+		var token = CancellationToken;
+		var result = await GetAsyncData(token).SkipWhile(x => x < 2, token).ToArrayAsync(token);
+		result.AssertEqual([2, 3]);
+	}
+
+	[TestMethod]
+	public async Task TakeWhile()
+	{
+		var token = CancellationToken;
+		var result = await GetAsyncData(token).TakeWhile(x => x < 3, token).ToArrayAsync(token);
+		result.AssertEqual([1, 2]);
+	}
+
+	[TestMethod]
+	public async Task DistinctBy()
+	{
+		var token = CancellationToken;
+		var source = new[] { "a", "bb", "c", "dd", "eee" }.ToAsyncEnumerable();
+		var result = await source.DistinctBy(s => s.Length, token).ToArrayAsync(token);
+		result.AssertEqual(["a", "bb", "eee"]);
+	}
+
+	[TestMethod]
+	public async Task OrderBy()
+	{
+		var token = CancellationToken;
+		var source = new[] { 3, 1, 4, 1, 5, 9, 2, 6 }.ToAsyncEnumerable();
+		var result = await source.OrderBy(x => x, token).ToArrayAsync(token);
+		result.AssertEqual([1, 1, 2, 3, 4, 5, 6, 9]);
+	}
+
+	[TestMethod]
+	public async Task OrderByDescending()
+	{
+		var token = CancellationToken;
+		var source = new[] { 3, 1, 4, 1, 5 }.ToAsyncEnumerable();
+		var result = await source.OrderByDescending(x => x, token).ToArrayAsync(token);
+		result.AssertEqual([5, 4, 3, 1, 1]);
+	}
+
+	[TestMethod]
+	public async Task OfType()
+	{
+		var token = CancellationToken;
+		var source = new object[] { 1, "a", 2, "b", 3 }.ToAsyncEnumerable();
+		var result = await source.OfType<int>(token).ToArrayAsync(token);
+		result.AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public async Task Cast()
+	{
+		var token = CancellationToken;
+		var source = new object[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var result = await source.Cast<int>(token).ToArrayAsync(token);
+		result.AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public async Task DefaultIfEmpty_NonEmpty()
+	{
+		var token = CancellationToken;
+		var result = await GetAsyncData(token).DefaultIfEmpty(token).ToArrayAsync(token);
+		result.AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public async Task DefaultIfEmpty_Empty()
+	{
+		var token = CancellationToken;
+		var result = await AsyncEnumerable.Empty<int>().DefaultIfEmpty(token).ToArrayAsync(token);
+		result.AssertEqual([0]);
+	}
+
+	[TestMethod]
+	public async Task DefaultIfEmpty_WithValue()
+	{
+		var token = CancellationToken;
+		var result = await AsyncEnumerable.Empty<int>().DefaultIfEmpty(42, token).ToArrayAsync(token);
+		result.AssertEqual([42]);
+	}
+
+	[TestMethod]
+	public async Task Chunk()
+	{
+		var token = CancellationToken;
+		var source = new[] { 1, 2, 3, 4, 5, 6, 7 }.ToAsyncEnumerable();
+		var result = await source.Chunk(3, token).ToArrayAsync(token);
+		result.Length.AssertEqual(3);
+		result[0].AssertEqual([1, 2, 3]);
+		result[1].AssertEqual([4, 5, 6]);
+		result[2].AssertEqual([7]);
+	}
+
+	[TestMethod]
+	public async Task AggregateAsync()
+	{
+		var token = CancellationToken;
+		var result = await GetAsyncData(token).AggregateAsync((a, b) => a + b, token);
+		result.AssertEqual(6);
+	}
+
+	[TestMethod]
+	public async Task AggregateAsync_WithSeed()
+	{
+		var token = CancellationToken;
+		var result = await GetAsyncData(token).AggregateAsync(10, (a, b) => a + b, token);
+		result.AssertEqual(16);
+	}
+
+	[TestMethod]
+	public async Task SequenceEqualAsync_Equal()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var second = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var result = await first.SequenceEqualAsync(second, token);
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task SequenceEqualAsync_NotEqual()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var second = new[] { 1, 2, 4 }.ToAsyncEnumerable();
+		var result = await first.SequenceEqualAsync(second, token);
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task SequenceEqualAsync_DifferentLengths()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var second = new[] { 1, 2 }.ToAsyncEnumerable();
+		var result = await first.SequenceEqualAsync(second, token);
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task Union()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var second = new[] { 2, 3, 4 }.ToAsyncEnumerable();
+		var result = await first.Union(second, token).ToArrayAsync(token);
+		result.AssertEqual([1, 2, 3, 4]);
+	}
+
+	[TestMethod]
+	public async Task Intersect()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3, 4 }.ToAsyncEnumerable();
+		var second = new[] { 2, 4, 6 }.ToAsyncEnumerable();
+		var result = await first.Intersect(second, token).ToArrayAsync(token);
+		result.AssertEqual([2, 4]);
+	}
+
+	[TestMethod]
+	public async Task Except()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3, 4 }.ToAsyncEnumerable();
+		var second = new[] { 2, 4 }.ToAsyncEnumerable();
+		var result = await first.Except(second, token).ToArrayAsync(token);
+		result.AssertEqual([1, 3]);
+	}
+
+	[TestMethod]
+	public async Task Zip_WithSelector()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var second = new[] { 10, 20, 30 }.ToAsyncEnumerable();
+		var result = await first.Zip(second, (a, b) => a + b, token).ToArrayAsync(token);
+		result.AssertEqual([11, 22, 33]);
+	}
+
+	[TestMethod]
+	public async Task Zip_Tuple()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2 }.ToAsyncEnumerable();
+		var second = new[] { "a", "b" }.ToAsyncEnumerable();
+		var result = await first.Zip(second, token).ToArrayAsync(token);
+		result.Length.AssertEqual(2);
+		result[0].AssertEqual((1, "a"));
+		result[1].AssertEqual((2, "b"));
+	}
+
+	[TestMethod]
+	public async Task Zip_DifferentLengths()
+	{
+		var token = CancellationToken;
+		var first = new[] { 1, 2, 3, 4, 5 }.ToAsyncEnumerable();
+		var second = new[] { 10, 20 }.ToAsyncEnumerable();
+		var result = await first.Zip(second, (a, b) => a + b, token).ToArrayAsync(token);
+		result.AssertEqual([11, 22]);
+	}
+
+	[TestMethod]
+	public async Task Range()
+	{
+		var token = CancellationToken;
+		var result = await AsyncEnumerable.Range(5, 3).ToArrayAsync(token);
+		result.AssertEqual([5, 6, 7]);
+	}
+
+	[TestMethod]
+	public async Task Repeat()
+	{
+		var token = CancellationToken;
+		var result = await AsyncEnumerable.Repeat(42, 3).ToArrayAsync(token);
+		result.AssertEqual([42, 42, 42]);
+	}
 }
 #endif

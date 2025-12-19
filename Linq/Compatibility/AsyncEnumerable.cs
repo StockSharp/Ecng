@@ -997,5 +997,747 @@ public static class AsyncEnumerable
 			_ => new SyncAsyncEnumerable<TSource>(source),
 		};
 	}
+
+	/// <summary>
+	/// Gets the first element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The first element that satisfies the condition.</returns>
+	public static async ValueTask<T> FirstAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+				return item;
+		}
+
+		throw new InvalidOperationException("Sequence contains no matching element");
+	}
+
+	/// <summary>
+	/// Gets the first element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition or default.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The first element that satisfies the condition or default.</returns>
+	public static async ValueTask<T> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+				return item;
+		}
+
+		return default;
+	}
+
+	/// <summary>
+	/// Gets the last element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The last element that satisfies the condition.</returns>
+	public static async ValueTask<T> LastAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		T last = default;
+		var found = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+			{
+				last = item;
+				found = true;
+			}
+		}
+
+		if (!found)
+			throw new InvalidOperationException("Sequence contains no matching element");
+
+		return last;
+	}
+
+	/// <summary>
+	/// Gets the last element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition or default.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The last element that satisfies the condition or default.</returns>
+	public static async ValueTask<T> LastOrDefaultAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		T last = default;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+				last = item;
+		}
+
+		return last;
+	}
+
+	/// <summary>
+	/// Gets the only element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The single element that satisfies the condition.</returns>
+	public static async ValueTask<T> SingleAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		T result = default;
+		var found = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+			{
+				if (found)
+					throw new InvalidOperationException("Sequence contains more than one matching element");
+
+				result = item;
+				found = true;
+			}
+		}
+
+		if (!found)
+			throw new InvalidOperationException("Sequence contains no matching element");
+
+		return result;
+	}
+
+	/// <summary>
+	/// Gets the only element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition or default.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
+	/// <param name="source">The enumeration.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The single element that satisfies the condition or default.</returns>
+	public static async ValueTask<T> SingleOrDefaultAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		T result = default;
+		var found = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+			{
+				if (found)
+					throw new InvalidOperationException("Sequence contains more than one matching element");
+
+				result = item;
+				found = true;
+			}
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Returns the number of elements in the <see cref="IAsyncEnumerable{T}"/> that satisfy a condition.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> that contains the elements to be counted.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The number of elements that satisfy the condition.</returns>
+	public static async ValueTask<int> CountAsync<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		var count = 0;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (predicate(item))
+				count++;
+		}
+
+		return count;
+	}
+
+	/// <summary>
+	/// Projects each element of an async sequence to an <see cref="IEnumerable{T}"/> and flattens the resulting sequences into one async sequence.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TResult">The type of the elements of the sequence returned by selector.</typeparam>
+	/// <param name="source">A sequence of values to project.</param>
+	/// <param name="selector">A transform function to apply to each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> whose elements are the result of invoking the one-to-many transform function on each element of the input sequence.</returns>
+	public static async IAsyncEnumerable<TResult> SelectMany<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, IEnumerable<TResult>> selector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (selector is null)
+			throw new ArgumentNullException(nameof(selector));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			foreach (var result in selector(item))
+				yield return result;
+		}
+	}
+
+	/// <summary>
+	/// Projects each element of an async sequence to an <see cref="IAsyncEnumerable{T}"/> and flattens the resulting sequences into one async sequence.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TResult">The type of the elements of the sequence returned by selector.</typeparam>
+	/// <param name="source">A sequence of values to project.</param>
+	/// <param name="selector">A transform function to apply to each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> whose elements are the result of invoking the one-to-many transform function on each element of the input sequence.</returns>
+	public static async IAsyncEnumerable<TResult> SelectMany<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, IAsyncEnumerable<TResult>> selector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (selector is null)
+			throw new ArgumentNullException(nameof(selector));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			await foreach (var result in selector(item).WithEnforcedCancellation(cancellationToken))
+				yield return result;
+		}
+	}
+
+	/// <summary>
+	/// Bypasses elements in a sequence as long as a specified condition is true and then returns the remaining elements.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">An <see cref="IAsyncEnumerable{T}"/> to return elements from.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains the elements from the input sequence starting at the first element in the linear series that does not pass the test specified by predicate.</returns>
+	public static async IAsyncEnumerable<T> SkipWhile<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		var yielding = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (!yielding && !predicate(item))
+				yielding = true;
+
+			if (yielding)
+				yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Returns elements from a sequence as long as a specified condition is true.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">A sequence to return elements from.</param>
+	/// <param name="predicate">A function to test each element for a condition.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains the elements from the input sequence that occur before the element at which the test no longer passes.</returns>
+	public static async IAsyncEnumerable<T> TakeWhile<T>(this IAsyncEnumerable<T> source, Func<T, bool> predicate, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (predicate is null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (!predicate(item))
+				yield break;
+
+			yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Returns distinct elements from a sequence according to a specified key selector function.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+	/// <param name="source">The sequence to remove duplicate elements from.</param>
+	/// <param name="keySelector">A function to extract the key for each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains distinct elements from the source sequence.</returns>
+	public static async IAsyncEnumerable<TSource> DistinctBy<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (keySelector is null)
+			throw new ArgumentNullException(nameof(keySelector));
+
+		var seen = new HashSet<TKey>();
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (seen.Add(keySelector(item)))
+				yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Sorts the elements of a sequence in ascending order according to a key.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+	/// <param name="source">A sequence of values to order.</param>
+	/// <param name="keySelector">A function to extract a key from an element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> whose elements are sorted according to a key.</returns>
+	public static async IAsyncEnumerable<TSource> OrderBy<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (keySelector is null)
+			throw new ArgumentNullException(nameof(keySelector));
+
+		var list = await source.ToListAsync(cancellationToken);
+		list.Sort((x, y) => Comparer<TKey>.Default.Compare(keySelector(x), keySelector(y)));
+
+		foreach (var item in list)
+			yield return item;
+	}
+
+	/// <summary>
+	/// Sorts the elements of a sequence in descending order according to a key.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+	/// <param name="source">A sequence of values to order.</param>
+	/// <param name="keySelector">A function to extract a key from an element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> whose elements are sorted in descending order according to a key.</returns>
+	public static async IAsyncEnumerable<TSource> OrderByDescending<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (keySelector is null)
+			throw new ArgumentNullException(nameof(keySelector));
+
+		var list = await source.ToListAsync(cancellationToken);
+		list.Sort((x, y) => Comparer<TKey>.Default.Compare(keySelector(y), keySelector(x)));
+
+		foreach (var item in list)
+			yield return item;
+	}
+
+	/// <summary>
+	/// Filters the elements of an <see cref="IAsyncEnumerable{T}"/> based on a specified type.
+	/// </summary>
+	/// <typeparam name="TResult">The type to filter the elements of the sequence on.</typeparam>
+	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> whose elements to filter.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains elements from the input sequence of type <typeparamref name="TResult"/>.</returns>
+	public static async IAsyncEnumerable<TResult> OfType<TResult>(this IAsyncEnumerable<object> source, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (item is TResult result)
+				yield return result;
+		}
+	}
+
+	/// <summary>
+	/// Casts the elements of an <see cref="IAsyncEnumerable{T}"/> to the specified type.
+	/// </summary>
+	/// <typeparam name="TResult">The type to cast the elements of source to.</typeparam>
+	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> that contains the elements to be cast.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains each element of the source sequence cast to the specified type.</returns>
+	public static async IAsyncEnumerable<TResult> Cast<TResult>(this IAsyncEnumerable<object> source, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+			yield return (TResult)item;
+	}
+
+	/// <summary>
+	/// Returns the elements of the specified sequence or the specified value in a singleton collection if the sequence is empty.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">The sequence to return the specified value for if it is empty.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains defaultValue if source is empty; otherwise, source.</returns>
+	public static async IAsyncEnumerable<T> DefaultIfEmpty<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		var hasElements = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			hasElements = true;
+			yield return item;
+		}
+
+		if (!hasElements)
+			yield return default;
+	}
+
+	/// <summary>
+	/// Returns the elements of the specified sequence or the specified value if the sequence is empty.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">The sequence to return the specified value for if it is empty.</param>
+	/// <param name="defaultValue">The value to return if the sequence is empty.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains defaultValue if source is empty; otherwise, source.</returns>
+	public static async IAsyncEnumerable<T> DefaultIfEmpty<T>(this IAsyncEnumerable<T> source, T defaultValue, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		var hasElements = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			hasElements = true;
+			yield return item;
+		}
+
+		if (!hasElements)
+			yield return defaultValue;
+	}
+
+	/// <summary>
+	/// Splits the elements of a sequence into chunks of size at most <paramref name="size"/>.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of source.</typeparam>
+	/// <param name="source">An <see cref="IAsyncEnumerable{T}"/> whose elements to chunk.</param>
+	/// <param name="size">Maximum size of each chunk.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains the elements the input sequence split into chunks of size <paramref name="size"/>.</returns>
+	public static async IAsyncEnumerable<T[]> Chunk<T>(this IAsyncEnumerable<T> source, int size, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (size <= 0)
+			throw new ArgumentOutOfRangeException(nameof(size));
+
+		var chunk = new List<T>(size);
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			chunk.Add(item);
+
+			if (chunk.Count == size)
+			{
+				yield return [.. chunk];
+				chunk.Clear();
+			}
+		}
+
+		if (chunk.Count > 0)
+			yield return [.. chunk];
+	}
+
+	/// <summary>
+	/// Applies an accumulator function over a sequence.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <param name="source">An <see cref="IAsyncEnumerable{T}"/> to aggregate over.</param>
+	/// <param name="func">An accumulator function to be invoked on each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The final accumulator value.</returns>
+	public static async ValueTask<TSource> AggregateAsync<TSource>(this IAsyncEnumerable<TSource> source, Func<TSource, TSource, TSource> func, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (func is null)
+			throw new ArgumentNullException(nameof(func));
+
+		TSource result = default;
+		var hasValue = false;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+		{
+			if (!hasValue)
+			{
+				result = item;
+				hasValue = true;
+			}
+			else
+			{
+				result = func(result, item);
+			}
+		}
+
+		if (!hasValue)
+			throw new InvalidOperationException("Sequence contains no elements");
+
+		return result;
+	}
+
+	/// <summary>
+	/// Applies an accumulator function over a sequence with a seed value.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of source.</typeparam>
+	/// <typeparam name="TAccumulate">The type of the accumulator value.</typeparam>
+	/// <param name="source">An <see cref="IAsyncEnumerable{T}"/> to aggregate over.</param>
+	/// <param name="seed">The initial accumulator value.</param>
+	/// <param name="func">An accumulator function to be invoked on each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The final accumulator value.</returns>
+	public static async ValueTask<TAccumulate> AggregateAsync<TSource, TAccumulate>(this IAsyncEnumerable<TSource> source, TAccumulate seed, Func<TAccumulate, TSource, TAccumulate> func, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+		if (func is null)
+			throw new ArgumentNullException(nameof(func));
+
+		var result = seed;
+
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
+			result = func(result, item);
+
+		return result;
+	}
+
+	/// <summary>
+	/// Determines whether two sequences are equal by comparing their elements.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the input sequences.</typeparam>
+	/// <param name="first">An <see cref="IAsyncEnumerable{T}"/> to compare to second.</param>
+	/// <param name="second">An <see cref="IAsyncEnumerable{T}"/> to compare to the first sequence.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>true if the two source sequences are of equal length and their corresponding elements compare equal; otherwise, false.</returns>
+	public static async ValueTask<bool> SequenceEqualAsync<T>(this IAsyncEnumerable<T> first, IAsyncEnumerable<T> second, CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+
+		var comparer = EqualityComparer<T>.Default;
+
+		await using var e1 = first.GetAsyncEnumerator(cancellationToken);
+		await using var e2 = second.GetAsyncEnumerator(cancellationToken);
+
+		while (await e1.MoveNextAsync())
+		{
+			if (!await e2.MoveNextAsync() || !comparer.Equals(e1.Current, e2.Current))
+				return false;
+		}
+
+		return !await e2.MoveNextAsync();
+	}
+
+	/// <summary>
+	/// Produces the set union of two sequences.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the input sequences.</typeparam>
+	/// <param name="first">An <see cref="IAsyncEnumerable{T}"/> whose distinct elements form the first set for the union.</param>
+	/// <param name="second">An <see cref="IAsyncEnumerable{T}"/> whose distinct elements form the second set for the union.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains the elements from both input sequences, excluding duplicates.</returns>
+	public static async IAsyncEnumerable<T> Union<T>(this IAsyncEnumerable<T> first, IAsyncEnumerable<T> second, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+
+		var seen = new HashSet<T>();
+
+		await foreach (var item in first.WithEnforcedCancellation(cancellationToken))
+		{
+			if (seen.Add(item))
+				yield return item;
+		}
+
+		await foreach (var item in second.WithEnforcedCancellation(cancellationToken))
+		{
+			if (seen.Add(item))
+				yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Produces the set intersection of two sequences.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the input sequences.</typeparam>
+	/// <param name="first">An <see cref="IAsyncEnumerable{T}"/> whose distinct elements that also appear in second will be returned.</param>
+	/// <param name="second">An <see cref="IAsyncEnumerable{T}"/> whose distinct elements that also appear in the first sequence will be returned.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>A sequence that contains the elements that form the set intersection of two sequences.</returns>
+	public static async IAsyncEnumerable<T> Intersect<T>(this IAsyncEnumerable<T> first, IAsyncEnumerable<T> second, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+
+		var secondSet = await second.ToHashSetAsync(cancellationToken);
+		var seen = new HashSet<T>();
+
+		await foreach (var item in first.WithEnforcedCancellation(cancellationToken))
+		{
+			if (secondSet.Contains(item) && seen.Add(item))
+				yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Produces the set difference of two sequences.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements of the input sequences.</typeparam>
+	/// <param name="first">An <see cref="IAsyncEnumerable{T}"/> whose elements that are not also in second will be returned.</param>
+	/// <param name="second">An <see cref="IAsyncEnumerable{T}"/> whose elements that also occur in the first sequence will cause those elements to be removed from the returned sequence.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>A sequence that contains the set difference of the elements of two sequences.</returns>
+	public static async IAsyncEnumerable<T> Except<T>(this IAsyncEnumerable<T> first, IAsyncEnumerable<T> second, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+
+		var secondSet = await second.ToHashSetAsync(cancellationToken);
+		var seen = new HashSet<T>();
+
+		await foreach (var item in first.WithEnforcedCancellation(cancellationToken))
+		{
+			if (!secondSet.Contains(item) && seen.Add(item))
+				yield return item;
+		}
+	}
+
+	/// <summary>
+	/// Merges two sequences by using the specified predicate function.
+	/// </summary>
+	/// <typeparam name="TFirst">The type of the elements of the first input sequence.</typeparam>
+	/// <typeparam name="TSecond">The type of the elements of the second input sequence.</typeparam>
+	/// <typeparam name="TResult">The type of the elements of the result sequence.</typeparam>
+	/// <param name="first">The first sequence to merge.</param>
+	/// <param name="second">The second sequence to merge.</param>
+	/// <param name="resultSelector">A function that specifies how to merge the elements from the two sequences.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains merged elements of two input sequences.</returns>
+	public static async IAsyncEnumerable<TResult> Zip<TFirst, TSecond, TResult>(this IAsyncEnumerable<TFirst> first, IAsyncEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+		if (resultSelector is null)
+			throw new ArgumentNullException(nameof(resultSelector));
+
+		await using var e1 = first.GetAsyncEnumerator(cancellationToken);
+		await using var e2 = second.GetAsyncEnumerator(cancellationToken);
+
+		while (await e1.MoveNextAsync() && await e2.MoveNextAsync())
+			yield return resultSelector(e1.Current, e2.Current);
+	}
+
+	/// <summary>
+	/// Produces a sequence of tuples with elements from the two specified sequences.
+	/// </summary>
+	/// <typeparam name="TFirst">The type of the elements of the first input sequence.</typeparam>
+	/// <typeparam name="TSecond">The type of the elements of the second input sequence.</typeparam>
+	/// <param name="first">The first sequence to merge.</param>
+	/// <param name="second">The second sequence to merge.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>A sequence of tuples with elements taken from the first and second sequences, in that order.</returns>
+	public static async IAsyncEnumerable<(TFirst First, TSecond Second)> Zip<TFirst, TSecond>(this IAsyncEnumerable<TFirst> first, IAsyncEnumerable<TSecond> second, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+	{
+		if (first is null)
+			throw new ArgumentNullException(nameof(first));
+		if (second is null)
+			throw new ArgumentNullException(nameof(second));
+
+		await using var e1 = first.GetAsyncEnumerator(cancellationToken);
+		await using var e2 = second.GetAsyncEnumerator(cancellationToken);
+
+		while (await e1.MoveNextAsync() && await e2.MoveNextAsync())
+			yield return (e1.Current, e2.Current);
+	}
+
+	/// <summary>
+	/// Generates a sequence of integral numbers within a specified range.
+	/// </summary>
+	/// <param name="start">The value of the first integer in the sequence.</param>
+	/// <param name="count">The number of sequential integers to generate.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains a range of sequential integral numbers.</returns>
+	public static async IAsyncEnumerable<int> Range(int start, int count)
+	{
+		if (count < 0)
+			throw new ArgumentOutOfRangeException(nameof(count));
+
+		for (var i = 0; i < count; i++)
+			yield return start + i;
+
+		await Task.CompletedTask;
+	}
+
+	/// <summary>
+	/// Generates a sequence that contains one repeated value.
+	/// </summary>
+	/// <typeparam name="T">The type of the value to be repeated in the result sequence.</typeparam>
+	/// <param name="element">The value to be repeated.</param>
+	/// <param name="count">The number of times to repeat the value in the generated sequence.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains a repeated value.</returns>
+	public static async IAsyncEnumerable<T> Repeat<T>(T element, int count)
+	{
+		if (count < 0)
+			throw new ArgumentOutOfRangeException(nameof(count));
+
+		for (var i = 0; i < count; i++)
+			yield return element;
+
+		await Task.CompletedTask;
+	}
 }
 #endif
