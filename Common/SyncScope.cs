@@ -13,7 +13,7 @@ public readonly ref struct SyncScope
 	private readonly Lock.Scope _lockScope;
 
 	/// <summary>
-	/// Inializes a new synchronization scope and enters the provided synchronization object.
+	/// Initializes a new synchronization scope and enters the provided synchronization object.
 	/// </summary>
 	/// <param name="syncRoot">
 	/// Synchronization object. If it's a <see cref="Lock"/>, <see cref="Lock.EnterScope"/> is used; otherwise, <see cref="Monitor.Enter(object)"/> is used.

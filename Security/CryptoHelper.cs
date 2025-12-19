@@ -124,8 +124,6 @@ public static class CryptoHelper
 		};
 	}
 
-	// https://stackoverflow.com/a/10177020/8029915
-
 	// This constant is used to determine the keysize of the encryption algorithm in bits.
 	// We divide this by 8 within the code below to get the equivalent number of bytes.
 	private const int _keySize = 256;
@@ -303,21 +301,6 @@ public static class CryptoHelper
 	/// <param name="iv">The iv.</param>
 	/// <returns>The plain text.</returns>
 	public static byte[] DecryptAes(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv) => TransformAes(false, cipherText, passPhrase, salt, iv);
-
-	private static string Hash(this byte[] value, Func<HashAlgorithm> createAlgo)
-	{
-		if (value is null)
-			throw new ArgumentNullException(nameof(value));
-
-		if (value.Length == 0)
-			throw new ArgumentOutOfRangeException(nameof(value));
-
-		if (createAlgo is null)
-			throw new ArgumentNullException(nameof(createAlgo));
-
-		using var algo = createAlgo();
-		return algo.ComputeHash(value).Digest();
-	}
 
 	private static void ValidateHashInput(byte[] value)
 	{

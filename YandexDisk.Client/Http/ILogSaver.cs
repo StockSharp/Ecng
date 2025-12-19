@@ -11,7 +11,7 @@ namespace YandexDisk.Client.Http
     public interface ILogSaver
     {
         /// <summary>
-        /// Trigered on each request
+        /// Triggered on each request
         /// </summary>
         [PublicAPI]
         void SaveLog([NotNull] RequestLog requestLog, [NotNull] ResponseLog responseLog);
@@ -61,7 +61,7 @@ namespace YandexDisk.Client.Http
         public string Headers { get; set; }
 
         /// <summary>
-        /// Exception text if it have been risen
+        /// Exception text if it has been raised
         /// </summary>
         public string Exception { get; set; }
 

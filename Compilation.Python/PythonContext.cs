@@ -354,7 +354,6 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 			private class ReflectedPropertyImpl(ReflectedProperty property, TypeImpl declaringType) : PropertyInfo
 			{
-				//private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
 				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
 				private readonly PropertyInfo _propInfo = property.GetPropInfo();
 

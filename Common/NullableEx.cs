@@ -36,7 +36,7 @@ public class NullableEx<T> : Equatable<NullableEx<T>>
 			if (HasValue)
 				return _value;
 			else
-				throw new InvalidOperationException();
+				throw new InvalidOperationException("NullableEx does not have a value.");
 		}
 		set
 		{

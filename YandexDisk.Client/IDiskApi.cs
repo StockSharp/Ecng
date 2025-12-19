@@ -5,7 +5,7 @@ using YandexDisk.Client.Clients;
 namespace YandexDisk.Client
 {
     /// <summary>
-    /// Definition of all methods od Yandex Disk API
+    /// Definition of all methods of Yandex Disk API
     /// </summary>
     [PublicAPI]
     public interface IDiskApi : IDisposable

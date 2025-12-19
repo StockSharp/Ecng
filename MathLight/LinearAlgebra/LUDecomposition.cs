@@ -64,7 +64,7 @@ namespace Ecng.MathLight.LinearAlgebra
 
 				if (singular == 0)
 				{
-					throw new ArgumentException("Matrix is singlar");
+					throw new ArgumentException("Matrix is singular");
 				}
 
 				Swap(ref _permutation[k], ref _permutation[pivotRow]);

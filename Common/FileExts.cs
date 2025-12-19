@@ -63,14 +63,14 @@ public static class FileExts
 	public const string Bin = ".bin";
 
 	/// <summary>
-	/// Xsl file extension.
+	/// Excel file extension.
 	/// </summary>
-	public const string Xls = ".xsl";
+	public const string Xls = ".xls";
 
 	/// <summary>
-	/// Xslx file extension.
+	/// Excel file extension.
 	/// </summary>
-	public const string Xlsx = ".xslx";
+	public const string Xlsx = ".xlsx";
 
 	/// <summary>
 	/// Convert the extension into display name format.

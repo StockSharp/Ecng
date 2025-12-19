@@ -75,7 +75,6 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 
 	#region Min
 
-	//private bool _isMinInit;
 	private readonly NullableEx<T> _min = new();
 
 	/// <summary>
@@ -93,7 +92,6 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 				ValidateBounds(value, Max);
 
 			_min.Value = value;
-			//_isMinInit = true;
 		}
 	}
 
@@ -101,7 +99,6 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 
 	#region Max
 
-	//private bool _isMaxInit;
 	private readonly NullableEx<T> _max = new();
 
 	/// <summary>
@@ -119,7 +116,6 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 				ValidateBounds(Min, value);
 
 			_max.Value = value;
-			//_isMaxInit = true;
 		}
 	}
 

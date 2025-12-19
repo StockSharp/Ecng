@@ -135,7 +135,7 @@ namespace Lzma
 		{
 			// sanity checks.
 			if ((long)offset + count > buffer.LongLength)
-				throw new ArgumentException("Offset + count may not be greater than the length. of the buffer.");
+				throw new ArgumentException("Offset + count may not be greater than the length of the buffer.");
 
 			// initialize the range decoder if necessary.
 			if (this.initRangeDecoder)

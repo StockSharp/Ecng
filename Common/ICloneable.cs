@@ -1,10 +1,6 @@
 namespace Ecng.Common;
 
-#region Using Directives
-
 using System;
-
-#endregion
 
 /// <summary>
 /// Defines a method that creates a new object that is a deep copy of the current instance.

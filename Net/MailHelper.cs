@@ -110,7 +110,7 @@ public static class MailHelper
 		try
 		{
 			new MailAddress(email);
-			return EmailRegex().IsMatch(email)/* && _emailRegex2.IsMatch(email)*/;
+			return EmailRegex().IsMatch(email);
 		}
 		catch (FormatException)
 		{

@@ -44,7 +44,7 @@ namespace Ecng.MathLight.LinearAlgebra
 			// create the X matrix
 			for (int row = 0; row < x.Length; row++)
 			{
-				double nVal = 1.0f;
+				double nVal = 1.0;
 				for (int col = 0; col < order; col++)
 				{
 					matrixX[row, col] = nVal;

@@ -1,5 +1,7 @@
 namespace Ecng.Data;
 
+using System;
+
 using Ecng.Common;
 using Ecng.ComponentModel;
 using Ecng.Serialization;
@@ -89,8 +91,8 @@ public class DatabaseConnectionPair : NotifiableObject, IPersistable
 		unchecked
 		{
 			var hash = 17;
-			hash = hash * 23 + (Provider?.GetHashCode() ?? 0);
-			hash = hash * 23 + (ConnectionString?.GetHashCode() ?? 0);
+			hash = hash * 23 + (Provider is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(Provider));
+			hash = hash * 23 + (ConnectionString is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(ConnectionString));
 			return hash;
 		}
 	}

@@ -14,7 +14,6 @@ using System.Threading;
 /// </summary>
 /// <typeparam name="T">The type of the resource to be managed.</typeparam>
 public sealed class Scope<T> : Disposable
-	//where T : class
 {
 	#region Scope.ctor()
 
@@ -50,8 +49,6 @@ public sealed class Scope<T> : Disposable
 
 		Parent = _current.Value;
 		_current.Value = this;
-
-		//_all.Add(this);
 	}
 
 	#endregion
@@ -134,8 +131,6 @@ public sealed class Scope<T> : Disposable
 		{
 			Value.DoDispose();
 		}
-
-		//_all.Remove(this);
 
 		base.DisposeManaged();
 	}

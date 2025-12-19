@@ -68,9 +68,11 @@ public class DatabaseConnectionCache : IPersistable
 		}
 
 		if (isNew)
+		{
 			ConnectionCreated?.Invoke(connection);
+			Updated?.Invoke();
+		}
 
-		Updated?.Invoke();
 		return connection;
 	}
 

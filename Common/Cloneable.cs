@@ -8,7 +8,6 @@ using System;
 /// <typeparam name="T">The type of cloned object.</typeparam>
 [Serializable]
 public abstract class Cloneable<T> : ICloneable<T>
-	//where T : Cloneable<T>
 {
 	/// <summary>
 	/// Creates a new object that is a copy of the current instance.

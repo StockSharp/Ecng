@@ -66,30 +66,6 @@ public static class DrawingExtensions
 			c = Color.LightGray;
 		}
 
-		//// System color
-		//if (c.IsEmpty)
-		//{
-		//	if (s_htmlSysColorTable == null)
-		//	{
-		//		InitializeHtmlSysColorTable();
-		//	}
-
-		//	s_htmlSysColorTable!.TryGetValue(htmlColor.ToLowerInvariant(), out c);
-		//}
-
-		//// resort to type converter which will handle named colors
-		//if (c.IsEmpty)
-		//{
-		//	try
-		//	{
-		//		c = ColorConverterCommon.ConvertFromString(htmlColor, CultureInfo.CurrentCulture);
-		//	}
-		//	catch (Exception ex)
-		//	{
-		//		throw new ArgumentException(ex.Message, nameof(htmlColor), ex);
-		//	}
-		//}
-
 		return c;
 #else
 		return ColorTranslator.FromHtml(htmlColor);

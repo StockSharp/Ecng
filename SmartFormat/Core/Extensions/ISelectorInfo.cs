@@ -31,7 +31,7 @@ namespace SmartFormat.Core.Extensions
 
         /// <summary>
         /// The index of the selector in a multi-part selector.
-        /// Example: {Person.Birthday.Year} has 3 seletors,
+        /// Example: {Person.Birthday.Year} has 3 selectors,
         /// and Year has a SelectorIndex of 2.
         /// </summary>
         int SelectorIndex { get; }
