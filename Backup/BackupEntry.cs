@@ -1,6 +1,7 @@
 namespace Ecng.Backup;
 
 using System;
+using System.Collections.Generic;
 
 using Ecng.Common;
 
@@ -45,13 +46,22 @@ public class BackupEntry
 	/// <returns>Full path.</returns>
 	public string GetFullPath()
 	{
+		var visited = new HashSet<BackupEntry>();
+		return GetFullPath(visited);
+	}
+
+	private string GetFullPath(HashSet<BackupEntry> visited)
+	{
+		if (!visited.Add(this))
+			throw new InvalidOperationException("Circular reference detected in parent chain.");
+
 		var path = Name;
 
 		if (path.IsEmpty())
 			throw new InvalidOperationException("Entry name is empty.");
 
 		if (Parent is not null)
-			path = Parent.GetFullPath() + $"/{path}";
+			path = Parent.GetFullPath(visited) + $"/{path}";
 
 		return path;
 	}
