@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections;
+using System.IO;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,10 +43,15 @@ public abstract class BaseTestClass
 	}
 
 	private static bool IsEnvVarSet(string name)
-	{
-		var value = Environment.GetEnvironmentVariable(name);
-		return !value.IsEmpty();
-	}
+		=> !Env(name).IsEmpty();
+
+	/// <summary>
+	/// Gets environment variable value.
+	/// </summary>
+	/// <param name="name">Variable name.</param>
+	/// <returns>Value or null if not set.</returns>
+	protected static string Env(string name)
+		=> Environment.GetEnvironmentVariable(name);
 
 	/// <summary>
 	/// <see cref="TestContext"/>
@@ -809,5 +816,96 @@ public abstract class BaseTestClass
 	{
 		if (string.IsNullOrWhiteSpace(value))
 			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-null and non-whitespace string." : message);
+	}
+
+	private static string _secretsFile = "secrets.json";
+
+	/// <summary>
+	/// Gets or sets the secrets file name. Can be set from AssemblyInitialize.
+	/// </summary>
+	public static string SecretsFile
+	{
+		get => _secretsFile;
+		set
+		{
+			_secretsFile = value;
+			_secretsLoaded = false;
+			_secretsDoc?.Dispose();
+			_secretsDoc = null;
+		}
+	}
+
+	private static JsonDocument _secretsDoc;
+	private static bool _secretsLoaded;
+
+	/// <summary>
+	/// Tries to get a secret value from environment variable or JSON secrets file.
+	/// Same key is used for both ENV and JSON lookup.
+	/// </summary>
+	/// <param name="key">Secret key (e.g., "BACKUP_AWS_REGION").</param>
+	/// <returns>Secret value or null if not found.</returns>
+	protected static string TryGetSecret(string key)
+	{
+		var value = Env(key);
+		if (!value.IsEmpty())
+			return value;
+
+		var doc = GetSecretsDocument();
+		if (doc is null)
+			return null;
+
+		if (doc.RootElement.TryGetProperty(key, out var prop))
+			return prop.ValueKind == JsonValueKind.String ? prop.GetString() : prop.ToString();
+
+		// case-insensitive fallback
+		foreach (var p in doc.RootElement.EnumerateObject())
+		{
+			if (p.Name.Equals(key, StringComparison.OrdinalIgnoreCase))
+				return p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() : p.Value.ToString();
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Gets a secret value or marks test as inconclusive if not found.
+	/// </summary>
+	/// <param name="key">Secret key (e.g., "BACKUP_AWS_REGION").</param>
+	/// <returns>Secret value.</returns>
+	protected static string GetSecret(string key)
+	{
+		var value = TryGetSecret(key);
+		if (value.IsEmpty())
+			Assert.Inconclusive($"Secret '{key}' missing. Set env var or add to {SecretsFile}.");
+		return value;
+	}
+
+	private static JsonDocument GetSecretsDocument()
+	{
+		if (_secretsLoaded)
+			return _secretsDoc;
+
+		_secretsLoaded = true;
+
+		var path = FindSecretsFile();
+		if (path is null)
+			return null;
+
+		_secretsDoc = JsonDocument.Parse(File.ReadAllText(path));
+		return _secretsDoc;
+	}
+
+	private static string FindSecretsFile()
+	{
+		var dir = new DirectoryInfo(AppContext.BaseDirectory);
+		for (var i = 0; i < 8 && dir != null; i++)
+		{
+			var candidate = Path.Combine(dir.FullName, SecretsFile);
+			if (File.Exists(candidate))
+				return candidate;
+			dir = dir.Parent;
+		}
+
+		return null;
 	}
 }

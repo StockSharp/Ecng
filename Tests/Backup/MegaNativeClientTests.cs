@@ -1,69 +1,21 @@
 namespace Ecng.Tests.Backup;
 
-using System.IO;
-
 using Ecng.Backup.Mega.Native;
 
 [TestClass]
 [TestCategory("Integration")]
 public class MegaNativeClientTests : BaseTestClass
 {
-	private sealed class Secrets
-	{
-		public MegaSecrets Mega { get; init; }
-	}
-
-	private sealed class MegaSecrets
-	{
-		public string Email { get; init; }
-		public string Password { get; init; }
-	}
-
-	private static MegaSecrets LoadMegaSecrets()
-	{
-		static string Env(string name) => Environment.GetEnvironmentVariable(name);
-
-		var email = Env("BACKUP_MEGA_EMAIL");
-		var password = Env("BACKUP_MEGA_PASSWORD");
-
-		var fromFile = TryLoadSecretsFile()?.Mega;
-
-		email ??= fromFile?.Email;
-		password ??= fromFile?.Password;
-
-		if (email.IsEmpty() || password.IsEmpty())
-			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
-
-		return new MegaSecrets { Email = email, Password = password };
-	}
-
-	private static Secrets TryLoadSecretsFile()
-	{
-		const string secretsFileName = "secrets.json";
-
-		var explicitPath = Environment.GetEnvironmentVariable("BACKUP_SECRETS_FILE");
-		if (!explicitPath.IsEmpty() && File.Exists(explicitPath))
-			return explicitPath.DeserializeSecrets<Secrets>();
-
-		var dir = new DirectoryInfo(AppContext.BaseDirectory);
-		for (var i = 0; i < 8 && dir != null; i++)
-		{
-			var candidate = Path.Combine(dir.FullName, secretsFileName);
-			if (File.Exists(candidate))
-				return candidate.DeserializeSecrets<Secrets>();
-			dir = dir.Parent;
-		}
-
-		return null;
-	}
+	private (string email, string password) LoadMegaSecrets()
+		=> (GetSecret("BACKUP_MEGA_EMAIL"), GetSecret("BACKUP_MEGA_PASSWORD"));
 
 	[TestMethod]
 	public async Task Login_And_GetNodes()
 	{
-		var s = LoadMegaSecrets();
+		var (email, password) = LoadMegaSecrets();
 
 		using var client = new Client();
-		await client.LoginAsync(s.Email, s.Password, CancellationToken);
+		await client.LoginAsync(email, password, CancellationToken);
 
 		var nodes = await client.GetNodesAsync(CancellationToken);
 		nodes.Any(n => n.Type == NodeType.Root).AssertTrue();
@@ -72,10 +24,10 @@ public class MegaNativeClientTests : BaseTestClass
 	[TestMethod]
 	public async Task Roundtrip_Upload_Download_Delete()
 	{
-		var s = LoadMegaSecrets();
+		var (email, password) = LoadMegaSecrets();
 
 		using var client = new Client();
-		await client.LoginAsync(s.Email, s.Password, CancellationToken);
+		await client.LoginAsync(email, password, CancellationToken);
 
 		var nodes = await client.GetNodesAsync(CancellationToken);
 		var root = nodes.First(n => n.Type == NodeType.Root);
@@ -121,10 +73,10 @@ public class MegaNativeClientTests : BaseTestClass
 	[TestMethod]
 	public async Task Logout_InvalidatesSession()
 	{
-		var s = LoadMegaSecrets();
+		var (email, password) = LoadMegaSecrets();
 
 		using var client = new Client();
-		await client.LoginAsync(s.Email, s.Password, CancellationToken);
+		await client.LoginAsync(email, password, CancellationToken);
 
 		client.IsLoggedIn.AssertTrue();
 
@@ -133,17 +85,17 @@ public class MegaNativeClientTests : BaseTestClass
 		client.IsLoggedIn.AssertFalse();
 		await ThrowsAsync<InvalidOperationException>(() => client.GetNodesAsync(CancellationToken));
 
-		await client.LoginAsync(s.Email, s.Password, CancellationToken);
+		await client.LoginAsync(email, password, CancellationToken);
 		client.IsLoggedIn.AssertTrue();
 	}
 
 	[TestMethod]
 	public async Task Publish_Unpublish_File()
 	{
-		var s = LoadMegaSecrets();
+		var (email, password) = LoadMegaSecrets();
 
 		using var client = new Client();
-		await client.LoginAsync(s.Email, s.Password, CancellationToken);
+		await client.LoginAsync(email, password, CancellationToken);
 
 		var nodes = await client.GetNodesAsync(CancellationToken);
 		var root = nodes.First(n => n.Type == NodeType.Root);

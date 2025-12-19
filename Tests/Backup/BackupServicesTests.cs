@@ -1,6 +1,5 @@
 namespace Ecng.Tests.Backup;
 
-using System.IO;
 using System.Net;
 using System.Net.Http;
 
@@ -14,119 +13,6 @@ using Ecng.Backup.Yandex;
 [TestCategory("Integration")]
 public class BackupServicesTests : BaseTestClass
 {
-	private const string _secretsFileName = "secrets.json";
-
-	private sealed class Secrets
-	{
-		public AwsSecrets Aws { get; init; }
-		public AzureSecrets Azure { get; init; }
-		public MegaSecrets Mega { get; init; }
-		public YandexSecrets Yandex { get; init; }
-	}
-
-	private sealed class AwsSecrets
-	{
-		public string Region { get; init; }
-		public string Bucket { get; init; }
-		public string AccessKey { get; init; }
-		public string SecretKey { get; init; }
-	}
-
-	private sealed class AzureSecrets
-	{
-		public string ConnectionString { get; init; }
-		public string Container { get; init; }
-	}
-
-	private sealed class MegaSecrets
-	{
-		public string Email { get; init; }
-		public string Password { get; init; }
-	}
-
-	private sealed class YandexSecrets
-	{
-		public string Token { get; init; }
-	}
-
-	private static Secrets LoadSecrets()
-	{
-		static string Env(string name) => Environment.GetEnvironmentVariable(name);
-
-		var fromEnv = new Secrets
-		{
-			Aws = new AwsSecrets
-			{
-				Region = Env("BACKUP_AWS_REGION"),
-				Bucket = Env("BACKUP_AWS_BUCKET"),
-				AccessKey = Env("BACKUP_AWS_ACCESS_KEY"),
-				SecretKey = Env("BACKUP_AWS_SECRET_KEY"),
-			},
-			Azure = new AzureSecrets
-			{
-				ConnectionString = Env("BACKUP_AZURE_CONNECTION_STRING"),
-				Container = Env("BACKUP_AZURE_CONTAINER"),
-			},
-			Mega = new MegaSecrets
-			{
-				Email = Env("BACKUP_MEGA_EMAIL"),
-				Password = Env("BACKUP_MEGA_PASSWORD"),
-			},
-			Yandex = new YandexSecrets
-			{
-				Token = Env("BACKUP_YANDEX_TOKEN"),
-			},
-		};
-
-		var fileSecrets = TryLoadSecretsFile();
-		if (fileSecrets is null)
-			return fromEnv;
-
-		// env overrides file
-		return new Secrets
-		{
-			Aws = new AwsSecrets
-			{
-				Region = fromEnv.Aws.Region ?? fileSecrets.Aws?.Region,
-				Bucket = fromEnv.Aws.Bucket ?? fileSecrets.Aws?.Bucket,
-				AccessKey = fromEnv.Aws.AccessKey ?? fileSecrets.Aws?.AccessKey,
-				SecretKey = fromEnv.Aws.SecretKey ?? fileSecrets.Aws?.SecretKey,
-			},
-			Azure = new AzureSecrets
-			{
-				ConnectionString = fromEnv.Azure.ConnectionString ?? fileSecrets.Azure?.ConnectionString,
-				Container = fromEnv.Azure.Container ?? fileSecrets.Azure?.Container,
-			},
-			Mega = new MegaSecrets
-			{
-				Email = fromEnv.Mega.Email ?? fileSecrets.Mega?.Email,
-				Password = fromEnv.Mega.Password ?? fileSecrets.Mega?.Password,
-			},
-			Yandex = new YandexSecrets
-			{
-				Token = fromEnv.Yandex.Token ?? fileSecrets.Yandex?.Token,
-			},
-		};
-	}
-
-	private static Secrets TryLoadSecretsFile()
-	{
-		var explicitPath = Environment.GetEnvironmentVariable("BACKUP_SECRETS_FILE");
-		if (!explicitPath.IsEmpty() && File.Exists(explicitPath))
-			return explicitPath.DeserializeSecrets<Secrets>();
-
-		var dir = new DirectoryInfo(AppContext.BaseDirectory);
-		for (var i = 0; i < 8 && dir != null; i++)
-		{
-			var candidate = Path.Combine(dir.FullName, _secretsFileName);
-			if (File.Exists(candidate))
-				return candidate.DeserializeSecrets<Secrets>();
-			dir = dir.Parent;
-		}
-
-		return null;
-	}
-
 	private static async Task RoundtripAsync(IBackupService service, string serviceName, CancellationToken cancellationToken)
 	{
 		var folder = service.CanFolders ? new BackupEntry { Name = "ecng-tests-" + Guid.NewGuid().ToString("N") } : null;
@@ -166,22 +52,24 @@ public class BackupServicesTests : BaseTestClass
 	[TestMethod]
 	public async Task AwsS3_Roundtrip()
 	{
-		var s = LoadSecrets().Aws;
-		if (s?.Region.IsEmpty() != false || s.Bucket.IsEmpty() || s.AccessKey.IsEmpty() || s.SecretKey.IsEmpty())
-			Assert.Inconclusive("AWS secrets missing. Set BACKUP_AWS_REGION, BACKUP_AWS_BUCKET, BACKUP_AWS_ACCESS_KEY, BACKUP_AWS_SECRET_KEY or provide secrets.json.");
+		var region = GetSecret("BACKUP_AWS_REGION");
+		var bucket = GetSecret("BACKUP_AWS_BUCKET");
+		var accessKey = GetSecret("BACKUP_AWS_ACCESS_KEY");
+		var secretKey = GetSecret("BACKUP_AWS_SECRET_KEY");
 
-		using var svc = new AmazonS3Service(s.Region, s.Bucket, s.AccessKey, s.SecretKey);
+		using var svc = new AmazonS3Service(region, bucket, accessKey, secretKey);
 		await RoundtripAsync(svc, "AWS S3", cancellationToken: CancellationToken);
 	}
 
 	[TestMethod]
 	public async Task AwsS3_Publish_Unpublish()
 	{
-		var s = LoadSecrets().Aws;
-		if (s?.Region.IsEmpty() != false || s.Bucket.IsEmpty() || s.AccessKey.IsEmpty() || s.SecretKey.IsEmpty())
-			Assert.Inconclusive("AWS secrets missing. Set BACKUP_AWS_REGION, BACKUP_AWS_BUCKET, BACKUP_AWS_ACCESS_KEY, BACKUP_AWS_SECRET_KEY or provide secrets.json.");
+		var region = GetSecret("BACKUP_AWS_REGION");
+		var bucket = GetSecret("BACKUP_AWS_BUCKET");
+		var accessKey = GetSecret("BACKUP_AWS_ACCESS_KEY");
+		var secretKey = GetSecret("BACKUP_AWS_SECRET_KEY");
 
-		using IBackupService svc = new AmazonS3Service(s.Region, s.Bucket, s.AccessKey, s.SecretKey);
+		using IBackupService svc = new AmazonS3Service(region, bucket, accessKey, secretKey);
 
 		var entry = new BackupEntry { Name = $"publish-{Guid.NewGuid():N}.txt" };
 		var data = "hello " + Guid.NewGuid();
@@ -191,9 +79,7 @@ public class BackupServicesTests : BaseTestClass
 
 		try
 		{
-			string url;
-
-			url = await svc.PublishAsync(entry, expiresIn: TimeSpan.FromMinutes(5), cancellationToken: CancellationToken);
+			var url = await svc.PublishAsync(entry, expiresIn: TimeSpan.FromMinutes(5), cancellationToken: CancellationToken);
 
 			url.IsEmpty().AssertFalse();
 
@@ -217,33 +103,30 @@ public class BackupServicesTests : BaseTestClass
 		if (IsLocalHost)
 			Inconclusive("Azure tests are skipped on localhost.");
 
-		var s = LoadSecrets().Azure;
-		if (s?.ConnectionString.IsEmpty() != false || s.Container.IsEmpty())
-			Assert.Inconclusive("Azure secrets missing. Set BACKUP_AZURE_CONNECTION_STRING and BACKUP_AZURE_CONTAINER or provide secrets.json.");
+		var connectionString = GetSecret("BACKUP_AZURE_CONNECTION_STRING");
+		var container = GetSecret("BACKUP_AZURE_CONTAINER");
 
-		using var svc = new AzureBlobService(s.ConnectionString, s.Container);
+		using var svc = new AzureBlobService(connectionString, container);
 		await RoundtripAsync(svc, "Azure Blob", cancellationToken: CancellationToken);
 	}
 
 	[TestMethod]
 	public async Task Mega_Roundtrip()
 	{
-		var s = LoadSecrets().Mega;
-		if (s?.Email.IsEmpty() != false || s.Password.IsEmpty())
-			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
+		var email = GetSecret("BACKUP_MEGA_EMAIL");
+		var password = GetSecret("BACKUP_MEGA_PASSWORD");
 
-		using IBackupService svc = new MegaService(s.Email, s.Password.Secure());
+		using IBackupService svc = new MegaService(email, password.Secure());
 		await RoundtripAsync(svc, "Mega", cancellationToken: CancellationToken);
 	}
 
 	[TestMethod]
 	public async Task Mega_Publish_Unpublish()
 	{
-		var s = LoadSecrets().Mega;
-		if (s?.Email.IsEmpty() != false || s.Password.IsEmpty())
-			Assert.Inconclusive("Mega secrets missing. Set BACKUP_MEGA_EMAIL and BACKUP_MEGA_PASSWORD or provide secrets.json.");
+		var email = GetSecret("BACKUP_MEGA_EMAIL");
+		var password = GetSecret("BACKUP_MEGA_PASSWORD");
 
-		using IBackupService svc = new MegaService(s.Email, s.Password.Secure());
+		using IBackupService svc = new MegaService(email, password.Secure());
 
 		var folder = new BackupEntry { Name = "ecng-publish-tests-" + Guid.NewGuid().ToString("N") };
 		await svc.CreateFolder(folder, CancellationToken);
@@ -274,7 +157,7 @@ public class BackupServicesTests : BaseTestClass
 
 		using (var native = new Ecng.Backup.Mega.Native.Client())
 		{
-			await native.LoginAsync(s.Email, s.Password, CancellationToken);
+			await native.LoginAsync(email, password, CancellationToken);
 			var dl = await native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken);
 			dl.Url.IsEmpty().AssertFalse();
 		}
@@ -283,7 +166,7 @@ public class BackupServicesTests : BaseTestClass
 
 		using (var native = new Ecng.Backup.Mega.Native.Client())
 		{
-			await native.LoginAsync(s.Email, s.Password, CancellationToken);
+			await native.LoginAsync(email, password, CancellationToken);
 			await ThrowsAsync<InvalidOperationException>(() => native.GetPublicDownloadUrlAsync(publicHandle, CancellationToken));
 		}
 
@@ -294,22 +177,18 @@ public class BackupServicesTests : BaseTestClass
 	[TestMethod]
 	public async Task YandexDisk_Roundtrip()
 	{
-		var s = LoadSecrets().Yandex;
-		if (s?.Token.IsEmpty() != false)
-			Assert.Inconclusive("Yandex secrets missing. Set BACKUP_YANDEX_TOKEN or provide secrets.json.");
+		var token = GetSecret("BACKUP_YANDEX_TOKEN");
 
-		using var svc = new YandexDiskService(s.Token.Secure());
+		using var svc = new YandexDiskService(token.Secure());
 		await RoundtripAsync(svc, "Yandex Disk", cancellationToken: CancellationToken);
 	}
 
 	[TestMethod]
 	public async Task YandexDisk_Publish_Unpublish()
 	{
-		var s = LoadSecrets().Yandex;
-		if (s?.Token.IsEmpty() != false)
-			Assert.Inconclusive("Yandex secrets missing. Set BACKUP_YANDEX_TOKEN or provide secrets.json.");
+		var token = GetSecret("BACKUP_YANDEX_TOKEN");
 
-		using IBackupService svc = new YandexDiskService(s.Token.Secure());
+		using IBackupService svc = new YandexDiskService(token.Secure());
 
 		var folder = new BackupEntry { Name = "ecng-yandex-publish-tests-" + Guid.NewGuid().ToString("N") };
 		var entry = new BackupEntry
@@ -330,7 +209,7 @@ public class BackupServicesTests : BaseTestClass
 			var url = await svc.PublishAsync(entry, cancellationToken: CancellationToken);
 			url.IsEmpty().AssertFalse();
 
-			using var api = new YandexDisk.Client.Http.DiskHttpApi(s.Token);
+			using var api = new YandexDisk.Client.Http.DiskHttpApi(token);
 
 			var published = false;
 

@@ -1,9 +1,5 @@
 namespace Ecng.Tests.Backup;
 
-using System.IO;
-
-using Ecng.Common;
-
 using YandexDisk.Client.Clients;
 using YandexDisk.Client.Http;
 
@@ -11,49 +7,7 @@ using YandexDisk.Client.Http;
 [TestCategory("Integration")]
 public class YandexDiskClientTests : BaseTestClass
 {
-	private sealed class Secrets
-	{
-		public YandexSecrets Yandex { get; init; }
-	}
-
-	private sealed class YandexSecrets
-	{
-		public string Token { get; init; }
-	}
-
-	private string LoadToken()
-	{
-		static string Env(string name) => Environment.GetEnvironmentVariable(name);
-
-		var token = Env("BACKUP_YANDEX_TOKEN");
-		var fromFile = TryLoadSecretsFile()?.Yandex?.Token;
-		token ??= fromFile;
-
-		if (token.IsEmpty())
-			Assert.Inconclusive("Yandex secrets missing. Set BACKUP_YANDEX_TOKEN or provide secrets.json.");
-
-		return token;
-	}
-
-	private static Secrets TryLoadSecretsFile()
-	{
-		const string secretsFileName = "secrets.json";
-
-		var explicitPath = Environment.GetEnvironmentVariable("BACKUP_SECRETS_FILE");
-		if (!explicitPath.IsEmpty() && File.Exists(explicitPath))
-			return explicitPath.DeserializeSecrets<Secrets>();
-
-		var dir = new DirectoryInfo(AppContext.BaseDirectory);
-		for (var i = 0; i < 8 && dir != null; i++)
-		{
-			var candidate = Path.Combine(dir.FullName, secretsFileName);
-			if (File.Exists(candidate))
-				return candidate.DeserializeSecrets<Secrets>();
-			dir = dir.Parent;
-		}
-
-		return null;
-	}
+	private static string LoadToken() => GetSecret("BACKUP_YANDEX_TOKEN");
 
 	[TestMethod]
 	public async Task GetDiskInfo()

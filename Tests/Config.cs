@@ -1,7 +1,6 @@
 namespace Ecng.Tests;
 
 using System.Net.Http;
-using System.Text.Json;
 
 using Ecng.Reflection;
 
@@ -44,12 +43,4 @@ public static class Config
 		Directory.CreateDirectory(path);
 		return path;
 	}
-
-	private static readonly JsonSerializerOptions _opts = new()
-	{
-		PropertyNameCaseInsensitive = true
-	};
-
-	public static T DeserializeSecrets<T>(this string path)
-		=> JsonSerializer.Deserialize<T>(File.ReadAllText(path), _opts);
 }
