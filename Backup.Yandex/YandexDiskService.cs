@@ -46,7 +46,10 @@ public class YandexDiskService : Disposable, IBackupService
 	bool IBackupService.CanExpirable => false;
 	bool IBackupService.CanPartialDownload => false;
 
-	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
+	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria)
+		=> FindAsyncImpl(parent, criteria);
+
+	private async IAsyncEnumerable<BackupEntry> FindAsyncImpl(BackupEntry parent, string criteria, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		var path = parent is null ? "/" : parent.GetFullPath().TrimEnd('/') + "/";
 

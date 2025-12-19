@@ -31,7 +31,7 @@ public class BackupServicesTests : BaseTestClass
 			await service.UploadAsync(entry, uploadStream, _ => { }, cancellationToken);
 
 		var found = new List<BackupEntry>();
-		await foreach (var f in service.FindAsync(folder, entry.Name, cancellationToken))
+		await foreach (var f in service.FindAsync(folder, entry.Name).WithCancellation(cancellationToken))
 			found.Add(f);
 
 		(found.Any(f => f.Name.EqualsIgnoreCase(entry.Name))).AssertTrue($"{serviceName}: uploaded entry not found");

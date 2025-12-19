@@ -60,7 +60,10 @@ public class AmazonS3Service : Disposable, IBackupService
 	bool IBackupService.CanExpirable => true;
 	bool IBackupService.CanPartialDownload => true;
 
-	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
+	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria)
+		=> FindAsyncImpl(parent, criteria);
+
+	private async IAsyncEnumerable<BackupEntry> FindAsyncImpl(BackupEntry parent, string criteria, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		//if (parent != null && !parent.IsDirectory)
 		//	throw new ArgumentException("{0} should be directory.".Put(parent.Name), "parent");

@@ -47,7 +47,10 @@ public class AzureBlobService : Disposable, IBackupService
 	Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
 		=> Task.CompletedTask;
 
-	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
+	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria)
+		=> FindAsyncImpl(parent, criteria);
+
+	private async IAsyncEnumerable<BackupEntry> FindAsyncImpl(BackupEntry parent, string criteria, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		await EnsureContainerAsync(cancellationToken).NoWait();
 

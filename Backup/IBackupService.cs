@@ -44,9 +44,8 @@ public interface IBackupService : IDisposable
 	/// </summary>
 	/// <param name="parent">Parent element. Can be null.</param>
 	/// <param name="criteria">Criteria.</param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns>File list.</returns>
-	IAsyncEnumerable<BackupEntry> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default);
+	IAsyncEnumerable<BackupEntry> FindAsync(BackupEntry parent, string criteria);
 
 	/// <summary>
 	/// Fill file info.

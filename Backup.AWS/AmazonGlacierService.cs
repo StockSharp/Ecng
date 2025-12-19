@@ -98,7 +98,10 @@ public class AmazonGlacierService : Disposable, IBackupService
 	bool IBackupService.CanExpirable => false;
 	bool IBackupService.CanPartialDownload => true;
 
-	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
+	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria)
+		=> FindAsyncImpl(parent, criteria);
+
+	private async IAsyncEnumerable<BackupEntry> FindAsyncImpl(BackupEntry parent, string criteria, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		// Glacier inventory is eventually consistent and can be up to 24h stale.
 		// We rely on the last inventory plus in-session uploads.
