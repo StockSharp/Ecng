@@ -209,7 +209,8 @@ public class HexEncoding : Encoding
 	/// <filterpriority>1</filterpriority>
 	public override int GetMaxByteCount(int charCount)
 	{
-		return charCount * 2;
+		// 2 hex characters = 1 byte
+		return charCount / 2;
 	}
 
 	/// <summary>
@@ -227,12 +228,8 @@ public class HexEncoding : Encoding
 	/// <filterpriority>1</filterpriority>
 	public override int GetMaxCharCount(int byteCount)
 	{
-		if (byteCount % 2 != 0)
-		{
-			byteCount--;
-		}
-
-		return byteCount / 2;
+		// 1 byte = 2 hex characters
+		return byteCount * 2;
 	}
 
 	/// <summary>

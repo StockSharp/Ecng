@@ -8,7 +8,6 @@ namespace Ecng.IO.Fossil
 		private UInt16 b;
 		private UInt16 i;
 		private byte[] z;
-		static int ii = 0;
 
 		public RollingHash ()
 		{
@@ -18,9 +17,9 @@ namespace Ecng.IO.Fossil
 			this.z = new byte[Delta.NHASH];
 		}
 
-		/**
-		 * Initialize the rolling hash using the first NHASH characters of z[]
-		 */
+		/// <summary>
+		/// Initialize the rolling hash using the first NHASH characters of z[].
+		/// </summary>
 		public unsafe void Init (byte* z, int pos)
 		{
 			UInt16 a = 0, b = 0, i, x;
@@ -35,9 +34,9 @@ namespace Ecng.IO.Fossil
 			this.i = 0;
 		}
 
-		/**
-		 * Advance the rolling hash by a single character "c"
-		 */
+		/// <summary>
+		/// Advance the rolling hash by a single character.
+		/// </summary>
 		public void Next (byte c) {
 			UInt16 old = this.z[this.i];
 			this.z[this.i] = c;
@@ -47,22 +46,16 @@ namespace Ecng.IO.Fossil
 		}
 
 
-		/**
-		 * Return a 32-bit hash value
-		 */
+		/// <summary>
+		/// Return a 32-bit hash value.
+		/// </summary>
 		public UInt32 Value () {
-			RollingHash.ii ++;
 			return (UInt32) (((UInt32)(this.a & 0xffff)) | (((UInt32)(this.b & 0xffff)) << 16));
 		}
 
-		/*
-		 * Compute a hash on NHASH bytes.
-		 *
-		 * This routine is intended to be equivalent to:
-		 *    hash h;
-		 *    hash_init(&h, zInput);
-		 *    return hash_32bit(&h);
-		 */
+		/// <summary>
+		/// Compute a hash on NHASH bytes in a single call.
+		/// </summary>
 		public static UInt32 Once (byte[] z) {
 			UInt16 a, b, i;
 			a = b = z[0];

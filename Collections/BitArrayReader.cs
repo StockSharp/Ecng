@@ -217,7 +217,7 @@ public class BitArrayReader
 		bits >>= bitOffset;
 
 		if (bitOffset > 0)
-			bits |= Get(_dataOffset + 1) << (64 - bitOffset); // честные 64 бита в битс
+			bits |= Get(_dataOffset + 1) << (64 - bitOffset); // combine to get full 64 bits
 
 		var value = 0;
 

@@ -62,8 +62,10 @@ public class HexEncodingTests : BaseTestClass
 	public void MaxCountsAndStatic()
 	{
 		var enc = new HexEncoding();
-		enc.GetMaxByteCount(2).AssertEqual(4);
-		enc.GetMaxCharCount(3).AssertEqual(1);
+		// 2 hex chars = 1 byte, so GetMaxByteCount(2) = 1
+		enc.GetMaxByteCount(2).AssertEqual(1);
+		// 1 byte = 2 hex chars, so GetMaxCharCount(3) = 6
+		enc.GetMaxCharCount(3).AssertEqual(6);
 
 		var bytes = HexEncoding.GetBytes("A1Z".ToCharArray(), 0, 3, out var discard);
 		discard.AssertEqual(1);
