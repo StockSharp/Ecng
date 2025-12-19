@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using System.Security;
+using System.Text;
 
 [TestClass]
 public class StringTests : BaseTestClass
@@ -303,7 +304,7 @@ public class StringTests : BaseTestClass
 		bytes.Digest().AssertEqual("DEADBEEF");
 		bytes.Digest(2).AssertEqual("DEAD");
 		var str = "Hello";
-		System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)))).AssertEqual(str); // roundtrip check
+		Encoding.UTF8.GetString(Convert.FromBase64String(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)))).AssertEqual(str); // roundtrip check
 		Convert.ToBase64String(bytes).AssertEqual(bytes.Base64());
 	}
 
@@ -311,10 +312,10 @@ public class StringTests : BaseTestClass
 	public void EncodingHelpers()
 	{
 		var str = "Hello";
-		str.ASCII().AssertEqual(System.Text.Encoding.ASCII.GetBytes(str));
-		str.UTF8().AssertEqual(System.Text.Encoding.UTF8.GetBytes(str));
-		str.Unicode().AssertEqual(System.Text.Encoding.Unicode.GetBytes(str));
-		str.Cyrillic().AssertEqual(System.Text.Encoding.GetEncoding(1251).GetBytes(str));
+		str.ASCII().AssertEqual(Encoding.ASCII.GetBytes(str));
+		str.UTF8().AssertEqual(Encoding.UTF8.GetBytes(str));
+		str.Unicode().AssertEqual(Encoding.Unicode.GetBytes(str));
+		str.Cyrillic().AssertEqual(Encoding.GetEncoding(1251).GetBytes(str));
 	}
 
 	[TestMethod]
@@ -344,7 +345,7 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void RemoveLast_And_IsEmpty_StringBuilder()
 	{
-		var sb = new System.Text.StringBuilder("abc");
+		var sb = new StringBuilder("abc");
 		sb.RemoveLast(1);
 		sb.ToString().AssertEqual("ab");
 		sb.IsEmpty().AssertFalse();
@@ -355,7 +356,7 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void GetAndClear_StringBuilder()
 	{
-		var sb = new System.Text.StringBuilder("abc");
+		var sb = new StringBuilder("abc");
 		sb.GetAndClear().AssertEqual("abc");
 		sb.Length.AssertEqual(0);
 	}
@@ -401,7 +402,7 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void ReplaceIgnoreCase_StringBuilder()
 	{
-		var sb = new System.Text.StringBuilder("Hello");
+		var sb = new StringBuilder("Hello");
 		sb.ReplaceIgnoreCase("he", "HE");
 		sb.ToString().AssertEqual("HEllo");
 	}
@@ -439,7 +440,7 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void LastIndexOf_StringBuilder_Works()
 	{
-		var sb = new System.Text.StringBuilder("a_b_c");
+		var sb = new StringBuilder("a_b_c");
 		sb.LastIndexOf('_').AssertEqual(3);
 	}
 
@@ -447,19 +448,19 @@ public class StringTests : BaseTestClass
 	public void LastIndexOf_StringBuilder_AtIndexZero()
 	{
 		// Test that character at index 0 is found correctly
-		var sb = new System.Text.StringBuilder("_abc");
+		var sb = new StringBuilder("_abc");
 		sb.LastIndexOf('_').AssertEqual(0);
 
 		// Test when only character at index 0
-		sb = new System.Text.StringBuilder("x");
+		sb = new StringBuilder("x");
 		sb.LastIndexOf('x').AssertEqual(0);
 
 		// Test not found
-		sb = new System.Text.StringBuilder("abc");
+		sb = new StringBuilder("abc");
 		sb.LastIndexOf('x').AssertEqual(-1);
 
 		// Test empty
-		sb = new System.Text.StringBuilder("");
+		sb = new StringBuilder("");
 		sb.LastIndexOf('x').AssertEqual(-1);
 	}
 
@@ -549,9 +550,9 @@ public class StringTests : BaseTestClass
 		str.Unicode().Unicode().AssertEqual(str);
 		str.Cyrillic().Cyrillic().AssertEqual(str);
 
-		var bytes = System.Text.Encoding.UTF8.GetBytes(str);
+		var bytes = Encoding.UTF8.GetBytes(str);
 		var seg = new ArraySegment<byte>(bytes);
-		System.Text.Encoding.UTF8.GetString(seg).AssertEqual(str);
+		Encoding.UTF8.GetString(seg).AssertEqual(str);
 	}
 
 	[TestMethod]
@@ -579,7 +580,7 @@ public class StringTests : BaseTestClass
 		Span<byte> destination = new byte[100];
 		var count = charSpan.UTF8(destination);
 		count.AssertEqual(bytes.Length);
-		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+		destination[..count].ToArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -599,7 +600,7 @@ public class StringTests : BaseTestClass
 		Span<byte> destination = new byte[100];
 		var count = charSpan.ASCII(destination);
 		count.AssertEqual(bytes.Length);
-		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+		destination[..count].ToArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -619,7 +620,7 @@ public class StringTests : BaseTestClass
 		Span<byte> destination = new byte[100];
 		var count = charSpan.Unicode(destination);
 		count.AssertEqual(bytes.Length);
-		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+		destination[..count].ToArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -639,7 +640,7 @@ public class StringTests : BaseTestClass
 		Span<byte> destination = new byte[100];
 		var count = charSpan.Default(destination);
 		count.AssertEqual(bytes.Length);
-		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+		destination[..count].ToArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -659,7 +660,7 @@ public class StringTests : BaseTestClass
 		Span<byte> destination = new byte[100];
 		var count = charSpan.Cyrillic(destination);
 		count.AssertEqual(bytes.Length);
-		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+		destination[..count].ToArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]

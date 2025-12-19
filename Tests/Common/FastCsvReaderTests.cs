@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Common;
 
+using System.Text;
+
 [TestClass]
 public class FastCsvReaderTests : BaseTestClass
 {
@@ -30,15 +32,15 @@ public class FastCsvReaderTests : BaseTestClass
 	[TestMethod]
 	public void Dispose_StreamLeaveOpen_Works()
 	{
-		var stream = new TrackingStream(System.Text.Encoding.UTF8.GetBytes("A" + StringHelper.N));
+		var stream = new TrackingStream(Encoding.UTF8.GetBytes("A" + StringHelper.N));
 
-		using (new FastCsvReader(stream, System.Text.Encoding.UTF8, StringHelper.N, leaveOpen: true))
+		using (new FastCsvReader(stream, Encoding.UTF8, StringHelper.N, leaveOpen: true))
 		{
 		}
 
 		stream.IsDisposed.AssertFalse();
 
-		using (new FastCsvReader(stream, System.Text.Encoding.UTF8, StringHelper.N, leaveOpen: false))
+		using (new FastCsvReader(stream, Encoding.UTF8, StringHelper.N, leaveOpen: false))
 		{
 		}
 

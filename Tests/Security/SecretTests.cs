@@ -1,6 +1,7 @@
 namespace Ecng.Tests.Security;
 
 using System.IO;
+using System.Security;
 
 using Ecng.Security;
 
@@ -127,7 +128,7 @@ public class SecretTests : BaseTestClass
 		var algo = CreateAlgo();
 
 		Secret secret = _correctPwd.CreateSecret(algo);
-		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((SecureString)null, algo));
 	}
 
 	[TestMethod]
@@ -154,7 +155,7 @@ public class SecretTests : BaseTestClass
 	{
 		var algo = CreateAlgo();
 
-		System.Security.SecureString s = null;
+		SecureString s = null;
 		ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
@@ -223,7 +224,7 @@ public class SecretTests : BaseTestClass
 	{
 		var algo = CreateAlgo();
 
-		System.Security.SecureString s = null;
+		SecureString s = null;
 		ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
@@ -250,7 +251,7 @@ public class SecretTests : BaseTestClass
 		var algo = CreateAlgo();
 
 		var secret = _correctPwd.CreateSecret(algo);
-		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((SecureString)null, algo));
 	}
 
 	[TestMethod]
