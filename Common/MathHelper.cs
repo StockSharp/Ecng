@@ -764,10 +764,9 @@ public static class MathHelper
 	/// <param name="x">The numerator.</param>
 	/// <param name="y">The denominator.</param>
 	/// <returns>The angle, in radians, whose tangent is the quotient of x and y.</returns>
+	[Obsolete("Use Atan2 instead. This method was incorrectly named.")]
 	public static double Asin(this double x, double y)
-	{
-		return Math.Atan2(x, y);
-	}
+		=> Atan2(x, y);
 
 	/// <summary>
 	/// Returns the angle whose tangent is the quotient of two specified decimal numbers.
@@ -775,10 +774,27 @@ public static class MathHelper
 	/// <param name="x">The numerator.</param>
 	/// <param name="y">The denominator.</param>
 	/// <returns>The angle, in radians, whose tangent is the quotient of x and y.</returns>
+	[Obsolete("Use Atan2 instead. This method was incorrectly named.")]
 	public static decimal Asin(this decimal x, decimal y)
-	{
-		return (decimal)Math.Atan2((double)x, (double)y);
-	}
+		=> Atan2(x, y);
+
+	/// <summary>
+	/// Returns the angle whose tangent is the quotient of two specified double numbers.
+	/// </summary>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="x">The x coordinate.</param>
+	/// <returns>The angle, in radians, whose tangent is the quotient of y and x.</returns>
+	public static double Atan2(this double y, double x)
+		=> Math.Atan2(y, x);
+
+	/// <summary>
+	/// Returns the angle whose tangent is the quotient of two specified decimal numbers.
+	/// </summary>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="x">The x coordinate.</param>
+	/// <returns>The angle, in radians, whose tangent is the quotient of y and x.</returns>
+	public static decimal Atan2(this decimal y, decimal x)
+		=> (decimal)Math.Atan2((double)y, (double)x);
 
 	/// <summary>
 	/// Returns the cosine of the specified double angle.

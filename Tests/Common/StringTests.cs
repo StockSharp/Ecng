@@ -444,6 +444,26 @@ public class StringTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void LastIndexOf_StringBuilder_AtIndexZero()
+	{
+		// Test that character at index 0 is found correctly
+		var sb = new System.Text.StringBuilder("_abc");
+		sb.LastIndexOf('_').AssertEqual(0);
+
+		// Test when only character at index 0
+		sb = new System.Text.StringBuilder("x");
+		sb.LastIndexOf('x').AssertEqual(0);
+
+		// Test not found
+		sb = new System.Text.StringBuilder("abc");
+		sb.LastIndexOf('x').AssertEqual(-1);
+
+		// Test empty
+		sb = new System.Text.StringBuilder("");
+		sb.LastIndexOf('x').AssertEqual(-1);
+	}
+
+	[TestMethod]
 	public void Char_ToLower_ToUpper_Variants()
 	{
 		'A'.ToLower().AssertEqual('a');

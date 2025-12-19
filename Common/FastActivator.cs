@@ -15,12 +15,11 @@ public class FastEmitNotSupported
 /// Fast alternative to Activator.CreateInstance&lt;T> for reference types with default constructor
 /// </summary>
 /// <remarks>
-/// Измененная версия FastObjectFactory2&lt;T> отсюда:
+/// Modified version of FastObjectFactory2&lt;T> from:
 /// http://stackoverflow.com/questions/2024435/how-to-pass-ctor-args-in-activator-createinstance-or-use-il
 /// </remarks>
+/// <typeparam name="T">Type to create. Does not require 'new()' constraint to allow creating classes with private constructors.</typeparam>
 public static class FastActivator<T>
-	// чтобы можно было создавать классы с закрытым конструктором
-	//where T :new()
 {
 	/// <summary>
 	/// Not supported mode.
@@ -60,18 +59,6 @@ public static class FastActivator<T>
 			ilGen.Emit(OpCodes.Newobj, cinfo);
 			ilGen.Emit(OpCodes.Ret);
 			CreateObject = (Func<T>)dynMethod.CreateDelegate(typeof(Func<T>));
-
-			// mika
-			// если будет Disposable объект, то проверочный запуск приведет к подвисшему в памяти объекту с неуправляемыми ресурсами
-			//
-			//try
-			//{
-			//    CreateObject();
-			//}
-			//catch
-			//{
-			//    CreateObject = () => new T();
-			//}
 		}
 	}
 }

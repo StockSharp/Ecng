@@ -65,12 +65,12 @@ public interface IBackupService : IDisposable
 	Task DeleteAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Save file.
+	/// Download file.
 	/// </summary>
 	/// <param name="entry">Element.</param>
-	/// <param name="stream"></param>
-	/// <param name="offset"></param>
-	/// <param name="length"></param>
+	/// <param name="stream">The stream to write downloaded data into.</param>
+	/// <param name="offset">Optional offset to start downloading from.</param>
+	/// <param name="length">Optional length to download.</param>
 	/// <param name="progress">Progress notification.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns><see cref="Task"/></returns>
@@ -80,7 +80,7 @@ public interface IBackupService : IDisposable
 	/// Upload file.
 	/// </summary>
 	/// <param name="entry">Element.</param>
-	/// <param name="stream">The stream of the open file into which data from the service will be downloaded.</param>
+	/// <param name="stream">The stream to read data from for uploading.</param>
 	/// <param name="progress">Progress notification.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns><see cref="Task"/></returns>

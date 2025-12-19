@@ -505,7 +505,7 @@ public static class RandomGen
 				return value;
 		}
 
-		throw new InvalidOperationException();
+		throw new InvalidOperationException("Failed to generate non-zero decimal value.");
 	}
 
 	/// <summary>

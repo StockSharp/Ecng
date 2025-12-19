@@ -115,7 +115,7 @@ public class CircularBuffer<T> : ICircularBuffer<T>
 
 				_buffer = dst;
 				_start = 0;
-				_end = _count % value; // == _count when value > _count, иначе 0 если ровно
+				_end = _count % value; // == _count when value > _count, else 0 if equal
 			}
 			else
 			{

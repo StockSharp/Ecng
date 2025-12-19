@@ -96,7 +96,7 @@ public static class CompareHelper
 			return 1;
 
 		if (value1.GetType() != value2.GetType())
-			throw new ArgumentException("The values must be a same types.", nameof(value2));
+			throw new ArgumentException("The values must be the same type.", nameof(value2));
 
 
 		if (value1 is IComparable compare1)

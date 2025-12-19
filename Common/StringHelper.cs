@@ -443,7 +443,7 @@ public static class StringHelper
 		if (builder is null)
 			throw new ArgumentNullException(nameof(builder));
 
-		for (var i = builder.Length - 1; i > 0; i--)
+		for (var i = builder.Length - 1; i >= 0; i--)
 		{
 			if (builder[i] == value)
 				return i;
