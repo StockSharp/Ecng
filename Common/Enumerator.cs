@@ -272,7 +272,7 @@ public static class Enumerator
 			throw new ArgumentNullException(nameof(enumVal));
 
 		var memInfo = enumVal.GetType().GetMember(enumVal.ToString());
-		return memInfo[0].GetAttribute<TAttribute>(false);
+		return memInfo.Length == 0 ? null : memInfo[0].GetAttribute<TAttribute>(false);
 	}
 
 	/// <summary>
