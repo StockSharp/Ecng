@@ -143,6 +143,9 @@ public sealed class PairSet<TKey, TValue> : KeyedCollection<TKey, TValue>
 	/// <param name="value">The new value to set.</param>
 	protected override void OnSetting(TKey key, TValue value)
 	{
+		if (InnerDictionary.TryGetValue(key, out var oldValue))
+			_values.Remove(oldValue);
+
 		_values[value] = key;
 	}
 
