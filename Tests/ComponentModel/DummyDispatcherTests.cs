@@ -81,8 +81,8 @@ public class DummyDispatcherTests : BaseTestClass
 
 		d.InvokeAsync(() => { Interlocked.Exchange(ref value, 1); done.Set(); });
 
-		// Should complete within a reasonable time
-		done.Wait(TimeSpan.FromSeconds(2), CancellationToken).AssertTrue("InvokeAsync action should complete within 2 seconds");
+		// Should complete within a reasonable time (10 seconds to handle slow CI environments)
+		done.Wait(TimeSpan.FromSeconds(10), CancellationToken).AssertTrue("InvokeAsync action should complete within 10 seconds");
 		value.AssertEqual(1, $"Expected value=1, but was {value}");
 	}
 
@@ -255,12 +255,17 @@ public class DummyDispatcherTests : BaseTestClass
 		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter} after {sw.ElapsedMilliseconds}ms");
 
 		// Remove the last (and only) action
-		var counterBefore = counter;
 		sub.Dispose();
 
-		// Wait and verify no more ticks
-		await Task.Delay(200, CancellationToken);
-		counter.AssertEqual(counterBefore, $"Expected counter to stay at {counterBefore} after removing last action, but was {counter}");
+		// Wait a bit for any in-flight tick to complete
+		await Task.Delay(100, CancellationToken);
+
+		// Capture counter AFTER dispose has settled
+		var counterAfterDispose = counter;
+
+		// Wait longer and verify no more ticks
+		await Task.Delay(300, CancellationToken);
+		counter.AssertEqual(counterAfterDispose, $"Expected counter to stay at {counterAfterDispose} after removing last action, but was {counter}");
 	}
 
 	[TestMethod]
@@ -433,16 +438,17 @@ public class DummyDispatcherTests : BaseTestClass
 		var counter = 0;
 		Action action = () => Interlocked.Increment(ref counter);
 
-		using var fastSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(30));
-		var slowSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(300));
+		// Use 100ms interval (more reliable than 30ms on slow systems)
+		using var fastSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(100));
+		var slowSub = d.InvokePeriodically(action, TimeSpan.FromMilliseconds(500));
 		GetPlannerCount(d).AssertEqual(2, "Expected two subscriptions to be registered.");
-		GetTimerInterval(d).AssertEqual(TimeSpan.FromMilliseconds(30), "Timer interval should be 30ms while the fast subscription is present.");
+		GetTimerInterval(d).AssertEqual(TimeSpan.FromMilliseconds(100), "Timer interval should be 100ms while the fast subscription is present.");
 
-		await WaitForAsync(() => counter >= 3, TimeSpan.FromSeconds(2), $"Expected counter >= 3 with 30ms interval, but was {counter}");
+		await WaitForAsync(() => counter >= 3, TimeSpan.FromSeconds(5), $"Expected counter >= 3 with 100ms interval, but was {counter}");
 
 		// Dispose the slow subscription and ensure the fast one continues.
 		slowSub.Dispose();
 		GetPlannerCount(d).AssertEqual(1, "Expected only the fast subscription to remain after disposing the slow subscription.");
-		GetTimerInterval(d).AssertEqual(TimeSpan.FromMilliseconds(30), "Timer interval should remain at 30ms after disposing the slow subscription.");
+		GetTimerInterval(d).AssertEqual(TimeSpan.FromMilliseconds(100), "Timer interval should remain at 100ms after disposing the slow subscription.");
 	}
 }

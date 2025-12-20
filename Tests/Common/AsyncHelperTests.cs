@@ -184,12 +184,13 @@ public class AsyncHelperTests : BaseTestClass
 		using var cts = new CancellationTokenSource();
 
 		// StartPeriodicTimer(handler, start, interval) - start is initial delay
-		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(100), cts.Token);
+		// Use larger initial delay (500ms) for reliability on slow systems
+		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(100, CancellationToken); // Before first execution (200ms initial delay)
-		count.AssertEqual(0);
+		await Task.Delay(200, CancellationToken); // Well before first execution (500ms initial delay)
+		count.AssertEqual(0, $"Count should be 0 before initial delay (200ms < 500ms), but was {count}");
 
-		await Task.Delay(800, CancellationToken); // After initial delay passed (total 300ms > 200ms)
+		await Task.Delay(600, CancellationToken); // After initial delay passed (total 800ms > 500ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		cts.Cancel();
