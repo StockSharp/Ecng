@@ -1144,7 +1144,7 @@ public static class MathHelper
 	/// <returns>True if the bit is set; otherwise, false.</returns>
 	public static bool GetBit(this int value, int index)
 	{
-		if (index < 0 || index > 32)
+		if (index < 0 || index >= 32)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
 		return (value & (1 << index)) != 0;
@@ -1159,7 +1159,7 @@ public static class MathHelper
 	/// <returns>The resulting integer value after modification.</returns>
 	public static int SetBit(this int value, int index, bool bit)
 	{
-		if (index < 0 || index > 32)
+		if (index < 0 || index >= 32)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
 		if (bit)
@@ -1178,10 +1178,10 @@ public static class MathHelper
 	/// <returns>True if the bit is set; otherwise, false.</returns>
 	public static bool GetBit(this long value, int index)
 	{
-		if (index < 0 || index > 64)
+		if (index < 0 || index >= 64)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
-		return (value & (1 << index)) != 0;
+		return (value & (1L << index)) != 0;
 	}
 
 	/// <summary>
@@ -1193,7 +1193,7 @@ public static class MathHelper
 	/// <returns>The resulting long value after modification.</returns>
 	public static long SetBit(this long value, int index, bool bit)
 	{
-		if (index < 0 || index > 64)
+		if (index < 0 || index >= 64)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
 		if (bit)

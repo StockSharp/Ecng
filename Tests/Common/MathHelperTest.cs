@@ -444,7 +444,7 @@ public class MathHelperTest : BaseTestClass
 				throw new OverflowException("Mantissa exceeds long range.");
 
 			mantissa = combined.To<long>();
-			exponent = -fractionalPart.Length; // Экспонента = -scale
+			exponent = -fractionalPart.Length; // Р­РєСЃРїРѕРЅРµРЅС‚Р° = -scale
 		}
 		else
 		{
@@ -500,11 +500,11 @@ public class MathHelperTest : BaseTestClass
 		var info = value.GetDecimalInfo();
 		var (parsedMantissa, parsedExponent) = ParseDecimalToMantissaExponent(value);
 
-		// Сравнение с GetDecimalInfo
+		// РЎСЂР°РІРЅРµРЅРёРµ СЃ GetDecimalInfo
 		info.Mantissa.AssertEqual(parsedMantissa);
 		info.Exponent.AssertEqual(parsedExponent);
 
-		// Проверка восстановления значения
+		// РџСЂРѕРІРµСЂРєР° РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ Р·РЅР°С‡РµРЅРёСЏ
 		var reconstructed = MathHelper.ToDecimal(info.Mantissa, info.Exponent);
 		reconstructed.AssertEqual(value);
 
@@ -1258,5 +1258,70 @@ public class MathHelperTest : BaseTestClass
 		value.GetBit(0).AssertTrue();   // bit 0 should be 1
 		value.GetBit(1).AssertFalse();  // bit 1 should be 0
 		value.GetBit(2).AssertTrue();   // bit 2 should be 1
+	}
+
+	[TestMethod]
+	public void GetBit_Int_Index31_Works()
+	{
+		var value = int.MinValue; // only bit 31 is set
+		value.GetBit(31).AssertTrue();
+
+		ThrowsExactly<ArgumentOutOfRangeException>(() => value.GetBit(32));
+	}
+
+	[TestMethod]
+	public void SetBit_Int_Index31_Works()
+	{
+		// Set the highest bit (bit 31)
+		0.SetBit(31, true).AssertEqual(int.MinValue);
+
+		// Index 32 should throw
+		ThrowsExactly<ArgumentOutOfRangeException>(() => 0.SetBit(32, true));
+	}
+
+	[TestMethod]
+	public void GetBit_Long_Index63_Works()
+	{
+		// Test that index 63 (highest bit for long) works correctly
+		var value = long.MinValue; // only bit 63 is set
+		value.GetBit(63).AssertTrue();
+
+		// Index 64 should throw
+		ThrowsExactly<ArgumentOutOfRangeException>(() => value.GetBit(64));
+	}
+
+	[TestMethod]
+	public void SetBit_Long_Index63_Works()
+	{
+		// Set the highest bit (bit 63)
+		0L.SetBit(63, true).AssertEqual(long.MinValue);
+
+		// Index 64 should throw
+		ThrowsExactly<ArgumentOutOfRangeException>(() => 0L.SetBit(64, true));
+	}
+
+	[TestMethod]
+	public void GetBit_Long_HighBits_Work()
+	{
+		for (int i = 32; i < 63; i++)
+		{
+			var value = 1L << i;
+			value.GetBit(i).AssertTrue();
+
+			// Other bits should be false
+			value.GetBit(0).AssertFalse();
+			value.GetBit(31).AssertFalse();
+		}
+	}
+
+	[TestMethod]
+	public void SetBit_Long_HighBits_Work()
+	{
+		// Test setting bits 32-62
+		for (int i = 32; i < 63; i++)
+		{
+			var result = 0L.SetBit(i, true);
+			result.AssertEqual(1L << i);
+		}
 	}
 }
