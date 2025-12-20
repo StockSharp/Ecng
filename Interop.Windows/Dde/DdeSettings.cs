@@ -47,7 +47,7 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative.");
 
 			_columnOffset = value;
 		}
@@ -66,7 +66,7 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative.");
 
 			_rowOffset = value;
 		}
