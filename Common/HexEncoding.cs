@@ -148,12 +148,8 @@ public class HexEncoding : Encoding
 	/// <filterpriority>1</filterpriority>
 	public override int GetCharCount(byte[] bytes, int index, int count)
 	{
-		var charCount = 0;
-
-		for (var i = index; i < (index + count); i++)
-			charCount += bytes[i].ToString("X2").Length;
-
-		return charCount;
+		// Each byte is represented by 2 hex characters
+		return count * 2;
 	}
 
 	/// <summary>
@@ -250,9 +246,8 @@ public class HexEncoding : Encoding
 		if (chars.Length < (charIndex + charCount))
 			throw new ArgumentOutOfRangeException(nameof(chars));
 
-
 		discarded = 0;
-		var newString = string.Empty;
+		var sb = new StringBuilder(charCount);
 
 		// remove all none A-F, 0-9, characters
 		for (var i = charIndex; i < (charIndex + charCount); i++)
@@ -260,26 +255,24 @@ public class HexEncoding : Encoding
 			var c = chars[i];
 
 			if (IsHexDigit(c))
-				newString += c;
+				sb.Append(c);
 			else
 				discarded++;
 		}
 
 		// if odd number of characters, discard last character
-		if (newString.Length % 2 != 0)
+		if (sb.Length % 2 != 0)
 		{
 			discarded++;
-			newString = newString.Substring(0, newString.Length - 1);
+			sb.Length--;
 		}
 
-		var byteLength = newString.Length / 2;
+		var byteLength = sb.Length / 2;
 		var bytes = new byte[byteLength];
-		var j = 0;
 		for (var i = 0; i < bytes.Length; i++)
 		{
-			var hex = new string([newString[j], newString[j + 1]]);
+			var hex = new string([sb[i * 2], sb[i * 2 + 1]]);
 			bytes[i] = HexToByte(hex);
-			j = j + 2;
 		}
 
 		return bytes;
