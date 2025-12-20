@@ -153,7 +153,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <summary>
 	/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
 	/// </summary>
-	/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+	/// <param name="algorithm"><para>The <see cref="AsymmetricAlgorithm"/> to use.</para></param>
 	/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 	/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
 	public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey, byte[] privateKey)
@@ -164,7 +164,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <summary>
 	/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
 	/// </summary>
-	/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+	/// <param name="algorithm"><para>The <see cref="AsymmetricAlgorithm"/> to use.</para></param>
 	/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 	public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey)
 		: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), null)
