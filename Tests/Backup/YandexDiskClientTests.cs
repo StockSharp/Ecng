@@ -27,7 +27,7 @@ public class YandexDiskClientTests : BaseTestClass
 		using var api = new DiskHttpApi(token);
 
 		var folder = "/ecng-yandex-native-tests-" + Guid.NewGuid().ToString("N");
-		await api.Commands.CreateDictionaryAsync(folder, CancellationToken);
+		await api.Commands.CreateDirectoryAsync(folder, CancellationToken);
 
 		var filePath = folder + "/test-" + Guid.NewGuid().ToString("N") + ".bin";
 		var data = RandomGen.GetBytes(4096);
@@ -74,7 +74,7 @@ public class YandexDiskClientTests : BaseTestClass
 		using var api = new DiskHttpApi(token);
 
 		var folder = "/ecng-yandex-native-publish-tests-" + Guid.NewGuid().ToString("N");
-		await api.Commands.CreateDictionaryAsync(folder, CancellationToken);
+		await api.Commands.CreateDirectoryAsync(folder, CancellationToken);
 
 		var filePath = folder + "/publish-" + Guid.NewGuid().ToString("N") + ".txt";
 		var data = "hello " + Guid.NewGuid().ToString("N");
