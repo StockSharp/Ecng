@@ -7,9 +7,11 @@ using System.IO;
 /// Represents a stream wrapper that records all data read from and written to the underlying stream.
 /// </summary>
 /// <param name="underlying">The underlying stream to wrap.</param>
-public class DumpableStream(Stream underlying) : Stream
+/// <param name="leaveOpen">true to leave the underlying stream open after disposing; otherwise, false.</param>
+public class DumpableStream(Stream underlying, bool leaveOpen = false) : Stream
 {
 	private readonly Stream _underlying = underlying ?? throw new ArgumentNullException(nameof(underlying));
+	private readonly bool _leaveOpen = leaveOpen;
 
 	/// <summary>
 	/// Retrieves and clears the dump of data read from the underlying stream.
@@ -152,5 +154,14 @@ public class DumpableStream(Stream underlying) : Stream
 	{
 		get => _underlying.Position;
 		set => _underlying.Position = value;
+	}
+
+	/// <inheritdoc />
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing && !_leaveOpen)
+			_underlying.Dispose();
+
+		base.Dispose(disposing);
 	}
 }

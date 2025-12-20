@@ -498,4 +498,50 @@ public class DumpableStreamTests : BaseTestClass
 
 		bytesRead.AssertEqual(5);
 	}
+
+	[TestMethod]
+	public void Dispose_DisposesUnderlyingStream()
+	{
+		// This test verifies that disposing DumpableStream also disposes underlying stream
+		// Without the Dispose(bool) override, underlying stream was NOT disposed
+		var ms = new MemoryStream([1, 2, 3]);
+		var dump = new DumpableStream(ms);
+
+		// Stream should be accessible before dispose
+		ms.CanRead.AssertTrue();
+
+		dump.Dispose();
+
+		// After DumpableStream is disposed, underlying stream should also be disposed
+		// Disposed MemoryStream throws ObjectDisposedException on access
+		ThrowsExactly<ObjectDisposedException>(() => _ = ms.Length);
+	}
+
+	[TestMethod]
+	public void Dispose_LeaveOpenTrue_DoesNotDisposeUnderlyingStream()
+	{
+		var ms = new MemoryStream([1, 2, 3]);
+		var dump = new DumpableStream(ms, leaveOpen: true);
+
+		dump.Dispose();
+
+		// Underlying stream should still be accessible
+		ms.CanRead.AssertTrue();
+		ms.Length.AssertEqual(3);
+
+		// Clean up
+		ms.Dispose();
+	}
+
+	[TestMethod]
+	public void Dispose_LeaveOpenFalse_DisposesUnderlyingStream()
+	{
+		var ms = new MemoryStream([1, 2, 3]);
+		var dump = new DumpableStream(ms, leaveOpen: false);
+
+		dump.Dispose();
+
+		// Underlying stream should be disposed
+		ThrowsExactly<ObjectDisposedException>(() => _ = ms.Length);
+	}
 }
