@@ -2,6 +2,7 @@ namespace Ecng.Tests.Security;
 
 using System.IO;
 using System.Security;
+using System.Security.Cryptography;
 
 using Ecng.Security;
 
@@ -163,7 +164,7 @@ public class SecretTests : BaseTestClass
 	public void Md5_Sha256_Sha512_Correctness()
 	{
 		var data = "abc".UTF8();
-		// Проверка корректности хэшей
+		// РџСЂРѕРІРµСЂРєР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё С…СЌС€РµР№
 		data.Md5().AssertEqual("900150983CD24FB0D6963F7D28E17F72");
 		data.Sha256().AssertEqual("BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD");
 		data.Sha512().AssertEqual("DDAF35A193617ABACC417349AE20413112E6FA4E89A97EA20A9EEEE64B55D39A2192992A274FC1A836BA3C23A3FEEBBD454D4423643CE80E2A9AC94FA54CA49F");

@@ -57,8 +57,6 @@ public class SymmetricCryptographer : Disposable
 		Buffer.BlockCopy(_algorithm.IV, 0, output, 0, IVLength);
 		Buffer.BlockCopy(cipherText, 0, output, IVLength, cipherText.Length);
 
-		ZeroOutBytes(_algorithm.Key);
-
 		return output;
 	}
 
@@ -76,8 +74,6 @@ public class SymmetricCryptographer : Disposable
 		{
 			output = Transform(transform, data);
 		}
-
-		ZeroOutBytes(_algorithm.Key);
 
 		return output;
 	}
@@ -110,24 +106,6 @@ public class SymmetricCryptographer : Disposable
 		}
 
 		return transformBuffer;
-	}
-
-	/// <summary>
-	/// <para>Fills <paramref name="bytes"/> zeros.</para>
-	/// </summary>
-	/// <param name="bytes">
-	/// <para>The byte array to fill.</para>
-	/// </param>
-	public static void ZeroOutBytes(byte[] bytes)
-	{
-		if (bytes is null)
-			return;
-
-#if NET6_0_OR_GREATER
-		CryptographicOperations.ZeroMemory(bytes);
-#else
-		Array.Clear(bytes, 0, bytes.Length);
-#endif
 	}
 
 	private int IVLength
