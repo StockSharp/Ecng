@@ -173,5 +173,5 @@ pub/
 # Local integration secrets
 *secrets.json
 
-/ReviewResults/
+ReviewResults/
 CLAUDE.md
