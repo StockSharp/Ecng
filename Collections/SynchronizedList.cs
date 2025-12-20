@@ -150,10 +150,19 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 
 		using (EnterScope())
 		{
-			var realCount = Count;
-			realCount -= index;
-			InnerCollection.RemoveRange(index, count);
-			return (realCount.Min(count)).Max(0);
+			var actualCount = Math.Min(count, Count - index);
+			if (actualCount <= 0)
+				return 0;
+
+			var removedItems = InnerCollection.GetRange(index, actualCount);
+			var filteredItems = removedItems.Where(OnRemoving).ToArray();
+
+			InnerCollection.RemoveRange(index, actualCount);
+			filteredItems.ForEach(base.OnRemoved);
+
+			RemovedRange?.Invoke(filteredItems);
+
+			return actualCount;
 		}
 	}
 
