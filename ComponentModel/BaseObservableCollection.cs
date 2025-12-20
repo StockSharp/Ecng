@@ -18,7 +18,7 @@ public abstract class BaseObservableCollection
 		set
 		{
 			if (value < -1 || value == 0)
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be -1 or positive.");
 
 			_maxCount = value;
 		}

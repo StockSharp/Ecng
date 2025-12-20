@@ -44,7 +44,7 @@ public abstract class KeyedCollection<TKey, TValue>(IDictionary<TKey, TValue> in
 	public virtual void Add(TKey key, TValue value)
 	{
 		if (!CanAdd(key, value))
-			throw new ArgumentException();
+			throw new ArgumentException("Cannot add the specified key-value pair.", nameof(key));
 
 		OnAdding(key, value);
 		InnerDictionary.Add(key, value);

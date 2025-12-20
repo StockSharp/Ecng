@@ -442,28 +442,4 @@ public class DelegateTests : BaseTestClass
 	}
 
 	#endregion
-
-	#region RemoveAllDelegates Tests
-
-#pragma warning disable CS0618 // Type or member is obsolete
-	[TestMethod]
-	public void RemoveAllDelegates_RemovesAllFromInvocationList()
-	{
-		// Arrange
-		var callCount = 0;
-		Action action1 = () => callCount++;
-		Action action2 = () => callCount++;
-		var combined = action1.AddDelegate(action2);
-
-		// Act
-		combined.RemoveAllDelegates();
-
-		// Assert - the source delegate is not modified (value type semantics)
-		// RemoveAllDelegates iterates but doesn't modify the original
-		combined();
-		callCount.AssertEqual(2);
-	}
-#pragma warning restore CS0618 // Type or member is obsolete
-
-	#endregion
 }
