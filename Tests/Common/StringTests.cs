@@ -273,11 +273,20 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void ComparePaths_Works()
 	{
+		// Same paths with different representations should be equal
 		var p1 = Path.GetFullPath(".");
 		var p2 = Path.GetFullPath("./");
+		p1.ComparePaths(p2).AssertTrue($"'{p1}' and '{p2}' should be equal paths");
 
-		if (!p1.ComparePaths(p2))
-			p1.AssertEqual(p2);
+		// Different paths should not be equal
+		var p3 = Path.GetFullPath("..");
+		p1.ComparePaths(p3).AssertFalse($"'{p1}' and '{p3}' should NOT be equal paths");
+
+		// Case sensitivity test (platform-dependent behavior)
+		var pUpper = Path.GetFullPath(".").ToUpperInvariant();
+		var pLower = Path.GetFullPath(".").ToLowerInvariant();
+		// Just verify it doesn't throw - result is platform-dependent
+		_ = pUpper.ComparePaths(pLower);
 	}
 
 	[TestMethod]

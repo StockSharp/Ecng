@@ -255,8 +255,12 @@ public class RandomArrayTests : BaseTestClass
 		// Assert
 		randomArray.Count.AssertEqual(50);
 
-		var value = randomArray.Next();
-		(value >= 0).AssertTrue($"value={value} should be >=0");
+		// Verify we get different values (not all zeros)
+		var values = Enumerable.Range(0, 20).Select(_ => randomArray.Next()).ToArray();
+		values.Distinct().Count().AssertGreater(1, "Should generate different uint values");
+
+		// Verify some values are > 0 (randomness check)
+		values.Any(v => v > 0).AssertTrue("Some uint values should be > 0");
 	}
 
 	[TestMethod]
@@ -268,8 +272,12 @@ public class RandomArrayTests : BaseTestClass
 		// Assert
 		randomArray.Count.AssertEqual(50);
 
-		var value = randomArray.Next();
-		(value >= 0).AssertTrue($"value={value} should be >=0");
+		// Verify we get different values (not all zeros)
+		var values = Enumerable.Range(0, 20).Select(_ => randomArray.Next()).ToArray();
+		values.Distinct().Count().AssertGreater(1, "Should generate different ulong values");
+
+		// Verify some values are > 0 (randomness check)
+		values.Any(v => v > 0).AssertTrue("Some ulong values should be > 0");
 	}
 
 	[TestMethod]
@@ -281,8 +289,12 @@ public class RandomArrayTests : BaseTestClass
 		// Assert
 		randomArray.Count.AssertEqual(50);
 
-		var value = randomArray.Next();
-		(value >= 0 && value <= ushort.MaxValue).AssertTrue($"value={value} should be >=0 and <={ushort.MaxValue}");
+		// Verify we get different values (not all zeros)
+		var values = Enumerable.Range(0, 20).Select(_ => randomArray.Next()).ToArray();
+		values.Distinct().Count().AssertGreater(1, "Should generate different ushort values");
+
+		// Verify some values are > 0 (randomness check)
+		values.Any(v => v > 0).AssertTrue("Some ushort values should be > 0");
 	}
 
 	[TestMethod]

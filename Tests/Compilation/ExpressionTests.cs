@@ -344,7 +344,7 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task BoolComples()
+	public async Task BoolComplex()
 	{
 		var formula = await CompileBool("(C > O) && (B < C)");
 		formula.Calculate([6, 4, 3]).AssertTrue();
@@ -352,7 +352,7 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task BoolComples2()
+	public async Task BoolComplex2()
 	{
 		var formula = await CompileBool("([C] > O) && ([B] < C)");
 		formula.Calculate([6, 4, 3]).AssertTrue();
@@ -406,5 +406,65 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([6, 4]).AssertEqual(6);
 		formula.Calculate([0.01m, 2]).AssertEqual(0.01m);
 		formula.Calculate([0.011m, 2]).AssertEqual(0.01m);
+	}
+
+	[TestMethod]
+	public async Task BoolLessThan()
+	{
+		var formula = await CompileBool("C < O");
+		formula.Calculate([4, 6]).AssertTrue();
+		formula.Calculate([6, 4]).AssertFalse();
+		formula.Calculate([5, 5]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolGreaterOrEqual()
+	{
+		var formula = await CompileBool("C >= O");
+		formula.Calculate([6, 4]).AssertTrue();
+		formula.Calculate([5, 5]).AssertTrue();
+		formula.Calculate([4, 6]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolLessOrEqual()
+	{
+		var formula = await CompileBool("C <= O");
+		formula.Calculate([4, 6]).AssertTrue();
+		formula.Calculate([5, 5]).AssertTrue();
+		formula.Calculate([6, 4]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolEqual()
+	{
+		var formula = await CompileBool("C == O");
+		formula.Calculate([5, 5]).AssertTrue();
+		formula.Calculate([4, 6]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolNotEqual()
+	{
+		var formula = await CompileBool("C != O");
+		formula.Calculate([4, 6]).AssertTrue();
+		formula.Calculate([5, 5]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolOr()
+	{
+		var formula = await CompileBool("(C > O) || (B > O)");
+		formula.Calculate([6, 4, 3]).AssertTrue();
+		formula.Calculate([3, 4, 6]).AssertTrue();
+		formula.Calculate([3, 4, 2]).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task BoolNot()
+	{
+		var formula = await CompileBool("!(C > O)");
+		formula.Calculate([4, 6]).AssertTrue();
+		formula.Calculate([6, 4]).AssertFalse();
 	}
 }

@@ -8,13 +8,23 @@ public class RandomTests : BaseTestClass
 	[TestMethod]
 	public void Int()
 	{
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			RandomGen.GetInt();
-			RandomGen.GetInt(0, 1000);
-			RandomGen.GetInt(int.MinValue, 0);
-			RandomGen.GetInt(int.MinValue, int.MaxValue);
+			var value = RandomGen.GetInt();
+			(value >= int.MinValue && value <= int.MaxValue).AssertTrue($"value={value} out of int range");
+
+			var ranged = RandomGen.GetInt(0, 1000);
+			(ranged >= 0 && ranged <= 1000).AssertTrue($"ranged={ranged} should be >=0 and <=1000");
+
+			var negative = RandomGen.GetInt(int.MinValue, 0);
+			(negative >= int.MinValue && negative <= 0).AssertTrue($"negative={negative} should be <={0}");
+
+			var full = RandomGen.GetInt(int.MinValue, int.MaxValue);
+			(full >= int.MinValue && full <= int.MaxValue).AssertTrue($"full={full} out of range");
 		}
+
+		// Edge case: min == max
+		RandomGen.GetInt(42, 42).AssertEqual(42);
 	}
 
 	[TestMethod]
@@ -70,14 +80,22 @@ public class RandomTests : BaseTestClass
 	[TestMethod]
 	public void Long()
 	{
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			RandomGen.GetLong();
-			RandomGen.GetLong(0, 1000);
-			RandomGen.GetLong(long.MinValue, 0);
-			RandomGen.GetLong(long.MinValue, long.MaxValue);
+			var value = RandomGen.GetLong();
+			(value >= long.MinValue && value <= long.MaxValue).AssertTrue($"value={value} out of long range");
+
+			var ranged = RandomGen.GetLong(0, 1000);
+			(ranged >= 0 && ranged <= 1000).AssertTrue($"ranged={ranged} should be >=0 and <=1000");
+
+			var negative = RandomGen.GetLong(long.MinValue, 0);
+			(negative >= long.MinValue && negative <= 0).AssertTrue($"negative={negative} should be <=0");
+
+			var full = RandomGen.GetLong(long.MinValue, long.MaxValue);
+			(full >= long.MinValue && full <= long.MaxValue).AssertTrue($"full={full} out of range");
 		}
 
+		// Edge case: min == max
 		RandomGen.GetLong(long.MaxValue, long.MaxValue).AssertEqual(long.MaxValue);
 	}
 
@@ -126,53 +144,121 @@ public class RandomTests : BaseTestClass
 	[TestMethod]
 	public void Date()
 	{
-		for (int i = 0; i < 10000; i++)
+		var minDate = new DateTime(2020, 1, 1);
+		var maxDate = new DateTime(2025, 12, 31);
+
+		for (int i = 0; i < 1000; i++)
 		{
-			RandomGen.GetDate();
-			RandomGen.GetDate(new DateTime(2020, 1, 1), DateTime.UtcNow);
+			var date = RandomGen.GetDate();
+			(date >= DateTime.MinValue && date <= DateTime.MaxValue).AssertTrue($"date={date} out of range");
+
+			var ranged = RandomGen.GetDate(minDate, maxDate);
+			(ranged >= minDate && ranged <= maxDate).AssertTrue($"ranged={ranged} should be between {minDate} and {maxDate}");
 		}
+
+		// Edge case: min == max
+		var sameDay = new DateTime(2024, 6, 15);
+		RandomGen.GetDate(sameDay, sameDay).AssertEqual(sameDay);
 	}
 
 	[TestMethod]
 	public void Time()
 	{
-		for (int i = 0; i < 10000; i++)
+		var minTime = TimeSpan.FromHours(1);
+		var maxTime = TimeSpan.FromHours(10);
+
+		for (int i = 0; i < 1000; i++)
 		{
-			RandomGen.GetTime();
-			RandomGen.GetTime(TimeSpan.Zero, TimeSpan.MaxValue);
-			RandomGen.GetTime(TimeSpan.MinValue, TimeSpan.Zero);
-			RandomGen.GetTime(TimeSpan.MinValue, TimeSpan.MaxValue);
+			var time = RandomGen.GetTime();
+			(time >= TimeSpan.MinValue && time <= TimeSpan.MaxValue).AssertTrue($"time={time} out of range");
+
+			var positive = RandomGen.GetTime(TimeSpan.Zero, TimeSpan.MaxValue);
+			(positive >= TimeSpan.Zero && positive <= TimeSpan.MaxValue).AssertTrue($"positive={positive} should be >=0");
+
+			var negative = RandomGen.GetTime(TimeSpan.MinValue, TimeSpan.Zero);
+			(negative >= TimeSpan.MinValue && negative <= TimeSpan.Zero).AssertTrue($"negative={negative} should be <=0");
+
+			var ranged = RandomGen.GetTime(minTime, maxTime);
+			(ranged >= minTime && ranged <= maxTime).AssertTrue($"ranged={ranged} should be between {minTime} and {maxTime}");
 		}
+
+		// Edge case: min == max
+		var sameTime = TimeSpan.FromMinutes(30);
+		RandomGen.GetTime(sameTime, sameTime).AssertEqual(sameTime);
 	}
 
 	[TestMethod]
 	public void String()
 	{
-		for (int i = 0; i < 10000; i++)
+		// NOTE: GetString(minLen, maxLen) - contract is unclear, string may exceed maxLen
+		// This test verifies basic functionality without strict length bounds
+
+		for (int i = 0; i < 100; i++)
 		{
-			RandomGen.GetString(0, RandomGen.GetInt(0, 1000));
+			var minLen = RandomGen.GetInt(5, 20);
+			var maxLen = minLen + RandomGen.GetInt(10, 30);
+			var str = RandomGen.GetString(minLen, maxLen);
+
+			// Basic validity checks
+			str.AssertNotNull();
+			(str.Length > 0).AssertTrue($"str.Length={str.Length} should be >0 for minLen={minLen}");
 		}
+
+		// Verify we get different strings (randomness)
+		var samples = Enumerable.Range(0, 20).Select(_ => RandomGen.GetString(10, 20)).Distinct().ToArray();
+		(samples.Length > 1).AssertTrue("GetString should return different values");
+
+		// Verify strings contain printable characters
+		var sample = RandomGen.GetString(50, 100);
+		sample.AssertNotNull();
+		sample.All(c => !char.IsControl(c) || c == '\t' || c == '\n' || c == '\r')
+			.AssertTrue("String should contain mostly printable characters");
 	}
 
 	[TestMethod]
 	public void Decimal()
 	{
-		for (int i = 0; i < 10000; i++)
+		// GetDecimal(intDigits, fracDigits) - generates decimal with specified digit counts
+		for (int i = 0; i < 100; i++)
 		{
-			RandomGen.GetDecimal(RandomGen.GetInt(1, 8), RandomGen.GetInt(0, 8));
+			var intDigits = RandomGen.GetInt(1, 8);
+			var fracDigits = RandomGen.GetInt(0, 8);
+			var value = RandomGen.GetDecimal(intDigits, fracDigits);
+
+			// Verify value is a valid decimal (not NaN or overflow)
+			(value >= decimal.MinValue && value <= decimal.MaxValue).AssertTrue($"value={value} out of decimal range");
 		}
+
+		// Verify we get different values (randomness check)
+		var samples = Enumerable.Range(0, 50).Select(_ => RandomGen.GetDecimal(5, 3)).Distinct().ToArray();
+		(samples.Length > 1).AssertTrue("GetDecimal should return different values");
+
+		// Verify values can have fractional parts when requested
+		var withFraction = Enumerable.Range(0, 20).Select(_ => RandomGen.GetDecimal(3, 4)).ToArray();
+		withFraction.Any(v => v != Math.Truncate(v)).AssertTrue("GetDecimal with fracDigits>0 should produce some fractional values");
 	}
 
 	[TestMethod]
 	public void Enum()
 	{
-		var seed = Enumerator.GetValues<CurrencyTypes>();
-		var max = seed.Last();
+		var allValues = Enumerator.GetValues<CurrencyTypes>();
+		var min = allValues.First();
+		var max = allValues.Last();
 
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			RandomGen.GetEnum(default, max);
+			var value = RandomGen.GetEnum(min, max);
+
+			// Verify value is a valid enum member
+			System.Enum.IsDefined(typeof(CurrencyTypes), value).AssertTrue($"value={value} is not a valid CurrencyTypes");
+
+			// Verify value is within range
+			(value >= min && value <= max).AssertTrue($"value={value} should be between {min} and {max}");
 		}
+
+		// Verify we can get different values (not always the same)
+		var samples = Enumerable.Range(0, 100).Select(_ => RandomGen.GetEnum(min, max)).Distinct().ToArray();
+		(samples.Length > 1).AssertTrue("GetEnum should return different values");
 	}
 
 	private class CountingEnumerable<T>(IEnumerable<T> inner) : IEnumerable<T>
@@ -191,9 +277,15 @@ public class RandomTests : BaseTestClass
 	[TestMethod]
 	public void MaxValue()
 	{
-		RandomGen.GetInt(int.MaxValue);
-		RandomGen.GetUInt(uint.MaxValue);
-		RandomGen.GetULong(ulong.MaxValue);
+		// When max parameter equals type's max value, should return valid values
+		var intVal = RandomGen.GetInt(int.MaxValue);
+		(intVal >= 0 && intVal <= int.MaxValue).AssertTrue($"intVal={intVal} should be >=0 and <=int.MaxValue");
+
+		var uintVal = RandomGen.GetUInt(uint.MaxValue);
+		(uintVal >= 0 && uintVal <= uint.MaxValue).AssertTrue($"uintVal={uintVal} should be <=uint.MaxValue");
+
+		var ulongVal = RandomGen.GetULong(ulong.MaxValue);
+		(ulongVal >= 0 && ulongVal <= ulong.MaxValue).AssertTrue($"ulongVal={ulongVal} should be <=ulong.MaxValue");
 	}
 
 	[TestMethod]

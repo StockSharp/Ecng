@@ -122,4 +122,171 @@ public class SynchronizedSetTests : BaseTestClass
 		set.SetEquals(["apple", "banana"]).AssertTrue();
 		set.SetEquals(["Apple", "Cherry"]).AssertFalse();
 	}
+
+	[TestMethod]
+	public void ConcurrentAdd()
+	{
+		var set = new SynchronizedSet<int>();
+		const int threadCount = 10;
+		const int itemsPerThread = 100;
+		var threads = new Thread[threadCount];
+		var exceptions = new List<Exception>();
+
+		for (var t = 0; t < threadCount; t++)
+		{
+			var threadIndex = t;
+			threads[t] = new Thread(() =>
+			{
+				try
+				{
+					for (var i = 0; i < itemsPerThread; i++)
+					{
+						set.Add(threadIndex * itemsPerThread + i);
+					}
+				}
+				catch (Exception ex)
+				{
+					lock (exceptions)
+						exceptions.Add(ex);
+				}
+			});
+		}
+
+		foreach (var t in threads)
+			t.Start();
+		foreach (var t in threads)
+			t.Join();
+
+		exceptions.Count.AssertEqual(0);
+		set.Count.AssertEqual(threadCount * itemsPerThread);
+	}
+
+	[TestMethod]
+	public void ConcurrentAddRemove()
+	{
+		var set = new SynchronizedSet<int>();
+		const int iterations = 1000;
+		var exceptions = new List<Exception>();
+
+		var addThread = new Thread(() =>
+		{
+			try
+			{
+				for (var i = 0; i < iterations; i++)
+					set.TryAdd(i % 100);
+			}
+			catch (Exception ex)
+			{
+				lock (exceptions)
+					exceptions.Add(ex);
+			}
+		});
+
+		var removeThread = new Thread(() =>
+		{
+			try
+			{
+				for (var i = 0; i < iterations; i++)
+					set.Remove(i % 100);
+			}
+			catch (Exception ex)
+			{
+				lock (exceptions)
+					exceptions.Add(ex);
+			}
+		});
+
+		addThread.Start();
+		removeThread.Start();
+		addThread.Join();
+		removeThread.Join();
+
+		exceptions.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ConcurrentEnumeration()
+	{
+		var set = new SynchronizedSet<int>();
+		set.AddRange(Enumerable.Range(0, 100));
+		const int iterations = 100;
+		var exceptions = new List<Exception>();
+
+		var modifyThread = new Thread(() =>
+		{
+			try
+			{
+				for (var i = 0; i < iterations; i++)
+				{
+					set.TryAdd(100 + i);
+					set.Remove(i);
+				}
+			}
+			catch (Exception ex)
+			{
+				lock (exceptions)
+					exceptions.Add(ex);
+			}
+		});
+
+		var enumerateThread = new Thread(() =>
+		{
+			try
+			{
+				for (var i = 0; i < iterations; i++)
+				{
+					var snapshot = set.ToArray();
+					(snapshot.Length >= 0).AssertTrue();
+				}
+			}
+			catch (Exception ex)
+			{
+				lock (exceptions)
+					exceptions.Add(ex);
+			}
+		});
+
+		modifyThread.Start();
+		enumerateThread.Start();
+		modifyThread.Join();
+		enumerateThread.Join();
+
+		exceptions.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ConcurrentContainsCheck()
+	{
+		var set = new SynchronizedSet<int>();
+		set.AddRange(Enumerable.Range(0, 1000));
+		const int threadCount = 5;
+		var threads = new Thread[threadCount];
+		var exceptions = new List<Exception>();
+
+		for (var t = 0; t < threadCount; t++)
+		{
+			threads[t] = new Thread(() =>
+			{
+				try
+				{
+					for (var i = 0; i < 1000; i++)
+					{
+						_ = set.Contains(i);
+					}
+				}
+				catch (Exception ex)
+				{
+					lock (exceptions)
+						exceptions.Add(ex);
+				}
+			});
+		}
+
+		foreach (var t in threads)
+			t.Start();
+		foreach (var t in threads)
+			t.Join();
+
+		exceptions.Count.AssertEqual(0);
+	}
 }

@@ -269,8 +269,9 @@ public class LoggableStreamTests : BaseTestClass
 		bytesRead.AssertEqual(0);
 		loggable.FlushRead();
 
-		// Empty reads might not generate logs, or might generate empty logs
-		// We're just checking it doesn't crash
+		// Empty reads (0 bytes) may or may not generate log entries
+		// Verify stream state is consistent after empty read
+		ms.Position.AssertEqual(0L, "Stream position should not change after 0-byte read");
 	}
 
 	[TestMethod]
@@ -286,8 +287,10 @@ public class LoggableStreamTests : BaseTestClass
 		loggable.Write([1, 2, 3], 0, 0);
 		loggable.FlushWrite();
 
-		// Empty writes might not generate logs, or might generate empty logs
-		// We're just checking it doesn't crash
+		// Empty writes (0 bytes) may or may not generate log entries
+		// Verify underlying stream was not modified by 0-byte write
+		ms.Length.AssertEqual(0L, "Stream length should be 0 after 0-byte write");
+		ms.Position.AssertEqual(0L, "Stream position should be 0 after 0-byte write");
 	}
 
 	[TestMethod]
