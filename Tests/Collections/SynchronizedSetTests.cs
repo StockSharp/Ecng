@@ -80,4 +80,46 @@ public class SynchronizedSetTests : BaseTestClass
 		removed.AssertEqual(2);
 		set.AssertEqual([1, 4]);
 	}
+
+	[TestMethod]
+	public void IntersectWith_PreservesComparer()
+	{
+		// This test verifies that set operations preserve the comparer.
+		var set = new SynchronizedSet<string>(StringComparer.OrdinalIgnoreCase);
+		set.AddRange(["Apple", "Banana", "Cherry"]);
+
+		// IntersectWith should use case-insensitive comparison
+		set.IntersectWith(["APPLE", "banana", "Date"]);
+
+		// With case-insensitive comparison, Apple and Banana should remain
+		set.Count.AssertEqual(2);
+		set.Contains("Apple").AssertTrue();
+		set.Contains("Banana").AssertTrue();
+	}
+
+	[TestMethod]
+	public void ExceptWith_PreservesComparer()
+	{
+		var set = new SynchronizedSet<string>(StringComparer.OrdinalIgnoreCase);
+		set.AddRange(["Apple", "Banana", "Cherry"]);
+
+		// ExceptWith should use case-insensitive comparison
+		set.ExceptWith(["APPLE", "CHERRY"]);
+
+		// Only Banana should remain
+		set.Count.AssertEqual(1);
+		set.Contains("Banana").AssertTrue();
+	}
+
+	[TestMethod]
+	public void SetEquals_PreservesComparer()
+	{
+		var set = new SynchronizedSet<string>(StringComparer.OrdinalIgnoreCase);
+		set.AddRange(["Apple", "Banana"]);
+
+		// SetEquals should use case-insensitive comparison
+		set.SetEquals(["APPLE", "BANANA"]).AssertTrue();
+		set.SetEquals(["apple", "banana"]).AssertTrue();
+		set.SetEquals(["Apple", "Cherry"]).AssertFalse();
+	}
 }

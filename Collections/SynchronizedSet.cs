@@ -245,7 +245,8 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 		if (other is null)
 			throw new ArgumentNullException(nameof(other));
 
-		var set = new HashSet<T>(other);
+		var comparer = (InnerCollection as HashSet<T>)?.Comparer;
+		var set = comparer != null ? new HashSet<T>(other, comparer) : new HashSet<T>(other);
 
 		using (EnterScope())
 		{
@@ -272,7 +273,8 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 		if (other is null)
 			throw new ArgumentNullException(nameof(other));
 
-		var set = new HashSet<T>(other);
+		var comparer = (InnerCollection as HashSet<T>)?.Comparer;
+		var set = comparer != null ? new HashSet<T>(other, comparer) : new HashSet<T>(other);
 
 		using (EnterScope())
 		{
@@ -351,7 +353,8 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 
 		using (EnterScope())
 		{
-			var set = new HashSet<T>(other);
+			var comparer = (InnerCollection as HashSet<T>)?.Comparer;
+			var set = comparer != null ? new HashSet<T>(other, comparer) : new HashSet<T>(other);
 			return Count == set.Count && this.All(set.Contains);
 		}
 	}
