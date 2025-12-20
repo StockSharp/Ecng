@@ -2,7 +2,6 @@ namespace Ecng.Tests.Security;
 
 using System.IO;
 using System.Security;
-using System.Security.Cryptography;
 
 using Ecng.Security;
 
