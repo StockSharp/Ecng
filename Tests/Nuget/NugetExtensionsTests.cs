@@ -228,6 +228,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetNuspecAsync_RealPackage_ReturnsValidNuspec()
 	{
 		// Arrange
@@ -260,6 +261,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetAllVersionsOrderedAsync_RealPackage_ReturnsOrderedVersions()
 	{
 		// Arrange
@@ -282,6 +284,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetLastVersionAsync_RealPackage_WithoutPrerelease_ReturnsStableVersion()
 	{
 		// Arrange
@@ -299,6 +302,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetLastVersionAsync_RealPackage_WithPrerelease_ReturnsAnyVersion()
 	{
 		// Arrange
@@ -315,6 +319,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetLastVersionInFloatingRangeAsync_ValidRange_ReturnsVersionInRange()
 	{
 		// Arrange
@@ -331,6 +336,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public Task GetLastVersionInFloatingRangeAsync_InvalidRange_ThrowsArgumentException()
 	{
 		// Arrange
@@ -344,6 +350,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetBaseUrl_ValidRepository_ReturnsUrlWithTrailingSlash()
 	{
 		// Arrange
@@ -370,6 +377,7 @@ public class NugetExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GetTargetFrameworks_RealPackage_ReturnsFrameworks()
 	{
 		// Arrange

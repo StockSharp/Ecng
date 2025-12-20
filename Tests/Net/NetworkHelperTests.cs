@@ -204,6 +204,7 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[TestCategory("Integration")]
 	public async Task GravatarDownload_Works_ForDifferentSizes()
 	{
 		// Arrange
