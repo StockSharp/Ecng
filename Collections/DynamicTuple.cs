@@ -43,5 +43,5 @@ public class DynamicTuple(object[] values) : Equatable<DynamicTuple>
 	/// </summary>
 	/// <returns>A string representing the tuple's values.</returns>
 	public override string ToString()
-		=> Values.Select(v => v.ToString()).JoinComma();
+		=> Values.Select(v => v?.ToString() ?? string.Empty).JoinComma();
 }

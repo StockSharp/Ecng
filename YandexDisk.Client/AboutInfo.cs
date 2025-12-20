@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace YandexDisk.Client
 {
     /// <summary>
-    /// Class provided assymbly and file description
+    /// Class providing assembly and file description.
     /// </summary>
     [PublicAPI]
     public class AboutInfo
@@ -24,13 +24,13 @@ namespace YandexDisk.Client
         /// Return product title from AssemblyTitleAttribute
         /// </summary>
         [PublicAPI, NotNull]
-        public string ProductTitle => _productTitle ?? (_productTitle = GetAttribute<AssemblyTitleAttribute>().Title);
+        public string ProductTitle => _productTitle ??= GetAttribute<AssemblyTitleAttribute>().Title;
 
         /// <summary>
         /// Return version of assembly
         /// </summary>
         [PublicAPI, NotNull]
-        public string Version => _version ?? (_version = _assembly.GetName().Version.ToString());
+        public string Version => _version ??= _assembly.GetName().Version.ToString();
 
         private TAttr GetAttribute<TAttr>()
         {

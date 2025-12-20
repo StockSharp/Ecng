@@ -13,7 +13,7 @@
     }
 
     /// <summary>
-    /// Возможные статусы опреаций
+    /// Возможные статусы операций
     /// </summary>
     public enum OperationStatus
     {

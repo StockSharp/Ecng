@@ -17,7 +17,7 @@ namespace YandexDisk.Client.Clients
         /// Create folder on Disk
         /// </summary>
         [PublicAPI, ItemNotNull]
-        Task<Link> CreateDictionaryAsync([NotNull] string path, CancellationToken cancellationToken = default(CancellationToken));
+        Task<Link> CreateDirectoryAsync([NotNull] string path, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Copy fileor folder on Disk from one path to another

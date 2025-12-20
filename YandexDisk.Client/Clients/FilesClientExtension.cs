@@ -102,8 +102,7 @@ namespace YandexDisk.Client.Clients
                 throw new ArgumentNullException(nameof(localFile));
             }
 
-            Stream data = await DownloadFileAsync(client, path, cancellationToken).ConfigureAwait(false);
-
+            using (Stream data = await DownloadFileAsync(client, path, cancellationToken).ConfigureAwait(false))
             using (var file = new FileStream(localFile, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite))
             {
                 await data.CopyToAsync(file, bufferSize: 81920/*keep default*/, cancellationToken: cancellationToken).ConfigureAwait(false);

@@ -3,7 +3,7 @@
 namespace YandexDisk.Client.Protocol
 {
     /// <summary>
-    /// Request of coping file on Disk
+    /// Request for restoring file from Trash.
     /// </summary>
     [PublicAPI]
     public class RestoreFromTrashRequest
@@ -22,7 +22,7 @@ namespace YandexDisk.Client.Protocol
         /// Признак перезаписи. Учитывается, если ресурс восстанавливается в папку, в которой уже есть ресурс с таким именем.
         /// Допустимые значения:
         /// true — удалять файлы с совпадающими именами и записывать восстанавливаемые файлы.
-        /// false — используется по умолчанию.Указывает не перезаписывать файлы и отменить восстановление.
+        /// false — используется по умолчанию. Указывает не перезаписывать файлы и отменить восстановление.
         /// </summary>
         public bool Overwrite { get; set; }
     }

@@ -66,7 +66,7 @@ public class MillisecondIncrementalIdGenerator : IncrementalIdGenerator
 	/// </summary>
 	public MillisecondIncrementalIdGenerator()
 	{
-		Current = (long)(DateTime.UtcNow - DateTime.Today).TotalMilliseconds;
+		Current = (long)DateTime.UtcNow.TimeOfDay.TotalMilliseconds;
 	}
 }
 

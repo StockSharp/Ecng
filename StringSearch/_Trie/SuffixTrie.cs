@@ -56,14 +56,5 @@ namespace Gma.DataStructures.StringSearch
 	    {
 			m_InnerTrie.Clear();
 	    }
-
-		private static IEnumerable<string> GetAllSuffixes(int minSuffixLength, string word)
-		{
-			for (int i = word.Length - minSuffixLength; i >= 0; i--)
-			{
-				var partition = new StringPartition(word, i);
-				yield return partition.ToString();
-			}
-		}
 	}
 }

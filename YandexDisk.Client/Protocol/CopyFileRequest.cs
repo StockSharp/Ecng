@@ -3,7 +3,7 @@
 namespace YandexDisk.Client.Protocol
 {
     /// <summary>
-    /// Request of coping file on Disk
+    /// Request of copying file on Disk.
     /// </summary>
     [PublicAPI]
     public class CopyFileRequest

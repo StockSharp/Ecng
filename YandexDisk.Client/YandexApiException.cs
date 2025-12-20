@@ -6,7 +6,7 @@ using YandexDisk.Client.Protocol;
 namespace YandexDisk.Client
 {
     /// <summary>
-    /// Exception provide any exceptions risen on yandex server 
+    /// Exception provides any exceptions raised on Yandex server.
     /// </summary>
     [PublicAPI]
     [Serializable]

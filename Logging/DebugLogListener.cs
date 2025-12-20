@@ -46,6 +46,9 @@ public class DebugLogListener : LogListener
 
 		switch (level)
 		{
+			case LogLevels.Off:
+				break;
+			case LogLevels.Inherit:
 			case LogLevels.Verbose:
 			case LogLevels.Debug:
 			case LogLevels.Info:

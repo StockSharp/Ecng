@@ -16,7 +16,7 @@ namespace YandexDisk.Client.Clients
         /// <summary>
         /// Default pull period for waiting operation.
         /// </summary>
-        public static TimeSpan DefaultPullPeriod = TimeSpan.FromSeconds(3);
+        public static readonly TimeSpan DefaultPullPeriod = TimeSpan.FromSeconds(3);
 
         private static async Task WaitOperationAsync([NotNull] this ICommandsClient client, [NotNull] Link operationLink, CancellationToken cancellationToken, TimeSpan? pullPeriod)
         {
@@ -28,7 +28,7 @@ namespace YandexDisk.Client.Clients
             Operation operation;
             do
             {
-                Thread.Sleep(pullPeriod.Value);
+                await Task.Delay(pullPeriod.Value, cancellationToken).ConfigureAwait(false);
                 operation = await client.GetOperationStatus(operationLink, cancellationToken).ConfigureAwait(false);
             } while (operation.Status == OperationStatus.InProgress &&
                      !cancellationToken.IsCancellationRequested);
@@ -76,7 +76,7 @@ namespace YandexDisk.Client.Clients
         /// <summary>
         /// Empty trash
         /// </summary>
-        public static async Task EmptyTrashAndWaitAsyncAsync([NotNull] this ICommandsClient client, [NotNull] string path, CancellationToken cancellationToken = default(CancellationToken), TimeSpan? pullPeriod = null)
+        public static async Task EmptyTrashAndWaitAsync([NotNull] this ICommandsClient client, [NotNull] string path, CancellationToken cancellationToken = default(CancellationToken), TimeSpan? pullPeriod = null)
         {
             var link = await client.EmptyTrashAsync(path, cancellationToken).ConfigureAwait(false);
 
@@ -89,7 +89,7 @@ namespace YandexDisk.Client.Clients
         /// <summary>
         /// Restore files from trash
         /// </summary>
-        public static async Task RestoreFromTrashAndWaitAsyncAsync([NotNull] this ICommandsClient client, [NotNull] RestoreFromTrashRequest request, CancellationToken cancellationToken = default(CancellationToken), TimeSpan? pullPeriod = null)
+        public static async Task RestoreFromTrashAndWaitAsync([NotNull] this ICommandsClient client, [NotNull] RestoreFromTrashRequest request, CancellationToken cancellationToken = default(CancellationToken), TimeSpan? pullPeriod = null)
         {
             var link = await client.RestoreFromTrashAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -132,19 +132,19 @@ namespace YandexDisk.Client.Clients
         /// <summary>
         /// Empty trash
         /// </summary>
-        [Obsolete("Method is obsolete. Please use EmptyTrashAndWaitAsyncAsync(ICommandsClient, string, CancellationToken, TimeSpan) instead.")]
-        public static Task EmptyTrashAndWaitAsyncAsync([NotNull] this ICommandsClient client, [NotNull] string path, CancellationToken cancellationToken, int pullPeriod)
+        [Obsolete("Method is obsolete. Please use EmptyTrashAndWaitAsync(ICommandsClient, string, CancellationToken, TimeSpan) instead.")]
+        public static Task EmptyTrashAndWaitAsync([NotNull] this ICommandsClient client, [NotNull] string path, CancellationToken cancellationToken, int pullPeriod)
         {
-            return EmptyTrashAndWaitAsyncAsync(client, path, cancellationToken, TimeSpan.FromSeconds(pullPeriod));
+            return EmptyTrashAndWaitAsync(client, path, cancellationToken, TimeSpan.FromSeconds(pullPeriod));
         }
 
         /// <summary>
         /// Restore files from trash
         /// </summary>
-        [Obsolete("Method is obsolete. Please use RestoreFromTrashAndWaitAsyncAsync(ICommandsClient, RestoreFromTrashRequest, CancellationToken, TimeSpan) instead.")]
-        public static Task RestoreFromTrashAndWaitAsyncAsync([NotNull] this ICommandsClient client, [NotNull] RestoreFromTrashRequest request, CancellationToken cancellationToken, int pullPeriod)
+        [Obsolete("Method is obsolete. Please use RestoreFromTrashAndWaitAsync(ICommandsClient, RestoreFromTrashRequest, CancellationToken, TimeSpan) instead.")]
+        public static Task RestoreFromTrashAndWaitAsync([NotNull] this ICommandsClient client, [NotNull] RestoreFromTrashRequest request, CancellationToken cancellationToken, int pullPeriod)
         {
-            return RestoreFromTrashAndWaitAsyncAsync(client, request, cancellationToken, TimeSpan.FromSeconds(pullPeriod));
+            return RestoreFromTrashAndWaitAsync(client, request, cancellationToken, TimeSpan.FromSeconds(pullPeriod));
         }
 
         #endregion

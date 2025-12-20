@@ -528,14 +528,14 @@ public struct DecimalN : IFormattable
 	/// The exponent must be between 0 and 8 (inclusive).
 	/// </summary>
 	/// <exception cref="ArgumentOutOfRangeException">
-	/// Thrown when a value less than 0 or greater than 8 is assigned.
+	/// Thrown when value is greater than 8.
 	/// </exception>
 	public byte Exponent
 	{
 		readonly get => _exponent;
 		set
 		{
-			if (value < 0 || value > _defExponent)
+			if (value > _defExponent)
 				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
 
 			_exponent = value;

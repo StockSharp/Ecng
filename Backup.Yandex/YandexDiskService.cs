@@ -153,7 +153,7 @@ public class YandexDiskService : Disposable, IBackupService
 
 			if (!needCheck)
 			{
-				await _client.Commands.CreateDictionaryAsync(path, cancellationToken).NoWait();
+				await _client.Commands.CreateDirectoryAsync(path, cancellationToken).NoWait();
 				continue;
 			}
 
@@ -165,7 +165,7 @@ public class YandexDiskService : Disposable, IBackupService
 			{
 				if (ex.StatusCode == HttpStatusCode.NotFound)
 				{
-					await _client.Commands.CreateDictionaryAsync(path, cancellationToken).NoWait();
+					await _client.Commands.CreateDirectoryAsync(path, cancellationToken).NoWait();
 					needCheck = false;
 				}
 				else

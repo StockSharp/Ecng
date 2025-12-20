@@ -15,6 +15,7 @@ namespace Lzma
 
 		private readonly Stream stream;
 		private readonly CompressionMode mode;
+		private readonly bool leaveOpen;
 
 		private bool hasHeader;
 		private readonly DecoderStream decoderStream;
@@ -23,7 +24,7 @@ namespace Lzma
 		private readonly EncoderStream encoderStream;
 		private long encodedBytes;
 		private long headerPosition;
-		
+
 		#endregion
 
 		#region Properties
@@ -82,6 +83,7 @@ namespace Lzma
 		{
 			this.stream = stream;
 			this.mode = mode;
+			this.leaveOpen = leaveOpen;
 
 			this.hasHeader = false;
 
@@ -121,13 +123,6 @@ namespace Lzma
 		public LzmaStream(Stream stream, EncoderProperties properties)
 			: this(stream, CompressionMode.Compress, false)
 		{
-			//this.stream = stream;
-			//this.mode = CompressionMode.Compress;
-
-			//if (!stream.CanWrite)
-			//	throw new ArgumentException("Compression mode requires a writable stream.");
-
-			//this.encoderStream = new EncoderStream(stream);
 			this.encoderProperties = properties;
 		}
 
@@ -311,6 +306,11 @@ namespace Lzma
 		public override void Close()
 		{
 			this.Flush();
+
+			if (!this.leaveOpen)
+				this.stream.Close();
+
+			base.Close();
 		}
 
 		/// <summary>

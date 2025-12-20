@@ -13,7 +13,7 @@ namespace YandexDisk.Client.Http.Clients
             : base(apiContext)
         { }
 
-        public Task<Link> CreateDictionaryAsync(string path, CancellationToken cancellationToken = default)
+        public Task<Link> CreateDirectoryAsync(string path, CancellationToken cancellationToken = default)
         {
             return PutAsync<object, object, Link>("resources", new { path }, /*requestBody*/ null, cancellationToken);
         }
@@ -25,12 +25,12 @@ namespace YandexDisk.Client.Http.Clients
 
         public Task<Link> MoveAsync(MoveFileRequest request, CancellationToken cancellationToken = default)
         {
-            return PostAsync<CopyFileRequest, object, Link>("resources/move", request, /*requestBody*/ null, cancellationToken);
+            return PostAsync<MoveFileRequest, object, Link>("resources/move", request, /*requestBody*/ null, cancellationToken);
         }
 
         public Task<Link> DeleteAsync(DeleteFileRequest request, CancellationToken cancellationToken = default)
         {
-            return DeleteAsync<CopyFileRequest, object, Link>("resources", request, /*requestBody*/ null, cancellationToken);
+            return DeleteAsync<DeleteFileRequest, object, Link>("resources", request, /*requestBody*/ null, cancellationToken);
         }
 
         public Task<Link> EmptyTrashAsync(string path, CancellationToken cancellationToken = default)
