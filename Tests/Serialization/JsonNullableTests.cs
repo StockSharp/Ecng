@@ -42,11 +42,20 @@ public class JsonNullableTests : BaseTestClass
 		}
 	}
 
-	private async Task<T> Roundtrip<T>(T value)
+	private async Task<T> Roundtrip<T>(T value, Action<string> jsonInspector = null)
 	{
 		var ser = new JsonSerializer<T>();
 		await using var ms = new MemoryStream();
 		await ser.SerializeAsync(value, ms, CancellationToken);
+
+		// Verify intermediate format has content
+		ms.Length.AssertGreater(0L, "Serialized JSON stream should not be empty");
+
+		// Capture JSON for inspection
+		ms.Position = 0;
+		var jsonString = ms.ToArray().UTF8();
+		jsonInspector?.Invoke(jsonString);
+
 		ms.Position = 0;
 		return await ser.DeserializeAsync(ms, CancellationToken);
 	}
@@ -72,7 +81,13 @@ public class JsonNullableTests : BaseTestClass
 	public async Task AllNull()
 	{
 		var obj = new NullableHolder { I = null, D = null, T = null, G = null, M = null, P = null };
-		var actual = await Roundtrip(obj);
+		var actual = await Roundtrip(obj, jsonInspector: json =>
+		{
+			// Verify JSON contains property names (fields are serialized, not omitted)
+			json.Contains("\"I\"").AssertTrue($"JSON should contain 'I' property. JSON: {json}");
+			// Verify null values are explicitly null in JSON
+			json.Contains("null").AssertTrue($"JSON should contain null values. JSON: {json}");
+		});
 		actual.Equals(obj).AssertTrue();
 	}
 

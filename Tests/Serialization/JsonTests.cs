@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 [TestClass]
 public class JsonTests : BaseTestClass
 {
-	private async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include)
+	private async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include, Action<string> jsonInspector = null)
 	{
 		var ser = new JsonSerializer<T>
 		{
@@ -24,6 +24,18 @@ public class JsonTests : BaseTestClass
 
 		var stream = new MemoryStream();
 		await ser.SerializeAsync(value, stream, CancellationToken);
+
+		// Verify intermediate format - stream should have content
+		stream.Length.AssertGreater(0L, "Serialized JSON stream should not be empty");
+
+		// Capture JSON for inspection if needed
+		stream.Position = 0;
+		var jsonBytes = stream.ToArray();
+		var jsonString = jsonBytes.UTF8();
+
+		// Allow tests to inspect the intermediate JSON format
+		jsonInspector?.Invoke(jsonString);
+
 		stream.Position = 0;
 
 		var needCast = value is SettingsStorage;
@@ -155,8 +167,19 @@ public class JsonTests : BaseTestClass
 	[TestMethod]
 	public async Task PrimitiveEnumAsString()
 	{
-		await Do(GCKind.Any, enumAsString: true);
-		await Do((GCKind?)null, enumAsString: true);
+		// Verify enum is serialized as string, not number
+		await Do(GCKind.Any, enumAsString: true, jsonInspector: json =>
+		{
+			json.Contains("\"Any\"").AssertTrue($"Enum should be serialized as string 'Any'. JSON: {json}");
+			// Should NOT contain just the number (which would be 0 for GCKind.Any)
+			// The serializer wraps in array format, so verify the string representation is present
+			json.Contains("\"0\"").AssertFalse($"Enum should NOT be serialized as number '0'. JSON: {json}");
+		});
+
+		await Do((GCKind?)null, enumAsString: true, jsonInspector: json =>
+		{
+			json.Contains("null").AssertTrue($"Nullable null enum should serialize as null. JSON: {json}");
+		});
 	}
 
 	[TestMethod]
@@ -954,13 +977,23 @@ public class JsonTests : BaseTestClass
 	[TestMethod]
 	public async Task ComplexSecureString()
 	{
+		const string plainTextPassword = "SuperSecret123!";
 		var obj = new TestSecureString
 		{
-			SecureStringProp = "123".Secure(),
+			SecureStringProp = plainTextPassword.Secure(),
 		};
 
-		await Do(obj, encryptedAsByteArray: true);
-		await Do(obj);
+		// Test with encryptedAsByteArray: true - verify plain text password is NOT in JSON
+		await Do(obj, encryptedAsByteArray: true, jsonInspector: json =>
+		{
+			json.Contains(plainTextPassword).AssertFalse($"Plain text password should NOT appear in JSON when encryptedAsByteArray=true. JSON: {json}");
+		});
+
+		// Test without encryptedAsByteArray - verify JSON has some content for the property
+		await Do(obj, jsonInspector: json =>
+		{
+			json.Contains("SecureStringProp").AssertTrue("JSON should contain the property name");
+		});
 
 		var ss = obj.Save();
 

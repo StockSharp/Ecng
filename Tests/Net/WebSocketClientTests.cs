@@ -188,7 +188,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		receivedTcs.Task.IsCompleted.AssertTrue("Echo was not received in time.");
 		var echoed = await receivedTcs.Task;
-		echoed.Contains(payload).AssertTrue();
+		// Echo server should return exactly what was sent
+		echoed.AssertEqual(payload, $"Echo response should exactly match payload. Got: '{echoed}'");
 
 		client.Disconnect();
 	}
@@ -381,7 +382,8 @@ public class WebSocketClientTests : BaseTestClass
 		await client.SendAsync(original, cts.Token);
 		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(15).Delay(cts.Token));
 		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
-		tcs.Task.Result.Contains(transformed).AssertTrue($"Actual message does not contain expected transformed payload.\nActual: {tcs.Task.Result}\nExpected contains: {transformed}");
+		// Echo + PreProcess2 uppercase transform should produce exactly the transformed payload
+		tcs.Task.Result.AssertEqual(transformed, $"Transformed message should exactly match expected.\nActual: {tcs.Task.Result}\nExpected: {transformed}");
 
 		client.Disconnect();
 	}

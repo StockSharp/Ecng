@@ -730,13 +730,32 @@ public class TimeHelperTests : BaseTestClass
 	[TestMethod]
 	public void GetLunarPhaseTest()
 	{
-		// Test with known new moon date (approximate)
-		var dt = new DateTime(2024, 1, 11); // New moon around this date
-		var phase = dt.GetLunarPhase();
+		// Test with known lunar dates (from NASA lunar calendar 2024)
+		// Note: Algorithm uses simplified 29.53-day cycle, so we allow for ±1 phase tolerance
+		// due to the inherent approximation in the calculation method
 
-		// Just verify it returns a valid phase (0-7)
-		var phaseInt = (int)phase;
-		(phaseInt >= 0 && phaseInt <= 7).AssertTrue($"phase={(int)phase} should be >=0 and <=7");
+		// New Moon: January 11, 2024 06:57 UTC
+		var newMoonDate = new DateTime(2024, 1, 11, 6, 57, 0, DateTimeKind.Utc);
+		var newMoonPhase = newMoonDate.GetLunarPhase();
+		// Should be NewMoon (0) or adjacent phase (7 or 1) due to calculation tolerance
+		((int)newMoonPhase <= 1 || (int)newMoonPhase == 7).AssertTrue(
+			$"New Moon date should return NewMoon (0) or adjacent phase, got: {newMoonPhase} ({(int)newMoonPhase})");
+
+		// Full Moon: January 25, 2024 17:54 UTC
+		var fullMoonDate = new DateTime(2024, 1, 25, 17, 54, 0, DateTimeKind.Utc);
+		var fullMoonPhase = fullMoonDate.GetLunarPhase();
+		// Should be FullMoon (4) or adjacent phase (3 or 5)
+		((int)fullMoonPhase >= 3 && (int)fullMoonPhase <= 5).AssertTrue(
+			$"Full Moon date should return FullMoon (4) or adjacent phase, got: {fullMoonPhase} ({(int)fullMoonPhase})");
+
+		// Verify range for any date
+		for (int month = 1; month <= 12; month++)
+		{
+			var testDate = new DateTime(2024, month, 15);
+			var phase = testDate.GetLunarPhase();
+			var phaseInt = (int)phase;
+			(phaseInt >= 0 && phaseInt <= 7).AssertTrue($"phase={phase} ({phaseInt}) should be >=0 and <=7 for {testDate}");
+		}
 	}
 
 	[TestMethod]
@@ -1976,17 +1995,6 @@ public class TimeHelperTests : BaseTestClass
 
 		// Should be close to 2451545
 		(jd > 2451544 && jd < 2451546).AssertTrue($"jd={jd} should be >2451544 and <2451546");
-	}
-
-	[TestMethod]
-	public void GetLunarPhase_ShouldReturnValidPhase()
-	{
-		var dt = new DateTime(2024, 6, 15);
-		var phase = dt.GetLunarPhase();
-
-		// Should return a value between 0 and 7 (8 phases)
-		var phaseInt = (int)phase;
-		(phaseInt >= 0 && phaseInt <= 7).AssertTrue($"phase={(int)phase} should be >=0 and <=7");
 	}
 
 	#endregion

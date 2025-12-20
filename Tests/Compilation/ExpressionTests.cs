@@ -71,21 +71,21 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Parse()
+	public void Calculate_Subtraction()
 	{
 		var formula = Compile("RI@FORTS - SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(2);
 	}
 
 	[TestMethod]
-	public void Parse2()
+	public void Calculate_Multiplication()
 	{
 		var formula = Compile("[RI@FORTS] * [SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(24);
 	}
 
 	[TestMethod]
-	public void Parse3()
+	public void Calculate_Addition_VariousSyntax()
 	{
 		var formula = Compile("RI@FORTS+[SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(10);
@@ -113,7 +113,7 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Parse4()
+	public void Calculate_UnaryNegation()
 	{
 		var formula = Compile("1*RI@FORTS + [@SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(10);
@@ -123,210 +123,210 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Parse5()
+	public void Calculate_SpecialPrefixes_Asterisk()
 	{
 		var formula = Compile("[*RI@FORTS] + @SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse6()
+	public void Calculate_DotInIdentifier_Bracketed()
 	{
 		var formula = Compile("[SPFB.SBRF@FORTS] + SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse7()
+	public void Calculate_DotInIdentifier_Unbracketed()
 	{
 		var formula = Compile("SPFB.SBRF@FORTS + SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse8()
+	public void Calculate_DotPrefix_InBracket()
 	{
 		var formula = Compile("SPFB.SBRF@FORTS + [.SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse9()
+	public void Calculate_DotPrefix_Variant()
 	{
 		var formula = Compile("SPFB.SBRF@FORTS + [.SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse10()
+	public void Calculate_HashPrefix_Bracketed()
 	{
 		var formula = Compile("#SPFB.SBRF@FORTS + [#.SBER@TQBR]");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse11()
+	public void Calculate_HashPrefix_Unbracketed()
 	{
 		var formula = Compile("#SPFB.SBRF@FORTS + #.SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(10);
 	}
 
 	[TestMethod]
-	public void Parse12()
+	public void Calculate_DecimalLiteral_SingleVariable()
 	{
 		var formula = Compile("#SPFB.SBRF@FORTS * 0.1m - #SPFB.SBRF@FORTS");
 		formula.Calculate([6]).AssertEqual(-5.4m);
 	}
 
 	[TestMethod]
-	public void ParseCurrency()
+	public void Calculate_CurrencyPair_SlashSeparator()
 	{
 		var formula = Compile("RI@FORTS / [AUD/CAD@DUKAS]");
 		formula.Calculate([6, 4]).AssertEqual(1.5m);
 	}
 
 	[TestMethod]
-	public void ParseCurrency2()
+	public void Calculate_CurrencyPair_DashSeparator()
 	{
 		var formula = Compile("RI@FORTS / [AUD-CAD@DUKAS]");
 		formula.Calculate([6, 4]).AssertEqual(1.5m);
 	}
 
 	[TestMethod]
-	public void ParseAbs()
+	public void Calculate_AbsFunction()
 	{
 		var formula = Compile("RI@FORTS - Abs(SBER@TQBR)");
 		formula.Calculate([6, -4]).AssertEqual(2);
 	}
 
 	[TestMethod]
-	public void ParseAbs2()
+	public void Calculate_AbsAsIdentifierPart()
 	{
 		var formula = Compile("POW(abs@FORTS,  abs(SBER@TQBR))");
 		formula.Calculate([2, -4]).AssertEqual(16);
 	}
 
 	[TestMethod]
-	public void ParsePow()
+	public void Calculate_PowWithAbs()
 	{
 		var formula = Compile("POW(RI@FORTS,  Abs(SBER@TQBR))");
 		formula.Calculate([2, -4]).AssertEqual(16);
 	}
 
 	[TestMethod]
-	public void ParsePow2()
+	public void Calculate_PowWithNegativeExponent()
 	{
 		var formula = Compile("POW(RI@FORTS,  SBER@TQBR)");
 		formula.Calculate([2, -4]).AssertEqual(0.0625m);
 	}
 
 	[TestMethod]
-	public void ParsePow3()
+	public void Calculate_PowWithFractionalExponent()
 	{
 		var formula = Compile("POW(RI@FORTS*SBER@TQBR,1.0m/3)");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow4()
+	public void Calculate_PowWithBrackets_Variant1()
 	{
 		var formula = Compile("POW([RI@FORTS]*[SBER@TQBR],1m/3)");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow5()
+	public void Calculate_PowWithBrackets_Variant2()
 	{
 		var formula = Compile("POW(RI@FORTS*[SBER@TQBR],1m/3)");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow6()
+	public void Calculate_Pow_LowerCase()
 	{
 		var formula = Compile("pow(RI@FORTS*[SBER@TQBR],1m/3)");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow7()
+	public void Calculate_Pow_MixedCase()
 	{
 		var formula = Compile("Pow(RI@FORTS*[SBER@TQBR],1m/3)");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow9()
+	public void Calculate_Pow_WithWhitespace()
 	{
 		var formula = Compile("   Pow(RI@FORTS*[SBER@TQBR],1m/3) ");
 		formula.Calculate([2, 4.5m]).AssertEqual(2.0800838230519m);
 	}
 
 	[TestMethod]
-	public void ParsePow8()
+	public void Calculate_Pow_SameVariableMultipleTimes()
 	{
 		var formula = Compile("Pow(RI@FORTS*[RI@FORTS],1m/RI@FORTS)");
 		formula.Calculate([2]).AssertEqual(2);
 	}
 
 	[TestMethod]
-	public void ParseFormula1()
+	public void Calculate_SimpleVariables_Addition()
 	{
 		var formula = Compile("x + y");
 		formula.Calculate([2, -4]).AssertEqual(-2);
 	}
 
 	[TestMethod]
-	public void ParseFormula2()
+	public void Calculate_SimpleVariables_Multiplication()
 	{
 		var formula = Compile("x * y");
 		formula.Calculate([2, -4]).AssertEqual(-8);
 	}
 
 	[TestMethod]
-	public void ParseFormula3()
+	public void Calculate_SimpleVariables_MultiplicationNoSpaces()
 	{
 		var formula = Compile("x*y");
 		formula.Calculate([2, -4]).AssertEqual(-8);
 	}
 
 	[TestMethod]
-	public void ParseFormula4()
+	public void Calculate_SimpleVariables_PowAndAbs()
 	{
 		var formula = Compile("pow(x,abs(y))");
 		formula.Calculate([2, -4]).AssertEqual(16);
 	}
 
 	[TestMethod]
-	public void ParseFormula5()
+	public void Calculate_SimpleVariables_ComplexExpression()
 	{
 		var formula = Compile("(x+y)*X/3");
 		formula.Calculate([2, 3]).AssertEqual(3.3333333333333333333333333333m);
 	}
 
 	[TestMethod]
-	public void ParseFormula6()
+	public void Calculate_SimpleVariables_DecimalMultiplier()
 	{
 		var formula = Compile("(x+y)*5.2m/3");
 		formula.Calculate([2, 3]).AssertEqual(8.666666666666666666666666667m);
 	}
 
 	[TestMethod]
-	public void ParseFormula7()
+	public void Calculate_SimpleVariables_NestedParentheses()
 	{
 		var formula = Compile("((x+y)*5.2m/3) + abs(X)");
 		formula.Calculate([2, 3]).AssertEqual(10.666666666666666666666666667m);
 	}
 
 	[TestMethod]
-	public void ParseFormula8()
+	public void Calculate_NumericLiteral_Addition()
 	{
 		var formula = Compile("SBER@TQBR + 12334545");
 		formula.Calculate([2, 12334545]).AssertEqual(2 + 12334545);
 	}
 
 	[TestMethod]
-	public void ParseFormula9()
+	public void Calculate_SimpleVariables_IrregularWhitespace()
 	{
 		var formula = Compile("    x*   y");
 		formula.Calculate([2, -4]).AssertEqual(-8);
