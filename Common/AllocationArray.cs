@@ -57,7 +57,6 @@ public class AllocationArray<T> : IEnumerable<T>
 
 	//private readonly int _capacity;
 	private T[] _buffer;
-	private readonly AllocationArrayEnumerator _enumerator;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="AllocationArray{T}"/> class with the specified capacity.
@@ -70,7 +69,6 @@ public class AllocationArray<T> : IEnumerable<T>
 
 		//_capacity = capacity;
 		_buffer = new T[capacity];
-		_enumerator = new AllocationArrayEnumerator(this);
 	}
 
 	/// <summary>
@@ -222,7 +220,7 @@ public class AllocationArray<T> : IEnumerable<T>
 	/// Returns an enumerator that iterates through the collection.
 	/// </summary>
 	/// <returns>An enumerator for the allocation array.</returns>
-	public IEnumerator<T> GetEnumerator() => _enumerator;
+	public IEnumerator<T> GetEnumerator() => new AllocationArrayEnumerator(this);
 
 	/// <summary>
 	/// Returns an enumerator that iterates through the collection.

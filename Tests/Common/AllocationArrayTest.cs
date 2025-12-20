@@ -119,6 +119,28 @@ public class AllocationArrayTest : BaseTestClass
 	}
 
 	[TestMethod]
+	public void NestedEnumeration()
+	{
+		var arr = new AllocationArray<int> { 1, 2, 3 };
+		var results = new List<(int outer, int inner)>();
+
+		foreach (var outer in arr)
+		{
+			foreach (var inner in arr)
+			{
+				results.Add((outer, inner));
+
+				(results.Count < 10).AssertTrue();
+			}
+		}
+
+		results.Count.AssertEqual(9);
+		results[0].AssertEqual((1, 1));
+		results[4].AssertEqual((2, 2));
+		results[8].AssertEqual((3, 3));
+	}
+
+	[TestMethod]
 	public void BufferReflectsChanges()
 	{
 		var arr = new AllocationArray<int>
