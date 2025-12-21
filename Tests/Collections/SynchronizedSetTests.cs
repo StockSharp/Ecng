@@ -235,7 +235,7 @@ public class SynchronizedSetTests : BaseTestClass
 			{
 				for (var i = 0; i < iterations; i++)
 				{
-					var snapshot = set.ToArray();
+					var snapshot = set.SyncGet(s => s.ToArray());
 					(snapshot.Length >= 0).AssertTrue();
 				}
 			}

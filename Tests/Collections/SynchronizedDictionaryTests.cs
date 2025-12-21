@@ -190,7 +190,7 @@ public class SynchronizedDictionaryTests
 			{
 				for (var i = 0; i < iterations; i++)
 				{
-					var snapshot = dict.ToArray();
+					var snapshot = dict.SyncGet(d => d.ToArray());
 					(snapshot.Length >= 0).AssertTrue();
 				}
 			}

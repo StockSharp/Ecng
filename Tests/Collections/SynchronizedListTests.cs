@@ -219,7 +219,7 @@ public class SynchronizedListTests : BaseTestClass
 			{
 				for (var i = 0; i < iterations; i++)
 				{
-					var snapshot = list.ToArray();
+					var snapshot = list.SyncGet(l => l.ToArray());
 					(snapshot.Length >= 0).AssertTrue();
 				}
 			}
