@@ -1032,6 +1032,42 @@ public static class AsyncEnumerable
 	}
 
 	/// <summary>
+	/// Converts an asynchronous <see cref="IAsyncEnumerable{T}"/> to a synchronous <see cref="IEnumerable{T}"/>
+	/// with lazy evaluation. Each element is fetched on-demand by blocking on the async operation.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements.</typeparam>
+	/// <param name="source">The source async enumerable.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IEnumerable{TSource}"/> that yields items from the async source sequence.</returns>
+	/// <remarks>
+	/// This method blocks the calling thread for each element. Use with caution in UI or async contexts.
+	/// Unlike ToArrayAsync/ToListAsync, this does not buffer all items - elements are fetched lazily.
+	/// </remarks>
+	public static IEnumerable<TSource> ToEnumerable<TSource>(this IAsyncEnumerable<TSource> source, CancellationToken cancellationToken = default)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		return Iterator(source, cancellationToken);
+
+		static IEnumerable<TSource> Iterator(IAsyncEnumerable<TSource> source, CancellationToken cancellationToken)
+		{
+			var enumerator = source.GetAsyncEnumerator(cancellationToken);
+			try
+			{
+				while (AsyncHelper.Run(() => enumerator.MoveNextAsync()))
+				{
+					yield return enumerator.Current;
+				}
+			}
+			finally
+			{
+				AsyncHelper.Run(() => enumerator.DisposeAsync());
+			}
+		}
+	}
+
+	/// <summary>
 	/// Gets the first element of the <see cref="IAsyncEnumerable{T}"/> that satisfies a condition.
 	/// </summary>
 	/// <typeparam name="T">The type of the elements of the <see cref="IAsyncEnumerable{T}"/>.</typeparam>
