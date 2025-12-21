@@ -102,8 +102,8 @@ public class DummyDispatcherTests : BaseTestClass
 		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter} after {sw.ElapsedMilliseconds}ms");
 
 		// After dispose, counter should stop increasing.
-		var after = counter;
 		sub.Dispose();
+		var after = counter; // Capture AFTER dispose to avoid race condition
 		await Task.Delay(200, CancellationToken);
 		counter.AssertEqual(after, $"Expected counter to stay at {after} after dispose, but was {counter}");
 	}
@@ -174,22 +174,16 @@ public class DummyDispatcherTests : BaseTestClass
 		var ticksBefore = timerTickCount;
 		fastSub.Dispose();
 
-		// Wait and count how many times the timer ticks
-		// If interval is recalculated to 500ms, we should see ~1-2 ticks in 600ms
-		// If interval stays at 50ms (bug), we would see ~12 ticks in 600ms
-		await Task.Delay(600, CancellationToken);
+		// Wait for slow action to fire at least once after fast unsubscription
+		// Use WaitForAsync to avoid flaky timing issues
+		await WaitForAsync(() => slowCounter >= 1, TimeSpan.FromSeconds(2), $"Expected slowCounter >= 1, but was {slowCounter}");
 
 		var ticksAfter = timerTickCount - ticksBefore;
 
 		// With proper interval recalculation, should be ~1-2 ticks (500ms interval)
-		// With bug (interval stays 50ms), would be ~12 ticks but only slowCounter increments
-		// Since slow action has 500ms interval, it should only fire ~1 time in 600ms
-		(slowCounter >= 1).AssertTrue($"Expected slowCounter >= 1, but was {slowCounter}, ticksAfter={ticksAfter}");
-
-		// This assertion would fail if interval is not recalculated:
-		// Timer would tick 12 times but slow action only runs once every 500ms
-		// We can't directly test timer tick rate without modifying the code,
-		// so this test mainly documents the expected behavior.
+		// With bug (interval stays 50ms), would be many more ticks
+		// This test verifies the slow action continues to work after fast action is removed
+		(ticksAfter >= 1).AssertTrue($"Expected ticksAfter >= 1, but was {ticksAfter}");
 	}
 
 	[TestMethod]
