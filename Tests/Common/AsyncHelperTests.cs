@@ -311,4 +311,183 @@ public class AsyncHelperTests : BaseTestClass
 
 		timer.Dispose();
 	}
+
+	[TestMethod]
+	public async Task ToAsync_Action()
+	{
+		var called = false;
+		Action action = () => called = true;
+		await action.ToAsync()(CancellationToken.None);
+		called.AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action1()
+	{
+		var result = 0;
+		Action<int> action = a => result = a;
+		await action.ToAsync()(1, CancellationToken.None);
+		result.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action2()
+	{
+		var result = 0;
+		Action<int, int> action = (a, b) => result = a + b;
+		await action.ToAsync()(1, 2, CancellationToken.None);
+		result.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action3()
+	{
+		var result = 0;
+		Action<int, int, int> action = (a, b, c) => result = a + b + c;
+		await action.ToAsync()(1, 2, 3, CancellationToken.None);
+		result.AssertEqual(6);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action4()
+	{
+		var result = 0;
+		Action<int, int, int, int> action = (a, b, c, d) => result = a + b + c + d;
+		await action.ToAsync()(1, 2, 3, 4, CancellationToken.None);
+		result.AssertEqual(10);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action5()
+	{
+		var result = 0;
+		Action<int, int, int, int, int> action = (a, b, c, d, e) => result = a + b + c + d + e;
+		await action.ToAsync()(1, 2, 3, 4, 5, CancellationToken.None);
+		result.AssertEqual(15);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action6()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int> action = (a, b, c, d, e, f) => result = a + b + c + d + e + f;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, CancellationToken.None);
+		result.AssertEqual(21);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action7()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g) => result = a + b + c + d + e + f + g;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, CancellationToken.None);
+		result.AssertEqual(28);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action8()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h) => result = a + b + c + d + e + f + g + h;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, CancellationToken.None);
+		result.AssertEqual(36);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action9()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i) => result = a + b + c + d + e + f + g + h + i;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, CancellationToken.None);
+		result.AssertEqual(45);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action10()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j) => result = a + b + c + d + e + f + g + h + i + j;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, CancellationToken.None);
+		result.AssertEqual(55);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action11()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j, k) => result = a + b + c + d + e + f + g + h + i + j + k;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, CancellationToken.None);
+		result.AssertEqual(66);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action12()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j, k, l) => result = a + b + c + d + e + f + g + h + i + j + k + l;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, CancellationToken.None);
+		result.AssertEqual(78);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action13()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j, k, l, m) => result = a + b + c + d + e + f + g + h + i + j + k + l + m;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, CancellationToken.None);
+		result.AssertEqual(91);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action14()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j, k, l, m, n) => result = a + b + c + d + e + f + g + h + i + j + k + l + m + n;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, CancellationToken.None);
+		result.AssertEqual(105);
+	}
+
+	[TestMethod]
+	public async Task ToAsync_Action15()
+	{
+		var result = 0;
+		Action<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int> action = (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) => result = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o;
+		await action.ToAsync()(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, CancellationToken.None);
+		result.AssertEqual(120);
+	}
+
+	[TestMethod]
+	public void ToAsync_NullAction_Throws()
+	{
+		Action action = null;
+		Throws<ArgumentNullException>(() => action.ToAsync());
+	}
+
+	[TestMethod]
+	public void ToAsync_NullAction1_Throws()
+	{
+		Action<int> action = null;
+		Throws<ArgumentNullException>(() => action.ToAsync());
+	}
+
+	[TestMethod]
+	public void ToAsync_NullAction2_Throws()
+	{
+		Action<int, int> action = null;
+		Throws<ArgumentNullException>(() => action.ToAsync());
+	}
+
+	[TestMethod]
+	public void ToAsync_NullAction8_Throws()
+	{
+		Action<int, int, int, int, int, int, int, int> action = null;
+		Throws<ArgumentNullException>(() => action.ToAsync());
+	}
+
+	[TestMethod]
+	public void ToAsync_NullAction15_Throws()
+	{
+		Action<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int> action = null;
+		Throws<ArgumentNullException>(() => action.ToAsync());
+	}
 }

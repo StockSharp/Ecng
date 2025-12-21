@@ -733,4 +733,184 @@ public static class AsyncHelper
 
 		return new ControllablePeriodicTimer(handler);
 	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	/// <param name="action">The synchronous action to convert.</param>
+	/// <returns>An async function that wraps the action.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if action is null.</exception>
+	public static Func<CancellationToken, ValueTask> ToAsync(this Action action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return _ => { action(); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T, CancellationToken, ValueTask> ToAsync<T>(this Action<T> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a, _) => { action(a); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, CancellationToken, ValueTask> ToAsync<T1, T2>(this Action<T1, T2> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, _) => { action(a1, a2); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, CancellationToken, ValueTask> ToAsync<T1, T2, T3>(this Action<T1, T2, T3> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, _) => { action(a1, a2, a3); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4>(this Action<T1, T2, T3, T4> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, _) => { action(a1, a2, a3, a4); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5>(this Action<T1, T2, T3, T4, T5> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, _) => { action(a1, a2, a3, a4, a5); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6>(this Action<T1, T2, T3, T4, T5, T6> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, _) => { action(a1, a2, a3, a4, a5, a6); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7>(this Action<T1, T2, T3, T4, T5, T6, T7> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, _) => { action(a1, a2, a3, a4, a5, a6, a7); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8>(this Action<T1, T2, T3, T4, T5, T6, T7, T8> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14); return default; };
+	}
+
+	/// <summary>
+	/// Converts a synchronous action to an async function with CancellationToken support.
+	/// </summary>
+	public static Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, CancellationToken, ValueTask> ToAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(this Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		return (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, _) => { action(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15); return default; };
+	}
+
 }
