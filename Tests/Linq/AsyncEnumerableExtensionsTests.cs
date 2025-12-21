@@ -276,4 +276,131 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region ToEnumerable
+
+	[TestMethod]
+	public void ToEnumerable_Basic()
+	{
+		var source = new[] { 1, 2, 3 }.ToAsyncEnumerable();
+		var result = source.ToEnumerable().ToArray();
+		result.AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public void ToEnumerable_Empty()
+	{
+		var source = Array.Empty<int>().ToAsyncEnumerable();
+		var result = source.ToEnumerable().ToArray();
+		result.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ToEnumerable_LazyEvaluation()
+	{
+		var yielded = new List<int>();
+		async IAsyncEnumerable<int> Generate()
+		{
+			for (var i = 1; i <= 5; i++)
+			{
+				yielded.Add(i);
+				yield return i;
+			}
+		}
+
+		var enumerable = Generate().ToEnumerable();
+
+		// Before iteration, nothing should be yielded
+		yielded.Count.AssertEqual(0);
+
+		// Take only first 2 elements
+		var first2 = enumerable.Take(2).ToArray();
+		first2.AssertEqual([1, 2]);
+
+		// Only 2 elements should have been yielded (lazy evaluation)
+		yielded.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void ToEnumerable_DisposeAsyncCalledOnBreak()
+	{
+		var disposed = false;
+
+		var enumerable = CreateAsyncEnumerable().ToEnumerable();
+
+		// Break early from foreach - should still dispose the async enumerator
+		foreach (var item in enumerable)
+		{
+			if (item == 2)
+				break;
+		}
+
+		// DisposeAsync should have been called via finally block
+		disposed.AssertTrue();
+
+		async IAsyncEnumerable<int> CreateAsyncEnumerable()
+		{
+			try
+			{
+				for (var i = 1; i <= 10; i++)
+					yield return i;
+			}
+			finally
+			{
+				// This runs when DisposeAsync is called
+				disposed = true;
+			}
+		}
+	}
+
+	[TestMethod]
+	public void ToEnumerable_WithCancellation()
+	{
+		using var cts = new CancellationTokenSource();
+
+		async IAsyncEnumerable<int> Generate([EnumeratorCancellation] CancellationToken ct = default)
+		{
+			for (var i = 1; i <= 100; i++)
+			{
+				ct.ThrowIfCancellationRequested();
+				yield return i;
+			}
+		}
+
+		var enumerable = Generate().ToEnumerable(cts.Token);
+		var count = 0;
+
+		ThrowsExactly<OperationCanceledException>(() =>
+		{
+			foreach (var item in enumerable)
+			{
+				count++;
+				if (count == 3)
+					cts.Cancel();
+			}
+		});
+
+		count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void ToEnumerable_NullThrows()
+	{
+		IAsyncEnumerable<int> source = null;
+		ThrowsExactly<ArgumentNullException>(() => source.ToEnumerable());
+	}
+
+	[TestMethod]
+	public void ToEnumerable_ForeachWorks()
+	{
+		var source = new[] { "a", "b", "c" }.ToAsyncEnumerable();
+		var result = new List<string>();
+
+		foreach (var item in source.ToEnumerable())
+			result.Add(item);
+
+		result.AssertEqual(["a", "b", "c"]);
+	}
+
+	#endregion
 }
