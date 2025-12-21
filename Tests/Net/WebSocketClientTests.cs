@@ -17,6 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CS0618 // Type or member is obsolete - testing obsolete sync API for backward compatibility
+
 [TestClass]
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
@@ -890,5 +892,236 @@ public class WebSocketClientTests : BaseTestClass
 			await Task.Delay(100, token);
 		}
 		return predicate();
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task AsyncConstructor_StateChanged_ReceivesCancellationToken()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var stateChangedTokens = new ConcurrentQueue<CancellationToken>();
+		var stateChangedStates = new ConcurrentQueue<ConnectionStates>();
+
+		using var client = new WebSocketClient(
+			url,
+			async (state, token) =>
+			{
+				stateChangedStates.Enqueue(state);
+				stateChangedTokens.Enqueue(token);
+				await ValueTask.CompletedTask;
+			},
+			async (ex, token) => await ValueTask.CompletedTask,
+			async (msg, token) => await ValueTask.CompletedTask,
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		client.Disconnect();
+
+		// Wait for Disconnected state
+		var ok = await WaitForStatesAsync(stateChangedStates, () => stateChangedStates.Contains(ConnectionStates.Disconnected), TimeSpan.FromSeconds(10), cts.Token);
+		ok.AssertTrue("Did not observe Disconnected state.");
+
+		// Verify tokens were passed (not default)
+		stateChangedStates.Contains(ConnectionStates.Connecting).AssertTrue();
+		stateChangedStates.Contains(ConnectionStates.Connected).AssertTrue();
+		(stateChangedTokens.Count >= 2).AssertTrue("Should have received at least 2 state changes with tokens.");
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task AsyncConstructor_Error_ReceivesCancellationToken()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var errorTokens = new ConcurrentQueue<CancellationToken>();
+		var errorExceptions = new ConcurrentQueue<Exception>();
+
+		using var client = new WebSocketClient(
+			url,
+			async (state, token) => await ValueTask.CompletedTask,
+			async (ex, token) =>
+			{
+				errorExceptions.Enqueue(ex);
+				errorTokens.Enqueue(token);
+				await ValueTask.CompletedTask;
+			},
+			async (msg, token) =>
+			{
+				// Throw error to trigger error callback
+				throw new InvalidOperationException("Test error from process");
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		// Send message to trigger process which throws
+		await client.SendAsync("trigger-error", cts.Token);
+
+		// Wait for error callback
+		var sw = Stopwatch.StartNew();
+		while (sw.Elapsed < TimeSpan.FromSeconds(10) && errorExceptions.IsEmpty)
+			await Task.Delay(100, cts.Token);
+
+		errorExceptions.IsEmpty.AssertFalse("Error callback should have been called.");
+		errorTokens.IsEmpty.AssertFalse("Error callback should receive CancellationToken.");
+
+		client.Disconnect();
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task StateChangedAsync_Event_IsCalled()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var eventStates = new ConcurrentQueue<ConnectionStates>();
+		var eventTokens = new ConcurrentQueue<CancellationToken>();
+
+		using var client = new WebSocketClient(
+			url,
+			_ => { }, // sync callback
+			_ => { },
+			async (msg, token) => await ValueTask.CompletedTask,
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.StateChangedAsync += async (state, token) =>
+		{
+			eventStates.Enqueue(state);
+			eventTokens.Enqueue(token);
+			await ValueTask.CompletedTask;
+		};
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		client.Disconnect();
+
+		var ok = await WaitForStatesAsync(eventStates, () => eventStates.Contains(ConnectionStates.Disconnected), TimeSpan.FromSeconds(10), cts.Token);
+		ok.AssertTrue("StateChangedAsync event should have fired for Disconnected.");
+
+		eventStates.Contains(ConnectionStates.Connecting).AssertTrue("StateChangedAsync should fire for Connecting.");
+		eventStates.Contains(ConnectionStates.Connected).AssertTrue("StateChangedAsync should fire for Connected.");
+		(eventTokens.Count >= 2).AssertTrue("StateChangedAsync should receive CancellationTokens.");
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task ErrorAsync_Event_IsCalled()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var eventErrors = new ConcurrentQueue<Exception>();
+		var eventTokens = new ConcurrentQueue<CancellationToken>();
+
+		using var client = new WebSocketClient(
+			url,
+			_ => { },
+			_ => { },
+			async (msg, token) =>
+			{
+				throw new InvalidOperationException("Test error");
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ErrorAsync += async (ex, token) =>
+		{
+			eventErrors.Enqueue(ex);
+			eventTokens.Enqueue(token);
+			await ValueTask.CompletedTask;
+		};
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		await client.SendAsync("trigger", cts.Token);
+
+		var sw = Stopwatch.StartNew();
+		while (sw.Elapsed < TimeSpan.FromSeconds(10) && eventErrors.IsEmpty)
+			await Task.Delay(100, cts.Token);
+
+		eventErrors.IsEmpty.AssertFalse("ErrorAsync event should have been called.");
+		eventTokens.IsEmpty.AssertFalse("ErrorAsync should receive CancellationToken.");
+
+		client.Disconnect();
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task AsyncConstructor_BackwardCompatibility_SyncCallbacksWork()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var syncStates = new ConcurrentQueue<ConnectionStates>();
+		var syncErrors = new ConcurrentQueue<Exception>();
+		var receivedMessages = new ConcurrentQueue<string>();
+
+		// Use old sync constructor - should still work
+		using var client = new WebSocketClient(
+			url,
+			state => syncStates.Enqueue(state),
+			ex => syncErrors.Enqueue(ex),
+			async (msg, token) =>
+			{
+				receivedMessages.Enqueue(msg.AsString());
+				await ValueTask.CompletedTask;
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		var payload = $"compat-{Guid.NewGuid():N}";
+		await client.SendAsync(payload, cts.Token);
+
+		var sw = Stopwatch.StartNew();
+		while (sw.Elapsed < TimeSpan.FromSeconds(10) && !receivedMessages.Any(m => m == payload))
+			await Task.Delay(100, cts.Token);
+
+		receivedMessages.Any(m => m == payload).AssertTrue("Message should be echoed back.");
+		syncStates.Contains(ConnectionStates.Connected).AssertTrue("Sync stateChanged callback should work.");
+
+		client.Disconnect();
+
+		var ok = await WaitForStatesAsync(syncStates, () => syncStates.Contains(ConnectionStates.Disconnected), TimeSpan.FromSeconds(10), cts.Token);
+		ok.AssertTrue("Sync stateChanged should fire for Disconnected.");
 	}
 }
