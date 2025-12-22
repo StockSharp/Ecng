@@ -1,3 +1,5 @@
+#pragma warning disable CS0618 // Type or member is obsolete - testing obsolete StateChanged event
+
 namespace Ecng.Tests.Net;
 
 using Ecng.ComponentModel;
@@ -9,6 +11,8 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	private class MockConnection : IConnection
 	{
 		public event Action<ConnectionStates> StateChanged;
+
+		public event Func<ConnectionStates, CancellationToken, ValueTask> StateChangedAsync;
 
 		public ConnectionStates CurrentState { get; private set; } = ConnectionStates.Disconnected;
 
@@ -32,6 +36,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		{
 			CurrentState = state;
 			StateChanged?.Invoke(state);
+			StateChangedAsync?.Invoke(state, default).GetAwaiter().GetResult();
 		}
 	}
 

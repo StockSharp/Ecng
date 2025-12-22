@@ -11,7 +11,7 @@ public class ConnectionStateTracker : Disposable, IConnection
 	private class ConnectionWrapper : Disposable
 	{
 		private readonly IConnection _connection;
-		private readonly Action _stateChanged;
+		private readonly Func<CancellationToken, ValueTask> _stateChanged;
 
 		/// <summary>
 		/// Gets the current connection state of the wrapped connection.
@@ -24,14 +24,18 @@ public class ConnectionStateTracker : Disposable, IConnection
 		/// <param name="connection">The connection to wrap.</param>
 		/// <param name="stateChanged">Callback invoked when the connection state changes.</param>
 		/// <exception cref="ArgumentNullException">Thrown when connection or stateChanged is null.</exception>
-		public ConnectionWrapper(IConnection connection, Action stateChanged)
+		public ConnectionWrapper(IConnection connection, Func<CancellationToken, ValueTask> stateChanged)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
 
 			State = ConnectionStates.Disconnected;
 
+#pragma warning disable CS0618 // Type or member is obsolete
 			_connection.StateChanged += OnStateChanged;
+#pragma warning restore CS0618
+
+			_connection.StateChangedAsync += OnStateChangedAsync;
 		}
 
 		/// <summary>
@@ -39,18 +43,33 @@ public class ConnectionStateTracker : Disposable, IConnection
 		/// </summary>
 		protected override void DisposeManaged()
 		{
+#pragma warning disable CS0618 // Type or member is obsolete
 			_connection.StateChanged -= OnStateChanged;
+#pragma warning restore CS0618
+
+			_connection.StateChangedAsync -= OnStateChangedAsync;
 			base.DisposeManaged();
 		}
 
 		/// <summary>
-		/// Handles the state change event from the wrapped connection.
+		/// Handles the state change event from the wrapped connection (sync version).
 		/// </summary>
 		/// <param name="newState">The new state of the connection.</param>
 		private void OnStateChanged(ConnectionStates newState)
 		{
 			State = newState;
-			_stateChanged();
+			_stateChanged(default).GetAwaiter().GetResult();
+		}
+
+		/// <summary>
+		/// Handles the state change event from the wrapped connection (async version).
+		/// </summary>
+		/// <param name="newState">The new state of the connection.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		private async ValueTask OnStateChangedAsync(ConnectionStates newState, CancellationToken cancellationToken)
+		{
+			State = newState;
+			await _stateChanged(cancellationToken);
 		}
 	}
 
@@ -61,7 +80,13 @@ public class ConnectionStateTracker : Disposable, IConnection
 	/// <summary>
 	/// Occurs when the overall connection state changes.
 	/// </summary>
+	[Obsolete("Use StateChangedAsync event instead.")]
 	public event Action<ConnectionStates> StateChanged;
+
+	/// <summary>
+	/// Occurs when the overall connection state changes (async version with CancellationToken).
+	/// </summary>
+	public event Func<ConnectionStates, CancellationToken, ValueTask> StateChangedAsync;
 
 	/// <summary>
 	/// Connects all tracked connections asynchronously.
@@ -90,7 +115,7 @@ public class ConnectionStateTracker : Disposable, IConnection
 	/// </summary>
 	/// <param name="connection">The connection to add.</param>
 	public void Add(IConnection connection)
-		=> _connections.Add(connection, new(connection, UpdateOverallState));
+		=> _connections.Add(connection, new(connection, UpdateOverallStateAsync));
 
 	/// <summary>
 	/// Removes a tracked connection.
@@ -124,7 +149,8 @@ public class ConnectionStateTracker : Disposable, IConnection
 	/// <summary>
 	/// Updates the overall state based on the states of all tracked connections.
 	/// </summary>
-	private void UpdateOverallState()
+	/// <param name="cancellationToken">The cancellation token.</param>
+	private async ValueTask UpdateOverallStateAsync(CancellationToken cancellationToken)
 	{
 		ConnectionStates newState;
 
@@ -160,7 +186,12 @@ public class ConnectionStateTracker : Disposable, IConnection
 
 			_currState = newState;
 		}
-		
+
+#pragma warning disable CS0618 // Type or member is obsolete
 		StateChanged?.Invoke(newState);
+#pragma warning restore CS0618
+
+		if (StateChangedAsync is { } handler)
+			await handler(newState, cancellationToken);
 	}
 }
