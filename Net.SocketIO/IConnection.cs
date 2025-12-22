@@ -8,13 +8,7 @@ public interface IConnection
 	/// <summary>
 	/// Occurs when the connection state has changed.
 	/// </summary>
-	[Obsolete("Use StateChangedAsync event instead.")]
-	event Action<ConnectionStates> StateChanged;
-
-	/// <summary>
-	/// Occurs when the connection state has changed (async version with CancellationToken).
-	/// </summary>
-	event Func<ConnectionStates, CancellationToken, ValueTask> StateChangedAsync;
+	event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
 
 	/// <summary>
 	/// Asynchronously connects to a target.

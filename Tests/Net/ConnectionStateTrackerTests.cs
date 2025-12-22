@@ -1,5 +1,3 @@
-#pragma warning disable CS0618 // Type or member is obsolete - testing obsolete StateChanged event
-
 namespace Ecng.Tests.Net;
 
 using Ecng.ComponentModel;
@@ -10,9 +8,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 {
 	private class MockConnection : IConnection
 	{
-		public event Action<ConnectionStates> StateChanged;
-
-		public event Func<ConnectionStates, CancellationToken, ValueTask> StateChangedAsync;
+		public event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
 
 		public ConnectionStates CurrentState { get; private set; } = ConnectionStates.Disconnected;
 
@@ -35,8 +31,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		public void SetState(ConnectionStates state)
 		{
 			CurrentState = state;
-			StateChanged?.Invoke(state);
-			StateChangedAsync?.Invoke(state, default).GetAwaiter().GetResult();
+			StateChanged?.Invoke(state, default).GetAwaiter().GetResult();
 		}
 	}
 
@@ -174,7 +169,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connected);
@@ -193,7 +188,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Reconnecting);
@@ -214,7 +209,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn3);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Restored);
@@ -234,7 +229,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Failed);
 		conn2.SetState(ConnectionStates.Failed);
@@ -260,7 +255,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		conn3.SetState(ConnectionStates.Connected);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		// Now disconnect/fail all
 		conn1.SetState(ConnectionStates.Disconnected);
@@ -281,7 +276,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connecting); // Mixed state
@@ -300,7 +295,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connected);
@@ -324,7 +319,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var states = new List<ConnectionStates>();
-		tracker.StateChanged += state => states.Add(state);
+		tracker.StateChanged += (state, _) => { states.Add(state); return default; };
 
 		// All disconnected (initial state, should not fire)
 		// Both connecting -> mixed, should not fire
@@ -369,7 +364,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn.SetState(ConnectionStates.Connected);
 		fireCount.AssertEqual(1);
@@ -395,7 +390,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 
 		// After dispose, connections should not trigger state changes
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connected);
@@ -413,7 +408,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 			tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => Interlocked.Increment(ref fireCount);
+		tracker.StateChanged += (state, _) => { Interlocked.Increment(ref fireCount); return default; };
 
 		// Concurrently change states
 		Parallel.ForEach(connections, conn =>
@@ -437,7 +432,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn.SetState(ConnectionStates.Connected);
 		fireCount.AssertEqual(1);
@@ -472,7 +467,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Restored);
 		conn2.SetState(ConnectionStates.Restored);
@@ -493,7 +488,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn3);
 
 		var states = new List<ConnectionStates>();
-		tracker.StateChanged += state => states.Add(state);
+		tracker.StateChanged += (state, _) => { states.Add(state); return default; };
 
 		// First all connected
 		conn1.SetState(ConnectionStates.Connected);
@@ -517,7 +512,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		var conn = new MockConnection();
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		tracker.Add(conn);
 
@@ -554,7 +549,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		conn2.SetState(ConnectionStates.Connected);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		// One disconnecting, one connected - mixed state, should not fire
 		conn1.SetState(ConnectionStates.Disconnecting);
@@ -573,7 +568,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		// All disconnecting - not a recognized aggregate state
 		conn1.SetState(ConnectionStates.Disconnecting);
@@ -593,7 +588,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		// All connecting - not a recognized aggregate state
 		conn1.SetState(ConnectionStates.Connecting);
@@ -684,7 +679,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		tracker.Dispose();
 
@@ -702,7 +697,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn.SetState(ConnectionStates.Connected);
 
@@ -718,7 +713,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn.SetState(ConnectionStates.Failed);
 
@@ -734,7 +729,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn.SetState(ConnectionStates.Reconnecting);
 
@@ -750,7 +745,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn.SetState(ConnectionStates.Restored);
 
@@ -769,7 +764,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		conn.SetState(ConnectionStates.Connected);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn.SetState(ConnectionStates.Disconnected);
 
@@ -785,7 +780,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn.SetState(ConnectionStates.Disconnecting);
 
@@ -801,7 +796,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		var fireCount = 0;
-		tracker.StateChanged += state => fireCount++;
+		tracker.StateChanged += (state, _) => { fireCount++; return default; };
 
 		conn.SetState(ConnectionStates.Connecting);
 
@@ -853,7 +848,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var states = new List<ConnectionStates>();
-		tracker.StateChanged += state => states.Add(state);
+		tracker.StateChanged += (state, _) => { states.Add(state); return default; };
 
 		// All failed
 		conn1.SetState(ConnectionStates.Failed);
@@ -888,7 +883,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		conn3.SetState(ConnectionStates.Connected);
 
 		ConnectionStates? firedState = null;
-		tracker.StateChanged += state => firedState = state;
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		// Mix of disconnected and failed
 		conn1.SetState(ConnectionStates.Disconnected);

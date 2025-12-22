@@ -28,46 +28,6 @@ public class WebSocketClient : Disposable, IConnection
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
-	/// </summary>
-	/// <param name="url">The URL to connect to.</param>
-	/// <param name="stateChanged">Action to call when connection state changes.</param>
-	/// <param name="error">Action to handle errors.</param>
-	/// <param name="process">Function to process incoming messages.</param>
-	/// <param name="infoLog">Action to log informational messages.</param>
-	/// <param name="errorLog">Action to log error messages.</param>
-	/// <param name="verboseLog">Action to log verbose messages.</param>
-	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
-	[Obsolete("Use constructor with async Func<..., CancellationToken, ValueTask> callbacks instead.")]
-	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
-		Func<WebSocketMessage, CancellationToken, ValueTask> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(url, stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
-	/// </summary>
-	/// <param name="url">The URL to connect to.</param>
-	/// <param name="stateChanged">Action to call when the connection state changes.</param>
-	/// <param name="error">Action to handle errors.</param>
-	/// <param name="process">Function to process incoming messages with reference to the client instance.</param>
-	/// <param name="infoLog">Action to log informational messages.</param>
-	/// <param name="errorLog">Action to log error messages.</param>
-	/// <param name="verboseLog">Action to log verbose messages.</param>
-	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
-	[Obsolete("Use constructor with async Func<..., CancellationToken, ValueTask> callbacks instead.")]
-	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
-		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(url, stateChanged.ToAsync(), error.ToAsync(), process, infoLog, errorLog, verboseLog)
-	{
-	}
-
-	/// <summary>
 	/// Initializes a new instance of the <see cref="WebSocketClient"/> class with async callbacks.
 	/// </summary>
 	/// <param name="url">The URL to connect to.</param>
@@ -189,13 +149,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <summary>
 	/// Occurs when the connection state changes.
 	/// </summary>
-	[Obsolete("Use StateChangedAsync event instead.")]
-	public event Action<ConnectionStates> StateChanged;
-
-	/// <summary>
-	/// Occurs when the connection state changes (async version with CancellationToken).
-	/// </summary>
-	public event Func<ConnectionStates, CancellationToken, ValueTask> StateChangedAsync;
+	public event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
 
 	/// <summary>
 	/// Occurs when an error happens (async version with CancellationToken).
@@ -260,9 +214,8 @@ public class WebSocketClient : Disposable, IConnection
 			_infoLog("{0}", state);
 
 		State = state;
-		StateChanged?.Invoke(state);
 
-		if (StateChangedAsync is { } handler)
+		if (StateChanged is { } handler)
 			await handler(state, cancellationToken).NoWait();
 
 		await _stateChanged(state, cancellationToken).NoWait();
