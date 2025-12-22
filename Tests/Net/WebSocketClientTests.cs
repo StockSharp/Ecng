@@ -17,6 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CS0618 // Type or member is obsolete - testing obsolete sync API for backward compatibility
+
 [TestClass]
 [DoNotParallelize]
 public class WebSocketClientTests : BaseTestClass
@@ -159,8 +161,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => { if (!errorTcs.Task.IsCompleted) errorTcs.TrySetResult(ex); },
+			_ => { },
+			ex => { if (!errorTcs.Task.IsCompleted) errorTcs.TrySetResult(ex); },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -206,8 +208,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -260,8 +262,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (st, token) => { states.Enqueue(st); await ValueTask.CompletedTask; },
-			async (ex, token) => await ValueTask.CompletedTask,
+			st => states.Enqueue(st),
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -297,8 +299,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				if (msg.AsString() == subscribePayload)
@@ -353,8 +355,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -401,8 +403,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -445,8 +447,8 @@ public class WebSocketClientTests : BaseTestClass
 		var url = "ws://127.0.0.1:1/ws";
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -469,8 +471,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -502,8 +504,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -545,8 +547,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -606,8 +608,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -664,8 +666,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (st, token) => { states.Enqueue(st); await ValueTask.CompletedTask; },
-			async (ex, token) => await ValueTask.CompletedTask,
+			st => states.Enqueue(st),
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -733,8 +735,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (st, token) => { states.Enqueue((st, DateTime.UtcNow)); await ValueTask.CompletedTask; },
-			async (ex, token) => await ValueTask.CompletedTask,
+			st => states.Enqueue((st, DateTime.UtcNow)),
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -809,8 +811,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -863,8 +865,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (st, token) => { states.Enqueue(st); await ValueTask.CompletedTask; },
-			async (ex, token) => await ValueTask.CompletedTask,
+			st => states.Enqueue(st),
+			_ => { },
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -986,7 +988,7 @@ public class WebSocketClientTests : BaseTestClass
 
 	[TestMethod]
 	[Timeout(60000, CooperativeCancellation = true)]
-	public async Task StateChanged_Event_IsCalled()
+	public async Task StateChangedAsync_Event_IsCalled()
 	{
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
@@ -997,15 +999,15 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { }, // sync callback
+			_ => { },
 			async (msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
 			null
 		);
 
-		client.StateChanged += async (state, token) =>
+		client.StateChangedAsync += async (state, token) =>
 		{
 			eventStates.Enqueue(state);
 			eventTokens.Enqueue(token);
@@ -1020,11 +1022,11 @@ public class WebSocketClientTests : BaseTestClass
 		client.Disconnect();
 
 		var ok = await WaitForStatesAsync(eventStates, () => eventStates.Contains(ConnectionStates.Disconnected), TimeSpan.FromSeconds(10), cts.Token);
-		ok.AssertTrue("StateChanged event should have fired for Disconnected.");
+		ok.AssertTrue("StateChangedAsync event should have fired for Disconnected.");
 
-		eventStates.Contains(ConnectionStates.Connecting).AssertTrue("StateChanged should fire for Connecting.");
-		eventStates.Contains(ConnectionStates.Connected).AssertTrue("StateChanged should fire for Connected.");
-		(eventTokens.Count >= 2).AssertTrue("StateChanged should receive CancellationTokens.");
+		eventStates.Contains(ConnectionStates.Connecting).AssertTrue("StateChangedAsync should fire for Connecting.");
+		eventStates.Contains(ConnectionStates.Connected).AssertTrue("StateChangedAsync should fire for Connected.");
+		(eventTokens.Count >= 2).AssertTrue("StateChangedAsync should receive CancellationTokens.");
 	}
 
 	[TestMethod]
@@ -1040,8 +1042,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			async (state, token) => await ValueTask.CompletedTask,
-			async (ex, token) => await ValueTask.CompletedTask,
+			_ => { },
+			_ => { },
 			async (msg, token) =>
 			{
 				throw new InvalidOperationException("Test error");
@@ -1075,4 +1077,51 @@ public class WebSocketClientTests : BaseTestClass
 		client.Disconnect();
 	}
 
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task AsyncConstructor_BackwardCompatibility_SyncCallbacksWork()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var syncStates = new ConcurrentQueue<ConnectionStates>();
+		var syncErrors = new ConcurrentQueue<Exception>();
+		var receivedMessages = new ConcurrentQueue<string>();
+
+		// Use old sync constructor - should still work
+		using var client = new WebSocketClient(
+			url,
+			state => syncStates.Enqueue(state),
+			ex => syncErrors.Enqueue(ex),
+			async (msg, token) =>
+			{
+				receivedMessages.Enqueue(msg.AsString());
+				await ValueTask.CompletedTask;
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ReconnectAttempts = 0;
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		var payload = $"compat-{Guid.NewGuid():N}";
+		await client.SendAsync(payload, cts.Token);
+
+		var sw = Stopwatch.StartNew();
+		while (sw.Elapsed < TimeSpan.FromSeconds(10) && !receivedMessages.Any(m => m == payload))
+			await Task.Delay(100, cts.Token);
+
+		receivedMessages.Any(m => m == payload).AssertTrue("Message should be echoed back.");
+		syncStates.Contains(ConnectionStates.Connected).AssertTrue("Sync stateChanged callback should work.");
+
+		client.Disconnect();
+
+		var ok = await WaitForStatesAsync(syncStates, () => syncStates.Contains(ConnectionStates.Disconnected), TimeSpan.FromSeconds(10), cts.Token);
+		ok.AssertTrue("Sync stateChanged should fire for Disconnected.");
+	}
 }
