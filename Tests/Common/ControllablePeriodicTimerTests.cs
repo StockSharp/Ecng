@@ -462,5 +462,87 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.IsRunning.AssertTrue("Timer should still be running after ChangeInterval during handler");
 	}
+
+	[TestMethod]
+	public async Task Start_WithExternalCancellationToken_StopsWhenCancelled()
+	{
+		var counter = 0;
+		using var externalCts = new CancellationTokenSource();
+
+		using var timer = new ControllablePeriodicTimer(() =>
+		{
+			Interlocked.Increment(ref counter);
+			return Task.CompletedTask;
+		});
+
+		timer.Start(TimeSpan.FromMilliseconds(50), cancellationToken: externalCts.Token);
+
+		// Wait for a few ticks
+		var sw = Stopwatch.StartNew();
+		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
+			await Task.Delay(10, CancellationToken);
+
+		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter}");
+		timer.IsRunning.AssertTrue("Timer should be running");
+
+		var counterBeforeCancel = counter;
+
+		// Cancel external token
+		externalCts.Cancel();
+
+		// Give time for cancellation to propagate
+		await Task.Delay(100, CancellationToken);
+
+		timer.IsRunning.AssertFalse("Timer should stop after external token is cancelled");
+
+		// Verify no more ticks after cancellation
+		await Task.Delay(150, CancellationToken);
+		counter.AssertEqual(counterBeforeCancel, $"Expected counter to stay at {counterBeforeCancel} after cancellation, but was {counter}");
+	}
+
+	[TestMethod]
+	public async Task Start_WithExternalCancellationToken_AlreadyCancelled_DoesNotStart()
+	{
+		var counter = 0;
+		using var externalCts = new CancellationTokenSource();
+		externalCts.Cancel();
+
+		using var timer = new ControllablePeriodicTimer(() =>
+		{
+			Interlocked.Increment(ref counter);
+			return Task.CompletedTask;
+		});
+
+		timer.Start(TimeSpan.FromMilliseconds(50), cancellationToken: externalCts.Token);
+
+		await Task.Delay(150, CancellationToken);
+
+		counter.AssertEqual(0, "Timer should not tick when started with already-cancelled token");
+	}
+
+	[TestMethod]
+	public async Task Start_WithoutExternalToken_WorksAsUsual()
+	{
+		var counter = 0;
+
+		using var timer = new ControllablePeriodicTimer(() =>
+		{
+			Interlocked.Increment(ref counter);
+			return Task.CompletedTask;
+		});
+
+		// Start without external token (backward compatibility)
+		timer.Start(TimeSpan.FromMilliseconds(50));
+
+		var sw = Stopwatch.StartNew();
+		while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
+			await Task.Delay(10, CancellationToken);
+
+		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter}");
+		timer.IsRunning.AssertTrue("Timer should be running");
+
+		timer.Stop();
+		timer.IsRunning.AssertFalse("Timer should stop after Stop()");
+	}
 }
 

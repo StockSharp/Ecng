@@ -79,15 +79,18 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 	/// </summary>
 	/// <param name="interval">The interval between timer executions.</param>
 	/// <param name="start">Optional delay before the first execution.</param>
+	/// <param name="cancellationToken">Optional external cancellation token to stop the timer.</param>
 	/// <returns>The ControllablePeriodicTimer instance for method chaining.</returns>
-	public ControllablePeriodicTimer Start(TimeSpan interval, TimeSpan? start = null)
+	public ControllablePeriodicTimer Start(TimeSpan interval, TimeSpan? start = null, CancellationToken cancellationToken = default)
 	{
 		using (_lock.EnterScope())
 		{
 			Stop();
 
 			_interval = interval;
-			_cts = new();
+			_cts = cancellationToken.CanBeCanceled
+				? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+				: new();
 			var cts = _cts;
 			var token = cts.Token;
 
