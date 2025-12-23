@@ -992,4 +992,61 @@ public static class NetworkHelper
 		       path.IsWebDavPath() ||
 		       path.IsHostPortAddress();
 	}
+
+	/// <summary>
+	/// Tries to parse an IP address from a proxy header value.
+	/// </summary>
+	/// <param name="headerValue">The header value (e.g., "192.168.1.1, 10.0.0.1" or "for=192.168.1.1;proto=https").</param>
+	/// <param name="ip">When this method returns, contains the parsed IP address, or <c>null</c> if parsing failed.</param>
+	/// <returns><c>true</c> if the IP address was successfully parsed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// Handles various proxy header formats:
+	/// <list type="bullet">
+	/// <item><description>Comma-separated lists (takes the first IP)</description></item>
+	/// <item><description>IPv4 with port (e.g., "192.168.1.1:8080")</description></item>
+	/// <item><description>IPv6 with brackets (e.g., "[::1]:8080")</description></item>
+	/// <item><description>Forwarded header format (e.g., "for=192.168.1.1")</description></item>
+	/// <item><description>Quoted values</description></item>
+	/// </list>
+	/// </remarks>
+	public static bool TryParseClientIpHeader(string headerValue, out IPAddress ip)
+	{
+		ip = default;
+
+		if (headerValue.IsEmpty())
+			return false;
+
+		var first = headerValue.SplitByComma().FirstOrDefault()?.Trim();
+
+		if (first.IsEmpty())
+			return false;
+
+		var semiIndex = first.IndexOf(';');
+
+		if (semiIndex >= 0)
+			first = first.Substring(0, semiIndex);
+
+		if (first.StartsWithIgnoreCase("for="))
+			first = first.Substring("for=".Length);
+
+		first = first.Trim().Trim('"');
+
+		if (first.StartsWithIgnoreCase("unknown"))
+			return false;
+
+		if (first.StartsWith("[") && first.Contains("]"))
+		{
+			var endBracket = first.IndexOf(']');
+			first = first.Substring(1, endBracket - 1);
+		}
+		else
+		{
+			var lastColon = first.LastIndexOf(':');
+
+			if (lastColon > 0 && first.Contains('.') && int.TryParse(first.Substring(lastColon + 1), out _))
+				first = first.Substring(0, lastColon);
+		}
+
+		return IPAddress.TryParse(first, out ip);
+	}
 }

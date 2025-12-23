@@ -470,4 +470,107 @@ public class NetworkHelperTests : BaseTestClass
 		"dav://server/folder".IsNetworkPath().AssertTrue();
 		"davs://server/secure/folder".IsNetworkPath().AssertTrue();
 	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_SimpleIPv4()
+	{
+		NetworkHelper.TryParseClientIpHeader("192.168.1.1", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_IPv4WithPort()
+	{
+		NetworkHelper.TryParseClientIpHeader("192.168.1.1:8080", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_SimpleIPv6()
+	{
+		NetworkHelper.TryParseClientIpHeader("::1", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("::1"));
+
+		NetworkHelper.TryParseClientIpHeader("2001:db8::1", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("2001:db8::1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_IPv6WithBracketsAndPort()
+	{
+		NetworkHelper.TryParseClientIpHeader("[::1]:8080", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("::1"));
+
+		NetworkHelper.TryParseClientIpHeader("[2001:db8::1]:443", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("2001:db8::1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_CommaSeparatedList()
+	{
+		// Should take the first IP
+		NetworkHelper.TryParseClientIpHeader("192.168.1.1, 10.0.0.1, 172.16.0.1", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+
+		NetworkHelper.TryParseClientIpHeader("  203.0.113.50  ,  70.41.3.18  ", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("203.0.113.50"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_ForwardedFormat()
+	{
+		// RFC 7239 Forwarded header format
+		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+
+		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1;proto=https", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+
+		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1;proto=https;by=10.0.0.1", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_QuotedValues()
+	{
+		NetworkHelper.TryParseClientIpHeader("\"192.168.1.1\"", out var ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+
+		NetworkHelper.TryParseClientIpHeader("for=\"192.168.1.1\"", out ip).AssertTrue();
+		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_Unknown()
+	{
+		NetworkHelper.TryParseClientIpHeader("unknown", out _).AssertFalse();
+		NetworkHelper.TryParseClientIpHeader("Unknown", out _).AssertFalse();
+		NetworkHelper.TryParseClientIpHeader("UNKNOWN", out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_EmptyOrNull()
+	{
+		NetworkHelper.TryParseClientIpHeader(null, out _).AssertFalse();
+		NetworkHelper.TryParseClientIpHeader("", out _).AssertFalse();
+		NetworkHelper.TryParseClientIpHeader("   ", out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TryParseClientIpHeader_InvalidValues()
+	{
+		NetworkHelper.TryParseClientIpHeader("not-an-ip", out _).AssertFalse();
+		NetworkHelper.TryParseClientIpHeader("999.999.999.999", out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void HttpHeaders_ClientIpHeaders_ContainsExpectedHeaders()
+	{
+		HttpHeaders.ClientIpHeaders.Length.AssertEqual(5);
+		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.CFConnectingIP).AssertTrue();
+		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.TrueClientIP).AssertTrue();
+		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.XRealIP).AssertTrue();
+		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.XForwardedFor).AssertTrue();
+		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.Forwarded).AssertTrue();
+	}
 }

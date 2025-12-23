@@ -69,4 +69,41 @@ public static class HttpHeaders
 	/// Gets the header name for WWW-Authenticate.
 	/// </summary>
 	public const string WWWAuthenticate = "WWW-Authenticate";
+
+	/// <summary>
+	/// Gets the header name for CF-Connecting-IP (Cloudflare).
+	/// </summary>
+	public const string CFConnectingIP = "CF-Connecting-IP";
+
+	/// <summary>
+	/// Gets the header name for True-Client-IP (Cloudflare/Akamai).
+	/// </summary>
+	public const string TrueClientIP = "True-Client-IP";
+
+	/// <summary>
+	/// Gets the header name for X-Real-IP (nginx).
+	/// </summary>
+	public const string XRealIP = "X-Real-IP";
+
+	/// <summary>
+	/// Gets the header name for X-Forwarded-For (standard proxy header).
+	/// </summary>
+	public const string XForwardedFor = "X-Forwarded-For";
+
+	/// <summary>
+	/// Gets the header name for Forwarded (RFC 7239).
+	/// </summary>
+	public const string Forwarded = "Forwarded";
+
+	/// <summary>
+	/// Gets the list of headers used to determine the real client IP address behind proxies.
+	/// </summary>
+	public static readonly string[] ClientIpHeaders =
+	[
+		CFConnectingIP,
+		TrueClientIP,
+		XRealIP,
+		XForwardedFor,
+		Forwarded,
+	];
 }
