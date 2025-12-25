@@ -1,43 +1,8 @@
 namespace Ecng.ComponentModel;
 
 using System;
-using System.Windows.Input;
 
 using Ecng.Common;
-
-/// <summary>
-/// Interface for commands that support CanExecute revalidation.
-/// </summary>
-public interface IRevalidatableCommand : ICommand
-{
-	/// <summary>
-	/// Invoke CanExecuteChanged event.
-	/// </summary>
-	void RaiseCanExecuteChanged();
-}
-
-/// <summary>
-/// Registry for commands that need automatic CanExecute revalidation.
-/// </summary>
-public interface ICommandRegistry
-{
-	/// <summary>
-	/// Register a command for automatic revalidation.
-	/// </summary>
-	/// <param name="command">Command to register.</param>
-	void Register(IRevalidatableCommand command);
-
-	/// <summary>
-	/// Unregister a command.
-	/// </summary>
-	/// <param name="command">Command to unregister.</param>
-	void Unregister(IRevalidatableCommand command);
-
-	/// <summary>
-	/// Raise CanExecuteChanged on all registered commands.
-	/// </summary>
-	void RevalidateAll();
-}
 
 /// <summary>
 /// Global settings for <see cref="DelegateCommand{T}"/>.
