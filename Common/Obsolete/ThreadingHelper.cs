@@ -529,62 +529,24 @@ public static class ThreadingHelper
 	/// <param name="name">The name of the Mutex.</param>
 	/// <param name="mutex">When this method returns, contains the Mutex if successful.</param>
 	/// <returns>True if the Mutex is unique and acquired; otherwise, false.</returns>
+	[Obsolete("Use Do.TryGetUniqueMutex instead.")]
 	public static bool TryGetUniqueMutex(string name, out Mutex mutex)
-	{
-		mutex = new Mutex(false, name);
-
-		try
-		{
-			if (!mutex.WaitOne(1))
-				return false;
-
-			mutex.Dispose();
-			mutex = new Mutex(true, name);
-		}
-		catch (AbandonedMutexException)
-		{
-			// http://stackoverflow.com/questions/15456986/how-to-gracefully-get-out-of-abandonedmutexexception
-			// The previous process did not release the mutex.
-			// When catching the exception, the current process becomes the owner.
-		}
-
-		return true;
-	}
-
-	private class CultureHolder : Disposable
-	{
-		private readonly CultureInfo _culture;
-
-		/// <summary>
-		/// Initializes a new instance of the CultureHolder class, capturing the current culture.
-		/// </summary>
-		public CultureHolder() => _culture = System.Threading.Thread.CurrentThread.CurrentCulture;
-
-		/// <summary>
-		/// Restores the original culture when disposed.
-		/// </summary>
-		protected override void DisposeManaged()
-		{
-			System.Threading.Thread.CurrentThread.CurrentCulture = _culture;
-			base.DisposeManaged();
-		}
-	}
+		=> Do.TryGetUniqueMutex(name, out mutex);
 
 	/// <summary>
 	/// Temporarily sets the current thread's culture to the specified culture.
 	/// </summary>
 	/// <param name="culture">The CultureInfo to be set for the current thread.</param>
 	/// <returns>An IDisposable that, when disposed, restores the original culture.</returns>
+	[Obsolete("Use Do.WithCulture instead.")]
 	public static IDisposable WithCulture(CultureInfo culture)
-	{
-		var holder = new CultureHolder();
-		System.Threading.Thread.CurrentThread.CurrentCulture = culture;
-		return holder;
-	}
+		=> Do.WithCulture(culture);
 
 	/// <summary>
 	/// Temporarily sets the current thread's culture to the invariant culture.
 	/// </summary>
 	/// <returns>An IDisposable that, when disposed, restores the original culture.</returns>
-	public static IDisposable WithInvariantCulture() => WithCulture(CultureInfo.InvariantCulture);
+	[Obsolete("Use Do.WithInvariantCulture instead.")]
+	public static IDisposable WithInvariantCulture()
+		=> Do.WithInvariantCulture();
 }

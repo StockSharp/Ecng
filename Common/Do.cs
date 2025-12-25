@@ -2,6 +2,7 @@
 
 using System;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -9,6 +10,65 @@ using System.Threading.Tasks;
 /// </summary>
 public static class Do
 {
+	private class CultureHolder : Disposable
+	{
+		private readonly CultureInfo _culture;
+
+		public CultureHolder() => _culture = Thread.CurrentThread.CurrentCulture;
+
+		protected override void DisposeManaged()
+		{
+			Thread.CurrentThread.CurrentCulture = _culture;
+			base.DisposeManaged();
+		}
+	}
+
+	/// <summary>
+	/// Temporarily sets the current thread's culture to the specified culture.
+	/// </summary>
+	/// <param name="culture">The CultureInfo to be set for the current thread.</param>
+	/// <returns>An IDisposable that, when disposed, restores the original culture.</returns>
+	public static IDisposable WithCulture(CultureInfo culture)
+	{
+		var holder = new CultureHolder();
+		Thread.CurrentThread.CurrentCulture = culture;
+		return holder;
+	}
+
+	/// <summary>
+	/// Temporarily sets the current thread's culture to the invariant culture.
+	/// </summary>
+	/// <returns>An IDisposable that, when disposed, restores the original culture.</returns>
+	public static IDisposable WithInvariantCulture() => WithCulture(CultureInfo.InvariantCulture);
+
+	/// <summary>
+	/// Tries to get a unique Mutex with the specified name.
+	/// </summary>
+	/// <param name="name">The name of the Mutex.</param>
+	/// <param name="mutex">When this method returns, contains the Mutex if successful.</param>
+	/// <returns>True if the Mutex is unique and acquired; otherwise, false.</returns>
+	public static bool TryGetUniqueMutex(string name, out Mutex mutex)
+	{
+		mutex = new Mutex(false, name);
+
+		try
+		{
+			if (!mutex.WaitOne(1))
+				return false;
+
+			mutex.Dispose();
+			mutex = new Mutex(true, name);
+		}
+		catch (AbandonedMutexException)
+		{
+			// http://stackoverflow.com/questions/15456986/how-to-gracefully-get-out-of-abandonedmutexexception
+			// The previous process did not release the mutex.
+			// When catching the exception, the current process becomes the owner.
+		}
+
+		return true;
+	}
+
 	/// <summary>
 	/// Executes the specified function under the invariant culture and returns its result.
 	/// </summary>
@@ -36,7 +96,7 @@ public static class Do
 		if (funcAsync is null)
 			throw new ArgumentNullException(nameof(funcAsync));
 
-		using (ThreadingHelper.WithInvariantCulture())
+		using (WithInvariantCulture())
 			return await funcAsync().NoWait();
 	}
 
@@ -50,7 +110,7 @@ public static class Do
 		if (actionAsync is null)
 			throw new ArgumentNullException(nameof(actionAsync));
 
-		using (ThreadingHelper.WithInvariantCulture())
+		using (WithInvariantCulture())
 			await actionAsync().NoWait();
 	}
 }

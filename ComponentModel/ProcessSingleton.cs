@@ -77,7 +77,7 @@ public static class ProcessSingleton
 				try
 				{
 					var mutexName = key.UTF8().Md5();
-					if (!ThreadingHelper.TryGetUniqueMutex(mutexName, out mutex))
+					if (!Do.TryGetUniqueMutex(mutexName, out mutex))
 						throw new InvalidOperationException($"can't acquire the mutex {mutexName}, (key={key})");
 				}
 				catch (Exception e)
