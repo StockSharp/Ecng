@@ -1,4 +1,3 @@
-#if NET7_0_OR_GREATER == false
 namespace System.IO;
 
 using System.Threading;
@@ -9,6 +8,37 @@ using System.Threading.Tasks;
 /// </summary>
 public static class TextWriterExtensions
 {
+#if NET7_0_OR_GREATER
+	/// <summary>
+	/// Writes a string to the text stream asynchronously.
+	/// </summary>
+	/// <param name="writer">The text writer.</param>
+	/// <param name="value">The string to write. If value is null, nothing is written to the text stream.</param>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous write operation.</returns>
+	public static Task WriteAsync(this TextWriter writer, string value, CancellationToken cancellationToken)
+	{
+		if (writer is null)
+			throw new ArgumentNullException(nameof(writer));
+
+		return writer.WriteAsync(value.AsMemory(), cancellationToken);
+	}
+
+	/// <summary>
+	/// Writes a string followed by a line terminator to the text stream asynchronously.
+	/// </summary>
+	/// <param name="writer">The text writer.</param>
+	/// <param name="value">The string to write. If value is null, only a line terminator is written.</param>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous write operation.</returns>
+	public static Task WriteLineAsync(this TextWriter writer, string value, CancellationToken cancellationToken)
+	{
+		if (writer is null)
+			throw new ArgumentNullException(nameof(writer));
+
+		return writer.WriteLineAsync(value.AsMemory(), cancellationToken);
+	}
+#else
 	/// <summary>
 	/// Writes a character to the text stream asynchronously.
 	/// </summary>
@@ -164,6 +194,7 @@ public static class TextWriterExtensions
 
 		return writer.WriteLineAsync(buffer, index, count);
 	}
+#endif
 
 #if NET8_0_OR_GREATER == false
 	/// <summary>
@@ -183,4 +214,3 @@ public static class TextWriterExtensions
 	}
 #endif
 }
-#endif

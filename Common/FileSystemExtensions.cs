@@ -1,6 +1,5 @@
 namespace Ecng.Common;
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -44,12 +43,7 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenRead(path);
 		using var reader = new StreamReader(stream, encoding);
 
-#if NETSTANDARD2_0
-		cancellationToken.ThrowIfCancellationRequested();
-		return await reader.ReadToEndAsync();
-#else
 		return await reader.ReadToEndAsync(cancellationToken);
-#endif
 	}
 
 	/// <summary>
@@ -84,14 +78,8 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenWrite(path);
 		using var writer = new StreamWriter(stream, encoding);
 
-#if NETSTANDARD2_0
-		cancellationToken.ThrowIfCancellationRequested();
-		await writer.WriteAsync(content);
-		await writer.FlushAsync();
-#else
-		await writer.WriteAsync(content.AsMemory(), cancellationToken);
+		await writer.WriteAsync(content, cancellationToken);
 		await writer.FlushAsync(cancellationToken);
-#endif
 	}
 
 	/// <summary>
@@ -126,14 +114,8 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenWrite(path, append: true);
 		using var writer = new StreamWriter(stream, encoding);
 
-#if NETSTANDARD2_0
-		cancellationToken.ThrowIfCancellationRequested();
-		await writer.WriteAsync(content);
-		await writer.FlushAsync();
-#else
-		await writer.WriteAsync(content.AsMemory(), cancellationToken);
+		await writer.WriteAsync(content, cancellationToken);
 		await writer.FlushAsync(cancellationToken);
-#endif
 	}
 
 	/// <summary>
@@ -164,12 +146,7 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenRead(path);
 		using var ms = new MemoryStream();
 
-#if NETSTANDARD2_0
-		cancellationToken.ThrowIfCancellationRequested();
-		await stream.CopyToAsync(ms);
-#else
 		await stream.CopyToAsync(ms, cancellationToken);
-#endif
 
 		return ms.ToArray();
 	}
@@ -198,12 +175,7 @@ public static class FileSystemExtensions
 	{
 		using var stream = fs.OpenWrite(path);
 
-#if NETSTANDARD2_0
-		cancellationToken.ThrowIfCancellationRequested();
-		await stream.WriteAsync(bytes, 0, bytes.Length);
-#else
 		await stream.WriteAsync(bytes, cancellationToken);
-#endif
 	}
 
 	/// <summary>
@@ -245,17 +217,8 @@ public static class FileSystemExtensions
 
 		var lines = new List<string>();
 
-#if NETSTANDARD2_0
-		string line;
-		while ((line = await reader.ReadLineAsync()) != null)
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			lines.Add(line);
-		}
-#else
 		while (await reader.ReadLineAsync(cancellationToken) is { } line)
 			lines.Add(line);
-#endif
 
 		return [.. lines];
 	}
@@ -294,19 +257,8 @@ public static class FileSystemExtensions
 		using var writer = new StreamWriter(stream, encoding);
 
 		foreach (var line in lines)
-		{
-#if NETSTANDARD2_0
-			cancellationToken.ThrowIfCancellationRequested();
-			await writer.WriteLineAsync(line);
-#else
-			await writer.WriteLineAsync(line.AsMemory(), cancellationToken);
-#endif
-		}
+			await writer.WriteLineAsync(line, cancellationToken);
 
-#if NETSTANDARD2_0
-		await writer.FlushAsync();
-#else
 		await writer.FlushAsync(cancellationToken);
-#endif
 	}
 }
