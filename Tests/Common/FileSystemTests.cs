@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Common;
 
+using System.Text;
+
 [TestClass]
 public class FileSystemTests : BaseTestClass
 {
@@ -450,6 +452,117 @@ public class FileSystemTests : BaseTestClass
 
 			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
 			ReadAll(fs, dest).AssertEqual("NEW");
+		});
+	}
+
+	[TestMethod]
+	public void Extensions_ReadWriteAllText()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "text.txt");
+
+			fs.WriteAllText(file, "Hello World");
+			fs.ReadAllText(file).AssertEqual("Hello World");
+		});
+	}
+
+	[TestMethod]
+	public async Task Extensions_ReadWriteAllTextAsync()
+	{
+		var fs = new MemoryFileSystem();
+		var file = "async_text.txt";
+
+		await fs.WriteAllTextAsync(file, "Async Content", cancellationToken: CancellationToken);
+		var content = await fs.ReadAllTextAsync(file, cancellationToken: CancellationToken);
+		content.AssertEqual("Async Content");
+	}
+
+	[TestMethod]
+	public void Extensions_AppendAllText()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "append.txt");
+
+			fs.WriteAllText(file, "Hello");
+			fs.AppendAllText(file, " World");
+			fs.ReadAllText(file).AssertEqual("Hello World");
+		});
+	}
+
+	[TestMethod]
+	public async Task Extensions_AppendAllTextAsync()
+	{
+		var fs = new MemoryFileSystem();
+		var file = "append_async.txt";
+
+		await fs.WriteAllTextAsync(file, "Hello", cancellationToken: CancellationToken);
+		await fs.AppendAllTextAsync(file, " World", cancellationToken: CancellationToken);
+		var content = await fs.ReadAllTextAsync(file, cancellationToken: CancellationToken);
+		content.AssertEqual("Hello World");
+	}
+
+	[TestMethod]
+	public void Extensions_ReadWriteAllBytes()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "bytes.bin");
+			var data = new byte[] { 1, 2, 3, 4, 5 };
+
+			fs.WriteAllBytes(file, data);
+			fs.ReadAllBytes(file).AssertEqual(data);
+		});
+	}
+
+	[TestMethod]
+	public async Task Extensions_ReadWriteAllBytesAsync()
+	{
+		var fs = new MemoryFileSystem();
+		var file = "bytes_async.bin";
+		var data = new byte[] { 10, 20, 30, 40, 50 };
+
+		await fs.WriteAllBytesAsync(file, data, CancellationToken);
+		var result = await fs.ReadAllBytesAsync(file, CancellationToken);
+		result.AssertEqual(data);
+	}
+
+	[TestMethod]
+	public void Extensions_ReadWriteAllLines()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "lines.txt");
+			var lines = new[] { "Line 1", "Line 2", "Line 3" };
+
+			fs.WriteAllLines(file, lines);
+			fs.ReadAllLines(file).AssertEqual(lines);
+		});
+	}
+
+	[TestMethod]
+	public async Task Extensions_ReadWriteAllLinesAsync()
+	{
+		var fs = new MemoryFileSystem();
+		var file = "lines_async.txt";
+		var lines = new[] { "Async Line 1", "Async Line 2" };
+
+		await fs.WriteAllLinesAsync(file, lines, cancellationToken: CancellationToken);
+		var result = await fs.ReadAllLinesAsync(file, cancellationToken: CancellationToken);
+		result.AssertEqual(lines);
+	}
+
+	[TestMethod]
+	public void Extensions_ReadWriteAllText_WithEncoding()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "unicode.txt");
+			var text = "Привет мир! 你好世界";
+
+			fs.WriteAllText(file, text, Encoding.UTF8);
+			fs.ReadAllText(file, Encoding.UTF8).AssertEqual(text);
 		});
 	}
 }
