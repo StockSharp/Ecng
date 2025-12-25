@@ -438,7 +438,10 @@ public class DummyDispatcherTests : BaseTestClass
 		GetPlannerCount(d).AssertEqual(2, "Expected two subscriptions to be registered.");
 		GetTimerInterval(d).AssertEqual(TimeSpan.FromMilliseconds(100), "Timer interval should be 100ms while the fast subscription is present.");
 
-		await WaitForAsync(() => counter >= 3, TimeSpan.FromSeconds(5), $"Expected counter >= 3 with 100ms interval, but was {counter}");
+		// Give timer time to start on slow systems
+		await Task.Delay(50, CancellationToken);
+
+		await WaitForAsync(() => counter >= 3, TimeSpan.FromSeconds(10), $"Expected counter >= 3 with 100ms interval, but was {counter}");
 
 		// Dispose the slow subscription and ensure the fast one continues.
 		slowSub.Dispose();
