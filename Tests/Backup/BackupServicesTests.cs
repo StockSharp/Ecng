@@ -211,9 +211,12 @@ public class BackupServicesTests : BaseTestClass
 
 			using var api = new YandexDisk.Client.Http.DiskHttpApi(token);
 
+			// Give Yandex API time to propagate the publish status
+			await Task.Delay(2000, CancellationToken);
+
 			var published = false;
 
-			for (var i = 0; i < 120; i++)
+			for (var i = 0; i < 180; i++)
 			{
 				YandexDisk.Client.Protocol.Resource info;
 
@@ -241,9 +244,12 @@ public class BackupServicesTests : BaseTestClass
 
 			await svc.UnPublishAsync(entry, CancellationToken);
 
+			// Give Yandex API time to propagate the unpublish status
+			await Task.Delay(2000, CancellationToken);
+
 			var unpublished = false;
 
-			for (var i = 0; i < 120; i++)
+			for (var i = 0; i < 180; i++)
 			{
 				YandexDisk.Client.Protocol.Resource info;
 
