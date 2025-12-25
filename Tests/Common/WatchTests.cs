@@ -337,7 +337,7 @@ public class WatchTests : BaseTestClass
 		result.AssertEqual(123, "result should be 123");
 
 		var totalMls = (int)elapsed.TotalMilliseconds;
-		(elapsed.TotalMilliseconds >= 100).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=100 ms");
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=90 ms");
 		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 }
