@@ -3,6 +3,8 @@ namespace Ecng.ComponentModel;
 using System;
 using System.Windows.Input;
 
+using Ecng.Common;
+
 /// <summary>
 /// Interface for commands that support CanExecute revalidation.
 /// </summary>
@@ -53,7 +55,7 @@ public static class DelegateCommandSettings
 /// Delegate command capable of taking argument.
 /// </summary>
 /// <typeparam name="T">The argument type.</typeparam>
-public class DelegateCommand<T> : IRevalidatableCommand
+public class DelegateCommand<T> : Disposable, IRevalidatableCommand
 {
 	private readonly Action<T> _execute;
 	private readonly Func<T, bool> _canExecute;
@@ -70,6 +72,13 @@ public class DelegateCommand<T> : IRevalidatableCommand
 
 		if (_canExecute != null)
 			DelegateCommandSettings.Registry?.Register(this);
+	}
+
+	/// <inheritdoc />
+	protected override void DisposeManaged()
+	{
+		DelegateCommandSettings.Registry?.Unregister(this);
+		base.DisposeManaged();
 	}
 
 	/// <inheritdoc />
