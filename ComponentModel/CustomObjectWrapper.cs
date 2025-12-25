@@ -8,9 +8,13 @@ using System.Linq;
 using Ecng.Common;
 
 /// <summary>
-/// Create instance.
+/// Abstract base class that wraps an object and exposes its properties and events
+/// through <see cref="ICustomTypeDescriptor"/> interface. Wrapped properties are read-only
+/// and can be displayed in PropertyGrid or similar controls. The wrapper also implements
+/// <see cref="INotifyPropertyChanged"/> to support data binding scenarios.
 /// </summary>
-/// <param name="obj">Parent chart element or indicator.</param>
+/// <typeparam name="T">The type of the wrapped object.</typeparam>
+/// <param name="obj">The object to wrap.</param>
 public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropertyChanged, ICustomTypeDescriptor where T : class
 {
 	/// <inheritdoc />
@@ -23,11 +27,11 @@ public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropert
 	protected virtual void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
 	/// <summary>
-	/// Specialization of <see cref="PropertyDescriptor"/>.
+	/// Read-only property descriptor that proxies access to the wrapped object's property.
+	/// SetValue and ResetValue operations throw <see cref="NotSupportedException"/>.
 	/// </summary>
-	/// <remarks>
-	/// Create instance.
-	/// </remarks>
+	/// <param name="orig">The original property descriptor from the wrapped object.</param>
+	/// <param name="owner">The wrapper instance that owns this descriptor.</param>
 	protected class ProxyPropDescriptor(PropertyDescriptor orig, object owner) : NamedPropertyDescriptor(orig)
 	{
 		private readonly PropertyDescriptor _orig = orig;
@@ -59,11 +63,10 @@ public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropert
 	}
 
 	/// <summary>
-	/// Specialization of <see cref="EventDescriptor"/>.
+	/// Event descriptor that proxies access to the wrapped object's event.
 	/// </summary>
-	/// <remarks>
-	/// Create instance.
-	/// </remarks>
+	/// <param name="orig">The original event descriptor from the wrapped object.</param>
+	/// <param name="owner">The wrapper instance that owns this descriptor.</param>
 	protected class ProxyEventDescriptor(EventDescriptor orig, object owner) : EventDescriptor(orig)
 	{
 		private readonly EventDescriptor _orig = orig;
@@ -112,8 +115,9 @@ public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropert
 	PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[] attributes) => ((ICustomTypeDescriptor)this).GetProperties();
 
 	/// <summary>
-	/// Get property list from wrapped object.
+	/// Gets the event descriptors from the wrapped object.
 	/// </summary>
+	/// <returns>Collection of proxy event descriptors.</returns>
 	protected virtual IEnumerable<EventDescriptor> OnGetEvents()
 	{
 		return Obj is null
@@ -124,8 +128,9 @@ public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropert
 	}
 
 	/// <summary>
-	/// Get property list from wrapped object.
+	/// Gets the property descriptors from the wrapped object.
 	/// </summary>
+	/// <returns>Collection of read-only proxy property descriptors.</returns>
 	protected virtual IEnumerable<PropertyDescriptor> OnGetProperties()
 	{
 		return Obj is null
