@@ -5,6 +5,8 @@ using Ecng.ComponentModel;
 [TestClass]
 public class DelegateCommandTests : BaseTestClass
 {
+	private static readonly object _registryLock = new();
+
 	[TestMethod]
 	public void Execute_InvokesAction()
 	{
@@ -108,5 +110,128 @@ public class DelegateCommandTests : BaseTestClass
 		cmd.Execute("hello");
 
 		received.AssertEqual("hello");
+	}
+
+	[TestMethod]
+	public void Command_WithCanExecute_RegistersInRegistry()
+	{
+		lock (_registryLock)
+		{
+			var registry = new TestCommandRegistry();
+			var oldRegistry = DelegateCommandSettings.Registry;
+
+			try
+			{
+				DelegateCommandSettings.Registry = registry;
+
+				var cmd = new DelegateCommand<int>(_ => { }, _ => true);
+
+				registry.RegisteredCommands.Count.AssertEqual(1);
+				registry.RegisteredCommands[0].AssertSame(cmd);
+			}
+			finally
+			{
+				DelegateCommandSettings.Registry = oldRegistry;
+			}
+		}
+	}
+
+	[TestMethod]
+	public void Command_WithoutCanExecute_DoesNotRegister()
+	{
+		lock (_registryLock)
+		{
+			var registry = new TestCommandRegistry();
+			var oldRegistry = DelegateCommandSettings.Registry;
+
+			try
+			{
+				DelegateCommandSettings.Registry = registry;
+
+				var cmd = new DelegateCommand<int>(_ => { });
+
+				registry.RegisteredCommands.Count.AssertEqual(0);
+			}
+			finally
+			{
+				DelegateCommandSettings.Registry = oldRegistry;
+			}
+		}
+	}
+
+	[TestMethod]
+	public void Command_Dispose_UnregistersFromRegistry()
+	{
+		lock (_registryLock)
+		{
+			var registry = new TestCommandRegistry();
+			var oldRegistry = DelegateCommandSettings.Registry;
+
+			try
+			{
+				DelegateCommandSettings.Registry = registry;
+
+				var cmd = new DelegateCommand<int>(_ => { }, _ => true);
+				registry.RegisteredCommands.Count.AssertEqual(1);
+
+				cmd.Dispose();
+
+				registry.UnregisteredCommands.Count.AssertEqual(1);
+				registry.UnregisteredCommands[0].AssertSame(cmd);
+			}
+			finally
+			{
+				DelegateCommandSettings.Registry = oldRegistry;
+			}
+		}
+	}
+
+	[TestMethod]
+	public void Registry_RevalidateAll_RaisesCanExecuteChanged()
+	{
+		lock (_registryLock)
+		{
+			var registry = new TestCommandRegistry();
+			var oldRegistry = DelegateCommandSettings.Registry;
+
+			try
+			{
+				DelegateCommandSettings.Registry = registry;
+
+				var cmd1 = new DelegateCommand<int>(_ => { }, _ => true);
+				var cmd2 = new DelegateCommand<int>(_ => { }, _ => true);
+
+				var raised1 = false;
+				var raised2 = false;
+
+				cmd1.CanExecuteChanged += (s, e) => raised1 = true;
+				cmd2.CanExecuteChanged += (s, e) => raised2 = true;
+
+				registry.RevalidateAll();
+
+				raised1.AssertTrue();
+				raised2.AssertTrue();
+			}
+			finally
+			{
+				DelegateCommandSettings.Registry = oldRegistry;
+			}
+		}
+	}
+
+	private class TestCommandRegistry : ICommandRegistry
+	{
+		public List<IRevalidatableCommand> RegisteredCommands { get; } = [];
+		public List<IRevalidatableCommand> UnregisteredCommands { get; } = [];
+
+		public void Register(IRevalidatableCommand command) => RegisteredCommands.Add(command);
+
+		public void Unregister(IRevalidatableCommand command) => UnregisteredCommands.Add(command);
+
+		public void RevalidateAll()
+		{
+			foreach (var cmd in RegisteredCommands)
+				cmd.RaiseCanExecuteChanged();
+		}
 	}
 }
