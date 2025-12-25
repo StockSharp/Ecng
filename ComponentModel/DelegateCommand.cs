@@ -4,10 +4,56 @@ using System;
 using System.Windows.Input;
 
 /// <summary>
+/// Interface for commands that support CanExecute revalidation.
+/// </summary>
+public interface IRevalidatableCommand : ICommand
+{
+	/// <summary>
+	/// Invoke CanExecuteChanged event.
+	/// </summary>
+	void RaiseCanExecuteChanged();
+}
+
+/// <summary>
+/// Registry for commands that need automatic CanExecute revalidation.
+/// </summary>
+public interface ICommandRegistry
+{
+	/// <summary>
+	/// Register a command for automatic revalidation.
+	/// </summary>
+	/// <param name="command">Command to register.</param>
+	void Register(IRevalidatableCommand command);
+
+	/// <summary>
+	/// Unregister a command.
+	/// </summary>
+	/// <param name="command">Command to unregister.</param>
+	void Unregister(IRevalidatableCommand command);
+
+	/// <summary>
+	/// Raise CanExecuteChanged on all registered commands.
+	/// </summary>
+	void RevalidateAll();
+}
+
+/// <summary>
+/// Global settings for <see cref="DelegateCommand{T}"/>.
+/// </summary>
+public static class DelegateCommandSettings
+{
+	/// <summary>
+	/// Global command registry for automatic CanExecute revalidation.
+	/// Set this to a WPF-specific implementation that hooks into CommandManager.RequerySuggested.
+	/// </summary>
+	public static ICommandRegistry Registry { get; set; }
+}
+
+/// <summary>
 /// Delegate command capable of taking argument.
 /// </summary>
 /// <typeparam name="T">The argument type.</typeparam>
-public class DelegateCommand<T> : ICommand
+public class DelegateCommand<T> : IRevalidatableCommand
 {
 	private readonly Action<T> _execute;
 	private readonly Func<T, bool> _canExecute;
@@ -21,6 +67,9 @@ public class DelegateCommand<T> : ICommand
 	{
 		_execute = execute ?? throw new ArgumentNullException(nameof(execute));
 		_canExecute = canExecute;
+
+		if (_canExecute != null)
+			DelegateCommandSettings.Registry?.Register(this);
 	}
 
 	/// <inheritdoc />
@@ -32,9 +81,7 @@ public class DelegateCommand<T> : ICommand
 	/// <inheritdoc />
 	public event EventHandler CanExecuteChanged;
 
-	/// <summary>
-	/// Invoke <see cref="CanExecuteChanged"/> event.
-	/// </summary>
+	/// <inheritdoc />
 	public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
 
