@@ -5,7 +5,7 @@ using Ecng.ComponentModel;
 [TestClass]
 public class DelegateCommandTests : BaseTestClass
 {
-	private static readonly object _registryLock = new();
+	private static readonly Lock _registryLock = new();
 
 	[TestMethod]
 	public void Execute_InvokesAction()
@@ -115,7 +115,7 @@ public class DelegateCommandTests : BaseTestClass
 	[TestMethod]
 	public void Command_WithCanExecute_RegistersInRegistry()
 	{
-		lock (_registryLock)
+		using (_registryLock.EnterScope())
 		{
 			var registry = new TestCommandRegistry();
 			var oldRegistry = DelegateCommandSettings.Registry;
@@ -139,7 +139,7 @@ public class DelegateCommandTests : BaseTestClass
 	[TestMethod]
 	public void Command_WithoutCanExecute_DoesNotRegister()
 	{
-		lock (_registryLock)
+		using (_registryLock.EnterScope())
 		{
 			var registry = new TestCommandRegistry();
 			var oldRegistry = DelegateCommandSettings.Registry;
@@ -162,7 +162,7 @@ public class DelegateCommandTests : BaseTestClass
 	[TestMethod]
 	public void Command_Dispose_UnregistersFromRegistry()
 	{
-		lock (_registryLock)
+		using (_registryLock.EnterScope())
 		{
 			var registry = new TestCommandRegistry();
 			var oldRegistry = DelegateCommandSettings.Registry;
@@ -189,7 +189,7 @@ public class DelegateCommandTests : BaseTestClass
 	[TestMethod]
 	public void Registry_RevalidateAll_RaisesCanExecuteChanged()
 	{
-		lock (_registryLock)
+		using (_registryLock.EnterScope())
 		{
 			var registry = new TestCommandRegistry();
 			var oldRegistry = DelegateCommandSettings.Registry;
