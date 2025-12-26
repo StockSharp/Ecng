@@ -100,22 +100,47 @@ public class MemoryFileSystem : IFileSystem
 	}
 
 	/// <inheritdoc />
-	public Stream OpenRead(string path)
+	public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite)
 	{
 		using (_lock.EnterScope())
 		{
-			var node = GetNode(path) ?? throw new FileNotFoundException(path);
-			if (node.IsDirectory)
-				throw new UnauthorizedAccessException("Cannot open directory for reading.");
-			return new MemoryStream(node.Data ?? [], false);
-		}
-	}
+			var exists = FileExists(path);
 
-	/// <inheritdoc />
-	public Stream OpenWrite(string path, bool append = false)
-	{
-		using (_lock.EnterScope())
-		{
+			switch (mode)
+			{
+				case FileMode.CreateNew:
+					if (exists)
+						throw new IOException("File already exists.");
+					break;
+				case FileMode.Create:
+					break;
+				case FileMode.Open:
+					if (!exists)
+						throw new FileNotFoundException(path);
+					break;
+				case FileMode.OpenOrCreate:
+					break;
+				case FileMode.Truncate:
+					if (!exists)
+						throw new FileNotFoundException(path);
+					break;
+				case FileMode.Append:
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(mode));
+			}
+
+			if (access == FileAccess.Read)
+			{
+				var node = GetNode(path) ?? throw new FileNotFoundException(path);
+				if (node.IsDirectory)
+					throw new UnauthorizedAccessException("Cannot open directory for reading.");
+				return new MemoryStream(node.Data ?? [], false);
+			}
+
+			var append = mode == FileMode.Append;
+			var truncate = mode is FileMode.Create or FileMode.CreateNew or FileMode.Truncate;
+
 			var dir = Traverse(path, createDirs: true, forFile: true, out var fileName);
 			if (!dir.IsDirectory)
 				throw new IOException("Path's parent is not a directory.");
@@ -128,10 +153,12 @@ public class MemoryFileSystem : IFileSystem
 			if (fileNode.IsDirectory)
 				throw new IOException("Path points to a directory.");
 
-			var baseData = append && fileNode.Data != null ? fileNode.Data : [];
+			var baseData = truncate ? [] : (fileNode.Data ?? []);
 			var ms = new MemoryStream();
 			if (baseData.Length > 0)
 				ms.Write(baseData, 0, baseData.Length);
+			if (append)
+				ms.Seek(0, SeekOrigin.End);
 			return new CommittingStream(ms, bytes =>
 			{
 				fileNode.Data = bytes;
@@ -239,8 +266,8 @@ public class MemoryFileSystem : IFileSystem
 			if (overwrite && FileExists(destFileName))
 				DeleteFile(destFileName);
 
-			using (var src = OpenRead(sourceFileName))
-			using (var dst = OpenWrite(destFileName, append: false))
+			using (var src = this.OpenRead(sourceFileName))
+			using (var dst = this.OpenWrite(destFileName, append: false))
 			{
 				src.CopyTo(dst);
 			}
@@ -305,8 +332,8 @@ public class MemoryFileSystem : IFileSystem
 			if (overwrite && FileExists(destFileName))
 				DeleteFile(destFileName);
 
-			using var src = OpenRead(sourceFileName);
-			using var dst = OpenWrite(destFileName, append: false);
+			using var src = this.OpenRead(sourceFileName);
+			using var dst = this.OpenWrite(destFileName, append: false);
 			src.CopyTo(dst);
 		}
 	}

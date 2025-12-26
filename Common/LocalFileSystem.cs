@@ -15,18 +15,8 @@ public class LocalFileSystem : IFileSystem
 	public bool DirectoryExists(string path) => Directory.Exists(path);
 
 	/// <inheritdoc />
-	public Stream OpenRead(string path) => File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-	/// <inheritdoc />
-	public Stream OpenWrite(string path, bool append = false)
-	{
-		var dir = Path.GetDirectoryName(path);
-
-		if (!dir.IsEmpty() && !Directory.Exists(dir))
-			Directory.CreateDirectory(dir);
-
-		return File.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None);
-	}
+	public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite)
+		=> File.Open(path, mode, access, access == FileAccess.Read ? FileShare.Read : FileShare.None);
 
 	/// <inheritdoc />
 	public void CreateDirectory(string path) => Directory.CreateDirectory(path);

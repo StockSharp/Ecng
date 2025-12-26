@@ -25,20 +25,13 @@ public interface IFileSystem
 	bool DirectoryExists(string path);
 
 	/// <summary>
-	/// Opens a readable stream for the file at the specified path.
+	/// Opens a stream for the file with specified mode and access.
 	/// </summary>
 	/// <param name="path">Path to the file.</param>
-	/// <returns>A read-only stream.</returns>
-	Stream OpenRead(string path);
-
-	/// <summary>
-	/// Opens a writable stream for the file at the specified path.
-	/// Creates the parent directory if it does not exist.
-	/// </summary>
-	/// <param name="path">Path to the file.</param>
-	/// <param name="append">If true, appends to the file; otherwise overwrites.</param>
-	/// <returns>A write-capable stream.</returns>
-	Stream OpenWrite(string path, bool append = false);
+	/// <param name="mode">File open mode.</param>
+	/// <param name="access">File access type.</param>
+	/// <returns>A stream with the specified access.</returns>
+	Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite);
 
 	/// <summary>
 	/// Creates a directory including all missing intermediate directories.

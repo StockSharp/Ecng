@@ -12,6 +12,25 @@ using System.Threading.Tasks;
 public static class FileSystemExtensions
 {
 	/// <summary>
+	/// Opens a readable stream for the file at the specified path.
+	/// </summary>
+	/// <param name="fs">File system.</param>
+	/// <param name="path">Path to the file.</param>
+	/// <returns>A read-only stream.</returns>
+	public static Stream OpenRead(this IFileSystem fs, string path)
+		=> fs.Open(path, FileMode.Open, FileAccess.Read);
+
+	/// <summary>
+	/// Opens a writable stream for the file at the specified path.
+	/// </summary>
+	/// <param name="fs">File system.</param>
+	/// <param name="path">Path to the file.</param>
+	/// <param name="append">If true, appends to the file; otherwise overwrites.</param>
+	/// <returns>A write-capable stream.</returns>
+	public static Stream OpenWrite(this IFileSystem fs, string path, bool append = false)
+		=> fs.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write);
+
+	/// <summary>
 	/// Reads all text from a file.
 	/// </summary>
 	/// <param name="fs">File system.</param>
