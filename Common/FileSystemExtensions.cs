@@ -18,7 +18,7 @@ public static class FileSystemExtensions
 	/// <param name="path">Path to the file.</param>
 	/// <returns>A read-only stream.</returns>
 	public static Stream OpenRead(this IFileSystem fs, string path)
-		=> fs.Open(path, FileMode.Open, FileAccess.Read);
+		=> fs.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
 	/// <summary>
 	/// Opens a writable stream for the file at the specified path.
@@ -28,7 +28,7 @@ public static class FileSystemExtensions
 	/// <param name="append">If true, appends to the file; otherwise overwrites.</param>
 	/// <returns>A write-capable stream.</returns>
 	public static Stream OpenWrite(this IFileSystem fs, string path, bool append = false)
-		=> fs.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write);
+		=> fs.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None);
 
 	/// <summary>
 	/// Reads all text from a file.

@@ -1055,7 +1055,7 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		public bool FileExists(string path) => inner.FileExists(path);
 		public bool DirectoryExists(string path) => inner.DirectoryExists(path);
-		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite) => inner.Open(path, mode, access);
+		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None) => inner.Open(path, mode, access, share);
 		public void CreateDirectory(string path) => inner.CreateDirectory(path);
 		public void DeleteDirectory(string path, bool recursive = false) => inner.DeleteDirectory(path, recursive);
 		public void DeleteFile(string path) => inner.DeleteFile(path);

@@ -30,8 +30,9 @@ public interface IFileSystem
 	/// <param name="path">Path to the file.</param>
 	/// <param name="mode">File open mode.</param>
 	/// <param name="access">File access type.</param>
+	/// <param name="share">File sharing mode.</param>
 	/// <returns>A stream with the specified access.</returns>
-	Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite);
+	Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None);
 
 	/// <summary>
 	/// Creates a directory including all missing intermediate directories.

@@ -100,8 +100,9 @@ public class MemoryFileSystem : IFileSystem
 	}
 
 	/// <inheritdoc />
-	public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite)
+	public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None)
 	{
+		// Note: FileShare is accepted for API compatibility but not enforced in memory implementation
 		using (_lock.EnterScope())
 		{
 			var exists = FileExists(path);

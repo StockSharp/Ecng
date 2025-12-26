@@ -727,4 +727,49 @@ public class FileSystemTests : BaseTestClass
 			Throws<ArgumentException>(() => fs.Open(file, FileMode.Append, FileAccess.Read));
 		});
 	}
+
+	[TestMethod]
+	public void Open_ShareNone_BlocksSecondOpen_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			// Second open should throw because first has exclusive access
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None));
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareRead_AllowsMultipleReaders_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using var stream2 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			// Both streams should be readable
+			stream1.CanRead.AssertTrue();
+			stream2.CanRead.AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareReadWrite_AllowsReadAndWrite_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+			reader.CanRead.AssertTrue();
+			writer.CanWrite.AssertTrue();
+		});
+	}
 }
