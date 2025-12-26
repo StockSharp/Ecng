@@ -775,6 +775,10 @@ public class FileSystemTests : BaseTestClass
 	[TestMethod]
 	public void Open_ShareNone_BlocksSecondOpen_Local()
 	{
+		// FileShare locking is Windows-specific (Linux uses advisory locking)
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		WithLocalFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
@@ -865,6 +869,10 @@ public class FileSystemTests : BaseTestClass
 	[TestMethod]
 	public void Open_ShareRead_BlocksWriter_Local()
 	{
+		// FileShare locking is Windows-specific (Linux uses advisory locking)
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		WithLocalFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
@@ -893,6 +901,10 @@ public class FileSystemTests : BaseTestClass
 	[TestMethod]
 	public void Open_ShareWrite_BlocksReader_Local()
 	{
+		// FileShare locking is Windows-specific (Linux uses advisory locking)
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		WithLocalFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
@@ -921,6 +933,10 @@ public class FileSystemTests : BaseTestClass
 	[TestMethod]
 	public void DeleteFile_WhileOpen_Throws_Local()
 	{
+		// FileShare locking is Windows-specific (Linux allows deleting open files)
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		WithLocalFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
@@ -947,6 +963,10 @@ public class FileSystemTests : BaseTestClass
 	[TestMethod]
 	public void MoveFile_WhileOpen_Throws_Local()
 	{
+		// FileShare locking is Windows-specific (Linux allows moving open files)
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		WithLocalFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
