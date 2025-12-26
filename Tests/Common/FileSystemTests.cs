@@ -647,6 +647,32 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Open_ExistingFile_PositionAtStart_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+			stream.Position.AssertEqual(0L);
+		});
+	}
+
+	[TestMethod]
+	public void Open_ExistingFile_PositionAtStart_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+			stream.Position.AssertEqual(0L);
+		});
+	}
+
+	[TestMethod]
 	public void Open_ReadWriteAccess_CanDoAll_Local()
 	{
 		WithLocalFs((fs, root) =>

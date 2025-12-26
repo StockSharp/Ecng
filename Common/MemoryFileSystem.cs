@@ -232,6 +232,8 @@ public class MemoryFileSystem : IFileSystem
 			var appendStart = append ? ms.Length : -1L;
 			if (append)
 				ms.Seek(0, SeekOrigin.End);
+			else
+				ms.Seek(0, SeekOrigin.Begin);
 
 			return new CommittingStream(ms, bytes =>
 			{
