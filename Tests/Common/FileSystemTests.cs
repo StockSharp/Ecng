@@ -787,9 +787,39 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Open_ShareNone_BlocksSecondOpen_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			// Second open should throw because first has exclusive access
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None));
+		});
+	}
+
+	[TestMethod]
 	public void Open_ShareRead_AllowsMultipleReaders_Local()
 	{
 		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using var stream2 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			// Both streams should be readable
+			stream1.CanRead.AssertTrue();
+			stream2.CanRead.AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareRead_AllowsMultipleReaders_Memory()
+	{
+		WithMemoryFs((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -814,6 +844,355 @@ public class FileSystemTests : BaseTestClass
 			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
 			reader.CanRead.AssertTrue();
 			writer.CanWrite.AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareReadWrite_AllowsReadAndWrite_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+			reader.CanRead.AssertTrue();
+			writer.CanWrite.AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareRead_BlocksWriter_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			// Writer should be blocked because only Read sharing is allowed
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Read));
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareRead_BlocksWriter_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+			// Writer should be blocked because only Read sharing is allowed
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Read));
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareWrite_BlocksReader_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Write);
+			// Reader should be blocked because only Write sharing is allowed
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Write));
+		});
+	}
+
+	[TestMethod]
+	public void Open_ShareWrite_BlocksReader_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Write);
+			// Reader should be blocked because only Write sharing is allowed
+			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Write));
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WhileOpen_Throws_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			Throws<IOException>(() => fs.DeleteFile(file));
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WhileOpen_Throws_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			Throws<IOException>(() => fs.DeleteFile(file));
+		});
+	}
+
+	[TestMethod]
+	public void MoveFile_WhileOpen_Throws_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			var dest = Path.Combine(root, "moved.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			Throws<IOException>(() => fs.MoveFile(file, dest));
+		});
+	}
+
+	[TestMethod]
+	public void MoveFile_WhileOpen_Throws_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			var dest = Path.Combine(root, "moved.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
+			Throws<IOException>(() => fs.MoveFile(file, dest));
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_Succeeds_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_Succeeds_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// File should not exist
+			fs.FileExists(file).AssertFalse();
+
+			// New open should fail
+			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Open, FileAccess.Read));
+
+			// But existing stream should still be readable
+			var buffer = new byte[7];
+			stream.Read(buffer, 0, 7);
+			Encoding.UTF8.GetString(buffer).AssertEqual("content");
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// File should not exist
+			fs.FileExists(file).AssertFalse();
+
+			// New open should fail
+			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Open, FileAccess.Read));
+
+			// But existing stream should still be readable
+			var buffer = new byte[7];
+			stream.Read(buffer, 0, 7);
+			Encoding.UTF8.GetString(buffer).AssertEqual("content");
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// Should be able to create a new file with the same name
+			WriteAll(fs, file, "new content");
+			fs.FileExists(file).AssertTrue();
+
+			// Old stream still reads original data
+			var buffer = new byte[8];
+			stream.Read(buffer, 0, 8);
+			Encoding.UTF8.GetString(buffer).AssertEqual("original");
+
+			// New open reads new content
+			fs.ReadAllText(file).AssertEqual("new content");
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// Should be able to create a new file with the same name
+			WriteAll(fs, file, "new content");
+			fs.FileExists(file).AssertTrue();
+
+			// Old stream still reads original data
+			var buffer = new byte[8];
+			stream.Read(buffer, 0, 8);
+			Encoding.UTF8.GetString(buffer).AssertEqual("original");
+
+			// New open reads new content
+			fs.ReadAllText(file).AssertEqual("new content");
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_WriteStillWorks_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// File should not exist
+			fs.FileExists(file).AssertFalse();
+
+			// Write to deleted file still works
+			stream.Seek(0, SeekOrigin.End);
+			var extra = " extra"u8.ToArray();
+			stream.Write(extra, 0, extra.Length);
+
+			// Can read back what we wrote
+			stream.Seek(0, SeekOrigin.Begin);
+			var buffer = new byte[14];
+			stream.Read(buffer, 0, 14);
+			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
+
+			// But file is still gone
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_WriteStillWorks_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete);
+			fs.DeleteFile(file);
+
+			// File should not exist
+			fs.FileExists(file).AssertFalse();
+
+			// Write to deleted file still works
+			stream.Seek(0, SeekOrigin.End);
+			var extra = " extra"u8.ToArray();
+			stream.Write(extra, 0, extra.Length);
+
+			// Can read back what we wrote
+			stream.Seek(0, SeekOrigin.Begin);
+			var buffer = new byte[14];
+			stream.Read(buffer, 0, 14);
+			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
+
+			// But file is still gone
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_DataLostAfterClose_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using (var stream = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Delete))
+			{
+				fs.DeleteFile(file);
+				stream.Write("modified"u8.ToArray(), 0, 8);
+			}
+
+			// After close, file is gone and data is lost
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_WithShareDelete_DataLostAfterClose_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "original");
+
+			using (var stream = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Delete))
+			{
+				fs.DeleteFile(file);
+				stream.Write("modified"u8.ToArray(), 0, 8);
+			}
+
+			// After close, file is gone and data is lost
+			fs.FileExists(file).AssertFalse();
 		});
 	}
 }

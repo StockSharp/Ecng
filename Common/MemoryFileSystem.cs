@@ -21,10 +21,54 @@ public class MemoryFileSystem : IFileSystem
 		public DateTime CreatedUtc;
 		public DateTime UpdatedUtc;
 		public long Length => Data?.LongLength ?? 0L;
+		public List<FileHandle> OpenHandles; // tracks open file handles for FileShare enforcement
+	}
+
+	private class FileHandle
+	{
+		public FileAccess Access;
+		public FileShare Share;
 	}
 
 	private readonly Node _root = new() { IsDirectory = true, Children = new(StringComparer.OrdinalIgnoreCase), CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
 	private readonly Lock _lock = new();
+
+	private static bool CanOpenWithExistingHandles(Node node, FileAccess newAccess, FileShare newShare)
+	{
+		if (node.OpenHandles == null || node.OpenHandles.Count == 0)
+			return true;
+
+		foreach (var existing in node.OpenHandles)
+		{
+			// Check if existing handle allows the new access
+			if (newAccess.HasFlag(FileAccess.Read) && !existing.Share.HasFlag(FileShare.Read))
+				return false;
+			if (newAccess.HasFlag(FileAccess.Write) && !existing.Share.HasFlag(FileShare.Write))
+				return false;
+
+			// Check if new handle allows the existing access
+			if (existing.Access.HasFlag(FileAccess.Read) && !newShare.HasFlag(FileShare.Read))
+				return false;
+			if (existing.Access.HasFlag(FileAccess.Write) && !newShare.HasFlag(FileShare.Write))
+				return false;
+		}
+
+		return true;
+	}
+
+	private static bool CanDeleteWithExistingHandles(Node node)
+	{
+		if (node.OpenHandles == null || node.OpenHandles.Count == 0)
+			return true;
+
+		foreach (var existing in node.OpenHandles)
+		{
+			if (!existing.Share.HasFlag(FileShare.Delete))
+				return false;
+		}
+
+		return true;
+	}
 
 	private static string[] Split(string path)
 	{
@@ -102,7 +146,6 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None)
 	{
-		// Note: FileShare is accepted for API compatibility but not enforced in memory implementation
 		using (_lock.EnterScope())
 		{
 			var exists = FileExists(path);
@@ -138,7 +181,23 @@ public class MemoryFileSystem : IFileSystem
 				var node = GetNode(path) ?? throw new FileNotFoundException(path);
 				if (node.IsDirectory)
 					throw new UnauthorizedAccessException("Cannot open directory for reading.");
-				return new MemoryStream(node.Data ?? [], false);
+
+				// Check FileShare compatibility
+				if (!CanOpenWithExistingHandles(node, access, share))
+					throw new IOException("The process cannot access the file because it is being used by another process.");
+
+				// Register handle and return read-only stream
+				var handle = new FileHandle { Access = access, Share = share };
+				node.OpenHandles ??= [];
+				node.OpenHandles.Add(handle);
+
+				return new ReadOnlyHandleStream(new MemoryStream(node.Data ?? [], false), () =>
+				{
+					using (_lock.EnterScope())
+					{
+						node.OpenHandles?.Remove(handle);
+					}
+				});
 			}
 
 			var append = mode == FileMode.Append;
@@ -156,6 +215,15 @@ public class MemoryFileSystem : IFileSystem
 			if (fileNode.IsDirectory)
 				throw new IOException("Path points to a directory.");
 
+			// Check FileShare compatibility
+			if (!CanOpenWithExistingHandles(fileNode, access, share))
+				throw new IOException("The process cannot access the file because it is being used by another process.");
+
+			// Register handle
+			var writeHandle = new FileHandle { Access = access, Share = share };
+			fileNode.OpenHandles ??= [];
+			fileNode.OpenHandles.Add(writeHandle);
+
 			var baseData = truncate ? [] : (fileNode.Data ?? []);
 			var ms = new MemoryStream();
 			if (baseData.Length > 0)
@@ -169,11 +237,44 @@ public class MemoryFileSystem : IFileSystem
 			{
 				fileNode.Data = bytes;
 				fileNode.UpdatedUtc = DateTime.UtcNow;
+			}, () =>
+			{
+				using (_lock.EnterScope())
+				{
+					fileNode.OpenHandles?.Remove(writeHandle);
+				}
 			}, access, appendStart);
 		}
 	}
 
-	private class CommittingStream(MemoryStream inner, Action<byte[]> commit, FileAccess access, long appendStart) : Stream
+	private class ReadOnlyHandleStream(MemoryStream inner, Action onDispose) : Stream
+	{
+		private bool _disposed;
+
+		protected override void Dispose(bool disposing)
+		{
+			if (!_disposed)
+			{
+				_disposed = true;
+				onDispose();
+				inner.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		public override void Flush() => inner.Flush();
+		public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+		public override void SetLength(long value) => throw new NotSupportedException();
+		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+		public override bool CanRead => true;
+		public override bool CanSeek => inner.CanSeek;
+		public override bool CanWrite => false;
+		public override long Length => inner.Length;
+		public override long Position { get => inner.Position; set => inner.Position = value; }
+	}
+
+	private class CommittingStream(MemoryStream inner, Action<byte[]> commit, Action onDispose, FileAccess access, long appendStart) : Stream
 	{
 		private bool _disposed;
 
@@ -183,6 +284,7 @@ public class MemoryFileSystem : IFileSystem
 			{
 				_disposed = true;
 				commit(inner.ToArray());
+				onDispose();
 				inner.Dispose();
 			}
 			base.Dispose(disposing);
@@ -282,7 +384,14 @@ public class MemoryFileSystem : IFileSystem
 					return; // nothing to delete
 				dir = next;
 			}
-			dir.Children?.Remove(parts[parts.Length - 1]);
+
+			var fileName = parts[parts.Length - 1];
+			if (dir.Children != null && dir.Children.TryGetValue(fileName, out var fileNode))
+			{
+				if (!CanDeleteWithExistingHandles(fileNode))
+					throw new IOException("The process cannot access the file because it is being used by another process.");
+				dir.Children.Remove(fileName);
+			}
 		}
 	}
 
@@ -291,21 +400,39 @@ public class MemoryFileSystem : IFileSystem
 	{
 		using (_lock.EnterScope())
 		{
-			if (!FileExists(sourceFileName))
+			var sourceNode = GetNode(sourceFileName);
+			if (sourceNode == null || sourceNode.IsDirectory)
 				throw new FileNotFoundException(sourceFileName);
 			if (!overwrite && FileExists(destFileName))
 				throw new IOException("Destination file exists.");
 
-			// Delete destination first if overwriting, then copy source content
+			// Check if source file can be deleted (moved)
+			if (!CanDeleteWithExistingHandles(sourceNode))
+				throw new IOException("The process cannot access the file because it is being used by another process.");
+
+			// Delete destination first if overwriting
 			if (overwrite && FileExists(destFileName))
 				DeleteFile(destFileName);
 
-			using (var src = this.OpenRead(sourceFileName))
-			using (var dst = this.OpenWrite(destFileName, append: false))
+			// Create destination file with source data
+			var destDir = Traverse(destFileName, createDirs: true, forFile: true, out var destName);
+			if (!destDir.IsDirectory)
+				throw new IOException("Path's parent is not a directory.");
+			destDir.Children ??= new(StringComparer.OrdinalIgnoreCase);
+			destDir.Children[destName] = new Node
 			{
-				src.CopyTo(dst);
-			}
-			DeleteFile(sourceFileName);
+				IsDirectory = false,
+				Data = sourceNode.Data,
+				CreatedUtc = sourceNode.CreatedUtc,
+				UpdatedUtc = DateTime.UtcNow
+			};
+
+			// Remove source
+			var sourceParts = Split(sourceFileName);
+			var sourceDir = _root;
+			for (int i = 0; i < sourceParts.Length - 1; i++)
+				sourceDir = sourceDir.Children[sourceParts[i]];
+			sourceDir.Children.Remove(sourceParts[sourceParts.Length - 1]);
 		}
 	}
 
