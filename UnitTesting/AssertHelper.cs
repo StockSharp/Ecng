@@ -97,6 +97,28 @@ public static class AssertHelper
 			str.IsEqualTo(expected.To<SecureString>()).AssertTrue(message);
 		else if (value is IEnumerable enu1 && value is not string)
 			enu1.AssertEqual((IEnumerable)expected, message);
+		else if (value is DateTime dtValue && expected is DateTime dtExpected)
+		{
+			if (!dtValue.Equals(dtExpected))
+			{
+				var details = $"DateTime mismatch:\n" +
+					$"  Expected: {dtExpected:o} Kind={dtExpected.Kind} Ticks={dtExpected.Ticks}\n" +
+					$"  Actual:   {dtValue:o} Kind={dtValue.Kind} Ticks={dtValue.Ticks}\n" +
+					$"  Diff:     {dtValue.Ticks - dtExpected.Ticks} ticks";
+				Assert.Fail(message is null ? details : $"{message}\n{details}");
+			}
+		}
+		else if (value is DateTimeOffset dtoValue && expected is DateTimeOffset dtoExpected)
+		{
+			if (!dtoValue.Equals(dtoExpected))
+			{
+				var details = $"DateTimeOffset mismatch:\n" +
+					$"  Expected: {dtoExpected:o} Offset={dtoExpected.Offset} Ticks={dtoExpected.Ticks} UtcTicks={dtoExpected.UtcTicks}\n" +
+					$"  Actual:   {dtoValue:o} Offset={dtoValue.Offset} Ticks={dtoValue.Ticks} UtcTicks={dtoValue.UtcTicks}\n" +
+					$"  Diff:     {dtoValue.Ticks - dtoExpected.Ticks} ticks, UtcDiff={dtoValue.UtcTicks - dtoExpected.UtcTicks} ticks";
+				Assert.Fail(message is null ? details : $"{message}\n{details}");
+			}
+		}
 		else
 			Assert.AreEqual(expected, value, message);
 	}
