@@ -277,26 +277,26 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 
 	#endregion
 
-	#region ToEnumerable
+	#region ToBlockingEnumerable
 
 	[TestMethod]
-	public void ToEnumerable_Basic()
+	public void ToBlockingEnumerable_Basic()
 	{
 		var source = new[] { 1, 2, 3 }.ToAsyncEnumerable();
-		var result = source.ToEnumerable().ToArray();
+		var result = source.ToBlockingEnumerable().ToArray();
 		result.AssertEqual([1, 2, 3]);
 	}
 
 	[TestMethod]
-	public void ToEnumerable_Empty()
+	public void ToBlockingEnumerable_Empty()
 	{
 		var source = Array.Empty<int>().ToAsyncEnumerable();
-		var result = source.ToEnumerable().ToArray();
+		var result = source.ToBlockingEnumerable().ToArray();
 		result.Length.AssertEqual(0);
 	}
 
 	[TestMethod]
-	public void ToEnumerable_LazyEvaluation()
+	public void ToBlockingEnumerable_LazyEvaluation()
 	{
 		var yielded = new List<int>();
 		async IAsyncEnumerable<int> Generate()
@@ -308,7 +308,7 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 			}
 		}
 
-		var enumerable = Generate().ToEnumerable();
+		var enumerable = Generate().ToBlockingEnumerable();
 
 		// Before iteration, nothing should be yielded
 		yielded.Count.AssertEqual(0);
@@ -322,11 +322,11 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void ToEnumerable_DisposeAsyncCalledOnBreak()
+	public void ToBlockingEnumerable_DisposeAsyncCalledOnBreak()
 	{
 		var disposed = false;
 
-		var enumerable = CreateAsyncEnumerable().ToEnumerable();
+		var enumerable = CreateAsyncEnumerable().ToBlockingEnumerable();
 
 		// Break early from foreach - should still dispose the async enumerator
 		foreach (var item in enumerable)
@@ -354,7 +354,7 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void ToEnumerable_WithCancellation()
+	public void ToBlockingEnumerable_WithCancellation()
 	{
 		using var cts = new CancellationTokenSource();
 
@@ -367,7 +367,7 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 			}
 		}
 
-		var enumerable = Generate().ToEnumerable(cts.Token);
+		var enumerable = Generate().ToBlockingEnumerable(cts.Token);
 		var count = 0;
 
 		ThrowsExactly<OperationCanceledException>(() =>
@@ -384,19 +384,19 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void ToEnumerable_NullThrows()
+	public void ToBlockingEnumerable_NullThrows()
 	{
 		IAsyncEnumerable<int> source = null;
-		ThrowsExactly<ArgumentNullException>(() => source.ToEnumerable());
+		ThrowsExactly<ArgumentNullException>(() => source.ToBlockingEnumerable());
 	}
 
 	[TestMethod]
-	public void ToEnumerable_ForeachWorks()
+	public void ToBlockingEnumerable_ForeachWorks()
 	{
 		var source = new[] { "a", "b", "c" }.ToAsyncEnumerable();
 		var result = new List<string>();
 
-		foreach (var item in source.ToEnumerable())
+		foreach (var item in source.ToBlockingEnumerable())
 			result.Add(item);
 
 		result.AssertEqual(["a", "b", "c"]);
