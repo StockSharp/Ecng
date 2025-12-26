@@ -125,6 +125,8 @@ public class MemoryFileSystem : IFileSystem
 						throw new FileNotFoundException(path);
 					break;
 				case FileMode.Append:
+					if (access.HasFlag(FileAccess.Read))
+						throw new ArgumentException("Append mode cannot be used with Read access.", nameof(access));
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(mode));
@@ -157,17 +159,20 @@ public class MemoryFileSystem : IFileSystem
 			var ms = new MemoryStream();
 			if (baseData.Length > 0)
 				ms.Write(baseData, 0, baseData.Length);
+
+			var appendStart = append ? ms.Length : -1L;
 			if (append)
 				ms.Seek(0, SeekOrigin.End);
+
 			return new CommittingStream(ms, bytes =>
 			{
 				fileNode.Data = bytes;
 				fileNode.UpdatedUtc = DateTime.UtcNow;
-			}, access);
+			}, access, appendStart);
 		}
 	}
 
-	private class CommittingStream(MemoryStream inner, Action<byte[]> commit, FileAccess access) : Stream
+	private class CommittingStream(MemoryStream inner, Action<byte[]> commit, FileAccess access, long appendStart) : Stream
 	{
 		private bool _disposed;
 
@@ -183,7 +188,23 @@ public class MemoryFileSystem : IFileSystem
 		}
 		public override void Flush() => inner.Flush();
 		public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
-		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+
+		public override long Seek(long offset, SeekOrigin origin)
+		{
+			var newPos = origin switch
+			{
+				SeekOrigin.Begin => offset,
+				SeekOrigin.Current => inner.Position + offset,
+				SeekOrigin.End => inner.Length + offset,
+				_ => throw new ArgumentOutOfRangeException(nameof(origin))
+			};
+
+			if (appendStart >= 0 && newPos < appendStart)
+				throw new IOException("Unable to seek before the append start position.");
+
+			return inner.Seek(offset, origin);
+		}
+
 		public override void SetLength(long value) => inner.SetLength(value);
 		public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
 		public override bool CanRead => access.HasFlag(FileAccess.Read);

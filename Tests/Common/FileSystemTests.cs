@@ -645,4 +645,86 @@ public class FileSystemTests : BaseTestClass
 			stream.CanRead.AssertTrue();
 		});
 	}
+
+	[TestMethod]
+	public void Open_Append_CannotRead_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_Append_CannotRead_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_Append_SeekBeforeEnd_Throws_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
+			// Seeking to beginning should throw
+			Throws<IOException>(() => stream.Seek(0, SeekOrigin.Begin));
+		});
+	}
+
+	[TestMethod]
+	public void Open_Append_SeekBeforeEnd_Throws_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
+			// Seeking to beginning should throw
+			Throws<IOException>(() => stream.Seek(0, SeekOrigin.Begin));
+		});
+	}
+
+	[TestMethod]
+	public void Open_Append_ReadAccess_Throws_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			// Append with Read access should throw
+			Throws<ArgumentException>(() => fs.Open(file, FileMode.Append, FileAccess.Read));
+		});
+	}
+
+	[TestMethod]
+	public void Open_Append_ReadAccess_Throws_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			// Append with Read access should throw
+			Throws<ArgumentException>(() => fs.Open(file, FileMode.Append, FileAccess.Read));
+		});
+	}
 }
