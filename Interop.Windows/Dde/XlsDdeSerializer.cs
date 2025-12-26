@@ -151,7 +151,8 @@ static class XlsDdeSerializer
 						if (type == typeof(string))
 						{
 							var pos = 0;
-							var buffer = stream.ReadBuffer(typeSize);
+							var buffer = new byte[typeSize];
+							stream.ReadExactly(buffer, 0, typeSize);
 							while (pos < buffer.Length)
 							{
 								var len = buffer[pos];
@@ -167,7 +168,8 @@ static class XlsDdeSerializer
 				}
 				else
 				{
-					stream.ReadBuffer(cellSize);
+					var skipBuffer = new byte[cellSize];
+					stream.ReadExactly(skipBuffer, 0, cellSize);
 					cells.AddRange(new object[cellSize]);
 				}
 			}

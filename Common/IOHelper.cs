@@ -722,6 +722,7 @@ public static class IOHelper
 	/// <param name="stream">The stream to read from.</param>
 	/// <param name="size">The number of bytes to read.</param>
 	/// <returns>A byte array containing the data read from the stream.</returns>
+	[Obsolete("Use Stream.ReadExactly extension method instead.")]
 	public static byte[] ReadBuffer(this Stream stream, int size)
 	{
 		if (stream is null)
@@ -732,28 +733,13 @@ public static class IOHelper
 
 		var buffer = new byte[size];
 
-		if (size == 1)
+		try
 		{
-			var b = stream.ReadByte();
-
-			if (b == -1)
-				throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream));
-
-			buffer[0] = (byte)b;
+			stream.ReadExactly(buffer, 0, size);
 		}
-		else
+		catch (EndOfStreamException ex)
 		{
-			var offset = 0;
-			do
-			{
-				var readBytes = stream.Read(buffer, offset, size - offset);
-
-				if (readBytes == 0)
-					throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream));
-
-				offset += readBytes;
-			}
-			while (offset < size);
+			throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream), ex);
 		}
 
 		return buffer;
@@ -884,7 +870,17 @@ public static class IOHelper
 		if (size > int.MaxValue / 10)
 			throw new ArgumentOutOfRangeException(nameof(size), $"Size has too big value {size}.");
 
-		var buffer = size > 0 ? stream.ReadBuffer(size) : [];
+		byte[] buffer;
+
+		if (size > 0)
+		{
+			buffer = new byte[size];
+			stream.ReadExactly(buffer, 0, size);
+		}
+		else
+		{
+			buffer = [];
+		}
 
 		if (type == typeof(byte[]))
 			return buffer;

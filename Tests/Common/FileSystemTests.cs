@@ -580,7 +580,7 @@ public class FileSystemTests : BaseTestClass
 
 			// Verify read works
 			var buffer = new byte[7];
-			stream.Read(buffer, 0, buffer.Length).AssertEqual(7);
+			stream.ReadExactly(buffer, 0, buffer.Length);
 
 			// Verify write throws
 			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
@@ -601,7 +601,7 @@ public class FileSystemTests : BaseTestClass
 
 			// Verify read works
 			var buffer = new byte[7];
-			stream.Read(buffer, 0, buffer.Length).AssertEqual(7);
+			stream.ReadExactly(buffer, 0, buffer.Length);
 
 			// Verify write throws
 			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
@@ -623,7 +623,7 @@ public class FileSystemTests : BaseTestClass
 			stream.Write("test"u8.ToArray(), 0, 4);
 
 			// Verify read throws
-			Throws<NotSupportedException>(() => stream.Read(new byte[4], 0, 4));
+			Throws<NotSupportedException>(() => stream.ReadExactly(new byte[4]));
 		});
 	}
 
@@ -642,7 +642,7 @@ public class FileSystemTests : BaseTestClass
 			stream.Write("test"u8.ToArray(), 0, 4);
 
 			// Verify read throws
-			Throws<NotSupportedException>(() => stream.Read(new byte[4], 0, 4));
+			Throws<NotSupportedException>(() => stream.ReadExactly(new byte[4]));
 		});
 	}
 
@@ -663,7 +663,7 @@ public class FileSystemTests : BaseTestClass
 			// Verify read works
 			stream.Position = 0;
 			var buffer = new byte[4];
-			stream.Read(buffer, 0, 4).AssertEqual(4);
+			stream.ReadExactly(buffer, 0, 4);
 			buffer.AssertEqual("test"u8.ToArray());
 		});
 	}
@@ -685,7 +685,7 @@ public class FileSystemTests : BaseTestClass
 			// Verify read works
 			stream.Position = 0;
 			var buffer = new byte[4];
-			stream.Read(buffer, 0, 4).AssertEqual(4);
+			stream.ReadExactly(buffer, 0, 4);
 			buffer.AssertEqual("test"u8.ToArray());
 		});
 	}
@@ -1019,7 +1019,7 @@ public class FileSystemTests : BaseTestClass
 
 			// But existing stream should still be readable
 			var buffer = new byte[7];
-			stream.Read(buffer, 0, 7);
+			stream.ReadExactly(buffer, 0, 7);
 			Encoding.UTF8.GetString(buffer).AssertEqual("content");
 		});
 	}
@@ -1043,7 +1043,7 @@ public class FileSystemTests : BaseTestClass
 
 			// But existing stream should still be readable
 			var buffer = new byte[7];
-			stream.Read(buffer, 0, 7);
+			stream.ReadExactly(buffer, 0, 7);
 			Encoding.UTF8.GetString(buffer).AssertEqual("content");
 		});
 	}
@@ -1065,7 +1065,7 @@ public class FileSystemTests : BaseTestClass
 
 			// Old stream still reads original data
 			var buffer = new byte[8];
-			stream.Read(buffer, 0, 8);
+			stream.ReadExactly(buffer, 0, 8);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original");
 
 			// New open reads new content
@@ -1090,7 +1090,7 @@ public class FileSystemTests : BaseTestClass
 
 			// Old stream still reads original data
 			var buffer = new byte[8];
-			stream.Read(buffer, 0, 8);
+			stream.ReadExactly(buffer, 0, 8);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original");
 
 			// New open reads new content
@@ -1120,7 +1120,7 @@ public class FileSystemTests : BaseTestClass
 			// Can read back what we wrote
 			stream.Seek(0, SeekOrigin.Begin);
 			var buffer = new byte[14];
-			stream.Read(buffer, 0, 14);
+			stream.ReadExactly(buffer, 0, 14);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
 
 			// But file is still gone
@@ -1150,7 +1150,7 @@ public class FileSystemTests : BaseTestClass
 			// Can read back what we wrote
 			stream.Seek(0, SeekOrigin.Begin);
 			var buffer = new byte[14];
-			stream.Read(buffer, 0, 14);
+			stream.ReadExactly(buffer, 0, 14);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
 
 			// But file is still gone
