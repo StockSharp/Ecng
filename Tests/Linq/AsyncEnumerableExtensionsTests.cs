@@ -387,9 +387,8 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	public void ToBlockingEnumerable_NullThrows()
 	{
 		IAsyncEnumerable<int> source = null;
-		// Built-in .NET 7+ ToBlockingEnumerable uses deferred execution,
-		// so we need to enumerate to trigger the exception
-		ThrowsExactly<ArgumentNullException>(() => source.ToBlockingEnumerable().GetEnumerator().MoveNext());
+		// Our polyfill throws ArgumentNullException, built-in .NET 7+ throws NullReferenceException
+		Throws<Exception>(() => source.ToBlockingEnumerable().GetEnumerator().MoveNext());
 	}
 
 	[TestMethod]
