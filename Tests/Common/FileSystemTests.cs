@@ -565,4 +565,84 @@ public class FileSystemTests : BaseTestClass
 			fs.ReadAllText(file, Encoding.UTF8).AssertEqual(text);
 		});
 	}
+
+	[TestMethod]
+	public void Open_ReadAccess_CannotWrite_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
+			stream.CanRead.AssertTrue();
+			stream.CanWrite.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ReadAccess_CannotWrite_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
+			stream.CanRead.AssertTrue();
+			stream.CanWrite.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_WriteAccess_CannotRead_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+
+			using var stream = fs.Open(file, FileMode.Create, FileAccess.Write);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_WriteAccess_CannotRead_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+
+			using var stream = fs.Open(file, FileMode.Create, FileAccess.Write);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ReadWriteAccess_CanDoAll_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+
+			using var stream = fs.Open(file, FileMode.Create, FileAccess.ReadWrite);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void Open_ReadWriteAccess_CanDoAll_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "test.txt");
+
+			using var stream = fs.Open(file, FileMode.Create, FileAccess.ReadWrite);
+			stream.CanWrite.AssertTrue();
+			stream.CanRead.AssertTrue();
+		});
+	}
 }

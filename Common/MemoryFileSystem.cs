@@ -163,11 +163,11 @@ public class MemoryFileSystem : IFileSystem
 			{
 				fileNode.Data = bytes;
 				fileNode.UpdatedUtc = DateTime.UtcNow;
-			});
+			}, access);
 		}
 	}
 
-	private class CommittingStream(MemoryStream inner, Action<byte[]> commit) : Stream
+	private class CommittingStream(MemoryStream inner, Action<byte[]> commit, FileAccess access) : Stream
 	{
 		private bool _disposed;
 
@@ -186,9 +186,9 @@ public class MemoryFileSystem : IFileSystem
 		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
 		public override void SetLength(long value) => inner.SetLength(value);
 		public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
-		public override bool CanRead => inner.CanRead;
+		public override bool CanRead => access.HasFlag(FileAccess.Read);
 		public override bool CanSeek => inner.CanSeek;
-		public override bool CanWrite => inner.CanWrite;
+		public override bool CanWrite => access.HasFlag(FileAccess.Write);
 		public override long Length => inner.Length;
 		public override long Position { get => inner.Position; set => inner.Position = value; }
 	}
