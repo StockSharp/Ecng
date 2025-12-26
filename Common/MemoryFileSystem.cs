@@ -188,7 +188,13 @@ public class MemoryFileSystem : IFileSystem
 			base.Dispose(disposing);
 		}
 		public override void Flush() => inner.Flush();
-		public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
+		public override int Read(byte[] buffer, int offset, int count)
+		{
+			if (!CanRead)
+				throw new NotSupportedException("Stream does not support reading.");
+			return inner.Read(buffer, offset, count);
+		}
 
 		public override long Seek(long offset, SeekOrigin origin)
 		{
@@ -207,7 +213,13 @@ public class MemoryFileSystem : IFileSystem
 		}
 
 		public override void SetLength(long value) => inner.SetLength(value);
-		public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
+
+		public override void Write(byte[] buffer, int offset, int count)
+		{
+			if (!CanWrite)
+				throw new NotSupportedException("Stream does not support writing.");
+			inner.Write(buffer, offset, count);
+		}
 		public override bool CanRead => access.HasFlag(FileAccess.Read);
 		public override bool CanSeek => inner.CanSeek;
 		public override bool CanWrite => access.HasFlag(FileAccess.Write);

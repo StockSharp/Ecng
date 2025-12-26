@@ -577,6 +577,13 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
 			stream.CanRead.AssertTrue();
 			stream.CanWrite.AssertFalse();
+
+			// Verify read works
+			var buffer = new byte[7];
+			stream.Read(buffer, 0, buffer.Length).AssertEqual(7);
+
+			// Verify write throws
+			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
 		});
 	}
 
@@ -591,6 +598,13 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
 			stream.CanRead.AssertTrue();
 			stream.CanWrite.AssertFalse();
+
+			// Verify read works
+			var buffer = new byte[7];
+			stream.Read(buffer, 0, buffer.Length).AssertEqual(7);
+
+			// Verify write throws
+			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
 		});
 	}
 
@@ -604,6 +618,12 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Create, FileAccess.Write);
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertFalse();
+
+			// Verify write works
+			stream.Write("test"u8.ToArray(), 0, 4);
+
+			// Verify read throws
+			Throws<NotSupportedException>(() => stream.Read(new byte[4], 0, 4));
 		});
 	}
 
@@ -617,6 +637,12 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Create, FileAccess.Write);
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertFalse();
+
+			// Verify write works
+			stream.Write("test"u8.ToArray(), 0, 4);
+
+			// Verify read throws
+			Throws<NotSupportedException>(() => stream.Read(new byte[4], 0, 4));
 		});
 	}
 
@@ -630,6 +656,15 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Create, FileAccess.ReadWrite);
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertTrue();
+
+			// Verify write works
+			stream.Write("test"u8.ToArray(), 0, 4);
+
+			// Verify read works
+			stream.Position = 0;
+			var buffer = new byte[4];
+			stream.Read(buffer, 0, 4).AssertEqual(4);
+			buffer.AssertEqual("test"u8.ToArray());
 		});
 	}
 
@@ -643,6 +678,15 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Create, FileAccess.ReadWrite);
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertTrue();
+
+			// Verify write works
+			stream.Write("test"u8.ToArray(), 0, 4);
+
+			// Verify read works
+			stream.Position = 0;
+			var buffer = new byte[4];
+			stream.Read(buffer, 0, 4).AssertEqual(4);
+			buffer.AssertEqual("test"u8.ToArray());
 		});
 	}
 
