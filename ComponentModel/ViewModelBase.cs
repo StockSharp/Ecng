@@ -14,6 +14,7 @@ using Ecng.Common;
 public abstract class ViewModelBase : Disposable, INotifyPropertyChanged
 {
 	private List<IDisposable> _commands;
+	private readonly Dictionary<string, object> _values = [];
 
 	/// <inheritdoc />
 	public event PropertyChangedEventHandler PropertyChanged;
@@ -35,6 +36,32 @@ public abstract class ViewModelBase : Disposable, INotifyPropertyChanged
 	protected void OnPropertyChanged<T>(Expression<Func<T>> selectorExpression)
 	{
 		OnPropertyChanged(PropertyName(selectorExpression));
+	}
+
+	/// <summary>
+	/// Gets property value from internal storage.
+	/// </summary>
+	/// <typeparam name="T">Property type.</typeparam>
+	/// <param name="name">Property name (auto-filled by compiler).</param>
+	/// <returns>Property value or default if not set.</returns>
+	protected T GetValue<T>([CallerMemberName] string name = null)
+		=> _values.TryGetValue(name, out var value) ? (T)value : default;
+
+	/// <summary>
+	/// Sets property value and raises PropertyChanged if value changed.
+	/// </summary>
+	/// <typeparam name="T">Property type.</typeparam>
+	/// <param name="value">New value.</param>
+	/// <param name="name">Property name (auto-filled by compiler).</param>
+	/// <returns>True if value was changed.</returns>
+	protected bool SetValue<T>(T value, [CallerMemberName] string name = null)
+	{
+		if (_values.TryGetValue(name, out var existing) && EqualityComparer<T>.Default.Equals((T)existing, value))
+			return false;
+
+		_values[name] = value;
+		OnPropertyChanged(name);
+		return true;
 	}
 
 	/// <summary>

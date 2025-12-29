@@ -10,19 +10,16 @@ public class ViewModelBaseTests : BaseTestClass
 {
 	private class TestViewModel : ViewModelBase
 	{
-		private string _name;
-		private int _age;
-
 		public string Name
 		{
-			get => _name;
-			set => SetField(ref _name, value);
+			get => GetValue<string>();
+			set => SetValue(value);
 		}
 
 		public int Age
 		{
-			get => _age;
-			set => SetField(ref _age, value);
+			get => GetValue<int>();
+			set => SetValue(value);
 		}
 
 		public ICommand TestCommand { get; private set; }
