@@ -363,7 +363,7 @@ public class IOHelperTests : BaseTestClass
 	public void TrySave_Memory_Failure_ReturnsFalse()
 	{
 		var fs = new MemoryFileSystem();
-		// Directory doesn't exist, should fail
+		// Directory doesn't exist, should fail with DirectoryNotFoundException
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
@@ -371,6 +371,22 @@ public class IOHelperTests : BaseTestClass
 
 		result.AssertFalse();
 		caught.AssertNotNull();
+		(caught is DirectoryNotFoundException).AssertTrue();
+	}
+
+	[TestMethod]
+	public void TrySave_LocalFileSystem_Failure_ReturnsFalse()
+	{
+		var fs = LocalFileSystem.Instance;
+		// Directory doesn't exist, should fail with DirectoryNotFoundException
+		var data = new byte[] { 1, 2, 3 };
+		Exception caught = null;
+
+		var result = data.TrySave("/nonexistent/file.bin", fs, ex => caught = ex);
+
+		result.AssertFalse();
+		caught.AssertNotNull();
+		(caught is DirectoryNotFoundException).AssertTrue();
 	}
 
 	#endregion
