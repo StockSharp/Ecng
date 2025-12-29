@@ -38,7 +38,7 @@ public class TransactionFileStream : Stream
 	/// <param name="name">The name of the target file.</param>
 	/// <param name="mode">The file mode that specifies the type of operations to be performed on the file.</param>
 	public TransactionFileStream(string name, FileMode mode)
-		: this(new LocalFileSystem(), name, mode)
+		: this(LocalFileSystem.Instance, name, mode)
 	{
 	}
 

@@ -17,7 +17,7 @@ public class AssemblyReference : BaseCodeReference
 	/// Initializes a new instance of the <see cref="AssemblyReference"/>.
 	/// </summary>
 	public AssemblyReference()
-		: this(new LocalFileSystem())
+		: this(LocalFileSystem.Instance)
 	{
 	}
 

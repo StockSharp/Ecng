@@ -104,7 +104,7 @@ public class FileLogListener : LogListener
 	/// To create <see cref="FileLogListener"/>. For each <see cref="ILogSource"/> a separate file with a name equal to <see cref="ILogSource.Name"/> will be created.
 	/// </summary>
 	public FileLogListener()
-		: this(new LocalFileSystem())
+		: this(LocalFileSystem.Instance)
 	{
 	}
 
@@ -122,7 +122,7 @@ public class FileLogListener : LogListener
 	/// </summary>
 	/// <param name="fileName">The name of a text file to which messages from the event <see cref="ILogSource.Log"/> will be recorded.</param>
 	public FileLogListener(string fileName)
-		: this(new LocalFileSystem(), fileName)
+		: this(LocalFileSystem.Instance, fileName)
 	{
 	}
 

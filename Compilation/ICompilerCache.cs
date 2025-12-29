@@ -249,6 +249,6 @@ public class CompilerCache : ICompilerCache
 /// </summary>
 [Obsolete("Use CompilerCache with LocalFileSystem instead.")]
 public class FileCompilerCache(string path, TimeSpan timeout)
-	: CompilerCache(new LocalFileSystem(), path, timeout)
+	: CompilerCache(LocalFileSystem.Instance, path, timeout)
 {
 }

@@ -16,7 +16,7 @@ public class NuGetReference : BaseCodeReference
 	/// Initializes a new instance of the <see cref="NuGetReference"/>.
 	/// </summary>
 	public NuGetReference()
-		: this(new LocalFileSystem())
+		: this(LocalFileSystem.Instance)
 	{
 	}
 

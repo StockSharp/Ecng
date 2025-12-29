@@ -12,7 +12,7 @@ public class FileSystemTests : BaseTestClass
 		try
 		{
 			Directory.CreateDirectory(root);
-			action(new LocalFileSystem(), root);
+			action(LocalFileSystem.Instance, root);
 		}
 		finally
 		{

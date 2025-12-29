@@ -9,6 +9,11 @@ using System.IO;
 /// </summary>
 public class LocalFileSystem : IFileSystem
 {
+	/// <summary>
+	/// Singleton instance.
+	/// </summary>
+	public static LocalFileSystem Instance { get; } = new();
+
 	/// <inheritdoc />
 	public bool FileExists(string path) => File.Exists(path);
 	/// <inheritdoc />
