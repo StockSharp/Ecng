@@ -12,6 +12,7 @@ public class ExpressionTests : BaseTestClass
 	private static readonly ICompiler _compiler = new CSharpCompiler();
 	private static readonly ICompilerContext _context = _compiler.CreateContext();
 
+	private static readonly IFileSystem _cacheFileSystem = new MemoryFileSystem();
 	private const string _cacheDir = "asm_cache";
 
 	private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
@@ -20,7 +21,7 @@ public class ExpressionTests : BaseTestClass
 	[ClassInitialize]
 	public static void Init(TestContext _)
 	{
-		_cacheDir.SafeDeleteDir();
+		_cacheDir.SafeDeleteDir(_cacheFileSystem);
 	}
 
 	[TestMethod]
@@ -46,7 +47,7 @@ public class ExpressionTests : BaseTestClass
 	[TestMethod]
 	public async Task FileCache()
 	{
-		var fs = new LocalFileSystem();
+		var fs = _cacheFileSystem;
 		var cache = new CompilerCache(fs, _cacheDir, TimeSpan.MaxValue);
 		await cache.InitAsync(CancellationToken);
 

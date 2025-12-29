@@ -124,7 +124,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		count.AssertInRange(1, 6); // Allow some variance for timer jitter
+		count.AssertInRange(1, 6, $"count={count}"); // Allow some variance for timer jitter
 	}
 
 	[TestMethod]
