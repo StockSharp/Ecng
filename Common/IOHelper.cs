@@ -243,17 +243,30 @@ public static class IOHelper
 	/// Creates the directory for the specified file if it does not already exist.
 	/// </summary>
 	/// <param name="fullPath">The full path to the file.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>True if the directory was created; otherwise, false.</returns>
-	public static bool CreateDirIfNotExists(this string fullPath)
+	public static bool CreateDirIfNotExists(this string fullPath, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		var directory = Path.GetDirectoryName(fullPath);
 
-		if (directory.IsEmpty() || Directory.Exists(directory))
+		if (directory.IsEmpty() || fs.DirectoryExists(directory))
 			return false;
 
-		Directory.CreateDirectory(directory);
+		fs.CreateDirectory(directory);
 		return true;
 	}
+
+	/// <summary>
+	/// Creates the directory for the specified file if it does not already exist.
+	/// </summary>
+	/// <param name="fullPath">The full path to the file.</param>
+	/// <returns>True if the directory was created; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static bool CreateDirIfNotExists(this string fullPath)
+		=> fullPath.CreateDirIfNotExists(LocalFileSystem.Instance);
 
 	private static readonly string[] _suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
 
@@ -286,13 +299,25 @@ public static class IOHelper
 	/// Safely deletes a directory.
 	/// </summary>
 	/// <param name="path">The directory path.</param>
-	public static void SafeDeleteDir(this string path)
+	/// <param name="fs">The file system to use.</param>
+	public static void SafeDeleteDir(this string path, IFileSystem fs)
 	{
-		if (!Directory.Exists(path))
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		if (!fs.DirectoryExists(path))
 			return;
 
-		Directory.Delete(path, true);
+		fs.DeleteDirectory(path, true);
 	}
+
+	/// <summary>
+	/// Safely deletes a directory.
+	/// </summary>
+	/// <param name="path">The directory path.</param>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static void SafeDeleteDir(this string path)
+		=> path.SafeDeleteDir(LocalFileSystem.Instance);
 
 	/// <summary>
 	/// Creates a temporary directory and returns its path.
@@ -312,19 +337,30 @@ public static class IOHelper
 	/// Checks if the specified installation directory exists and contains files or subdirectories.
 	/// </summary>
 	/// <param name="path">The installation directory path.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>True if the installation is valid; otherwise, false.</returns>
-	public static bool CheckInstallation(string path)
+	public static bool CheckInstallation(string path, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		if (path.IsEmpty())
 			return false;
 
-		if (!Directory.Exists(path))
+		if (!fs.DirectoryExists(path))
 			return false;
 
-		var files = Directory.GetFiles(path);
-		var directories = Directory.GetDirectories(path);
-		return files.Any() || directories.Any();
+		return fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any();
 	}
+
+	/// <summary>
+	/// Checks if the specified installation directory exists and contains files or subdirectories.
+	/// </summary>
+	/// <param name="path">The installation directory path.</param>
+	/// <returns>True if the installation is valid; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static bool CheckInstallation(string path)
+		=> CheckInstallation(path, LocalFileSystem.Instance);
 
 	/// <summary>
 	/// Gets the relative path from a folder to a file.
@@ -360,20 +396,40 @@ public static class IOHelper
 	/// <param name="relativePath">The relative path to the file.</param>
 	/// <param name="fileName">The file name.</param>
 	/// <param name="content">The content as a byte array.</param>
-	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content)
+	/// <param name="fs">The file system to use.</param>
+	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		string fullPath;
+
 		if (relativePath.IsEmpty())
 		{
-			File.WriteAllBytes(Path.Combine(rootPath, fileName), content);
+			fullPath = Path.Combine(rootPath, fileName);
 		}
 		else
 		{
-			var fullPath = Path.Combine(rootPath, relativePath, fileName);
-			var fileInfo = new FileInfo(fullPath);
-			fileInfo.Directory.Create();
-			File.WriteAllBytes(fullPath, content);
+			fullPath = Path.Combine(rootPath, relativePath, fileName);
+			var dir = Path.GetDirectoryName(fullPath);
+			if (!dir.IsEmpty())
+				fs.CreateDirectory(dir);
 		}
+
+		using var stream = fs.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
+		stream.Write(content, 0, content.Length);
 	}
+
+	/// <summary>
+	/// Creates a file with the specified content.
+	/// </summary>
+	/// <param name="rootPath">The root path.</param>
+	/// <param name="relativePath">The relative path to the file.</param>
+	/// <param name="fileName">The file name.</param>
+	/// <param name="content">The content as a byte array.</param>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content)
+		=> CreateFile(rootPath, relativePath, fileName, content, LocalFileSystem.Instance);
 
 	// https://stackoverflow.com/a/2811746/8029915
 
@@ -381,25 +437,27 @@ public static class IOHelper
 	/// Recursively deletes empty directories starting from the specified directory.
 	/// </summary>
 	/// <param name="dir">The root directory to check and delete if empty.</param>
-	public static void DeleteEmptyDirs(string dir)
+	/// <param name="fs">The file system to use.</param>
+	public static void DeleteEmptyDirs(string dir, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		if (dir.IsEmpty())
 			throw new ArgumentNullException(nameof(dir));
 
 		try
 		{
-			foreach (var d in Directory.EnumerateDirectories(dir))
+			foreach (var d in fs.EnumerateDirectories(dir))
 			{
-				DeleteEmptyDirs(d);
+				DeleteEmptyDirs(d, fs);
 			}
 
-			var entries = Directory.EnumerateFileSystemEntries(dir);
-
-			if (!entries.Any())
+			if (!fs.EnumerateFiles(dir).Any() && !fs.EnumerateDirectories(dir).Any())
 			{
 				try
 				{
-					Directory.Delete(dir);
+					fs.DeleteDirectory(dir);
 				}
 				catch (UnauthorizedAccessException) { }
 				catch (DirectoryNotFoundException) { }
@@ -407,6 +465,14 @@ public static class IOHelper
 		}
 		catch (UnauthorizedAccessException) { }
 	}
+
+	/// <summary>
+	/// Recursively deletes empty directories starting from the specified directory.
+	/// </summary>
+	/// <param name="dir">The root directory to check and delete if empty.</param>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static void DeleteEmptyDirs(string dir)
+		=> DeleteEmptyDirs(dir, LocalFileSystem.Instance);
 
 	/// <summary>
 	/// The %Documents% variable.
@@ -526,16 +592,66 @@ public static class IOHelper
 	/// Retrieves the directories within the specified path matching the search pattern.
 	/// </summary>
 	/// <param name="path">The root directory to search.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <param name="searchPattern">The search pattern.</param>
 	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
 	/// <returns>An enumerable of matching directory paths.</returns>
 	public static IEnumerable<string> GetDirectories(string path,
+		IFileSystem fs,
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly)
 	{
-		return !Directory.Exists(path)
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		return !fs.DirectoryExists(path)
 			? []
-			: Directory.EnumerateDirectories(path, searchPattern, searchOption);
+			: fs.EnumerateDirectories(path, searchPattern, searchOption);
+	}
+
+	/// <summary>
+	/// Retrieves the directories within the specified path matching the search pattern.
+	/// </summary>
+	/// <param name="path">The root directory to search.</param>
+	/// <param name="searchPattern">The search pattern.</param>
+	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
+	/// <returns>An enumerable of matching directory paths.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static IEnumerable<string> GetDirectories(string path,
+		string searchPattern = "*",
+		SearchOption searchOption = SearchOption.TopDirectoryOnly)
+		=> GetDirectories(path, LocalFileSystem.Instance, searchPattern, searchOption);
+
+	/// <summary>
+	/// Asynchronously retrieves the directories within the specified path matching the search pattern.
+	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
+	/// </summary>
+	/// <param name="path">The root directory to search.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="searchPattern">The search pattern.</param>
+	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
+	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+	/// <returns>A task producing an enumerable of matching directory paths.</returns>
+	public static Task<IEnumerable<string>> GetDirectoriesAsync(
+		string path,
+		IFileSystem fs,
+		string searchPattern = "*",
+		SearchOption searchOption = SearchOption.TopDirectoryOnly,
+		CancellationToken cancellationToken = default)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		if (!fs.DirectoryExists(path))
+			return Enumerable.Empty<string>().FromResult();
+
+		return Task.Run(() =>
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var arr = fs.EnumerateDirectories(path, searchPattern, searchOption).ToArray();
+			cancellationToken.ThrowIfCancellationRequested();
+			return (IEnumerable<string>)arr;
+		}, cancellationToken);
 	}
 
 	/// <summary>
@@ -547,19 +663,41 @@ public static class IOHelper
 	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
 	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
 	/// <returns>A task producing an enumerable of matching directory paths.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Task<IEnumerable<string>> GetDirectoriesAsync(
 		string path,
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly,
 		CancellationToken cancellationToken = default)
+		=> GetDirectoriesAsync(path, LocalFileSystem.Instance, searchPattern, searchOption, cancellationToken);
+
+	/// <summary>
+	/// Asynchronously retrieves the files within the specified path matching the search pattern.
+	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
+	/// </summary>
+	/// <param name="path">The root directory to search.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="searchPattern">The search pattern.</param>
+	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
+	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+	/// <returns>A task producing an enumerable of matching file paths.</returns>
+	public static Task<IEnumerable<string>> GetFilesAsync(
+		string path,
+		IFileSystem fs,
+		string searchPattern = "*",
+		SearchOption searchOption = SearchOption.TopDirectoryOnly,
+		CancellationToken cancellationToken = default)
 	{
-		if (!Directory.Exists(path))
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		if (!fs.DirectoryExists(path))
 			return Enumerable.Empty<string>().FromResult();
 
 		return Task.Run(() =>
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var arr = Directory.GetDirectories(path, searchPattern, searchOption);
+			var arr = fs.EnumerateFiles(path, searchPattern, searchOption).ToArray();
 			cancellationToken.ThrowIfCancellationRequested();
 			return (IEnumerable<string>)arr;
 		}, cancellationToken);
@@ -574,23 +712,13 @@ public static class IOHelper
 	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
 	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
 	/// <returns>A task producing an enumerable of matching file paths.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Task<IEnumerable<string>> GetFilesAsync(
 		string path,
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly,
 		CancellationToken cancellationToken = default)
-	{
-		if (!Directory.Exists(path))
-			return Enumerable.Empty<string>().FromResult();
-
-		return Task.Run(() =>
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			var arr = Directory.GetFiles(path, searchPattern, searchOption);
-			cancellationToken.ThrowIfCancellationRequested();
-			return (IEnumerable<string>)arr;
-		}, cancellationToken);
-	}
+		=> GetFilesAsync(path, LocalFileSystem.Instance, searchPattern, searchOption, cancellationToken);
 
 	/// <summary>
 	/// Gets the timestamp of the specified assembly.
@@ -602,19 +730,23 @@ public static class IOHelper
 		if (assembly is null)
 			throw new ArgumentNullException(nameof(assembly));
 
-		return GetTimestamp(assembly.Location);
+		return GetTimestamp(assembly.Location, LocalFileSystem.Instance);
 	}
 
 	/// <summary>
 	/// Gets the timestamp of the specified file.
 	/// </summary>
 	/// <param name="filePath">The file path.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>The timestamp representing when the file was built.</returns>
-	public static DateTime GetTimestamp(string filePath)
+	public static DateTime GetTimestamp(string filePath, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		var b = new byte[2048];
 
-		using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+		using (var s = fs.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			s.ReadBytes(b, b.Length);
 
 		const int peHeaderOffset = 60;
@@ -624,6 +756,15 @@ public static class IOHelper
 
 		return secondsSince1970.FromUnix().ToLocalTime();
 	}
+
+	/// <summary>
+	/// Gets the timestamp of the specified file.
+	/// </summary>
+	/// <param name="filePath">The file path.</param>
+	/// <returns>The timestamp representing when the file was built.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static DateTime GetTimestamp(string filePath)
+		=> GetTimestamp(filePath, LocalFileSystem.Instance);
 
 	/// <summary>
 	/// Determines whether the specified path represents a directory.
@@ -926,12 +1067,16 @@ public static class IOHelper
 	/// </summary>
 	/// <param name="stream">The stream whose contents to save.</param>
 	/// <param name="fileName">The file path to save the stream's contents to.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>The original stream.</returns>
-	public static Stream Save(this Stream stream, string fileName)
+	public static Stream Save(this Stream stream, string fileName, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		var pos = stream.CanSeek ? stream.Position : 0;
 
-		using (var file = File.Create(fileName))
+		using (var file = fs.Open(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
 			stream.CopyTo(file);
 
 		if (stream.CanSeek)
@@ -941,15 +1086,64 @@ public static class IOHelper
 	}
 
 	/// <summary>
+	/// Saves the content of the stream to a file specified by fileName.
+	/// </summary>
+	/// <param name="stream">The stream whose contents to save.</param>
+	/// <param name="fileName">The file path to save the stream's contents to.</param>
+	/// <returns>The original stream.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static Stream Save(this Stream stream, string fileName)
+		=> stream.Save(fileName, LocalFileSystem.Instance);
+
+	/// <summary>
+	/// Saves the byte array to a file specified by fileName.
+	/// </summary>
+	/// <param name="data">The byte array to save.</param>
+	/// <param name="fileName">The file path to save the data to.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <returns>The original byte array.</returns>
+	public static byte[] Save(this byte[] data, string fileName, IFileSystem fs)
+	{
+		data.To<Stream>().Save(fileName, fs);
+		return data;
+	}
+
+	/// <summary>
 	/// Saves the byte array to a file specified by fileName.
 	/// </summary>
 	/// <param name="data">The byte array to save.</param>
 	/// <param name="fileName">The file path to save the data to.</param>
 	/// <returns>The original byte array.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static byte[] Save(this byte[] data, string fileName)
+		=> data.Save(fileName, LocalFileSystem.Instance);
+
+	/// <summary>
+	/// Attempts to save the byte array to a file and handles any exceptions using the provided errorHandler.
+	/// </summary>
+	/// <param name="data">The byte array to save.</param>
+	/// <param name="fileName">The file path to save the data to.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="errorHandler">The action to handle exceptions.</param>
+	/// <returns>True if the save operation was successful; otherwise, false.</returns>
+	public static bool TrySave(this byte[] data, string fileName, IFileSystem fs, Action<Exception> errorHandler)
 	{
-		data.To<Stream>().Save(fileName);
-		return data;
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		if (errorHandler is null)
+			throw new ArgumentNullException(nameof(errorHandler));
+
+		try
+		{
+			data.To<Stream>().Save(fileName, fs);
+			return true;
+		}
+		catch (Exception e)
+		{
+			errorHandler(e);
+			return false;
+		}
 	}
 
 	/// <summary>
@@ -959,22 +1153,9 @@ public static class IOHelper
 	/// <param name="fileName">The file path to save the data to.</param>
 	/// <param name="errorHandler">The action to handle exceptions.</param>
 	/// <returns>True if the save operation was successful; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool TrySave(this byte[] data, string fileName, Action<Exception> errorHandler)
-	{
-		if (errorHandler is null)
-			throw new ArgumentNullException(nameof(errorHandler));
-
-		try
-		{
-			data.To<Stream>().Save(fileName);
-			return true;
-		}
-		catch (Exception e)
-		{
-			errorHandler(e);
-			return false;
-		}
-	}
+		=> data.TrySave(fileName, LocalFileSystem.Instance, errorHandler);
 
 	/// <summary>
 	/// Truncates the underlying stream used by the StreamWriter by clearing its content.
@@ -1009,12 +1190,42 @@ public static class IOHelper
 	/// Checks whether the directory contains files or subdirectories that contain files.
 	/// </summary>
 	/// <param name="path">The directory path to check.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>True if the directory contains any files; otherwise, false.</returns>
-	public static bool CheckDirContainFiles(string path)
+	public static bool CheckDirContainFiles(string path, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		return
-			Directory.Exists(path) &&
-			(Directory.GetFiles(path).Any() || Directory.GetDirectories(path).Any(CheckDirContainFiles));
+			fs.DirectoryExists(path) &&
+			(fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any(d => CheckDirContainFiles(d, fs)));
+	}
+
+	/// <summary>
+	/// Checks whether the directory contains files or subdirectories that contain files.
+	/// </summary>
+	/// <param name="path">The directory path to check.</param>
+	/// <returns>True if the directory contains any files; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static bool CheckDirContainFiles(string path)
+		=> CheckDirContainFiles(path, LocalFileSystem.Instance);
+
+	/// <summary>
+	/// Checks whether the directory contains any files or subdirectories.
+	/// </summary>
+	/// <param name="path">The directory path to check.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <returns>True if the directory contains any entries; otherwise, false.</returns>
+	public static bool CheckDirContainsAnything(string path, IFileSystem fs)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		if (!fs.DirectoryExists(path))
+			return false;
+
+		return fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any();
 	}
 
 	/// <summary>
@@ -1022,29 +1233,27 @@ public static class IOHelper
 	/// </summary>
 	/// <param name="path">The directory path to check.</param>
 	/// <returns>True if the directory contains any entries; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CheckDirContainsAnything(string path)
-	{
-		if (!Directory.Exists(path))
-			return false;
-
-		return Directory.EnumerateFileSystemEntries(path).Any();
-	}
+		=> CheckDirContainsAnything(path, LocalFileSystem.Instance);
 
 	/// <summary>
 	/// Determines whether the file specified by the path is locked by another process.
 	/// </summary>
 	/// <param name="path">The path to the file to check.</param>
+	/// <param name="fs">The file system to use.</param>
 	/// <returns>True if the file is locked; otherwise, false.</returns>
-	public static bool IsFileLocked(string path)
+	public static bool IsFileLocked(string path, IFileSystem fs)
 	{
-		var info = new FileInfo(path);
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
 
-		if (!info.Exists)
+		if (!fs.FileExists(path))
 			return false;
 
 		try
 		{
-			using var stream = info.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+			using var stream = fs.Open(path, FileMode.Open, FileAccess.Read, FileShare.None);
 		}
 		catch (IOException)
 		{
@@ -1053,6 +1262,15 @@ public static class IOHelper
 
 		return false;
 	}
+
+	/// <summary>
+	/// Determines whether the file specified by the path is locked by another process.
+	/// </summary>
+	/// <param name="path">The path to the file to check.</param>
+	/// <returns>True if the file is locked; otherwise, false.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static bool IsFileLocked(string path)
+		=> IsFileLocked(path, LocalFileSystem.Instance);
 
 	/// <summary>
 	/// Determines if the specified path refers to a directory.
