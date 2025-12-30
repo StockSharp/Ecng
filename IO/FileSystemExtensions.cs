@@ -288,7 +288,7 @@ public static class FileSystemExtensions
 
 		foreach (var line in lines)
 		{
-			await writer.WriteAsync(line
+			await writer.WriteLineAsync(line
 #if NET10_0_OR_GREATER
 				.AsMemory()
 #endif

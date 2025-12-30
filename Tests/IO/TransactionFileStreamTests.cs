@@ -666,14 +666,14 @@ public class TransactionFileStreamTests : BaseTestClass
 
 	#region MemoryFileSystem Tests
 
-	private static string ReadAllText(MemoryFileSystem fs, string path)
+	private static string ReadAllText(IFileSystem fs, string path)
 	{
 		using var stream = fs.OpenRead(path);
 		using var reader = new StreamReader(stream, Encoding.UTF8);
 		return reader.ReadToEnd();
 	}
 
-	private static void WriteAllText(MemoryFileSystem fs, string path, string content)
+	private static void WriteAllText(IFileSystem fs, string path, string content)
 	{
 		using var stream = fs.OpenWrite(path);
 		var bytes = content.UTF8();
