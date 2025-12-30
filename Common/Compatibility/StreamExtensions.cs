@@ -1,3 +1,4 @@
+#if !NET7_0_OR_GREATER
 namespace System.IO;
 
 using System.Threading;
@@ -157,3 +158,4 @@ public static class StreamExtensions
 	}
 #endif
 }
+#endif

@@ -1,4 +1,4 @@
-#if NET7_0_OR_GREATER == false
+#if !NET7_0_OR_GREATER
 namespace System.IO;
 
 using System.Threading;
