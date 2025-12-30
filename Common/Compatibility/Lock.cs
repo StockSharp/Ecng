@@ -5,7 +5,7 @@ namespace System.Threading;
 /// Provides a mechanism for achieving mutual exclusion in regions of code between different threads.
 /// Compatibility implementation for target frameworks below .NET 9.
 /// </summary>
-public sealed class Lock
+public class Lock
 {
 	private readonly object _sync = new();
 

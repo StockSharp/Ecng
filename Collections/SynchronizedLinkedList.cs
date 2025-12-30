@@ -2,14 +2,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
-
-#if NET9_0_OR_GREATER
-using SyncObject = System.Threading.Lock;
-using LockScope = System.Threading.Lock.Scope;
-#else
-using Ecng.Common;
-using LockScope = Ecng.Common.SyncObject.Scope;
-#endif
+using System.Threading;
 
 /// <summary>
 /// Represents a thread-safe linked list that provides synchronization for its operations.
@@ -28,8 +21,8 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.
 	/// </summary>
-	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
-	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
+	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
+	public Lock.Scope EnterScope() => SyncRoot.EnterScope();
 
 	/// <summary>
 	/// Gets the first node of the linked list.

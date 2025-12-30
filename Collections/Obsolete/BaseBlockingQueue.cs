@@ -50,8 +50,8 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.
 	/// </summary>
-	/// <returns>A <see cref="SyncObject.Scope"/> that represents the synchronized scope.</returns>
-	public SyncObject.Scope EnterScope() => CollectionHelper.EnterScope(this);
+	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
+	public Lock.Scope EnterScope() => SyncRoot.EnterScope();
 
 	/// <summary>
 	/// Gets the current number of items in the queue.

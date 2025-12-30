@@ -4,17 +4,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-
-using Ecng.Collections;
-using Ecng.Common;
 
 #if NET9_0_OR_GREATER
 using SyncObject = System.Threading.Lock;
-using LockScope = System.Threading.Lock.Scope;
-#else
-using LockScope = Ecng.Common.SyncObject.Scope;
 #endif
+
+using Ecng.Collections;
+using Ecng.Common;
 
 /// <summary>
 /// The class represents a synchronized collection that can be used in WPF applications.
@@ -386,6 +384,6 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.
 	/// </summary>
-	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
-	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
+	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
+	public Lock.Scope EnterScope() => SyncRoot.EnterScope();
 }
