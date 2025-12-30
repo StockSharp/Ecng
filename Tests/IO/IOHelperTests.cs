@@ -11,7 +11,7 @@ public class IOHelperTests : BaseTestClass
 	public void CreateDirIfNotExists_Memory_CreatesDirectory()
 	{
 		var fs = new MemoryFileSystem();
-		var result = "/root/subdir/file.txt".CreateDirIfNotExists(fs);
+		var result = fs.CreateDirIfNotExists("/root/subdir/file.txt");
 
 		result.AssertTrue();
 		fs.DirectoryExists("/root/subdir").AssertTrue();
@@ -23,7 +23,7 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/root/subdir");
 
-		var result = "/root/subdir/file.txt".CreateDirIfNotExists(fs);
+		var result = fs.CreateDirIfNotExists("/root/subdir/file.txt");
 
 		result.AssertFalse();
 	}
@@ -32,7 +32,7 @@ public class IOHelperTests : BaseTestClass
 	public void CreateDirIfNotExists_Memory_EmptyDir_ReturnsFalse()
 	{
 		var fs = new MemoryFileSystem();
-		var result = "file.txt".CreateDirIfNotExists(fs);
+		var result = fs.CreateDirIfNotExists("file.txt");
 
 		result.AssertFalse();
 	}
@@ -49,7 +49,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/subdir/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		"/root/subdir".SafeDeleteDir(fs);
+		fs.SafeDeleteDir("/root/subdir");
 
 		fs.DirectoryExists("/root/subdir").AssertFalse();
 	}
@@ -58,7 +58,7 @@ public class IOHelperTests : BaseTestClass
 	public void SafeDeleteDir_Memory_NonExistent_NoException()
 	{
 		var fs = new MemoryFileSystem();
-		"/nonexistent".SafeDeleteDir(fs);
+		fs.SafeDeleteDir("/nonexistent");
 	}
 
 	#endregion
@@ -73,7 +73,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/install/app.exe", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.CheckInstallation("/install", fs).AssertTrue();
+		fs.CheckInstallation("/install").AssertTrue();
 	}
 
 	[TestMethod]
@@ -82,7 +82,7 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/install/subdir");
 
-		IOHelper.CheckInstallation("/install", fs).AssertTrue();
+		fs.CheckInstallation("/install").AssertTrue();
 	}
 
 	[TestMethod]
@@ -91,21 +91,21 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/install");
 
-		IOHelper.CheckInstallation("/install", fs).AssertFalse();
+		fs.CheckInstallation("/install").AssertFalse();
 	}
 
 	[TestMethod]
 	public void CheckInstallation_Memory_NonExistent_ReturnsFalse()
 	{
 		var fs = new MemoryFileSystem();
-		IOHelper.CheckInstallation("/install", fs).AssertFalse();
+		fs.CheckInstallation("/install").AssertFalse();
 	}
 
 	[TestMethod]
 	public void CheckInstallation_Memory_EmptyPath_ReturnsFalse()
 	{
 		var fs = new MemoryFileSystem();
-		IOHelper.CheckInstallation("", fs).AssertFalse();
+		fs.CheckInstallation("").AssertFalse();
 	}
 
 	#endregion
@@ -119,7 +119,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root");
 		var content = new byte[] { 1, 2, 3, 4, 5 };
 
-		IOHelper.CreateFile("/root", "", "test.bin", content, fs);
+		fs.CreateFile("/root", "", "test.bin", content);
 
 		fs.FileExists("/root/test.bin").AssertTrue();
 		using var stream = fs.Open("/root/test.bin", FileMode.Open, FileAccess.Read);
@@ -135,7 +135,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root");
 		var content = new byte[] { 10, 20, 30 };
 
-		IOHelper.CreateFile("/root", "sub/dir", "data.bin", content, fs);
+		fs.CreateFile("/root", "sub/dir", "data.bin", content);
 
 		fs.DirectoryExists("/root/sub/dir").AssertTrue();
 		fs.FileExists("/root/sub/dir/data.bin").AssertTrue();
@@ -152,7 +152,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root/a/b/c");
 		fs.CreateDirectory("/root/d");
 
-		IOHelper.DeleteEmptyDirs("/root", fs);
+		fs.DeleteEmptyDirs("/root");
 
 		fs.DirectoryExists("/root").AssertFalse();
 	}
@@ -166,7 +166,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/a/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.DeleteEmptyDirs("/root", fs);
+		fs.DeleteEmptyDirs("/root");
 
 		fs.DirectoryExists("/root/a").AssertTrue();
 		fs.DirectoryExists("/root/a/b").AssertFalse();
@@ -185,7 +185,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root/b");
 		fs.CreateDirectory("/root/c");
 
-		var dirs = IOHelper.GetDirectories("/root", fs).OrderBy(x => x).ToArray();
+		var dirs = fs.GetDirectories("/root").OrderBy(x => x).ToArray();
 
 		dirs.Length.AssertEqual(3);
 		dirs[0].ComparePaths("/root/a").AssertTrue("/root/a");
@@ -197,7 +197,7 @@ public class IOHelperTests : BaseTestClass
 	public void GetDirectories_Memory_NonExistent_ReturnsEmpty()
 	{
 		var fs = new MemoryFileSystem();
-		var dirs = IOHelper.GetDirectories("/nonexistent", fs);
+		var dirs = fs.GetDirectories("/nonexistent");
 
 		dirs.Any().AssertFalse();
 	}
@@ -210,7 +210,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root/test2");
 		fs.CreateDirectory("/root/other");
 
-		var dirs = IOHelper.GetDirectories("/root", fs, "test*").ToArray();
+		var dirs = fs.GetDirectories("/root", "test*").ToArray();
 
 		dirs.Length.AssertEqual(2);
 	}
@@ -226,7 +226,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root/dir1");
 		fs.CreateDirectory("/root/dir2");
 
-		var dirs = (await IOHelper.GetDirectoriesAsync("/root", fs, cancellationToken: CancellationToken)).ToArray();
+		var dirs = (await fs.GetDirectoriesAsync("/root", cancellationToken: CancellationToken)).ToArray();
 
 		dirs.Length.AssertEqual(2);
 	}
@@ -235,7 +235,7 @@ public class IOHelperTests : BaseTestClass
 	public async Task GetDirectoriesAsync_Memory_NonExistent_ReturnsEmpty()
 	{
 		var fs = new MemoryFileSystem();
-		var dirs = await IOHelper.GetDirectoriesAsync("/nonexistent", fs, cancellationToken: CancellationToken);
+		var dirs = await fs.GetDirectoriesAsync("/nonexistent", cancellationToken: CancellationToken);
 
 		dirs.Any().AssertFalse();
 	}
@@ -254,7 +254,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/b.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(2);
 
-		var files = (await IOHelper.GetFilesAsync("/root", fs, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+		var files = (await fs.GetFilesAsync("/root", cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 
 		files.Length.AssertEqual(2);
 		files[0].ComparePaths("/root/a.txt").AssertTrue("/root/a.txt");
@@ -265,7 +265,7 @@ public class IOHelperTests : BaseTestClass
 	public async Task GetFilesAsync_Memory_NonExistent_ReturnsEmpty()
 	{
 		var fs = new MemoryFileSystem();
-		var files = await IOHelper.GetFilesAsync("/nonexistent", fs, cancellationToken: CancellationToken);
+		var files = await fs.GetFilesAsync("/nonexistent", cancellationToken: CancellationToken);
 
 		files.Any().AssertFalse();
 	}
@@ -282,7 +282,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/data.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(3);
 
-		var files = (await IOHelper.GetFilesAsync("/root", fs, "*.txt", cancellationToken: CancellationToken)).ToArray();
+		var files = (await fs.GetFilesAsync("/root", "*.txt", cancellationToken: CancellationToken)).ToArray();
 
 		files.Length.AssertEqual(2);
 	}
@@ -299,7 +299,7 @@ public class IOHelperTests : BaseTestClass
 		var data = new byte[] { 1, 2, 3, 4, 5 };
 		using var source = new MemoryStream(data);
 
-		source.Save("/root/output.bin", fs);
+		fs.Save(source, "/root/output.bin");
 
 		fs.FileExists("/root/output.bin").AssertTrue();
 		using var read = fs.Open("/root/output.bin", FileMode.Open, FileAccess.Read);
@@ -317,7 +317,7 @@ public class IOHelperTests : BaseTestClass
 		using var source = new MemoryStream(data);
 		source.Position = 1;
 
-		source.Save("/root/output.bin", fs);
+		fs.Save(source, "/root/output.bin");
 
 		source.Position.AssertEqual(1);
 	}
@@ -329,7 +329,7 @@ public class IOHelperTests : BaseTestClass
 		fs.CreateDirectory("/root");
 		var data = new byte[] { 10, 20, 30, 40 };
 
-		var result = data.Save("/root/data.bin", fs);
+		var result = fs.Save(data, "/root/data.bin");
 
 		result.AssertSame(data);
 		fs.FileExists("/root/data.bin").AssertTrue();
@@ -347,7 +347,7 @@ public class IOHelperTests : BaseTestClass
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
-		var result = data.TrySave("/root/file.bin", fs, ex => caught = ex);
+		var result = fs.TrySave(data, "/root/file.bin", ex => caught = ex);
 
 		result.AssertTrue();
 		caught.AssertNull();
@@ -362,7 +362,7 @@ public class IOHelperTests : BaseTestClass
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
-		var result = data.TrySave("/nonexistent/file.bin", fs, ex => caught = ex);
+		var result = fs.TrySave(data, "/nonexistent/file.bin", ex => caught = ex);
 
 		result.AssertFalse();
 		caught.AssertNotNull();
@@ -377,7 +377,7 @@ public class IOHelperTests : BaseTestClass
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
-		var result = data.TrySave("/nonexistent/file.bin", fs, ex => caught = ex);
+		var result = fs.TrySave(data, "/nonexistent/file.bin", ex => caught = ex);
 
 		result.AssertFalse();
 		caught.AssertNotNull();
@@ -396,7 +396,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.CheckDirContainFiles("/root", fs).AssertTrue();
+		fs.CheckDirContainFiles("/root").AssertTrue();
 	}
 
 	[TestMethod]
@@ -407,7 +407,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/sub/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.CheckDirContainFiles("/root", fs).AssertTrue();
+		fs.CheckDirContainFiles("/root").AssertTrue();
 	}
 
 	[TestMethod]
@@ -416,7 +416,7 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/root/sub");
 
-		IOHelper.CheckDirContainFiles("/root", fs).AssertFalse();
+		fs.CheckDirContainFiles("/root").AssertFalse();
 	}
 
 	[TestMethod]
@@ -424,7 +424,7 @@ public class IOHelperTests : BaseTestClass
 	{
 		var fs = new MemoryFileSystem();
 
-		IOHelper.CheckDirContainFiles("/nonexistent", fs).AssertFalse();
+		fs.CheckDirContainFiles("/nonexistent").AssertFalse();
 	}
 
 	#endregion
@@ -439,7 +439,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.CheckDirContainsAnything("/root", fs).AssertTrue();
+		fs.CheckDirContainsAnything("/root").AssertTrue();
 	}
 
 	[TestMethod]
@@ -448,7 +448,7 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/root/sub");
 
-		IOHelper.CheckDirContainsAnything("/root", fs).AssertTrue();
+		fs.CheckDirContainsAnything("/root").AssertTrue();
 	}
 
 	[TestMethod]
@@ -457,7 +457,7 @@ public class IOHelperTests : BaseTestClass
 		var fs = new MemoryFileSystem();
 		fs.CreateDirectory("/root");
 
-		IOHelper.CheckDirContainsAnything("/root", fs).AssertFalse();
+		fs.CheckDirContainsAnything("/root").AssertFalse();
 	}
 
 	[TestMethod]
@@ -465,7 +465,7 @@ public class IOHelperTests : BaseTestClass
 	{
 		var fs = new MemoryFileSystem();
 
-		IOHelper.CheckDirContainsAnything("/nonexistent", fs).AssertFalse();
+		fs.CheckDirContainsAnything("/nonexistent").AssertFalse();
 	}
 
 	#endregion
@@ -477,7 +477,7 @@ public class IOHelperTests : BaseTestClass
 	{
 		var fs = new MemoryFileSystem();
 
-		IOHelper.IsFileLocked("/nonexistent.txt", fs).AssertFalse();
+		fs.IsFileLocked("/nonexistent.txt").AssertFalse();
 	}
 
 	[TestMethod]
@@ -488,7 +488,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
 			s.WriteByte(1);
 
-		IOHelper.IsFileLocked("/root/file.txt", fs).AssertFalse();
+		fs.IsFileLocked("/root/file.txt").AssertFalse();
 	}
 
 	[TestMethod]
@@ -500,7 +500,7 @@ public class IOHelperTests : BaseTestClass
 		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write, FileShare.None))
 		{
 			s.WriteByte(1);
-			IOHelper.IsFileLocked("/root/file.txt", fs).AssertTrue();
+			fs.IsFileLocked("/root/file.txt").AssertTrue();
 		}
 	}
 
@@ -536,7 +536,7 @@ public class IOHelperTests : BaseTestClass
 			fs.CreateDirectory(Path.Combine(root, "a"));
 			fs.CreateDirectory(Path.Combine(root, "b"));
 
-			var dirs = (await IOHelper.GetDirectoriesAsync(root, fs, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+			var dirs = (await fs.GetDirectoriesAsync(root, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 			var expected = new[] { Path.Combine(root, "a"), Path.Combine(root, "b") }.OrderBy(x => x).ToArray();
 
 			dirs.AssertEqual(expected);
@@ -562,7 +562,7 @@ public class IOHelperTests : BaseTestClass
 			fs.WriteAllText(Path.Combine(root, "f1.txt"), "a");
 			fs.WriteAllText(Path.Combine(root, "f2.txt"), "b");
 
-			var files = (await IOHelper.GetFilesAsync(root, fs, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+			var files = (await fs.GetFilesAsync(root, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 			var expected = new[] { Path.Combine(root, "f1.txt"), Path.Combine(root, "f2.txt") }.OrderBy(x => x).ToArray();
 
 			files.AssertEqual(expected);
@@ -582,7 +582,7 @@ public class IOHelperTests : BaseTestClass
 	{
 		var fs = LocalFileSystem.Instance;
 		var path = fs.GetTempPath("NonExistent");
-		var res = await IOHelper.GetDirectoriesAsync(path, fs, cancellationToken: CancellationToken);
+		var res = await fs.GetDirectoriesAsync(path, cancellationToken: CancellationToken);
 		res.Any().AssertFalse();
 	}
 
@@ -602,7 +602,7 @@ public class IOHelperTests : BaseTestClass
 			var thrown = false;
 			try
 			{
-				await IOHelper.GetFilesAsync(root, fs, cancellationToken: cts.Token);
+				await fs.GetFilesAsync(root, cancellationToken: cts.Token);
 			}
 			catch (OperationCanceledException)
 			{
@@ -632,7 +632,7 @@ public class IOHelperTests : BaseTestClass
 			fs.CreateDirectory(Path.Combine(root, "d1"));
 			fs.CreateDirectory(Path.Combine(root, "d2"));
 
-			var result = await IOHelper.GetDirectoriesAsync(root, fs, cancellationToken: CancellationToken);
+			var result = await fs.GetDirectoriesAsync(root, cancellationToken: CancellationToken);
 			var arr = result.ToArray();
 
 			// remove original directory

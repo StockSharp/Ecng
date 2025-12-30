@@ -595,7 +595,7 @@ public class CollectionHelperTests : BaseTestClass
 		var collection = new[] { 1, 2, 3, 4, 5, 6, 7 };
 
 		// Act
-		var batches = collection.Batch(3).ToArray();
+		var batches = collection.Chunk(3).ToArray();
 
 		// Assert
 		batches.Length.AssertEqual(3);
@@ -624,7 +624,7 @@ public class CollectionHelperTests : BaseTestClass
 		var collection = new[] { 1, 2, 2, 3, 3, 3 };
 
 		// Act
-		var set = collection.ToSet();
+		var set = collection.ToHashSet();
 
 		// Assert
 		set.Count.AssertEqual(3);
@@ -1532,22 +1532,6 @@ public class CollectionHelperTests : BaseTestClass
 		dict.Count.AssertEqual(2);
 		dict[0].Count().AssertEqual(2); // even numbers
 		dict[1].Count().AssertEqual(3); // odd numbers
-	}
-
-	[TestMethod]
-	public void Batch_WithFunction_TransformsBatches()
-	{
-		// Arrange
-		var items = new[] { 1, 2, 3, 4, 5 };
-
-		// Act
-		var batches = items.Batch(2, batch => batch.Sum(), () => false).ToArray();
-
-		// Assert
-		batches.Length.AssertEqual(3);
-		batches[0].AssertEqual(3);  // 1 + 2
-		batches[1].AssertEqual(7);  // 3 + 4
-		batches[2].AssertEqual(5);  // 5
 	}
 
 	[TestMethod]

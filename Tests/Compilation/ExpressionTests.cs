@@ -22,7 +22,7 @@ public class ExpressionTests : BaseTestClass
 	[ClassInitialize]
 	public static void Init(TestContext _)
 	{
-		_cacheDir.SafeDeleteDir(_fileSystem);
+		_fileSystem.SafeDeleteDir(_cacheDir);
 	}
 
 	[TestMethod]
