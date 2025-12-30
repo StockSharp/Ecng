@@ -1,4 +1,4 @@
-namespace Ecng.Serialization;
+namespace Ecng.IO;
 
 using System;
 using System.Diagnostics;

@@ -1,8 +1,8 @@
-namespace Ecng.Tests.Serialization;
+namespace Ecng.Tests.IO;
 
 using System.Text;
 
-using Ecng.Serialization;
+using Ecng.IO;
 
 [TestClass]
 public class TransactionFileStreamTests : BaseTestClass

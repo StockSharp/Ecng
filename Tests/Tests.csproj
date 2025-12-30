@@ -26,7 +26,7 @@
     <ProjectReference Include="..\Backup.Yandex\Backup.Yandex.csproj" />
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
-    <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\IO.Compression\IO.Compression.csproj" />
     <ProjectReference Include="..\Logging\Logging.csproj" />
     <ProjectReference Include="..\Net.Clients\Net.Clients.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />

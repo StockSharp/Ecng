@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 using System;
 using System.Collections.Generic;

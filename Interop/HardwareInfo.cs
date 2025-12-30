@@ -99,7 +99,7 @@ public static class HardwareInfo
 		var errors = new List<string>();
 		var result = new List<string>();
 
-		var res = await IOHelper.ExecuteAsync("lsblk", "-r -o MOUNTPOINT,UUID", str =>
+		var res = await ProcessExtensions.ExecuteAsync("lsblk", "-r -o MOUNTPOINT,UUID", str =>
 		{
 			var m = LsblkRegex().Match(str);
 			if (m.Success)
@@ -124,7 +124,7 @@ public static class HardwareInfo
 
 		// Execute system_profiler with JSON output format
 		// -json flag is available since macOS High Sierra (10.13)
-		var res = await IOHelper.ExecuteAsync(
+		var res = await ProcessExtensions.ExecuteAsync(
 			"system_profiler",
 			"SPHardwareDataType -json",
 			str => output.AppendLine(str),

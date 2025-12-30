@@ -1,8 +1,10 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Ecng.Common;
 
 /// <summary>
 /// Implementation of <see cref="IFileSystem"/> over the local file system (<see cref="System.IO"/>).

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Security;
 
 using Ecng.Common;
+using Ecng.IO;
 
 /// <summary>
 /// Crypto helper.

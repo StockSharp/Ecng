@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Localization;
+using Ecng.IO;
 
 using Nito.AsyncEx;
 

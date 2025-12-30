@@ -1,6 +1,6 @@
 # Ecng.Common
 
-Core utilities and extension methods for everyday .NET development. Includes string helpers, type conversion, time utilities, CSV parsing, and more.
+Core utilities and extension methods for everyday .NET development. Includes string helpers, type conversion, time utilities, and more.
 
 ## String Utilities
 

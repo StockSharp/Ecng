@@ -3,7 +3,7 @@
 using System.IO.Compression;
 using System.Text;
 
-using Ecng.IO;
+using Ecng.IO.Compression;
 
 [TestClass]
 public class CompressTests : BaseTestClass

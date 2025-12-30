@@ -8,7 +8,8 @@
 // http://www.blackbeltcoder.com
 //
 
-using Nito.AsyncEx;
+namespace Ecng.IO;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,7 +18,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ecng.Common;
+using Nito.AsyncEx;
+
+using Ecng.Common;
 
 /// <summary>
 /// Determines how empty lines are interpreted when reading CSV files.

@@ -2,6 +2,8 @@
 
 using Ecng.IO.Fossil;
 
+using Ecng.IO.Compression;
+
 [TestClass]
 public class FossilTests : BaseTestClass
 {

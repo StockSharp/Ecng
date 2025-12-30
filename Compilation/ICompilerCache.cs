@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Ecng.Collections;
 using Ecng.Common;
 using Ecng.Security;
+using Ecng.IO;
 
 /// <summary>
 /// Defines methods for caching compiled assemblies.

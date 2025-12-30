@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Text.RegularExpressions;
+
+using Ecng.Common;
 
 /// <summary>
 /// In-memory implementation of <see cref="IFileSystem"/> useful for tests and environments without disk access.

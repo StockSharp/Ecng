@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Common;
 
+using System;
+
 /// <summary>
 /// Provides extension methods for converting file sizes between bytes, kilobytes, and megabytes.
 /// </summary>
@@ -32,4 +34,31 @@ public static class FileSizesExtensions
 	/// <param name="mbytes">The number of megabytes.</param>
 	/// <returns>The equivalent number of bytes.</returns>
 	public static long FromMB(this long mbytes) => mbytes * FileSizes.MB;
+
+	private static readonly string[] _suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
+
+	/// <summary>
+	/// Converts a byte count to a human-readable file size string.
+	/// </summary>
+	/// <param name="byteCount">The number of bytes.</param>
+	/// <returns>A formatted string representing the file size.</returns>
+	public static string ToHumanReadableFileSize(this long byteCount)
+	{
+		int place;
+		int num;
+
+		if (byteCount == 0)
+		{
+			num = 0;
+			place = 0;
+		}
+		else
+		{
+			var bytes = byteCount.Abs();
+			place = (int)Math.Log(bytes, FileSizes.KB).Floor();
+			num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(FileSizes.KB, place), 1));
+		}
+
+		return num + " " + _suf[place];
+	}
 }

@@ -6,6 +6,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 
 using Ecng.Common;
+using Ecng.IO;
 
 #if NETCOREAPP
 using CoreNativeLib = System.Runtime.InteropServices.NativeLibrary;

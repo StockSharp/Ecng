@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 using System;
 using System.Threading;
@@ -14,6 +14,8 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 
 using Nito.AsyncEx;
+
+using Ecng.Common;
 
 /// <summary>
 /// Provides helper methods for file and directory operations.
@@ -133,113 +135,6 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Executes a process with specified arguments and output handlers.
-	/// </summary>
-	/// <param name="fileName">The process file name.</param>
-	/// <param name="arg">Arguments for the process.</param>
-	/// <param name="output">Action to handle standard output.</param>
-	/// <param name="error">Action to handle standard error.</param>
-	/// <param name="infoHandler">Optional action to modify process start info.</param>
-	/// <param name="waitForExit">TimeSpan to wait for process exit.</param>
-	/// <param name="stdInput">Standard input to write to the process.</param>
-	/// <param name="priority">Optional process priority.</param>
-	/// <returns>The process exit code.</returns>
-	public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null, ProcessPriorityClass? priority = null)
-	{
-		var source = new CancellationTokenSource();
-
-		if (waitForExit != default)
-			source.CancelAfter(waitForExit);
-
-		return AsyncContext.Run(() => ExecuteAsync(fileName, arg, output, error, infoHandler, stdInput, priority, source.Token));
-	}
-
-	/// <summary>
-	/// Asynchronously executes a process with specified arguments and output handlers.
-	/// </summary>
-	/// <param name="fileName">The file name to execute.</param>
-	/// <param name="arg">Arguments for the process.</param>
-	/// <param name="output">Action to handle standard output.</param>
-	/// <param name="error">Action to handle standard error.</param>
-	/// <param name="infoHandler">Optional action to modify process start info.</param>
-	/// <param name="stdInput">Standard input to send to the process.</param>
-	/// <param name="priority">Optional process priority.</param>
-	/// <param name="cancellationToken">A cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation, containing the process exit code.</returns>
-	public static async Task<int> ExecuteAsync(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, string stdInput = null, ProcessPriorityClass? priority = null, CancellationToken cancellationToken = default)
-	{
-		if (output is null)
-			throw new ArgumentNullException(nameof(output));
-
-		if (error is null)
-			throw new ArgumentNullException(nameof(error));
-
-		var input = !stdInput.IsEmpty();
-
-		var procInfo = new ProcessStartInfo(fileName, arg)
-		{
-			UseShellExecute = false,
-			RedirectStandardError = true,
-			RedirectStandardOutput = true,
-			RedirectStandardInput = input,
-			CreateNoWindow = true,
-			WindowStyle = ProcessWindowStyle.Hidden
-		};
-
-		infoHandler?.Invoke(procInfo);
-
-		using var process = new Process
-		{
-			EnableRaisingEvents = true,
-			StartInfo = procInfo
-		};
-
-		process.Start();
-
-		// Set process priority if provided.
-		// https://stackoverflow.com/a/1010377/8029915
-		if (priority is not null)
-			process.PriorityClass = priority.Value;
-
-		var locker = new Lock();
-
-		if (input)
-		{
-			process.StandardInput.WriteLine(stdInput);
-			process.StandardInput.Close();
-		}
-
-		async Task ReadProcessOutput(TextReader reader, Action<string> action)
-		{
-			do
-			{
-				var str = await reader.ReadLineAsync().WithCancellation(cancellationToken);
-				if (str is null)
-					break;
-
-				if (!str.IsEmptyOrWhiteSpace())
-				{
-					using (locker.EnterScope())
-						action(str);
-				}
-
-				cancellationToken.ThrowIfCancellationRequested();
-			}
-			while (true);
-		}
-
-		var task1 = ReadProcessOutput(process.StandardOutput, output);
-		var task2 = ReadProcessOutput(process.StandardError, error);
-
-		await task1;
-		await task2;
-
-		await process.WaitForExitAsync(cancellationToken);
-
-		return process.ExitCode;
-	}
-
-	/// <summary>
 	/// Creates the directory for the specified file if it does not already exist.
 	/// </summary>
 	/// <param name="fullPath">The full path to the file.</param>
@@ -267,33 +162,6 @@ public static class IOHelper
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CreateDirIfNotExists(this string fullPath)
 		=> fullPath.CreateDirIfNotExists(LocalFileSystem.Instance);
-
-	private static readonly string[] _suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
-
-	/// <summary>
-	/// Converts a byte count to a human-readable file size string.
-	/// </summary>
-	/// <param name="byteCount">The number of bytes.</param>
-	/// <returns>A formatted string representing the file size.</returns>
-	public static string ToHumanReadableFileSize(this long byteCount)
-	{
-		int place;
-		int num;
-
-		if (byteCount == 0)
-		{
-			num = 0;
-			place = 0;
-		}
-		else
-		{
-			var bytes = byteCount.Abs();
-			place = (int)Math.Log(bytes, FileSizes.KB).Floor();
-			num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(FileSizes.KB, place), 1));
-		}
-
-		return num + " " + _suf[place];
-	}
 
 	/// <summary>
 	/// Safely deletes a directory.
@@ -543,49 +411,6 @@ public static class IOHelper
 			Thread.Sleep(sleep);
 
 		return Directory.Exists(dir);
-	}
-
-	/// <summary>
-	/// Opens the specified URL or file path using the default system launcher.
-	/// </summary>
-	/// <param name="url">The URL or file path to open.</param>
-	/// <param name="raiseError">Determines if an exception should be raised if opening fails.</param>
-	/// <returns>True if the operation is successful; otherwise, false.</returns>
-	public static bool OpenLink(this string url, bool raiseError)
-	{
-		if (url.IsEmpty())
-			throw new ArgumentNullException(nameof(url));
-
-		// https://stackoverflow.com/a/21836079
-
-		try
-		{
-			// https://github.com/dotnet/wpf/issues/2566
-
-			var procInfo = new ProcessStartInfo(url)
-			{
-				UseShellExecute = true,
-			};
-
-			Process.Start(procInfo);
-			return true;
-		}
-		catch (Win32Exception)
-		{
-			try
-			{
-				var launcher = url.StartsWithIgnoreCase("http") ? "IExplore.exe" : "explorer.exe";
-				Process.Start(launcher, url);
-				return true;
-			}
-			catch
-			{
-				if (raiseError)
-					throw;
-
-				return false;
-			}
-		}
 	}
 
 	/// <summary>
@@ -1030,37 +855,6 @@ public static class IOHelper
 	}
 
 	#endregion
-
-	/// <summary>
-	/// Returns the size in bytes of an unmanaged type T.
-	/// </summary>
-	/// <typeparam name="T">The unmanaged type.</typeparam>
-	/// <returns>The size in bytes of the specified type.</returns>
-	public static int SizeOf<T>()
-	{
-		return SizeOf(typeof(T));
-	}
-
-	/// <summary>
-	/// Returns the size in bytes of the specified unmanaged type.
-	/// </summary>
-	/// <param name="type">The type whose size is to be computed.</param>
-	/// <returns>The size in bytes of the specified type.</returns>
-	public static int SizeOf(this Type type)
-	{
-		if (type.IsDateTime())
-			type = typeof(long);
-		else if (type == typeof(TimeSpan))
-			type = typeof(long);
-		else if (type.IsEnum())
-			type = type.GetEnumBaseType();
-		else if (type == typeof(bool))
-			type = typeof(byte);
-		else if (type == typeof(char))
-			type = typeof(short);
-
-		return Marshal.SizeOf(type);
-	}
 
 	/// <summary>
 	/// Saves the content of the stream to a file specified by fileName.

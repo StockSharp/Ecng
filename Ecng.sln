@@ -85,6 +85,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Localization", "Localizatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Licensing", "Licensing\Licensing.csproj", "{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Compression", "IO.Compression\IO.Compression.csproj", "{D7BCBDDA-CA7E-411F-80D7-C4B114E5BC95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -243,6 +245,10 @@ Global
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7BCBDDA-CA7E-411F-80D7-C4B114E5BC95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7BCBDDA-CA7E-411F-80D7-C4B114E5BC95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7BCBDDA-CA7E-411F-80D7-C4B114E5BC95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7BCBDDA-CA7E-411F-80D7-C4B114E5BC95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

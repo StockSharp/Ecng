@@ -4,9 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
-using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Provides helper methods for working with types and related operations.
@@ -469,4 +470,35 @@ public static class TypeHelper
 	/// <returns>Returns true if the URI is web-based.</returns>
 	public static bool IsWebLink(this Uri uri)
 		=> uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeFtp;
+
+	/// <summary>
+	/// Returns the size in bytes of an unmanaged type T.
+	/// </summary>
+	/// <typeparam name="T">The unmanaged type.</typeparam>
+	/// <returns>The size in bytes of the specified type.</returns>
+	public static int SizeOf<T>()
+	{
+		return SizeOf(typeof(T));
+	}
+
+	/// <summary>
+	/// Returns the size in bytes of the specified unmanaged type.
+	/// </summary>
+	/// <param name="type">The type whose size is to be computed.</param>
+	/// <returns>The size in bytes of the specified type.</returns>
+	public static int SizeOf(this Type type)
+	{
+		if (type.IsDateTime())
+			type = typeof(long);
+		else if (type == typeof(TimeSpan))
+			type = typeof(long);
+		else if (type.IsEnum())
+			type = type.GetEnumBaseType();
+		else if (type == typeof(bool))
+			type = typeof(byte);
+		else if (type == typeof(char))
+			type = typeof(short);
+
+		return Marshal.SizeOf(type);
+	}
 }

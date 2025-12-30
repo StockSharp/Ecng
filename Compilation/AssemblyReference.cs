@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Serialization;
+using Ecng.IO;
 
 /// <summary>
 /// The reference to the .NET assembly.

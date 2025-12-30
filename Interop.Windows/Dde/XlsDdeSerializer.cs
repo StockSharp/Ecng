@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 
 using Ecng.Common;
+using Ecng.IO;
 
 /// <summary>
 /// Provides methods for serializing and deserializing data to and from a format compatible with Excel DDE.

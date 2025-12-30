@@ -1,4 +1,4 @@
-# Ecng.IO
+# Ecng.IO.Compression
 
 A comprehensive .NET library providing compression, decompression, and file system utilities with async support.
 
@@ -20,10 +20,10 @@ Ecng.IO is part of the Ecng system framework by StockSharp, offering powerful he
 
 ## Installation
 
-Add a reference to the Ecng.IO project or NuGet package in your project.
+Add a reference to the Ecng.IO.Compression project or NuGet package in your project.
 
 ```xml
-<ProjectReference Include="path\to\Ecng.IO\IO.csproj" />
+<ProjectReference Include="path\to\Ecng.IO.Compression\IO.Compression.csproj" />
 ```
 
 ## Features
@@ -229,7 +229,7 @@ Console.WriteLine($"Expected output size: {outputSize} bytes");
 
 ### 4. File and Directory Operations
 
-The library extends the functionality available through `Ecng.Common.IOHelper`.
+The library extends the functionality available through `IOHelper`.
 
 #### Directory Management
 

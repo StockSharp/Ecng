@@ -1,16 +1,20 @@
-﻿namespace Ecng.Common;
+﻿#if !NET5_0_OR_GREATER
+namespace System.Diagnostics;
 
-#if !NET5_0_OR_GREATER
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.IO;
 
-static class ProcessExtensions
+using Ecng.Common;
+
+/// <summary>
+/// Provides extension methods for <see cref="Process"/>.
+/// </summary>
+public static class ProcessExtensions
 {
-	public static bool Associated(this Process process)
+	private static bool Associated(this Process process)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
@@ -102,8 +106,8 @@ static class ProcessExtensions
 
 		var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		EventHandler handler = (_, _) => tcs.TrySetResult(true);
-		process.Exited += handler;
+        void handler(object _, EventArgs __) => tcs.TrySetResult(true);
+        process.Exited += handler;
 
 		try
 		{

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Ecng.Common;
+using Ecng.IO;
 using Ecng.Serialization;
 
 /// <summary>
