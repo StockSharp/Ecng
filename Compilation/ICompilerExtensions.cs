@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.IO;
 
 /// <summary>
 /// Provides extension methods for the ICompiler interface and compilation results.
@@ -51,10 +52,11 @@ public static class ICompilerExtensions
 	/// <param name="name">The name of the compilation unit.</param>
 	/// <param name="source">The source code as a string.</param>
 	/// <param name="refs">A collection of reference paths.</param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A task representing the asynchronous compilation, containing the compilation result.</returns>
-	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, CancellationToken cancellationToken = default)
-		=> Compile(compiler, name, [source], refs, cancellationToken);
+	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, IFileSystem fileSystem, CancellationToken cancellationToken = default)
+		=> Compile(compiler, name, [source], refs, fileSystem, cancellationToken);
 
 	/// <summary>
 	/// Compiles the provided source code using the specified compiler and references.
@@ -63,18 +65,20 @@ public static class ICompilerExtensions
 	/// <param name="name">The name of the compilation unit.</param>
 	/// <param name="sources">The source code files as strings.</param>
 	/// <param name="refs">A collection of reference paths.</param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A task representing the asynchronous compilation, containing the compilation result.</returns>
-	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken = default)
-		=> compiler.Compile(name, sources, refs.Select(ToRef), cancellationToken);
+	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, IEnumerable<string> sources, IEnumerable<string> refs, IFileSystem fileSystem, CancellationToken cancellationToken = default)
+		=> compiler.Compile(name, sources, refs.Select(r => ToRef(r, fileSystem)), cancellationToken);
 
 	/// <summary>
 	/// Reads the file at the given path and returns its file name and binary content.
 	/// </summary>
 	/// <param name="path">The path to the reference file.</param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <returns>A tuple containing the file name and its binary content.</returns>
-	public static (string name, byte[] body) ToRef(this string path)
-		=> (Path.GetFileName(path), File.ReadAllBytes(path));
+	public static (string name, byte[] body) ToRef(this string path, IFileSystem fileSystem)
+		=> (Path.GetFileName(path), fileSystem.ReadAllBytes(path));
 
 	/// <summary>
 	/// Asynchronously extracts valid reference images from the provided references.

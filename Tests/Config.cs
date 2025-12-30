@@ -2,6 +2,7 @@ namespace Ecng.Tests;
 
 using System.Net.Http;
 
+using Ecng.IO;
 using Ecng.Reflection;
 
 [TestClass]
@@ -37,10 +38,14 @@ public static class Config
 
 	public static readonly HttpClient HttpClient = new();
 
-	public static string GetTempPath(string folderName)
+	public static string GetTempPath(this IFileSystem fileSystem, string folderName = default)
 	{
-		var path = Path.Combine(_tempRoot, Guid.NewGuid().ToString("N"), folderName);
-		Directory.CreateDirectory(path);
+		var path = Path.Combine(_tempRoot, Guid.NewGuid().ToString("N"));
+
+		if (!folderName.IsEmptyOrWhiteSpace())
+			path = Path.Combine(path, folderName);
+
+		fileSystem.CreateDirectory(path);
 		return path;
 	}
 }

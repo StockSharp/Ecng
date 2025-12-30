@@ -1,6 +1,7 @@
 namespace Ecng.Tests.IO;
 
 using System.Text;
+using System.IO;
 
 using Ecng.IO;
 
@@ -9,16 +10,17 @@ public class FileSystemTests : BaseTestClass
 {
 	private static void WithLocalFs(Action<IFileSystem, string> action)
 	{
-		var root = Config.GetTempPath("Fs");
+		var fs = LocalFileSystem.Instance;
+		var root = fs.GetTempPath();
 
 		try
 		{
-			Directory.CreateDirectory(root);
-			action(LocalFileSystem.Instance, root);
+			fs.CreateDirectory(root);
+			action(fs, root);
 		}
 		finally
 		{
-			try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch { }
+			try { if (fs.DirectoryExists(root)) fs.DeleteDirectory(root, true); } catch { }
 		}
 	}
 
@@ -1243,4 +1245,59 @@ public class FileSystemTests : BaseTestClass
 			fs.FileExists(file).AssertFalse();
 		});
 	}
+
+	[TestMethod]
+	public void SetReadOnly_GetAttributes_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "rofile.txt");
+			WriteAll(fs, file, "content");
+
+			// initially not read-only
+			(fs.GetAttributes(file).HasFlag(FileAttributes.ReadOnly)).AssertFalse();
+
+			fs.SetReadOnly(file, true);
+			(fs.GetAttributes(file).HasFlag(FileAttributes.ReadOnly)).AssertTrue();
+
+			// Memory FS should prevent deletion of read-only file
+			ThrowsExactly<UnauthorizedAccessException>(() => fs.DeleteFile(file));
+
+			// clear and delete
+			fs.SetReadOnly(file, false);
+			(fs.GetAttributes(file).HasFlag(FileAttributes.ReadOnly)).AssertFalse();
+			fs.DeleteFile(file);
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void SetReadOnly_GetAttributes_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var file = Path.Combine(root, "ro_local.txt");
+			WriteAll(fs, file, "content");
+
+			fs.SetReadOnly(file, true);
+			var attrs = fs.GetAttributes(file);
+			(attrs.HasFlag(FileAttributes.ReadOnly)).AssertTrue();
+
+			// Deletion behavior may differ across platforms. Accept either UnauthorizedAccessException or successful deletion.
+			try
+			{
+				fs.DeleteFile(file);
+				fs.FileExists(file).AssertFalse();
+			}
+			catch (UnauthorizedAccessException)
+			{
+				// expected on some platforms
+				// try clearing and deleting
+				fs.SetReadOnly(file, false);
+				fs.DeleteFile(file);
+				fs.FileExists(file).AssertFalse();
+			}
+		});
+	}
+
 }

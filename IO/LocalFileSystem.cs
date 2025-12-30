@@ -83,4 +83,29 @@ public class LocalFileSystem : IFileSystem
 	public DateTime GetLastWriteTimeUtc(string path) => File.GetLastWriteTimeUtc(path);
 	/// <inheritdoc />
 	public long GetFileLength(string path) => new FileInfo(path).Length;
+
+	/// <inheritdoc />
+	public void SetReadOnly(string path, bool isReadOnly)
+	{
+		if (path is null)
+			throw new ArgumentNullException(nameof(path));
+
+		var attrs = File.GetAttributes(path);
+
+		if (isReadOnly)
+			attrs |= FileAttributes.ReadOnly;
+		else
+			attrs &= ~FileAttributes.ReadOnly;
+
+		File.SetAttributes(path, attrs);
+	}
+
+	/// <inheritdoc />
+	public FileAttributes GetAttributes(string path)
+	{
+		if (path is null)
+			throw new ArgumentNullException(nameof(path));
+
+		return File.GetAttributes(path);
+	}
 }

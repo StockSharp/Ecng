@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
+using Ecng.IO;
 
 /// <summary>
 /// Extension class for <see cref="ExpressionFormula{TResult}"/>.
@@ -252,12 +253,13 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <typeparam name="TResult"></typeparam>
 	/// <param name="compiler"><see cref="ICompiler"/>.</param>
 	/// <param name="context"><see cref="ICompilerContext"/></param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <param name="expression">Text expression.</param>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	//// <returns>Compiled mathematical formula.</returns>
-	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
-		=> Compile<TResult>(compiler, context, GetType, expression, cache, cancellationToken);
+	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, IFileSystem fileSystem, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+		=> Compile<TResult>(compiler, context, fileSystem, GetType, expression, cache, cancellationToken);
 
 	private const string _lang = FileExts.CSharp;
 
@@ -267,16 +269,18 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <typeparam name="TResult">Result type.</typeparam>
 	/// <param name="compiler"><see cref="ICompiler"/>.</param>
 	/// <param name="context"><see cref="ICompilerContext"/></param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <param name="getType">Function to get type from the assembly.</param>
 	/// <param name="expression">Text expression.</param>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, Func<Assembly, string, Type> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, IFileSystem fileSystem, Func<Assembly, string, Type> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
-		if (compiler is null)	throw new ArgumentNullException(nameof(compiler));
-		if (context is null)	throw new ArgumentNullException(nameof(context));
-		if (getType is null)	throw new ArgumentNullException(nameof(getType));
+		if (compiler is null)		throw new ArgumentNullException(nameof(compiler));
+		if (context is null)		throw new ArgumentNullException(nameof(context));
+		if (getType is null)		throw new ArgumentNullException(nameof(getType));
+		if (fileSystem is null)		throw new ArgumentNullException(nameof(fileSystem));
 
 		try
 		{
@@ -296,16 +300,14 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			if (cache?.TryGet(_lang, sources, refs, out var assemblyBody) != true)
 			{
-				var result = await compiler.Compile("Formula", sources, refs, cancellationToken).NoWait();
+				var result = await compiler.Compile("Formula", sources, refs, fileSystem, cancellationToken).NoWait();
 
 				assembly = result.GetAssembly(context);
 
 				if (assembly is null)
 					return ExpressionFormula<TResult>.CreateError(result.Errors.ErrorsOnly().Select(e => e.Message).JoinNL());
 				else
-				{
 					cache?.Add(_lang, sources, refs, ((AssemblyCompilationResult)result).AssemblyBody);
-				}
 			}
 			else
 				assembly = context.LoadFromBinary(assemblyBody);

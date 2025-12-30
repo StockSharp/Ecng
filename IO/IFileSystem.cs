@@ -50,7 +50,7 @@ public interface IFileSystem
 	/// <summary>
 	/// Deletes a file.
 	/// </summary>
-	/// <param name="path">Path to the file.</param>
+	/// <param name="path">The path to the file.</param>
 	void DeleteFile(string path);
 
 	/// <summary>
@@ -114,4 +114,20 @@ public interface IFileSystem
 	/// <param name="path">Path to the file.</param>
 	/// <returns>File size in bytes.</returns>
 	long GetFileLength(string path);
+
+	/// <summary>
+	/// Sets or clears the read-only attribute on the specified file.
+	/// Implementations should handle cases when the file does not exist gracefully.
+	/// </summary>
+	/// <param name="path">Path to the file.</param>
+	/// <param name="isReadOnly">True to set read-only; false to clear.</param>
+	void SetReadOnly(string path, bool isReadOnly);
+
+	/// <summary>
+	/// Gets file or directory attributes (equivalent to File.GetAttributes).
+	/// Implementations should throw appropriate exceptions if the path does not exist.
+	/// </summary>
+	/// <param name="path">Path to the file or directory.</param>
+	/// <returns>The <see cref="FileAttributes"/> for the given path.</returns>
+	FileAttributes GetAttributes(string path);
 }

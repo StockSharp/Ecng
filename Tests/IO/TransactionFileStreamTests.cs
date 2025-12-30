@@ -8,12 +8,8 @@ using Ecng.IO;
 public class TransactionFileStreamTests : BaseTestClass
 {
 	#region Helper Methods
-	private static string NewTempFilePath()
-	{
-		var dir = Config.GetTempPath(nameof(TransactionFileStreamTests));
-		Directory.CreateDirectory(dir);
-		return Path.Combine(dir, Guid.NewGuid().ToString("N"));
-	}
+
+	private string NewTempFilePath() => Config.GetTempPath(LocalFileSystem.Instance);
 
 	private static void WriteAllText(string path, string content)
 	{
@@ -1074,6 +1070,10 @@ public class TransactionFileStreamTests : BaseTestClass
 		public DateTime GetCreationTimeUtc(string path) => inner.GetCreationTimeUtc(path);
 		public DateTime GetLastWriteTimeUtc(string path) => inner.GetLastWriteTimeUtc(path);
 		public long GetFileLength(string path) => inner.GetFileLength(path);
+
+		public void SetReadOnly(string path, bool isReadOnly) => inner.SetReadOnly(path, isReadOnly);
+		public FileAttributes GetAttributes(string path) => inner.GetAttributes(path);
+
 	}
 
 	/// <summary>

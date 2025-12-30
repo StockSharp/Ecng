@@ -86,6 +86,6 @@ public class AssemblyReference : BaseCodeReference
 	/// <inheritdoc />
 	public override ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken)
 	{
-		return new([Location.ToRef()]);
+		return new([Location.ToRef(FileSystem)]);
 	}
 }

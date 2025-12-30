@@ -22,6 +22,7 @@ public class MemoryFileSystem : IFileSystem
 		public Dictionary<string, Node> Children; // directory children
 		public DateTime CreatedUtc;
 		public DateTime UpdatedUtc;
+		public FileAttributes Attributes;
 		public long Length => Data?.LongLength ?? 0L;
 		public List<FileHandle> OpenHandles; // tracks open file handles for FileShare enforcement
 	}
@@ -32,7 +33,15 @@ public class MemoryFileSystem : IFileSystem
 		public FileShare Share;
 	}
 
-	private readonly Node _root = new() { IsDirectory = true, Children = new(StringComparer.OrdinalIgnoreCase), CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
+	private readonly Node _root = new()
+	{
+		IsDirectory = true,
+		Attributes = FileAttributes.Directory,
+		Children = new(StringComparer.OrdinalIgnoreCase),
+		CreatedUtc = DateTime.UtcNow,
+		UpdatedUtc = DateTime.UtcNow
+	};
+
 	private readonly Lock _lock = new();
 
 	private static bool CanOpenWithExistingHandles(Node node, FileAccess newAccess, FileShare newShare)
@@ -102,7 +111,14 @@ public class MemoryFileSystem : IFileSystem
 			{
 				if (!createDirs)
 					return null;
-				next = new Node { IsDirectory = true, Children = new(StringComparer.OrdinalIgnoreCase), CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
+				next = new Node
+				{
+					IsDirectory = true,
+					Attributes = FileAttributes.Directory,
+					Children = new(StringComparer.OrdinalIgnoreCase),
+					CreatedUtc = DateTime.UtcNow,
+					UpdatedUtc = DateTime.UtcNow
+				};
 				cur.Children[part] = next;
 			}
 			cur = next;
@@ -213,11 +229,21 @@ public class MemoryFileSystem : IFileSystem
 			dir.Children ??= new(StringComparer.OrdinalIgnoreCase);
 			if (!dir.Children.TryGetValue(fileName, out var fileNode))
 			{
-				fileNode = new Node { IsDirectory = false, Data = [], CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
+				fileNode = new Node
+				{
+					IsDirectory = false,
+					Attributes = FileAttributes.Normal,
+					Data = [],
+					CreatedUtc = DateTime.UtcNow,
+					UpdatedUtc = DateTime.UtcNow
+				};
 				dir.Children[fileName] = fileNode;
 			}
 			if (fileNode.IsDirectory)
 				throw new IOException("Path points to a directory.");
+
+			if (exists && fileNode.Attributes.HasFlag(FileAttributes.ReadOnly) && access.HasFlag(FileAccess.Write))
+				throw new UnauthorizedAccessException("Access to the path is denied.");
 
 			// Check FileShare compatibility
 			if (!CanOpenWithExistingHandles(fileNode, access, share))
@@ -394,6 +420,9 @@ public class MemoryFileSystem : IFileSystem
 			var fileName = parts[parts.Length - 1];
 			if (dir.Children != null && dir.Children.TryGetValue(fileName, out var fileNode))
 			{
+				if (fileNode.Attributes.HasFlag(FileAttributes.ReadOnly))
+					throw new UnauthorizedAccessException("Access to the path is denied.");
+
 				if (!CanDeleteWithExistingHandles(fileNode))
 					throw new IOException("The process cannot access the file because it is being used by another process.");
 				dir.Children.Remove(fileName);
@@ -429,6 +458,7 @@ public class MemoryFileSystem : IFileSystem
 			{
 				IsDirectory = false,
 				Data = sourceNode.Data,
+				Attributes = sourceNode.Attributes,
 				CreatedUtc = sourceNode.CreatedUtc,
 				UpdatedUtc = DateTime.UtcNow
 			};
@@ -590,6 +620,70 @@ public class MemoryFileSystem : IFileSystem
 			if (node.IsDirectory)
 				throw new IOException("Path is a directory.");
 			return node.Length;
+		}
+	}
+
+	/// <inheritdoc />
+	public void SetReadOnly(string path, bool isReadOnly)
+	{
+		using (_lock.EnterScope())
+		{
+			var node = GetNode(path);
+
+			// As per interface contract: missing file should be handled gracefully.
+			if (node == null)
+				return;
+
+			if (isReadOnly)
+			{
+				node.Attributes |= FileAttributes.ReadOnly;
+				node.Attributes &= ~FileAttributes.Normal;
+			}
+			else
+			{
+				node.Attributes &= ~FileAttributes.ReadOnly;
+
+				// If it's a file and no other flags are set, keep it as Normal.
+				if (!node.IsDirectory)
+				{
+					var otherFlags = node.Attributes & ~(FileAttributes.Normal | FileAttributes.Directory);
+					if (otherFlags == 0)
+						node.Attributes = FileAttributes.Normal;
+				}
+			}
+
+			node.UpdatedUtc = DateTime.UtcNow;
+		}
+	}
+
+	/// <inheritdoc />
+	public FileAttributes GetAttributes(string path)
+	{
+		using (_lock.EnterScope())
+		{
+			var node = GetNode(path) ?? throw new FileNotFoundException(path);
+
+			var attrs = node.Attributes;
+
+			if (node.IsDirectory)
+			{
+				attrs |= FileAttributes.Directory;
+				attrs &= ~FileAttributes.Normal; // "Normal" is not used for directories
+				return attrs;
+			}
+
+			attrs &= ~FileAttributes.Directory;
+
+			// If any flag other than Normal is present, "Normal" must not be combined with it.
+			var otherThanNormal = attrs & ~FileAttributes.Normal;
+			if (otherThanNormal != 0)
+				attrs &= ~FileAttributes.Normal;
+
+			// If nothing left, treat as Normal.
+			if (attrs == 0)
+				attrs = FileAttributes.Normal;
+
+			return attrs;
 		}
 	}
 

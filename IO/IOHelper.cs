@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 using System.Globalization;
-
-using Nito.AsyncEx;
+#if !NET5_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 using Ecng.Common;
 
@@ -28,8 +26,37 @@ public static class IOHelper
 	/// <param name="path">The directory path to clear.</param>
 	/// <param name="filter">Optional filter to determine which files to delete.</param>
 	/// <returns>A DirectoryInfo for the cleared directory.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static DirectoryInfo ClearDirectory(string path, Func<string, bool> filter = null)
-		=> AsyncContext.Run(() => ClearDirectoryAsync(path, filter));
+		=> ClearDirectory(path, LocalFileSystem.Instance, filter);
+
+	/// <summary>
+	/// Clears the specified directory by deleting its files and subdirectories using the provided file system.
+	/// </summary>
+	/// <param name="path">The directory path to clear.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="filter">Optional filter to determine which files to delete.</param>
+	/// <returns>A DirectoryInfo for the cleared directory.</returns>
+	public static DirectoryInfo ClearDirectory(string path, IFileSystem fs, Func<string, bool> filter = null)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		foreach (var file in fs.EnumerateFiles(path))
+		{
+			if (filter != null && !filter(file))
+				continue;
+
+			fs.DeleteFile(file);
+		}
+
+		foreach (var dir in fs.EnumerateDirectories(path))
+		{
+			fs.DeleteDirectory(dir, true);
+		}
+
+		return new(path);
+	}
 
 	/// <summary>
 	/// Asynchronously clears the specified directory by deleting its files and subdirectories.
@@ -38,28 +65,41 @@ public static class IOHelper
 	/// <param name="filter">Optional filter to determine which files to delete.</param>
 	/// <param name="cancellationToken">A cancellation token.</param>
 	/// <returns>A task that represents the asynchronous operation, containing a DirectoryInfo for the cleared directory.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Task<DirectoryInfo> ClearDirectoryAsync(string path, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
-	{
-		var parentDir = new DirectoryInfo(path);
+		=> ClearDirectoryAsync(path, LocalFileSystem.Instance, filter, cancellationToken);
 
-		foreach (var file in parentDir.EnumerateFiles())
+	/// <summary>
+	/// Asynchronously clears the specified directory by deleting its files and subdirectories using the provided file system.
+	/// </summary>
+	/// <param name="path">The directory path to clear.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="filter">Optional filter to determine which files to delete.</param>
+	/// <param name="cancellationToken">A cancellation token.</param>
+	/// <returns>A task that represents the asynchronous operation, containing a DirectoryInfo for the cleared directory.</returns>
+	public static Task<DirectoryInfo> ClearDirectoryAsync(string path, IFileSystem fs, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		foreach (var file in fs.EnumerateFiles(path))
 		{
-			if (filter != null && !filter(file.FullName))
+			if (filter != null && !filter(file))
 				continue;
 
-			file.Delete();
+			fs.DeleteFile(file);
 
 			cancellationToken.ThrowIfCancellationRequested();
 		}
 
-		foreach (var dir in parentDir.EnumerateDirectories())
+		foreach (var dir in fs.EnumerateDirectories(path))
 		{
-			dir.Delete(true);
+			fs.DeleteDirectory(dir, true);
 
 			cancellationToken.ThrowIfCancellationRequested();
 		}
 
-		return parentDir.FromResult();
+		return new DirectoryInfo(path).FromResult();
 	}
 
 	/// <summary>
@@ -67,8 +107,33 @@ public static class IOHelper
 	/// </summary>
 	/// <param name="sourcePath">The source directory path.</param>
 	/// <param name="destPath">The destination directory path.</param>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static void CopyDirectory(string sourcePath, string destPath)
-		=> AsyncContext.Run(() => CopyDirectoryAsync(sourcePath, destPath));
+		=> CopyDirectory(sourcePath, destPath, LocalFileSystem.Instance);
+
+	/// <summary>
+	/// Copies the content of one directory to another using the provided file system.
+	/// </summary>
+	/// <param name="sourcePath">The source directory path.</param>
+	/// <param name="destPath">The destination directory path.</param>
+	/// <param name="fs">The file system to use.</param>
+	public static void CopyDirectory(string sourcePath, string destPath, IFileSystem fs)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		fs.CreateDirectory(destPath);
+
+		foreach (var fileName in fs.EnumerateFiles(sourcePath))
+		{
+			CopyAndMakeWritable(fileName, destPath, fs);
+		}
+
+		foreach (var directory in fs.EnumerateDirectories(sourcePath))
+		{
+			CopyDirectory(directory, Path.Combine(destPath, Path.GetFileName(directory)), fs);
+		}
+	}
 
 	/// <summary>
 	/// Asynchronously copies the content of one directory to another.
@@ -77,20 +142,35 @@ public static class IOHelper
 	/// <param name="destPath">The destination directory path.</param>
 	/// <param name="cancellationToken">A cancellation token.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public static async Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
-	{
-		Directory.CreateDirectory(destPath);
+	[Obsolete("Use overload with IFileSystem parameter.")]
+	public static Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
+		=> CopyDirectoryAsync(sourcePath, destPath, LocalFileSystem.Instance, cancellationToken);
 
-		foreach (var fileName in Directory.GetFiles(sourcePath))
+	/// <summary>
+	/// Asynchronously copies the content of one directory to another using the provided file system.
+	/// </summary>
+	/// <param name="sourcePath">The source directory path.</param>
+	/// <param name="destPath">The destination directory path.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="cancellationToken">A cancellation token.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public static async Task CopyDirectoryAsync(string sourcePath, string destPath, IFileSystem fs, CancellationToken cancellationToken = default)
+	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
+		fs.CreateDirectory(destPath);
+
+		foreach (var fileName in fs.EnumerateFiles(sourcePath))
 		{
-			CopyAndMakeWritable(fileName, destPath);
+			CopyAndMakeWritable(fileName, destPath, fs);
 
 			cancellationToken.ThrowIfCancellationRequested();
 		}
 
-		foreach (var directory in Directory.GetDirectories(sourcePath))
+		foreach (var directory in fs.EnumerateDirectories(sourcePath))
 		{
-			await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), cancellationToken).NoWait();
+			await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), fs, cancellationToken).NoWait();
 		}
 	}
 
@@ -100,12 +180,30 @@ public static class IOHelper
 	/// <param name="fileName">The source file path.</param>
 	/// <param name="destPath">The destination directory path.</param>
 	/// <returns>The destination file path.</returns>
+	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static string CopyAndMakeWritable(string fileName, string destPath)
+		=> CopyAndMakeWritable(fileName, destPath, LocalFileSystem.Instance);
+
+	/// <summary>
+	/// Copies a file to the specified destination and makes the copy writable using the provided file system.
+	/// </summary>
+	/// <param name="fileName">The source file path.</param>
+	/// <param name="destPath">The destination directory path.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <returns>The destination file path.</returns>
+	public static string CopyAndMakeWritable(string fileName, string destPath, IFileSystem fs)
 	{
+		if (fs is null)
+			throw new ArgumentNullException(nameof(fs));
+
 		var destFile = Path.Combine(destPath, Path.GetFileName(fileName));
 
-		File.Copy(fileName, destFile, true);
-		new FileInfo(destFile).IsReadOnly = false;
+		fs.CopyFile(fileName, destFile, true);
+		try
+		{
+			fs.SetReadOnly(destFile, false);
+		}
+		catch { }
 
 		return destFile;
 	}
@@ -190,13 +288,14 @@ public static class IOHelper
 	/// <summary>
 	/// Creates a temporary directory and returns its path.
 	/// </summary>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <returns>The path to the new temporary directory.</returns>
-	public static string CreateTempDir()
+	public static string CreateTempDir(this IFileSystem fileSystem)
 	{
 		var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Remove("-"));
 
-		if (!Directory.Exists(path))
-			Directory.CreateDirectory(path);
+		if (!fileSystem.DirectoryExists(path))
+			fileSystem.CreateDirectory(path);
 
 		return path;
 	}
@@ -363,29 +462,32 @@ public static class IOHelper
 	/// <summary>
 	/// Deletes a directory in a blocking manner.
 	/// </summary>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <param name="dir">The directory to delete.</param>
 	/// <param name="isRecursive">Indicates whether to delete subdirectories recursively.</param>
 	/// <param name="iterCount">Number of iterations to attempt deletion.</param>
 	/// <param name="sleep">Sleep duration between attempts in milliseconds.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>True if the directory still exists after deletion attempts; otherwise, false.</returns>
-	public static bool BlockDeleteDir(string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0)
+	public static async ValueTask<bool> BlockDeleteDirAsync(this IFileSystem fileSystem, string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0, CancellationToken cancellationToken = default)
 	{
-		if (isRecursive)
+        if (fileSystem is null)
+            throw new ArgumentNullException(nameof(fileSystem));
+
+        if (isRecursive)
 		{
-			// https://stackoverflow.com/a/329502/8029915
-			// Delete files and directories recursively.
-			var files = Directory.GetFiles(dir);
-			var dirs = Directory.GetDirectories(dir);
+			var files = fileSystem.EnumerateFiles(dir);
+			var dirs = fileSystem.EnumerateDirectories(dir);
 
 			foreach (var file in files)
 			{
 				File.SetAttributes(file, FileAttributes.Normal);
-				File.Delete(file);
+				fileSystem.DeleteFile(file);
 			}
 
 			foreach (var sub in dirs)
 			{
-				BlockDeleteDir(sub, true, iterCount, sleep);
+				await BlockDeleteDirAsync(fileSystem, sub, true, iterCount, sleep, cancellationToken);
 			}
 		}
 
@@ -394,23 +496,23 @@ public static class IOHelper
 
 		try
 		{
-			Directory.Delete(dir, false);
+			fileSystem.DeleteDirectory(dir, false);
 		}
 		catch (IOException)
 		{
-			Directory.Delete(dir, false);
+			fileSystem.DeleteDirectory(dir, false);
 		}
 		catch (UnauthorizedAccessException)
 		{
-			Directory.Delete(dir, false);
+			fileSystem.DeleteDirectory(dir, false);
 		}
 
 		var limit = iterCount;
 
-		while (Directory.Exists(dir) && limit-- > 0)
-			Thread.Sleep(sleep);
+		while (fileSystem.DirectoryExists(dir) && limit-- > 0)
+			await Task.Delay(sleep, cancellationToken);
 
-		return Directory.Exists(dir);
+		return fileSystem.DirectoryExists(dir);
 	}
 
 	/// <summary>
@@ -595,8 +697,10 @@ public static class IOHelper
 	/// Determines whether the specified path represents a directory.
 	/// </summary>
 	/// <param name="path">The file or directory path.</param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <returns>True if the path is a directory; otherwise, false.</returns>
-	public static bool IsDirectory(this string path) => File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+	public static bool IsDirectory(this string path, IFileSystem fileSystem)
+		=> fileSystem.GetAttributes(path).HasFlag(FileAttributes.Directory);
 
 	/// <summary>
 	/// Writes the specified bytes to a stream.
@@ -1070,9 +1174,10 @@ public static class IOHelper
 	/// Determines if the specified path refers to a directory.
 	/// </summary>
 	/// <param name="path">The path to check.</param>
+	/// <param name="fileSystem">The file system to use.</param>
 	/// <returns>True if the path is a directory; otherwise, false.</returns>
-	public static bool IsPathIsDir(this string path)
-		=> File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+	public static bool IsPathIsDir(this string path, IFileSystem fileSystem)
+		=> fileSystem.GetAttributes(path).HasFlag(FileAttributes.Directory);
 
 	/// <summary>
 	/// Normalizes the provided file path for comparison purposes without converting to lowercase.

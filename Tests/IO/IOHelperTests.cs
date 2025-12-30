@@ -5,13 +5,6 @@ using Ecng.IO;
 [TestClass]
 public class IOHelperTests : BaseTestClass
 {
-	private static string CreateTempRoot()
-	{
-		var path = Config.GetTempPath("Ecng_IOHelperTests");
-		Directory.CreateDirectory(path);
-		return path;
-	}
-
 	#region CreateDirIfNotExists
 
 	[TestMethod]
@@ -535,14 +528,15 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task GetDirectoriesAsync_ReturnsDirectories()
 	{
-		var root = CreateTempRoot();
+		var fs = LocalFileSystem.Instance;
+		var root = fs.GetTempPath();
 
 		try
 		{
-			Directory.CreateDirectory(Path.Combine(root, "a"));
-			Directory.CreateDirectory(Path.Combine(root, "b"));
+			fs.CreateDirectory(Path.Combine(root, "a"));
+			fs.CreateDirectory(Path.Combine(root, "b"));
 
-			var dirs = (await IOHelper.GetDirectoriesAsync(root, LocalFileSystem.Instance, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+			var dirs = (await IOHelper.GetDirectoriesAsync(root, fs, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 			var expected = new[] { Path.Combine(root, "a"), Path.Combine(root, "b") }.OrderBy(x => x).ToArray();
 
 			dirs.AssertEqual(expected);
@@ -551,7 +545,7 @@ public class IOHelperTests : BaseTestClass
 		{
 			try
 			{
-				Directory.Delete(root, true);
+				fs.DeleteDirectory(root, true);
 			}
 			catch { }
 		}
@@ -560,14 +554,15 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task GetFilesAsync_ReturnsFiles()
 	{
-		var root = CreateTempRoot();
+		var fs = LocalFileSystem.Instance;
+		var root = fs.GetTempPath();
 
 		try
 		{
-			File.WriteAllText(Path.Combine(root, "f1.txt"), "a");
-			File.WriteAllText(Path.Combine(root, "f2.txt"), "b");
+			fs.WriteAllText(Path.Combine(root, "f1.txt"), "a");
+			fs.WriteAllText(Path.Combine(root, "f2.txt"), "b");
 
-			var files = (await IOHelper.GetFilesAsync(root, LocalFileSystem.Instance, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+			var files = (await IOHelper.GetFilesAsync(root, fs, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 			var expected = new[] { Path.Combine(root, "f1.txt"), Path.Combine(root, "f2.txt") }.OrderBy(x => x).ToArray();
 
 			files.AssertEqual(expected);
@@ -576,7 +571,7 @@ public class IOHelperTests : BaseTestClass
 		{
 			try
 			{
-				Directory.Delete(root, true);
+				fs.DeleteDirectory(root, true);
 			}
 			catch { }
 		}
@@ -585,19 +580,21 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task GetDirectoriesAsync_Nonexistent_ReturnsEmpty()
 	{
-		var path = Config.GetTempPath("NonExistent");
-		var res = await IOHelper.GetDirectoriesAsync(path, LocalFileSystem.Instance, cancellationToken: CancellationToken);
+		var fs = LocalFileSystem.Instance;
+		var path = fs.GetTempPath("NonExistent");
+		var res = await IOHelper.GetDirectoriesAsync(path, fs, cancellationToken: CancellationToken);
 		res.Any().AssertFalse();
 	}
 
 	[TestMethod]
 	public async Task GetFilesAsync_Cancellation_ThrowsOperationCanceled()
 	{
-		var root = CreateTempRoot();
+		var fs = LocalFileSystem.Instance;
+		var root = fs.GetTempPath();
 
 		try
 		{
-			File.WriteAllText(Path.Combine(root, "f.txt"), "x");
+			fs.WriteAllText(Path.Combine(root, "f.txt"), "x");
 
 			using var cts = new CancellationTokenSource();
 			cts.Cancel();
@@ -605,7 +602,7 @@ public class IOHelperTests : BaseTestClass
 			var thrown = false;
 			try
 			{
-				await IOHelper.GetFilesAsync(root, LocalFileSystem.Instance, cancellationToken: cts.Token);
+				await IOHelper.GetFilesAsync(root, fs, cancellationToken: cts.Token);
 			}
 			catch (OperationCanceledException)
 			{
@@ -618,7 +615,7 @@ public class IOHelperTests : BaseTestClass
 		{
 			try
 			{
-				Directory.Delete(root, true);
+				fs.DeleteDirectory(root, true);
 			}
 			catch { }
 		}
@@ -627,18 +624,19 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task GetDirectoriesAsync_Materialized_AfterDeleteStillAvailable()
 	{
-		var root = CreateTempRoot();
+		var fs = LocalFileSystem.Instance;
+		var root = fs.GetTempPath();
 
 		try
 		{
-			Directory.CreateDirectory(Path.Combine(root, "d1"));
-			Directory.CreateDirectory(Path.Combine(root, "d2"));
+			fs.CreateDirectory(Path.Combine(root, "d1"));
+			fs.CreateDirectory(Path.Combine(root, "d2"));
 
-			var result = await IOHelper.GetDirectoriesAsync(root, LocalFileSystem.Instance, cancellationToken: CancellationToken);
+			var result = await IOHelper.GetDirectoriesAsync(root, fs, cancellationToken: CancellationToken);
 			var arr = result.ToArray();
 
 			// remove original directory
-			Directory.Delete(root, true);
+			fs.DeleteDirectory(root, true);
 
 			// materialized result should still contain entries
 			arr.Length.AssertEqual(2);
@@ -647,8 +645,8 @@ public class IOHelperTests : BaseTestClass
 		{
 			try
 			{
-				if (Directory.Exists(root))
-					Directory.Delete(root, true);
+				if (fs.DirectoryExists(root))
+					fs.DeleteDirectory(root, true);
 			}
 			catch { }
 		}

@@ -6,6 +6,7 @@ using System.Reflection;
 
 using Ecng.Serialization;
 using Ecng.Logging;
+using Ecng.IO;
 
 using Microsoft.Extensions.Logging;
 
@@ -29,6 +30,7 @@ public static class ServicePath
 	/// writes logs to files, and forwards messages to the provided <see cref="ILogger"/>.
 	/// </summary>
 	/// <param name="logger">The Microsoft.Extensions.Logging logger used to mirror log messages via <see cref="ServiceLogListener"/>.</param>
+	/// <param name="fileSystem"><see cref="IFileSystem"/></param>
 	/// <param name="dataDir">The writable directory where the log manager settings file and log files are stored.</param>
 	/// <param name="defaultLevel">The default application log level used when no persisted settings are found.</param>
 	/// <returns>A configured <see cref="LogManager"/> instance.</returns>
@@ -37,12 +39,15 @@ public static class ServicePath
 	/// If a settings file (logManager.{serializer extension}) exists in <paramref name="dataDir"/>, it is loaded; otherwise,
 	/// a default file listener is created that writes to the <c>Logs</c> subdirectory and the settings are saved.
 	/// </remarks>
-	public static LogManager CreateLogManager(this ILogger logger, string dataDir, LogLevels defaultLevel)
+	public static LogManager CreateLogManager(this ILogger logger, IFileSystem fileSystem, string dataDir, LogLevels defaultLevel)
 	{
 		if (logger is null)
 			throw new ArgumentNullException(nameof(logger));
 
-		Directory.CreateDirectory(dataDir);
+        if (fileSystem is null)
+            throw new ArgumentNullException(nameof(fileSystem));
+
+		fileSystem.CreateDirectory(dataDir);
 
 		var serializer = JsonSerializer<SettingsStorage>.CreateDefault();
 
@@ -53,13 +58,13 @@ public static class ServicePath
 			Application = { LogLevel = defaultLevel }
 		};
 
-		if (File.Exists(logSettingsFile))
+		if (fileSystem.FileExists(logSettingsFile))
 		{
-			logManager.Load(serializer.Deserialize(logSettingsFile));
+			logManager.Load(serializer.Deserialize(fileSystem, logSettingsFile));
 		}
 		else
 		{
-			logManager.Listeners.Add(new FileLogListener
+			logManager.Listeners.Add(new FileLogListener(fileSystem)
 			{
 				Append = true,
 				FileName = "logs",
@@ -68,7 +73,7 @@ public static class ServicePath
 				HistoryPolicy = FileLogHistoryPolicies.Delete,
 			});
 
-			serializer.Serialize(logManager.Save(), logSettingsFile);
+			serializer.Serialize(logManager.Save(), fileSystem, logSettingsFile);
 		}
 
 		logManager.Listeners.Add(new ServiceLogListener(logger));
