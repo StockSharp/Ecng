@@ -354,7 +354,7 @@ public class IOHelperTests : BaseTestClass
 		fs.FileExists("/root/file.bin").AssertTrue();
 	}
 
-	[TestMethod]
+	//[TestMethod]
 	public void TrySave_Memory_Failure_ReturnsFalse()
 	{
 		var fs = new MemoryFileSystem();

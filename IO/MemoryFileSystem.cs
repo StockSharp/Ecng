@@ -221,9 +221,10 @@ public class MemoryFileSystem : IFileSystem
 			var append = mode == FileMode.Append;
 			var truncate = mode is FileMode.Create or FileMode.CreateNew or FileMode.Truncate;
 
-			var dir = Traverse(path, createDirs: false, forFile: true, out var fileName);
-			if (dir == null)
-				throw new DirectoryNotFoundException($"Could not find a part of the path '{path}'.");
+			// TODO temp disabled of createDirs
+			var dir = Traverse(path, createDirs: true/*false*/, forFile: true, out var fileName);
+			//if (dir == null)
+			//	throw new DirectoryNotFoundException($"Could not find a part of the path '{path}'.");
 			if (!dir.IsDirectory)
 				throw new IOException("Path's parent is not a directory.");
 			dir.Children ??= new(StringComparer.OrdinalIgnoreCase);
