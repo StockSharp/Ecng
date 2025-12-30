@@ -9,7 +9,8 @@ public class TransactionFileStreamTests : BaseTestClass
 {
 	#region Helper Methods
 
-	private string NewTempFilePath() => Config.GetTempPath(LocalFileSystem.Instance);
+	private static string NewTempFilePath()
+		=> Path.Combine(LocalFileSystem.Instance.GetTempPath(), "file.txt");
 
 	private static void WriteAllText(string path, string content)
 	{

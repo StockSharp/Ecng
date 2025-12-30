@@ -1,8 +1,6 @@
 namespace Ecng.IO;
 
-#if NET10_0_OR_GREATER
 using System;
-#endif
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -100,11 +98,7 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenWrite(path);
 		using var writer = new StreamWriter(stream, encoding);
 
-		await writer.WriteAsync(content
-#if NET10_0_OR_GREATER
-			.AsMemory()
-#endif
-			, cancellationToken);
+		await writer.WriteAsync(content.AsMemory(), cancellationToken);
 		await writer.FlushAsync(cancellationToken);
 	}
 
@@ -140,11 +134,7 @@ public static class FileSystemExtensions
 		using var stream = fs.OpenWrite(path, append: true);
 		using var writer = new StreamWriter(stream, encoding);
 
-		await writer.WriteAsync(content
-#if NET10_0_OR_GREATER
-			.AsMemory()
-#endif
-			, cancellationToken);
+		await writer.WriteAsync(content.AsMemory(), cancellationToken);
 		await writer.FlushAsync(cancellationToken);
 	}
 
@@ -288,11 +278,7 @@ public static class FileSystemExtensions
 
 		foreach (var line in lines)
 		{
-			await writer.WriteLineAsync(line
-#if NET10_0_OR_GREATER
-				.AsMemory()
-#endif
-				, cancellationToken);
+			await writer.WriteLineAsync(line.AsMemory(), cancellationToken);
 		}
 
 		await writer.FlushAsync(cancellationToken);

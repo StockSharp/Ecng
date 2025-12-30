@@ -351,18 +351,10 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 
 			if (i > 0)
 			{
-				await _writer.WriteAsync(Delimiter.ToString()
-#if NET7_0_OR_GREATER
-					.AsMemory()
-#endif
-				, cancellationToken).NoWait();
+				await _writer.WriteAsync(Delimiter.ToString().AsMemory(), cancellationToken).NoWait();
 			}
 
-			await _writer.WriteAsync(Encode(c ?? string.Empty)
-#if NET7_0_OR_GREATER
-				.AsMemory()
-#endif
-			, cancellationToken).NoWait();
+			await _writer.WriteAsync(Encode(c ?? string.Empty).AsMemory(), cancellationToken).NoWait();
 
 			i++;
 		}

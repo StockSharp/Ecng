@@ -801,7 +801,7 @@ public class FileLogListener : LogListener
 			writer.Write("|");
 		}
 
-		return writer.WriteLineAsync(message.Message, cancellationToken);
+		return writer.WriteLineAsync(message.Message.AsMemory(), cancellationToken);
 	}
 
 	// http://ramblings.markstarmer.co.uk/2011/07/efficiency-datetime-tostringstring/
