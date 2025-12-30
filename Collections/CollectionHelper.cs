@@ -11,12 +11,6 @@ using Nito.AsyncEx;
 
 using Ecng.Common;
 
-#if NET9_0_OR_GREATER
-using LockScope = System.Threading.Lock.Scope;
-#else
-using LockScope = Ecng.Common.SyncObject.Scope;
-#endif
-
 /// <summary>
 /// Provides extension methods and helper utilities for working with collections.
 /// </summary>
@@ -407,24 +401,12 @@ public static class CollectionHelper
 		if (collection is null)
 			throw new ArgumentNullException(nameof(collection));
 
-#if NETSTANDARD2_0
-		unchecked
-		{
-			var hash = 17;
-
-			foreach (var item in collection)
-				hash = (hash * 31) + (item?.GetHashCode() ?? 0);
-
-			return hash;
-		}
-#else
 		var hc = new HashCode();
 
 		foreach (var item in collection)
 			hc.Add(item);
 
 		return hc.ToHashCode();
-#endif
 	}
 
 	/// <summary>
@@ -1282,8 +1264,8 @@ public static class CollectionHelper
 	/// Enters a synchronized scope for thread-safe operations on the collection.
 	/// </summary>
 	/// <param name="collection"><see cref="ISynchronizedCollection"/></param>
-	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
-	public static LockScope EnterScope(this ISynchronizedCollection collection)
+	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
+	public static Lock.Scope EnterScope(this ISynchronizedCollection collection)
 		=> collection.CheckOnNull(nameof(collection)).SyncRoot.EnterScope();
 
 	/// <summary>
@@ -2129,13 +2111,10 @@ public static class CollectionHelper
 	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
 	/// <param name="values">The sequence to convert.</param>
 	/// <returns>A set containing the unique elements from the sequence.</returns>
+	[Obsolete("Use ToHashSet method.")]	
 	public static ISet<T> ToSet<T>(this IEnumerable<T> values)
 	{
-#if NETSTANDARD2_0
-		return new HashSet<T>(values);
-#else
 		return values.ToHashSet();
-#endif
 	}
 
 	/// <summary>
@@ -2145,11 +2124,7 @@ public static class CollectionHelper
 	/// <returns>A set containing the unique strings, ignoring case.</returns>
 	public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values)
 	{
-#if NETSTANDARD2_0
-		return new HashSet<string>(values, StringComparer.InvariantCultureIgnoreCase);
-#else
 		return values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-#endif
 	}
 
 	/// <summary>
@@ -2159,13 +2134,10 @@ public static class CollectionHelper
 	/// <param name="source">The sequence to batch.</param>
 	/// <param name="size">The size of each batch.</param>
 	/// <returns>An enumerable of arrays, each containing up to <paramref name="size"/> elements.</returns>
+	[Obsolete("Use Chunk instead.")]
 	public static IEnumerable<T[]> Batch<T>(this IEnumerable<T> source, int size)
 	{
-#if NETSTANDARD2_0
-		return Batch<T, T[]>(source, size, source => [.. source], () => false);
-#else
 		return source.Chunk(size);
-#endif
 	}
 
 	/// <summary>
@@ -2178,6 +2150,7 @@ public static class CollectionHelper
 	/// <param name="resultSelector">The function to transform each batch into a result.</param>
 	/// <param name="needStop">The function to determine if batching should stop prematurely.</param>
 	/// <returns>An enumerable of results, each representing a batch.</returns>
+	[Obsolete("Use Chunk instead.")]
 	public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
 		Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
 	{
@@ -2339,16 +2312,6 @@ public static class CollectionHelper
 	}
 
 #if NETSTANDARD2_0
-	/// <summary>
-	/// Returns all elements of a sequence except the last specified number of elements.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
-	/// <param name="source">The sequence to process.</param>
-	/// <param name="count">The number of elements to skip from the end.</param>
-	/// <returns>An enumerable with the last <paramref name="count"/> elements omitted.</returns>
-	public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
-		=> source.Take(source.Count() - count);
-
 	/// <summary>
 	/// Clears all elements from a concurrent queue.
 	/// </summary>
