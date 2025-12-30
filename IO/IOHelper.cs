@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text;
-using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Globalization;
@@ -28,35 +27,7 @@ public static class IOHelper
 	/// <returns>A DirectoryInfo for the cleared directory.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static DirectoryInfo ClearDirectory(string path, Func<string, bool> filter = null)
-		=> ClearDirectory(path, LocalFileSystem.Instance, filter);
-
-	/// <summary>
-	/// Clears the specified directory by deleting its files and subdirectories using the provided file system.
-	/// </summary>
-	/// <param name="path">The directory path to clear.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="filter">Optional filter to determine which files to delete.</param>
-	/// <returns>A DirectoryInfo for the cleared directory.</returns>
-	public static DirectoryInfo ClearDirectory(string path, IFileSystem fs, Func<string, bool> filter = null)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		foreach (var file in fs.EnumerateFiles(path))
-		{
-			if (filter != null && !filter(file))
-				continue;
-
-			fs.DeleteFile(file);
-		}
-
-		foreach (var dir in fs.EnumerateDirectories(path))
-		{
-			fs.DeleteDirectory(dir, true);
-		}
-
-		return new(path);
-	}
+		=> LocalFileSystem.Instance.ClearDirectory(path, filter);
 
 	/// <summary>
 	/// Asynchronously clears the specified directory by deleting its files and subdirectories.
@@ -67,40 +38,7 @@ public static class IOHelper
 	/// <returns>A task that represents the asynchronous operation, containing a DirectoryInfo for the cleared directory.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Task<DirectoryInfo> ClearDirectoryAsync(string path, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
-		=> ClearDirectoryAsync(path, LocalFileSystem.Instance, filter, cancellationToken);
-
-	/// <summary>
-	/// Asynchronously clears the specified directory by deleting its files and subdirectories using the provided file system.
-	/// </summary>
-	/// <param name="path">The directory path to clear.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="filter">Optional filter to determine which files to delete.</param>
-	/// <param name="cancellationToken">A cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation, containing a DirectoryInfo for the cleared directory.</returns>
-	public static Task<DirectoryInfo> ClearDirectoryAsync(string path, IFileSystem fs, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		foreach (var file in fs.EnumerateFiles(path))
-		{
-			if (filter != null && !filter(file))
-				continue;
-
-			fs.DeleteFile(file);
-
-			cancellationToken.ThrowIfCancellationRequested();
-		}
-
-		foreach (var dir in fs.EnumerateDirectories(path))
-		{
-			fs.DeleteDirectory(dir, true);
-
-			cancellationToken.ThrowIfCancellationRequested();
-		}
-
-		return new DirectoryInfo(path).FromResult();
-	}
+		=> LocalFileSystem.Instance.ClearDirectoryAsync(path, filter, cancellationToken);
 
 	/// <summary>
 	/// Copies the content of one directory to another.
@@ -109,31 +47,7 @@ public static class IOHelper
 	/// <param name="destPath">The destination directory path.</param>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static void CopyDirectory(string sourcePath, string destPath)
-		=> CopyDirectory(sourcePath, destPath, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Copies the content of one directory to another using the provided file system.
-	/// </summary>
-	/// <param name="sourcePath">The source directory path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	/// <param name="fs">The file system to use.</param>
-	public static void CopyDirectory(string sourcePath, string destPath, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		fs.CreateDirectory(destPath);
-
-		foreach (var fileName in fs.EnumerateFiles(sourcePath))
-		{
-			CopyAndMakeWritable(fileName, destPath, fs);
-		}
-
-		foreach (var directory in fs.EnumerateDirectories(sourcePath))
-		{
-			CopyDirectory(directory, Path.Combine(destPath, Path.GetFileName(directory)), fs);
-		}
-	}
+		=> LocalFileSystem.Instance.CopyDirectory(sourcePath, destPath);
 
 	/// <summary>
 	/// Asynchronously copies the content of one directory to another.
@@ -144,35 +58,7 @@ public static class IOHelper
 	/// <returns>A task that represents the asynchronous operation.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
-		=> CopyDirectoryAsync(sourcePath, destPath, LocalFileSystem.Instance, cancellationToken);
-
-	/// <summary>
-	/// Asynchronously copies the content of one directory to another using the provided file system.
-	/// </summary>
-	/// <param name="sourcePath">The source directory path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="cancellationToken">A cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	public static async Task CopyDirectoryAsync(string sourcePath, string destPath, IFileSystem fs, CancellationToken cancellationToken = default)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		fs.CreateDirectory(destPath);
-
-		foreach (var fileName in fs.EnumerateFiles(sourcePath))
-		{
-			CopyAndMakeWritable(fileName, destPath, fs);
-
-			cancellationToken.ThrowIfCancellationRequested();
-		}
-
-		foreach (var directory in fs.EnumerateDirectories(sourcePath))
-		{
-			await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), fs, cancellationToken).NoWait();
-		}
-	}
+		=> LocalFileSystem.Instance.CopyDirectoryAsync(sourcePath, destPath, cancellationToken);
 
 	/// <summary>
 	/// Copies a file to the specified destination and makes the copy writable.
@@ -182,31 +68,7 @@ public static class IOHelper
 	/// <returns>The destination file path.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static string CopyAndMakeWritable(string fileName, string destPath)
-		=> CopyAndMakeWritable(fileName, destPath, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Copies a file to the specified destination and makes the copy writable using the provided file system.
-	/// </summary>
-	/// <param name="fileName">The source file path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>The destination file path.</returns>
-	public static string CopyAndMakeWritable(string fileName, string destPath, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		var destFile = Path.Combine(destPath, Path.GetFileName(fileName));
-
-		fs.CopyFile(fileName, destFile, true);
-		try
-		{
-			fs.SetReadOnly(destFile, false);
-		}
-		catch { }
-
-		return destFile;
-	}
+		=> LocalFileSystem.Instance.CopyAndMakeWritable(fileName, destPath);
 
 	/// <summary>
 	/// Converts a relative or partial path to a fully qualified path.
@@ -236,46 +98,10 @@ public static class IOHelper
 	/// Creates the directory for the specified file if it does not already exist.
 	/// </summary>
 	/// <param name="fullPath">The full path to the file.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>True if the directory was created; otherwise, false.</returns>
-	public static bool CreateDirIfNotExists(this string fullPath, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		var directory = Path.GetDirectoryName(fullPath);
-
-		if (directory.IsEmpty() || fs.DirectoryExists(directory))
-			return false;
-
-		fs.CreateDirectory(directory);
-		return true;
-	}
-
-	/// <summary>
-	/// Creates the directory for the specified file if it does not already exist.
-	/// </summary>
-	/// <param name="fullPath">The full path to the file.</param>
 	/// <returns>True if the directory was created; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CreateDirIfNotExists(this string fullPath)
-		=> fullPath.CreateDirIfNotExists(LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Safely deletes a directory.
-	/// </summary>
-	/// <param name="path">The directory path.</param>
-	/// <param name="fs">The file system to use.</param>
-	public static void SafeDeleteDir(this string path, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (!fs.DirectoryExists(path))
-			return;
-
-		fs.DeleteDirectory(path, true);
-	}
+		=> LocalFileSystem.Instance.CreateDirIfNotExists(fullPath);
 
 	/// <summary>
 	/// Safely deletes a directory.
@@ -283,42 +109,7 @@ public static class IOHelper
 	/// <param name="path">The directory path.</param>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static void SafeDeleteDir(this string path)
-		=> path.SafeDeleteDir(LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Creates a temporary directory and returns its path.
-	/// </summary>
-	/// <param name="fileSystem">The file system to use.</param>
-	/// <returns>The path to the new temporary directory.</returns>
-	public static string CreateTempDir(this IFileSystem fileSystem)
-	{
-		var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Remove("-"));
-
-		if (!fileSystem.DirectoryExists(path))
-			fileSystem.CreateDirectory(path);
-
-		return path;
-	}
-
-	/// <summary>
-	/// Checks if the specified installation directory exists and contains files or subdirectories.
-	/// </summary>
-	/// <param name="path">The installation directory path.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>True if the installation is valid; otherwise, false.</returns>
-	public static bool CheckInstallation(string path, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (path.IsEmpty())
-			return false;
-
-		if (!fs.DirectoryExists(path))
-			return false;
-
-		return fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any();
-	}
+		=> LocalFileSystem.Instance.SafeDeleteDir(path);
 
 	/// <summary>
 	/// Checks if the specified installation directory exists and contains files or subdirectories.
@@ -327,7 +118,7 @@ public static class IOHelper
 	/// <returns>True if the installation is valid; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CheckInstallation(string path)
-		=> CheckInstallation(path, LocalFileSystem.Instance);
+		=> LocalFileSystem.Instance.CheckInstallation(path);
 
 	/// <summary>
 	/// Gets the relative path from a folder to a file.
@@ -363,75 +154,9 @@ public static class IOHelper
 	/// <param name="relativePath">The relative path to the file.</param>
 	/// <param name="fileName">The file name.</param>
 	/// <param name="content">The content as a byte array.</param>
-	/// <param name="fs">The file system to use.</param>
-	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		string fullPath;
-
-		if (relativePath.IsEmpty())
-		{
-			fullPath = Path.Combine(rootPath, fileName);
-		}
-		else
-		{
-			fullPath = Path.Combine(rootPath, relativePath, fileName);
-			var dir = Path.GetDirectoryName(fullPath);
-			if (!dir.IsEmpty())
-				fs.CreateDirectory(dir);
-		}
-
-		using var stream = fs.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
-		stream.Write(content, 0, content.Length);
-	}
-
-	/// <summary>
-	/// Creates a file with the specified content.
-	/// </summary>
-	/// <param name="rootPath">The root path.</param>
-	/// <param name="relativePath">The relative path to the file.</param>
-	/// <param name="fileName">The file name.</param>
-	/// <param name="content">The content as a byte array.</param>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content)
-		=> CreateFile(rootPath, relativePath, fileName, content, LocalFileSystem.Instance);
-
-	// https://stackoverflow.com/a/2811746/8029915
-
-	/// <summary>
-	/// Recursively deletes empty directories starting from the specified directory.
-	/// </summary>
-	/// <param name="dir">The root directory to check and delete if empty.</param>
-	/// <param name="fs">The file system to use.</param>
-	public static void DeleteEmptyDirs(string dir, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (dir.IsEmpty())
-			throw new ArgumentNullException(nameof(dir));
-
-		try
-		{
-			foreach (var d in fs.EnumerateDirectories(dir))
-			{
-				DeleteEmptyDirs(d, fs);
-			}
-
-			if (!fs.EnumerateFiles(dir).Any() && !fs.EnumerateDirectories(dir).Any())
-			{
-				try
-				{
-					fs.DeleteDirectory(dir);
-				}
-				catch (UnauthorizedAccessException) { }
-				catch (DirectoryNotFoundException) { }
-			}
-		}
-		catch (UnauthorizedAccessException) { }
-	}
+		=> LocalFileSystem.Instance.CreateFile(rootPath, relativePath, fileName, content);
 
 	/// <summary>
 	/// Recursively deletes empty directories starting from the specified directory.
@@ -439,7 +164,7 @@ public static class IOHelper
 	/// <param name="dir">The root directory to check and delete if empty.</param>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static void DeleteEmptyDirs(string dir)
-		=> DeleteEmptyDirs(dir, LocalFileSystem.Instance);
+		=> LocalFileSystem.Instance.DeleteEmptyDirs(dir);
 
 	/// <summary>
 	/// The %Documents% variable.
@@ -460,83 +185,6 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Deletes a directory in a blocking manner.
-	/// </summary>
-	/// <param name="fileSystem">The file system to use.</param>
-	/// <param name="dir">The directory to delete.</param>
-	/// <param name="isRecursive">Indicates whether to delete subdirectories recursively.</param>
-	/// <param name="iterCount">Number of iterations to attempt deletion.</param>
-	/// <param name="sleep">Sleep duration between attempts in milliseconds.</param>
-	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-	/// <returns>True if the directory still exists after deletion attempts; otherwise, false.</returns>
-	public static async ValueTask<bool> BlockDeleteDirAsync(this IFileSystem fileSystem, string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0, CancellationToken cancellationToken = default)
-	{
-        if (fileSystem is null)
-            throw new ArgumentNullException(nameof(fileSystem));
-
-        if (isRecursive)
-		{
-			var files = fileSystem.EnumerateFiles(dir);
-			var dirs = fileSystem.EnumerateDirectories(dir);
-
-			foreach (var file in files)
-			{
-				File.SetAttributes(file, FileAttributes.Normal);
-				fileSystem.DeleteFile(file);
-			}
-
-			foreach (var sub in dirs)
-			{
-				await BlockDeleteDirAsync(fileSystem, sub, true, iterCount, sleep, cancellationToken);
-			}
-		}
-
-		// https://stackoverflow.com/a/1703799/8029915
-		// Attempt deletion.
-
-		try
-		{
-			fileSystem.DeleteDirectory(dir, false);
-		}
-		catch (IOException)
-		{
-			fileSystem.DeleteDirectory(dir, false);
-		}
-		catch (UnauthorizedAccessException)
-		{
-			fileSystem.DeleteDirectory(dir, false);
-		}
-
-		var limit = iterCount;
-
-		while (fileSystem.DirectoryExists(dir) && limit-- > 0)
-			await Task.Delay(sleep, cancellationToken);
-
-		return fileSystem.DirectoryExists(dir);
-	}
-
-	/// <summary>
-	/// Retrieves the directories within the specified path matching the search pattern.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <returns>An enumerable of matching directory paths.</returns>
-	public static IEnumerable<string> GetDirectories(string path,
-		IFileSystem fs,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		return !fs.DirectoryExists(path)
-			? []
-			: fs.EnumerateDirectories(path, searchPattern, searchOption);
-	}
-
-	/// <summary>
 	/// Retrieves the directories within the specified path matching the search pattern.
 	/// </summary>
 	/// <param name="path">The root directory to search.</param>
@@ -547,39 +195,7 @@ public static class IOHelper
 	public static IEnumerable<string> GetDirectories(string path,
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly)
-		=> GetDirectories(path, LocalFileSystem.Instance, searchPattern, searchOption);
-
-	/// <summary>
-	/// Asynchronously retrieves the directories within the specified path matching the search pattern.
-	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
-	/// <returns>A task producing an enumerable of matching directory paths.</returns>
-	public static Task<IEnumerable<string>> GetDirectoriesAsync(
-		string path,
-		IFileSystem fs,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly,
-		CancellationToken cancellationToken = default)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (!fs.DirectoryExists(path))
-			return Enumerable.Empty<string>().FromResult();
-
-		return Task.Run(() =>
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			var arr = fs.EnumerateDirectories(path, searchPattern, searchOption).ToArray();
-			cancellationToken.ThrowIfCancellationRequested();
-			return (IEnumerable<string>)arr;
-		}, cancellationToken);
-	}
+		=> LocalFileSystem.Instance.GetDirectories(path, searchPattern, searchOption);
 
 	/// <summary>
 	/// Asynchronously retrieves the directories within the specified path matching the search pattern.
@@ -596,39 +212,7 @@ public static class IOHelper
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly,
 		CancellationToken cancellationToken = default)
-		=> GetDirectoriesAsync(path, LocalFileSystem.Instance, searchPattern, searchOption, cancellationToken);
-
-	/// <summary>
-	/// Asynchronously retrieves the files within the specified path matching the search pattern.
-	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
-	/// <returns>A task producing an enumerable of matching file paths.</returns>
-	public static Task<IEnumerable<string>> GetFilesAsync(
-		string path,
-		IFileSystem fs,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly,
-		CancellationToken cancellationToken = default)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (!fs.DirectoryExists(path))
-			return Enumerable.Empty<string>().FromResult();
-
-		return Task.Run(() =>
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			var arr = fs.EnumerateFiles(path, searchPattern, searchOption).ToArray();
-			cancellationToken.ThrowIfCancellationRequested();
-			return (IEnumerable<string>)arr;
-		}, cancellationToken);
-	}
+		=> LocalFileSystem.Instance.GetDirectoriesAsync(path, searchPattern, searchOption, cancellationToken);
 
 	/// <summary>
 	/// Asynchronously retrieves the files within the specified path matching the search pattern.
@@ -645,7 +229,7 @@ public static class IOHelper
 		string searchPattern = "*",
 		SearchOption searchOption = SearchOption.TopDirectoryOnly,
 		CancellationToken cancellationToken = default)
-		=> GetFilesAsync(path, LocalFileSystem.Instance, searchPattern, searchOption, cancellationToken);
+		=> LocalFileSystem.Instance.GetFilesAsync(path, searchPattern, searchOption, cancellationToken);
 
 	/// <summary>
 	/// Gets the timestamp of the specified assembly.
@@ -657,31 +241,7 @@ public static class IOHelper
 		if (assembly is null)
 			throw new ArgumentNullException(nameof(assembly));
 
-		return GetTimestamp(assembly.Location, LocalFileSystem.Instance);
-	}
-
-	/// <summary>
-	/// Gets the timestamp of the specified file.
-	/// </summary>
-	/// <param name="filePath">The file path.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>The timestamp representing when the file was built.</returns>
-	public static DateTime GetTimestamp(string filePath, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		var b = new byte[2048];
-
-		using (var s = fs.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-			s.ReadBytes(b, b.Length);
-
-		const int peHeaderOffset = 60;
-		const int linkerTimestampOffset = 8;
-		var i = BitConverter.ToInt32(b, peHeaderOffset);
-		var secondsSince1970 = (long)BitConverter.ToInt32(b, i + linkerTimestampOffset);
-
-		return secondsSince1970.FromUnix().ToLocalTime();
+		return LocalFileSystem.Instance.GetTimestamp(assembly.Location);
 	}
 
 	/// <summary>
@@ -691,16 +251,7 @@ public static class IOHelper
 	/// <returns>The timestamp representing when the file was built.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static DateTime GetTimestamp(string filePath)
-		=> GetTimestamp(filePath, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Determines whether the specified path represents a directory.
-	/// </summary>
-	/// <param name="path">The file or directory path.</param>
-	/// <param name="fileSystem">The file system to use.</param>
-	/// <returns>True if the path is a directory; otherwise, false.</returns>
-	public static bool IsDirectory(this string path, IFileSystem fileSystem)
-		=> fileSystem.GetAttributes(path).HasFlag(FileAttributes.Directory);
+		=> LocalFileSystem.Instance.GetTimestamp(filePath);
 
 	/// <summary>
 	/// Writes the specified bytes to a stream.
@@ -965,46 +516,10 @@ public static class IOHelper
 	/// </summary>
 	/// <param name="stream">The stream whose contents to save.</param>
 	/// <param name="fileName">The file path to save the stream's contents to.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>The original stream.</returns>
-	public static Stream Save(this Stream stream, string fileName, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		var pos = stream.CanSeek ? stream.Position : 0;
-
-		using (var file = fs.Open(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
-			stream.CopyTo(file);
-
-		if (stream.CanSeek)
-			stream.Position = pos;
-
-		return stream;
-	}
-
-	/// <summary>
-	/// Saves the content of the stream to a file specified by fileName.
-	/// </summary>
-	/// <param name="stream">The stream whose contents to save.</param>
-	/// <param name="fileName">The file path to save the stream's contents to.</param>
 	/// <returns>The original stream.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static Stream Save(this Stream stream, string fileName)
-		=> stream.Save(fileName, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Saves the byte array to a file specified by fileName.
-	/// </summary>
-	/// <param name="data">The byte array to save.</param>
-	/// <param name="fileName">The file path to save the data to.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>The original byte array.</returns>
-	public static byte[] Save(this byte[] data, string fileName, IFileSystem fs)
-	{
-		data.To<Stream>().Save(fileName, fs);
-		return data;
-	}
+		=> LocalFileSystem.Instance.Save(stream, fileName);
 
 	/// <summary>
 	/// Saves the byte array to a file specified by fileName.
@@ -1014,35 +529,7 @@ public static class IOHelper
 	/// <returns>The original byte array.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static byte[] Save(this byte[] data, string fileName)
-		=> data.Save(fileName, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Attempts to save the byte array to a file and handles any exceptions using the provided errorHandler.
-	/// </summary>
-	/// <param name="data">The byte array to save.</param>
-	/// <param name="fileName">The file path to save the data to.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="errorHandler">The action to handle exceptions.</param>
-	/// <returns>True if the save operation was successful; otherwise, false.</returns>
-	public static bool TrySave(this byte[] data, string fileName, IFileSystem fs, Action<Exception> errorHandler)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (errorHandler is null)
-			throw new ArgumentNullException(nameof(errorHandler));
-
-		try
-		{
-			data.To<Stream>().Save(fileName, fs);
-			return true;
-		}
-		catch (Exception e)
-		{
-			errorHandler(e);
-			return false;
-		}
-	}
+		=> LocalFileSystem.Instance.Save(data, fileName);
 
 	/// <summary>
 	/// Attempts to save the byte array to a file and handles any exceptions using the provided errorHandler.
@@ -1053,7 +540,7 @@ public static class IOHelper
 	/// <returns>True if the save operation was successful; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool TrySave(this byte[] data, string fileName, Action<Exception> errorHandler)
-		=> data.TrySave(fileName, LocalFileSystem.Instance, errorHandler);
+		=> LocalFileSystem.Instance.TrySave(data, fileName, errorHandler);
 
 	/// <summary>
 	/// Truncates the underlying stream used by the StreamWriter by clearing its content.
@@ -1088,43 +575,10 @@ public static class IOHelper
 	/// Checks whether the directory contains files or subdirectories that contain files.
 	/// </summary>
 	/// <param name="path">The directory path to check.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>True if the directory contains any files; otherwise, false.</returns>
-	public static bool CheckDirContainFiles(string path, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		return
-			fs.DirectoryExists(path) &&
-			(fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any(d => CheckDirContainFiles(d, fs)));
-	}
-
-	/// <summary>
-	/// Checks whether the directory contains files or subdirectories that contain files.
-	/// </summary>
-	/// <param name="path">The directory path to check.</param>
 	/// <returns>True if the directory contains any files; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CheckDirContainFiles(string path)
-		=> CheckDirContainFiles(path, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Checks whether the directory contains any files or subdirectories.
-	/// </summary>
-	/// <param name="path">The directory path to check.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>True if the directory contains any entries; otherwise, false.</returns>
-	public static bool CheckDirContainsAnything(string path, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (!fs.DirectoryExists(path))
-			return false;
-
-		return fs.EnumerateFiles(path).Any() || fs.EnumerateDirectories(path).Any();
-	}
+		=> LocalFileSystem.Instance.CheckDirContainFiles(path);
 
 	/// <summary>
 	/// Checks whether the directory contains any files or subdirectories.
@@ -1133,33 +587,7 @@ public static class IOHelper
 	/// <returns>True if the directory contains any entries; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool CheckDirContainsAnything(string path)
-		=> CheckDirContainsAnything(path, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Determines whether the file specified by the path is locked by another process.
-	/// </summary>
-	/// <param name="path">The path to the file to check.</param>
-	/// <param name="fs">The file system to use.</param>
-	/// <returns>True if the file is locked; otherwise, false.</returns>
-	public static bool IsFileLocked(string path, IFileSystem fs)
-	{
-		if (fs is null)
-			throw new ArgumentNullException(nameof(fs));
-
-		if (!fs.FileExists(path))
-			return false;
-
-		try
-		{
-			using var stream = fs.Open(path, FileMode.Open, FileAccess.Read, FileShare.None);
-		}
-		catch (IOException)
-		{
-			return true;
-		}
-
-		return false;
-	}
+		=> LocalFileSystem.Instance.CheckDirContainsAnything(path);
 
 	/// <summary>
 	/// Determines whether the file specified by the path is locked by another process.
@@ -1168,16 +596,7 @@ public static class IOHelper
 	/// <returns>True if the file is locked; otherwise, false.</returns>
 	[Obsolete("Use overload with IFileSystem parameter.")]
 	public static bool IsFileLocked(string path)
-		=> IsFileLocked(path, LocalFileSystem.Instance);
-
-	/// <summary>
-	/// Determines if the specified path refers to a directory.
-	/// </summary>
-	/// <param name="path">The path to check.</param>
-	/// <param name="fileSystem">The file system to use.</param>
-	/// <returns>True if the path is a directory; otherwise, false.</returns>
-	public static bool IsPathIsDir(this string path, IFileSystem fileSystem)
-		=> fileSystem.GetAttributes(path).HasFlag(FileAttributes.Directory);
+		=> LocalFileSystem.Instance.IsFileLocked(path);
 
 	/// <summary>
 	/// Normalizes the provided file path for comparison purposes without converting to lowercase.
