@@ -302,8 +302,8 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	/// <param name="stream">The stream to write to</param>
 	/// <param name="encoding">The text encoding.</param>
 	public CsvFileWriter(Stream stream, Encoding encoding = null)
+		: this(encoding != null ? new StreamWriter(stream, encoding) : new(stream))
 	{
-		_writer = encoding != null ? new(stream, encoding) : new(stream);
 	}
 
 	/// <summary>
@@ -312,8 +312,18 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	/// </summary>
 	/// <param name="path">The name of the CSV file to write to</param>
 	public CsvFileWriter(string path)
+		: this(new StreamWriter(path))
 	{
-		_writer = new(path);
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the CsvFileWriter class for the
+	/// specified writer.
+	/// </summary>
+	/// <param name="writer"><see cref="StreamWriter"/></param>
+	public CsvFileWriter(StreamWriter writer)
+	{
+		_writer = writer ?? throw new ArgumentNullException(nameof(writer));
 	}
 
 	/// <summary>
