@@ -1,6 +1,7 @@
 ﻿namespace Ecng.IO.Compression;
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -15,6 +16,45 @@ using Nito.AsyncEx;
 /// </summary>
 public static class CompressionHelper
 {
+	/// <summary>
+	/// Creates a ZIP archive from a collection of entries and writes it to the specified stream.
+	/// </summary>
+	/// <param name="entries">The entries to include in the archive. Each entry is a tuple of (name, stream).</param>
+	/// <param name="output">The output stream to write the ZIP archive to.</param>
+	/// <param name="level">The compression level to use.</param>
+	/// <param name="leaveOpen">Whether to leave the output stream open after creating the archive.</param>
+	public static void Zip(this IEnumerable<(string name, Stream body)> entries, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true)
+		=> AsyncContext.Run(() => entries.ZipAsync(output, level, leaveOpen));
+
+	/// <summary>
+	/// Creates a ZIP archive from a collection of entries and writes it to the specified stream asynchronously.
+	/// </summary>
+	/// <param name="entries">The entries to include in the archive. Each entry is a tuple of (name, stream).</param>
+	/// <param name="output">The output stream to write the ZIP archive to.</param>
+	/// <param name="level">The compression level to use.</param>
+	/// <param name="leaveOpen">Whether to leave the output stream open after creating the archive.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	public static async Task ZipAsync(this IEnumerable<(string name, Stream body)> entries, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true, CancellationToken cancellationToken = default)
+	{
+		if (entries is null)
+			throw new ArgumentNullException(nameof(entries));
+
+		if (output is null)
+			throw new ArgumentNullException(nameof(output));
+
+		using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen);
+
+		foreach (var (name, body) in entries)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var entry = archive.CreateEntry(name, level);
+
+			using var entryStream = entry.Open();
+			await body.CopyToAsync(entryStream, cancellationToken);
+		}
+	}
+
 	/// <summary>
 	/// Extracts entries from a ZIP archive contained in the specified byte array.
 	/// </summary>
