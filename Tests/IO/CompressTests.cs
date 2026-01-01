@@ -198,20 +198,22 @@ public class CompressTests : BaseTestClass
 			return sr.ReadToEnd();
 		}
 
-		using var zip = ms.Unzip(leaveOpen: true);
+		var expected = new Dictionary<string, string>
+		{
+			["a.txt"] = "hello",
+			["b.txt"] = "world"
+		};
 
-		// Materialize results first (typical pattern), then consume streams later
-		var entries = zip.ToArray();
+		var count = 0;
+		foreach (var (name, body) in ms.Unzip(leaveOpen: true))
+		{
+			count++;
+			expected.TryGetValue(name, out var expectedContent).AssertTrue();
+			ReadAll(body).AssertEqual(expectedContent);
+			ReadAll(body).AssertEqual(string.Empty);
+		}
 
-		entries.Length.AssertEqual(2);
-
-		entries[0].name.EndsWith("a.txt").AssertTrue();
-		ReadAll(entries[0].body).AssertEqual("hello");
-		ReadAll(entries[0].body).AssertEqual(string.Empty);
-
-		entries[1].name.EndsWith("b.txt").AssertTrue();
-		ReadAll(entries[1].body).AssertEqual("world");
-		ReadAll(entries[1].body).AssertEqual(string.Empty);
+		count.AssertEqual(2);
 	}
 
 	[TestMethod]
@@ -275,9 +277,7 @@ public class CompressTests : BaseTestClass
 		entries.Zip(zipStream);
 		zipStream.Position = 0;
 
-		using var unzipped = zipStream.Unzip(leaveOpen: true);
-
-		foreach (var (name, body) in unzipped)
+		foreach (var (name, body) in zipStream.Unzip(leaveOpen: true))
 		{
 			using var reader = new StreamReader(body);
 			var content = reader.ReadToEnd();
@@ -533,10 +533,7 @@ public class CompressTests : BaseTestClass
 		fs.FileExists(zipPath).AssertTrue();
 
 		// Verify by unzipping
-		using var zipEntries = fs.Unzip(zipPath);
-		var list = zipEntries.ToList();
-
-		list.Count.AssertEqual(2);
+		fs.Unzip(zipPath).Count().AssertEqual(2);
 	}
 
 	[TestMethod]
@@ -555,12 +552,13 @@ public class CompressTests : BaseTestClass
 		fs.Zip(zipPath, entries);
 
 		// Test Unzip extension
-		using var unzipped = fs.Unzip(zipPath);
-		var list = unzipped.ToList();
+		var names = new List<string>();
+		foreach (var (name, _) in fs.Unzip(zipPath))
+			names.Add(name);
 
-		list.Count.AssertEqual(2);
-		list.Any(e => e.name == "a.txt").AssertTrue();
-		list.Any(e => e.name == "b.txt").AssertTrue();
+		names.Count.AssertEqual(2);
+		names.Any(n => n == "a.txt").AssertTrue();
+		names.Any(n => n == "b.txt").AssertTrue();
 	}
 
 	[TestMethod]
@@ -655,9 +653,7 @@ public class CompressTests : BaseTestClass
 
 		fs.FileExists(zipPath).AssertTrue();
 
-		using var zipEntries = fs.Unzip(zipPath);
-		var list = zipEntries.ToList();
-		list.Count.AssertEqual(2);
+		fs.Unzip(zipPath).Count().AssertEqual(2);
 	}
 
 	[TestMethod]
@@ -756,10 +752,15 @@ public class CompressTests : BaseTestClass
 		var zipPath = Path.Combine(root, "with_base.zip");
 		fs.ZipFrom(sourceDir, zipPath, includeBaseDirectory: true);
 
-		using var zipEntries = fs.Unzip(zipPath);
-		var list = zipEntries.ToList();
-		list.Count.AssertEqual(1);
-		list[0].name.Contains("mydir").AssertTrue();
+		var foundName = string.Empty;
+		var count = 0;
+		foreach (var (name, _) in fs.Unzip(zipPath))
+		{
+			count++;
+			foundName = name;
+		}
+		count.AssertEqual(1);
+		foundName.Contains("mydir").AssertTrue();
 	}
 
 	[TestMethod]
@@ -777,11 +778,12 @@ public class CompressTests : BaseTestClass
 		};
 		fs.Zip(zipPath, entries);
 
-		using var filtered = fs.Unzip(zipPath, name => name.EndsWith(".txt"));
-		var list = filtered.ToList();
+		var names = new List<string>();
+		foreach (var (name, _) in fs.Unzip(zipPath, n => n.EndsWith(".txt")))
+			names.Add(name);
 
-		list.Count.AssertEqual(2);
-		list.All(e => e.name.EndsWith(".txt")).AssertTrue();
+		names.Count.AssertEqual(2);
+		names.All(n => n.EndsWith(".txt")).AssertTrue();
 	}
 
 	[TestMethod]

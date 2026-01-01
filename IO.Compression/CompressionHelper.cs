@@ -1,9 +1,11 @@
 ﻿namespace Ecng.IO.Compression;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,6 +18,52 @@ using Nito.AsyncEx;
 /// </summary>
 public static class CompressionHelper
 {
+	#region ZipEntries
+
+	private class ZipEntries(Stream input, bool leaveOpen, Func<string, bool> filter) : IEnumerable<(string name, Stream body)>
+	{
+		private class Enumerator(Stream input, bool leaveOpen, Func<string, bool> filter) : IEnumerator<(string name, Stream body)>
+		{
+			private ZipArchive _archive;
+			private IEnumerator<ZipArchiveEntry> _entries;
+			private (string name, Stream body) _current;
+
+			public (string name, Stream body) Current => _current;
+			object IEnumerator.Current => _current;
+
+			public bool MoveNext()
+			{
+				if (_archive is null)
+				{
+					_archive = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen);
+					_entries = _archive.Entries.Where(e => filter(e.Name)).GetEnumerator();
+				}
+
+				if (!_entries.MoveNext())
+					return false;
+
+				var entry = _entries.Current;
+				_current = (entry.FullName, entry.Open());
+				return true;
+			}
+
+			public void Reset() => throw new NotSupportedException();
+
+			public void Dispose()
+			{
+				_entries?.Dispose();
+				_archive?.Dispose();
+			}
+		}
+
+		public IEnumerator<(string name, Stream body)> GetEnumerator()
+			=> new Enumerator(input, leaveOpen, filter);
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
+
+	#endregion
+
 	/// <summary>
 	/// Creates a ZIP archive from a collection of entries and writes it to the specified stream.
 	/// </summary>
@@ -60,8 +108,8 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The byte array containing the ZIP archive.</param>
 	/// <param name="filter">A function to filter entries by name. Only entries returning true will be processed.</param>
-	/// <returns>A disposable enumerable of entries.</returns>
-	public static ZipEntries Unzip(this byte[] input, Func<string, bool> filter = null)
+	/// <returns>An enumerable of entries. The enumerator must be disposed after use (foreach does this automatically).</returns>
+	public static IEnumerable<(string name, Stream body)> Unzip(this byte[] input, Func<string, bool> filter = null)
 	{
 		return input.To<MemoryStream>().Unzip(filter: filter);
 	}
@@ -72,15 +120,13 @@ public static class CompressionHelper
 	/// <param name="input">The stream containing the ZIP archive.</param>
 	/// <param name="leaveOpen">Whether to leave the underlying stream open after processing.</param>
 	/// <param name="filter">A function to filter entries by name. Only entries returning true will be processed.</param>
-	/// <returns>A disposable enumerable of entries that must be disposed when finished.</returns>
-	public static ZipEntries Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
+	/// <returns>An enumerable of entries. The enumerator must be disposed after use (foreach does this automatically).</returns>
+	public static IEnumerable<(string name, Stream body)> Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
 	{
 		if (input is null)
 			throw new ArgumentNullException(nameof(input));
 
-		filter ??= _ => true;
-
-		return new ZipEntries(new(input, ZipArchiveMode.Read, leaveOpen), filter);
+		return new ZipEntries(input, leaveOpen, filter ?? (_ => true));
 	}
 
 	/// <summary>

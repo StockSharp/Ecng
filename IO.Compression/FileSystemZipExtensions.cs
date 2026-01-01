@@ -311,8 +311,8 @@ public static class FileSystemZipExtensions
 	/// <param name="fs">The file system to use.</param>
 	/// <param name="zipPath">Path to the ZIP archive file.</param>
 	/// <param name="filter">Optional filter function for entry names.</param>
-	/// <returns>A disposable collection of entries.</returns>
-	public static ZipEntries Unzip(this IFileSystem fs, string zipPath, Func<string, bool> filter = null)
+	/// <returns>An enumerable of entries. The enumerator must be disposed after use (foreach does this automatically).</returns>
+	public static IEnumerable<(string name, Stream body)> Unzip(this IFileSystem fs, string zipPath, Func<string, bool> filter = null)
 	{
 		if (fs is null) throw new ArgumentNullException(nameof(fs));
 		if (zipPath.IsEmpty()) throw new ArgumentNullException(nameof(zipPath));
