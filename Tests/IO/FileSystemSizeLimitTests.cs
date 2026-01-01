@@ -23,7 +23,7 @@ public class FileSystemSizeLimitTests : BaseTestClass
 		}
 		else
 		{
-			var fs = LocalFileSystem.Instance;
+			var fs = new LocalFileSystem();
 			var root = fs.GetTempPath();
 			return (fs, root);
 		}
