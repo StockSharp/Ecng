@@ -10,20 +10,22 @@ using Ecng.IO;
 [TestClass]
 public class FileSystemSizeLimitTests : BaseTestClass
 {
-	private static (IFileSystem fs, string root, Action cleanup) CreateFs(Type fsType)
+	// Note: we create new LocalFileSystem instances (not the singleton) because each test needs its own TotalSize tracking.
+	// Cleanup is handled by Config.AssemblyCleanup which deletes _tempRoot.
+	private static (IFileSystem fs, string root) CreateFs(Type fsType)
 	{
 		if (fsType == typeof(MemoryFileSystem))
 		{
 			var fs = new MemoryFileSystem();
 			var root = "/data";
 			fs.CreateDirectory(root);
-			return (fs, root, () => { });
+			return (fs, root);
 		}
 		else
 		{
-			var fs = new LocalFileSystem();
+			var fs = LocalFileSystem.Instance;
 			var root = fs.GetTempPath();
-			return (fs, root, () => { try { Directory.Delete(root, true); } catch { } });
+			return (fs, root);
 		}
 	}
 
@@ -44,31 +46,24 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	[DataRow(typeof(LocalFileSystem))]
 	public void TotalSize_TracksFileSize(Type fsType)
 	{
-		var (fs, root, cleanup) = CreateFs(fsType);
+		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 1000, FileSystemOverflowBehavior.ThrowException);
 
-		try
+		fs.TotalSize.AssertEqual(0L);
+
+		WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
+		fs.TotalSize.AssertEqual(5L);
+
+		WriteBytes(fs, Path.Combine(root, "file2.txt"), 6);
+		fs.TotalSize.AssertEqual(11L);
+
+		fs.DeleteFile(Path.Combine(root, "file1.txt"));
+		// Note: LocalFileSystem doesn't track deletes, only MemoryFileSystem does
+		if (fs is MemoryFileSystem)
 		{
+			fs.TotalSize.AssertEqual(6L);
+			fs.DeleteFile(Path.Combine(root, "file2.txt"));
 			fs.TotalSize.AssertEqual(0L);
-
-			WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
-			fs.TotalSize.AssertEqual(5L);
-
-			WriteBytes(fs, Path.Combine(root, "file2.txt"), 6);
-			fs.TotalSize.AssertEqual(11L);
-
-			fs.DeleteFile(Path.Combine(root, "file1.txt"));
-			// Note: LocalFileSystem doesn't track deletes, only MemoryFileSystem does
-			if (fs is MemoryFileSystem)
-			{
-				fs.TotalSize.AssertEqual(6L);
-				fs.DeleteFile(Path.Combine(root, "file2.txt"));
-				fs.TotalSize.AssertEqual(0L);
-			}
-		}
-		finally
-		{
-			cleanup();
 		}
 	}
 
@@ -77,24 +72,17 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	[DataRow(typeof(LocalFileSystem))]
 	public void MaxSize_ThrowException_WhenExceeded(Type fsType)
 	{
-		var (fs, root, cleanup) = CreateFs(fsType);
+		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.ThrowException);
 
-		try
-		{
-			WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
-			fs.TotalSize.AssertEqual(5L);
+		WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
+		fs.TotalSize.AssertEqual(5L);
 
-			// This should throw - would exceed limit
-			ThrowsExactly<IOException>(() => WriteBytes(fs, Path.Combine(root, "file2.txt"), 10));
+		// This should throw - would exceed limit
+		ThrowsExactly<IOException>(() => WriteBytes(fs, Path.Combine(root, "file2.txt"), 10));
 
-			// Original tracking should remain
-			fs.TotalSize.AssertEqual(5L);
-		}
-		finally
-		{
-			cleanup();
-		}
+		// Original tracking should remain
+		fs.TotalSize.AssertEqual(5L);
 	}
 
 	[TestMethod]
@@ -102,24 +90,17 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	[DataRow(typeof(LocalFileSystem))]
 	public void MaxSize_IgnoreWrites_WhenExceeded(Type fsType)
 	{
-		var (fs, root, cleanup) = CreateFs(fsType);
+		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.IgnoreWrites);
 
-		try
-		{
-			WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
-			fs.TotalSize.AssertEqual(5L);
+		WriteBytes(fs, Path.Combine(root, "file1.txt"), 5);
+		fs.TotalSize.AssertEqual(5L);
 
-			// This should be silently ignored
-			WriteBytes(fs, Path.Combine(root, "file2.txt"), 10);
+		// This should be silently ignored
+		WriteBytes(fs, Path.Combine(root, "file2.txt"), 10);
 
-			// Total size should remain unchanged
-			fs.TotalSize.AssertEqual(5L);
-		}
-		finally
-		{
-			cleanup();
-		}
+		// Total size should remain unchanged
+		fs.TotalSize.AssertEqual(5L);
 	}
 
 	[TestMethod]
@@ -127,24 +108,17 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	[DataRow(typeof(LocalFileSystem))]
 	public void MaxSize_NoLimit_WhenZero(Type fsType)
 	{
-		var (fs, root, cleanup) = CreateFs(fsType);
+		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 0, FileSystemOverflowBehavior.ThrowException);
 
-		try
-		{
-			// Should be able to write unlimited data (no tracking when MaxSize=0)
-			WriteBytes(fs, Path.Combine(root, "file1.txt"), 1000);
-			WriteBytes(fs, Path.Combine(root, "file2.txt"), 1000);
+		// Should be able to write unlimited data (no tracking when MaxSize=0)
+		WriteBytes(fs, Path.Combine(root, "file1.txt"), 1000);
+		WriteBytes(fs, Path.Combine(root, "file2.txt"), 1000);
 
-			if (fs is MemoryFileSystem)
-				fs.TotalSize.AssertEqual(2000L);
-			else
-				fs.TotalSize.AssertEqual(0L); // LocalFileSystem doesn't track when MaxSize=0
-		}
-		finally
-		{
-			cleanup();
-		}
+		if (fs is MemoryFileSystem)
+			fs.TotalSize.AssertEqual(2000L);
+		else
+			fs.TotalSize.AssertEqual(0L); // LocalFileSystem doesn't track when MaxSize=0
 	}
 
 	[TestMethod]
@@ -152,21 +126,14 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	[DataRow(typeof(LocalFileSystem))]
 	public void MaxSize_ExactLimit(Type fsType)
 	{
-		var (fs, root, cleanup) = CreateFs(fsType);
+		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.ThrowException);
 
-		try
-		{
-			WriteBytes(fs, Path.Combine(root, "file.txt"), 10);
-			fs.TotalSize.AssertEqual(10L);
+		WriteBytes(fs, Path.Combine(root, "file.txt"), 10);
+		fs.TotalSize.AssertEqual(10L);
 
-			// Should throw on any addition
-			ThrowsExactly<IOException>(() => WriteBytes(fs, Path.Combine(root, "file2.txt"), 1));
-		}
-		finally
-		{
-			cleanup();
-		}
+		// Should throw on any addition
+		ThrowsExactly<IOException>(() => WriteBytes(fs, Path.Combine(root, "file2.txt"), 1));
 	}
 
 	#region MemoryFileSystem-specific tests
