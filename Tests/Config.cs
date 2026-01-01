@@ -48,4 +48,21 @@ public static class Config
 		fileSystem.CreateDirectory(path);
 		return path;
 	}
+
+	public static (IFileSystem fs, string root) CreateFs(Type fsType, string memRootName = "data")
+	{
+		if (fsType == typeof(LocalFileSystem))
+		{
+			var fs = LocalFileSystem.Instance;
+			var root = fs.GetTempPath();
+			return (fs, root);
+		}
+		else
+		{
+			var fs = new MemoryFileSystem();
+			var root = "/" + memRootName;
+			fs.CreateDirectory(root);
+			return (fs, root);
+		}
+	}
 }

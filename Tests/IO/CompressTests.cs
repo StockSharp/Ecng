@@ -459,672 +459,486 @@ public class CompressTests : BaseTestClass
 	#region FileSystem Zip Extensions Tests
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ZipFrom_UnzipTo_RoundTrip(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_UnzipTo_RoundTrip(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
+		var (fs, root) = Config.CreateFs(fsType);
+		// Create source directory with files
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
 
-		try
+		var subDir = Path.Combine(sourceDir, "subdir");
+		fs.CreateDirectory(subDir);
+		fs.WriteAllText(Path.Combine(subDir, "file2.txt"), "content2");
+
+		// Create zip from directory
+		var zipPath = Path.Combine(root, "archive.zip");
+		fs.ZipFrom(sourceDir, zipPath);
+
+		fs.FileExists(zipPath).AssertTrue();
+
+		// Unzip to new directory
+		var destDir = Path.Combine(root, "dest");
+		fs.UnzipTo(zipPath, destDir);
+
+		// Verify extracted files
+		fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
+
+		fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_ZipFromAsync_UnzipToAsync_RoundTrip(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "async1.txt"), "async content 1");
+		fs.WriteAllText(Path.Combine(sourceDir, "async2.txt"), "async content 2");
+
+		var zipPath = Path.Combine(root, "async_archive.zip");
+		await fs.ZipFromAsync(sourceDir, zipPath, cancellationToken: CancellationToken);
+
+		fs.FileExists(zipPath).AssertTrue();
+
+		var destDir = Path.Combine(root, "dest");
+		await fs.UnzipToAsync(zipPath, destDir, cancellationToken: CancellationToken);
+
+		fs.ReadAllText(Path.Combine(destDir, "async1.txt")).AssertEqual("async content 1");
+		fs.ReadAllText(Path.Combine(destDir, "async2.txt")).AssertEqual("async content 2");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_Zip_FromEntries(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var zipPath = Path.Combine(root, "entries.zip");
+
+		var entries = new List<(string name, Stream body)>
 		{
-			// Create source directory with files
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
+			("entry1.txt", new MemoryStream("entry content 1"u8.ToArray())),
+			("dir/entry2.txt", new MemoryStream("entry content 2"u8.ToArray()))
+		};
 
-			var subDir = Path.Combine(sourceDir, "subdir");
-			fs.CreateDirectory(subDir);
-			fs.WriteAllText(Path.Combine(subDir, "file2.txt"), "content2");
+		fs.Zip(zipPath, entries);
 
-			// Create zip from directory
-			var zipPath = Path.Combine(root, "archive.zip");
-			fs.ZipFrom(sourceDir, zipPath);
+		fs.FileExists(zipPath).AssertTrue();
 
-			fs.FileExists(zipPath).AssertTrue();
+		// Verify by unzipping
+		using var zipEntries = fs.Unzip(zipPath);
+		var list = zipEntries.ToList();
 
-			// Unzip to new directory
-			var destDir = Path.Combine(root, "dest");
-			fs.UnzipTo(zipPath, destDir);
+		list.Count.AssertEqual(2);
+	}
 
-			// Verify extracted files
-			fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
-
-			fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
-		}
-		finally
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_Unzip_ReturnsEntries(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		// Create a zip file first
+		var zipPath = Path.Combine(root, "test.zip");
+		var entries = new List<(string name, Stream body)>
 		{
-			CleanupFs(fs, fsType, root);
+			("a.txt", new MemoryStream("aaa"u8.ToArray())),
+			("b.txt", new MemoryStream("bbb"u8.ToArray()))
+		};
+		fs.Zip(zipPath, entries);
+
+		// Test Unzip extension
+		using var unzipped = fs.Unzip(zipPath);
+		var list = unzipped.ToList();
+
+		list.Count.AssertEqual(2);
+		list.Any(e => e.name == "a.txt").AssertTrue();
+		list.Any(e => e.name == "b.txt").AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_UnzipTo_OverwriteOption(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		// Create initial zip
+		var zipPath = Path.Combine(root, "overwrite.zip");
+		var entries = new List<(string name, Stream body)>
+		{
+			("file.txt", new MemoryStream("new content"u8.ToArray()))
+		};
+		fs.Zip(zipPath, entries);
+
+		// Create dest with existing file
+		var destDir = Path.Combine(root, "dest");
+		fs.CreateDirectory(destDir);
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
+
+		// Unzip with overwrite=true (default)
+		fs.UnzipTo(zipPath, destDir, overwrite: true);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("new content");
+
+		// Reset
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
+
+		// Unzip with overwrite=false
+		fs.UnzipTo(zipPath, destDir, overwrite: false);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("old content");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_Zip_ToStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var entries = new List<(string name, Stream body)>
+		{
+			("stream1.txt", new MemoryStream("stream content 1"u8.ToArray())),
+			("stream2.txt", new MemoryStream("stream content 2"u8.ToArray()))
+		};
+
+		using var zipStream = new MemoryStream();
+		fs.Zip(zipStream, entries);
+		zipStream.Position = 0;
+
+		// Verify archive
+		using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
+		archive.Entries.Count.AssertEqual(2);
+		archive.Entries.Any(e => e.Name == "stream1.txt").AssertTrue();
+		archive.Entries.Any(e => e.Name == "stream2.txt").AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_ZipAsync_ToStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var entries = new List<(string name, Stream body)>
+		{
+			("async_stream1.txt", new MemoryStream("async stream 1"u8.ToArray())),
+			("async_stream2.txt", new MemoryStream("async stream 2"u8.ToArray()))
+		};
+
+		using var zipStream = new MemoryStream();
+		await fs.ZipAsync(zipStream, entries, cancellationToken: CancellationToken);
+		zipStream.Position = 0;
+
+		using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
+		archive.Entries.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_ZipAsync_FromEntries(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var zipPath = Path.Combine(root, "async_entries.zip");
+
+		var entries = new List<(string name, Stream body)>
+		{
+			("async1.txt", new MemoryStream("async content 1"u8.ToArray())),
+			("dir/async2.txt", new MemoryStream("async content 2"u8.ToArray()))
+		};
+
+		await fs.ZipAsync(zipPath, entries, cancellationToken: CancellationToken);
+
+		fs.FileExists(zipPath).AssertTrue();
+
+		using var zipEntries = fs.Unzip(zipPath);
+		var list = zipEntries.ToList();
+		list.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_ToStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
+		fs.WriteAllText(Path.Combine(sourceDir, "file2.txt"), "content2");
+
+		using var zipStream = new MemoryStream();
+		fs.ZipFrom(sourceDir, zipStream);
+		zipStream.Position = 0;
+
+		using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
+		archive.Entries.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_ZipFromAsync_ToStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
+
+		using var zipStream = new MemoryStream();
+		await fs.ZipFromAsync(sourceDir, zipStream, cancellationToken: CancellationToken);
+		zipStream.Position = 0;
+
+		using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
+		archive.Entries.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_UnzipTo_FromStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		// Create zip in memory
+		var entries = new List<(string name, Stream body)>
+		{
+			("fromstream.txt", new MemoryStream("from stream content"u8.ToArray()))
+		};
+
+		using var zipStream = new MemoryStream();
+		entries.Zip(zipStream);
+		zipStream.Position = 0;
+
+		// Unzip from stream
+		var destDir = Path.Combine(root, "dest");
+		fs.UnzipTo(zipStream, destDir);
+
+		fs.FileExists(Path.Combine(destDir, "fromstream.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "fromstream.txt")).AssertEqual("from stream content");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_UnzipToAsync_FromStream(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var entries = new List<(string name, Stream body)>
+		{
+			("async_fromstream.txt", new MemoryStream("async from stream"u8.ToArray()))
+		};
+
+		using var zipStream = new MemoryStream();
+		entries.Zip(zipStream);
+		zipStream.Position = 0;
+
+		var destDir = Path.Combine(root, "dest");
+		await fs.UnzipToAsync(zipStream, destDir, cancellationToken: CancellationToken);
+
+		fs.FileExists(Path.Combine(destDir, "async_fromstream.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "async_fromstream.txt")).AssertEqual("async from stream");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_IncludeBaseDirectory(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "mydir");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file.txt"), "content");
+
+		var zipPath = Path.Combine(root, "with_base.zip");
+		fs.ZipFrom(sourceDir, zipPath, includeBaseDirectory: true);
+
+		using var zipEntries = fs.Unzip(zipPath);
+		var list = zipEntries.ToList();
+		list.Count.AssertEqual(1);
+		list[0].name.Contains("mydir").AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_Unzip_WithFilter(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var zipPath = Path.Combine(root, "filter_test.zip");
+		var entries = new List<(string name, Stream body)>
+		{
+			("include.txt", new MemoryStream("include"u8.ToArray())),
+			("exclude.dat", new MemoryStream("exclude"u8.ToArray())),
+			("also_include.txt", new MemoryStream("also"u8.ToArray()))
+		};
+		fs.Zip(zipPath, entries);
+
+		using var filtered = fs.Unzip(zipPath, name => name.EndsWith(".txt"));
+		var list = filtered.ToList();
+
+		list.Count.AssertEqual(2);
+		list.All(e => e.name.EndsWith(".txt")).AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_ReturnsStreams(Type fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
+
+		var subDir = Path.Combine(sourceDir, "sub");
+		fs.CreateDirectory(subDir);
+		fs.WriteAllText(Path.Combine(subDir, "file2.txt"), "content2");
+
+		var entries = fs.ReadEntries(sourceDir).ToList();
+
+		entries.Count.AssertEqual(2);
+		entries.Any(e => e.name == "file1.txt").AssertTrue();
+		entries.Any(e => e.name == "sub/file2.txt").AssertTrue();
+
+		// Read content from streams
+		foreach (var (name, body) in entries)
+		{
+			using var reader = new StreamReader(body);
+			var content = reader.ReadToEnd();
+			content.IsEmpty().AssertFalse();
+			body.Dispose();
 		}
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_ZipFromAsync_UnzipToAsync_RoundTrip(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_WithPattern(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
+		var (fs, root) = Config.CreateFs(fsType);
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "txt");
+		fs.WriteAllText(Path.Combine(sourceDir, "file2.dat"), "dat");
+		fs.WriteAllText(Path.Combine(sourceDir, "file3.txt"), "txt2");
 
-		try
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "async1.txt"), "async content 1");
-			fs.WriteAllText(Path.Combine(sourceDir, "async2.txt"), "async content 2");
+		var entries = fs.ReadEntries(sourceDir, "*.txt").ToList();
 
-			var zipPath = Path.Combine(root, "async_archive.zip");
-			await fs.ZipFromAsync(sourceDir, zipPath, cancellationToken: CancellationToken);
+		entries.Count.AssertEqual(2);
+		entries.All(e => e.name.EndsWith(".txt")).AssertTrue();
 
-			fs.FileExists(zipPath).AssertTrue();
-
-			var destDir = Path.Combine(root, "dest");
-			await fs.UnzipToAsync(zipPath, destDir, cancellationToken: CancellationToken);
-
-			fs.ReadAllText(Path.Combine(destDir, "async1.txt")).AssertEqual("async content 1");
-			fs.ReadAllText(Path.Combine(destDir, "async2.txt")).AssertEqual("async content 2");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
+		foreach (var (_, body) in entries)
+			body.Dispose();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_Zip_FromEntries(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_WriteEntries_CreatesFiles(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
+		var (fs, root) = Config.CreateFs(fsType);
+		var destDir = Path.Combine(root, "dest");
 
-		try
+		var entries = new List<(string name, Stream body)>
 		{
-			var zipPath = Path.Combine(root, "entries.zip");
+			("file1.txt", new MemoryStream("content1"u8.ToArray())),
+			("sub/file2.txt", new MemoryStream("content2"u8.ToArray()))
+		};
 
-			var entries = new List<(string name, Stream body)>
-			{
-				("entry1.txt", new MemoryStream("entry content 1"u8.ToArray())),
-				("dir/entry2.txt", new MemoryStream("entry content 2"u8.ToArray()))
-			};
+		fs.WriteEntries(destDir, entries);
 
-			fs.Zip(zipPath, entries);
+		fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
 
-			fs.FileExists(zipPath).AssertTrue();
-
-			// Verify by unzipping
-			using var zipEntries = fs.Unzip(zipPath);
-			var list = zipEntries.ToList();
-
-			list.Count.AssertEqual(2);
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
+		fs.FileExists(Path.Combine(destDir, "sub", "file2.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "sub", "file2.txt")).AssertEqual("content2");
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_Unzip_ReturnsEntries(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_WriteEntries_OverwriteOption(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
+		var (fs, root) = Config.CreateFs(fsType);
+		var destDir = Path.Combine(root, "dest");
+		fs.CreateDirectory(destDir);
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old");
 
-		try
+		var entries = new List<(string name, Stream body)>
 		{
-			// Create a zip file first
-			var zipPath = Path.Combine(root, "test.zip");
-			var entries = new List<(string name, Stream body)>
-			{
-				("a.txt", new MemoryStream("aaa"u8.ToArray())),
-				("b.txt", new MemoryStream("bbb"u8.ToArray()))
-			};
-			fs.Zip(zipPath, entries);
+			("file.txt", new MemoryStream("new"u8.ToArray()))
+		};
 
-			// Test Unzip extension
-			using var unzipped = fs.Unzip(zipPath);
-			var list = unzipped.ToList();
+		// overwrite=true
+		fs.WriteEntries(destDir, entries, overwrite: true);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("new");
 
-			list.Count.AssertEqual(2);
-			list.Any(e => e.name == "a.txt").AssertTrue();
-			list.Any(e => e.name == "b.txt").AssertTrue();
-		}
-		finally
+		// Reset
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old");
+
+		entries = new List<(string name, Stream body)>
 		{
-			CleanupFs(fs, fsType, root);
-		}
+			("file.txt", new MemoryStream("new2"u8.ToArray()))
+		};
+
+		// overwrite=false
+		fs.WriteEntries(destDir, entries, overwrite: false);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("old");
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_UnzipTo_OverwriteOption(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public async Task FileSystem_WriteEntriesAsync_CreatesFiles(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
+		var (fs, root) = Config.CreateFs(fsType);
+		var destDir = Path.Combine(root, "dest");
 
-		try
+		var entries = new List<(string name, Stream body)>
 		{
-			// Create initial zip
-			var zipPath = Path.Combine(root, "overwrite.zip");
-			var entries = new List<(string name, Stream body)>
-			{
-				("file.txt", new MemoryStream("new content"u8.ToArray()))
-			};
-			fs.Zip(zipPath, entries);
+			("async1.txt", new MemoryStream("async content 1"u8.ToArray())),
+			("dir/async2.txt", new MemoryStream("async content 2"u8.ToArray()))
+		};
 
-			// Create dest with existing file
-			var destDir = Path.Combine(root, "dest");
-			fs.CreateDirectory(destDir);
-			fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
+		await fs.WriteEntriesAsync(destDir, entries, cancellationToken: CancellationToken);
 
-			// Unzip with overwrite=true (default)
-			fs.UnzipTo(zipPath, destDir, overwrite: true);
-			fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("new content");
-
-			// Reset
-			fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
-
-			// Unzip with overwrite=false
-			fs.UnzipTo(zipPath, destDir, overwrite: false);
-			fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("old content");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
+		fs.FileExists(Path.Combine(destDir, "async1.txt")).AssertTrue();
+		fs.FileExists(Path.Combine(destDir, "dir", "async2.txt")).AssertTrue();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_Zip_ToStream(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_WriteEntries_RoundTrip(Type fsType)
 	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var entries = new List<(string name, Stream body)>
-			{
-				("stream1.txt", new MemoryStream("stream content 1"u8.ToArray())),
-				("stream2.txt", new MemoryStream("stream content 2"u8.ToArray()))
-			};
-
-			using var zipStream = new MemoryStream();
-			fs.Zip(zipStream, entries);
-			zipStream.Position = 0;
-
-			// Verify archive
-			using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
-			archive.Entries.Count.AssertEqual(2);
-			archive.Entries.Any(e => e.Name == "stream1.txt").AssertTrue();
-			archive.Entries.Any(e => e.Name == "stream2.txt").AssertTrue();
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_ZipAsync_ToStream(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var entries = new List<(string name, Stream body)>
-			{
-				("async_stream1.txt", new MemoryStream("async stream 1"u8.ToArray())),
-				("async_stream2.txt", new MemoryStream("async stream 2"u8.ToArray()))
-			};
-
-			using var zipStream = new MemoryStream();
-			await fs.ZipAsync(zipStream, entries, cancellationToken: CancellationToken);
-			zipStream.Position = 0;
-
-			using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
-			archive.Entries.Count.AssertEqual(2);
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_ZipAsync_FromEntries(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var zipPath = Path.Combine(root, "async_entries.zip");
-
-			var entries = new List<(string name, Stream body)>
-			{
-				("async1.txt", new MemoryStream("async content 1"u8.ToArray())),
-				("dir/async2.txt", new MemoryStream("async content 2"u8.ToArray()))
-			};
-
-			await fs.ZipAsync(zipPath, entries, cancellationToken: CancellationToken);
-
-			fs.FileExists(zipPath).AssertTrue();
-
-			using var zipEntries = fs.Unzip(zipPath);
-			var list = zipEntries.ToList();
-			list.Count.AssertEqual(2);
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ZipFrom_ToStream(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
-			fs.WriteAllText(Path.Combine(sourceDir, "file2.txt"), "content2");
-
-			using var zipStream = new MemoryStream();
-			fs.ZipFrom(sourceDir, zipStream);
-			zipStream.Position = 0;
-
-			using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
-			archive.Entries.Count.AssertEqual(2);
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_ZipFromAsync_ToStream(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
-
-			using var zipStream = new MemoryStream();
-			await fs.ZipFromAsync(sourceDir, zipStream, cancellationToken: CancellationToken);
-			zipStream.Position = 0;
-
-			using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
-			archive.Entries.Count.AssertEqual(1);
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_UnzipTo_FromStream(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			// Create zip in memory
-			var entries = new List<(string name, Stream body)>
-			{
-				("fromstream.txt", new MemoryStream("from stream content"u8.ToArray()))
-			};
-
-			using var zipStream = new MemoryStream();
-			entries.Zip(zipStream);
-			zipStream.Position = 0;
-
-			// Unzip from stream
-			var destDir = Path.Combine(root, "dest");
-			fs.UnzipTo(zipStream, destDir);
-
-			fs.FileExists(Path.Combine(destDir, "fromstream.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "fromstream.txt")).AssertEqual("from stream content");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_UnzipToAsync_FromStream(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var entries = new List<(string name, Stream body)>
-			{
-				("async_fromstream.txt", new MemoryStream("async from stream"u8.ToArray()))
-			};
-
-			using var zipStream = new MemoryStream();
-			entries.Zip(zipStream);
-			zipStream.Position = 0;
-
-			var destDir = Path.Combine(root, "dest");
-			await fs.UnzipToAsync(zipStream, destDir, cancellationToken: CancellationToken);
-
-			fs.FileExists(Path.Combine(destDir, "async_fromstream.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "async_fromstream.txt")).AssertEqual("async from stream");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ZipFrom_IncludeBaseDirectory(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var sourceDir = Path.Combine(root, "mydir");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file.txt"), "content");
-
-			var zipPath = Path.Combine(root, "with_base.zip");
-			fs.ZipFrom(sourceDir, zipPath, includeBaseDirectory: true);
-
-			using var zipEntries = fs.Unzip(zipPath);
-			var list = zipEntries.ToList();
-			list.Count.AssertEqual(1);
-			list[0].name.Contains("mydir").AssertTrue();
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_Unzip_WithFilter(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var zipPath = Path.Combine(root, "filter_test.zip");
-			var entries = new List<(string name, Stream body)>
-			{
-				("include.txt", new MemoryStream("include"u8.ToArray())),
-				("exclude.dat", new MemoryStream("exclude"u8.ToArray())),
-				("also_include.txt", new MemoryStream("also"u8.ToArray()))
-			};
-			fs.Zip(zipPath, entries);
-
-			using var filtered = fs.Unzip(zipPath, name => name.EndsWith(".txt"));
-			var list = filtered.ToList();
-
-			list.Count.AssertEqual(2);
-			list.All(e => e.name.EndsWith(".txt")).AssertTrue();
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ReadEntries_ReturnsStreams(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "content1");
-
-			var subDir = Path.Combine(sourceDir, "sub");
-			fs.CreateDirectory(subDir);
-			fs.WriteAllText(Path.Combine(subDir, "file2.txt"), "content2");
-
-			var entries = fs.ReadEntries(sourceDir).ToList();
-
-			entries.Count.AssertEqual(2);
-			entries.Any(e => e.name == "file1.txt").AssertTrue();
-			entries.Any(e => e.name == "sub/file2.txt").AssertTrue();
-
-			// Read content from streams
-			foreach (var (name, body) in entries)
-			{
-				using var reader = new StreamReader(body);
-				var content = reader.ReadToEnd();
-				content.IsEmpty().AssertFalse();
-				body.Dispose();
-			}
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ReadEntries_WithPattern(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "txt");
-			fs.WriteAllText(Path.Combine(sourceDir, "file2.dat"), "dat");
-			fs.WriteAllText(Path.Combine(sourceDir, "file3.txt"), "txt2");
-
-			var entries = fs.ReadEntries(sourceDir, "*.txt").ToList();
-
-			entries.Count.AssertEqual(2);
-			entries.All(e => e.name.EndsWith(".txt")).AssertTrue();
-
-			foreach (var (_, body) in entries)
-				body.Dispose();
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_WriteEntries_CreatesFiles(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var destDir = Path.Combine(root, "dest");
-
-			var entries = new List<(string name, Stream body)>
-			{
-				("file1.txt", new MemoryStream("content1"u8.ToArray())),
-				("sub/file2.txt", new MemoryStream("content2"u8.ToArray()))
-			};
-
-			fs.WriteEntries(destDir, entries);
-
-			fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
-
-			fs.FileExists(Path.Combine(destDir, "sub", "file2.txt")).AssertTrue();
-			fs.ReadAllText(Path.Combine(destDir, "sub", "file2.txt")).AssertEqual("content2");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_WriteEntries_OverwriteOption(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var destDir = Path.Combine(root, "dest");
-			fs.CreateDirectory(destDir);
-			fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old");
-
-			var entries = new List<(string name, Stream body)>
-			{
-				("file.txt", new MemoryStream("new"u8.ToArray()))
-			};
-
-			// overwrite=true
-			fs.WriteEntries(destDir, entries, overwrite: true);
-			fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("new");
-
-			// Reset
-			fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old");
-
-			entries = new List<(string name, Stream body)>
-			{
-				("file.txt", new MemoryStream("new2"u8.ToArray()))
-			};
-
-			// overwrite=false
-			fs.WriteEntries(destDir, entries, overwrite: false);
-			fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("old");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public async Task FileSystem_WriteEntriesAsync_CreatesFiles(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			var destDir = Path.Combine(root, "dest");
-
-			var entries = new List<(string name, Stream body)>
-			{
-				("async1.txt", new MemoryStream("async content 1"u8.ToArray())),
-				("dir/async2.txt", new MemoryStream("async content 2"u8.ToArray()))
-			};
-
-			await fs.WriteEntriesAsync(destDir, entries, cancellationToken: CancellationToken);
-
-			fs.FileExists(Path.Combine(destDir, "async1.txt")).AssertTrue();
-			fs.FileExists(Path.Combine(destDir, "dir", "async2.txt")).AssertTrue();
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void FileSystem_ReadEntries_WriteEntries_RoundTrip(FileSystemType fsType)
-	{
-		var fs = CreateFs(fsType, out var root);
-
-		try
-		{
-			// Create source
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			fs.WriteAllText(Path.Combine(sourceDir, "a.txt"), "aaa");
-			fs.WriteAllText(Path.Combine(sourceDir, "b.txt"), "bbb");
-
-			var subDir = Path.Combine(sourceDir, "sub");
-			fs.CreateDirectory(subDir);
-			fs.WriteAllText(Path.Combine(subDir, "c.txt"), "ccc");
-
-			// Read entries and write to dest
-			var destDir = Path.Combine(root, "dest");
-			var entries = fs.ReadEntries(sourceDir).ToList();
-			fs.WriteEntries(destDir, entries);
-
-			// Dispose streams
-			foreach (var (_, body) in entries)
-				body.Dispose();
-
-			// Verify
-			fs.ReadAllText(Path.Combine(destDir, "a.txt")).AssertEqual("aaa");
-			fs.ReadAllText(Path.Combine(destDir, "b.txt")).AssertEqual("bbb");
-			fs.ReadAllText(Path.Combine(destDir, "sub", "c.txt")).AssertEqual("ccc");
-		}
-		finally
-		{
-			CleanupFs(fs, fsType, root);
-		}
-	}
-
-	private static IFileSystem CreateFs(FileSystemType fsType, out string root)
-	{
-		if (fsType == FileSystemType.Local)
-		{
-			var fs = LocalFileSystem.Instance;
-			root = Path.Combine(Path.GetTempPath(), "ZipTests_" + Guid.NewGuid().ToString("N"));
-			fs.CreateDirectory(root);
-			return fs;
-		}
-		else
-		{
-			root = "/ziptest";
-			var fs = new MemoryFileSystem();
-			fs.CreateDirectory(root);
-			return fs;
-		}
-	}
-
-	private static void CleanupFs(IFileSystem fs, FileSystemType fsType, string root)
-	{
-		if (fsType == FileSystemType.Local)
-		{
-			try { if (fs.DirectoryExists(root)) fs.DeleteDirectory(root, true); } catch { }
-		}
+		var (fs, root) = Config.CreateFs(fsType);
+		// Create source
+		var sourceDir = Path.Combine(root, "source");
+		fs.CreateDirectory(sourceDir);
+		fs.WriteAllText(Path.Combine(sourceDir, "a.txt"), "aaa");
+		fs.WriteAllText(Path.Combine(sourceDir, "b.txt"), "bbb");
+
+		var subDir = Path.Combine(sourceDir, "sub");
+		fs.CreateDirectory(subDir);
+		fs.WriteAllText(Path.Combine(subDir, "c.txt"), "ccc");
+
+		// Read entries and write to dest
+		var destDir = Path.Combine(root, "dest");
+		var entries = fs.ReadEntries(sourceDir).ToList();
+		fs.WriteEntries(destDir, entries);
+
+		// Dispose streams
+		foreach (var (_, body) in entries)
+			body.Dispose();
+
+		// Verify
+		fs.ReadAllText(Path.Combine(destDir, "a.txt")).AssertEqual("aaa");
+		fs.ReadAllText(Path.Combine(destDir, "b.txt")).AssertEqual("bbb");
+		fs.ReadAllText(Path.Combine(destDir, "sub", "c.txt")).AssertEqual("ccc");
 	}
 
 	#endregion

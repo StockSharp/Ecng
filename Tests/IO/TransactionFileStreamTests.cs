@@ -9,53 +9,22 @@ public class TransactionFileStreamTests : BaseTestClass
 {
 	#region Helper Methods
 
-	private IFileSystem _fs;
-	private string _root;
-	private FileSystemType _fsType;
+	private static string NewFilePath(string root, string name = "file.txt")
+		=> Path.Combine(root, name);
 
-	private void InitFs(FileSystemType fsType)
+	private static TransactionFileStream CreateTfs(IFileSystem fs, string path, FileMode mode)
+		=> new(fs, path, mode);
+
+	private static void WriteAllText(IFileSystem fs, string path, string content)
 	{
-		_fsType = fsType;
-
-		if (fsType == FileSystemType.Local)
-		{
-			_fs = LocalFileSystem.Instance;
-			_root = _fs.GetTempPath();
-			_fs.CreateDirectory(_root);
-		}
-		else
-		{
-			_fs = new MemoryFileSystem();
-			_root = "/data";
-			_fs.CreateDirectory(_root);
-		}
-	}
-
-	[TestCleanup]
-	public void Cleanup()
-	{
-		if (_fsType == FileSystemType.Local && _fs != null && _root != null)
-		{
-			try { if (_fs.DirectoryExists(_root)) _fs.DeleteDirectory(_root, true); } catch { }
-		}
-	}
-
-	private string NewFilePath(string name = "file.txt")
-		=> Path.Combine(_root, name);
-
-	private TransactionFileStream CreateTfs(string path, FileMode mode)
-		=> new(_fs, path, mode);
-
-	private void WriteAllText(string path, string content)
-	{
-		using var stream = _fs.OpenWrite(path);
+		using var stream = fs.OpenWrite(path);
 		var bytes = content.UTF8();
 		stream.Write(bytes, 0, bytes.Length);
 	}
 
-	private string ReadAllText(string path)
+	private static string ReadAllText(IFileSystem fs, string path)
 	{
-		using var stream = _fs.OpenRead(path);
+		using var stream = fs.OpenRead(path);
 		using var reader = new StreamReader(stream, Encoding.UTF8);
 		return reader.ReadToEnd();
 	}
@@ -65,109 +34,109 @@ public class TransactionFileStreamTests : BaseTestClass
 	#region DataRow Tests
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CreateNew_CommitAndCleanup(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CreateNew_CommitAndCleanup(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		using (var tfs = CreateTfs(target, FileMode.CreateNew))
+		using (var tfs = CreateTfs(fs, target, FileMode.CreateNew))
 		{
 			var data = "hello".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		_fs.FileExists(target).AssertTrue();
-		ReadAllText(target).AssertEqual("hello");
-		_fs.FileExists(tmp).AssertFalse();
+		fs.FileExists(target).AssertTrue();
+		ReadAllText(fs, target).AssertEqual("hello");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Open_NonExisting_Throws(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Open_NonExisting_Throws(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		ThrowsExactly<FileNotFoundException>(() => CreateTfs(target, FileMode.Open));
+		ThrowsExactly<FileNotFoundException>(() => CreateTfs(fs, target, FileMode.Open));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void OpenOrCreate_CreatesAndWrites(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void OpenOrCreate_CreatesAndWrites(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		using (var tfs = CreateTfs(target, FileMode.OpenOrCreate))
+		using (var tfs = CreateTfs(fs, target, FileMode.OpenOrCreate))
 		{
 			var data = "abc".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("abc");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("abc");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Append_AppendsToExisting(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Append_AppendsToExisting(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "start");
+		WriteAllText(fs, target, "start");
 
-		using (var tfs = CreateTfs(target, FileMode.Append))
+		using (var tfs = CreateTfs(fs, target, FileMode.Append))
 		{
 			var data = "+end".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("start+end");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("start+end");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Truncate_Existing_ReplacesContent(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Truncate_Existing_ReplacesContent(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "very-long-content");
+		WriteAllText(fs, target, "very-long-content");
 
-		using (var tfs = CreateTfs(target, FileMode.Truncate))
+		using (var tfs = CreateTfs(fs, target, FileMode.Truncate))
 		{
 			var data = "short".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("short");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("short");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void AfterDispose_ThrowsObjectDisposed(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void AfterDispose_ThrowsObjectDisposed(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
-		var stream = CreateTfs(target, FileMode.Create);
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
+		var stream = CreateTfs(fs, target, FileMode.Create);
 
 		stream.Dispose();
 
@@ -176,296 +145,296 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CreateNew_ExistingFile_Throws(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CreateNew_ExistingFile_Throws(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		WriteAllText(target, "existing");
+		WriteAllText(fs, target, "existing");
 
-		ThrowsExactly<IOException>(() => CreateTfs(target, FileMode.CreateNew));
+		ThrowsExactly<IOException>(() => CreateTfs(fs, target, FileMode.CreateNew));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Create_OverwritesExisting(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Create_OverwritesExisting(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "old-content");
+		WriteAllText(fs, target, "old-content");
 
-		using (var tfs = CreateTfs(target, FileMode.Create))
+		using (var tfs = CreateTfs(fs, target, FileMode.Create))
 		{
 			var data = "new".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("new");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("new");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Truncate_NonExisting_Throws(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Truncate_NonExisting_Throws(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		ThrowsExactly<FileNotFoundException>(() => CreateTfs(target, FileMode.Truncate));
+		ThrowsExactly<FileNotFoundException>(() => CreateTfs(fs, target, FileMode.Truncate));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void OpenOrCreate_ExistingFile_AppendsContent(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void OpenOrCreate_ExistingFile_AppendsContent(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "existing");
+		WriteAllText(fs, target, "existing");
 
-		using (var tfs = CreateTfs(target, FileMode.OpenOrCreate))
+		using (var tfs = CreateTfs(fs, target, FileMode.OpenOrCreate))
 		{
 			var data = "-appended".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("existing-appended");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("existing-appended");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Seek_ThrowsNotSupported(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Seek_ThrowsNotSupported(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		ThrowsExactly<NotSupportedException>(() => tfs.Seek(0, SeekOrigin.Begin));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void SetLength_ThrowsNotSupported(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void SetLength_ThrowsNotSupported(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		ThrowsExactly<NotSupportedException>(() => tfs.SetLength(5));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void PositionSet_ThrowsNotSupported(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void PositionSet_ThrowsNotSupported(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		ThrowsExactly<NotSupportedException>(() => tfs.Position = 0);
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CanRead_ReturnsFalse(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CanRead_ReturnsFalse(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.CanRead.AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Read_ThrowsNotSupported(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Read_ThrowsNotSupported(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		ThrowsExactly<NotSupportedException>(() => tfs.ReadBytes(new byte[10], 10));
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CanSeek_ReturnsFalse(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CanSeek_ReturnsFalse(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.CanSeek.AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CanWrite_ReturnsTrue(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CanWrite_ReturnsTrue(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.CanWrite.AssertTrue();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CanWrite_AfterDispose_ReturnsFalse(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CanWrite_AfterDispose_ReturnsFalse(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		var tfs = CreateTfs(target, FileMode.Create);
+		var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.Dispose();
 		tfs.CanWrite.AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Flush_Works(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Flush_Works(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		var data = "test".UTF8();
 		tfs.Write(data, 0, data.Length);
 		tfs.Flush(); // Should not throw
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MultipleDispose_NoException(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MultipleDispose_NoException(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		var tfs = CreateTfs(target, FileMode.Create);
+		var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.Dispose();
 		tfs.Dispose(); // Second dispose should not throw
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Append_NonExisting_CreatesFile(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Append_NonExisting_CreatesFile(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		using (var tfs = CreateTfs(target, FileMode.Append))
+		using (var tfs = CreateTfs(fs, target, FileMode.Append))
 		{
 			var data = "new-file".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("new-file");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("new-file");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Open_ExistingFile_AppendsContent(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Open_ExistingFile_AppendsContent(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "original");
+		WriteAllText(fs, target, "original");
 
-		using (var tfs = CreateTfs(target, FileMode.Open))
+		using (var tfs = CreateTfs(fs, target, FileMode.Open))
 		{
 			var data = "-new".UTF8();
 			tfs.Write(data, 0, data.Length);
 			tfs.Commit();
 		}
 
-		ReadAllText(target).AssertEqual("original-new");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("original-new");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Commit_AfterDispose_Throws(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Commit_AfterDispose_Throws(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		var tfs = CreateTfs(target, FileMode.Create);
+		var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.Dispose();
 		ThrowsExactly<ObjectDisposedException>(() => tfs.Commit());
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MultipleCommits_AppendData(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MultipleCommits_AppendData(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		using (var tfs = CreateTfs(target, FileMode.Create))
+		using (var tfs = CreateTfs(fs, target, FileMode.Create))
 		{
 			// First write and commit
 			tfs.Write("hello".UTF8(), 0, 5);
 			tfs.Commit();
 
-			ReadAllText(target).AssertEqual("hello");
+			ReadAllText(fs, target).AssertEqual("hello");
 
 			// Second write appends and commit
 			tfs.Write(" world".UTF8(), 0, 6);
 			tfs.Commit();
 
-			ReadAllText(target).AssertEqual("hello world");
+			ReadAllText(fs, target).AssertEqual("hello world");
 
 			// Third write appends
 			tfs.Write("!".UTF8(), 0, 1);
 			tfs.Commit();
 
-			ReadAllText(target).AssertEqual("hello world!");
+			ReadAllText(fs, target).AssertEqual("hello world!");
 		}
 
 		// After dispose, file should still have all committed data
-		ReadAllText(target).AssertEqual("hello world!");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("hello world!");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MultipleCommits_PositionAndLengthPreserved(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MultipleCommits_PositionAndLengthPreserved(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 
 		tfs.Write("0123456789".UTF8(), 0, 10);
 		tfs.Commit();
@@ -478,19 +447,19 @@ public class TransactionFileStreamTests : BaseTestClass
 		tfs.Write("ABC".UTF8(), 0, 3);
 		tfs.Commit();
 
-		ReadAllText(target).AssertEqual("0123456789ABC");
+		ReadAllText(fs, target).AssertEqual("0123456789ABC");
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MultipleCommits_RollbackUncommittedWrites(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MultipleCommits_RollbackUncommittedWrites(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		using (var tfs = CreateTfs(target, FileMode.Create))
+		using (var tfs = CreateTfs(fs, target, FileMode.Create))
 		{
 			// First commit
 			tfs.Write("first".UTF8(), 0, 5);
@@ -506,66 +475,66 @@ public class TransactionFileStreamTests : BaseTestClass
 		}
 
 		// Should have only first two committed writes, no garbage
-		ReadAllText(target).AssertEqual("first-second");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("first-second");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void DisposeWithoutCommit_Rollback(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void DisposeWithoutCommit_Rollback(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "original");
+		WriteAllText(fs, target, "original");
 
-		using (var tfs = CreateTfs(target, FileMode.Create))
+		using (var tfs = CreateTfs(fs, target, FileMode.Create))
 		{
 			tfs.Write("new".UTF8(), 0, 3);
 			// No Commit() - should rollback
 		}
 
 		// Original should be preserved
-		ReadAllText(target).AssertEqual("original");
-		_fs.FileExists(tmp).AssertFalse();
+		ReadAllText(fs, target).AssertEqual("original");
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void CommitRequired_ForChangesToPersist(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void CommitRequired_ForChangesToPersist(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		var tfs = CreateTfs(target, FileMode.Create);
+		var tfs = CreateTfs(fs, target, FileMode.Create);
 		var data = "test".UTF8();
 		tfs.Write(data, 0, data.Length);
 
 		// Before dispose, target should not exist (only tmp)
-		_fs.FileExists(target).AssertFalse();
+		fs.FileExists(target).AssertFalse();
 
 		// Commit marks transaction for persistence
 		tfs.Commit();
 		tfs.Dispose();
 
 		// After dispose with commit, target should exist
-		_fs.FileExists(target).AssertTrue();
-		ReadAllText(target).AssertEqual("test");
+		fs.FileExists(target).AssertTrue();
+		ReadAllText(fs, target).AssertEqual("test");
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void DisposeWithoutCommit_NoTarget(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void DisposeWithoutCommit_NoTarget(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		var tfs = CreateTfs(target, FileMode.Create);
+		var tfs = CreateTfs(fs, target, FileMode.Create);
 		var data = "test".UTF8();
 		tfs.Write(data, 0, data.Length);
 
@@ -573,19 +542,19 @@ public class TransactionFileStreamTests : BaseTestClass
 		tfs.Dispose();
 
 		// Target should NOT exist (rollback)
-		_fs.FileExists(target).AssertFalse();
-		_fs.FileExists(tmp).AssertFalse();
+		fs.FileExists(target).AssertFalse();
+		fs.FileExists(tmp).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void PositionGet_ReturnsCurrentPosition(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void PositionGet_ReturnsCurrentPosition(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.Position.AssertEqual(0);
 
 		var data = "hello".UTF8();
@@ -594,14 +563,14 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void IsCommitted_Property(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void IsCommitted_Property(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		using var tfs = CreateTfs(target, FileMode.Create);
+		using var tfs = CreateTfs(fs, target, FileMode.Create);
 		tfs.Write("test".UTF8(), 0, 4);
 
 		tfs.IsCommitted.AssertFalse();
@@ -620,12 +589,12 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void EmptyName_Throws(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void EmptyName_Throws(Type fsType)
 	{
-		InitFs(fsType);
-		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(_fs, "", FileMode.Create));
+		var (fs, root) = Config.CreateFs(fsType);
+		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(fs, "", FileMode.Create));
 	}
 
 	#endregion
@@ -669,18 +638,18 @@ public class TransactionFileStreamTests : BaseTestClass
 	/// When exception is thrown inside using block (before Commit), original file should remain unchanged (rollback).
 	/// </summary>
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 
-		WriteAllText(target, "ORIGINAL_IMPORTANT_DATA");
+		WriteAllText(fs, target, "ORIGINAL_IMPORTANT_DATA");
 
 		try
 		{
-			using (var tfs = CreateTfs(target, FileMode.Create))
+			using (var tfs = CreateTfs(fs, target, FileMode.Create))
 			{
 				var data = "PARTIAL".UTF8();
 				tfs.Write(data, 0, data.Length);
@@ -693,28 +662,28 @@ public class TransactionFileStreamTests : BaseTestClass
 		}
 
 		// Original file should be preserved on exception (rollback behavior)
-		ReadAllText(target).AssertEqual("ORIGINAL_IMPORTANT_DATA");
+		ReadAllText(fs, target).AssertEqual("ORIGINAL_IMPORTANT_DATA");
 	}
 
 	/// <summary>
 	/// Stale .tmp file from previous crash should not affect new Append operation.
 	/// </summary>
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void Append_WithStaleTmpFile_ShouldStartFresh(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void Append_WithStaleTmpFile_ShouldStartFresh(Type fsType)
 	{
-		InitFs(fsType);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
 		// Leftover .tmp from previous crashed operation
-		WriteAllText(tmp, "STALE_GARBAGE_");
+		WriteAllText(fs, tmp, "STALE_GARBAGE_");
 
 		// Target does NOT exist
-		_fs.FileExists(target).AssertFalse();
+		fs.FileExists(target).AssertFalse();
 
-		using (var tfs = CreateTfs(target, FileMode.Append))
+		using (var tfs = CreateTfs(fs, target, FileMode.Append))
 		{
 			var data = "newdata".UTF8();
 			tfs.Write(data, 0, data.Length);
@@ -722,23 +691,23 @@ public class TransactionFileStreamTests : BaseTestClass
 		}
 
 		// Should be fresh file without stale garbage
-		ReadAllText(target).AssertEqual("newdata");
+		ReadAllText(fs, target).AssertEqual("newdata");
 	}
 
 	/// <summary>
 	/// When MoveFile fails in Commit, written data should be preserved in .tmp for recovery.
 	/// </summary>
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MoveFileFailure_ShouldPreserveTmpForRecovery(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MoveFileFailure_ShouldPreserveTmpForRecovery(Type fsType)
 	{
-		InitFs(fsType);
-		var faultyFs = new FaultyFileSystem(_fs);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var faultyFs = new FaultyFileSystem(fs);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
-		WriteAllText(target, "ORIGINAL");
+		WriteAllText(fs, target, "ORIGINAL");
 		faultyFs.OnMoveFile = _ => new IOException("Disk full");
 
 		using var tfs = new TransactionFileStream(faultyFs, target, FileMode.Create);
@@ -755,24 +724,24 @@ public class TransactionFileStreamTests : BaseTestClass
 		}
 
 		// Original should be untouched
-		ReadAllText(target).AssertEqual("ORIGINAL");
+		ReadAllText(fs, target).AssertEqual("ORIGINAL");
 
 		// .tmp should be preserved for manual recovery (not deleted!)
-		_fs.FileExists(tmp).AssertTrue();
-		ReadAllText(tmp).AssertEqual("NEW_IMPORTANT_DATA");
+		fs.FileExists(tmp).AssertTrue();
+		ReadAllText(fs, tmp).AssertEqual("NEW_IMPORTANT_DATA");
 	}
 
 	/// <summary>
 	/// After MoveFile failure in Commit, Dispose should not throw and should preserve .tmp.
 	/// </summary>
 	[TestMethod]
-	[DataRow(FileSystemType.Local)]
-	[DataRow(FileSystemType.Memory)]
-	public void MoveFileFailure_DisposeAfterFailedCommit_PreservesTmp(FileSystemType fsType)
+	[DataRow(typeof(LocalFileSystem))]
+	[DataRow(typeof(MemoryFileSystem))]
+	public void MoveFileFailure_DisposeAfterFailedCommit_PreservesTmp(Type fsType)
 	{
-		InitFs(fsType);
-		var faultyFs = new FaultyFileSystem(_fs);
-		var target = NewFilePath();
+		var (fs, root) = Config.CreateFs(fsType);
+		var faultyFs = new FaultyFileSystem(fs);
+		var target = NewFilePath(root);
 		var tmp = target + ".tmp";
 
 		faultyFs.OnMoveFile = _ => new IOException("Error");
@@ -786,7 +755,7 @@ public class TransactionFileStreamTests : BaseTestClass
 		tfs.Dispose();
 
 		// .tmp should be preserved for recovery (Commit failed, so we keep it)
-		_fs.FileExists(tmp).AssertTrue();
+		fs.FileExists(tmp).AssertTrue();
 
 		// Multiple Dispose should not throw
 		tfs.Dispose();
