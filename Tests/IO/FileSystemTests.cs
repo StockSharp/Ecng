@@ -5,6 +5,12 @@ using System.IO;
 
 using Ecng.IO;
 
+public enum FileSystemType
+{
+	Local,
+	Memory
+}
+
 [TestClass]
 public class FileSystemTests : BaseTestClass
 {
@@ -30,6 +36,25 @@ public class FileSystemTests : BaseTestClass
 		var root = "memroot";
 		fs.CreateDirectory(root);
 		action(fs, root);
+	}
+
+	/// <summary>
+	/// Runs the given action with both LocalFileSystem and MemoryFileSystem.
+	/// </summary>
+	private static void ForEach(Action<IFileSystem, string, FileSystemType> action)
+	{
+		WithLocalFs((fs, root) => action(fs, root, FileSystemType.Local));
+		WithMemoryFs((fs, root) => action(fs, root, FileSystemType.Memory));
+	}
+
+	/// <summary>
+	/// Runs the given action with both LocalFileSystem and MemoryFileSystem.
+	/// Simplified overload without FileSystemType parameter.
+	/// </summary>
+	private static void ForEach(Action<IFileSystem, string> action)
+	{
+		WithLocalFs(action);
+		WithMemoryFs(action);
 	}
 
 	private static void WriteAll(IFileSystem fs, string path, string content)
@@ -239,14 +264,14 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MoveDirectory_Local()
+	public void MoveDirectory()
 	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var sourceDir = Path.Combine(root, "source");
 			fs.CreateDirectory(sourceDir);
 			WriteAll(fs, Path.Combine(sourceDir, "file1.txt"), "content1");
-			
+
 			var subDir = Path.Combine(sourceDir, "subdir");
 			fs.CreateDirectory(subDir);
 			WriteAll(fs, Path.Combine(subDir, "file2.txt"), "content2");
@@ -265,54 +290,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MoveDirectory_Memory()
+	public void MoveDirectory_ToNestedPath()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			WriteAll(fs, Path.Combine(sourceDir, "file1.txt"), "content1");
-			
-			var subDir = Path.Combine(sourceDir, "subdir");
-			fs.CreateDirectory(subDir);
-			WriteAll(fs, Path.Combine(subDir, "file2.txt"), "content2");
-
-			var destDir = Path.Combine(root, "dest");
-			fs.MoveDirectory(sourceDir, destDir);
-
-			fs.DirectoryExists(sourceDir).AssertFalse();
-			fs.DirectoryExists(destDir).AssertTrue();
-			fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
-			ReadAll(fs, Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
-			fs.DirectoryExists(Path.Combine(destDir, "subdir")).AssertTrue();
-			fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
-			ReadAll(fs, Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
-		});
-	}
-
-	[TestMethod]
-	public void MoveDirectory_ToNestedPath_Local()
-	{
-		WithLocalFs((fs, root) =>
-		{
-			var sourceDir = Path.Combine(root, "source");
-			fs.CreateDirectory(sourceDir);
-			WriteAll(fs, Path.Combine(sourceDir, "test.txt"), "test");
-
-			// Move to a path where parent doesn't exist yet
-			var destDir = Path.Combine(root, "level1", "level2", "dest");
-			fs.MoveDirectory(sourceDir, destDir);
-
-			fs.DirectoryExists(sourceDir).AssertFalse();
-			fs.DirectoryExists(destDir).AssertTrue();
-			fs.FileExists(Path.Combine(destDir, "test.txt")).AssertTrue();
-		});
-	}
-
-	[TestMethod]
-	public void MoveDirectory_ToNestedPath_Memory()
-	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var sourceDir = Path.Combine(root, "source");
 			fs.CreateDirectory(sourceDir);
@@ -356,105 +336,40 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void CopyFile_OverwriteExisting_Local()
+	public void CopyFile_OverwriteExisting()
 	{
 		// Test that CopyFile with overwrite=true REPLACES the destination content,
 		// not appends to it.
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var source = Path.Combine(root, "source.txt");
 			var dest = Path.Combine(root, "dest.txt");
 
-			// Create source with "NEW"
 			WriteAll(fs, source, "NEW");
-
-			// Create destination with "OLD_CONTENT" (longer than source)
 			WriteAll(fs, dest, "OLD_CONTENT");
 
-			// Copy with overwrite - should REPLACE, not append
 			fs.CopyFile(source, dest, overwrite: true);
 
-			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
 			ReadAll(fs, dest).AssertEqual("NEW");
 		});
 	}
 
 	[TestMethod]
-	public void CopyFile_OverwriteExisting_Memory()
-	{
-		// Test that CopyFile with overwrite=true REPLACES the destination content,
-		// not appends to it.
-		//
-		WithMemoryFs((fs, root) =>
-		{
-			var source = Path.Combine(root, "source.txt");
-			var dest = Path.Combine(root, "dest.txt");
-
-			// Create source with "NEW"
-			WriteAll(fs, source, "NEW");
-
-			// Create destination with "OLD_CONTENT" (longer than source)
-			WriteAll(fs, dest, "OLD_CONTENT");
-
-			// Copy with overwrite - should REPLACE, not append
-			fs.CopyFile(source, dest, overwrite: true);
-
-			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
-			ReadAll(fs, dest).AssertEqual("NEW");
-		});
-	}
-
-	[TestMethod]
-	public void MoveFile_OverwriteExisting_Local()
+	public void MoveFile_OverwriteExisting()
 	{
 		// Test that MoveFile with overwrite=true REPLACES the destination content,
 		// not appends to it.
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var source = Path.Combine(root, "source.txt");
 			var dest = Path.Combine(root, "dest.txt");
 
-			// Create source with "NEW"
 			WriteAll(fs, source, "NEW");
-
-			// Create destination with "OLD_CONTENT" (longer than source)
 			WriteAll(fs, dest, "OLD_CONTENT");
 
-			// Move with overwrite - should REPLACE, not append
 			fs.MoveFile(source, dest, overwrite: true);
 
-			// Source should be deleted
 			fs.FileExists(source).AssertFalse();
-
-			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
-			ReadAll(fs, dest).AssertEqual("NEW");
-		});
-	}
-
-	[TestMethod]
-	public void MoveFile_OverwriteExisting_Memory()
-	{
-		// Test that MoveFile with overwrite=true REPLACES the destination content,
-		// not appends to it.
-		//
-		WithMemoryFs((fs, root) =>
-		{
-			var source = Path.Combine(root, "source.txt");
-			var dest = Path.Combine(root, "dest.txt");
-
-			// Create source with "NEW"
-			WriteAll(fs, source, "NEW");
-
-			// Create destination with "OLD_CONTENT" (longer than source)
-			WriteAll(fs, dest, "OLD_CONTENT");
-
-			// Move with overwrite - should REPLACE, not append
-			fs.MoveFile(source, dest, overwrite: true);
-
-			// Source should be deleted
-			fs.FileExists(source).AssertFalse();
-
-			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
 			ReadAll(fs, dest).AssertEqual("NEW");
 		});
 	}
@@ -571,9 +486,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_ReadAccess_CannotWrite_Local()
+	public void Open_ReadAccess_CannotWrite()
 	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -582,40 +497,17 @@ public class FileSystemTests : BaseTestClass
 			stream.CanRead.AssertTrue();
 			stream.CanWrite.AssertFalse();
 
-			// Verify read works
 			var buffer = new byte[7];
 			stream.ReadExactly(buffer, 0, buffer.Length);
 
-			// Verify write throws
 			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
 		});
 	}
 
 	[TestMethod]
-	public void Open_ReadAccess_CannotWrite_Memory()
+	public void Open_WriteAccess_CannotRead()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
-			stream.CanRead.AssertTrue();
-			stream.CanWrite.AssertFalse();
-
-			// Verify read works
-			var buffer = new byte[7];
-			stream.ReadExactly(buffer, 0, buffer.Length);
-
-			// Verify write throws
-			Throws<NotSupportedException>(() => stream.Write([1, 2, 3], 0, 3));
-		});
-	}
-
-	[TestMethod]
-	public void Open_WriteAccess_CannotRead_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 
@@ -623,37 +515,16 @@ public class FileSystemTests : BaseTestClass
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertFalse();
 
-			// Verify write works
 			stream.Write("test"u8.ToArray(), 0, 4);
 
-			// Verify read throws
 			Throws<NotSupportedException>(() => stream.ReadExactly(new byte[4]));
 		});
 	}
 
 	[TestMethod]
-	public void Open_WriteAccess_CannotRead_Memory()
+	public void Open_ExistingFile_PositionAtStart()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-
-			using var stream = fs.Open(file, FileMode.Create, FileAccess.Write);
-			stream.CanWrite.AssertTrue();
-			stream.CanRead.AssertFalse();
-
-			// Verify write works
-			stream.Write("test"u8.ToArray(), 0, 4);
-
-			// Verify read throws
-			Throws<NotSupportedException>(() => stream.ReadExactly(new byte[4]));
-		});
-	}
-
-	[TestMethod]
-	public void Open_ExistingFile_PositionAtStart_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -664,22 +535,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_ExistingFile_PositionAtStart_Memory()
+	public void Open_ReadWriteAccess_CanDoAll()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
-			stream.Position.AssertEqual(0L);
-		});
-	}
-
-	[TestMethod]
-	public void Open_ReadWriteAccess_CanDoAll_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 
@@ -687,10 +545,8 @@ public class FileSystemTests : BaseTestClass
 			stream.CanWrite.AssertTrue();
 			stream.CanRead.AssertTrue();
 
-			// Verify write works
 			stream.Write("test"u8.ToArray(), 0, 4);
 
-			// Verify read works
 			stream.Position = 0;
 			var buffer = new byte[4];
 			stream.ReadExactly(buffer, 0, 4);
@@ -699,31 +555,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_ReadWriteAccess_CanDoAll_Memory()
+	public void Open_Append_CannotRead()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-
-			using var stream = fs.Open(file, FileMode.Create, FileAccess.ReadWrite);
-			stream.CanWrite.AssertTrue();
-			stream.CanRead.AssertTrue();
-
-			// Verify write works
-			stream.Write("test"u8.ToArray(), 0, 4);
-
-			// Verify read works
-			stream.Position = 0;
-			var buffer = new byte[4];
-			stream.ReadExactly(buffer, 0, 4);
-			buffer.AssertEqual("test"u8.ToArray());
-		});
-	}
-
-	[TestMethod]
-	public void Open_Append_CannotRead_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -735,141 +569,66 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_Append_CannotRead_Memory()
+	public void Open_Append_SeekBeforeEnd_Throws()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
 			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
-			stream.CanWrite.AssertTrue();
-			stream.CanRead.AssertFalse();
-		});
-	}
-
-	[TestMethod]
-	public void Open_Append_SeekBeforeEnd_Throws_Local()
-	{
-		WithLocalFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
-			// Seeking to beginning should throw
 			Throws<IOException>(() => stream.Seek(0, SeekOrigin.Begin));
 		});
 	}
 
 	[TestMethod]
-	public void Open_Append_SeekBeforeEnd_Throws_Memory()
+	public void Open_Append_ReadAccess_Throws()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
-			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
-			// Seeking to beginning should throw
-			Throws<IOException>(() => stream.Seek(0, SeekOrigin.Begin));
-		});
-	}
-
-	[TestMethod]
-	public void Open_Append_ReadAccess_Throws_Local()
-	{
-		WithLocalFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			// Append with Read access should throw
 			Throws<ArgumentException>(() => fs.Open(file, FileMode.Append, FileAccess.Read));
 		});
 	}
 
 	[TestMethod]
-	public void Open_Append_ReadAccess_Throws_Memory()
+	public void Open_ShareNone_BlocksSecondOpen()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root, fsType) =>
 		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
+			// FileShare locking is Windows-specific for local FS
+			if (fsType == FileSystemType.Local && !OperatingSystemEx.IsWindows())
+				return;
 
-			// Append with Read access should throw
-			Throws<ArgumentException>(() => fs.Open(file, FileMode.Append, FileAccess.Read));
-		});
-	}
-
-	[TestMethod]
-	public void Open_ShareNone_BlocksSecondOpen_Local()
-	{
-		// FileShare locking is Windows-specific (Linux uses advisory locking)
-		if (!OperatingSystemEx.IsWindows())
-			return;
-
-		WithLocalFs((fs, root) =>
-		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
 			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
-			// Second open should throw because first has exclusive access
 			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None));
 		});
 	}
 
 	[TestMethod]
-	public void Open_ShareNone_BlocksSecondOpen_Memory()
+	public void Open_ShareRead_AllowsMultipleReaders()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
-			// Second open should throw because first has exclusive access
-			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None));
-		});
-	}
-
-	[TestMethod]
-	public void Open_ShareRead_AllowsMultipleReaders_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
 			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
 			using var stream2 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			// Both streams should be readable
 			stream1.CanRead.AssertTrue();
 			stream2.CanRead.AssertTrue();
 		});
 	}
 
 	[TestMethod]
-	public void Open_ShareRead_AllowsMultipleReaders_Memory()
+	public void Open_ShareReadWrite_AllowsReadAndWrite()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream1 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			using var stream2 = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			// Both streams should be readable
-			stream1.CanRead.AssertTrue();
-			stream2.CanRead.AssertTrue();
-		});
-	}
-
-	[TestMethod]
-	public void Open_ShareReadWrite_AllowsReadAndWrite_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -882,93 +641,45 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Open_ShareReadWrite_AllowsReadAndWrite_Memory()
+	public void Open_ShareRead_BlocksWriter()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root, fsType) =>
 		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
+			if (fsType == FileSystemType.Local && !OperatingSystemEx.IsWindows())
+				return;
 
-			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-			reader.CanRead.AssertTrue();
-			writer.CanWrite.AssertTrue();
-		});
-	}
-
-	[TestMethod]
-	public void Open_ShareRead_BlocksWriter_Local()
-	{
-		// FileShare locking is Windows-specific (Linux uses advisory locking)
-		if (!OperatingSystemEx.IsWindows())
-			return;
-
-		WithLocalFs((fs, root) =>
-		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
 			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			// Writer should be blocked because only Read sharing is allowed
 			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Read));
 		});
 	}
 
 	[TestMethod]
-	public void Open_ShareRead_BlocksWriter_Memory()
+	public void Open_ShareWrite_BlocksReader()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root, fsType) =>
 		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
+			if (fsType == FileSystemType.Local && !OperatingSystemEx.IsWindows())
+				return;
 
-			using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			// Writer should be blocked because only Read sharing is allowed
-			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Read));
-		});
-	}
-
-	[TestMethod]
-	public void Open_ShareWrite_BlocksReader_Local()
-	{
-		// FileShare locking is Windows-specific (Linux uses advisory locking)
-		if (!OperatingSystemEx.IsWindows())
-			return;
-
-		WithLocalFs((fs, root) =>
-		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
 			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Write);
-			// Reader should be blocked because only Write sharing is allowed
 			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Write));
 		});
 	}
 
 	[TestMethod]
-	public void Open_ShareWrite_BlocksReader_Memory()
+	public void DeleteFile_WhileOpen_Throws()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root, fsType) =>
 		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
+			if (fsType == FileSystemType.Local && !OperatingSystemEx.IsWindows())
+				return;
 
-			using var writer = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Write);
-			// Reader should be blocked because only Write sharing is allowed
-			Throws<IOException>(() => fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Write));
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WhileOpen_Throws_Local()
-	{
-		// FileShare locking is Windows-specific (Linux allows deleting open files)
-		if (!OperatingSystemEx.IsWindows())
-			return;
-
-		WithLocalFs((fs, root) =>
-		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
 
@@ -978,27 +689,13 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DeleteFile_WhileOpen_Throws_Memory()
+	public void MoveFile_WhileOpen_Throws()
 	{
-		WithMemoryFs((fs, root) =>
+		ForEach((fs, root, fsType) =>
 		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
+			if (fsType == FileSystemType.Local && !OperatingSystemEx.IsWindows())
+				return;
 
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
-			Throws<IOException>(() => fs.DeleteFile(file));
-		});
-	}
-
-	[TestMethod]
-	public void MoveFile_WhileOpen_Throws_Local()
-	{
-		// FileShare locking is Windows-specific (Linux allows moving open files)
-		if (!OperatingSystemEx.IsWindows())
-			return;
-
-		WithLocalFs((fs, root) =>
-		{
 			var file = Path.Combine(root, "test.txt");
 			var dest = Path.Combine(root, "moved.txt");
 			WriteAll(fs, file, "content");
@@ -1009,23 +706,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MoveFile_WhileOpen_Throws_Memory()
+	public void DeleteFile_WithShareDelete_Succeeds()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			var dest = Path.Combine(root, "moved.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.None);
-			Throws<IOException>(() => fs.MoveFile(file, dest));
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_Succeeds_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -1037,23 +720,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DeleteFile_WithShareDelete_Succeeds_Memory()
+	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
-			fs.DeleteFile(file);
-			fs.FileExists(file).AssertFalse();
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "content");
@@ -1061,13 +730,9 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
 			fs.DeleteFile(file);
 
-			// File should not exist
 			fs.FileExists(file).AssertFalse();
-
-			// New open should fail
 			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Open, FileAccess.Read));
 
-			// But existing stream should still be readable
 			var buffer = new byte[7];
 			stream.ReadExactly(buffer, 0, 7);
 			Encoding.UTF8.GetString(buffer).AssertEqual("content");
@@ -1075,33 +740,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete_Memory()
+	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "content");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
-			fs.DeleteFile(file);
-
-			// File should not exist
-			fs.FileExists(file).AssertFalse();
-
-			// New open should fail
-			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Open, FileAccess.Read));
-
-			// But existing stream should still be readable
-			var buffer = new byte[7];
-			stream.ReadExactly(buffer, 0, 7);
-			Encoding.UTF8.GetString(buffer).AssertEqual("content");
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "original");
@@ -1109,49 +750,21 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
 			fs.DeleteFile(file);
 
-			// Should be able to create a new file with the same name
 			WriteAll(fs, file, "new content");
 			fs.FileExists(file).AssertTrue();
 
-			// Old stream still reads original data
 			var buffer = new byte[8];
 			stream.ReadExactly(buffer, 0, 8);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original");
 
-			// New open reads new content
 			fs.ReadAllText(file).AssertEqual("new content");
 		});
 	}
 
 	[TestMethod]
-	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName_Memory()
+	public void DeleteFile_WithShareDelete_WriteStillWorks()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "original");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.Delete);
-			fs.DeleteFile(file);
-
-			// Should be able to create a new file with the same name
-			WriteAll(fs, file, "new content");
-			fs.FileExists(file).AssertTrue();
-
-			// Old stream still reads original data
-			var buffer = new byte[8];
-			stream.ReadExactly(buffer, 0, 8);
-			Encoding.UTF8.GetString(buffer).AssertEqual("original");
-
-			// New open reads new content
-			fs.ReadAllText(file).AssertEqual("new content");
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_WriteStillWorks_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "original");
@@ -1159,59 +772,25 @@ public class FileSystemTests : BaseTestClass
 			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete);
 			fs.DeleteFile(file);
 
-			// File should not exist
 			fs.FileExists(file).AssertFalse();
 
-			// Write to deleted file still works
 			stream.Seek(0, SeekOrigin.End);
 			var extra = " extra"u8.ToArray();
 			stream.Write(extra, 0, extra.Length);
 
-			// Can read back what we wrote
 			stream.Seek(0, SeekOrigin.Begin);
 			var buffer = new byte[14];
 			stream.ReadExactly(buffer, 0, 14);
 			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
 
-			// But file is still gone
 			fs.FileExists(file).AssertFalse();
 		});
 	}
 
 	[TestMethod]
-	public void DeleteFile_WithShareDelete_WriteStillWorks_Memory()
+	public void DeleteFile_WithShareDelete_DataLostAfterClose()
 	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "original");
-
-			using var stream = fs.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete);
-			fs.DeleteFile(file);
-
-			// File should not exist
-			fs.FileExists(file).AssertFalse();
-
-			// Write to deleted file still works
-			stream.Seek(0, SeekOrigin.End);
-			var extra = " extra"u8.ToArray();
-			stream.Write(extra, 0, extra.Length);
-
-			// Can read back what we wrote
-			stream.Seek(0, SeekOrigin.Begin);
-			var buffer = new byte[14];
-			stream.ReadExactly(buffer, 0, 14);
-			Encoding.UTF8.GetString(buffer).AssertEqual("original extra");
-
-			// But file is still gone
-			fs.FileExists(file).AssertFalse();
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_DataLostAfterClose_Local()
-	{
-		WithLocalFs((fs, root) =>
+		ForEach((fs, root) =>
 		{
 			var file = Path.Combine(root, "test.txt");
 			WriteAll(fs, file, "original");
@@ -1222,26 +801,6 @@ public class FileSystemTests : BaseTestClass
 				stream.Write("modified"u8.ToArray(), 0, 8);
 			}
 
-			// After close, file is gone and data is lost
-			fs.FileExists(file).AssertFalse();
-		});
-	}
-
-	[TestMethod]
-	public void DeleteFile_WithShareDelete_DataLostAfterClose_Memory()
-	{
-		WithMemoryFs((fs, root) =>
-		{
-			var file = Path.Combine(root, "test.txt");
-			WriteAll(fs, file, "original");
-
-			using (var stream = fs.Open(file, FileMode.Open, FileAccess.Write, FileShare.Delete))
-			{
-				fs.DeleteFile(file);
-				stream.Write("modified"u8.ToArray(), 0, 8);
-			}
-
-			// After close, file is gone and data is lost
 			fs.FileExists(file).AssertFalse();
 		});
 	}
@@ -1299,5 +858,490 @@ public class FileSystemTests : BaseTestClass
 			}
 		});
 	}
+
+	#region FileMode comprehensive tests
+
+	[TestMethod]
+	public void FileMode_CreateNew_FailsIfExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "content");
+
+			Throws<IOException>(() => fs.Open(file, FileMode.CreateNew, FileAccess.Write));
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_CreateNew_CreatesIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "new.txt");
+
+			using (var stream = fs.Open(file, FileMode.CreateNew, FileAccess.Write))
+			{
+				stream.Write("hello"u8.ToArray(), 0, 5);
+			}
+
+			fs.FileExists(file).AssertTrue();
+			ReadAll(fs, file).AssertEqual("hello");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Create_TruncatesExisting()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "old content that is long");
+
+			using (var stream = fs.Open(file, FileMode.Create, FileAccess.Write))
+			{
+				stream.Write("new"u8.ToArray(), 0, 3);
+			}
+
+			ReadAll(fs, file).AssertEqual("new");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Create_CreatesIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "new.txt");
+
+			using (var stream = fs.Open(file, FileMode.Create, FileAccess.Write))
+			{
+				stream.Write("created"u8.ToArray(), 0, 7);
+			}
+
+			fs.FileExists(file).AssertTrue();
+			ReadAll(fs, file).AssertEqual("created");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Open_FailsIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "nonexistent.txt");
+
+			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Open, FileAccess.Read));
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Open_OpensExisting()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "content");
+
+			using var stream = fs.Open(file, FileMode.Open, FileAccess.Read);
+			var buffer = new byte[7];
+			stream.ReadExactly(buffer, 0, 7);
+			Encoding.UTF8.GetString(buffer).AssertEqual("content");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_OpenOrCreate_CreatesIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "new.txt");
+
+			using (var stream = fs.Open(file, FileMode.OpenOrCreate, FileAccess.Write))
+			{
+				stream.Write("created"u8.ToArray(), 0, 7);
+			}
+
+			fs.FileExists(file).AssertTrue();
+			ReadAll(fs, file).AssertEqual("created");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_OpenOrCreate_OpensExisting()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "original");
+
+			using (var stream = fs.Open(file, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
+				// File should be opened at beginning, not truncated
+				var buffer = new byte[8];
+				stream.ReadExactly(buffer, 0, 8);
+				Encoding.UTF8.GetString(buffer).AssertEqual("original");
+			}
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_OpenOrCreate_DoesNotTruncate()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "original content");
+
+			using (var stream = fs.Open(file, FileMode.OpenOrCreate, FileAccess.Write))
+			{
+				stream.Write("new"u8.ToArray(), 0, 3);
+			}
+
+			// Only first 3 bytes should be overwritten
+			ReadAll(fs, file).AssertEqual("newginal content");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Truncate_FailsIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "nonexistent.txt");
+
+			Throws<FileNotFoundException>(() => fs.Open(file, FileMode.Truncate, FileAccess.Write));
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Truncate_TruncatesExisting()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "old content that is very long");
+
+			using (var stream = fs.Open(file, FileMode.Truncate, FileAccess.Write))
+			{
+				stream.Write("short"u8.ToArray(), 0, 5);
+			}
+
+			ReadAll(fs, file).AssertEqual("short");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Append_CreatesIfNotExists()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "new.txt");
+
+			using (var stream = fs.Open(file, FileMode.Append, FileAccess.Write))
+			{
+				stream.Write("appended"u8.ToArray(), 0, 8);
+			}
+
+			fs.FileExists(file).AssertTrue();
+			ReadAll(fs, file).AssertEqual("appended");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Append_AppendsToExisting()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "original");
+
+			using (var stream = fs.Open(file, FileMode.Append, FileAccess.Write))
+			{
+				stream.Write(" appended"u8.ToArray(), 0, 9);
+			}
+
+			ReadAll(fs, file).AssertEqual("original appended");
+		});
+	}
+
+	[TestMethod]
+	public void FileMode_Append_PositionAtEnd()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "existing.txt");
+			WriteAll(fs, file, "12345");
+
+			using var stream = fs.Open(file, FileMode.Append, FileAccess.Write);
+			stream.Position.AssertEqual(5L);
+		});
+	}
+
+	#endregion
+
+	#region Directory enumeration tests
+
+	[TestMethod]
+	public void EnumerateFiles_NonExistingDirectory_Throws()
+	{
+		ForEach((fs, root) =>
+		{
+			var nonExistent = Path.Combine(root, "nonexistent");
+
+			Throws<DirectoryNotFoundException>(() => fs.EnumerateFiles(nonExistent).ToList());
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateDirectories_NonExistingDirectory_Throws()
+	{
+		ForEach((fs, root) =>
+		{
+			var nonExistent = Path.Combine(root, "nonexistent");
+
+			Throws<DirectoryNotFoundException>(() => fs.EnumerateDirectories(nonExistent).ToList());
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateFiles_EmptyDirectory_ReturnsEmpty()
+	{
+		ForEach((fs, root) =>
+		{
+			var emptyDir = Path.Combine(root, "empty");
+			fs.CreateDirectory(emptyDir);
+
+			fs.EnumerateFiles(emptyDir).ToArray().Length.AssertEqual(0);
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateDirectories_EmptyDirectory_ReturnsEmpty()
+	{
+		ForEach((fs, root) =>
+		{
+			var emptyDir = Path.Combine(root, "empty");
+			fs.CreateDirectory(emptyDir);
+
+			fs.EnumerateDirectories(emptyDir).ToArray().Length.AssertEqual(0);
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateFiles_WithPattern()
+	{
+		ForEach((fs, root) =>
+		{
+			WriteAll(fs, Path.Combine(root, "file1.txt"), "a");
+			WriteAll(fs, Path.Combine(root, "file2.txt"), "b");
+			WriteAll(fs, Path.Combine(root, "data.csv"), "c");
+
+			var txtFiles = fs.EnumerateFiles(root, "*.txt").Select(Path.GetFileName).OrderBy(s => s).ToArray();
+			txtFiles.AssertEqual(["file1.txt", "file2.txt"]);
+
+			var csvFiles = fs.EnumerateFiles(root, "*.csv").Select(Path.GetFileName).ToArray();
+			csvFiles.AssertEqual(["data.csv"]);
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateDirectories_WithPattern()
+	{
+		ForEach((fs, root) =>
+		{
+			fs.CreateDirectory(Path.Combine(root, "test_dir"));
+			fs.CreateDirectory(Path.Combine(root, "test_folder"));
+			fs.CreateDirectory(Path.Combine(root, "other"));
+
+			var testDirs = fs.EnumerateDirectories(root, "test_*").Select(Path.GetFileName).OrderBy(s => s).ToArray();
+			testDirs.AssertEqual(["test_dir", "test_folder"]);
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateFiles_AllDirectories()
+	{
+		ForEach((fs, root) =>
+		{
+			WriteAll(fs, Path.Combine(root, "root.txt"), "r");
+			var subDir = Path.Combine(root, "sub");
+			fs.CreateDirectory(subDir);
+			WriteAll(fs, Path.Combine(subDir, "sub.txt"), "s");
+			var deepDir = Path.Combine(subDir, "deep");
+			fs.CreateDirectory(deepDir);
+			WriteAll(fs, Path.Combine(deepDir, "deep.txt"), "d");
+
+			var allFiles = fs.EnumerateFiles(root, "*.txt", SearchOption.AllDirectories)
+				.Select(Path.GetFileName)
+				.OrderBy(s => s)
+				.ToArray();
+			allFiles.AssertEqual(["deep.txt", "root.txt", "sub.txt"]);
+		});
+	}
+
+	[TestMethod]
+	public void EnumerateDirectories_AllDirectories()
+	{
+		ForEach((fs, root) =>
+		{
+			var dir1 = Path.Combine(root, "dir1");
+			fs.CreateDirectory(dir1);
+			var dir2 = Path.Combine(dir1, "dir2");
+			fs.CreateDirectory(dir2);
+			var dir3 = Path.Combine(dir2, "dir3");
+			fs.CreateDirectory(dir3);
+
+			var allDirs = fs.EnumerateDirectories(root, "*", SearchOption.AllDirectories)
+				.Select(Path.GetFileName)
+				.OrderBy(s => s)
+				.ToArray();
+			allDirs.AssertEqual(["dir1", "dir2", "dir3"]);
+		});
+	}
+
+	#endregion
+
+	#region Directory operations tests
+
+	[TestMethod]
+	public void CreateDirectory_NestedPath()
+	{
+		ForEach((fs, root) =>
+		{
+			var nested = Path.Combine(root, "a", "b", "c");
+			fs.CreateDirectory(nested);
+
+			fs.DirectoryExists(nested).AssertTrue();
+			fs.DirectoryExists(Path.Combine(root, "a", "b")).AssertTrue();
+			fs.DirectoryExists(Path.Combine(root, "a")).AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void CreateDirectory_AlreadyExists_NoError()
+	{
+		ForEach((fs, root) =>
+		{
+			var dir = Path.Combine(root, "existing");
+			fs.CreateDirectory(dir);
+			fs.CreateDirectory(dir); // Should not throw
+
+			fs.DirectoryExists(dir).AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteDirectory_NonRecursive_FailsIfNotEmpty()
+	{
+		ForEach((fs, root) =>
+		{
+			var dir = Path.Combine(root, "nonempty");
+			fs.CreateDirectory(dir);
+			WriteAll(fs, Path.Combine(dir, "file.txt"), "content");
+
+			Throws<IOException>(() => fs.DeleteDirectory(dir, recursive: false));
+		});
+	}
+
+	[TestMethod]
+	public void DeleteDirectory_Recursive_DeletesContents()
+	{
+		ForEach((fs, root) =>
+		{
+			var dir = Path.Combine(root, "nonempty");
+			fs.CreateDirectory(dir);
+			WriteAll(fs, Path.Combine(dir, "file.txt"), "content");
+			var subDir = Path.Combine(dir, "sub");
+			fs.CreateDirectory(subDir);
+			WriteAll(fs, Path.Combine(subDir, "nested.txt"), "nested");
+
+			fs.DeleteDirectory(dir, recursive: true);
+
+			fs.DirectoryExists(dir).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteDirectory_NonExistent_Throws()
+	{
+		ForEach((fs, root) =>
+		{
+			var dir = Path.Combine(root, "nonexistent");
+
+			Throws<DirectoryNotFoundException>(() => fs.DeleteDirectory(dir));
+		});
+	}
+
+	#endregion
+
+	#region File deletion tests
+
+	[TestMethod]
+	public void DeleteFile_NonExistent_NoError()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "nonexistent.txt");
+			fs.DeleteFile(file); // Should not throw
+
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	[TestMethod]
+	public void DeleteFile_ExistingFile()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "todelete.txt");
+			WriteAll(fs, file, "content");
+
+			fs.DeleteFile(file);
+
+			fs.FileExists(file).AssertFalse();
+		});
+	}
+
+	#endregion
+
+	#region Open file in non-existing directory tests
+
+	[TestMethod]
+	public void Open_InNonExistingDirectory_Throws()
+	{
+		// Both LocalFileSystem and MemoryFileSystem should throw DirectoryNotFoundException
+		// when trying to open a file in a non-existing directory
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "nonexistent_dir", "file.txt");
+
+			Throws<DirectoryNotFoundException>(() => fs.Open(file, FileMode.Create, FileAccess.Write));
+		});
+	}
+
+	[TestMethod]
+	public void Open_InNonExistingNestedDirectory_Throws()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "a", "b", "c", "file.txt");
+
+			Throws<DirectoryNotFoundException>(() => fs.Open(file, FileMode.CreateNew, FileAccess.Write));
+		});
+	}
+
+	[TestMethod]
+	public void Open_OpenOrCreate_InNonExistingDirectory_Throws()
+	{
+		ForEach((fs, root) =>
+		{
+			var file = Path.Combine(root, "nonexistent", "file.txt");
+
+			Throws<DirectoryNotFoundException>(() => fs.Open(file, FileMode.OpenOrCreate, FileAccess.Write));
+		});
+	}
+
+	#endregion
 
 }
