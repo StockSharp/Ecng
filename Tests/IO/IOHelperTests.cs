@@ -5,34 +5,86 @@ using Ecng.IO;
 [TestClass]
 public class IOHelperTests : BaseTestClass
 {
+	#region Helper Methods
+
+	private IFileSystem _fs;
+	private string _root;
+	private FileSystemType _fsType;
+
+	private void InitFs(FileSystemType fsType)
+	{
+		_fsType = fsType;
+
+		if (fsType == FileSystemType.Local)
+		{
+			_fs = LocalFileSystem.Instance;
+			_root = _fs.GetTempPath();
+			_fs.CreateDirectory(_root);
+		}
+		else
+		{
+			_fs = new MemoryFileSystem();
+			_root = "/data";
+			_fs.CreateDirectory(_root);
+		}
+	}
+
+	[TestCleanup]
+	public void Cleanup()
+	{
+		if (_fsType == FileSystemType.Local && _fs != null && _root != null)
+		{
+			try { if (_fs.DirectoryExists(_root)) _fs.DeleteDirectory(_root, true); } catch { }
+		}
+	}
+
+	private string NewPath(params string[] parts)
+		=> Path.Combine([_root, .. parts]);
+
+	private void WriteFile(string path, byte data = 1)
+	{
+		using var s = _fs.Open(path, FileMode.Create, FileAccess.Write);
+		s.WriteByte(data);
+	}
+
+	#endregion
+
 	#region CreateDirIfNotExists
 
 	[TestMethod]
-	public void CreateDirIfNotExists_Memory_CreatesDirectory()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CreateDirIfNotExists_CreatesDirectory(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		var result = fs.CreateDirIfNotExists("/root/subdir/file.txt");
+		InitFs(fsType);
+		var path = NewPath("subdir", "file.txt");
+
+		var result = _fs.CreateDirIfNotExists(path);
 
 		result.AssertTrue();
-		fs.DirectoryExists("/root/subdir").AssertTrue();
+		_fs.DirectoryExists(NewPath("subdir")).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CreateDirIfNotExists_Memory_ExistingDir_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CreateDirIfNotExists_ExistingDir_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/subdir");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("subdir"));
 
-		var result = fs.CreateDirIfNotExists("/root/subdir/file.txt");
+		var result = _fs.CreateDirIfNotExists(NewPath("subdir", "file.txt"));
 
 		result.AssertFalse();
 	}
 
 	[TestMethod]
-	public void CreateDirIfNotExists_Memory_EmptyDir_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CreateDirIfNotExists_EmptyDir_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		var result = fs.CreateDirIfNotExists("file.txt");
+		InitFs(fsType);
+		var result = _fs.CreateDirIfNotExists("file.txt");
 
 		result.AssertFalse();
 	}
@@ -42,23 +94,27 @@ public class IOHelperTests : BaseTestClass
 	#region SafeDeleteDir
 
 	[TestMethod]
-	public void SafeDeleteDir_Memory_DeletesDirectory()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void SafeDeleteDir_DeletesDirectory(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/subdir");
-		using (var s = fs.Open("/root/subdir/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		var subdir = NewPath("subdir");
+		_fs.CreateDirectory(subdir);
+		WriteFile(NewPath("subdir", "file.txt"));
 
-		fs.SafeDeleteDir("/root/subdir");
+		_fs.SafeDeleteDir(subdir);
 
-		fs.DirectoryExists("/root/subdir").AssertFalse();
+		_fs.DirectoryExists(subdir).AssertFalse();
 	}
 
 	[TestMethod]
-	public void SafeDeleteDir_Memory_NonExistent_NoException()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void SafeDeleteDir_NonExistent_NoException(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.SafeDeleteDir("/nonexistent");
+		InitFs(fsType);
+		_fs.SafeDeleteDir(NewPath("nonexistent"));
 	}
 
 	#endregion
@@ -66,46 +122,57 @@ public class IOHelperTests : BaseTestClass
 	#region CheckInstallation
 
 	[TestMethod]
-	public void CheckInstallation_Memory_WithFiles_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckInstallation_WithFiles_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/install");
-		using (var s = fs.Open("/install/app.exe", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		var install = NewPath("install");
+		_fs.CreateDirectory(install);
+		WriteFile(NewPath("install", "app.exe"));
 
-		fs.CheckInstallation("/install").AssertTrue();
+		_fs.CheckInstallation(install).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckInstallation_Memory_WithSubdirs_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckInstallation_WithSubdirs_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/install/subdir");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("install", "subdir"));
 
-		fs.CheckInstallation("/install").AssertTrue();
+		_fs.CheckInstallation(NewPath("install")).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckInstallation_Memory_Empty_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckInstallation_Empty_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/install");
+		InitFs(fsType);
+		var install = NewPath("install");
+		_fs.CreateDirectory(install);
 
-		fs.CheckInstallation("/install").AssertFalse();
+		_fs.CheckInstallation(install).AssertFalse();
 	}
 
 	[TestMethod]
-	public void CheckInstallation_Memory_NonExistent_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckInstallation_NonExistent_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CheckInstallation("/install").AssertFalse();
+		InitFs(fsType);
+		_fs.CheckInstallation(NewPath("install")).AssertFalse();
 	}
 
 	[TestMethod]
-	public void CheckInstallation_Memory_EmptyPath_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckInstallation_EmptyPath_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CheckInstallation("").AssertFalse();
+		InitFs(fsType);
+		_fs.CheckInstallation("").AssertFalse();
 	}
 
 	#endregion
@@ -113,32 +180,34 @@ public class IOHelperTests : BaseTestClass
 	#region CreateFile
 
 	[TestMethod]
-	public void CreateFile_Memory_CreatesFileWithContent()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CreateFile_CreatesFileWithContent(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var content = new byte[] { 1, 2, 3, 4, 5 };
 
-		fs.CreateFile("/root", "", "test.bin", content);
+		_fs.CreateFile(_root, "", "test.bin", content);
 
-		fs.FileExists("/root/test.bin").AssertTrue();
-		using var stream = fs.Open("/root/test.bin", FileMode.Open, FileAccess.Read);
+		_fs.FileExists(NewPath("test.bin")).AssertTrue();
+		using var stream = _fs.Open(NewPath("test.bin"), FileMode.Open, FileAccess.Read);
 		var read = new byte[5];
 		stream.ReadExactly(read, 0, 5);
 		read.AssertEqual(content);
 	}
 
 	[TestMethod]
-	public void CreateFile_Memory_WithRelativePath_CreatesDirectoryAndFile()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CreateFile_WithRelativePath_CreatesDirectoryAndFile(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var content = new byte[] { 10, 20, 30 };
 
-		fs.CreateFile("/root", "sub/dir", "data.bin", content);
+		_fs.CreateFile(_root, "sub/dir", "data.bin", content);
 
-		fs.DirectoryExists("/root/sub/dir").AssertTrue();
-		fs.FileExists("/root/sub/dir/data.bin").AssertTrue();
+		_fs.DirectoryExists(NewPath("sub", "dir")).AssertTrue();
+		_fs.FileExists(NewPath("sub", "dir", "data.bin")).AssertTrue();
 	}
 
 	#endregion
@@ -146,31 +215,34 @@ public class IOHelperTests : BaseTestClass
 	#region DeleteEmptyDirs
 
 	[TestMethod]
-	public void DeleteEmptyDirs_Memory_DeletesEmptyDirectories()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void DeleteEmptyDirs_DeletesEmptyDirectories(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/a/b/c");
-		fs.CreateDirectory("/root/d");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("a", "b", "c"));
+		_fs.CreateDirectory(NewPath("d"));
 
-		fs.DeleteEmptyDirs("/root");
+		_fs.DeleteEmptyDirs(_root);
 
-		fs.DirectoryExists("/root").AssertFalse();
+		_fs.DirectoryExists(_root).AssertFalse();
 	}
 
 	[TestMethod]
-	public void DeleteEmptyDirs_Memory_KeepsNonEmptyDirectories()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void DeleteEmptyDirs_KeepsNonEmptyDirectories(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/a/b");
-		fs.CreateDirectory("/root/c");
-		using (var s = fs.Open("/root/a/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("a", "b"));
+		_fs.CreateDirectory(NewPath("c"));
+		WriteFile(NewPath("a", "file.txt"));
 
-		fs.DeleteEmptyDirs("/root");
+		_fs.DeleteEmptyDirs(_root);
 
-		fs.DirectoryExists("/root/a").AssertTrue();
-		fs.DirectoryExists("/root/a/b").AssertFalse();
-		fs.DirectoryExists("/root/c").AssertFalse();
+		_fs.DirectoryExists(NewPath("a")).AssertTrue();
+		_fs.DirectoryExists(NewPath("a", "b")).AssertFalse();
+		_fs.DirectoryExists(NewPath("c")).AssertFalse();
 	}
 
 	#endregion
@@ -178,39 +250,45 @@ public class IOHelperTests : BaseTestClass
 	#region GetDirectories
 
 	[TestMethod]
-	public void GetDirectories_Memory_ReturnsDirectories()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void GetDirectories_ReturnsDirectories(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/a");
-		fs.CreateDirectory("/root/b");
-		fs.CreateDirectory("/root/c");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("a"));
+		_fs.CreateDirectory(NewPath("b"));
+		_fs.CreateDirectory(NewPath("c"));
 
-		var dirs = fs.GetDirectories("/root").OrderBy(x => x).ToArray();
+		var dirs = _fs.GetDirectories(_root).OrderBy(x => x).ToArray();
 
 		dirs.Length.AssertEqual(3);
-		dirs[0].ComparePaths("/root/a").AssertTrue("/root/a");
-		dirs[1].ComparePaths("/root/b").AssertTrue("/root/b");
-		dirs[2].ComparePaths("/root/c").AssertTrue("/root/c");
+		dirs[0].ComparePaths(NewPath("a")).AssertTrue(NewPath("a"));
+		dirs[1].ComparePaths(NewPath("b")).AssertTrue(NewPath("b"));
+		dirs[2].ComparePaths(NewPath("c")).AssertTrue(NewPath("c"));
 	}
 
 	[TestMethod]
-	public void GetDirectories_Memory_NonExistent_ReturnsEmpty()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void GetDirectories_NonExistent_ReturnsEmpty(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		var dirs = fs.GetDirectories("/nonexistent");
+		InitFs(fsType);
+		var dirs = _fs.GetDirectories(NewPath("nonexistent"));
 
 		dirs.Any().AssertFalse();
 	}
 
 	[TestMethod]
-	public void GetDirectories_Memory_WithPattern_FiltersResults()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void GetDirectories_WithPattern_FiltersResults(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/test1");
-		fs.CreateDirectory("/root/test2");
-		fs.CreateDirectory("/root/other");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("test1"));
+		_fs.CreateDirectory(NewPath("test2"));
+		_fs.CreateDirectory(NewPath("other"));
 
-		var dirs = fs.GetDirectories("/root", "test*").ToArray();
+		var dirs = _fs.GetDirectories(_root, "test*").ToArray();
 
 		dirs.Length.AssertEqual(2);
 	}
@@ -220,22 +298,26 @@ public class IOHelperTests : BaseTestClass
 	#region GetDirectoriesAsync
 
 	[TestMethod]
-	public async Task GetDirectoriesAsync_Memory_ReturnsDirectories()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetDirectoriesAsync_ReturnsDirectories(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/dir1");
-		fs.CreateDirectory("/root/dir2");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("dir1"));
+		_fs.CreateDirectory(NewPath("dir2"));
 
-		var dirs = (await fs.GetDirectoriesAsync("/root", cancellationToken: CancellationToken)).ToArray();
+		var dirs = (await _fs.GetDirectoriesAsync(_root, cancellationToken: CancellationToken)).ToArray();
 
 		dirs.Length.AssertEqual(2);
 	}
 
 	[TestMethod]
-	public async Task GetDirectoriesAsync_Memory_NonExistent_ReturnsEmpty()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetDirectoriesAsync_NonExistent_ReturnsEmpty(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		var dirs = await fs.GetDirectoriesAsync("/nonexistent", cancellationToken: CancellationToken);
+		InitFs(fsType);
+		var dirs = await _fs.GetDirectoriesAsync(NewPath("nonexistent"), cancellationToken: CancellationToken);
 
 		dirs.Any().AssertFalse();
 	}
@@ -245,44 +327,43 @@ public class IOHelperTests : BaseTestClass
 	#region GetFilesAsync
 
 	[TestMethod]
-	public async Task GetFilesAsync_Memory_ReturnsFiles()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetFilesAsync_ReturnsFiles(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-		using (var s = fs.Open("/root/a.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
-		using (var s = fs.Open("/root/b.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(2);
+		InitFs(fsType);
+		WriteFile(NewPath("a.txt"), 1);
+		WriteFile(NewPath("b.txt"), 2);
 
-		var files = (await fs.GetFilesAsync("/root", cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
+		var files = (await _fs.GetFilesAsync(_root, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
 
 		files.Length.AssertEqual(2);
-		files[0].ComparePaths("/root/a.txt").AssertTrue("/root/a.txt");
-		files[1].ComparePaths("/root/b.txt").AssertTrue("/root/b.txt");
+		files[0].ComparePaths(NewPath("a.txt")).AssertTrue(NewPath("a.txt"));
+		files[1].ComparePaths(NewPath("b.txt")).AssertTrue(NewPath("b.txt"));
 	}
 
 	[TestMethod]
-	public async Task GetFilesAsync_Memory_NonExistent_ReturnsEmpty()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetFilesAsync_NonExistent_ReturnsEmpty(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		var files = await fs.GetFilesAsync("/nonexistent", cancellationToken: CancellationToken);
+		InitFs(fsType);
+		var files = await _fs.GetFilesAsync(NewPath("nonexistent"), cancellationToken: CancellationToken);
 
 		files.Any().AssertFalse();
 	}
 
 	[TestMethod]
-	public async Task GetFilesAsync_Memory_WithPattern_FiltersResults()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetFilesAsync_WithPattern_FiltersResults(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
-		using (var s = fs.Open("/root/file.log", FileMode.Create, FileAccess.Write))
-			s.WriteByte(2);
-		using (var s = fs.Open("/root/data.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(3);
+		InitFs(fsType);
+		WriteFile(NewPath("file.txt"), 1);
+		WriteFile(NewPath("file.log"), 2);
+		WriteFile(NewPath("data.txt"), 3);
 
-		var files = (await fs.GetFilesAsync("/root", "*.txt", cancellationToken: CancellationToken)).ToArray();
+		var files = (await _fs.GetFilesAsync(_root, "*.txt", cancellationToken: CancellationToken)).ToArray();
 
 		files.Length.AssertEqual(2);
 	}
@@ -292,47 +373,50 @@ public class IOHelperTests : BaseTestClass
 	#region Save
 
 	[TestMethod]
-	public void Save_Stream_Memory_SavesContent()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void Save_Stream_SavesContent(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var data = new byte[] { 1, 2, 3, 4, 5 };
 		using var source = new MemoryStream(data);
 
-		fs.Save(source, "/root/output.bin");
+		_fs.Save(source, NewPath("output.bin"));
 
-		fs.FileExists("/root/output.bin").AssertTrue();
-		using var read = fs.Open("/root/output.bin", FileMode.Open, FileAccess.Read);
+		_fs.FileExists(NewPath("output.bin")).AssertTrue();
+		using var read = _fs.Open(NewPath("output.bin"), FileMode.Open, FileAccess.Read);
 		var buffer = new byte[5];
 		read.ReadExactly(buffer, 0, 5);
 		buffer.AssertEqual(data);
 	}
 
 	[TestMethod]
-	public void Save_Stream_Memory_RestoresPosition()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void Save_Stream_RestoresPosition(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var data = new byte[] { 1, 2, 3 };
 		using var source = new MemoryStream(data);
 		source.Position = 1;
 
-		fs.Save(source, "/root/output.bin");
+		_fs.Save(source, NewPath("output.bin"));
 
 		source.Position.AssertEqual(1);
 	}
 
 	[TestMethod]
-	public void Save_ByteArray_Memory_SavesContent()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void Save_ByteArray_SavesContent(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var data = new byte[] { 10, 20, 30, 40 };
 
-		var result = fs.Save(data, "/root/data.bin");
+		var result = _fs.Save(data, NewPath("data.bin"));
 
 		result.AssertSame(data);
-		fs.FileExists("/root/data.bin").AssertTrue();
+		_fs.FileExists(NewPath("data.bin")).AssertTrue();
 	}
 
 	#endregion
@@ -340,44 +424,32 @@ public class IOHelperTests : BaseTestClass
 	#region TrySave
 
 	[TestMethod]
-	public void TrySave_Memory_Success_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void TrySave_Success_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
+		InitFs(fsType);
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
-		var result = fs.TrySave(data, "/root/file.bin", ex => caught = ex);
+		var result = _fs.TrySave(data, NewPath("file.bin"), ex => caught = ex);
 
 		result.AssertTrue();
 		caught.AssertNull();
-		fs.FileExists("/root/file.bin").AssertTrue();
-	}
-
-	//[TestMethod]
-	public void TrySave_Memory_Failure_ReturnsFalse()
-	{
-		var fs = new MemoryFileSystem();
-		// Directory doesn't exist, should fail with DirectoryNotFoundException
-		var data = new byte[] { 1, 2, 3 };
-		Exception caught = null;
-
-		var result = fs.TrySave(data, "/nonexistent/file.bin", ex => caught = ex);
-
-		result.AssertFalse();
-		caught.AssertNotNull();
-		(caught is DirectoryNotFoundException).AssertTrue();
+		_fs.FileExists(NewPath("file.bin")).AssertTrue();
 	}
 
 	[TestMethod]
-	public void TrySave_LocalFileSystem_Failure_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void TrySave_Failure_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = LocalFileSystem.Instance;
+		InitFs(fsType);
 		// Directory doesn't exist, should fail with DirectoryNotFoundException
 		var data = new byte[] { 1, 2, 3 };
 		Exception caught = null;
 
-		var result = fs.TrySave(data, "/nonexistent/file.bin", ex => caught = ex);
+		var result = _fs.TrySave(data, NewPath("nonexistent", "file.bin"), ex => caught = ex);
 
 		result.AssertFalse();
 		caught.AssertNotNull();
@@ -389,42 +461,46 @@ public class IOHelperTests : BaseTestClass
 	#region CheckDirContainFiles
 
 	[TestMethod]
-	public void CheckDirContainFiles_Memory_WithFiles_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainFiles_WithFiles_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		WriteFile(NewPath("file.txt"));
 
-		fs.CheckDirContainFiles("/root").AssertTrue();
+		_fs.CheckDirContainFiles(_root).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckDirContainFiles_Memory_WithFilesInSubdir_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainFiles_WithFilesInSubdir_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/sub");
-		using (var s = fs.Open("/root/sub/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("sub"));
+		WriteFile(NewPath("sub", "file.txt"));
 
-		fs.CheckDirContainFiles("/root").AssertTrue();
+		_fs.CheckDirContainFiles(_root).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckDirContainFiles_Memory_EmptyDir_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainFiles_EmptyDir_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/sub");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("sub"));
 
-		fs.CheckDirContainFiles("/root").AssertFalse();
+		_fs.CheckDirContainFiles(_root).AssertFalse();
 	}
 
 	[TestMethod]
-	public void CheckDirContainFiles_Memory_NonExistent_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainFiles_NonExistent_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-
-		fs.CheckDirContainFiles("/nonexistent").AssertFalse();
+		InitFs(fsType);
+		_fs.CheckDirContainFiles(NewPath("nonexistent")).AssertFalse();
 	}
 
 	#endregion
@@ -432,40 +508,44 @@ public class IOHelperTests : BaseTestClass
 	#region CheckDirContainsAnything
 
 	[TestMethod]
-	public void CheckDirContainsAnything_Memory_WithFiles_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainsAnything_WithFiles_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		WriteFile(NewPath("file.txt"));
 
-		fs.CheckDirContainsAnything("/root").AssertTrue();
+		_fs.CheckDirContainsAnything(_root).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckDirContainsAnything_Memory_WithSubdir_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainsAnything_WithSubdir_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root/sub");
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("sub"));
 
-		fs.CheckDirContainsAnything("/root").AssertTrue();
+		_fs.CheckDirContainsAnything(_root).AssertTrue();
 	}
 
 	[TestMethod]
-	public void CheckDirContainsAnything_Memory_Empty_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainsAnything_Empty_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-
-		fs.CheckDirContainsAnything("/root").AssertFalse();
+		InitFs(fsType);
+		// _root exists and is empty
+		_fs.CheckDirContainsAnything(_root).AssertFalse();
 	}
 
 	[TestMethod]
-	public void CheckDirContainsAnything_Memory_NonExistent_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void CheckDirContainsAnything_NonExistent_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-
-		fs.CheckDirContainsAnything("/nonexistent").AssertFalse();
+		InitFs(fsType);
+		_fs.CheckDirContainsAnything(NewPath("nonexistent")).AssertFalse();
 	}
 
 	#endregion
@@ -473,35 +553,34 @@ public class IOHelperTests : BaseTestClass
 	#region IsFileLocked
 
 	[TestMethod]
-	public void IsFileLocked_Memory_NonExistent_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void IsFileLocked_NonExistent_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-
-		fs.IsFileLocked("/nonexistent.txt").AssertFalse();
+		InitFs(fsType);
+		_fs.IsFileLocked(NewPath("nonexistent.txt")).AssertFalse();
 	}
 
 	[TestMethod]
-	public void IsFileLocked_Memory_UnlockedFile_ReturnsFalse()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void IsFileLocked_UnlockedFile_ReturnsFalse(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write))
-			s.WriteByte(1);
+		InitFs(fsType);
+		WriteFile(NewPath("file.txt"));
 
-		fs.IsFileLocked("/root/file.txt").AssertFalse();
+		_fs.IsFileLocked(NewPath("file.txt")).AssertFalse();
 	}
 
 	[TestMethod]
-	public void IsFileLocked_Memory_LockedFile_ReturnsTrue()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public void IsFileLocked_LockedFile_ReturnsTrue(FileSystemType fsType)
 	{
-		var fs = new MemoryFileSystem();
-		fs.CreateDirectory("/root");
-
-		using (var s = fs.Open("/root/file.txt", FileMode.Create, FileAccess.Write, FileShare.None))
-		{
-			s.WriteByte(1);
-			fs.IsFileLocked("/root/file.txt").AssertTrue();
-		}
+		InitFs(fsType);
+		using var s = _fs.Open(NewPath("file.txt"), FileMode.Create, FileAccess.Write, FileShare.None);
+		s.WriteByte(1);
+		_fs.IsFileLocked(NewPath("file.txt")).AssertTrue();
 	}
 
 	#endregion
@@ -525,130 +604,50 @@ public class IOHelperTests : BaseTestClass
 
 	#endregion
 
-	[TestMethod]
-	public async Task GetDirectoriesAsync_ReturnsDirectories()
-	{
-		var fs = LocalFileSystem.Instance;
-		var root = fs.GetTempPath();
+	#region Async Cancellation and Materialization Tests
 
+	[TestMethod]
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetFilesAsync_Cancellation_ThrowsOperationCanceled(FileSystemType fsType)
+	{
+		InitFs(fsType);
+		WriteFile(NewPath("f.txt"));
+
+		using var cts = new CancellationTokenSource();
+		cts.Cancel();
+
+		var thrown = false;
 		try
 		{
-			fs.CreateDirectory(Path.Combine(root, "a"));
-			fs.CreateDirectory(Path.Combine(root, "b"));
-
-			var dirs = (await fs.GetDirectoriesAsync(root, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
-			var expected = new[] { Path.Combine(root, "a"), Path.Combine(root, "b") }.OrderBy(x => x).ToArray();
-
-			dirs.AssertEqual(expected);
+			await _fs.GetFilesAsync(_root, cancellationToken: cts.Token);
 		}
-		finally
+		catch (OperationCanceledException)
 		{
-			try
-			{
-				fs.DeleteDirectory(root, true);
-			}
-			catch { }
+			thrown = true;
 		}
+
+		thrown.AssertTrue();
 	}
 
 	[TestMethod]
-	public async Task GetFilesAsync_ReturnsFiles()
+	[DataRow(FileSystemType.Local)]
+	[DataRow(FileSystemType.Memory)]
+	public async Task GetDirectoriesAsync_Materialized_AfterDeleteStillAvailable(FileSystemType fsType)
 	{
-		var fs = LocalFileSystem.Instance;
-		var root = fs.GetTempPath();
+		InitFs(fsType);
+		_fs.CreateDirectory(NewPath("d1"));
+		_fs.CreateDirectory(NewPath("d2"));
 
-		try
-		{
-			fs.WriteAllText(Path.Combine(root, "f1.txt"), "a");
-			fs.WriteAllText(Path.Combine(root, "f2.txt"), "b");
+		var result = await _fs.GetDirectoriesAsync(_root, cancellationToken: CancellationToken);
+		var arr = result.ToArray();
 
-			var files = (await fs.GetFilesAsync(root, cancellationToken: CancellationToken)).OrderBy(x => x).ToArray();
-			var expected = new[] { Path.Combine(root, "f1.txt"), Path.Combine(root, "f2.txt") }.OrderBy(x => x).ToArray();
+		// remove original directory
+		_fs.DeleteDirectory(_root, true);
 
-			files.AssertEqual(expected);
-		}
-		finally
-		{
-			try
-			{
-				fs.DeleteDirectory(root, true);
-			}
-			catch { }
-		}
+		// materialized result should still contain entries
+		arr.Length.AssertEqual(2);
 	}
 
-	[TestMethod]
-	public async Task GetDirectoriesAsync_Nonexistent_ReturnsEmpty()
-	{
-		var fs = LocalFileSystem.Instance;
-		var path = fs.GetTempPath("NonExistent");
-		var res = await fs.GetDirectoriesAsync(path, cancellationToken: CancellationToken);
-		res.Any().AssertFalse();
-	}
-
-	[TestMethod]
-	public async Task GetFilesAsync_Cancellation_ThrowsOperationCanceled()
-	{
-		var fs = LocalFileSystem.Instance;
-		var root = fs.GetTempPath();
-
-		try
-		{
-			fs.WriteAllText(Path.Combine(root, "f.txt"), "x");
-
-			using var cts = new CancellationTokenSource();
-			cts.Cancel();
-
-			var thrown = false;
-			try
-			{
-				await fs.GetFilesAsync(root, cancellationToken: cts.Token);
-			}
-			catch (OperationCanceledException)
-			{
-				thrown = true;
-			}
-
-			thrown.AssertTrue();
-		}
-		finally
-		{
-			try
-			{
-				fs.DeleteDirectory(root, true);
-			}
-			catch { }
-		}
-	}
-
-	[TestMethod]
-	public async Task GetDirectoriesAsync_Materialized_AfterDeleteStillAvailable()
-	{
-		var fs = LocalFileSystem.Instance;
-		var root = fs.GetTempPath();
-
-		try
-		{
-			fs.CreateDirectory(Path.Combine(root, "d1"));
-			fs.CreateDirectory(Path.Combine(root, "d2"));
-
-			var result = await fs.GetDirectoriesAsync(root, cancellationToken: CancellationToken);
-			var arr = result.ToArray();
-
-			// remove original directory
-			fs.DeleteDirectory(root, true);
-
-			// materialized result should still contain entries
-			arr.Length.AssertEqual(2);
-		}
-		finally
-		{
-			try
-			{
-				if (fs.DirectoryExists(root))
-					fs.DeleteDirectory(root, true);
-			}
-			catch { }
-		}
-	}
+	#endregion
 }
