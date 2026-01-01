@@ -2,8 +2,6 @@
   <Import Project="..\common.props" />
   <ItemGroup>
     <PackageReference Include="FSharp.Compiler.Service" Version="$(FSharpVer)" />
-    <PackageReference Include="FSharp.Control.TaskSeq" Version="$(FSharpControlTaskSeqVer)" />
-    <PackageReference Include="FSharpPlus" Version="$(FSharpPlusVer)" />
   </ItemGroup>
  
   <ItemGroup>

@@ -35,7 +35,5 @@
     <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>7.0.1</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
-    <FSharpControlTaskSeqVer>0.*</FSharpControlTaskSeqVer>
-    <FSharpPlusVer>1.*</FSharpPlusVer>
   </PropertyGroup>
 </Project>
