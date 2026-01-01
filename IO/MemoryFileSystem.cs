@@ -10,6 +10,27 @@ using System.Text.RegularExpressions;
 using Ecng.Common;
 
 /// <summary>
+/// Defines behavior when <see cref="MemoryFileSystem"/> storage limit is exceeded.
+/// </summary>
+public enum MemoryFileSystemOverflowBehavior
+{
+	/// <summary>
+	/// Throw <see cref="IOException"/> when limit is exceeded.
+	/// </summary>
+	ThrowException,
+
+	/// <summary>
+	/// Silently ignore writes that would exceed the limit.
+	/// </summary>
+	IgnoreWrites,
+
+	/// <summary>
+	/// Evict oldest closed files to make room for new data.
+	/// </summary>
+	EvictOldest
+}
+
+/// <summary>
 /// In-memory implementation of <see cref="IFileSystem"/> useful for tests and environments without disk access.
 /// Thread-safe for basic operations.
 /// </summary>
@@ -22,9 +43,11 @@ public class MemoryFileSystem : IFileSystem
 		public Dictionary<string, Node> Children; // directory children
 		public DateTime CreatedUtc;
 		public DateTime UpdatedUtc;
+		public DateTime LastClosedUtc; // for eviction: when file was last closed
 		public FileAttributes Attributes;
 		public long Length => Data?.LongLength ?? 0L;
 		public List<FileHandle> OpenHandles; // tracks open file handles for FileShare enforcement
+		public string FullPath; // for eviction: need to know path to delete
 	}
 
 	private class FileHandle
@@ -43,6 +66,29 @@ public class MemoryFileSystem : IFileSystem
 	};
 
 	private readonly Lock _lock = new();
+	private long _totalSize;
+
+	/// <summary>
+	/// Maximum total size of all files in bytes. Zero or negative means unlimited.
+	/// </summary>
+	public long MaxSize { get; set; }
+
+	/// <summary>
+	/// Behavior when <see cref="MaxSize"/> limit is exceeded.
+	/// </summary>
+	public MemoryFileSystemOverflowBehavior OverflowBehavior { get; set; } = MemoryFileSystemOverflowBehavior.ThrowException;
+
+	/// <summary>
+	/// Current total size of all files in bytes.
+	/// </summary>
+	public long TotalSize
+	{
+		get
+		{
+			using (_lock.EnterScope())
+				return _totalSize;
+		}
+	}
 
 	private static bool CanOpenWithExistingHandles(Node node, FileAccess newAccess, FileShare newShare)
 	{
@@ -65,6 +111,136 @@ public class MemoryFileSystem : IFileSystem
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// Collects all file nodes that can be evicted (closed, not read-only).
+	/// </summary>
+	private List<Node> GetEvictableCandidates()
+	{
+		var result = new List<Node>();
+		CollectFiles(_root, result);
+		return result;
+
+		static void CollectFiles(Node node, List<Node> list)
+		{
+			if (node.Children == null)
+				return;
+
+			foreach (var child in node.Children.Values)
+			{
+				if (child.IsDirectory)
+				{
+					CollectFiles(child, list);
+				}
+				else if ((child.OpenHandles == null || child.OpenHandles.Count == 0) &&
+				         !child.Attributes.HasFlag(FileAttributes.ReadOnly))
+				{
+					list.Add(child);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Tries to free up space by evicting oldest closed files.
+	/// </summary>
+	/// <param name="requiredSpace">Amount of space needed.</param>
+	/// <returns>True if enough space was freed; false otherwise.</returns>
+	private bool TryEvictOldest(long requiredSpace)
+	{
+		var candidates = GetEvictableCandidates();
+		if (candidates.Count == 0)
+			return false;
+
+		// Sort by LastClosedUtc (oldest first), then by UpdatedUtc as fallback
+		candidates.Sort((a, b) =>
+		{
+			var cmp = a.LastClosedUtc.CompareTo(b.LastClosedUtc);
+			return cmp != 0 ? cmp : a.UpdatedUtc.CompareTo(b.UpdatedUtc);
+		});
+
+		long freedSpace = 0;
+		foreach (var candidate in candidates)
+		{
+			if (candidate.FullPath == null)
+				continue;
+
+			var size = candidate.Length;
+			DeleteFileInternal(candidate.FullPath);
+			freedSpace += size;
+
+			if (freedSpace >= requiredSpace)
+				return true;
+		}
+
+		return freedSpace >= requiredSpace;
+	}
+
+	/// <summary>
+	/// Internal delete without lock (caller must hold lock).
+	/// </summary>
+	private void DeleteFileInternal(string path)
+	{
+		var parts = Split(path);
+		if (parts.Length == 0)
+			return;
+
+		var dir = _root;
+		for (int i = 0; i < parts.Length - 1; i++)
+		{
+			if (!dir.IsDirectory || dir.Children == null || !dir.Children.TryGetValue(parts[i], out var next))
+				return;
+			dir = next;
+		}
+
+		var fileName = parts[parts.Length - 1];
+		if (dir.Children != null && dir.Children.TryGetValue(fileName, out var fileNode))
+		{
+			_totalSize -= fileNode.Length;
+			dir.Children.Remove(fileName);
+		}
+	}
+
+	/// <summary>
+	/// Handles size limit check and returns whether the write should proceed.
+	/// Must be called with lock held.
+	/// </summary>
+	/// <param name="oldSize">Previous file size.</param>
+	/// <param name="newSize">New file size.</param>
+	/// <returns>True if write is allowed; false if it should be ignored.</returns>
+	private bool HandleSizeLimit(long oldSize, long newSize)
+	{
+		if (MaxSize <= 0)
+			return true; // No limit
+
+		var delta = newSize - oldSize;
+		if (delta <= 0)
+			return true; // Shrinking or same size
+
+		var projectedTotal = _totalSize + delta;
+		if (projectedTotal <= MaxSize)
+			return true; // Within limit
+
+		// Limit exceeded
+		switch (OverflowBehavior)
+		{
+			case MemoryFileSystemOverflowBehavior.ThrowException:
+				throw new IOException($"MemoryFileSystem size limit exceeded. Limit: {MaxSize}, Current: {_totalSize}, Required: {projectedTotal}");
+
+			case MemoryFileSystemOverflowBehavior.IgnoreWrites:
+				return false;
+
+			case MemoryFileSystemOverflowBehavior.EvictOldest:
+				var needed = projectedTotal - MaxSize;
+				if (TryEvictOldest(needed))
+					return true;
+				// Could not free enough space
+				throw new IOException($"MemoryFileSystem size limit exceeded and cannot evict enough files. Limit: {MaxSize}, Current: {_totalSize}, Required: {projectedTotal}");
+
+			default:
+				return true;
+		}
 	}
 
 	private static bool CanDeleteWithExistingHandles(Node node)
@@ -227,6 +403,7 @@ public class MemoryFileSystem : IFileSystem
 			if (!dir.IsDirectory)
 				throw new IOException("Path's parent is not a directory.");
 			dir.Children ??= new(StringComparer.OrdinalIgnoreCase);
+			var normalizedPath = Normalize(path);
 			if (!dir.Children.TryGetValue(fileName, out var fileNode))
 			{
 				fileNode = new Node
@@ -235,10 +412,16 @@ public class MemoryFileSystem : IFileSystem
 					Attributes = FileAttributes.Normal,
 					Data = [],
 					CreatedUtc = DateTime.UtcNow,
-					UpdatedUtc = DateTime.UtcNow
+					UpdatedUtc = DateTime.UtcNow,
+					FullPath = normalizedPath
 				};
 				dir.Children[fileName] = fileNode;
 			}
+			else
+			{
+				fileNode.FullPath = normalizedPath;
+			}
+
 			if (fileNode.IsDirectory)
 				throw new IOException("Path points to a directory.");
 
@@ -255,6 +438,7 @@ public class MemoryFileSystem : IFileSystem
 			fileNode.OpenHandles.Add(writeHandle);
 
 			var baseData = truncate ? [] : (fileNode.Data ?? []);
+			var oldSize = fileNode.Length;
 			var ms = new MemoryStream();
 			if (baseData.Length > 0)
 				ms.Write(baseData, 0, baseData.Length);
@@ -267,13 +451,23 @@ public class MemoryFileSystem : IFileSystem
 
 			return new CommittingStream(ms, bytes =>
 			{
-				fileNode.Data = bytes;
-				fileNode.UpdatedUtc = DateTime.UtcNow;
+				using (_lock.EnterScope())
+				{
+					var newSize = bytes.LongLength;
+					if (HandleSizeLimit(oldSize, newSize))
+					{
+						_totalSize += newSize - oldSize;
+						fileNode.Data = bytes;
+						fileNode.UpdatedUtc = DateTime.UtcNow;
+					}
+					// else: IgnoreWrites - keep old data
+				}
 			}, () =>
 			{
 				using (_lock.EnterScope())
 				{
 					fileNode.OpenHandles?.Remove(writeHandle);
+					fileNode.LastClosedUtc = DateTime.UtcNow;
 				}
 			}, access, appendStart);
 		}
@@ -395,10 +589,28 @@ public class MemoryFileSystem : IFileSystem
 				throw new IOException("Path is a file.");
 			if (!recursive && cur.Children != null && cur.Children.Count > 0)
 				throw new IOException("Directory is not empty.");
+
+			// Calculate total size of all files in the directory tree
+			_totalSize -= CalculateTreeSize(cur);
+
 			// remove from parent
 			var parent = stack[stack.Count - 1];
 			parent.Children.Remove(names[names.Count - 1]);
 		}
+	}
+
+	private static long CalculateTreeSize(Node node)
+	{
+		if (!node.IsDirectory)
+			return node.Length;
+
+		long total = 0;
+		if (node.Children != null)
+		{
+			foreach (var child in node.Children.Values)
+				total += CalculateTreeSize(child);
+		}
+		return total;
 	}
 
 	/// <inheritdoc />
@@ -425,6 +637,8 @@ public class MemoryFileSystem : IFileSystem
 
 				if (!CanDeleteWithExistingHandles(fileNode))
 					throw new IOException("The process cannot access the file because it is being used by another process.");
+
+				_totalSize -= fileNode.Length;
 				dir.Children.Remove(fileName);
 			}
 		}

@@ -677,10 +677,17 @@ public class TransactionFileStreamTests : BaseTestClass
 		stream.Write(bytes, 0, bytes.Length);
 	}
 
+	private static MemoryFileSystem CreateMemoryFsWithData()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/data");
+		return fs;
+	}
+
 	[TestMethod]
 	public void MemoryFs_CreateNew_CommitAndCleanup()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -699,7 +706,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_CreateNew_ExistingFile_Throws()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		WriteAllText(fs, target, "existing");
@@ -710,7 +717,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Create_OverwritesExisting()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -730,7 +737,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Open_NonExisting_Throws()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(fs, target, FileMode.Open));
@@ -739,7 +746,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Open_ExistingFile_AppendsContent()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -759,7 +766,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_OpenOrCreate_CreatesNew()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -777,7 +784,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_OpenOrCreate_ExistingFile_AppendsContent()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -797,7 +804,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Truncate_NonExisting_Throws()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(fs, target, FileMode.Truncate));
@@ -806,7 +813,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Truncate_Existing_ReplacesContent()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -826,7 +833,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Append_NonExisting_CreatesFile()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -844,7 +851,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_Append_ExistingFile_AppendsContent()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -864,7 +871,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_CommitRequired_ForChangesToPersist()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -886,7 +893,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_DisposeWithoutCommit_NoTarget()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -911,14 +918,14 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_EmptyName_Throws()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(fs, "", FileMode.Create));
 	}
 
 	[TestMethod]
 	public void MemoryFs_Seek_ThrowsNotSupported()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -928,7 +935,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_SetLength_ThrowsNotSupported()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -938,7 +945,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_PositionGet_ReturnsCurrentPosition()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -952,7 +959,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_MultipleDispose_NoException()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -963,7 +970,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_AfterDispose_ThrowsObjectDisposed()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -976,7 +983,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_IsCommitted_Property()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
@@ -990,7 +997,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_MultipleCommits_AppendData()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -1015,7 +1022,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void MemoryFs_MultipleCommits_RollbackUncommittedWrites()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
@@ -1083,7 +1090,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 
 		WriteAllText(fs, target, "ORIGINAL_IMPORTANT_DATA");
@@ -1112,7 +1119,7 @@ public class TransactionFileStreamTests : BaseTestClass
 	[TestMethod]
 	public void Append_WithStaleTmpFile_ShouldStartFresh()
 	{
-		var fs = new MemoryFileSystem();
+		var fs = CreateMemoryFsWithData();
 		var target = "/data/file.txt";
 		var tmp = target + ".tmp";
 
