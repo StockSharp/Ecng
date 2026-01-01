@@ -5,6 +5,27 @@ using System.Collections.Generic;
 using System.IO;
 
 /// <summary>
+/// Defines behavior when file system storage limit is exceeded.
+/// </summary>
+public enum FileSystemOverflowBehavior
+{
+	/// <summary>
+	/// Throw <see cref="IOException"/> when limit is exceeded.
+	/// </summary>
+	ThrowException,
+
+	/// <summary>
+	/// Silently ignore writes that would exceed the limit.
+	/// </summary>
+	IgnoreWrites,
+
+	/// <summary>
+	/// Evict oldest closed files to make room for new data (only supported by <see cref="MemoryFileSystem"/>).
+	/// </summary>
+	EvictOldest
+}
+
+/// <summary>
 /// File system abstraction. Implementations can be backed by the local OS or an in-memory store.
 /// The interface defines a minimal stream-based contract.
 /// </summary>
@@ -130,4 +151,19 @@ public interface IFileSystem
 	/// <param name="path">Path to the file or directory.</param>
 	/// <returns>The <see cref="FileAttributes"/> for the given path.</returns>
 	FileAttributes GetAttributes(string path);
+
+	/// <summary>
+	/// Maximum total size of all files in bytes. Zero or negative means unlimited.
+	/// </summary>
+	long MaxSize { get; set; }
+
+	/// <summary>
+	/// Behavior when <see cref="MaxSize"/> limit is exceeded.
+	/// </summary>
+	FileSystemOverflowBehavior OverflowBehavior { get; set; }
+
+	/// <summary>
+	/// Current total size of all tracked files in bytes.
+	/// </summary>
+	long TotalSize { get; }
 }

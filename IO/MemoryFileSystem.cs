@@ -10,27 +10,6 @@ using System.Text.RegularExpressions;
 using Ecng.Common;
 
 /// <summary>
-/// Defines behavior when <see cref="MemoryFileSystem"/> storage limit is exceeded.
-/// </summary>
-public enum MemoryFileSystemOverflowBehavior
-{
-	/// <summary>
-	/// Throw <see cref="IOException"/> when limit is exceeded.
-	/// </summary>
-	ThrowException,
-
-	/// <summary>
-	/// Silently ignore writes that would exceed the limit.
-	/// </summary>
-	IgnoreWrites,
-
-	/// <summary>
-	/// Evict oldest closed files to make room for new data.
-	/// </summary>
-	EvictOldest
-}
-
-/// <summary>
 /// In-memory implementation of <see cref="IFileSystem"/> useful for tests and environments without disk access.
 /// Thread-safe for basic operations.
 /// </summary>
@@ -76,7 +55,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <summary>
 	/// Behavior when <see cref="MaxSize"/> limit is exceeded.
 	/// </summary>
-	public MemoryFileSystemOverflowBehavior OverflowBehavior { get; set; } = MemoryFileSystemOverflowBehavior.ThrowException;
+	public FileSystemOverflowBehavior OverflowBehavior { get; set; } = FileSystemOverflowBehavior.ThrowException;
 
 	/// <summary>
 	/// Current total size of all files in bytes.
@@ -225,13 +204,13 @@ public class MemoryFileSystem : IFileSystem
 		// Limit exceeded
 		switch (OverflowBehavior)
 		{
-			case MemoryFileSystemOverflowBehavior.ThrowException:
+			case FileSystemOverflowBehavior.ThrowException:
 				throw new IOException($"MemoryFileSystem size limit exceeded. Limit: {MaxSize}, Current: {_totalSize}, Required: {projectedTotal}");
 
-			case MemoryFileSystemOverflowBehavior.IgnoreWrites:
+			case FileSystemOverflowBehavior.IgnoreWrites:
 				return false;
 
-			case MemoryFileSystemOverflowBehavior.EvictOldest:
+			case FileSystemOverflowBehavior.EvictOldest:
 				var needed = projectedTotal - MaxSize;
 				if (TryEvictOldest(needed))
 					return true;

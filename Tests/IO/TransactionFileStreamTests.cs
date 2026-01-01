@@ -632,6 +632,10 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		public void SetReadOnly(string path, bool isReadOnly) => inner.SetReadOnly(path, isReadOnly);
 		public FileAttributes GetAttributes(string path) => inner.GetAttributes(path);
+
+		public long MaxSize { get => inner.MaxSize; set => inner.MaxSize = value; }
+		public FileSystemOverflowBehavior OverflowBehavior { get => inner.OverflowBehavior; set => inner.OverflowBehavior = value; }
+		public long TotalSize => inner.TotalSize;
 	}
 
 	/// <summary>
