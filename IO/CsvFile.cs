@@ -79,6 +79,11 @@ public abstract class CsvFileCommon : Disposable
 		get => SpecialChars[_quoteIndex];
 		set => SpecialChars[_quoteIndex] = value;
 	}
+
+	/// <summary>
+	/// Gets the underlying stream.
+	/// </summary>
+	public abstract Stream BaseStream { get; }
 }
 
 /// <summary>
@@ -96,6 +101,9 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 	/// The current line being read.
 	/// </summary>
 	public string CurrLine { get; private set; }
+
+	/// <inheritdoc />
+	public override Stream BaseStream => (_reader as StreamReader)?.BaseStream;
 
 	/// <summary>
 	/// Initializes a new instance of the CsvFileReader class for the
@@ -287,7 +295,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 /// <summary>
 /// Class for writing to comma-separated-value (CSV) files.
 /// </summary>
-public class CsvFileWriter : CsvFileCommon, IDisposable
+public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 {
 	private readonly StreamWriter _writer;
 
@@ -334,6 +342,9 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 		get => _writer.NewLine;
 		set => _writer.NewLine = value;
 	}
+
+	/// <inheritdoc />
+	public override Stream BaseStream => _writer.BaseStream;
 
 	/// <summary>
 	/// Writes a row of columns to the current CSV file.
@@ -415,6 +426,17 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	/// Truncates the underlying stream used by the <see cref="CsvFileWriter"/> by clearing its content.
 	/// </summary>
 	public void Truncate() => _writer.Truncate();
+
+	/// <summary>
+	/// Commits the transaction by flushing data and propagating commit to the underlying stream if it supports transactions.
+	/// </summary>
+	public void Commit()
+	{
+		_writer.Flush();
+
+		if (_writer.BaseStream is ICommitable tfs)
+			tfs.Commit();
+	}
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()

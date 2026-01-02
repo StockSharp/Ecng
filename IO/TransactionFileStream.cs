@@ -22,7 +22,7 @@ using Ecng.Common;
 /// // If exception occurs before Commit(), original file is preserved (rollback)
 /// </code>
 /// </remarks>
-public class TransactionFileStream : Stream
+public class TransactionFileStream : Stream, ICommitable
 {
 	private readonly string _name;
 	private readonly string _nameTemp;
