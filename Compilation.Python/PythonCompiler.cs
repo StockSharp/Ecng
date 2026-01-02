@@ -34,7 +34,7 @@ public class PythonCompiler : ICompiler
 	}
 
 	private readonly ScriptEngine _engine;
-	private readonly object _syncRoot = new();
+	private readonly Lock _syncRoot = new();
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="PythonCompiler"/> class.
@@ -57,7 +57,7 @@ public class PythonCompiler : ICompiler
 	/// Synchronization object for thread-safe access to the engine.
 	/// Use this to synchronize script execution when running scripts in parallel.
 	/// </summary>
-	public object SyncRoot => _syncRoot;
+	public Lock SyncRoot => _syncRoot;
 
 	bool ICompiler.IsAssemblyPersistable { get; } = false;
 	string ICompiler.Extension { get; } = FileExts.Python;
@@ -92,7 +92,7 @@ public class PythonCompiler : ICompiler
 		PythonCompilationResult result;
 
 		// ScriptEngine is not thread-safe, synchronize access
-		lock (_syncRoot)
+		using (_syncRoot.EnterScope())
 		{
 			try
 			{

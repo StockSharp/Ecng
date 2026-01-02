@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 using Ecng.Common;
 using Ecng.ComponentModel;
@@ -161,9 +162,9 @@ static class PythonAttrs
 /// <summary>
 /// Python compiler context.
 /// </summary>
-public class PythonContext(ScriptEngine engine, object syncRoot) : Disposable, ICompilerContext
+public class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerContext
 {
-	private readonly object _syncRoot = syncRoot ?? throw new ArgumentNullException(nameof(syncRoot));
+	private readonly Lock _syncRoot = syncRoot ?? throw new ArgumentNullException(nameof(syncRoot));
 	private class AssemblyImpl : Assembly
 	{
 		private class TypeImpl : Type, ITypeConstructor
@@ -706,7 +707,7 @@ public class PythonContext(ScriptEngine engine, object syncRoot) : Disposable, I
 			throw new ArgumentNullException(nameof(code));
 
 		// ScriptEngine is not thread-safe, synchronize access
-		lock (_syncRoot)
+		using (_syncRoot.EnterScope())
 		{
 			code.Execute();
 
@@ -718,7 +719,7 @@ public class PythonContext(ScriptEngine engine, object syncRoot) : Disposable, I
 	/// Synchronization object for thread-safe access to the engine.
 	/// Use this to synchronize script execution when running scripts in parallel.
 	/// </summary>
-	public object SyncRoot => _syncRoot;
+	public Lock SyncRoot => _syncRoot;
 
 	Assembly ICompilerContext.LoadFromBinary(byte[] body)
 		=> throw new NotSupportedException();
