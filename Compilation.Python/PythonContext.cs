@@ -158,8 +158,12 @@ static class PythonAttrs
 		.Where(attr => attr != null)];
 }
 
-class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
+/// <summary>
+/// Python compiler context.
+/// </summary>
+public class PythonContext(ScriptEngine engine, object syncRoot) : Disposable, ICompilerContext
 {
+	private readonly object _syncRoot = syncRoot ?? throw new ArgumentNullException(nameof(syncRoot));
 	private class AssemblyImpl : Assembly
 	{
 		private class TypeImpl : Type, ITypeConstructor
@@ -701,10 +705,20 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 		if (code is null)
 			throw new ArgumentNullException(nameof(code));
 
-		code.Execute();
+		// ScriptEngine is not thread-safe, synchronize access
+		lock (_syncRoot)
+		{
+			code.Execute();
 
-		return new AssemblyImpl(_engine, code.DefaultScope.GetTypes());
+			return new AssemblyImpl(_engine, code.DefaultScope.GetTypes());
+		}
 	}
+
+	/// <summary>
+	/// Synchronization object for thread-safe access to the engine.
+	/// Use this to synchronize script execution when running scripts in parallel.
+	/// </summary>
+	public object SyncRoot => _syncRoot;
 
 	Assembly ICompilerContext.LoadFromBinary(byte[] body)
 		=> throw new NotSupportedException();

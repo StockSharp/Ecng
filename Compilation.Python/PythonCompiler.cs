@@ -34,6 +34,7 @@ public class PythonCompiler : ICompiler
 	}
 
 	private readonly ScriptEngine _engine;
+	private readonly object _syncRoot = new();
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="PythonCompiler"/> class.
@@ -51,6 +52,12 @@ public class PythonCompiler : ICompiler
 	{
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 	}
+
+	/// <summary>
+	/// Synchronization object for thread-safe access to the engine.
+	/// Use this to synchronize script execution when running scripts in parallel.
+	/// </summary>
+	public object SyncRoot => _syncRoot;
 
 	bool ICompiler.IsAssemblyPersistable { get; } = false;
 	string ICompiler.Extension { get; } = FileExts.Python;
@@ -84,43 +91,47 @@ public class PythonCompiler : ICompiler
 
 		PythonCompilationResult result;
 
-		try
+		// ScriptEngine is not thread-safe, synchronize access
+		lock (_syncRoot)
 		{
-			var source = _engine.CreateScriptSourceFromString(sources.JoinN());
-			var errors = new List<CompilationError>();
-			var compiled = source.Compile(new PythonCompilerOptions
+			try
 			{
-				ModuleName = name,
-				Optimized = true
-			}, new CustomErrorListener(errors));
+				var source = _engine.CreateScriptSourceFromString(sources.JoinN());
+				var errors = new List<CompilationError>();
+				var compiled = source.Compile(new PythonCompilerOptions
+				{
+					ModuleName = name,
+					Optimized = true
+				}, new CustomErrorListener(errors));
 
-			if (compiled is not null)
-			{
-				// try to execute the code to catch runtime errors
-				var scope = _engine.CreateScope();
-				compiled.Execute(scope);
+				if (compiled is not null)
+				{
+					// try to execute the code to catch runtime errors
+					var scope = _engine.CreateScope();
+					compiled.Execute(scope);
+				}
+
+				result = new(errors) { CompiledCode = compiled };
 			}
-
-			result = new(errors) { CompiledCode = compiled };
-		}
-		catch (SyntaxErrorException ex)
-		{
-			result = new([new()
+			catch (SyntaxErrorException ex)
 			{
-				Type = ex.Severity.ToErrorType(),
-				Line = ex.Line,
-				Character = ex.Column,
-				Message = ex.Message,
-				Id = ex.ErrorCode.ToString(),
-			}]);
-		}
-		catch (Exception ex)
-		{
-			result = new([ex.ToError()]);
+				result = new([new()
+				{
+					Type = ex.Severity.ToErrorType(),
+					Line = ex.Line,
+					Character = ex.Column,
+					Message = ex.Message,
+					Id = ex.ErrorCode.ToString(),
+				}]);
+			}
+			catch (Exception ex)
+			{
+				result = new([ex.ToError()]);
+			}
 		}
 
 		return ((CompilationResult)result).FromResult();
 	}
 
-	ICompilerContext ICompiler.CreateContext() => new PythonContext(_engine);
+	ICompilerContext ICompiler.CreateContext() => new PythonContext(_engine, _syncRoot);
 }
