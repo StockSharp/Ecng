@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\Compilation\Compilation.csproj" />
+    <ProjectReference Include="..\Compilation.FSharp\Compilation.FSharp.csproj" />
+    <ProjectReference Include="..\Compilation.Python\Compilation.Python.csproj" />
+    <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
+  </ItemGroup>
+</Project>

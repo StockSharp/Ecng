@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
+    <ProjectReference Include="..\Backup.Azure\Backup.Azure.csproj" />
+    <ProjectReference Include="..\Backup.Mega\Backup.Mega.csproj" />
+    <ProjectReference Include="..\Backup.Yandex\Backup.Yandex.csproj" />
+  </ItemGroup>
+</Project>
