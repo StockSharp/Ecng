@@ -15,7 +15,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		return new DatabaseConnectionPair
 		{
 			Provider = ProviderName.SqlServer + ".MS",
-			ConnectionString = GetSecret("DB_MSSQL_CONNECTION_STRING"),
+			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
 		};
 	}
 
