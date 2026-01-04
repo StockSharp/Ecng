@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using System.Threading;
 
 /// <summary>
 /// Provides helper methods for working with types and related operations.
@@ -501,4 +502,12 @@ public static class TypeHelper
 
 		return Marshal.SizeOf(type);
 	}
+
+	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the <see cref="ISynchronizable"/>.
+	/// </summary>
+	/// <param name="sync"><see cref="ISynchronizable"/></param>
+	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
+	public static Lock.Scope EnterScope(this ISynchronizable sync)
+		=> sync.CheckOnNull(nameof(sync)).SyncRoot.EnterScope();
 }

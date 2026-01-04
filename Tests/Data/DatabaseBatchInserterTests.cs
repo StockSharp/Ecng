@@ -7,12 +7,6 @@ using LinqToDB.DataProvider.SqlServer;
 
 using Microsoft.Data.SqlClient;
 
-public enum BatchInserterProviderType
-{
-	Linq2db,
-	Ado,
-}
-
 [TestClass]
 [TestCategory("Integration")]
 public class DatabaseBatchInserterTests : BaseTestClass
@@ -29,13 +23,16 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		};
 	}
 
-	private static IDatabaseBatchInserterProvider GetProvider(BatchInserterProviderType providerType)
-		=> providerType switch
-		{
-			BatchInserterProviderType.Linq2db => new Linq2dbBatchInserterProvider(),
-			BatchInserterProviderType.Ado => new AdoBatchInserterProvider(connStr => new SqlConnection(connStr)),
-			_ => throw new ArgumentOutOfRangeException(nameof(providerType)),
-		};
+	private static IDatabaseBatchInserterProvider CreateProvider(Type providerType)
+	{
+		if (providerType == typeof(Linq2dbBatchInserterProvider))
+			return new Linq2dbBatchInserterProvider();
+
+		if (providerType == typeof(AdoBatchInserterProvider))
+			return new AdoBatchInserterProvider(connStr => new SqlConnection(connStr));
+
+		throw new ArgumentOutOfRangeException(nameof(providerType), providerType, null);
+	}
 
 	private static void DropTable(DatabaseConnectionPair connection, string tableName)
 	{
@@ -46,11 +43,11 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public async Task InsertAsync_SingleItem_Success(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public async Task InsertAsync_SingleItem_Success(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, _testTableName);
@@ -72,11 +69,11 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public async Task BulkCopyAsync_MultipleItems_Success(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public async Task BulkCopyAsync_MultipleItems_Success(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, _testTableName);
@@ -100,11 +97,11 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public async Task BulkCopyAsync_LargeDataset_Success(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public async Task BulkCopyAsync_LargeDataset_Success(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, _testTableName);
@@ -128,11 +125,11 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public async Task Create_WithDynamicProperties_Success(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public async Task Create_WithDynamicProperties_Success(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, _dynamicTestTableName);
@@ -153,22 +150,22 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public void Create_NullConnection_ThrowsArgumentNullException(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public void Create_NullConnection_ThrowsArgumentNullException(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 
 		Throws<ArgumentNullException>(() =>
 			provider.Create<TestEntity>(null, "table", _ => { }));
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public void Create_EmptyTableName_ThrowsArgumentNullException(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public void Create_EmptyTableName_ThrowsArgumentNullException(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		Throws<ArgumentNullException>(() =>
@@ -176,11 +173,11 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(BatchInserterProviderType.Linq2db)]
-	[DataRow(BatchInserterProviderType.Ado)]
-	public void Create_NullConfigureMapping_ThrowsArgumentNullException(BatchInserterProviderType providerType)
+	[DataRow(typeof(Linq2dbBatchInserterProvider))]
+	[DataRow(typeof(AdoBatchInserterProvider))]
+	public void Create_NullConfigureMapping_ThrowsArgumentNullException(Type providerType)
 	{
-		var provider = GetProvider(providerType);
+		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		Throws<ArgumentNullException>(() =>
