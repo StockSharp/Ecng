@@ -6,7 +6,7 @@ using Ecng.Interop;
 [TestCategory("Integration")]
 public class ExcelWorkerTests : BaseTestClass
 {
-	private IExcelWorkerProvider GetProvider() => new DevExpExcelWorkerProvider();
+	private static IExcelWorkerProvider GetProvider() => new DevExpExcelWorkerProvider();
 
 	[TestMethod]
 	public void CreateNew_AddSheet_Success()

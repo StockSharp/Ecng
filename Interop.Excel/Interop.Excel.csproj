@@ -2,6 +2,7 @@
   <Import Project="..\common.props" />
   <ItemGroup>
     <PackageReference Include="Ecng.DXRefs" Version="$(EcngVer)" />
+    <PackageReference Include="System.Drawing.Common" Version="$(MsExtensionsVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
