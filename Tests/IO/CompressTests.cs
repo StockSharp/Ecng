@@ -882,10 +882,10 @@ public class CompressTests : BaseTestClass
 		// Reset
 		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old");
 
-		entries = new List<(string name, Stream body)>
-		{
+		entries =
+        [
 			("file.txt", new MemoryStream("new2"u8.ToArray()))
-		};
+		];
 
 		// overwrite=false
 		fs.WriteEntries(destDir, entries, overwrite: false);

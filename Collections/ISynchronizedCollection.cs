@@ -6,12 +6,18 @@ using System.Collections.Generic;
 /// Represents a collection that can be synchronized using a <see cref="SyncObject"/>.
 /// </summary>
 public interface ISynchronizedCollection
+#if NET9_0_OR_GREATER
+	: Common.ISynchronizable
+{
+}
+#else
 {
 	/// <summary>
 	/// Gets the synchronization object used for thread-safe operations.
 	/// </summary>
 	SyncObject SyncRoot { get; }
 }
+#endif
 
 /// <summary>
 /// Represents a generic synchronized collection.

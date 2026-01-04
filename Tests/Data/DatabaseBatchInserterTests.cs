@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Data;
 
-using System.Data.Common;
-
 using Ecng.Data;
 
 using LinqToDB;
@@ -19,12 +17,12 @@ public enum BatchInserterProviderType
 [TestCategory("Integration")]
 public class DatabaseBatchInserterTests : BaseTestClass
 {
-	private const string TestTableName = "ecng_batch_test";
-	private const string DynamicTestTableName = "ecng_batch_dynamic_test";
+	private const string _testTableName = "ecng_batch_test";
+	private const string _dynamicTestTableName = "ecng_batch_dynamic_test";
 
-	private DatabaseConnectionPair GetSqlServerConnection()
+	private static DatabaseConnectionPair GetSqlServerConnection()
 	{
-		return new DatabaseConnectionPair
+		return new()
 		{
 			Provider = ProviderName.SqlServer2017 + "." + SqlServerProvider.MicrosoftDataSqlClient,
 			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
@@ -41,20 +39,13 @@ public class DatabaseBatchInserterTests : BaseTestClass
 
 	private static void DropTable(DatabaseConnectionPair connection, string tableName)
 	{
-		try
-		{
-			using var db = connection.CreateConnection();
-			using var cmd = db.CreateCommand();
-			cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
-			cmd.ExecuteNonQuery();
-		}
-		catch
-		{
-			// Ignore cleanup errors
-		}
+		using var db = connection.CreateConnection();
+		using var cmd = db.CreateCommand();
+		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
+		cmd.ExecuteNonQuery();
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public async Task InsertAsync_SingleItem_Success(BatchInserterProviderType providerType)
@@ -62,12 +53,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, TestTableName);
+		DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
-			TestTableName,
-			b => ConfigureMapping(b, TestTableName));
+			_testTableName,
+			b => ConfigureMapping(b, _testTableName));
 
 		var entity = new TestEntity
 		{
@@ -80,7 +71,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public async Task BulkCopyAsync_MultipleItems_Success(BatchInserterProviderType providerType)
@@ -88,12 +79,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, TestTableName);
+		DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
-			TestTableName,
-			b => ConfigureMapping(b, TestTableName));
+			_testTableName,
+			b => ConfigureMapping(b, _testTableName));
 
 		var entities = Enumerable.Range(1, 100)
 			.Select(i => new TestEntity
@@ -108,7 +99,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public async Task BulkCopyAsync_LargeDataset_Success(BatchInserterProviderType providerType)
@@ -116,12 +107,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, TestTableName);
+		DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
-			TestTableName,
-			b => ConfigureMapping(b, TestTableName));
+			_testTableName,
+			b => ConfigureMapping(b, _testTableName));
 
 		var entities = Enumerable.Range(1, 10000)
 			.Select(i => new TestEntity
@@ -136,7 +127,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public async Task Create_WithDynamicProperties_Success(BatchInserterProviderType providerType)
@@ -144,12 +135,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, DynamicTestTableName);
+		DropTable(connection, _dynamicTestTableName);
 
 		using var inserter = provider.Create<DynamicTestEntity>(
 			connection,
-			DynamicTestTableName,
-			b => ConfigureDynamicMapping(b, DynamicTestTableName));
+			_dynamicTestTableName,
+			b => ConfigureDynamicMapping(b, _dynamicTestTableName));
 
 		var entity = new DynamicTestEntity
 		{
@@ -161,7 +152,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public void Create_NullConnection_ThrowsArgumentNullException(BatchInserterProviderType providerType)
@@ -172,7 +163,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 			provider.Create<TestEntity>(null, "table", _ => { }));
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public void Create_EmptyTableName_ThrowsArgumentNullException(BatchInserterProviderType providerType)
@@ -184,7 +175,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 			provider.Create<TestEntity>(connection, "", _ => { }));
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow(BatchInserterProviderType.Linq2db)]
 	[DataRow(BatchInserterProviderType.Ado)]
 	public void Create_NullConfigureMapping_ThrowsArgumentNullException(BatchInserterProviderType providerType)
@@ -230,7 +221,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 
 	public class DynamicTestEntity
 	{
-		private readonly Dictionary<string, object> _dynamicProperties = new();
+		private readonly Dictionary<string, object> _dynamicProperties = [];
 
 		public int Id { get; set; }
 		public string Name { get; set; }

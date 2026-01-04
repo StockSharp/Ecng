@@ -6,9 +6,11 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void BasicAddAndLookup()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
-		set.Add("two", 2);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 },
+			{ "two", 2 }
+		};
 
 		set["one"].AssertEqual(1);
 		set[1].AssertEqual("one");
@@ -22,8 +24,10 @@ public class PairSetTests : BaseTestClass
 		// This test verifies that when setting a new value for an existing key,
 		// the old value→key mapping is removed from the reverse lookup.
 		// Without the fix, the old value would still map to the key.
-		var set = new PairSet<string, int>();
-		set.Add("key", 100);
+		var set = new PairSet<string, int>
+		{
+			{ "key", 100 }
+		};
 
 		// Verify initial state
 		set["key"].AssertEqual(100);
@@ -44,8 +48,10 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void SetValue_MultipleUpdates()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("key", 1);
+		var set = new PairSet<string, int>
+		{
+			{ "key", 1 }
+		};
 
 		set["key"] = 2;
 		set[2].AssertEqual("key");
@@ -59,8 +65,10 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void TryGetKey_Works()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 }
+		};
 
 		set.TryGetKey(1, out var key).AssertTrue();
 		key.AssertEqual("one");
@@ -71,8 +79,10 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void TryGetValue_Works()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 }
+		};
 
 		set.TryGetValue("one", out var value).AssertTrue();
 		value.AssertEqual(1);
@@ -83,8 +93,10 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void ContainsKey_ContainsValue()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 }
+		};
 
 		set.ContainsKey("one").AssertTrue();
 		set.ContainsKey("two").AssertFalse();
@@ -95,8 +107,10 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void Remove_RemovesBothMappings()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 }
+		};
 
 		set.Remove("one").AssertTrue();
 
@@ -107,9 +121,11 @@ public class PairSetTests : BaseTestClass
 	[TestMethod]
 	public void Clear_ClearsBothMappings()
 	{
-		var set = new PairSet<string, int>();
-		set.Add("one", 1);
-		set.Add("two", 2);
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 },
+			{ "two", 2 }
+		};
 
 		set.Clear();
 

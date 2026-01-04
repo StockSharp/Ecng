@@ -18,6 +18,9 @@ using Ecng.Common;
 /// The class represents a synchronized collection that can be used in WPF applications.
 /// </summary>
 public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IListEx<TItem> items) : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
+#if NET9_0_OR_GREATER
+	, ISynchronizable
+#endif
 {
 	private enum ActionTypes
 	{
