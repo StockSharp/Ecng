@@ -15,6 +15,13 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	private const string _testTableName = "ecng_batch_test";
 	private const string _dynamicTestTableName = "ecng_batch_dynamic_test";
 
+	[ClassInitialize]
+	public static void ClassInit(TestContext context)
+	{
+		// Register SQL Server provider for ADO.NET tests
+		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SqlServer, SqlClientFactory.Instance);
+	}
+
 	private static DatabaseConnectionPair GetSqlServerConnectionPair()
 	{
 		return new()
@@ -25,7 +32,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	}
 
 	private static Linq2dbBatchInserterProvider CreateLinq2dbProvider() => new();
-	private static AdoBatchInserterProvider CreateAdoProvider() => new(pair => new SqlConnection(pair.ConnectionString));
+	private static AdoBatchInserterProvider CreateAdoProvider() => new();
 
 	private static Task RunTestWithLinq2db(Func<Linq2dbBatchInserterProvider, DataConnection, Task> test)
 	{

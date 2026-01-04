@@ -20,10 +20,29 @@ using Ecng.ComponentModel;
 /// <remarks>
 /// Initializes a new instance of the <see cref="AdoBatchInserterProvider"/> class.
 /// </remarks>
-/// <param name="connectionFactory">Factory function that creates a DbConnection from connection string.</param>
+/// <param name="connectionFactory">Factory function that creates a DbConnection from connection pair.</param>
 public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider<DbConnection>
 {
 	private readonly Func<DatabaseConnectionPair, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+
+	/// <summary>
+	/// Initializes a new instance using <see cref="DatabaseProviderRegistry"/> to create connections.
+	/// </summary>
+	public AdoBatchInserterProvider()
+		: this(CreateConnectionFromRegistry)
+	{
+	}
+
+	private static DbConnection CreateConnectionFromRegistry(DatabaseConnectionPair pair)
+	{
+		if (pair is null)
+			throw new ArgumentNullException(nameof(pair));
+
+		var factory = DatabaseProviderRegistry.GetFactory(pair.Provider);
+		var connection = factory.CreateConnection();
+		connection.ConnectionString = pair.ConnectionString;
+		return connection;
+	}
 
 	/// <inheritdoc />
 	public DbConnection CreateConnection(DatabaseConnectionPair pair)
