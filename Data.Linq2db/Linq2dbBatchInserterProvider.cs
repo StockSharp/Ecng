@@ -48,6 +48,17 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 		using var db = connection.CreateConnection();
 		db.DropTable<object>(tableName, throwExceptionIfNotExists: false);
 	}
+
+	/// <inheritdoc />
+	public void Verify(DatabaseConnectionPair connection)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		using var db = connection.CreateConnection();
+		using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
+		conn.Open();
+	}
 }
 
 class Linq2dbBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>

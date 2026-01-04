@@ -59,6 +59,16 @@ public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFacto
 		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
 		cmd.ExecuteNonQuery();
 	}
+
+	/// <inheritdoc />
+	public void Verify(DatabaseConnectionPair connection)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		using var db = _connectionFactory(connection.ConnectionString);
+		db.Open();
+	}
 }
 
 class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>

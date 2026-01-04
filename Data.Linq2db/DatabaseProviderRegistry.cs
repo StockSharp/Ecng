@@ -1,12 +1,28 @@
 ﻿namespace Ecng.Data;
 
+using System;
+
 using LinqToDB;
 
 /// <summary>
 /// Provides a registry for database providers and verifies database connections.
 /// </summary>
-public class DatabaseProviderRegistry : IDatabaseProviderRegistry
+/// <remarks>
+/// Initializes a new instance of the <see cref="DatabaseProviderRegistry"/> class.
+/// </remarks>
+/// <param name="batchInserterProvider">The batch inserter provider to use for verification.</param>
+public class DatabaseProviderRegistry(IDatabaseBatchInserterProvider batchInserterProvider) : IDatabaseProviderRegistry
 {
+	private readonly IDatabaseBatchInserterProvider _batchInserterProvider = batchInserterProvider ?? throw new ArgumentNullException(nameof(batchInserterProvider));
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="DatabaseProviderRegistry"/> class.
+	/// </summary>
+	public DatabaseProviderRegistry()
+		: this(new Linq2dbBatchInserterProvider())
+	{
+	}
+
 	/// <summary>
 	/// Gets the list of available database providers.
 	/// </summary>
@@ -16,15 +32,4 @@ public class DatabaseProviderRegistry : IDatabaseProviderRegistry
 		ProviderName.SQLite,
 		ProviderName.MySql,
 	];
-
-	/// <summary>
-	/// Verifies the specified database connection by attempting to open a connection.
-	/// </summary>
-	/// <param name="connection">The database connection pair, including provider and connection string.</param>
-	public virtual void Verify(DatabaseConnectionPair connection)
-	{
-		using var db = connection.CreateConnection();
-		using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
-		conn.Open();
-	}
 }

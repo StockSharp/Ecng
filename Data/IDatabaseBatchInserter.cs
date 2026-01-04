@@ -55,6 +55,12 @@ public interface IDatabaseBatchInserterProvider
 	/// <param name="connection">Database connection settings.</param>
 	/// <param name="tableName">Name of the table to drop.</param>
 	void DropTable(DatabaseConnectionPair connection, string tableName);
+
+	/// <summary>
+	/// Verifies the specified database connection by attempting to open it.
+	/// </summary>
+	/// <param name="connection">Database connection settings.</param>
+	void Verify(DatabaseConnectionPair connection);
 }
 
 /// <summary>
