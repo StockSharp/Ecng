@@ -776,20 +776,6 @@ public static class CollectionHelper
 		return dictionary.Cast<DictionaryEntry>().ToDictionary(item => item.Key.To<TKey>(), item => item.Value.To<TValue>());
 	}
 
-#if NET8_0_OR_GREATER == false
-	/// <summary>
-	/// Converts a sequence of key-value pairs to a dictionary using the default equality comparer.
-	/// </summary>
-	/// <typeparam name="TKey">The type of keys.</typeparam>
-	/// <typeparam name="TValue">The type of values.</typeparam>
-	/// <param name="source">The sequence of key-value pairs.</param>
-	/// <returns>A dictionary containing the key-value pairs.</returns>
-	public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
-	{
-		return source.ToDictionary(pair => pair.Key, pair => pair.Value);
-	}
-#endif
-
 	/// <summary>
 	/// Converts a sequence of key-value pairs to a dictionary with a specified equality comparer.
 	/// </summary>
