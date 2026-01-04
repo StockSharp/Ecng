@@ -42,6 +42,7 @@
   <PropertyGroup Condition="
         $(MSBuildProjectName.StartsWith('Backup')) or
         $(MSBuildProjectName.StartsWith('Compilation')) or
+        $(MSBuildProjectName.StartsWith('Data.')) or
         '$(MSBuildProjectName)' == 'Net.SocketIO' or
         '$(MSBuildProjectName)' == 'Interop.Excel'
       ">

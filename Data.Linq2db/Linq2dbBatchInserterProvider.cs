@@ -13,12 +13,12 @@ using LinqToDB.Data;
 using LinqToDB.Mapping;
 
 /// <summary>
-/// Linq2db implementation of <see cref="IDatabaseBatchInserterProvider{TConnection}"/>.
+/// Linq2db implementation of <see cref="IDatabaseBatchInserterProvider"/>.
 /// </summary>
-public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider<DataConnection>
+public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 {
 	/// <inheritdoc />
-	public DataConnection CreateConnection(DatabaseConnectionPair pair)
+	public IDatabaseConnection CreateConnection(DatabaseConnectionPair pair)
 	{
 		if (pair is null)
 			throw new ArgumentNullException(nameof(pair));
@@ -33,7 +33,7 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider<DataC
 		if (connStr.IsEmpty())
 			throw new InvalidOperationException("Connection string is not set.");
 
-		return new DataConnection(ToLinq2dbProvider(provider), connStr);
+		return new Linq2dbConnection(new(ToLinq2dbProvider(provider), connStr));
 	}
 
 	private static string ToLinq2dbProvider(string provider) => provider switch
@@ -47,19 +47,24 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider<DataC
 
 	/// <inheritdoc />
 	public IDatabaseBatchInserter<T> Create<T>(
-		DataConnection connection,
+		IDatabaseConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class
 	{
-		if (tableName.IsEmpty())
-			throw new ArgumentNullException(nameof(tableName));
+        if (connection is null)
+            throw new ArgumentNullException(nameof(connection));
 
-		return new Linq2dbBatchInserter<T>(connection, configureMapping);
+        if (tableName.IsEmpty())
+			throw new ArgumentNullException(nameof(tableName));
+		
+		var dbConnection = ((Linq2dbConnection)connection).Connection;
+
+		return new Linq2dbBatchInserter<T>(dbConnection, configureMapping);
 	}
 
 	/// <inheritdoc />
-	public void DropTable(DataConnection connection, string tableName)
+	public void DropTable(IDatabaseConnection connection, string tableName)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
@@ -67,17 +72,33 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider<DataC
 		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
-		connection.DropTable<object>(tableName, throwExceptionIfNotExists: false);
+		var dbConnection = ((Linq2dbConnection)connection).Connection;
+
+		dbConnection.DropTable<object>(tableName, throwExceptionIfNotExists: false);
 	}
 
 	/// <inheritdoc />
-	public void Verify(DataConnection connection)
+	public void Verify(IDatabaseConnection connection)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		using var conn = connection.DataProvider.CreateConnection(connection.ConnectionString);
+		var dbConnection = ((Linq2dbConnection)connection).Connection;
+
+		using var conn = dbConnection.DataProvider.CreateConnection(dbConnection.ConnectionString);
 		conn.Open();
+	}
+}
+
+class Linq2dbConnection(DataConnection connection) : Disposable, IDatabaseConnection
+{
+	public DataConnection Connection { get; } = connection ?? throw new ArgumentNullException(nameof(connection));
+
+	protected override void DisposeManaged()
+	{
+		Connection.Dispose();
+
+		base.DisposeManaged();
 	}
 }
 
@@ -107,16 +128,16 @@ class Linq2dbBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		_table = _db.CreateTable<T>(tableOptions: TableOptions.CreateIfNotExists);
 	}
 
-	public async Task InsertAsync(T item, CancellationToken cancellationToken)
+	public Task InsertAsync(T item, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
-		await _db.InsertAsync(item, token: cancellationToken);
+		return _db.InsertAsync(item, token: cancellationToken);
 	}
 
-	public async Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
+	public Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
-		await _table.BulkCopyAsync(items, cancellationToken);
+		return _table.BulkCopyAsync(items, cancellationToken);
 	}
 
 	protected override void DisposeManaged()

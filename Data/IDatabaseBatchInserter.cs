@@ -31,18 +31,23 @@ public interface IDatabaseBatchInserter<T> : IDisposable
 }
 
 /// <summary>
+/// Represents a database connection.
+/// </summary>
+public interface IDatabaseConnection : IDisposable
+{
+}
+
+/// <summary>
 /// Factory for creating database batch inserters.
 /// </summary>
-/// <typeparam name="TConnection">The type of database connection.</typeparam>
-public interface IDatabaseBatchInserterProvider<TConnection>
-	where TConnection : IDisposable
+public interface IDatabaseBatchInserterProvider
 {
 	/// <summary>
 	/// Creates a database connection from the specified connection settings.
 	/// </summary>
 	/// <param name="pair">Database connection settings.</param>
 	/// <returns>A database connection instance.</returns>
-	TConnection CreateConnection(DatabaseConnectionPair pair);
+	IDatabaseConnection CreateConnection(DatabaseConnectionPair pair);
 
 	/// <summary>
 	/// Creates a batch inserter for the specified entity type.
@@ -53,7 +58,7 @@ public interface IDatabaseBatchInserterProvider<TConnection>
 	/// <param name="configureMapping">Callback to configure table mapping.</param>
 	/// <returns>A batch inserter instance.</returns>
 	IDatabaseBatchInserter<T> Create<T>(
-		TConnection connection,
+		IDatabaseConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class;
@@ -63,13 +68,13 @@ public interface IDatabaseBatchInserterProvider<TConnection>
 	/// </summary>
 	/// <param name="connection">Database connection.</param>
 	/// <param name="tableName">Name of the table to drop.</param>
-	void DropTable(TConnection connection, string tableName);
+	void DropTable(IDatabaseConnection connection, string tableName);
 
 	/// <summary>
 	/// Verifies the specified database connection by attempting to open it.
 	/// </summary>
 	/// <param name="connection">Database connection.</param>
-	void Verify(TConnection connection);
+	void Verify(IDatabaseConnection connection);
 }
 
 /// <summary>

@@ -15,13 +15,13 @@ using Ecng.Common;
 using Ecng.ComponentModel;
 
 /// <summary>
-/// Pure ADO.NET implementation of <see cref="IDatabaseBatchInserterProvider{TConnection}"/>.
+/// Pure ADO.NET implementation of <see cref="IDatabaseBatchInserterProvider"/>.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="AdoBatchInserterProvider"/> class.
 /// </remarks>
 /// <param name="connectionFactory">Factory function that creates a DbConnection from connection pair.</param>
-public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider<DbConnection>
+public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider
 {
 	private readonly Func<DatabaseConnectionPair, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
@@ -45,7 +45,7 @@ public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection>
 	}
 
 	/// <inheritdoc />
-	public DbConnection CreateConnection(DatabaseConnectionPair pair)
+	public IDatabaseConnection CreateConnection(DatabaseConnectionPair pair)
 	{
 		if (pair is null)
 			throw new ArgumentNullException(nameof(pair));
@@ -55,12 +55,12 @@ public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection>
 		if (connStr.IsEmpty())
 			throw new InvalidOperationException("Connection string is not set.");
 
-		return _connectionFactory(pair);
+		return new AdoConnection(_connectionFactory(pair));
 	}
 
 	/// <inheritdoc />
 	public IDatabaseBatchInserter<T> Create<T>(
-		DbConnection connection,
+		IDatabaseConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class
@@ -74,11 +74,13 @@ public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection>
 		if (configureMapping is null)
 			throw new ArgumentNullException(nameof(configureMapping));
 
-		return new AdoBatchInserter<T>(connection, tableName, configureMapping);
+		var dbConnection = ((AdoConnection)connection).Connection;
+
+		return new AdoBatchInserter<T>(dbConnection, tableName, configureMapping);
 	}
 
 	/// <inheritdoc />
-	public void DropTable(DbConnection connection, string tableName)
+	public void DropTable(IDatabaseConnection connection, string tableName)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
@@ -86,21 +88,36 @@ public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection>
 		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
-		if (connection.State != ConnectionState.Open)
-			connection.Open();
+		var dbConnection = ((AdoConnection)connection).Connection;
 
-		using var cmd = connection.CreateCommand();
+		if (dbConnection.State != ConnectionState.Open)
+			dbConnection.Open();
+
+		using var cmd = dbConnection.CreateCommand();
 		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
 		cmd.ExecuteNonQuery();
 	}
 
 	/// <inheritdoc />
-	public void Verify(DbConnection connection)
+	public void Verify(IDatabaseConnection connection)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		connection.Open();
+		var dbConnection = ((AdoConnection)connection).Connection;
+		dbConnection.Open();
+	}
+}
+
+class AdoConnection(DbConnection connection) : Disposable, IDatabaseConnection
+{
+	public DbConnection Connection { get; } = connection ?? throw new ArgumentNullException(nameof(connection));
+
+	protected override void DisposeManaged()
+	{
+		Connection.Dispose();
+
+		base.DisposeManaged();
 	}
 }
 
@@ -184,7 +201,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		_ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null)
 	};
 
-	public async Task InsertAsync(T item, CancellationToken cancellationToken)
+	public Task InsertAsync(T item, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
 
@@ -194,7 +211,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 
 		AddParameters(cmd, item);
 
-		await cmd.ExecuteNonQueryAsync(cancellationToken);
+		return cmd.ExecuteNonQueryAsync(cancellationToken);
 	}
 
 	public async Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
@@ -232,8 +249,8 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 
 	private string GenerateInsertSql()
 	{
-		var columnNames = string.Join(", ", _columns.Select(c => $"[{c.ColumnName}]"));
-		var paramNames = string.Join(", ", _columns.Select(c => $"@{c.ColumnName}"));
+		var columnNames = _columns.Select(c => $"[{c.ColumnName}]").JoinCommaSpace();
+		var paramNames = _columns.Select(c => $"@{c.ColumnName}").JoinCommaSpace();
 		return $"INSERT INTO [{_tableName}] ({columnNames}) VALUES ({paramNames})";
 	}
 

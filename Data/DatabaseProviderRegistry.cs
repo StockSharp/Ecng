@@ -3,7 +3,7 @@ namespace Ecng.Data;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
+using System.Threading;
 
 using Ecng.Common;
 
@@ -33,7 +33,7 @@ public static class DatabaseProviderRegistry
 	public const string PostgreSql = "PostgreSQL";
 
 	private static readonly Dictionary<string, DbProviderFactory> _factories = [];
-	private static readonly object _sync = new();
+	private static readonly Lock _sync = new();
 
 	/// <summary>
 	/// Gets the list of all registered database providers.
@@ -42,7 +42,7 @@ public static class DatabaseProviderRegistry
 	{
 		get
 		{
-			lock (_sync)
+			using (_sync.EnterScope())
 				return [.. _factories.Keys];
 		}
 	}
@@ -60,7 +60,7 @@ public static class DatabaseProviderRegistry
 		if (factory is null)
 			throw new ArgumentNullException(nameof(factory));
 
-		lock (_sync)
+		using (_sync.EnterScope())
 			_factories[providerName] = factory;
 	}
 
@@ -74,7 +74,7 @@ public static class DatabaseProviderRegistry
 		if (providerName.IsEmpty())
 			throw new ArgumentNullException(nameof(providerName));
 
-		lock (_sync)
+		using (_sync.EnterScope())
 			return _factories.Remove(providerName);
 	}
 
@@ -89,7 +89,7 @@ public static class DatabaseProviderRegistry
 		if (providerName.IsEmpty())
 			throw new ArgumentNullException(nameof(providerName));
 
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (_factories.TryGetValue(providerName, out var factory))
 				return factory;
@@ -112,7 +112,7 @@ public static class DatabaseProviderRegistry
 			return false;
 		}
 
-		lock (_sync)
+		using (_sync.EnterScope())
 			return _factories.TryGetValue(providerName, out factory);
 	}
 
@@ -126,7 +126,7 @@ public static class DatabaseProviderRegistry
 		if (providerName.IsEmpty())
 			return false;
 
-		lock (_sync)
+		using (_sync.EnterScope())
 			return _factories.ContainsKey(providerName);
 	}
 }
