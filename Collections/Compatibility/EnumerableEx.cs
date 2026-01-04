@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0
+﻿#if NET8_0_OR_GREATER == false
 namespace System.Linq;
 
 using System.Collections.Generic;
@@ -9,6 +9,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class EnumerableEx
 {
+#if NET6_0_OR_GREATER == false
 	/// <summary>
 	/// Returns all elements of a sequence except the last specified number of elements.
 	/// </summary>
@@ -67,7 +68,7 @@ public static class EnumerableEx
 	public static HashSet<TSource> ToHashSet<TSource>(this IEnumerable<TSource> source)
 	{
 		if (source == null) throw new ArgumentNullException(nameof(source));
-		return new HashSet<TSource>(source);
+		return new(source);
 	}
 
 	/// <summary>
@@ -186,6 +187,7 @@ public static class EnumerableEx
 
 		return max;
 	}
+#endif
 
 	/// <summary>
 	/// Converts a sequence of key-value pairs to a dictionary using the default equality comparer.
