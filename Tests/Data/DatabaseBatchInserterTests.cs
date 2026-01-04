@@ -24,7 +24,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	{
 		return new()
 		{
-			Provider = DatabaseProviderRegistry.SqlServer,
+			Provider = DatabaseProviderRegistry.AllProviders.First(),
 			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
 		};
 	}
