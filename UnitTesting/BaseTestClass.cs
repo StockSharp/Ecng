@@ -51,7 +51,7 @@ public abstract class BaseTestClass
 	/// <param name="name">Variable name.</param>
 	/// <returns>Value or null if not set.</returns>
 	protected static string Env(string name)
-		=> Environment.GetEnvironmentVariable(name);
+		=> Environment.GetEnvironmentVariable(name).IsEmpty(Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Machine));
 
 	/// <summary>
 	/// <see cref="TestContext"/>
