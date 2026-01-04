@@ -34,14 +34,6 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		throw new ArgumentOutOfRangeException(nameof(providerType), providerType, null);
 	}
 
-	private static void DropTable(DatabaseConnectionPair connection, string tableName)
-	{
-		using var db = connection.CreateConnection();
-		using var cmd = db.CreateCommand();
-		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
-		cmd.ExecuteNonQuery();
-	}
-
 	[TestMethod]
 	[DataRow(typeof(Linq2dbBatchInserterProvider))]
 	[DataRow(typeof(AdoBatchInserterProvider))]
@@ -50,7 +42,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, _testTableName);
+		provider.DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
@@ -76,7 +68,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, _testTableName);
+		provider.DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
@@ -104,7 +96,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, _testTableName);
+		provider.DropTable(connection, _testTableName);
 
 		using var inserter = provider.Create<TestEntity>(
 			connection,
@@ -132,7 +124,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		var provider = CreateProvider(providerType);
 		var connection = GetSqlServerConnection();
 
-		DropTable(connection, _dynamicTestTableName);
+		provider.DropTable(connection, _dynamicTestTableName);
 
 		using var inserter = provider.Create<DynamicTestEntity>(
 			connection,

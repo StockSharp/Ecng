@@ -2,7 +2,6 @@ namespace Ecng.Data;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,17 +27,30 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		if (string.IsNullOrEmpty(tableName))
+		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
 		if (configureMapping is null)
 			throw new ArgumentNullException(nameof(configureMapping));
 
-		return new Linq2dbBatchInserter<T>(connection, tableName, configureMapping);
+		return new Linq2dbBatchInserter<T>(connection, configureMapping);
+	}
+
+	/// <inheritdoc />
+	public void DropTable(DatabaseConnectionPair connection, string tableName)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		if (tableName.IsEmpty())
+			throw new ArgumentNullException(nameof(tableName));
+
+		using var db = connection.CreateConnection();
+		db.DropTable<object>(tableName, throwExceptionIfNotExists: false);
 	}
 }
 
-internal class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
+class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
 	where T : class
 {
 	private readonly DataConnection _db;
@@ -47,10 +59,14 @@ internal class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
 
 	public Linq2dbBatchInserter(
 		DatabaseConnectionPair connection,
-		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 	{
-		_db = connection.CreateConnection();
+        if (connection is null)
+            throw new ArgumentNullException(nameof(connection));
+        if (configureMapping is null)
+            throw new ArgumentNullException(nameof(configureMapping));
+
+        _db = connection.CreateConnection();
 
 		var schema = _db.MappingSchema;
 		var fluentBuilder = new FluentMappingBuilder(schema);
@@ -91,17 +107,11 @@ internal class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
 	}
 }
 
-internal class Linq2dbMappingBuilder<T> : IDatabaseMappingBuilder<T>
+class Linq2dbMappingBuilder<T>(EntityMappingBuilder<T> entityBuilder, MappingSchema schema) : IDatabaseMappingBuilder<T>
 	where T : class
 {
-	private readonly EntityMappingBuilder<T> _entityBuilder;
-	private readonly MappingSchema _schema;
-
-	public Linq2dbMappingBuilder(EntityMappingBuilder<T> entityBuilder, MappingSchema schema)
-	{
-		_entityBuilder = entityBuilder ?? throw new ArgumentNullException(nameof(entityBuilder));
-		_schema = schema ?? throw new ArgumentNullException(nameof(schema));
-	}
+	private readonly EntityMappingBuilder<T> _entityBuilder = entityBuilder ?? throw new ArgumentNullException(nameof(entityBuilder));
+	private readonly MappingSchema _schema = schema ?? throw new ArgumentNullException(nameof(schema));
 
 	public IDatabaseMappingBuilder<T> HasTableName(string name)
 	{
@@ -151,22 +161,15 @@ internal class Linq2dbMappingBuilder<T> : IDatabaseMappingBuilder<T>
 	}
 }
 
-internal class Linq2dbColumnBuilder<T> : IDatabaseColumnBuilder<T>
+internal class Linq2dbColumnBuilder<T>(
+	dynamic propBuilder,
+	EntityMappingBuilder<T> entityBuilder,
+	MappingSchema schema) : IDatabaseColumnBuilder<T>
 	where T : class
 {
-	private dynamic _propBuilder;
-	private readonly EntityMappingBuilder<T> _entityBuilder;
-	private readonly MappingSchema _schema;
-
-	public Linq2dbColumnBuilder(
-		dynamic propBuilder,
-		EntityMappingBuilder<T> entityBuilder,
-		MappingSchema schema)
-	{
-		_propBuilder = propBuilder;
-		_entityBuilder = entityBuilder;
-		_schema = schema;
-	}
+	private dynamic _propBuilder = propBuilder ?? throw new ArgumentNullException(nameof(propBuilder));
+	private readonly EntityMappingBuilder<T> _entityBuilder = entityBuilder ?? throw new ArgumentNullException(nameof(entityBuilder));
+	private readonly MappingSchema _schema = schema ?? throw new ArgumentNullException(nameof(schema));
 
 	public IDatabaseColumnBuilder<T> HasLength(int length)
 	{
@@ -224,18 +227,18 @@ internal class Linq2dbColumnBuilder<T> : IDatabaseColumnBuilder<T>
 		return new Linq2dbMappingBuilder<T>(_entityBuilder, _schema);
 	}
 
-	private static LinqToDB.DataType ToLinq2dbDataType(DatabaseDataType dataType) => dataType switch
+	private static DataType ToLinq2dbDataType(DatabaseDataType dataType) => dataType switch
 	{
-		DatabaseDataType.NVarChar => LinqToDB.DataType.NVarChar,
-		DatabaseDataType.VarChar => LinqToDB.DataType.VarChar,
-		DatabaseDataType.Char => LinqToDB.DataType.Char,
-		DatabaseDataType.Int => LinqToDB.DataType.Int32,
-		DatabaseDataType.BigInt => LinqToDB.DataType.Int64,
-		DatabaseDataType.Decimal => LinqToDB.DataType.Decimal,
-		DatabaseDataType.DateTime => LinqToDB.DataType.DateTime,
-		DatabaseDataType.Boolean => LinqToDB.DataType.Boolean,
-		DatabaseDataType.Binary => LinqToDB.DataType.Binary,
-		DatabaseDataType.Text => LinqToDB.DataType.Text,
+		DatabaseDataType.NVarChar => DataType.NVarChar,
+		DatabaseDataType.VarChar => DataType.VarChar,
+		DatabaseDataType.Char => DataType.Char,
+		DatabaseDataType.Int => DataType.Int32,
+		DatabaseDataType.BigInt => DataType.Int64,
+		DatabaseDataType.Decimal => DataType.Decimal,
+		DatabaseDataType.DateTime => DataType.DateTime,
+		DatabaseDataType.Boolean => DataType.Boolean,
+		DatabaseDataType.Binary => DataType.Binary,
+		DatabaseDataType.Text => DataType.Text,
 		_ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null)
 	};
 }

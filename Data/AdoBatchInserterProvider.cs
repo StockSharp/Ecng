@@ -16,18 +16,13 @@ using Ecng.Common;
 /// <summary>
 /// Pure ADO.NET implementation of <see cref="IDatabaseBatchInserterProvider"/>.
 /// </summary>
-public class AdoBatchInserterProvider : IDatabaseBatchInserterProvider
+/// <remarks>
+/// Initializes a new instance of the <see cref="AdoBatchInserterProvider"/> class.
+/// </remarks>
+/// <param name="connectionFactory">Factory function that creates a DbConnection from connection string.</param>
+public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider
 {
-	private readonly Func<string, DbConnection> _connectionFactory;
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="AdoBatchInserterProvider"/> class.
-	/// </summary>
-	/// <param name="connectionFactory">Factory function that creates a DbConnection from connection string.</param>
-	public AdoBatchInserterProvider(Func<string, DbConnection> connectionFactory)
-	{
-		_connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-	}
+	private readonly Func<string, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
 	/// <inheritdoc />
 	public IDatabaseBatchInserter<T> Create<T>(
@@ -39,13 +34,30 @@ public class AdoBatchInserterProvider : IDatabaseBatchInserterProvider
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		if (string.IsNullOrEmpty(tableName))
+		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
 		if (configureMapping is null)
 			throw new ArgumentNullException(nameof(configureMapping));
 
 		return new AdoBatchInserter<T>(_connectionFactory, connection.ConnectionString, tableName, configureMapping);
+	}
+
+	/// <inheritdoc />
+	public void DropTable(DatabaseConnectionPair connection, string tableName)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		if (tableName.IsEmpty())
+			throw new ArgumentNullException(nameof(tableName));
+
+		using var db = _connectionFactory(connection.ConnectionString);
+		db.Open();
+
+		using var cmd = db.CreateCommand();
+		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
+		cmd.ExecuteNonQuery();
 	}
 }
 
@@ -253,20 +265,15 @@ internal class ColumnMapping
 	public Func<object, object> PropertyGetter { get; set; }
 }
 
-internal class AdoMappingBuilder<T> : IDatabaseMappingBuilder<T>
+internal class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuilder<T>
 	where T : class
 {
-	private readonly AdoBatchInserter<T> _inserter;
+	private readonly AdoBatchInserter<T> _inserter = inserter ?? throw new ArgumentNullException(nameof(inserter));
 	private bool _columnsRequired;
 
 	public Func<T, string, object, object> DynamicGetter { get; private set; }
 	public Action<T, string, object> DynamicSetter { get; private set; }
 	public Func<object, object> ParameterConverter { get; private set; }
-
-	public AdoMappingBuilder(AdoBatchInserter<T> inserter)
-	{
-		_inserter = inserter;
-	}
 
 	public IDatabaseMappingBuilder<T> HasTableName(string name)
 	{
@@ -338,17 +345,11 @@ internal class AdoMappingBuilder<T> : IDatabaseMappingBuilder<T>
 	}
 }
 
-internal class AdoColumnBuilder<T> : IDatabaseColumnBuilder<T>
+class AdoColumnBuilder<T>(AdoMappingBuilder<T> mappingBuilder, ColumnMapping column) : IDatabaseColumnBuilder<T>
 	where T : class
 {
-	private readonly AdoMappingBuilder<T> _mappingBuilder;
-	private ColumnMapping _column;
-
-	public AdoColumnBuilder(AdoMappingBuilder<T> mappingBuilder, ColumnMapping column)
-	{
-		_mappingBuilder = mappingBuilder;
-		_column = column;
-	}
+	private readonly AdoMappingBuilder<T> _mappingBuilder = mappingBuilder ?? throw new ArgumentNullException(nameof(mappingBuilder));
+	private ColumnMapping _column = column ?? throw new ArgumentNullException(nameof(column));
 
 	public IDatabaseColumnBuilder<T> HasLength(int length)
 	{

@@ -48,6 +48,13 @@ public interface IDatabaseBatchInserterProvider
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class;
+
+	/// <summary>
+	/// Drops the specified table if it exists.
+	/// </summary>
+	/// <param name="connection">Database connection settings.</param>
+	/// <param name="tableName">Name of the table to drop.</param>
+	void DropTable(DatabaseConnectionPair connection, string tableName);
 }
 
 /// <summary>

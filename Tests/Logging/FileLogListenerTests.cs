@@ -535,7 +535,7 @@ public class FileLogListenerTests : BaseTestClass
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "order.txt"));
-		var contentLines = lines.Where(l => !string.IsNullOrEmpty(l)).ToArray();
+		var contentLines = lines.Where(l => !l.IsEmpty()).ToArray();
 
 		contentLines.Length.AssertEqual(3);
 		contentLines[0].AssertContains("First");
@@ -649,7 +649,7 @@ public class FileLogListenerTests : BaseTestClass
 
 		// When SeparateByDates is FileName, date should NOT be in log line (only time)
 		// The format should be "HH:mm:ss.fff|..." not "yyyy/MM/dd HH:mm:ss.fff|..."
-		var lines = content.Split('\n').Where(l => !string.IsNullOrEmpty(l)).ToArray();
+		var lines = content.Split('\n').Where(l => !l.IsEmpty()).ToArray();
 		lines.Length.AssertGreater(0);
 		// First char should be digit (hour), not year
 		char.IsDigit(lines[0][0]).AssertTrue();

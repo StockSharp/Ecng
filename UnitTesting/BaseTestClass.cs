@@ -462,7 +462,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(comparand) <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be greater than {comparand}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be greater than {comparand}." : message);
 	}
 
 	/// <summary>
@@ -476,7 +476,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(comparand) < 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be greater than or equal to {comparand}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be greater than or equal to {comparand}." : message);
 	}
 
 	/// <summary>
@@ -490,7 +490,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(comparand) >= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be less than {comparand}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be less than {comparand}." : message);
 	}
 
 	/// <summary>
@@ -504,7 +504,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(comparand) > 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be less than or equal to {comparand}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be less than or equal to {comparand}." : message);
 	}
 
 	/// <summary>
@@ -519,7 +519,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(min) < 0 || actual.CompareTo(max) > 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be in range [{min}, {max}]." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be in range [{min}, {max}]." : message);
 	}
 
 	/// <summary>
@@ -534,7 +534,7 @@ public abstract class BaseTestClass
 		where T : IComparable<T>
 	{
 		if (actual.CompareTo(min) >= 0 && actual.CompareTo(max) <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected {actual} to be outside range [{min}, {max}]." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected {actual} to be outside range [{min}, {max}]." : message);
 	}
 
 	/// <summary>
@@ -545,9 +545,9 @@ public abstract class BaseTestClass
 	protected static void IsEmpty(string value, string message = "")
 	{
 		if (value is null)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected empty string but was null." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected empty string but was null." : message);
 		if (value.Length != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected empty string but was \"{value}\"." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected empty string but was \"{value}\"." : message);
 	}
 
 	/// <summary>
@@ -558,9 +558,9 @@ public abstract class BaseTestClass
 	protected static void IsNotEmpty(string value, string message = "")
 	{
 		if (value is null)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty string but was null." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-empty string but was null." : message);
 		if (value.Length == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty string but was empty." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-empty string but was empty." : message);
 	}
 
 	/// <summary>
@@ -571,9 +571,9 @@ public abstract class BaseTestClass
 	protected static void IsEmpty(ICollection collection, string message = "")
 	{
 		if (collection is null)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected empty collection but was null." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected empty collection but was null." : message);
 		if (collection.Count != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected empty collection but had {collection.Count} elements." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected empty collection but had {collection.Count} elements." : message);
 	}
 
 	/// <summary>
@@ -584,9 +584,9 @@ public abstract class BaseTestClass
 	protected static void IsNotEmpty(ICollection collection, string message = "")
 	{
 		if (collection is null)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty collection but was null." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-empty collection but was null." : message);
 		if (collection.Count == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-empty collection but was empty." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-empty collection but was empty." : message);
 	}
 
 	/// <summary>
@@ -606,7 +606,7 @@ public abstract class BaseTestClass
 	protected static void IsPositive(int value, string message = "")
 	{
 		if (value <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected positive value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -617,7 +617,7 @@ public abstract class BaseTestClass
 	protected static void IsPositive(long value, string message = "")
 	{
 		if (value <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected positive value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -628,7 +628,7 @@ public abstract class BaseTestClass
 	protected static void IsPositive(double value, string message = "")
 	{
 		if (value <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected positive value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -639,7 +639,7 @@ public abstract class BaseTestClass
 	protected static void IsPositive(decimal value, string message = "")
 	{
 		if (value <= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected positive value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected positive value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -650,7 +650,7 @@ public abstract class BaseTestClass
 	protected static void IsNegative(int value, string message = "")
 	{
 		if (value >= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected negative value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -661,7 +661,7 @@ public abstract class BaseTestClass
 	protected static void IsNegative(long value, string message = "")
 	{
 		if (value >= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected negative value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -672,7 +672,7 @@ public abstract class BaseTestClass
 	protected static void IsNegative(double value, string message = "")
 	{
 		if (value >= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected negative value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -683,7 +683,7 @@ public abstract class BaseTestClass
 	protected static void IsNegative(decimal value, string message = "")
 	{
 		if (value >= 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected negative value but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected negative value but was {value}." : message);
 	}
 
 	/// <summary>
@@ -694,7 +694,7 @@ public abstract class BaseTestClass
 	protected static void IsZero(int value, string message = "")
 	{
 		if (value != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected zero but was {value}." : message);
 	}
 
 	/// <summary>
@@ -705,7 +705,7 @@ public abstract class BaseTestClass
 	protected static void IsZero(long value, string message = "")
 	{
 		if (value != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected zero but was {value}." : message);
 	}
 
 	/// <summary>
@@ -716,7 +716,7 @@ public abstract class BaseTestClass
 	protected static void IsZero(double value, string message = "")
 	{
 		if (value != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected zero but was {value}." : message);
 	}
 
 	/// <summary>
@@ -727,7 +727,7 @@ public abstract class BaseTestClass
 	protected static void IsZero(decimal value, string message = "")
 	{
 		if (value != 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected zero but was {value}." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected zero but was {value}." : message);
 	}
 
 	/// <summary>
@@ -738,7 +738,7 @@ public abstract class BaseTestClass
 	protected static void IsNotZero(int value, string message = "")
 	{
 		if (value == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-zero value but was 0." : message);
 	}
 
 	/// <summary>
@@ -749,7 +749,7 @@ public abstract class BaseTestClass
 	protected static void IsNotZero(long value, string message = "")
 	{
 		if (value == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-zero value but was 0." : message);
 	}
 
 	/// <summary>
@@ -760,7 +760,7 @@ public abstract class BaseTestClass
 	protected static void IsNotZero(double value, string message = "")
 	{
 		if (value == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-zero value but was 0." : message);
 	}
 
 	/// <summary>
@@ -771,7 +771,7 @@ public abstract class BaseTestClass
 	protected static void IsNotZero(decimal value, string message = "")
 	{
 		if (value == 0)
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-zero value but was 0." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-zero value but was 0." : message);
 	}
 
 	/// <summary>
@@ -781,8 +781,8 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNullOrEmpty(string value, string message = "")
 	{
-		if (!string.IsNullOrEmpty(value))
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected null or empty string but was \"{value}\"." : message);
+		if (!value.IsEmpty())
+			Assert.Fail(message.IsEmpty() ? $"Expected null or empty string but was \"{value}\"." : message);
 	}
 
 	/// <summary>
@@ -792,8 +792,8 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNotNullOrEmpty(string value, string message = "")
 	{
-		if (string.IsNullOrEmpty(value))
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-null and non-empty string." : message);
+		if (value.IsEmpty())
+			Assert.Fail(message.IsEmpty() ? "Expected non-null and non-empty string." : message);
 	}
 
 	/// <summary>
@@ -804,7 +804,7 @@ public abstract class BaseTestClass
 	protected static void IsNullOrWhiteSpace(string value, string message = "")
 	{
 		if (!string.IsNullOrWhiteSpace(value))
-			Assert.Fail(string.IsNullOrEmpty(message) ? $"Expected null or whitespace string but was \"{value}\"." : message);
+			Assert.Fail(message.IsEmpty() ? $"Expected null or whitespace string but was \"{value}\"." : message);
 	}
 
 	/// <summary>
@@ -815,7 +815,7 @@ public abstract class BaseTestClass
 	protected static void IsNotNullOrWhiteSpace(string value, string message = "")
 	{
 		if (string.IsNullOrWhiteSpace(value))
-			Assert.Fail(string.IsNullOrEmpty(message) ? "Expected non-null and non-whitespace string." : message);
+			Assert.Fail(message.IsEmpty() ? "Expected non-null and non-whitespace string." : message);
 	}
 
 	private static string _secretsFile = "secrets.json";
