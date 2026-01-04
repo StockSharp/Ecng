@@ -9,14 +9,18 @@ using LinqToDB.DataProvider.SqlServer;
 
 using Microsoft.Data.SqlClient;
 
+public enum BatchInserterProviderType
+{
+	Linq2db,
+	Ado,
+}
+
 [TestClass]
 [TestCategory("Integration")]
 public class DatabaseBatchInserterTests : BaseTestClass
 {
 	private const string TestTableName = "ecng_batch_test";
 	private const string DynamicTestTableName = "ecng_batch_dynamic_test";
-	private const string AdoTestTableName = "ecng_batch_ado_test";
-	private const string AdoDynamicTestTableName = "ecng_batch_ado_dynamic_test";
 
 	private DatabaseConnectionPair GetSqlServerConnection()
 	{
@@ -26,6 +30,14 @@ public class DatabaseBatchInserterTests : BaseTestClass
 			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
 		};
 	}
+
+	private static IDatabaseBatchInserterProvider GetProvider(BatchInserterProviderType providerType)
+		=> providerType switch
+		{
+			BatchInserterProviderType.Linq2db => new Linq2dbBatchInserterProvider(),
+			BatchInserterProviderType.Ado => new AdoBatchInserterProvider(connStr => new SqlConnection(connStr)),
+			_ => throw new ArgumentOutOfRangeException(nameof(providerType)),
+		};
 
 	private static void DropTable(DatabaseConnectionPair connection, string tableName)
 	{
@@ -42,10 +54,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		}
 	}
 
-	[TestMethod]
-	public async Task InsertAsync_SingleItem_Success()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public async Task InsertAsync_SingleItem_Success(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, TestTableName);
@@ -66,10 +80,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
-	[TestMethod]
-	public async Task BulkCopyAsync_MultipleItems_Success()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public async Task BulkCopyAsync_MultipleItems_Success(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, TestTableName);
@@ -92,10 +108,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
-	[TestMethod]
-	public async Task BulkCopyAsync_LargeDataset_Success()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public async Task BulkCopyAsync_LargeDataset_Success(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, TestTableName);
@@ -118,10 +136,12 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
-	[TestMethod]
-	public async Task Create_WithDynamicProperties_Success()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public async Task Create_WithDynamicProperties_Success(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		DropTable(connection, DynamicTestTableName);
@@ -141,169 +161,40 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
-	[TestMethod]
-	public void Create_NullConnection_ThrowsArgumentNullException()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public void Create_NullConnection_ThrowsArgumentNullException(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 
 		Throws<ArgumentNullException>(() =>
 			provider.Create<TestEntity>(null, "table", _ => { }));
 	}
 
-	[TestMethod]
-	public void Create_EmptyTableName_ThrowsArgumentNullException()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public void Create_EmptyTableName_ThrowsArgumentNullException(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		Throws<ArgumentNullException>(() =>
 			provider.Create<TestEntity>(connection, "", _ => { }));
 	}
 
-	[TestMethod]
-	public void Create_NullConfigureMapping_ThrowsArgumentNullException()
+	[DataTestMethod]
+	[DataRow(BatchInserterProviderType.Linq2db)]
+	[DataRow(BatchInserterProviderType.Ado)]
+	public void Create_NullConfigureMapping_ThrowsArgumentNullException(BatchInserterProviderType providerType)
 	{
-		var provider = new Linq2dbBatchInserterProvider();
+		var provider = GetProvider(providerType);
 		var connection = GetSqlServerConnection();
 
 		Throws<ArgumentNullException>(() =>
 			provider.Create<TestEntity>(connection, "table", null));
 	}
-
-	#region ADO.NET Provider Tests
-
-	private static AdoBatchInserterProvider GetAdoProvider()
-		=> new(connStr => new SqlConnection(connStr));
-
-	[TestMethod]
-	public async Task Ado_InsertAsync_SingleItem_Success()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		DropTable(connection, AdoTestTableName);
-
-		using var inserter = provider.Create<TestEntity>(
-			connection,
-			AdoTestTableName,
-			b => ConfigureMapping(b, AdoTestTableName));
-
-		var entity = new TestEntity
-		{
-			Id = 1,
-			Name = "ADO Test Item",
-			Value = 123.45m,
-			CreatedAt = DateTime.UtcNow,
-		};
-
-		await inserter.InsertAsync(entity, CancellationToken);
-	}
-
-	[TestMethod]
-	public async Task Ado_BulkCopyAsync_MultipleItems_Success()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		DropTable(connection, AdoTestTableName);
-
-		using var inserter = provider.Create<TestEntity>(
-			connection,
-			AdoTestTableName,
-			b => ConfigureMapping(b, AdoTestTableName));
-
-		var entities = Enumerable.Range(1, 100)
-			.Select(i => new TestEntity
-			{
-				Id = i,
-				Name = $"ADO Item {i}",
-				Value = i * 1.5m,
-				CreatedAt = DateTime.UtcNow.AddMinutes(-i),
-			})
-			.ToList();
-
-		await inserter.BulkCopyAsync(entities, CancellationToken);
-	}
-
-	[TestMethod]
-	public async Task Ado_BulkCopyAsync_LargeDataset_Success()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		DropTable(connection, AdoTestTableName);
-
-		using var inserter = provider.Create<TestEntity>(
-			connection,
-			AdoTestTableName,
-			b => ConfigureMapping(b, AdoTestTableName));
-
-		var entities = Enumerable.Range(1, 10000)
-			.Select(i => new TestEntity
-			{
-				Id = i,
-				Name = $"ADO Bulk Item {i}",
-				Value = i * 0.01m,
-				CreatedAt = DateTime.UtcNow,
-			})
-			.ToList();
-
-		await inserter.BulkCopyAsync(entities, CancellationToken);
-	}
-
-	[TestMethod]
-	public async Task Ado_Create_WithDynamicProperties_Success()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		DropTable(connection, AdoDynamicTestTableName);
-
-		using var inserter = provider.Create<DynamicTestEntity>(
-			connection,
-			AdoDynamicTestTableName,
-			b => ConfigureDynamicMapping(b, AdoDynamicTestTableName));
-
-		var entity = new DynamicTestEntity
-		{
-			Id = 1,
-			Name = "ADO Dynamic Test",
-		};
-		entity.SetDynamic("CustomField", "CustomValue");
-
-		await inserter.InsertAsync(entity, CancellationToken);
-	}
-
-	[TestMethod]
-	public void Ado_Create_NullConnection_ThrowsArgumentNullException()
-	{
-		var provider = GetAdoProvider();
-
-		Throws<ArgumentNullException>(() =>
-			provider.Create<TestEntity>(null, "table", _ => { }));
-	}
-
-	[TestMethod]
-	public void Ado_Create_EmptyTableName_ThrowsArgumentNullException()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		Throws<ArgumentNullException>(() =>
-			provider.Create<TestEntity>(connection, "", _ => { }));
-	}
-
-	[TestMethod]
-	public void Ado_Create_NullConfigureMapping_ThrowsArgumentNullException()
-	{
-		var provider = GetAdoProvider();
-		var connection = GetSqlServerConnection();
-
-		Throws<ArgumentNullException>(() =>
-			provider.Create<TestEntity>(connection, "table", null));
-	}
-
-	#endregion
 
 	private static void ConfigureMapping(IDatabaseMappingBuilder<TestEntity> builder, string tableName)
 	{
