@@ -822,11 +822,7 @@ public static class StringHelper
 		if (str2 is null)
 			return false;
 
-#if NETSTANDARD2_0
-		return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase) >= 0;
-#else
 		return str1.Contains(str2, StringComparison.InvariantCultureIgnoreCase);
-#endif
 	}
 
 	/// <summary>
@@ -853,11 +849,7 @@ public static class StringHelper
 		if (oldValue.Length == 0)
 			return original.IsEmpty() ? newValue : original;
 
-#if NETSTANDARD2_0
-		return Regex.Replace(original, oldValue, newValue, RegexOptions.IgnoreCase);
-#else
 		return original.Replace(oldValue, newValue, StringComparison.InvariantCultureIgnoreCase);
-#endif
 	}
 
 	/// <summary>
