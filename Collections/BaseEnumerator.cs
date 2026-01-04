@@ -10,6 +10,7 @@ using Ecng.Common;
 /// </summary>
 /// <typeparam name="TEnumerable">The type of the enumerable source, which must implement <see cref="IEnumerable{TItem}"/>.</typeparam>
 /// <typeparam name="TItem">The type of elements in the enumerable source.</typeparam>
+[Obsolete("Use yield return instead.")]
 public abstract class BaseEnumerator<TEnumerable, TItem> : SimpleEnumerator<TItem>
 	where TEnumerable : IEnumerable<TItem>
 {
