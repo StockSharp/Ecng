@@ -61,7 +61,7 @@ public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFacto
 	}
 }
 
-internal class AdoBatchInserter<T> : IDatabaseBatchInserter<T>
+class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 	where T : class
 {
 	private readonly DbConnection _connection;
@@ -70,7 +70,6 @@ internal class AdoBatchInserter<T> : IDatabaseBatchInserter<T>
 	private readonly Func<T, string, object, object> _dynamicGetter;
 	private readonly Action<T, string, object> _dynamicSetter;
 	private readonly Func<object, object> _parameterConverter;
-	private bool _disposed;
 	private bool _tableCreated;
 
 	public AdoBatchInserter(
@@ -237,23 +236,18 @@ internal class AdoBatchInserter<T> : IDatabaseBatchInserter<T>
 		_ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null)
 	};
 
-	public void Dispose()
+	protected override void DisposeManaged()
 	{
-		if (_disposed)
+		if (IsDisposed)
 			return;
 
-		_disposed = true;
 		_connection?.Dispose();
-	}
 
-	private void ThrowIfDisposed()
-	{
-		if (_disposed)
-			throw new ObjectDisposedException(nameof(AdoBatchInserter<T>));
+		base.DisposeManaged();
 	}
 }
 
-internal class ColumnMapping
+class ColumnMapping
 {
 	public string PropertyName { get; set; }
 	public string ColumnName { get; set; }
@@ -265,7 +259,7 @@ internal class ColumnMapping
 	public Func<object, object> PropertyGetter { get; set; }
 }
 
-internal class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuilder<T>
+class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuilder<T>
 	where T : class
 {
 	private readonly AdoBatchInserter<T> _inserter = inserter ?? throw new ArgumentNullException(nameof(inserter));
@@ -349,7 +343,7 @@ class AdoColumnBuilder<T>(AdoMappingBuilder<T> mappingBuilder, ColumnMapping col
 	where T : class
 {
 	private readonly AdoMappingBuilder<T> _mappingBuilder = mappingBuilder ?? throw new ArgumentNullException(nameof(mappingBuilder));
-	private ColumnMapping _column = column ?? throw new ArgumentNullException(nameof(column));
+	private readonly ColumnMapping _column = column ?? throw new ArgumentNullException(nameof(column));
 
 	public IDatabaseColumnBuilder<T> HasLength(int length)
 	{

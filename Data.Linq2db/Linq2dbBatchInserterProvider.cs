@@ -50,23 +50,22 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 	}
 }
 
-class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
+class Linq2dbBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 	where T : class
 {
 	private readonly DataConnection _db;
 	private readonly ITable<T> _table;
-	private bool _disposed;
 
 	public Linq2dbBatchInserter(
 		DatabaseConnectionPair connection,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 	{
-        if (connection is null)
-            throw new ArgumentNullException(nameof(connection));
-        if (configureMapping is null)
-            throw new ArgumentNullException(nameof(configureMapping));
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+		if (configureMapping is null)
+			throw new ArgumentNullException(nameof(configureMapping));
 
-        _db = connection.CreateConnection();
+		_db = connection.CreateConnection();
 
 		var schema = _db.MappingSchema;
 		var fluentBuilder = new FluentMappingBuilder(schema);
@@ -91,19 +90,14 @@ class Linq2dbBatchInserter<T> : IDatabaseBatchInserter<T>
 		await _table.BulkCopyAsync(items, cancellationToken);
 	}
 
-	public void Dispose()
+	protected override void DisposeManaged()
 	{
-		if (_disposed)
+		if (IsDisposed)
 			return;
 
-		_disposed = true;
 		_db?.Dispose();
-	}
 
-	private void ThrowIfDisposed()
-	{
-		if (_disposed)
-			throw new ObjectDisposedException(nameof(Linq2dbBatchInserter<T>));
+		base.DisposeManaged();
 	}
 }
 
@@ -161,7 +155,7 @@ class Linq2dbMappingBuilder<T>(EntityMappingBuilder<T> entityBuilder, MappingSch
 	}
 }
 
-internal class Linq2dbColumnBuilder<T>(
+class Linq2dbColumnBuilder<T>(
 	dynamic propBuilder,
 	EntityMappingBuilder<T> entityBuilder,
 	MappingSchema schema) : IDatabaseColumnBuilder<T>
