@@ -214,26 +214,54 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 	}
 
+	private const int _batchSize = 100;
+
 	public async Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
 
-		var sql = GenerateInsertSql();
 		var itemsList = items.ToList();
+		if (itemsList.Count == 0)
+			return;
 
 		using var transaction = _connection.BeginTransaction();
 
 		try
 		{
-			foreach (var item in itemsList)
+			var columnNames = _columns.Select(c => $"[{c.ColumnName}]").JoinCommaSpace();
+
+			for (var i = 0; i < itemsList.Count; i += _batchSize)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
+				var batch = itemsList.Skip(i).Take(_batchSize).ToList();
+
 				using var cmd = _connection.CreateCommand();
-				cmd.CommandText = sql;
 				cmd.Transaction = transaction;
 
-				AddParameters(cmd, item);
+				var valuesClauses = new List<string>(batch.Count);
+
+				for (var rowIdx = 0; rowIdx < batch.Count; rowIdx++)
+				{
+					var item = batch[rowIdx];
+					var paramNames = new List<string>(_columns.Count);
+
+					foreach (var column in _columns)
+					{
+						var paramName = $"@{column.ColumnName}_{rowIdx}";
+						paramNames.Add(paramName);
+
+						var param = cmd.CreateParameter();
+						param.ParameterName = paramName;
+						param.DbType = GetDbType(column.DataType);
+						param.Value = GetColumnValue(item, column) ?? DBNull.Value;
+						cmd.Parameters.Add(param);
+					}
+
+					valuesClauses.Add($"({paramNames.JoinCommaSpace()})");
+				}
+
+				cmd.CommandText = $"INSERT INTO [{_tableName}] ({columnNames}) VALUES {valuesClauses.JoinCommaSpace()}";
 
 				await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 			}
@@ -245,6 +273,21 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 			transaction.Rollback();
 			throw;
 		}
+	}
+
+	private object GetColumnValue(T item, ColumnMapping column)
+	{
+		object value;
+
+		if (column.IsDynamic)
+			value = _dynamicGetter?.Invoke(item, column.PropertyName, null);
+		else
+			value = column.PropertyGetter(item);
+
+		if (_parameterConverter != null)
+			value = _parameterConverter(value);
+
+		return value;
 	}
 
 	private string GenerateInsertSql()

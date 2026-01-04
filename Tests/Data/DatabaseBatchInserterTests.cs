@@ -108,7 +108,7 @@ public class DatabaseBatchInserterTests : BaseTestClass
 			_testTableName,
 			b => ConfigureMapping(b, _testTableName));
 
-		var entities = Enumerable.Range(1, 100)
+		var entities = Enumerable.Range(1, 1000)
 			.Select(i => new TestEntity
 			{
 				Id = i,
