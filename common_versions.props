@@ -2,8 +2,8 @@
   <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net6'))">
     <LangVersion>12.0</LangVersion>
     <MsExtensionsVer>8.*</MsExtensionsVer>
-    <MicrosoftCodeAnalysisVer>4.12.0</MicrosoftCodeAnalysisVer>
-    <MicrosoftCodeAnalysisAnalyzersVer>3.3.4</MicrosoftCodeAnalysisAnalyzersVer>
+    <MsCodeAnalysisVer>4.12.0</MsCodeAnalysisVer>
+    <MsCodeAnalysisAnalyzersVer>3.3.4</MsCodeAnalysisAnalyzersVer>
     <FSharpVer>43.9.300</FSharpVer>
     <MsTestVer>3.11.1</MsTestVer>
     <MsTestSdkVer>17.13.0</MsTestSdkVer>
@@ -12,8 +12,8 @@
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
     <LangVersion>14.0</LangVersion>
     <MsExtensionsVer>10.*</MsExtensionsVer>
-    <MsCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
-    <MsCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
+    <MsCodeAnalysisVer>4.*</MsCodeAnalysisVer>
+    <MsCodeAnalysisAnalyzersVer>3.*</MsCodeAnalysisAnalyzersVer>
     <FSharpVer>43.*</FSharpVer>
     <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>18.*</MsTestSdkVer>
