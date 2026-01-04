@@ -21,6 +21,17 @@ public static class SitemapGenerator
 	/// </summary>
 	public const int MaximumSitemapSizeInBytes = 10485760;
 
+	private static string Url2Abs(string url)
+	{
+		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+			throw new ArgumentException($"Invalid absolute URL: {url}", nameof(url));
+
+		if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+			throw new ArgumentException($"Only http/https URLs are allowed: {url}", nameof(url));
+
+		return uri.AbsoluteUri;
+	}
+
 	private const string _timeFormat = "yyyy-MM-ddTHH:mm:sszzz";
 
 	/// <summary>
@@ -37,7 +48,7 @@ public static class SitemapGenerator
 		{
 			var sitemapElement = new XElement(
 				xmlns + "sitemap",
-				new XElement(xmlns + "loc", sitemap),
+				new XElement(xmlns + "loc", Url2Abs(sitemap)),
 					new XElement(xmlns + "lastmod",
 						DateTime.UtcNow.ToString(_timeFormat)));
 
@@ -74,9 +85,9 @@ public static class SitemapGenerator
 		foreach (var sitemapNode in nodes)
 		{
 			var urlElement = new XElement(xmlns + "url");
-
+			
 			// Add basic sitemap elements
-			urlElement.Add(new XElement(xmlns + "loc", sitemapNode.Url.UrlEscape()));
+			urlElement.Add(new XElement(xmlns + "loc", Url2Abs(sitemapNode.Url)));
 
 			// Add XHTML alternate links
 			if (sitemapNode.AlternateLinks.Count > 0)
@@ -86,7 +97,7 @@ public static class SitemapGenerator
 					var xhtmlLink = new XElement(xhtmlNs + "link");
 					xhtmlLink.SetAttributeValue("rel", alternateLink.Rel);
 					xhtmlLink.SetAttributeValue("hreflang", alternateLink.Hreflang);
-					xhtmlLink.SetAttributeValue("href", alternateLink.Href.UrlEscape());
+					xhtmlLink.SetAttributeValue("href", Url2Abs(alternateLink.Href));
 					urlElement.Add(xhtmlLink);
 				}
 			}
