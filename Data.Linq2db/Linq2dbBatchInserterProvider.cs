@@ -192,6 +192,8 @@ class Linq2dbMappingBuilder<T>(EntityMappingBuilder<T> entityBuilder, MappingSch
 	public IDatabaseMappingBuilder<T> SetConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
 	{
 		_schema.SetConverter(converter);
+		// Also set converter for DataParameter to handle INSERT operations
+		_schema.SetConverter<TFrom, DataParameter>(from => new DataParameter { Value = converter(from) });
 		return this;
 	}
 

@@ -214,7 +214,9 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 	}
 
-	private const int _batchSize = 100;
+	private const int _maxParameters = 2000; // SQL Server limit is 2100, leave margin
+
+	private int GetBatchSize() => Math.Max(1, _maxParameters / Math.Max(1, _columns.Count));
 
 	public async Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
 	{
@@ -229,12 +231,13 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		try
 		{
 			var columnNames = _columns.Select(c => $"[{c.ColumnName}]").JoinCommaSpace();
+			var batchSize = GetBatchSize();
 
-			for (var i = 0; i < itemsList.Count; i += _batchSize)
+			for (var i = 0; i < itemsList.Count; i += batchSize)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				var batch = itemsList.Skip(i).Take(_batchSize).ToList();
+				var batch = itemsList.Skip(i).Take(batchSize).ToList();
 
 				using var cmd = _connection.CreateCommand();
 				cmd.Transaction = transaction;
@@ -287,7 +290,40 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		if (_parameterConverter != null)
 			value = _parameterConverter(value);
 
-		return value;
+		return ConvertValue(value, column.DataType);
+	}
+
+	private static object ConvertValue(object value, DatabaseDataType dataType)
+	{
+		if (value is null)
+			return DBNull.Value;
+
+		// Use Converter.To() for target DB type
+		return dataType switch
+		{
+			DatabaseDataType.NVarChar or DatabaseDataType.VarChar or DatabaseDataType.Text or DatabaseDataType.Char
+				=> value.To<string>(),
+
+			DatabaseDataType.Int
+				=> value.To<int>(),
+
+			DatabaseDataType.BigInt
+				=> value.To<long>(),
+
+			DatabaseDataType.Decimal
+				=> value.To<decimal>(),
+
+			DatabaseDataType.Boolean
+				=> value.To<bool>(),
+
+			DatabaseDataType.DateTime
+				=> value.To<DateTime>(),
+
+			DatabaseDataType.Binary
+				=> value.To<byte[]>(),
+
+			_ => value,
+		};
 	}
 
 	private string GenerateInsertSql()
@@ -304,23 +340,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 			var param = cmd.CreateParameter();
 			param.ParameterName = $"@{column.ColumnName}";
 			param.DbType = GetDbType(column.DataType);
-
-			object value;
-			if (column.IsDynamic)
-			{
-				value = _dynamicGetter?.Invoke(item, column.PropertyName, null);
-			}
-			else
-			{
-				value = column.PropertyGetter(item);
-			}
-
-			if (_parameterConverter != null)
-			{
-				value = _parameterConverter(value);
-			}
-
-			param.Value = value ?? DBNull.Value;
+			param.Value = GetColumnValue(item, column);
 			cmd.Parameters.Add(param);
 		}
 	}
@@ -398,6 +418,7 @@ class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuild
 		{
 			PropertyName = propInfo.Name,
 			ColumnName = propInfo.Name,
+			DataType = InferDataType(typeof(TProperty)),
 			IsNotNull = _columnsRequired,
 			IsDynamic = false,
 			PropertyGetter = obj => compiled((T)obj),
@@ -405,6 +426,43 @@ class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuild
 
 		_inserter.AddColumn(column);
 		return new AdoColumnBuilder<T>(this, column);
+	}
+
+	private static readonly Dictionary<Type, DatabaseDataType> _typeMap = new()
+	{
+		{ typeof(string), DatabaseDataType.NVarChar },
+		{ typeof(int), DatabaseDataType.Int },
+		{ typeof(short), DatabaseDataType.Int },
+		{ typeof(byte), DatabaseDataType.Int },
+		{ typeof(sbyte), DatabaseDataType.Int },
+		{ typeof(ushort), DatabaseDataType.Int },
+		{ typeof(long), DatabaseDataType.BigInt },
+		{ typeof(uint), DatabaseDataType.BigInt },
+		{ typeof(ulong), DatabaseDataType.BigInt },
+		{ typeof(decimal), DatabaseDataType.Decimal },
+		{ typeof(double), DatabaseDataType.Decimal },
+		{ typeof(float), DatabaseDataType.Decimal },
+		{ typeof(bool), DatabaseDataType.Boolean },
+		{ typeof(DateTime), DatabaseDataType.DateTime },
+		{ typeof(DateTimeOffset), DatabaseDataType.DateTime },
+		{ typeof(byte[]), DatabaseDataType.Binary },
+		{ typeof(Guid), DatabaseDataType.NVarChar },
+		{ typeof(TimeSpan), DatabaseDataType.BigInt },
+		{ typeof(TimeZoneInfo), DatabaseDataType.NVarChar },
+		{ typeof(Type), DatabaseDataType.NVarChar },
+	};
+
+	private static DatabaseDataType InferDataType(Type type)
+	{
+		// Handle Nullable<T>
+		type = type.GetUnderlyingType() ?? type;
+
+		// Enum → use underlying type
+		if (type.IsEnum)
+			type = type.GetEnumBaseType();
+
+		// Default to NVarChar for unknown types (will be converted to string)
+		return _typeMap.TryGetValue(type, out var dataType) ? dataType : DatabaseDataType.NVarChar;
 	}
 
 	public IDatabaseColumnBuilder<T> DynamicProperty(string propertyName)

@@ -227,5 +227,174 @@ public class DatabaseBatchInserterTests : BaseTestClass
 		public void SetDynamic(string name, object value)
 			=> _dynamicProperties[name] = value;
 	}
+
+	public enum TestStatus
+	{
+		Unknown,
+		Active,
+		Inactive,
+		Deleted
+	}
+
+	public enum TestFlags : long
+	{
+		None = 0,
+		Flag1 = 1L << 32,
+		Flag2 = 1L << 33,
+		All = Flag1 | Flag2
+	}
+
+	public class ComplexTestEntity
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+		public TestStatus Status { get; set; }
+		public TestFlags Flags { get; set; }
+		public TimeZoneInfo TimeZone { get; set; }
+		public TimeSpan Duration { get; set; }
+		public Guid UniqueId { get; set; }
+		public DateTimeOffset CreatedAt { get; set; }
+		public bool IsActive { get; set; }
+		public int? NullableInt { get; set; }
+		public decimal? NullableDecimal { get; set; }
+		public DateTime? NullableDate { get; set; }
+		public double Price { get; set; }
+		public float Rate { get; set; }
+	}
+
+	private const string _complexTestTableName = "ecng_batch_complex_test";
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbBatchInserterProvider))]
+	[DataRow(nameof(AdoBatchInserterProvider))]
+	public async Task InsertAsync_ComplexTypes_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+
+		provider.DropTable(connection, _complexTestTableName);
+
+		using var inserter = provider.Create<ComplexTestEntity>(
+			connection,
+			_complexTestTableName,
+			ConfigureComplexMapping);
+
+		var entity = new ComplexTestEntity
+		{
+			Id = 1,
+			Name = "Complex Test",
+			Status = TestStatus.Active,
+			Flags = TestFlags.Flag1 | TestFlags.Flag2,
+			TimeZone = TimeZoneInfo.FindSystemTimeZoneById("UTC"),
+			Duration = TimeSpan.FromHours(2.5),
+			UniqueId = Guid.NewGuid(),
+			CreatedAt = DateTimeOffset.UtcNow,
+			IsActive = true,
+			NullableInt = 42,
+			NullableDecimal = 123.45m,
+			NullableDate = DateTime.UtcNow,
+			Price = 99.99,
+			Rate = 0.15f,
+		};
+
+		await inserter.InsertAsync(entity, CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbBatchInserterProvider))]
+	[DataRow(nameof(AdoBatchInserterProvider))]
+	public async Task InsertAsync_ComplexTypesWithNulls_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+
+		provider.DropTable(connection, _complexTestTableName);
+
+		using var inserter = provider.Create<ComplexTestEntity>(
+			connection,
+			_complexTestTableName,
+			ConfigureComplexMapping);
+
+		var entity = new ComplexTestEntity
+		{
+			Id = 2,
+			Name = "Nullable Test",
+			Status = TestStatus.Unknown,
+			Flags = TestFlags.None,
+			TimeZone = TimeZoneInfo.Utc,
+			Duration = TimeSpan.Zero,
+			UniqueId = Guid.Empty,
+			CreatedAt = DateTimeOffset.MinValue,
+			IsActive = false,
+			NullableInt = null,
+			NullableDecimal = null,
+			NullableDate = null,
+			Price = 0,
+			Rate = 0,
+		};
+
+		await inserter.InsertAsync(entity, CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbBatchInserterProvider))]
+	[DataRow(nameof(AdoBatchInserterProvider))]
+	public async Task BulkCopyAsync_ComplexTypes_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+
+		provider.DropTable(connection, _complexTestTableName);
+
+		using var inserter = provider.Create<ComplexTestEntity>(
+			connection,
+			_complexTestTableName,
+			ConfigureComplexMapping);
+
+		var entities = Enumerable.Range(1, 100)
+			.Select(i => new ComplexTestEntity
+			{
+				Id = i,
+				Name = $"Bulk Complex {i}",
+				Status = (TestStatus)(i % 4),
+				Flags = i % 2 == 0 ? TestFlags.Flag1 : TestFlags.Flag2,
+				TimeZone = TimeZoneInfo.Utc,
+				Duration = TimeSpan.FromMinutes(i),
+				UniqueId = Guid.NewGuid(),
+				CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-i),
+				IsActive = i % 2 == 0,
+				NullableInt = i % 3 == 0 ? null : i,
+				NullableDecimal = i % 5 == 0 ? null : i * 1.1m,
+				NullableDate = i % 7 == 0 ? null : DateTime.UtcNow.AddDays(-i),
+				Price = i * 10.5,
+				Rate = i * 0.01f,
+			})
+			.ToList();
+
+		await inserter.BulkCopyAsync(entities, CancellationToken);
+	}
+
+	private static void ConfigureComplexMapping(IDatabaseMappingBuilder<ComplexTestEntity> builder)
+	{
+		builder
+			.HasTableName(_complexTestTableName)
+			.SetConverter<TimeZoneInfo, string>(tz => tz.Id)
+			.SetConverter<TimeSpan, long>(ts => ts.Ticks)
+			.SetConverter<Guid, string>(g => g.ToString())
+			.Property(e => e.Id)
+			.Property(e => e.Name).HasLength(100)
+			.Property(e => e.Status)
+			.Property(e => e.Flags)
+			.Property(e => e.TimeZone).HasDataType(DatabaseDataType.NVarChar).HasLength(100)
+			.Property(e => e.Duration).HasDataType(DatabaseDataType.BigInt)
+			.Property(e => e.UniqueId).HasDataType(DatabaseDataType.NVarChar).HasLength(36)
+			.Property(e => e.CreatedAt)
+			.Property(e => e.IsActive)
+			.Property(e => e.NullableInt)
+			.Property(e => e.NullableDecimal).HasScale(2)
+			.Property(e => e.NullableDate)
+			.Property(e => e.Price).HasScale(2)
+			.Property(e => e.Rate).HasScale(4);
+	}
 }
 #endif
