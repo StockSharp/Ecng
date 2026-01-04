@@ -3,8 +3,6 @@
 using Ecng.Data;
 using Ecng.Serialization;
 
-using LinqToDB;
-
 [TestClass]
 public class DataTests
 {
@@ -16,7 +14,7 @@ public class DataTests
 		var deleted = 0;
 		cache.ConnectionCreated += p => created++;
 		cache.ConnectionDeleted += p => deleted++;
-		var pair = cache.GetOrAdd(ProviderName.SqlServer, "123");
+		var pair = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "123");
 		cache.Connections.Count().AssertEqual(1);
 		created.AssertEqual(1);
 		deleted.AssertEqual(0);
@@ -30,7 +28,7 @@ public class DataTests
 	public void SaveLoad()
 	{
 		var cache = new DatabaseConnectionCache();
-		var pair = cache.GetOrAdd(ProviderName.SqlServer, "123");
+		var pair = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "123");
 		var ser = new JsonSerializer<DatabaseConnectionCache>();
 		var cache2 = ser.Deserialize(ser.Serialize(cache));
 
