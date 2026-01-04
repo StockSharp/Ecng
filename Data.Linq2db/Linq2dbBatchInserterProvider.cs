@@ -13,42 +13,12 @@ using LinqToDB.Data;
 using LinqToDB.Mapping;
 
 /// <summary>
-/// Linq2db implementation of <see cref="IDatabaseBatchInserterProvider"/>.
+/// Linq2db implementation of <see cref="IDatabaseBatchInserterProvider{TConnection}"/>.
 /// </summary>
-public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
+public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider<DataConnection>
 {
 	/// <inheritdoc />
-	public IDatabaseBatchInserter<T> Create<T>(
-		DatabaseConnectionPair connection,
-		string tableName,
-		Action<IDatabaseMappingBuilder<T>> configureMapping)
-		where T : class
-	{
-		if (tableName.IsEmpty())
-			throw new ArgumentNullException(nameof(tableName));
-
-		return new Linq2dbBatchInserter<T>(CreateConnection(connection), configureMapping);
-	}
-
-	/// <inheritdoc />
-	public void DropTable(DatabaseConnectionPair connection, string tableName)
-	{
-		if (tableName.IsEmpty())
-			throw new ArgumentNullException(nameof(tableName));
-
-		using var db = CreateConnection(connection);
-		db.DropTable<object>(tableName, throwExceptionIfNotExists: false);
-	}
-
-	/// <inheritdoc />
-	public void Verify(DatabaseConnectionPair connection)
-	{
-		using var db = CreateConnection(connection);
-		using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
-		conn.Open();
-	}
-
-	private static DataConnection CreateConnection(DatabaseConnectionPair pair)
+	public DataConnection CreateConnection(DatabaseConnectionPair pair)
 	{
 		if (pair is null)
 			throw new ArgumentNullException(nameof(pair));
@@ -61,9 +31,53 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 		var connStr = pair.ConnectionString;
 
 		if (connStr.IsEmpty())
-			throw new InvalidOperationException("Cannot create a connection, because some data was not entered.");
+			throw new InvalidOperationException("Connection string is not set.");
 
-		return new DataConnection(provider, connStr);
+		return new DataConnection(ToLinq2dbProvider(provider), connStr);
+	}
+
+	private static string ToLinq2dbProvider(string provider) => provider switch
+	{
+		DatabaseProviderRegistry.SqlServer => ProviderName.SqlServer,
+		DatabaseProviderRegistry.SQLite => ProviderName.SQLite,
+		DatabaseProviderRegistry.MySql => ProviderName.MySql,
+		DatabaseProviderRegistry.PostgreSql => ProviderName.PostgreSQL,
+		_ => provider, // pass through for direct linq2db provider names
+	};
+
+	/// <inheritdoc />
+	public IDatabaseBatchInserter<T> Create<T>(
+		DataConnection connection,
+		string tableName,
+		Action<IDatabaseMappingBuilder<T>> configureMapping)
+		where T : class
+	{
+		if (tableName.IsEmpty())
+			throw new ArgumentNullException(nameof(tableName));
+
+		return new Linq2dbBatchInserter<T>(connection, configureMapping);
+	}
+
+	/// <inheritdoc />
+	public void DropTable(DataConnection connection, string tableName)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		if (tableName.IsEmpty())
+			throw new ArgumentNullException(nameof(tableName));
+
+		connection.DropTable<object>(tableName, throwExceptionIfNotExists: false);
+	}
+
+	/// <inheritdoc />
+	public void Verify(DataConnection connection)
+	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		using var conn = connection.DataProvider.CreateConnection(connection.ConnectionString);
+		conn.Open();
 	}
 }
 

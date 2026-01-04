@@ -12,21 +12,36 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.ComponentModel;
 
 /// <summary>
-/// Pure ADO.NET implementation of <see cref="IDatabaseBatchInserterProvider"/>.
+/// Pure ADO.NET implementation of <see cref="IDatabaseBatchInserterProvider{TConnection}"/>.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="AdoBatchInserterProvider"/> class.
 /// </remarks>
 /// <param name="connectionFactory">Factory function that creates a DbConnection from connection string.</param>
-public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider
+public class AdoBatchInserterProvider(Func<DatabaseConnectionPair, DbConnection> connectionFactory) : IDatabaseBatchInserterProvider<DbConnection>
 {
-	private readonly Func<string, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+	private readonly Func<DatabaseConnectionPair, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+
+	/// <inheritdoc />
+	public DbConnection CreateConnection(DatabaseConnectionPair pair)
+	{
+		if (pair is null)
+			throw new ArgumentNullException(nameof(pair));
+
+		var connStr = pair.ConnectionString;
+
+		if (connStr.IsEmpty())
+			throw new InvalidOperationException("Connection string is not set.");
+
+		return _connectionFactory(pair);
+	}
 
 	/// <inheritdoc />
 	public IDatabaseBatchInserter<T> Create<T>(
-		DatabaseConnectionPair connection,
+		DbConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class
@@ -40,11 +55,11 @@ public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFacto
 		if (configureMapping is null)
 			throw new ArgumentNullException(nameof(configureMapping));
 
-		return new AdoBatchInserter<T>(_connectionFactory, connection.ConnectionString, tableName, configureMapping);
+		return new AdoBatchInserter<T>(connection, tableName, configureMapping);
 	}
 
 	/// <inheritdoc />
-	public void DropTable(DatabaseConnectionPair connection, string tableName)
+	public void DropTable(DbConnection connection, string tableName)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
@@ -52,22 +67,21 @@ public class AdoBatchInserterProvider(Func<string, DbConnection> connectionFacto
 		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
-		using var db = _connectionFactory(connection.ConnectionString);
-		db.Open();
+		if (connection.State != ConnectionState.Open)
+			connection.Open();
 
-		using var cmd = db.CreateCommand();
+		using var cmd = connection.CreateCommand();
 		cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
 		cmd.ExecuteNonQuery();
 	}
 
 	/// <inheritdoc />
-	public void Verify(DatabaseConnectionPair connection)
+	public void Verify(DbConnection connection)
 	{
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		using var db = _connectionFactory(connection.ConnectionString);
-		db.Open();
+		connection.Open();
 	}
 }
 
@@ -83,12 +97,11 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 	private bool _tableCreated;
 
 	public AdoBatchInserter(
-		Func<string, DbConnection> connectionFactory,
-		string connectionString,
+		DbConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 	{
-		_connection = connectionFactory(connectionString);
+		_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 		_tableName = tableName;
 
 		var mappingBuilder = new AdoMappingBuilder<T>(this);
@@ -98,7 +111,9 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		_dynamicSetter = mappingBuilder.DynamicSetter;
 		_parameterConverter = mappingBuilder.ParameterConverter;
 
-		_connection.Open();
+		if (_connection.State != ConnectionState.Open)
+			_connection.Open();
+
 		EnsureTableExists();
 	}
 

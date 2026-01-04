@@ -33,18 +33,27 @@ public interface IDatabaseBatchInserter<T> : IDisposable
 /// <summary>
 /// Factory for creating database batch inserters.
 /// </summary>
-public interface IDatabaseBatchInserterProvider
+/// <typeparam name="TConnection">The type of database connection.</typeparam>
+public interface IDatabaseBatchInserterProvider<TConnection>
+	where TConnection : IDisposable
 {
+	/// <summary>
+	/// Creates a database connection from the specified connection settings.
+	/// </summary>
+	/// <param name="pair">Database connection settings.</param>
+	/// <returns>A database connection instance.</returns>
+	TConnection CreateConnection(DatabaseConnectionPair pair);
+
 	/// <summary>
 	/// Creates a batch inserter for the specified entity type.
 	/// </summary>
 	/// <typeparam name="T">The type of entities to insert.</typeparam>
-	/// <param name="connection">Database connection settings.</param>
+	/// <param name="connection">Database connection.</param>
 	/// <param name="tableName">Name of the target table.</param>
 	/// <param name="configureMapping">Callback to configure table mapping.</param>
 	/// <returns>A batch inserter instance.</returns>
 	IDatabaseBatchInserter<T> Create<T>(
-		DatabaseConnectionPair connection,
+		TConnection connection,
 		string tableName,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class;
@@ -52,15 +61,15 @@ public interface IDatabaseBatchInserterProvider
 	/// <summary>
 	/// Drops the specified table if it exists.
 	/// </summary>
-	/// <param name="connection">Database connection settings.</param>
+	/// <param name="connection">Database connection.</param>
 	/// <param name="tableName">Name of the table to drop.</param>
-	void DropTable(DatabaseConnectionPair connection, string tableName);
+	void DropTable(TConnection connection, string tableName);
 
 	/// <summary>
 	/// Verifies the specified database connection by attempting to open it.
 	/// </summary>
-	/// <param name="connection">Database connection settings.</param>
-	void Verify(DatabaseConnectionPair connection);
+	/// <param name="connection">Database connection.</param>
+	void Verify(TConnection connection);
 }
 
 /// <summary>
