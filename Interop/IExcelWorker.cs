@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Interop;
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 using Ecng.Common;
@@ -94,6 +95,95 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <returns>The number of rows.</returns>
 	int GetRowsCount();
+
+	/// <summary>
+	/// Sets the width of a column.
+	/// </summary>
+	/// <param name="col">The column index (1-based).</param>
+	/// <param name="width">The width in characters.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetColumnWidth(int col, double width);
+
+	/// <summary>
+	/// Sets the height of a row.
+	/// </summary>
+	/// <param name="row">The row index (1-based).</param>
+	/// <param name="height">The height in points.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetRowHeight(int row, double height);
+
+	/// <summary>
+	/// Auto-fits the column width based on content.
+	/// </summary>
+	/// <param name="col">The column index (1-based).</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AutoFitColumn(int col);
+
+	/// <summary>
+	/// Freezes the specified number of top rows.
+	/// </summary>
+	/// <param name="count">The number of rows to freeze.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker FreezeRows(int count);
+
+	/// <summary>
+	/// Freezes the specified number of left columns.
+	/// </summary>
+	/// <param name="count">The number of columns to freeze.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker FreezeCols(int count);
+
+	/// <summary>
+	/// Merges cells in the specified range.
+	/// </summary>
+	/// <param name="startCol">The starting column index (1-based).</param>
+	/// <param name="startRow">The starting row index (1-based).</param>
+	/// <param name="endCol">The ending column index (1-based).</param>
+	/// <param name="endRow">The ending row index (1-based).</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker MergeCells(int startCol, int startRow, int endCol, int endRow);
+
+	/// <summary>
+	/// Sets a hyperlink in a cell.
+	/// </summary>
+	/// <param name="col">The column index (1-based).</param>
+	/// <param name="row">The row index (1-based).</param>
+	/// <param name="url">The URL for the hyperlink.</param>
+	/// <param name="text">The display text for the hyperlink. If null, the URL is used.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetHyperlink(int col, int row, string url, string text = null);
+
+	/// <summary>
+	/// Sets the format of a specific cell.
+	/// </summary>
+	/// <param name="col">The column index (1-based).</param>
+	/// <param name="row">The row index (1-based).</param>
+	/// <param name="format">The format string to apply.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetCellFormat(int col, int row, string format);
+
+	/// <summary>
+	/// Sets the colors of a specific cell.
+	/// </summary>
+	/// <param name="col">The column index (1-based).</param>
+	/// <param name="row">The row index (1-based).</param>
+	/// <param name="bgColor">The background color (e.g., hex code or name).</param>
+	/// <param name="fgColor">The foreground (text) color. If null, default is used.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null);
+
+	/// <summary>
+	/// Gets the names of all sheets in the workbook.
+	/// </summary>
+	/// <returns>An enumerable of sheet names.</returns>
+	IEnumerable<string> GetSheetNames();
+
+	/// <summary>
+	/// Deletes a sheet by name.
+	/// </summary>
+	/// <param name="name">The name of the sheet to delete.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker DeleteSheet(string name);
 }
 
 /// <summary>

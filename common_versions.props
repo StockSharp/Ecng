@@ -20,6 +20,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <EcngVer>1.0.*</EcngVer>
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>

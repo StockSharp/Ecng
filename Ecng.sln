@@ -39,6 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO", "IO\IO.csproj", "{4E2D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Windows", "Interop.Windows\Interop.Windows.csproj", "{E07110B3-2D56-474D-9668-7A4488774F33}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Excel", "Interop.Excel\Interop.Excel.csproj", "{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lzma", "Lzma\Lzma.csproj", "{69A43571-F70F-472C-9E03-48450476156B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearch\StringSearch.csproj", "{337D3CF8-08C6-4453-AB76-2A16B2742292}"
@@ -157,6 +159,10 @@ Global
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{69A43571-F70F-472C-9E03-48450476156B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{69A43571-F70F-472C-9E03-48450476156B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69A43571-F70F-472C-9E03-48450476156B}.Release|Any CPU.ActiveCfg = Release|Any CPU
