@@ -421,11 +421,24 @@ class AdoMappingBuilder<T>(AdoBatchInserter<T> inserter) : IDatabaseMappingBuild
 			DataType = InferDataType(typeof(TProperty)),
 			IsNotNull = _columnsRequired,
 			IsDynamic = false,
-			PropertyGetter = obj => compiled((T)obj),
+			PropertyGetter = obj => SafeGetValue(compiled, (T)obj),
 		};
 
 		_inserter.AddColumn(column);
 		return new AdoColumnBuilder<T>(this, column);
+	}
+
+	private static object SafeGetValue<TProperty>(Func<T, TProperty> getter, T item)
+	{
+		try
+		{
+			return getter(item);
+		}
+		catch (InvalidOperationException)
+		{
+			// Handle "Nullable object must have a value" for nullable property paths like m.SecurityId.Value.SecurityCode
+			return null;
+		}
 	}
 
 	private static readonly Dictionary<Type, DatabaseDataType> _typeMap = new()
