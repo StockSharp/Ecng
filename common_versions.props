@@ -12,8 +12,8 @@
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
     <LangVersion>14.0</LangVersion>
     <MsExtensionsVer>10.*</MsExtensionsVer>
-    <MicrosoftCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
-    <MicrosoftCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
+    <MsCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
+    <MsCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
     <FSharpVer>43.*</FSharpVer>
     <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>18.*</MsTestSdkVer>

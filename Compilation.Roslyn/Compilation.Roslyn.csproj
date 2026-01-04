@@ -5,8 +5,8 @@
     <NoWarn>8632</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisVer)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MicrosoftCodeAnalysisVer)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MsCodeAnalysisVer)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MsCodeAnalysisVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Compilation\Compilation.csproj" />
