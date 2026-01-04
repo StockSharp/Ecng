@@ -159,7 +159,7 @@ static class PythonAttrs
 		.Where(attr => attr != null)];
 }
 
-class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerContext
+class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerContext, ISynchronizable
 {
 	private class AssemblyImpl : Assembly
 	{

@@ -16,7 +16,7 @@ using IronPython.Compiler;
 /// <summary>
 /// Python compiler.
 /// </summary>
-public class PythonCompiler : ICompiler
+public class PythonCompiler : ICompiler, ISynchronizable
 {
 	private class CustomErrorListener(IList<CompilationError> errors) : ErrorListener
 	{
