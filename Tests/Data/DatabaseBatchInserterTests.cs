@@ -3,53 +3,61 @@ namespace Ecng.Tests.Data;
 using Ecng.Data;
 
 using LinqToDB;
+using LinqToDB.DataProvider.SqlServer;
 
 [TestClass]
 [TestCategory("Integration")]
 public class DatabaseBatchInserterTests : BaseTestClass
 {
 	private const string TestTableName = "ecng_batch_test";
+	private const string DynamicTestTableName = "ecng_batch_dynamic_test";
 
 	private DatabaseConnectionPair GetSqlServerConnection()
 	{
 		return new DatabaseConnectionPair
 		{
-			Provider = ProviderName.SqlServer + ".MS",
+			Provider = ProviderName.SqlServer2017 + "." + SqlServerProvider.MicrosoftDataSqlClient,
 			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
 		};
 	}
 
-	private static string GetUniqueTableName()
-		=> $"{TestTableName}_{Guid.NewGuid():N}";
+	private static void DropTable(DatabaseConnectionPair connection, string tableName)
+	{
+		try
+		{
+			using var db = connection.CreateConnection();
+			using var cmd = db.CreateCommand();
+			cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
+			cmd.ExecuteNonQuery();
+		}
+		catch
+		{
+			// Ignore cleanup errors
+		}
+	}
 
 	[TestMethod]
 	public async Task InsertAsync_SingleItem_Success()
 	{
 		var provider = new Linq2dbBatchInserterProvider();
 		var connection = GetSqlServerConnection();
-		var tableName = GetUniqueTableName();
 
-		try
+		DropTable(connection, TestTableName);
+
+		using var inserter = provider.Create<TestEntity>(
+			connection,
+			TestTableName,
+			b => ConfigureMapping(b, TestTableName));
+
+		var entity = new TestEntity
 		{
-			using var inserter = provider.Create<TestEntity>(
-				connection,
-				tableName,
-				b => ConfigureMapping(b, tableName));
+			Id = 1,
+			Name = "Test Item",
+			Value = 123.45m,
+			CreatedAt = DateTime.UtcNow,
+		};
 
-			var entity = new TestEntity
-			{
-				Id = 1,
-				Name = "Test Item",
-				Value = 123.45m,
-				CreatedAt = DateTime.UtcNow,
-			};
-
-			await inserter.InsertAsync(entity, CancellationToken);
-		}
-		finally
-		{
-			await DropTableAsync(connection, tableName);
-		}
+		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
 	[TestMethod]
@@ -57,31 +65,25 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	{
 		var provider = new Linq2dbBatchInserterProvider();
 		var connection = GetSqlServerConnection();
-		var tableName = GetUniqueTableName();
 
-		try
-		{
-			using var inserter = provider.Create<TestEntity>(
-				connection,
-				tableName,
-				b => ConfigureMapping(b, tableName));
+		DropTable(connection, TestTableName);
 
-			var entities = Enumerable.Range(1, 100)
-				.Select(i => new TestEntity
-				{
-					Id = i,
-					Name = $"Item {i}",
-					Value = i * 1.5m,
-					CreatedAt = DateTime.UtcNow.AddMinutes(-i),
-				})
-				.ToList();
+		using var inserter = provider.Create<TestEntity>(
+			connection,
+			TestTableName,
+			b => ConfigureMapping(b, TestTableName));
 
-			await inserter.BulkCopyAsync(entities, CancellationToken);
-		}
-		finally
-		{
-			await DropTableAsync(connection, tableName);
-		}
+		var entities = Enumerable.Range(1, 100)
+			.Select(i => new TestEntity
+			{
+				Id = i,
+				Name = $"Item {i}",
+				Value = i * 1.5m,
+				CreatedAt = DateTime.UtcNow.AddMinutes(-i),
+			})
+			.ToList();
+
+		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
 	[TestMethod]
@@ -89,31 +91,25 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	{
 		var provider = new Linq2dbBatchInserterProvider();
 		var connection = GetSqlServerConnection();
-		var tableName = GetUniqueTableName();
 
-		try
-		{
-			using var inserter = provider.Create<TestEntity>(
-				connection,
-				tableName,
-				b => ConfigureMapping(b, tableName));
+		DropTable(connection, TestTableName);
 
-			var entities = Enumerable.Range(1, 10000)
-				.Select(i => new TestEntity
-				{
-					Id = i,
-					Name = $"Bulk Item {i}",
-					Value = i * 0.01m,
-					CreatedAt = DateTime.UtcNow,
-				})
-				.ToList();
+		using var inserter = provider.Create<TestEntity>(
+			connection,
+			TestTableName,
+			b => ConfigureMapping(b, TestTableName));
 
-			await inserter.BulkCopyAsync(entities, CancellationToken);
-		}
-		finally
-		{
-			await DropTableAsync(connection, tableName);
-		}
+		var entities = Enumerable.Range(1, 10000)
+			.Select(i => new TestEntity
+			{
+				Id = i,
+				Name = $"Bulk Item {i}",
+				Value = i * 0.01m,
+				CreatedAt = DateTime.UtcNow,
+			})
+			.ToList();
+
+		await inserter.BulkCopyAsync(entities, CancellationToken);
 	}
 
 	[TestMethod]
@@ -121,28 +117,22 @@ public class DatabaseBatchInserterTests : BaseTestClass
 	{
 		var provider = new Linq2dbBatchInserterProvider();
 		var connection = GetSqlServerConnection();
-		var tableName = GetUniqueTableName();
 
-		try
+		DropTable(connection, DynamicTestTableName);
+
+		using var inserter = provider.Create<DynamicTestEntity>(
+			connection,
+			DynamicTestTableName,
+			b => ConfigureDynamicMapping(b, DynamicTestTableName));
+
+		var entity = new DynamicTestEntity
 		{
-			using var inserter = provider.Create<DynamicTestEntity>(
-				connection,
-				tableName,
-				b => ConfigureDynamicMapping(b, tableName));
+			Id = 1,
+			Name = "Dynamic Test",
+		};
+		entity.SetDynamic("CustomField", "CustomValue");
 
-			var entity = new DynamicTestEntity
-			{
-				Id = 1,
-				Name = "Dynamic Test",
-			};
-			entity.SetDynamic("CustomField", "CustomValue");
-
-			await inserter.InsertAsync(entity, CancellationToken);
-		}
-		finally
-		{
-			await DropTableAsync(connection, tableName);
-		}
+		await inserter.InsertAsync(entity, CancellationToken);
 	}
 
 	[TestMethod]
@@ -196,23 +186,6 @@ public class DatabaseBatchInserterTests : BaseTestClass
 			.DynamicPropertyAccessors(
 				(e, name, def) => e.GetDynamic(name) ?? def,
 				(e, name, value) => e.SetDynamic(name, value));
-	}
-
-	private static Task DropTableAsync(DatabaseConnectionPair connection, string tableName)
-	{
-		try
-		{
-			using var db = connection.CreateConnection();
-			using var cmd = db.CreateCommand();
-			cmd.CommandText = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
-			cmd.ExecuteNonQuery();
-		}
-		catch
-		{
-			// Ignore cleanup errors
-		}
-
-		return Task.CompletedTask;
 	}
 
 	public class TestEntity
