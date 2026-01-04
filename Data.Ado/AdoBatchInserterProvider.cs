@@ -201,7 +201,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 		_ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null)
 	};
 
-	public Task InsertAsync(T item, CancellationToken cancellationToken)
+	public async Task InsertAsync(T item, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
 
@@ -211,7 +211,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 
 		AddParameters(cmd, item);
 
-		return cmd.ExecuteNonQueryAsync(cancellationToken);
+		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 	}
 
 	public async Task BulkCopyAsync(IEnumerable<T> items, CancellationToken cancellationToken)
@@ -235,7 +235,7 @@ class AdoBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 
 				AddParameters(cmd, item);
 
-				await cmd.ExecuteNonQueryAsync(cancellationToken);
+				await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 			}
 
 			transaction.Commit();
