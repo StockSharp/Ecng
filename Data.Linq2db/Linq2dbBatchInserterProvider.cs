@@ -24,40 +24,46 @@ public class Linq2dbBatchInserterProvider : IDatabaseBatchInserterProvider
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 		where T : class
 	{
-		if (connection is null)
-			throw new ArgumentNullException(nameof(connection));
-
 		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
-		if (configureMapping is null)
-			throw new ArgumentNullException(nameof(configureMapping));
-
-		return new Linq2dbBatchInserter<T>(connection, configureMapping);
+		return new Linq2dbBatchInserter<T>(CreateConnection(connection), configureMapping);
 	}
 
 	/// <inheritdoc />
 	public void DropTable(DatabaseConnectionPair connection, string tableName)
 	{
-		if (connection is null)
-			throw new ArgumentNullException(nameof(connection));
-
 		if (tableName.IsEmpty())
 			throw new ArgumentNullException(nameof(tableName));
 
-		using var db = connection.CreateConnection();
+		using var db = CreateConnection(connection);
 		db.DropTable<object>(tableName, throwExceptionIfNotExists: false);
 	}
 
 	/// <inheritdoc />
 	public void Verify(DatabaseConnectionPair connection)
 	{
-		if (connection is null)
-			throw new ArgumentNullException(nameof(connection));
-
-		using var db = connection.CreateConnection();
+		using var db = CreateConnection(connection);
 		using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
 		conn.Open();
+	}
+
+	private static DataConnection CreateConnection(DatabaseConnectionPair pair)
+	{
+		if (pair is null)
+			throw new ArgumentNullException(nameof(pair));
+
+		var provider = pair.Provider;
+
+		if (provider.IsEmpty())
+			throw new InvalidOperationException("Provider is not set.");
+
+		var connStr = pair.ConnectionString;
+
+		if (connStr.IsEmpty())
+			throw new InvalidOperationException("Cannot create a connection, because some data was not entered.");
+
+		return new DataConnection(provider, connStr);
 	}
 }
 
@@ -68,15 +74,13 @@ class Linq2dbBatchInserter<T> : Disposable, IDatabaseBatchInserter<T>
 	private readonly ITable<T> _table;
 
 	public Linq2dbBatchInserter(
-		DatabaseConnectionPair connection,
+		DataConnection connection,
 		Action<IDatabaseMappingBuilder<T>> configureMapping)
 	{
-		if (connection is null)
-			throw new ArgumentNullException(nameof(connection));
+		_db = connection ?? throw new ArgumentNullException(nameof(connection));
+
 		if (configureMapping is null)
 			throw new ArgumentNullException(nameof(configureMapping));
-
-		_db = connection.CreateConnection();
 
 		var schema = _db.MappingSchema;
 		var fluentBuilder = new FluentMappingBuilder(schema);
