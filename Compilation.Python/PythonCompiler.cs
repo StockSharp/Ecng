@@ -34,7 +34,6 @@ public class PythonCompiler : ICompiler
 	}
 
 	private readonly ScriptEngine _engine;
-	private readonly Lock _syncRoot = new();
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="PythonCompiler"/> class.
@@ -52,6 +51,8 @@ public class PythonCompiler : ICompiler
 	{
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 	}
+
+	private readonly Lock _syncRoot = new();
 
 	/// <summary>
 	/// Synchronization object for thread-safe access to the engine.
