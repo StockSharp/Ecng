@@ -7,13 +7,15 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Collections;
+using Ecng.Common;
+
 /// <summary>
 /// UDP server that relays packets from a source to multicast groups.
 /// </summary>
-public class UdpServer : IDisposable
+public class UdpServer : Disposable
 {
-	private readonly Dictionary<IPEndPoint, UdpClient> _clients = new();
-	private bool _isDisposed;
+	private readonly Dictionary<IPEndPoint, UdpClient> _clients = [];
 
 	/// <summary>
 	/// Replays packets from the source to the configured multicast groups.
@@ -59,7 +61,7 @@ public class UdpServer : IDisposable
 		DateTime? lastPacketTime = null;
 		var random = new Random();
 
-		await foreach (var (targetDest, payload, packetTime) in packetSource.GetPacketsAsync(cancellationToken))
+		await foreach (var (targetDest, payload, packetTime) in packetSource.GetPacketsAsync().WithEnforcedCancellation(cancellationToken))
 		{
 			if (!clients.TryGetValue(targetDest, out var t))
 				continue;
@@ -115,14 +117,12 @@ public class UdpServer : IDisposable
 	}
 
 	/// <inheritdoc />
-	public void Dispose()
+	protected override void DisposeManaged()
 	{
-		if (_isDisposed)
+		if (IsDisposed)
 			return;
 
-		_isDisposed = true;
-
-		foreach (var client in _clients.Values)
+		foreach (var (_, client) in _clients.CopyAndClear())
 		{
 			try
 			{
@@ -135,6 +135,6 @@ public class UdpServer : IDisposable
 			}
 		}
 
-		_clients.Clear();
+		base.DisposeManaged();
 	}
 }

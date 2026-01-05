@@ -155,6 +155,9 @@ public static class NetworkHelper
 		if (socket is null)
 			throw new ArgumentNullException(nameof(socket));
 
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
 		if (address.SourceAddress is null)
 			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
 		else
@@ -183,6 +186,9 @@ public static class NetworkHelper
 	{
 		if (socket is null)
 			throw new ArgumentNullException(nameof(socket));
+
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
 
 		if (address.SourceAddress is null)
 			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropMembership, new MulticastOption(address.GroupAddress));

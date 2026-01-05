@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
 using Ecng.Net;
 
 /// <summary>
@@ -96,7 +97,7 @@ public interface IUdpSocketFactory
 /// <summary>
 /// Default implementation using real <see cref="Socket"/>.
 /// </summary>
-public class RealUdpSocket : IUdpSocket
+public class RealUdpSocket : Disposable, IUdpSocket
 {
 	private readonly Socket _socket;
 
@@ -105,7 +106,7 @@ public class RealUdpSocket : IUdpSocket
 	/// </summary>
 	public RealUdpSocket()
 	{
-		_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		_socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 	}
 
 	/// <inheritdoc />
@@ -132,7 +133,8 @@ public class RealUdpSocket : IUdpSocket
 	public async ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
 	{
 		var result = await _socket.ReceiveFromAsync(buffer, socketFlags, remoteEndPoint, cancellationToken);
-		return new SocketReceiveFromResult
+
+		return new()
 		{
 			ReceivedBytes = result.ReceivedBytes,
 			RemoteEndPoint = result.RemoteEndPoint
@@ -140,7 +142,11 @@ public class RealUdpSocket : IUdpSocket
 	}
 
 	/// <inheritdoc />
-	public void Dispose() => _socket.Dispose();
+	protected override void DisposeManaged()
+	{
+		_socket.Dispose();
+		base.DisposeManaged();
+	}
 }
 
 /// <summary>

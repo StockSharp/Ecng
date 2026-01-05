@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Interface for providing UDP packets for replay or testing.
@@ -15,37 +14,33 @@ public interface IUdpPacketSource
 	/// <summary>
 	/// Gets packets asynchronously.
 	/// </summary>
-	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>Async enumerable of packets with endpoint, payload, and timestamp.</returns>
-	IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync(CancellationToken cancellationToken);
+	IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync();
 }
 
 /// <summary>
 /// In-memory packet source for testing.
 /// </summary>
-public class MemoryPacketSource : IUdpPacketSource
+/// <remarks>
+/// Initializes a new instance.
+/// </remarks>
+/// <param name="packets">The packets to provide.</param>
+public class MemoryPacketSource(IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> packets) : IUdpPacketSource
 {
-	private readonly IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> _packets;
-
-	/// <summary>
-	/// Initializes a new instance.
-	/// </summary>
-	/// <param name="packets">The packets to provide.</param>
-	public MemoryPacketSource(IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> packets)
-	{
-		_packets = packets ?? throw new ArgumentNullException(nameof(packets));
-	}
+	private readonly IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> _packets = packets ?? throw new ArgumentNullException(nameof(packets));
 
 	/// <inheritdoc />
-	public async IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync(
-		[EnumeratorCancellation] CancellationToken cancellationToken)
+	public IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync()
 	{
-		foreach (var packet in _packets)
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			yield return (packet.EndPoint, packet.Payload, packet.PacketTime);
-		}
+		return Impl();
 
-		await Task.CompletedTask;
+		async IAsyncEnumerable<(IPEndPoint, Memory<byte>, DateTime)> Impl([EnumeratorCancellation]CancellationToken cancellationToken = default)
+		{
+			foreach (var packet in _packets)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				yield return (packet.EndPoint, packet.Payload, packet.PacketTime);
+			}
+		}
 	}
 }

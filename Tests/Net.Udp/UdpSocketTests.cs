@@ -1,13 +1,9 @@
 namespace Ecng.Tests.Net.Udp;
 
-using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Ecng.Net.Udp;
-using Ecng.UnitTesting;
 
 [TestClass]
 public class UdpSocketTests : BaseTestClass
@@ -37,7 +33,7 @@ public class UdpSocketTests : BaseTestClass
 	[TestMethod]
 	public void RealUdpSocketFactory_CreatesSockets()
 	{
-		var factory = RealUdpSocketFactory.Instance;
+		var factory = new RealUdpSocketFactory();
 		IsNotNull(factory);
 
 		using var socket1 = factory.Create();

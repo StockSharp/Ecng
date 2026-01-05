@@ -1,14 +1,8 @@
 namespace Ecng.Tests.Net.Udp;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Ecng.Net.Udp;
-using Ecng.UnitTesting;
 
 [TestClass]
 public class PacketSourceTests : BaseTestClass
@@ -28,7 +22,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var received = new List<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)>();
-		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
 		{
 			received.Add(packet);
 		}
@@ -54,7 +48,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var count = 0;
-		await foreach (var _ in source.GetPacketsAsync(CancellationToken))
+		await foreach (var _ in source.GetPacketsAsync().WithCancellation(CancellationToken))
 		{
 			count++;
 		}
@@ -81,7 +75,7 @@ public class PacketSourceTests : BaseTestClass
 		var received = 0;
 		try
 		{
-			await foreach (var _ in source.GetPacketsAsync(cts.Token))
+			await foreach (var _ in source.GetPacketsAsync().WithCancellation(cts.Token))
 			{
 				received++;
 				if (received == 1)
@@ -122,7 +116,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var times = new List<DateTime>();
-		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
 		{
 			times.Add(packet.PacketTime);
 		}
@@ -152,7 +146,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var endpoints = new List<IPEndPoint>();
-		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
 		{
 			endpoints.Add(packet.EndPoint);
 		}
