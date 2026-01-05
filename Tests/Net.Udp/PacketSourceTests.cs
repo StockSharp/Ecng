@@ -2,7 +2,7 @@ namespace Ecng.Tests.Net.Udp;
 
 using System.Net;
 
-using Ecng.Net.Udp;
+using Ecng.Net;
 
 [TestClass]
 public class PacketSourceTests : BaseTestClass

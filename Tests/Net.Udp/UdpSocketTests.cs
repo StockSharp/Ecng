@@ -3,7 +3,7 @@ namespace Ecng.Tests.Net.Udp;
 using System.Net;
 using System.Net.Sockets;
 
-using Ecng.Net.Udp;
+using Ecng.Net;
 
 [TestClass]
 public class UdpSocketTests : BaseTestClass

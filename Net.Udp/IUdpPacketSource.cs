@@ -1,4 +1,4 @@
-namespace Ecng.Net.Udp;
+namespace Ecng.Net;
 
 using System;
 using System.Collections.Generic;
