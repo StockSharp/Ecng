@@ -15,7 +15,6 @@
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
     <PackageReference Include="SixLabors.ImageSharp" Version="$(ImageSharpVer)" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MsSqlClientVer)" />
-    <PackageReference Include="SharpPcap" Version="$(SharpPcapVer)" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
