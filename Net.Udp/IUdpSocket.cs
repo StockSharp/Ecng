@@ -148,11 +148,6 @@ public class RealUdpSocket : IUdpSocket
 /// </summary>
 public class RealUdpSocketFactory : IUdpSocketFactory
 {
-	/// <summary>
-	/// Singleton instance.
-	/// </summary>
-	public static readonly RealUdpSocketFactory Instance = new();
-
 	/// <inheritdoc />
 	public IUdpSocket Create() => new RealUdpSocket();
 }
