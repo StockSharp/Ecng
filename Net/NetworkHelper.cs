@@ -3,13 +3,14 @@ namespace Ecng.Net;
 using System.Collections;
 using System.Collections.Specialized;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
-
 using System.Diagnostics;
 
 /// <summary>
@@ -587,6 +588,41 @@ public static class NetworkHelper
 	/// <param name="address">The IPAddress to check.</param>
 	/// <returns><c>true</c> if the IPAddress is loopback; otherwise, <c>false</c>.</returns>
 	public static bool IsLoopback(this IPAddress address) => IPAddress.IsLoopback(address);
+
+	/// <summary>
+	/// Determines whether the specified <see cref="IPAddress"/> is an IPv4 multicast address.
+	/// IPv4 multicast addresses are in the range 224.0.0.0 - 239.255.255.255.
+	/// </summary>
+	/// <param name="address">The IP address to check.</param>
+	/// <returns><c>true</c> if the address is an IPv4 multicast address; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="address"/> is <c>null</c>.</exception>
+	public static bool IsIPv4Multicast(this IPAddress address)
+	{
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
+		if (address.AddressFamily != AddressFamily.InterNetwork)
+			return false;
+
+		var bytes = address.GetAddressBytes();
+		// IPv4 multicast: 224.0.0.0 - 239.255.255.255
+		return bytes.Length == 4 && bytes[0] >= 224 && bytes[0] <= 239;
+	}
+
+	/// <summary>
+	/// Determines whether the specified <see cref="IPAddress"/> is a multicast address (IPv4 or IPv6).
+	/// </summary>
+	/// <param name="address">The IP address to check.</param>
+	/// <returns><c>true</c> if the address is a multicast address; otherwise, <c>false</c>.</returns>
+	public static bool IsMulticastAddress(this IPAddress address)
+	{
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
+		return address.AddressFamily == AddressFamily.InterNetworkV6
+			? address.IsIPv6Multicast
+			: address.IsIPv4Multicast();
+	}
 
 	/// <summary>
 	/// Computes the Gravatar token for the specified email.
