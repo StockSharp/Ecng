@@ -16,7 +16,6 @@ using Ecng.Common;
 public class UdpServer : Disposable
 {
 	private readonly ConcurrentDictionary<IPEndPoint, UdpClient> _clients = new();
-	private readonly object _syncRoot = new();
 
 	/// <summary>
 	/// Replays packets from the source to the configured multicast groups.
@@ -63,7 +62,7 @@ public class UdpServer : Disposable
 			var random = new Random();
 			double accumulatedDelay = 0;
 
-			await foreach (var (targetDest, payload, packetTime) in packetSource.GetPacketsAsync(cancellationToken).WithCancellation(cancellationToken))
+			await foreach (var (targetDest, payload, packetTime) in packetSource.GetPacketsAsync().WithCancellation(cancellationToken))
 			{
 				if (!clients.TryGetValue(targetDest, out var t))
 					continue;
@@ -130,30 +129,12 @@ public class UdpServer : Disposable
 		{
 			var client = new UdpClient(ep.AddressFamily);
 
-			if (IsMulticastAddress(ep.Address))
+			if (ep.Address.IsMulticastAddress())
 				client.JoinMulticastGroup(ep.Address);
 
 			trackNewClients?.Add(client);
 			return client;
 		});
-	}
-
-	/// <summary>
-	/// Checks if the given IP address is a multicast address.
-	/// </summary>
-	/// <param name="address">The IP address to check.</param>
-	/// <returns>True if the address is a multicast address.</returns>
-	public static bool IsMulticastAddress(IPAddress address)
-	{
-		if (address is null)
-			throw new ArgumentNullException(nameof(address));
-
-		if (address.AddressFamily == AddressFamily.InterNetworkV6)
-			return address.IsIPv6Multicast;
-
-		var bytes = address.GetAddressBytes();
-		// IPv4 multicast: 224.0.0.0 - 239.255.255.255
-		return bytes.Length == 4 && bytes[0] >= 224 && bytes[0] <= 239;
 	}
 
 	/// <inheritdoc />
