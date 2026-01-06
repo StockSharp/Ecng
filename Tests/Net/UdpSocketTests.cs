@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net.Udp;
+namespace Ecng.Tests.Net;
 
 using System.Net;
 using System.Net.Sockets;
@@ -78,7 +78,7 @@ public class UdpSocketTests : BaseTestClass
 	[TestMethod]
 	public void RealUdpSocketFactory_CreatesSockets_IPv4()
 	{
-		var factory = new RealUdpSocketFactory();
+		IUdpSocketFactory factory = new RealUdpSocketFactory();
 		IsNotNull(factory);
 
 		using var socket1 = factory.Create();
@@ -92,7 +92,7 @@ public class UdpSocketTests : BaseTestClass
 	[TestMethod]
 	public void RealUdpSocketFactory_CreatesSockets_IPv6()
 	{
-		var factory = new RealUdpSocketFactory();
+		IUdpSocketFactory factory = new RealUdpSocketFactory();
 
 		using var socket = factory.Create(AddressFamily.InterNetworkV6);
 		IsNotNull(socket);
@@ -181,7 +181,7 @@ public class UdpSocketTests : BaseTestClass
 	{
 		// Arrange & Act
 		var endpoint = new IPEndPoint(IPAddress.Loopback, 1234);
-		var result = new UdpReceiveFromResult
+		var result = new SocketReceiveFromResult
 		{
 			ReceivedBytes = 100,
 			RemoteEndPoint = endpoint

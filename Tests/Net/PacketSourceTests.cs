@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net.Udp;
+namespace Ecng.Tests.Net;
 
 using System.Net;
 
@@ -13,9 +13,9 @@ public class PacketSourceTests : BaseTestClass
 		// Arrange
 		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
 		{
-			(new IPEndPoint(IPAddress.Parse("224.0.0.1"), 5000), new byte[] { 1, 2, 3 }, DateTime.UtcNow),
-			(new IPEndPoint(IPAddress.Parse("224.0.0.1"), 5000), new byte[] { 4, 5 }, DateTime.UtcNow.AddSeconds(1)),
-			(new IPEndPoint(IPAddress.Parse("224.0.0.2"), 5001), new byte[] { 6 }, DateTime.UtcNow.AddSeconds(2)),
+			(new IPEndPoint("224.0.0.1".To<IPAddress>(), 5000), new byte[] { 1, 2, 3 }, DateTime.UtcNow),
+			(new IPEndPoint("224.0.0.1".To<IPAddress>(), 5000), new byte[] { 4, 5 }, DateTime.UtcNow.AddSeconds(1)),
+			(new IPEndPoint("224.0.0.2".To<IPAddress>(), 5001), new byte[] { 6 }, DateTime.UtcNow.AddSeconds(2)),
 		};
 
 		var source = new MemoryPacketSource(packets);
@@ -165,9 +165,9 @@ public class PacketSourceTests : BaseTestClass
 	public async Task MemoryPacketSource_PreservesEndpoints()
 	{
 		// Arrange
-		var ep1 = new IPEndPoint(IPAddress.Parse("239.1.1.1"), 10000);
-		var ep2 = new IPEndPoint(IPAddress.Parse("239.1.1.2"), 10001);
-		var ep3 = new IPEndPoint(IPAddress.Parse("239.1.1.3"), 10002);
+		var ep1 = new IPEndPoint("239.1.1.1".To<IPAddress>(), 10000);
+		var ep2 = new IPEndPoint("239.1.1.2".To<IPAddress>(), 10001);
+		var ep3 = new IPEndPoint("239.1.1.3".To<IPAddress>(), 10002);
 
 		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
 		{

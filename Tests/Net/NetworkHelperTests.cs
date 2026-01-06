@@ -123,7 +123,7 @@ public class NetworkHelperTests : BaseTestClass
 	[TestMethod]
 	public void EndPoint_HostPort_Setters()
 	{
-		var ip = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080);
+		var ip = new IPEndPoint("127.0.0.1".To<IPAddress>(), 8080);
 		ip.GetHost().AssertEqual("127.0.0.1");
 		ip.GetPort().AssertEqual(8080);
 
@@ -244,7 +244,7 @@ public class NetworkHelperTests : BaseTestClass
 	{
 		"95.31.174.147".To<IPAddress>().IsInSubnet("95.31.0.0/16").AssertTrue();
 
-		var addr6 = IPAddress.Parse("2001:db8::1");
+		var addr6 = "2001:db8::1".To<IPAddress>();
 		// mask with different family should return false
 		addr6.IsInSubnet("192.168.0.0/16").AssertFalse();
 	}
@@ -475,34 +475,34 @@ public class NetworkHelperTests : BaseTestClass
 	public void TryParseClientIpHeader_SimpleIPv4()
 	{
 		NetworkHelper.TryParseClientIpHeader("192.168.1.1", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 	}
 
 	[TestMethod]
 	public void TryParseClientIpHeader_IPv4WithPort()
 	{
 		NetworkHelper.TryParseClientIpHeader("192.168.1.1:8080", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 	}
 
 	[TestMethod]
 	public void TryParseClientIpHeader_SimpleIPv6()
 	{
 		NetworkHelper.TryParseClientIpHeader("::1", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("::1"));
+		ip.AssertEqual("::1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("2001:db8::1", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("2001:db8::1"));
+		ip.AssertEqual("2001:db8::1".To<IPAddress>());
 	}
 
 	[TestMethod]
 	public void TryParseClientIpHeader_IPv6WithBracketsAndPort()
 	{
 		NetworkHelper.TryParseClientIpHeader("[::1]:8080", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("::1"));
+		ip.AssertEqual("::1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("[2001:db8::1]:443", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("2001:db8::1"));
+		ip.AssertEqual("2001:db8::1".To<IPAddress>());
 	}
 
 	[TestMethod]
@@ -510,10 +510,10 @@ public class NetworkHelperTests : BaseTestClass
 	{
 		// Should take the first IP
 		NetworkHelper.TryParseClientIpHeader("192.168.1.1, 10.0.0.1, 172.16.0.1", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("  203.0.113.50  ,  70.41.3.18  ", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("203.0.113.50"));
+		ip.AssertEqual("203.0.113.50".To<IPAddress>());
 	}
 
 	[TestMethod]
@@ -521,23 +521,23 @@ public class NetworkHelperTests : BaseTestClass
 	{
 		// RFC 7239 Forwarded header format
 		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1;proto=https", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("for=192.168.1.1;proto=https;by=10.0.0.1", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 	}
 
 	[TestMethod]
 	public void TryParseClientIpHeader_QuotedValues()
 	{
 		NetworkHelper.TryParseClientIpHeader("\"192.168.1.1\"", out var ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 
 		NetworkHelper.TryParseClientIpHeader("for=\"192.168.1.1\"", out ip).AssertTrue();
-		ip.AssertEqual(IPAddress.Parse("192.168.1.1"));
+		ip.AssertEqual("192.168.1.1".To<IPAddress>());
 	}
 
 	[TestMethod]
@@ -578,37 +578,37 @@ public class NetworkHelperTests : BaseTestClass
 	public void IsMulticastAddress_IPv4_Multicast()
 	{
 		// Multicast range: 224.0.0.0 - 239.255.255.255
-		IsTrue(IPAddress.Parse("224.0.0.0").IsMulticastAddress());
-		IsTrue(IPAddress.Parse("224.0.0.1").IsMulticastAddress());
-		IsTrue(IPAddress.Parse("239.255.255.255").IsMulticastAddress());
-		IsTrue(IPAddress.Parse("230.1.2.3").IsMulticastAddress());
+		IsTrue("224.0.0.0".To<IPAddress>().IsMulticastAddress());
+		IsTrue("224.0.0.1".To<IPAddress>().IsMulticastAddress());
+		IsTrue("239.255.255.255".To<IPAddress>().IsMulticastAddress());
+		IsTrue("230.1.2.3".To<IPAddress>().IsMulticastAddress());
 	}
 
 	[TestMethod]
 	public void IsMulticastAddress_IPv4_NotMulticast()
 	{
-		IsFalse(IPAddress.Parse("223.255.255.255").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("240.0.0.0").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("127.0.0.1").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("192.168.1.1").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("10.0.0.1").IsMulticastAddress());
+		IsFalse("223.255.255.255".To<IPAddress>().IsMulticastAddress());
+		IsFalse("240.0.0.0".To<IPAddress>().IsMulticastAddress());
+		IsFalse("127.0.0.1".To<IPAddress>().IsMulticastAddress());
+		IsFalse("192.168.1.1".To<IPAddress>().IsMulticastAddress());
+		IsFalse("10.0.0.1".To<IPAddress>().IsMulticastAddress());
 	}
 
 	[TestMethod]
 	public void IsMulticastAddress_IPv6_Multicast()
 	{
 		// IPv6 multicast addresses start with ff
-		IsTrue(IPAddress.Parse("ff02::1").IsMulticastAddress());
-		IsTrue(IPAddress.Parse("ff05::1").IsMulticastAddress());
-		IsTrue(IPAddress.Parse("ff0e::1").IsMulticastAddress());
+		IsTrue("ff02::1".To<IPAddress>().IsMulticastAddress());
+		IsTrue("ff05::1".To<IPAddress>().IsMulticastAddress());
+		IsTrue("ff0e::1".To<IPAddress>().IsMulticastAddress());
 	}
 
 	[TestMethod]
 	public void IsMulticastAddress_IPv6_NotMulticast()
 	{
-		IsFalse(IPAddress.Parse("::1").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("fe80::1").IsMulticastAddress());
-		IsFalse(IPAddress.Parse("2001:db8::1").IsMulticastAddress());
+		IsFalse("::1".To<IPAddress>().IsMulticastAddress());
+		IsFalse("fe80::1".To<IPAddress>().IsMulticastAddress());
+		IsFalse("2001:db8::1".To<IPAddress>().IsMulticastAddress());
 	}
 
 	[TestMethod]

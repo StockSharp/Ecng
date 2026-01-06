@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net.Udp;
+namespace Ecng.Tests.Net;
 
 using System.Collections.Concurrent;
 using System.Net;
@@ -42,7 +42,7 @@ public class UdpServerTests : BaseTestClass
 		using var server = new UdpServer();
 		var groups = new Dictionary<IPEndPoint, double>
 		{
-			{ new IPEndPoint(IPAddress.Parse("239.0.0.1"), 5000), 0 }
+			{ new IPEndPoint("239.0.0.1".To < IPAddress >(), 5000), 0 }
 		};
 
 		await ThrowsAsync<ArgumentNullException>(
@@ -56,7 +56,7 @@ public class UdpServerTests : BaseTestClass
 		var source = new MemoryPacketSource([]);
 		var groups = new Dictionary<IPEndPoint, double>
 		{
-			{ new IPEndPoint(IPAddress.Parse("239.0.0.1"), 5000), 0 }
+			{ new IPEndPoint("239.0.0.1".To < IPAddress >(), 5000), 0 }
 		};
 
 		await ThrowsAsync<ArgumentOutOfRangeException>(
@@ -106,12 +106,12 @@ public class UdpServerTests : BaseTestClass
 
 		var groupsNegative = new Dictionary<IPEndPoint, double>
 		{
-			{ new IPEndPoint(IPAddress.Parse("239.0.0.1"), 5000), -0.1 }
+			{ new IPEndPoint("239.0.0.1".To<IPAddress>(), 5000), -0.1 }
 		};
 
 		var groupsOver1 = new Dictionary<IPEndPoint, double>
 		{
-			{ new IPEndPoint(IPAddress.Parse("239.0.0.1"), 5000), 1.1 }
+			{ new IPEndPoint("239.0.0.1".To<IPAddress>(), 5000), 1.1 }
 		};
 
 		await ThrowsAsync<ArgumentOutOfRangeException>(

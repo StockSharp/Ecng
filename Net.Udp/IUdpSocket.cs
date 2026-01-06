@@ -9,22 +9,6 @@ using System.Threading.Tasks;
 using Ecng.Common;
 
 /// <summary>
-/// Result of UDP ReceiveFromAsync operation.
-/// </summary>
-public readonly struct UdpReceiveFromResult
-{
-	/// <summary>
-	/// The number of bytes received.
-	/// </summary>
-	public int ReceivedBytes { get; init; }
-
-	/// <summary>
-	/// The remote endpoint from which the data was received.
-	/// </summary>
-	public EndPoint RemoteEndPoint { get; init; }
-}
-
-/// <summary>
 /// Interface for UDP socket operations, enabling testing without real network.
 /// </summary>
 public interface IUdpSocket : IDisposable
@@ -78,20 +62,7 @@ public interface IUdpSocket : IDisposable
 	/// <param name="remoteEndPoint">The remote endpoint to receive from.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The result containing received bytes and remote endpoint.</returns>
-	ValueTask<UdpReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken);
-}
-
-/// <summary>
-/// Factory for creating UDP sockets.
-/// </summary>
-public interface IUdpSocketFactory
-{
-	/// <summary>
-	/// Creates a new UDP socket.
-	/// </summary>
-	/// <param name="addressFamily">The address family (IPv4 or IPv6).</param>
-	/// <returns>The UDP socket.</returns>
-	IUdpSocket Create(AddressFamily addressFamily = AddressFamily.InterNetwork);
+	ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -164,7 +135,7 @@ public class RealUdpSocket : Disposable, IUdpSocket
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<UdpReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
+	public async ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
 		var result = await _socket.ReceiveFromAsync(buffer, socketFlags, remoteEndPoint, cancellationToken);
@@ -182,14 +153,4 @@ public class RealUdpSocket : Disposable, IUdpSocket
 		_socket.Dispose();
 		base.DisposeManaged();
 	}
-}
-
-/// <summary>
-/// Default factory creating real sockets.
-/// </summary>
-public class RealUdpSocketFactory : IUdpSocketFactory
-{
-	/// <inheritdoc />
-	public IUdpSocket Create(AddressFamily addressFamily = AddressFamily.InterNetwork)
-		=> new RealUdpSocket(addressFamily);
 }
