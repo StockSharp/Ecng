@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Interface for providing UDP packets for replay or testing.
@@ -14,8 +15,9 @@ public interface IUdpPacketSource
 	/// <summary>
 	/// Gets packets asynchronously.
 	/// </summary>
+	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Async enumerable of packets with endpoint, payload, and timestamp.</returns>
-	IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync();
+	IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -30,17 +32,21 @@ public class MemoryPacketSource(IReadOnlyList<(IPEndPoint EndPoint, byte[] Paylo
 	private readonly IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> _packets = packets ?? throw new ArgumentNullException(nameof(packets));
 
 	/// <inheritdoc />
-	public IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync()
+	public IAsyncEnumerable<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)> GetPacketsAsync(CancellationToken cancellationToken = default)
 	{
-		return Impl();
+		return Enumerate(_packets, cancellationToken);
 
-		async IAsyncEnumerable<(IPEndPoint, Memory<byte>, DateTime)> Impl([EnumeratorCancellation]CancellationToken cancellationToken = default)
+		static async IAsyncEnumerable<(IPEndPoint, Memory<byte>, DateTime)> Enumerate(
+			IReadOnlyList<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)> packets,
+			[EnumeratorCancellation] CancellationToken cancellationToken)
 		{
-			foreach (var packet in _packets)
+			foreach (var packet in packets)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				yield return (packet.EndPoint, packet.Payload, packet.PacketTime);
 			}
+
+			await Task.CompletedTask; // Satisfy async requirement
 		}
 	}
 }

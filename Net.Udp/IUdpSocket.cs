@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 using Ecng.Common;
 
 /// <summary>
-/// Result of ReceiveFromAsync operation.
+/// Result of UDP ReceiveFromAsync operation.
 /// </summary>
-public readonly struct SocketReceiveFromResult
+public readonly struct UdpReceiveFromResult
 {
 	/// <summary>
 	/// The number of bytes received.
@@ -78,7 +78,7 @@ public interface IUdpSocket : IDisposable
 	/// <param name="remoteEndPoint">The remote endpoint to receive from.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The result containing received bytes and remote endpoint.</returns>
-	ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken);
+	ValueTask<UdpReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -89,8 +89,9 @@ public interface IUdpSocketFactory
 	/// <summary>
 	/// Creates a new UDP socket.
 	/// </summary>
+	/// <param name="addressFamily">The address family (IPv4 or IPv6).</param>
 	/// <returns>The UDP socket.</returns>
-	IUdpSocket Create();
+	IUdpSocket Create(AddressFamily addressFamily = AddressFamily.InterNetwork);
 }
 
 /// <summary>
@@ -101,36 +102,71 @@ public class RealUdpSocket : Disposable, IUdpSocket
 	private readonly Socket _socket;
 
 	/// <summary>
-	/// Initializes a new instance.
+	/// Initializes a new instance for IPv4.
 	/// </summary>
 	public RealUdpSocket()
+		: this(AddressFamily.InterNetwork)
 	{
-		_socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+	}
+
+	/// <summary>
+	/// Initializes a new instance with specified address family.
+	/// </summary>
+	/// <param name="addressFamily">The address family (IPv4 or IPv6).</param>
+	public RealUdpSocket(AddressFamily addressFamily)
+	{
+		if (addressFamily != AddressFamily.InterNetwork && addressFamily != AddressFamily.InterNetworkV6)
+			throw new ArgumentOutOfRangeException(nameof(addressFamily), "Only IPv4 and IPv6 are supported");
+
+		_socket = new(addressFamily, SocketType.Dgram, ProtocolType.Udp);
 	}
 
 	/// <inheritdoc />
-	public void Bind(EndPoint localEP) => _socket.Bind(localEP);
+	public void Bind(EndPoint localEP)
+	{
+		ThrowIfDisposed();
+		_socket.Bind(localEP);
+	}
 
 	/// <inheritdoc />
 	public void SetSocketOption(SocketOptionLevel optionLevel, SocketOptionName optionName, bool optionValue)
-		=> _socket.SetSocketOption(optionLevel, optionName, optionValue);
+	{
+		ThrowIfDisposed();
+		_socket.SetSocketOption(optionLevel, optionName, optionValue);
+	}
 
 	/// <inheritdoc />
-	public void JoinMulticast(MulticastSourceAddress address) => _socket.JoinMulticast(address);
+	public void JoinMulticast(MulticastSourceAddress address)
+	{
+		ThrowIfDisposed();
+		_socket.JoinMulticast(address);
+	}
 
 	/// <inheritdoc />
-	public void LeaveMulticast(MulticastSourceAddress address) => _socket.LeaveMulticast(address);
+	public void LeaveMulticast(MulticastSourceAddress address)
+	{
+		ThrowIfDisposed();
+		_socket.LeaveMulticast(address);
+	}
 
 	/// <inheritdoc />
-	public void LeaveMulticast(IPAddress groupAddress) => _socket.LeaveMulticast(groupAddress);
+	public void LeaveMulticast(IPAddress groupAddress)
+	{
+		ThrowIfDisposed();
+		_socket.LeaveMulticast(groupAddress);
+	}
 
 	/// <inheritdoc />
 	public ValueTask<int> ReceiveAsync(Memory<byte> buffer, SocketFlags socketFlags, CancellationToken cancellationToken)
-		=> _socket.ReceiveAsync(buffer, socketFlags, cancellationToken);
+	{
+		ThrowIfDisposed();
+		return _socket.ReceiveAsync(buffer, socketFlags, cancellationToken);
+	}
 
 	/// <inheritdoc />
-	public async ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
+	public async ValueTask<UdpReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
 	{
+		ThrowIfDisposed();
 		var result = await _socket.ReceiveFromAsync(buffer, socketFlags, remoteEndPoint, cancellationToken);
 
 		return new()
@@ -154,5 +190,6 @@ public class RealUdpSocket : Disposable, IUdpSocket
 public class RealUdpSocketFactory : IUdpSocketFactory
 {
 	/// <inheritdoc />
-	public IUdpSocket Create() => new RealUdpSocket();
+	public IUdpSocket Create(AddressFamily addressFamily = AddressFamily.InterNetwork)
+		=> new RealUdpSocket(addressFamily);
 }

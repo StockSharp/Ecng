@@ -22,7 +22,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var received = new List<(IPEndPoint EndPoint, Memory<byte> Payload, DateTime PacketTime)>();
-		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
 		{
 			received.Add(packet);
 		}
@@ -48,7 +48,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var count = 0;
-		await foreach (var _ in source.GetPacketsAsync().WithCancellation(CancellationToken))
+		await foreach (var _ in source.GetPacketsAsync(CancellationToken))
 		{
 			count++;
 		}
@@ -58,7 +58,41 @@ public class PacketSourceTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task MemoryPacketSource_RespectsCancellation()
+	public async Task MemoryPacketSource_RespectsCancellation_ViaParameter()
+	{
+		// Arrange
+		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
+		{
+			(new IPEndPoint(IPAddress.Loopback, 5000), new byte[] { 1 }, DateTime.UtcNow),
+			(new IPEndPoint(IPAddress.Loopback, 5000), new byte[] { 2 }, DateTime.UtcNow),
+			(new IPEndPoint(IPAddress.Loopback, 5000), new byte[] { 3 }, DateTime.UtcNow),
+		};
+
+		var source = new MemoryPacketSource(packets);
+		var cts = new CancellationTokenSource();
+
+		// Act
+		var received = 0;
+		try
+		{
+			await foreach (var _ in source.GetPacketsAsync(cts.Token))
+			{
+				received++;
+				if (received == 1)
+					cts.Cancel();
+			}
+		}
+		catch (OperationCanceledException)
+		{
+			// Expected
+		}
+
+		// Assert - should have received at least 1 but not all
+		AreEqual(1, received);
+	}
+
+	[TestMethod]
+	public async Task MemoryPacketSource_RespectsCancellation_ViaWithCancellation()
 	{
 		// Arrange
 		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
@@ -116,7 +150,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var times = new List<DateTime>();
-		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
 		{
 			times.Add(packet.PacketTime);
 		}
@@ -146,7 +180,7 @@ public class PacketSourceTests : BaseTestClass
 
 		// Act
 		var endpoints = new List<IPEndPoint>();
-		await foreach (var packet in source.GetPacketsAsync().WithCancellation(CancellationToken))
+		await foreach (var packet in source.GetPacketsAsync(CancellationToken))
 		{
 			endpoints.Add(packet.EndPoint);
 		}
@@ -155,5 +189,30 @@ public class PacketSourceTests : BaseTestClass
 		AreEqual(ep1, endpoints[0]);
 		AreEqual(ep2, endpoints[1]);
 		AreEqual(ep3, endpoints[2]);
+	}
+
+	[TestMethod]
+	public async Task MemoryPacketSource_CanBeEnumeratedMultipleTimes()
+	{
+		// Arrange
+		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
+		{
+			(new IPEndPoint(IPAddress.Loopback, 5000), new byte[] { 1, 2, 3 }, DateTime.UtcNow),
+		};
+
+		var source = new MemoryPacketSource(packets);
+
+		// Act - enumerate twice
+		var count1 = 0;
+		await foreach (var _ in source.GetPacketsAsync(CancellationToken))
+			count1++;
+
+		var count2 = 0;
+		await foreach (var _ in source.GetPacketsAsync(CancellationToken))
+			count2++;
+
+		// Assert
+		AreEqual(1, count1);
+		AreEqual(1, count2);
 	}
 }

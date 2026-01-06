@@ -1,5 +1,6 @@
 namespace Ecng.Tests.Net.Udp;
 
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
@@ -63,6 +64,38 @@ public class UdpServerTests : BaseTestClass
 
 		await ThrowsAsync<ArgumentOutOfRangeException>(
 			() => server.ReplayAsync(groups, source, -1, CancellationToken).AsTask());
+
+		await ThrowsAsync<ArgumentOutOfRangeException>(
+			() => server.ReplayAsync(groups, source, -0.5, CancellationToken).AsTask());
+	}
+
+	[TestMethod]
+	public async Task UdpServer_ReplayAsync_AcceptsFractionalSpeed()
+	{
+		// Arrange
+		var port = GetAvailablePort();
+		var endpoint = new IPEndPoint(IPAddress.Loopback, port);
+
+		using var receiver = new UdpClient(port);
+		using var server = new UdpServer();
+
+		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
+		{
+			(endpoint, new byte[] { 1 }, DateTime.UtcNow),
+		};
+
+		var source = new MemoryPacketSource(packets);
+		var groups = new Dictionary<IPEndPoint, double> { { endpoint, 0 } };
+
+		// Act - should not throw with fractional speed
+		var receiveTask = receiver.ReceiveAsync(CancellationToken);
+		await Task.Delay(50);
+		await server.ReplayAsync(groups, source, 0.5, CancellationToken);
+
+		var received = await receiveTask;
+
+		// Assert
+		AreEqual(1, received.Buffer.Length);
 	}
 
 	[TestMethod]
@@ -121,6 +154,51 @@ public class UdpServerTests : BaseTestClass
 		AreEqual((byte)0xAA, received.Buffer[0]);
 		AreEqual((byte)0xBB, received.Buffer[1]);
 		AreEqual((byte)0xCC, received.Buffer[2]);
+	}
+
+	[TestMethod]
+	public async Task UdpServer_SendAsync_ConcurrentCalls_NoRaceCondition()
+	{
+		// Arrange
+		var port = GetAvailablePort();
+		var endpoint = new IPEndPoint(IPAddress.Loopback, port);
+
+		using var receiver = new UdpClient(port);
+		using var server = new UdpServer();
+
+		var receivedPackets = new ConcurrentBag<byte[]>();
+		const int packetCount = 100;
+
+		// Act - receive packets
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+		var receiveTask = Task.Run(async () =>
+		{
+			try
+			{
+				while (receivedPackets.Count < packetCount && !cts.Token.IsCancellationRequested)
+				{
+					var result = await receiver.ReceiveAsync(cts.Token);
+					receivedPackets.Add(result.Buffer);
+				}
+			}
+			catch (OperationCanceledException) { }
+		});
+
+		await Task.Delay(100);
+
+		// Send packets concurrently from multiple threads
+		var sendTasks = Enumerable.Range(0, packetCount)
+			.Select(i => Task.Run(async () =>
+			{
+				await server.SendAsync(endpoint, new byte[] { (byte)i });
+			}))
+			.ToArray();
+
+		await Task.WhenAll(sendTasks);
+		await receiveTask;
+
+		// Assert - all packets should be received without exceptions
+		AreEqual(packetCount, receivedPackets.Count);
 	}
 
 	[TestMethod]
@@ -276,6 +354,49 @@ public class UdpServerTests : BaseTestClass
 
 		// Assert - only 2 packets to known endpoint
 		AreEqual(2, receivedCount);
+	}
+
+	[TestMethod]
+	public void UdpServer_IsMulticastAddress_IPv4_Multicast()
+	{
+		// Multicast range: 224.0.0.0 - 239.255.255.255
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("224.0.0.0")));
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("224.0.0.1")));
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("239.255.255.255")));
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("230.1.2.3")));
+	}
+
+	[TestMethod]
+	public void UdpServer_IsMulticastAddress_IPv4_NotMulticast()
+	{
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("223.255.255.255")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("240.0.0.0")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("127.0.0.1")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("192.168.1.1")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("10.0.0.1")));
+	}
+
+	[TestMethod]
+	public void UdpServer_IsMulticastAddress_IPv6_Multicast()
+	{
+		// IPv6 multicast addresses start with ff
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff02::1")));
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff05::1")));
+		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff0e::1")));
+	}
+
+	[TestMethod]
+	public void UdpServer_IsMulticastAddress_IPv6_NotMulticast()
+	{
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("::1")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("fe80::1")));
+		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("2001:db8::1")));
+	}
+
+	[TestMethod]
+	public void UdpServer_IsMulticastAddress_ThrowsOnNull()
+	{
+		Throws<ArgumentNullException>(() => UdpServer.IsMulticastAddress(null));
 	}
 
 	private static int GetAvailablePort()

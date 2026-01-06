@@ -9,18 +9,40 @@ using Ecng.Net;
 public class UdpSocketTests : BaseTestClass
 {
 	[TestMethod]
-	public void RealUdpSocket_CanCreate()
+	public void RealUdpSocket_CanCreate_IPv4()
 	{
 		using var socket = new RealUdpSocket();
 		IsNotNull(socket);
 	}
 
 	[TestMethod]
-	public void RealUdpSocket_CanBind()
+	public void RealUdpSocket_CanCreate_IPv6()
+	{
+		using var socket = new RealUdpSocket(AddressFamily.InterNetworkV6);
+		IsNotNull(socket);
+	}
+
+	[TestMethod]
+	public void RealUdpSocket_ThrowsOnInvalidAddressFamily()
+	{
+		Throws<ArgumentOutOfRangeException>(() => new RealUdpSocket(AddressFamily.Unix));
+		Throws<ArgumentOutOfRangeException>(() => new RealUdpSocket(AddressFamily.AppleTalk));
+	}
+
+	[TestMethod]
+	public void RealUdpSocket_CanBind_IPv4()
 	{
 		using var socket = new RealUdpSocket();
 		// Bind to any available port
 		socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+	}
+
+	[TestMethod]
+	public void RealUdpSocket_CanBind_IPv6()
+	{
+		using var socket = new RealUdpSocket(AddressFamily.InterNetworkV6);
+		// Bind to any available port
+		socket.Bind(new IPEndPoint(IPAddress.IPv6Loopback, 0));
 	}
 
 	[TestMethod]
@@ -31,7 +53,30 @@ public class UdpSocketTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void RealUdpSocketFactory_CreatesSockets()
+	public void RealUdpSocket_ThrowsObjectDisposedException_AfterDispose()
+	{
+		var socket = new RealUdpSocket();
+		socket.Dispose();
+
+		Throws<ObjectDisposedException>(() => socket.Bind(new IPEndPoint(IPAddress.Loopback, 0)));
+		Throws<ObjectDisposedException>(() => socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true));
+	}
+
+	[TestMethod]
+	public async Task RealUdpSocket_ThrowsObjectDisposedException_OnReceiveAfterDispose()
+	{
+		var socket = new RealUdpSocket();
+		socket.Dispose();
+
+		await ThrowsAsync<ObjectDisposedException>(
+			() => socket.ReceiveAsync(new byte[1024], SocketFlags.None, CancellationToken).AsTask());
+
+		await ThrowsAsync<ObjectDisposedException>(
+			() => socket.ReceiveFromAsync(new byte[1024], SocketFlags.None, new IPEndPoint(IPAddress.Any, 0), CancellationToken).AsTask());
+	}
+
+	[TestMethod]
+	public void RealUdpSocketFactory_CreatesSockets_IPv4()
 	{
 		var factory = new RealUdpSocketFactory();
 		IsNotNull(factory);
@@ -45,22 +90,29 @@ public class UdpSocketTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RealUdpSocket_SendReceive_Loopback()
+	public void RealUdpSocketFactory_CreatesSockets_IPv6()
 	{
-		// Arrange
+		var factory = new RealUdpSocketFactory();
+
+		using var socket = factory.Create(AddressFamily.InterNetworkV6);
+		IsNotNull(socket);
+	}
+
+	[TestMethod]
+	public async Task RealUdpSocket_SendReceive_Loopback_IPv4()
+	{
+		// Arrange - get available port
+		int receiverPort;
+		using (var tempSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+		{
+			tempSocket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+			receiverPort = ((IPEndPoint)tempSocket.LocalEndPoint).Port;
+		}
+
+		// Receiver
 		using var receiver = new RealUdpSocket();
-		receiver.Bind(new IPEndPoint(IPAddress.Loopback, 0));
-
-		// Get the actual port assigned
-		using var tempSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-		tempSocket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
-		var receiverPort = ((IPEndPoint)tempSocket.LocalEndPoint).Port;
-		tempSocket.Close();
-
-		// Re-bind receiver to known port
-		using var receiver2 = new RealUdpSocket();
-		receiver2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-		receiver2.Bind(new IPEndPoint(IPAddress.Loopback, receiverPort));
+		receiver.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+		receiver.Bind(new IPEndPoint(IPAddress.Loopback, receiverPort));
 
 		// Sender
 		using var sender = new UdpClient();
@@ -70,7 +122,7 @@ public class UdpSocketTests : BaseTestClass
 		var receiveTask = Task.Run(async () =>
 		{
 			var buffer = new byte[1024];
-			var result = await receiver2.ReceiveFromAsync(buffer, SocketFlags.None, new IPEndPoint(IPAddress.Any, 0), CancellationToken);
+			var result = await receiver.ReceiveFromAsync(buffer, SocketFlags.None, new IPEndPoint(IPAddress.Any, 0), CancellationToken);
 			return (result.ReceivedBytes, buffer);
 		});
 
@@ -83,5 +135,71 @@ public class UdpSocketTests : BaseTestClass
 
 		for (int i = 0; i < testData.Length; i++)
 			AreEqual(testData[i], receivedBuffer[i]);
+	}
+
+	[TestMethod]
+	public async Task RealUdpSocket_SendReceive_Loopback_IPv6()
+	{
+		// Arrange - get available port
+		int receiverPort;
+		using (var tempSocket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp))
+		{
+			tempSocket.Bind(new IPEndPoint(IPAddress.IPv6Loopback, 0));
+			receiverPort = ((IPEndPoint)tempSocket.LocalEndPoint).Port;
+		}
+
+		// Receiver
+		using var receiver = new RealUdpSocket(AddressFamily.InterNetworkV6);
+		receiver.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+		receiver.Bind(new IPEndPoint(IPAddress.IPv6Loopback, receiverPort));
+
+		// Sender
+		using var sender = new UdpClient(AddressFamily.InterNetworkV6);
+		var testData = new byte[] { 0xAA, 0xBB, 0xCC };
+
+		// Act
+		var receiveTask = Task.Run(async () =>
+		{
+			var buffer = new byte[1024];
+			var result = await receiver.ReceiveFromAsync(buffer, SocketFlags.None, new IPEndPoint(IPAddress.IPv6Any, 0), CancellationToken);
+			return (result.ReceivedBytes, buffer);
+		});
+
+		await Task.Delay(100);
+		await sender.SendAsync(testData, new IPEndPoint(IPAddress.IPv6Loopback, receiverPort));
+
+		// Assert
+		var (receivedBytes, receivedBuffer) = await receiveTask;
+		AreEqual(testData.Length, receivedBytes);
+
+		for (int i = 0; i < testData.Length; i++)
+			AreEqual(testData[i], receivedBuffer[i]);
+	}
+
+	[TestMethod]
+	public void UdpReceiveFromResult_Properties()
+	{
+		// Arrange & Act
+		var endpoint = new IPEndPoint(IPAddress.Loopback, 1234);
+		var result = new UdpReceiveFromResult
+		{
+			ReceivedBytes = 100,
+			RemoteEndPoint = endpoint
+		};
+
+		// Assert
+		AreEqual(100, result.ReceivedBytes);
+		AreEqual(endpoint, result.RemoteEndPoint);
+	}
+
+	[TestMethod]
+	public void RealUdpSocket_CanDisposeMultipleTimes()
+	{
+		var socket = new RealUdpSocket();
+
+		// Should not throw
+		socket.Dispose();
+		socket.Dispose();
+		socket.Dispose();
 	}
 }
