@@ -32,7 +32,6 @@ public class LoggableStreamTests : BaseTestClass
 		public void LogInfo(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Info, string.Format(format, args)));
 		public void LogWarning(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Warning, string.Format(format, args)));
 		public void LogError(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Error, string.Format(format, args)));
-		public void LogError(Exception er) => this.AddErrorLog(er);
 
 		public void Dispose() { }
 	}

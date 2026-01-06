@@ -451,4 +451,12 @@ public static class LoggingHelper
 	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveErrorAndTrace(this Task task)
 		=> task.ObserveError(ex => Trace.WriteLine(ex));
+
+	/// <summary>
+	/// To record an error to the log.
+	/// </summary>
+	/// <param name="receiver">Logs receiver.</param>
+	/// <param name="exception">Error details.</param>
+	public static void LogError(this ILogReceiver receiver, Exception exception)
+		=> receiver.AddErrorLog(exception);
 }
