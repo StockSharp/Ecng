@@ -573,4 +573,47 @@ public class NetworkHelperTests : BaseTestClass
 		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.XForwardedFor).AssertTrue();
 		HttpHeaders.ClientIpHeaders.Contains(HttpHeaders.Forwarded).AssertTrue();
 	}
+
+	[TestMethod]
+	public void IsMulticastAddress_IPv4_Multicast()
+	{
+		// Multicast range: 224.0.0.0 - 239.255.255.255
+		IsTrue(IPAddress.Parse("224.0.0.0").IsMulticastAddress());
+		IsTrue(IPAddress.Parse("224.0.0.1").IsMulticastAddress());
+		IsTrue(IPAddress.Parse("239.255.255.255").IsMulticastAddress());
+		IsTrue(IPAddress.Parse("230.1.2.3").IsMulticastAddress());
+	}
+
+	[TestMethod]
+	public void IsMulticastAddress_IPv4_NotMulticast()
+	{
+		IsFalse(IPAddress.Parse("223.255.255.255").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("240.0.0.0").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("127.0.0.1").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("192.168.1.1").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("10.0.0.1").IsMulticastAddress());
+	}
+
+	[TestMethod]
+	public void IsMulticastAddress_IPv6_Multicast()
+	{
+		// IPv6 multicast addresses start with ff
+		IsTrue(IPAddress.Parse("ff02::1").IsMulticastAddress());
+		IsTrue(IPAddress.Parse("ff05::1").IsMulticastAddress());
+		IsTrue(IPAddress.Parse("ff0e::1").IsMulticastAddress());
+	}
+
+	[TestMethod]
+	public void IsMulticastAddress_IPv6_NotMulticast()
+	{
+		IsFalse(IPAddress.Parse("::1").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("fe80::1").IsMulticastAddress());
+		IsFalse(IPAddress.Parse("2001:db8::1").IsMulticastAddress());
+	}
+
+	[TestMethod]
+	public void IsMulticastAddress_ThrowsOnNull()
+	{
+		Throws<ArgumentNullException>(() => ((IPAddress)null).IsMulticastAddress());
+	}
 }

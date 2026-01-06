@@ -126,8 +126,8 @@ public class UdpSocketTests : BaseTestClass
 			return (result.ReceivedBytes, buffer);
 		});
 
-		await Task.Delay(100); // Give receiver time to start
-		await sender.SendAsync(testData, new IPEndPoint(IPAddress.Loopback, receiverPort));
+		await Task.Delay(100, CancellationToken); // Give receiver time to start
+		await sender.SendAsync(testData, new IPEndPoint(IPAddress.Loopback, receiverPort), CancellationToken);
 
 		// Assert
 		var (receivedBytes, receivedBuffer) = await receiveTask;
@@ -163,10 +163,10 @@ public class UdpSocketTests : BaseTestClass
 			var buffer = new byte[1024];
 			var result = await receiver.ReceiveFromAsync(buffer, SocketFlags.None, new IPEndPoint(IPAddress.IPv6Any, 0), CancellationToken);
 			return (result.ReceivedBytes, buffer);
-		});
+		}, CancellationToken);
 
-		await Task.Delay(100);
-		await sender.SendAsync(testData, new IPEndPoint(IPAddress.IPv6Loopback, receiverPort));
+		await Task.Delay(100, CancellationToken);
+		await sender.SendAsync(testData, new IPEndPoint(IPAddress.IPv6Loopback, receiverPort), CancellationToken);
 
 		// Assert
 		var (receivedBytes, receivedBuffer) = await receiveTask;

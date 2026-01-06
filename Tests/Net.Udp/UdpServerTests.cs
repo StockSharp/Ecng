@@ -89,7 +89,7 @@ public class UdpServerTests : BaseTestClass
 
 		// Act - should not throw with fractional speed
 		var receiveTask = receiver.ReceiveAsync(CancellationToken);
-		await Task.Delay(50);
+		await Task.Delay(50, CancellationToken);
 		await server.ReplayAsync(groups, source, 0.5, CancellationToken);
 
 		var received = await receiveTask;
@@ -127,7 +127,7 @@ public class UdpServerTests : BaseTestClass
 		using var server = new UdpServer();
 
 		await ThrowsAsync<ArgumentNullException>(
-			() => server.SendAsync(null, new byte[] { 1, 2, 3 }).AsTask());
+			() => server.SendAsync(null, new byte[] { 1, 2, 3 }, CancellationToken).AsTask());
 	}
 
 	[TestMethod]
@@ -144,8 +144,8 @@ public class UdpServerTests : BaseTestClass
 
 		// Act
 		var receiveTask = receiver.ReceiveAsync();
-		await Task.Delay(50);
-		await server.SendAsync(endpoint, testData);
+		await Task.Delay(50, CancellationToken);
+		await server.SendAsync(endpoint, testData, CancellationToken);
 
 		var received = await receiveTask.WaitAsync(CancellationToken);
 
@@ -182,16 +182,16 @@ public class UdpServerTests : BaseTestClass
 				}
 			}
 			catch (OperationCanceledException) { }
-		});
+		}, CancellationToken);
 
-		await Task.Delay(100);
+		await Task.Delay(100, CancellationToken);
 
 		// Send packets concurrently from multiple threads
 		var sendTasks = Enumerable.Range(0, packetCount)
 			.Select(i => Task.Run(async () =>
 			{
-				await server.SendAsync(endpoint, new byte[] { (byte)i });
-			}))
+				await server.SendAsync(endpoint, new byte[] { (byte)i }, CancellationToken);
+			}, CancellationToken))
 			.ToArray();
 
 		await Task.WhenAll(sendTasks);
@@ -235,9 +235,9 @@ public class UdpServerTests : BaseTestClass
 				var result = await receiver.ReceiveAsync(CancellationToken);
 				receivedPackets.Add(result.Buffer);
 			}
-		});
+		}, CancellationToken);
 
-		await Task.Delay(100);
+		await Task.Delay(100, CancellationToken);
 
 		// Replay packets
 		await server.ReplayAsync(groups, source, 100, CancellationToken); // 100x speed
@@ -295,7 +295,7 @@ public class UdpServerTests : BaseTestClass
 				}
 			}
 			catch (OperationCanceledException) { }
-		});
+		}, CancellationToken);
 
 		await server.ReplayAsync(groups, source, 1000, CancellationToken);
 		await receiveTask;
@@ -346,57 +346,14 @@ public class UdpServerTests : BaseTestClass
 				}
 			}
 			catch (OperationCanceledException) { }
-		});
+		}, CancellationToken);
 
-		await Task.Delay(100);
+		await Task.Delay(100, CancellationToken);
 		await server.ReplayAsync(groups, source, 100, CancellationToken);
 		await receiveTask;
 
 		// Assert - only 2 packets to known endpoint
 		AreEqual(2, receivedCount);
-	}
-
-	[TestMethod]
-	public void UdpServer_IsMulticastAddress_IPv4_Multicast()
-	{
-		// Multicast range: 224.0.0.0 - 239.255.255.255
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("224.0.0.0")));
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("224.0.0.1")));
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("239.255.255.255")));
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("230.1.2.3")));
-	}
-
-	[TestMethod]
-	public void UdpServer_IsMulticastAddress_IPv4_NotMulticast()
-	{
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("223.255.255.255")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("240.0.0.0")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("127.0.0.1")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("192.168.1.1")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("10.0.0.1")));
-	}
-
-	[TestMethod]
-	public void UdpServer_IsMulticastAddress_IPv6_Multicast()
-	{
-		// IPv6 multicast addresses start with ff
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff02::1")));
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff05::1")));
-		IsTrue(UdpServer.IsMulticastAddress(IPAddress.Parse("ff0e::1")));
-	}
-
-	[TestMethod]
-	public void UdpServer_IsMulticastAddress_IPv6_NotMulticast()
-	{
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("::1")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("fe80::1")));
-		IsFalse(UdpServer.IsMulticastAddress(IPAddress.Parse("2001:db8::1")));
-	}
-
-	[TestMethod]
-	public void UdpServer_IsMulticastAddress_ThrowsOnNull()
-	{
-		Throws<ArgumentNullException>(() => UdpServer.IsMulticastAddress(null));
 	}
 
 	private static int GetAvailablePort()
