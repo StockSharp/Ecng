@@ -45,6 +45,12 @@ public interface ILogReceiver : ILogSource
 	/// <param name="message">Text message.</param>
 	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
 	void LogError(string message, params object[] args);
+
+	/// <summary>
+	/// To record an error to the log.
+	/// </summary>
+	/// <param name="exception">Error details.</param>
+	void LogError(Exception exception);
 }
 
 /// <summary>
