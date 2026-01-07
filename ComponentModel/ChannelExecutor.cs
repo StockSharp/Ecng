@@ -35,6 +35,7 @@ public class ChannelExecutor : IAsyncDisposable
 	private readonly int _batchThreshold;
 	private Task _processingTask;
 	private CancellationTokenSource _internalCts;
+	private int _pendingCount;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChannelExecutor"/>.
@@ -89,17 +90,37 @@ public class ChannelExecutor : IAsyncDisposable
 			{
 				currentOp = operation;
 
+				Interlocked.Decrement(ref _pendingCount);
+
 				// Check for auto batch (pending items >= threshold) - only if not already in explicit batch
-				if (!inBatch && hasBatchCallbacks && _channel.Reader.Count >= _batchThreshold - 1)
+				if (!inBatch && hasBatchCallbacks && Interlocked.CompareExchange(ref _pendingCount, 0, 0) >= _batchThreshold - 1)
 				{
+					// Collect completions to defer until after _batchEnd
+					var completions = new List<(TaskCompletionSource<bool> Tcs, Exception Error)>();
+
 					_batchBegin();
-					ExecuteOperation(operation);
+					completions.Add(ExecuteOperationDeferred(operation));
 
 					// Process all currently available operations
 					while (_channel.Reader.TryRead(out var nextOp))
-						ExecuteOperation(nextOp);
+					{
+						Interlocked.Decrement(ref _pendingCount);
+						completions.Add(ExecuteOperationDeferred(nextOp));
+					}
 
 					_batchEnd();
+
+					// Complete all deferred TCS after batch end
+					foreach (var (tcs, error) in completions)
+					{
+						if (tcs == null)
+							continue;
+						if (error != null)
+							tcs.TrySetException(error);
+						else
+							tcs.TrySetResult(true);
+					}
+
 					currentOp = null;
 					continue;
 				}
@@ -136,7 +157,10 @@ public class ChannelExecutor : IAsyncDisposable
 
 			// Complete all remaining pending operations
 			while (_channel.Reader.TryRead(out var pendingOp))
+			{
+				Interlocked.Decrement(ref _pendingCount);
 				pendingOp.CompletionSource?.TrySetException(completionException);
+			}
 		}
 	}
 
@@ -154,6 +178,20 @@ public class ChannelExecutor : IAsyncDisposable
 		}
 	}
 
+	private (TaskCompletionSource<bool> Tcs, Exception Error) ExecuteOperationDeferred(Operation operation)
+	{
+		try
+		{
+			operation.Action();
+			return (operation.CompletionSource, null);
+		}
+		catch (Exception ex)
+		{
+			_errorHandler(ex);
+			return (operation.CompletionSource, ex);
+		}
+	}
+
 	/// <summary>
 	/// Add operation to the execution queue.
 	/// </summary>
@@ -163,11 +201,14 @@ public class ChannelExecutor : IAsyncDisposable
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
+		Interlocked.Increment(ref _pendingCount);
+
 		if (!_channel.Writer.TryWrite(new Operation
 		{
 			Action = action
 		}))
 		{
+			Interlocked.Decrement(ref _pendingCount);
 			throw new InvalidOperationException("Channel is closed");
 		}
 	}
@@ -182,6 +223,8 @@ public class ChannelExecutor : IAsyncDisposable
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
+
+		Interlocked.Increment(ref _pendingCount);
 
 		await _channel.Writer.WriteAsync(new Operation
 		{
@@ -199,6 +242,8 @@ public class ChannelExecutor : IAsyncDisposable
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
+
+		Interlocked.Increment(ref _pendingCount);
 
 		var tcs = new TaskCompletionSource<bool>();
 
@@ -234,6 +279,8 @@ public class ChannelExecutor : IAsyncDisposable
 			var isFirst = i == 0;
 			var isLast = i == list.Count - 1;
 
+			Interlocked.Increment(ref _pendingCount);
+
 			if (!_channel.Writer.TryWrite(new Operation
 			{
 				Action = action,
@@ -241,6 +288,7 @@ public class ChannelExecutor : IAsyncDisposable
 				IsBatchEnd = isLast
 			}))
 			{
+				Interlocked.Decrement(ref _pendingCount);
 				throw new InvalidOperationException("Channel is closed");
 			}
 		}
@@ -271,6 +319,8 @@ public class ChannelExecutor : IAsyncDisposable
 			var isFirst = i == 0;
 			var isLast = i == list.Count - 1;
 
+			Interlocked.Increment(ref _pendingCount);
+
 			await _channel.Writer.WriteAsync(new Operation
 			{
 				Action = action,
@@ -287,6 +337,8 @@ public class ChannelExecutor : IAsyncDisposable
 	/// <returns>Task.</returns>
 	public async Task WaitFlushAsync(CancellationToken cancellationToken = default)
 	{
+		Interlocked.Increment(ref _pendingCount);
+
 		var tcs = new TaskCompletionSource<bool>();
 
 		await _channel.Writer.WriteAsync(new Operation
