@@ -1,5 +1,7 @@
 namespace Ecng.Tests.ComponentModel;
 
+using System.Collections.Concurrent;
+
 using Ecng.ComponentModel;
 
 using Nito.AsyncEx;
@@ -451,6 +453,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_WaitsForCompletion()
 	{
 		var token = CancellationToken;
@@ -476,6 +479,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_WithException()
 	{
 		var token = CancellationToken;
@@ -500,6 +504,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_MultipleSequential()
 	{
 		var token = CancellationToken;
@@ -521,6 +526,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_ParallelCalls()
 	{
 		var token = CancellationToken;
@@ -550,6 +556,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_WithCancellation()
 	{
 		var token = CancellationToken;
@@ -565,6 +572,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAndWaitAsync_NullActionThrows()
 	{
 		var token = CancellationToken;
@@ -577,6 +585,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task DisposeDoesNotCancelLongRunningOperation()
 	{
 		var token = CancellationToken;
@@ -598,4 +607,651 @@ public class ChannelExecutorTests : BaseTestClass
 		// Both operations should still complete even though the first exceeds the default timeout
 		counter.AssertEqual(2);
 	}
+
+	#region Batch Tests
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AutoBatch_TriggersWhenThresholdReached()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 5);
+
+		_ = executor.RunAsync(token);
+
+		// Add operations below threshold - should NOT trigger batch
+		for (int i = 0; i < 3; i++)
+			executor.Add(() => Interlocked.Increment(ref operationCount));
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(3);
+		batchBeginCount.AssertEqual(0);
+		batchEndCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AutoBatch_TriggersWithManyOperations()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 5);
+
+		// Don't start processing yet - let operations accumulate
+		var bag = new ConcurrentBag<int>();
+		for (int i = 0; i < 20; i++)
+		{
+			var value = i;
+			executor.Add(() =>
+			{
+				Interlocked.Increment(ref operationCount);
+				bag.Add(value);
+			});
+		}
+
+		// Now start processing - should detect many items and batch them
+		_ = executor.RunAsync(token);
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(20);
+		batchBeginCount.AssertGreater(0);
+		batchEndCount.AssertEqual(batchBeginCount);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task BatchCallbacksWithNormalAdd()
+	{
+		// Test that executor with batch callbacks still works with normal Add
+		var batchBeginCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => { },
+			batchThreshold: 100);
+
+		_ = executor.RunAsync();
+
+		executor.Add(() => Interlocked.Increment(ref operationCount));
+
+		await executor.WaitFlushAsync();
+
+		operationCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task ExplicitBatch_CallsBeginEnd()
+	{
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 100); // High threshold so auto-batch doesn't trigger
+
+		_ = executor.RunAsync();
+
+		// Use explicit batch with just 3 items (below threshold)
+		executor.AddBatch([
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount)
+		]);
+
+		await executor.WaitFlushAsync();
+
+		operationCount.AssertEqual(3);
+		batchBeginCount.AssertEqual(1);
+		batchEndCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task ExplicitBatch_MultipleSequential()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 100);
+
+		_ = executor.RunAsync(token);
+
+		// First batch
+		executor.AddBatch([
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount)
+		]);
+
+		// Second batch
+		executor.AddBatch([
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount)
+		]);
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(5);
+		batchBeginCount.AssertEqual(2);
+		batchEndCount.AssertEqual(2);
+	}
+
+	[TestMethod]
+	//[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AddBatch_EmptyCollection()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount));
+
+		_ = executor.RunAsync(token);
+
+		// Empty batch should do nothing
+		executor.AddBatch([]);
+
+		await executor.WaitFlushAsync(token);
+
+		batchBeginCount.AssertEqual(0);
+		batchEndCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AddBatch_NullThrows()
+	{
+		var token = CancellationToken;
+
+		await using var executor = new ChannelExecutor(ex => { });
+		_ = executor.RunAsync(token);
+
+		ThrowsExactly<ArgumentNullException>(() => executor.AddBatch(null));
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AddBatch_NullActionInListThrows()
+	{
+		var token = CancellationToken;
+
+		await using var executor = new ChannelExecutor(ex => { });
+		_ = executor.RunAsync(token);
+
+		ThrowsExactly<ArgumentNullException>(() => executor.AddBatch([() => { }, null, () => { }]));
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task AddBatchAsync_Works()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 100);
+
+		_ = executor.RunAsync(token);
+
+		await executor.AddBatchAsync([
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount)
+		], token);
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(3);
+		batchBeginCount.AssertEqual(1);
+		batchEndCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task NoBatchCallbacks_WorksNormally()
+	{
+		var token = CancellationToken;
+
+		var operationCount = 0;
+
+		// No batch callbacks - should work like normal
+		await using var executor = new ChannelExecutor(ex => { });
+		_ = executor.RunAsync(token);
+
+		executor.AddBatch([
+			() => Interlocked.Increment(ref operationCount),
+			() => Interlocked.Increment(ref operationCount)
+		]);
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(2);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task BatchWithErrors_ContinuesAndCallsEnd()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var operationCount = 0;
+		var errors = new ConcurrentBag<Exception>();
+
+		await using var executor = new ChannelExecutor(
+			ex => errors.Add(ex),
+			() => Interlocked.Increment(ref batchBeginCount),
+			() => Interlocked.Increment(ref batchEndCount),
+			batchThreshold: 100);
+
+		_ = executor.RunAsync(token);
+
+		executor.AddBatch([
+			() => Interlocked.Increment(ref operationCount),
+			() => throw new InvalidOperationException("Test error"),
+			() => Interlocked.Increment(ref operationCount)
+		]);
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(2);
+		errors.Count.AssertEqual(1);
+		batchBeginCount.AssertEqual(1);
+		batchEndCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task MixedBatchAndSingleOperations()
+	{
+		var token = CancellationToken;
+
+		var batchBeginCount = 0;
+		var batchEndCount = 0;
+		var results = new ConcurrentQueue<string>();
+
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => { results.Enqueue("BEGIN"); Interlocked.Increment(ref batchBeginCount); },
+			() => { results.Enqueue("END"); Interlocked.Increment(ref batchEndCount); },
+			batchThreshold: 100);
+
+		_ = executor.RunAsync(token);
+
+		// Single operation
+		executor.Add(() => results.Enqueue("single1"));
+
+		// Batch
+		executor.AddBatch([
+			() => results.Enqueue("batch1"),
+			() => results.Enqueue("batch2")
+		]);
+
+		// Another single operation
+		executor.Add(() => results.Enqueue("single2"));
+
+		await executor.WaitFlushAsync(token);
+
+		// Verify order
+		var list = results.ToList();
+		list.Count.AssertEqual(6); // single1, BEGIN, batch1, batch2, END, single2
+		list[0].AssertEqual("single1");
+		list[1].AssertEqual("BEGIN");
+		list[2].AssertEqual("batch1");
+		list[3].AssertEqual("batch2");
+		list[4].AssertEqual("END");
+		list[5].AssertEqual("single2");
+	}
+
+	#endregion
+
+	#region Collection Modification Tests
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task ChaoticListModification_SingleThread()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		// Non-thread-safe list - safe because executor guarantees sequential execution
+		var list = new List<int>();
+
+		// Add items
+		for (int i = 0; i < 100; i++)
+		{
+			var value = i;
+			executor.Add(() => list.Add(value));
+		}
+
+		// Remove some items (every 3rd)
+		for (int i = 99; i >= 0; i -= 3)
+		{
+			var idx = i;
+			executor.Add(() => { if (idx < list.Count) list.RemoveAt(idx); });
+		}
+
+		// Add more items
+		for (int i = 100; i < 150; i++)
+		{
+			var value = i;
+			executor.Add(() => list.Add(value));
+		}
+
+		// Insert at specific positions
+		executor.Add(() => list.Insert(0, -1));
+		executor.Add(() => list.Insert(list.Count / 2, -2));
+
+		// Clear and rebuild
+		executor.Add(() => list.Clear());
+		for (int i = 0; i < 10; i++)
+		{
+			var value = i * 10;
+			executor.Add(() => list.Add(value));
+		}
+
+		await executor.WaitFlushAsync(token);
+
+		// Final state should be [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+		list.Count.AssertEqual(10);
+		for (int i = 0; i < 10; i++)
+			list[i].AssertEqual(i * 10);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task ChaoticListModification_MultipleThreads()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		// Non-thread-safe list - safe because executor guarantees sequential execution
+		var list = new List<int>();
+		var operationLog = new List<string>(); // Track operations for verification
+
+		var tasks = new List<Task>();
+
+		// Multiple threads adding chaotic operations
+		for (int t = 0; t < 5; t++)
+		{
+			var threadId = t;
+			var seed = 42 + threadId; // Different seed per thread
+			tasks.Add(Task.Run(() =>
+			{
+				var random = new Random(seed); // Thread-local random
+				for (int i = 0; i < 50; i++)
+				{
+					var op = random.Next(4);
+					var value = threadId * 1000 + i;
+
+					switch (op)
+					{
+						case 0: // Add
+							executor.Add(() =>
+							{
+								list.Add(value);
+								operationLog.Add($"Add:{value}");
+							});
+							break;
+						case 1: // Remove last if exists
+							executor.Add(() =>
+							{
+								if (list.Count > 0)
+								{
+									var removed = list[list.Count - 1];
+									list.RemoveAt(list.Count - 1);
+									operationLog.Add($"RemoveLast:{removed}");
+								}
+							});
+							break;
+						case 2: // Insert at beginning
+							executor.Add(() =>
+							{
+								list.Insert(0, value);
+								operationLog.Add($"Insert0:{value}");
+							});
+							break;
+						case 3: // Clear if too large
+							executor.Add(() =>
+							{
+								if (list.Count > 20)
+								{
+									list.Clear();
+									operationLog.Add("Clear");
+								}
+							});
+							break;
+					}
+				}
+			}, token));
+		}
+
+		await tasks.WhenAll();
+		await executor.WaitFlushAsync(token);
+
+		// Replay operations to verify final state
+		var expectedList = new List<int>();
+		foreach (var op in operationLog)
+		{
+			if (op.StartsWith("Add:"))
+				expectedList.Add(int.Parse(op[4..]));
+			else if (op.StartsWith("RemoveLast:") && expectedList.Count > 0)
+				expectedList.RemoveAt(expectedList.Count - 1);
+			else if (op.StartsWith("Insert0:"))
+				expectedList.Insert(0, int.Parse(op[8..]));
+			else if (op == "Clear")
+				expectedList.Clear();
+		}
+
+		list.Count.AssertEqual(expectedList.Count);
+		for (int i = 0; i < list.Count; i++)
+			list[i].AssertEqual(expectedList[i]);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task DictionaryModification_Chaotic()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		// Non-thread-safe dictionary
+		var dict = new Dictionary<string, int>();
+
+		var tasks = new List<Task>();
+
+		// Multiple threads modifying dictionary
+		for (int t = 0; t < 4; t++)
+		{
+			var threadId = t;
+			tasks.Add(Task.Run(() =>
+			{
+				for (int i = 0; i < 100; i++)
+				{
+					var key = $"key_{(threadId * 100 + i) % 50}"; // Limited key space for collisions
+					var value = threadId * 1000 + i;
+
+					if (i % 3 == 0)
+					{
+						executor.Add(() => dict[key] = value); // Add or update
+					}
+					else if (i % 3 == 1)
+					{
+						executor.Add(() => dict.Remove(key)); // Remove
+					}
+					else
+					{
+						executor.Add(() =>
+						{
+							if (dict.TryGetValue(key, out var v))
+								dict[key] = v + 1; // Increment if exists
+						});
+					}
+				}
+			}, token));
+		}
+
+		await tasks.WhenAll();
+		await executor.WaitFlushAsync(token);
+
+		// Dictionary should be in consistent state (no corrupted entries)
+		foreach (var kvp in dict)
+		{
+			kvp.Key.AssertNotNull();
+			// Value should be a valid integer
+			(kvp.Value >= 0).AssertTrue();
+		}
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task BatchModification_AtomicOperations()
+	{
+		var token = CancellationToken;
+
+		var batchCount = 0;
+		await using var executor = new ChannelExecutor(
+			ex => { },
+			() => Interlocked.Increment(ref batchCount),
+			() => { },
+			batchThreshold: 100);
+
+		_ = executor.RunAsync(token);
+
+		// Non-thread-safe list
+		var list = new List<int>();
+
+		// Batch: Add 10 items atomically
+		executor.AddBatch(Enumerable.Range(0, 10).Select(i => (Action)(() => list.Add(i))));
+
+		// Batch: Remove all even numbers atomically
+		executor.AddBatch([
+			() => { for (int i = list.Count - 1; i >= 0; i--) if (list[i] % 2 == 0) list.RemoveAt(i); }
+		]);
+
+		// Batch: Double all remaining values atomically
+		executor.AddBatch([
+			() => { for (int i = 0; i < list.Count; i++) list[i] *= 2; }
+		]);
+
+		await executor.WaitFlushAsync(token);
+
+		// Should have [1, 3, 5, 7, 9] doubled = [2, 6, 10, 14, 18]
+		list.Count.AssertEqual(5);
+		list[0].AssertEqual(2);
+		list[1].AssertEqual(6);
+		list[2].AssertEqual(10);
+		list[3].AssertEqual(14);
+		list[4].AssertEqual(18);
+
+		batchCount.AssertEqual(3);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task ComplexObjectModification()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		// Complex non-thread-safe structure
+		var data = new
+		{
+			Users = new List<(int Id, string Name, List<string> Tags)>(),
+			Stats = new Dictionary<int, int>()
+		};
+
+		// Add users from multiple threads
+		var tasks = new List<Task>();
+		for (int t = 0; t < 3; t++)
+		{
+			var threadId = t;
+			tasks.Add(Task.Run(() =>
+			{
+				for (int i = 0; i < 10; i++)
+				{
+					var userId = threadId * 100 + i;
+					var userName = $"User_{userId}";
+
+					// Add user
+					executor.Add(() => data.Users.Add((userId, userName, new List<string>())));
+
+					// Add tags
+					executor.Add(() =>
+					{
+						var user = data.Users.Find(u => u.Id == userId);
+						if (user != default)
+							user.Tags.Add($"tag_{i % 3}");
+					});
+
+					// Update stats
+					executor.Add(() =>
+					{
+						if (!data.Stats.ContainsKey(userId % 10))
+							data.Stats[userId % 10] = 0;
+						data.Stats[userId % 10]++;
+					});
+				}
+			}, token));
+		}
+
+		await tasks.WhenAll();
+		await executor.WaitFlushAsync(token);
+
+		// Verify
+		data.Users.Count.AssertEqual(30); // 3 threads * 10 users
+		data.Stats.Values.Sum().AssertEqual(30); // 30 stat increments
+	}
+
+	#endregion
 }
