@@ -66,20 +66,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				// Ensure calc on open (useful if later template formulas are added).
 				EnsureFullCalcOnLoad(_workbookPart.Workbook);
 
-				// Create initial worksheet.
-				var wsPart = _workbookPart.AddNewPart<WorksheetPart>();
-				wsPart.Worksheet = new Worksheet(new SheetData());
-
-				var sheets = _workbookPart.Workbook.GetFirstChild<Sheets>();
-				var relId = _workbookPart.GetIdOfPart(wsPart);
-
-				var sheet = new Sheet { Id = relId, SheetId = 1u, Name = "Sheet1" };
-				sheets.Append(sheet);
-
-				_currentWorksheetPart = wsPart;
-				_currentSheet = sheet;
-
-				CaptureColumnStyles();
+				// Do not create initial sheet - AddSheet() will create the first one.
 			}
 			else
 			{
@@ -179,9 +166,33 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (cell == null)
 				return default;
 
-			var raw = cell.CellValue?.Text;
+			string raw;
+
+			// Handle InlineString
+			if (cell.DataType?.Value == CellValues.InlineString)
+			{
+				raw = cell.InlineString?.Text?.Text;
+			}
+			else
+			{
+				raw = cell.CellValue?.Text;
+			}
+
 			if (raw == null)
 				return default;
+
+			// Handle Boolean conversion (Excel stores as "1" or "0")
+			if (typeof(T) == typeof(bool))
+			{
+				return (T)(object)(raw == "1");
+			}
+
+			// Handle DateTime conversion (Excel stores as OADate double)
+			if (typeof(T) == typeof(DateTime))
+			{
+				if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var oaDate))
+					return (T)(object)DateTime.FromOADate(oaDate);
+			}
 
 			return (T)Convert.ChangeType(raw, typeof(T), CultureInfo.InvariantCulture);
 		}
