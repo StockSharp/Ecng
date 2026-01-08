@@ -2,7 +2,6 @@ namespace Ecng.ComponentModel;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -10,29 +9,73 @@ using System.Threading.Tasks;
 using Ecng.Common;
 
 /// <summary>
+/// The interface for a group of operations executed by <see cref="ChannelExecutor"/>.
+/// </summary>
+public interface IChannelExecutorGroup
+{
+	/// <summary>
+	/// Add operation to the group.
+	/// </summary>
+	/// <param name="action">Operation to execute.</param>
+	void Add(Action action);
+
+	/// <summary>
+	/// Add operation to the group asynchronously.
+	/// </summary>
+	/// <param name="action">Operation to execute.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>Task.</returns>
+	ValueTask AddAsync(Action action, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
 /// Sequential operation executor based on channels.
 /// Ensures operations are executed sequentially to prevent file access conflicts.
 /// </summary>
-public class ChannelExecutor : IAsyncDisposable
+public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 {
 	private sealed class Operation
 	{
 		public Action Action { get; set; }
 		public TaskCompletionSource<bool> CompletionSource { get; set; }
-		public bool IsBatchStart { get; set; }
-		public bool IsBatchEnd { get; set; }
+		public Group Group { get; set; }
 	}
 
-	/// <summary>
-	/// Default batch threshold.
-	/// </summary>
-	public const int DefaultBatchThreshold = 10;
+	private class Group(ChannelExecutor executor, Action begin, Action end) : IChannelExecutorGroup
+	{
+		private readonly ChannelExecutor _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+
+		public Action Begin { get; } = begin ?? throw new ArgumentNullException(nameof(begin));
+		public Action End { get; } = end ?? throw new ArgumentNullException(nameof(end));
+
+		void IChannelExecutorGroup.Add(Action action)
+		{
+			if (action == null)
+				throw new ArgumentNullException(nameof(action));
+
+			_executor.Enqueue(new Operation
+			{
+				Action = action,
+				Group = this
+			});
+		}
+
+		ValueTask IChannelExecutorGroup.AddAsync(Action action, CancellationToken cancellationToken)
+		{
+			if (action == null)
+				throw new ArgumentNullException(nameof(action));
+
+			return _executor.EnqueueAsync(new Operation
+			{
+				Action = action,
+				Group = this
+			}, cancellationToken);
+		}
+	}
 
 	private readonly Channel<Operation> _channel;
 	private readonly Action<Exception> _errorHandler;
-	private readonly Action _batchBegin;
-	private readonly Action _batchEnd;
-	private readonly int _batchThreshold;
+	private readonly TimeSpan _flushInterval;
 	private Task _processingTask;
 	private CancellationTokenSource _internalCts;
 	private int _pendingCount;
@@ -41,24 +84,27 @@ public class ChannelExecutor : IAsyncDisposable
 	/// Initializes a new instance of the <see cref="ChannelExecutor"/>.
 	/// </summary>
 	/// <param name="errorHandler">Error handler for unhandled exceptions.</param>
-	/// <param name="batchBegin">Optional action called before processing a batch of operations.</param>
-	/// <param name="batchEnd">Optional action called after processing a batch of operations.</param>
-	/// <param name="batchThreshold">Minimum number of pending operations to trigger batch mode. Default is 10.</param>
-	public ChannelExecutor(
-		Action<Exception> errorHandler,
-		Action batchBegin = null,
-		Action batchEnd = null,
-		int batchThreshold = DefaultBatchThreshold)
+	/// <param name="flushInterval">Interval for batch processing. Use TimeSpan.Zero for immediate execution.</param>
+	public ChannelExecutor(Action<Exception> errorHandler, TimeSpan flushInterval)
 	{
 		_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
-		_batchBegin = batchBegin;
-		_batchEnd = batchEnd;
-		_batchThreshold = batchThreshold;
+		_flushInterval = flushInterval;
 		_channel = Channel.CreateUnbounded<Operation>(new UnboundedChannelOptions
 		{
 			SingleReader = true,
 			SingleWriter = false
 		});
+	}
+
+	/// <summary>
+	/// Creates a new operation group with begin/end callbacks.
+	/// </summary>
+	/// <param name="begin">Action called before first operation in the group.</param>
+	/// <param name="end">Action called after last operation in the group (always, like finally).</param>
+	/// <returns>Group object to add operations to.</returns>
+	public IChannelExecutorGroup CreateGroup(Action begin, Action end)
+	{
+		return new Group(this, begin, end);
 	}
 
 	/// <summary>
@@ -79,89 +125,121 @@ public class ChannelExecutor : IAsyncDisposable
 
 	private async Task ProcessOperationsAsync(CancellationToken cancellationToken)
 	{
-		var hasBatchCallbacks = _batchBegin != null && _batchEnd != null;
-		var inBatch = false;
 		Exception fatalException = null;
-		Operation currentOp = null;
+		var pendingOperations = new List<Operation>();
 
 		try
 		{
-			await foreach (var operation in _channel.Reader.ReadAllAsync(cancellationToken).NoWait())
+			while (!cancellationToken.IsCancellationRequested)
 			{
-				currentOp = operation;
-
-				Interlocked.Decrement(ref _pendingCount);
-
-				// Check for auto batch (pending items >= threshold) - only if not already in explicit batch
-				if (!inBatch && hasBatchCallbacks && Interlocked.CompareExchange(ref _pendingCount, 0, 0) >= _batchThreshold - 1)
+				// Read all available operations first
+				while (_channel.Reader.TryRead(out var op))
 				{
-					// Collect completions to defer until after _batchEnd
-					var completions = new List<(TaskCompletionSource<bool> Tcs, Exception Error)>();
+					Interlocked.Decrement(ref _pendingCount);
+					pendingOperations.Add(op);
 
-					_batchBegin();
-					completions.Add(ExecuteOperationDeferred(operation));
+					// For immediate mode, process after each read
+					if (_flushInterval == TimeSpan.Zero)
+						break;
+				}
 
-					// Process all currently available operations
-					while (_channel.Reader.TryRead(out var nextOp))
-					{
-						Interlocked.Decrement(ref _pendingCount);
-						completions.Add(ExecuteOperationDeferred(nextOp));
-					}
-
-					_batchEnd();
-
-					// Complete all deferred TCS after batch end
-					foreach (var (tcs, error) in completions)
-					{
-						if (tcs == null)
-							continue;
-						if (error != null)
-							tcs.TrySetException(error);
-						else
-							tcs.TrySetResult(true);
-					}
-
-					currentOp = null;
+				// If we have operations, process them
+				if (pendingOperations.Count > 0)
+				{
+					FlushOperations(pendingOperations);
+					pendingOperations.Clear();
 					continue;
 				}
 
-				// Handle explicit batch markers
-				if (hasBatchCallbacks && operation.IsBatchStart && !inBatch)
+				// No operations - wait for data
+				if (_flushInterval > TimeSpan.Zero)
 				{
-					_batchBegin();
-					inBatch = true;
+					// Interval mode: wait for interval period
+					try
+					{
+						await Task.Delay(_flushInterval, cancellationToken).NoWait();
+					}
+					catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+					{
+						break;
+					}
+
+					// Check if channel is completed
+					if (_channel.Reader.Completion.IsCompleted)
+						break;
 				}
-
-				ExecuteOperation(operation);
-
-				if (hasBatchCallbacks && operation.IsBatchEnd && inBatch)
+				else
 				{
-					_batchEnd();
-					inBatch = false;
+					// Immediate mode: wait for data
+					if (!await _channel.Reader.WaitToReadAsync(cancellationToken).NoWait())
+						break; // Channel closed
 				}
-
-				currentOp = null;
 			}
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			// Expected
 		}
 		catch (Exception ex)
 		{
 			fatalException = ex;
-			if (!cancellationToken.IsCancellationRequested)
-				_errorHandler(ex);
+			_errorHandler(ex);
 		}
 		finally
 		{
-			// Complete current operation if it was interrupted
-			var completionException = fatalException ?? new OperationCanceledException(cancellationToken);
-			currentOp?.CompletionSource?.TrySetException(completionException);
-
-			// Complete all remaining pending operations
-			while (_channel.Reader.TryRead(out var pendingOp))
+			// Process any remaining operations
+			while (_channel.Reader.TryRead(out var op))
 			{
 				Interlocked.Decrement(ref _pendingCount);
-				pendingOp.CompletionSource?.TrySetException(completionException);
+				pendingOperations.Add(op);
 			}
+
+			if (pendingOperations.Count > 0)
+				FlushOperations(pendingOperations);
+
+			// Complete any pending TCS with exception
+			var completionException = fatalException ?? new OperationCanceledException(cancellationToken);
+			foreach (var op in pendingOperations)
+				op.CompletionSource?.TrySetException(completionException);
 		}
+	}
+
+	private void FlushOperations(List<Operation> operations)
+	{
+		Group currentGroup = null;
+
+		void SafeBegin(Group g)
+		{
+			try
+			{ g?.Begin?.Invoke(); }
+			catch (Exception ex) { _errorHandler(ex); }
+		}
+
+		void SafeEnd(Group g)
+		{
+			try
+			{ g?.End?.Invoke(); }
+			catch (Exception ex) { _errorHandler(ex); }
+		}
+
+		foreach (var op in operations)
+		{
+			if (!ReferenceEquals(op.Group, currentGroup))
+			{
+				if (currentGroup != null)
+					SafeEnd(currentGroup);
+
+				currentGroup = op.Group;
+
+				if (currentGroup != null)
+					SafeBegin(currentGroup);
+			}
+
+			ExecuteOperation(op);
+		}
+
+		if (currentGroup != null)
+			SafeEnd(currentGroup);
 	}
 
 	private void ExecuteOperation(Operation operation)
@@ -178,20 +256,6 @@ public class ChannelExecutor : IAsyncDisposable
 		}
 	}
 
-	private (TaskCompletionSource<bool> Tcs, Exception Error) ExecuteOperationDeferred(Operation operation)
-	{
-		try
-		{
-			operation.Action();
-			return (operation.CompletionSource, null);
-		}
-		catch (Exception ex)
-		{
-			_errorHandler(ex);
-			return (operation.CompletionSource, ex);
-		}
-	}
-
 	/// <summary>
 	/// Add operation to the execution queue.
 	/// </summary>
@@ -201,16 +265,7 @@ public class ChannelExecutor : IAsyncDisposable
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
-		Interlocked.Increment(ref _pendingCount);
-
-		if (!_channel.Writer.TryWrite(new Operation
-		{
-			Action = action
-		}))
-		{
-			Interlocked.Decrement(ref _pendingCount);
-			throw new InvalidOperationException("Channel is closed");
-		}
+		Enqueue(new() { Action = action });
 	}
 
 	/// <summary>
@@ -219,17 +274,38 @@ public class ChannelExecutor : IAsyncDisposable
 	/// <param name="action">Operation to execute.</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Task.</returns>
-	public async ValueTask AddAsync(Action action, CancellationToken cancellationToken = default)
+	public ValueTask AddAsync(Action action, CancellationToken cancellationToken = default)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
+		return EnqueueAsync(new() { Action = action }, cancellationToken);
+	}
+
+	private void Enqueue(Operation operation)
+	{
 		Interlocked.Increment(ref _pendingCount);
 
-		await _channel.Writer.WriteAsync(new Operation
+		if (!_channel.Writer.TryWrite(operation))
 		{
-			Action = action
-		}, cancellationToken).NoWait();
+			Interlocked.Decrement(ref _pendingCount);
+			throw new ChannelClosedException();
+		}
+	}
+
+	private async ValueTask EnqueueAsync(Operation operation, CancellationToken cancellationToken)
+	{
+		Interlocked.Increment(ref _pendingCount);
+
+		try
+		{
+			await _channel.Writer.WriteAsync(operation, cancellationToken).NoWait();
+		}
+		catch
+		{
+			Interlocked.Decrement(ref _pendingCount);
+			throw;
+		}
 	}
 
 	/// <summary>
@@ -243,11 +319,9 @@ public class ChannelExecutor : IAsyncDisposable
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
-		Interlocked.Increment(ref _pendingCount);
-
 		var tcs = new TaskCompletionSource<bool>();
 
-		await _channel.Writer.WriteAsync(new Operation
+		await EnqueueAsync(new Operation
 		{
 			Action = action,
 			CompletionSource = tcs
@@ -257,91 +331,15 @@ public class ChannelExecutor : IAsyncDisposable
 	}
 
 	/// <summary>
-	/// Add a batch of operations to the execution queue.
-	/// All operations in the batch will be executed together with batch begin/end callbacks.
-	/// </summary>
-	/// <param name="actions">Operations to execute as a batch.</param>
-	public void AddBatch(IEnumerable<Action> actions)
-	{
-		if (actions == null)
-			throw new ArgumentNullException(nameof(actions));
-
-		var list = actions.ToList();
-		if (list.Count == 0)
-			return;
-
-		for (var i = 0; i < list.Count; i++)
-		{
-			var action = list[i];
-			if (action == null)
-				throw new ArgumentNullException(nameof(actions), $"Action at index {i} is null");
-
-			var isFirst = i == 0;
-			var isLast = i == list.Count - 1;
-
-			Interlocked.Increment(ref _pendingCount);
-
-			if (!_channel.Writer.TryWrite(new Operation
-			{
-				Action = action,
-				IsBatchStart = isFirst,
-				IsBatchEnd = isLast
-			}))
-			{
-				Interlocked.Decrement(ref _pendingCount);
-				throw new InvalidOperationException("Channel is closed");
-			}
-		}
-	}
-
-	/// <summary>
-	/// Add a batch of operations to the execution queue asynchronously.
-	/// All operations in the batch will be executed together with batch begin/end callbacks.
-	/// </summary>
-	/// <param name="actions">Operations to execute as a batch.</param>
-	/// <param name="cancellationToken">Cancellation token.</param>
-	/// <returns>Task.</returns>
-	public async ValueTask AddBatchAsync(IEnumerable<Action> actions, CancellationToken cancellationToken = default)
-	{
-		if (actions == null)
-			throw new ArgumentNullException(nameof(actions));
-
-		var list = actions.ToList();
-		if (list.Count == 0)
-			return;
-
-		for (var i = 0; i < list.Count; i++)
-		{
-			var action = list[i];
-			if (action == null)
-				throw new ArgumentNullException(nameof(actions), $"Action at index {i} is null");
-
-			var isFirst = i == 0;
-			var isLast = i == list.Count - 1;
-
-			Interlocked.Increment(ref _pendingCount);
-
-			await _channel.Writer.WriteAsync(new Operation
-			{
-				Action = action,
-				IsBatchStart = isFirst,
-				IsBatchEnd = isLast
-			}, cancellationToken).NoWait();
-		}
-	}
-
-	/// <summary>
 	/// Wait for all pending operations to complete.
 	/// </summary>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Task.</returns>
 	public async Task WaitFlushAsync(CancellationToken cancellationToken = default)
 	{
-		Interlocked.Increment(ref _pendingCount);
-
 		var tcs = new TaskCompletionSource<bool>();
 
-		await _channel.Writer.WriteAsync(new Operation
+		await EnqueueAsync(new Operation
 		{
 			Action = () => { },
 			CompletionSource = tcs
@@ -356,7 +354,7 @@ public class ChannelExecutor : IAsyncDisposable
 		// Complete the channel to signal no more items
 		_channel.Writer.Complete();
 
-		// Wait for processing to complete with timeout
+		// Wait for processing to complete
 		if (_processingTask != null)
 		{
 			try

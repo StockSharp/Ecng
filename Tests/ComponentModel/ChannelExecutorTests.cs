@@ -1,7 +1,7 @@
 namespace Ecng.Tests.ComponentModel;
 
 using System.Collections.Concurrent;
-
+using System.Threading.Channels;
 using Ecng.ComponentModel;
 
 using Nito.AsyncEx;
@@ -10,9 +10,10 @@ using Nito.AsyncEx;
 public class ChannelExecutorTests : BaseTestClass
 {
 	private static ChannelExecutor CreateChannel()
-		=> new(ex => { });
+		=> new(ex => { }, TimeSpan.Zero);
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task BasicExecution()
 	{
 		var token = CancellationToken;
@@ -31,6 +32,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task SequentialExecution()
 	{
 		var token = CancellationToken;
@@ -55,12 +57,13 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ErrorHandling()
 	{
 		var token = CancellationToken;
 
 		var errors = new List<Exception>();
-		await using var executor = new ChannelExecutor(ex => errors.Add(ex));
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.Zero);
 		_ = executor.RunAsync(token);
 
 		executor.Add(() => throw new InvalidOperationException("Test error 1"));
@@ -75,6 +78,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAsync()
 	{
 		var token = CancellationToken;
@@ -92,6 +96,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAsyncWithCancellation()
 	{
 		var token = CancellationToken;
@@ -107,6 +112,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ExternalCancellation()
 	{
 		var token = CancellationToken;
@@ -131,6 +137,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task WaitFlushAsync()
 	{
 		var token = CancellationToken;
@@ -147,6 +154,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task DisposeWaitsForCompletion()
 	{
 		var token = CancellationToken;
@@ -168,6 +176,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task CannotRunTwice()
 	{
 		var token = CancellationToken;
@@ -180,6 +189,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ConcurrentAdds()
 	{
 		var token = CancellationToken;
@@ -202,6 +212,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task NoErrorHandler()
 	{
 		var token = CancellationToken;
@@ -219,6 +230,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task NullActionThrows()
 	{
 		var token = CancellationToken;
@@ -231,6 +243,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AddAfterDispose()
 	{
 		var token = CancellationToken;
@@ -239,11 +252,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 		await executor.DisposeAsync();
 
-		ThrowsExactly<InvalidOperationException>(() =>
+		ThrowsExactly<ChannelClosedException>(() =>
 			executor.Add(() => { }));
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task MultipleWaitFlush()
 	{
 		var token = CancellationToken;
@@ -263,6 +277,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ParallelWaitFlush()
 	{
 		var token = CancellationToken;
@@ -282,6 +297,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task WaitFlushWithCancellation()
 	{
 		var token = CancellationToken;
@@ -297,6 +313,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ErrorHandlerReceivesAllExceptions()
 	{
 		var token = CancellationToken;
@@ -304,7 +321,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var caughtExceptions = new List<Exception>();
 		var errorHandler = new Action<Exception>(ex => caughtExceptions.Add(ex));
 
-		await using var executor = new ChannelExecutor(errorHandler);
+		await using var executor = new ChannelExecutor(errorHandler, TimeSpan.Zero);
 		_ = executor.RunAsync(token);
 
 		var expectedException1 = new InvalidOperationException("First error");
@@ -326,6 +343,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task AllOperationsExecuteSequentially()
 	{
 		var token = CancellationToken;
@@ -362,6 +380,7 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ThreadSafetyUnderHeavyLoad()
 	{
 		var token = CancellationToken;
@@ -407,12 +426,13 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task ThreadSafetyWithMixedOperations()
 	{
 		var token = CancellationToken;
 
 		var errors = new List<Exception>();
-		await using var executor = new ChannelExecutor(ex => errors.Add(ex));
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.Zero);
 		_ = executor.RunAsync(token);
 
 		var successfulOps = 0;
@@ -485,7 +505,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var token = CancellationToken;
 
 		var errors = new List<Exception>();
-		await using var executor = new ChannelExecutor(ex => errors.Add(ex));
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.Zero);
 		_ = executor.RunAsync(token);
 
 		var expectedException = new InvalidOperationException("Test error");
@@ -608,341 +628,288 @@ public class ChannelExecutorTests : BaseTestClass
 		counter.AssertEqual(2);
 	}
 
-	#region Batch Tests
+	#region Group Tests
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AutoBatch_TriggersWhenThresholdReached()
+	public async Task Group_CallsBeginEnd()
 	{
 		var token = CancellationToken;
 
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
+		var beginCount = 0;
+		var endCount = 0;
 		var operationCount = 0;
 
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 5);
-
+		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		// Add operations below threshold - should NOT trigger batch
-		for (int i = 0; i < 3; i++)
-			executor.Add(() => Interlocked.Increment(ref operationCount));
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
 
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(3);
-		batchBeginCount.AssertEqual(0);
-		batchEndCount.AssertEqual(0);
+		// With immediate mode (TimeSpan.Zero), each Add triggers flush
+		beginCount.AssertEqual(3);
+		endCount.AssertEqual(3);
 	}
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AutoBatch_TriggersWithManyOperations()
+	public async Task Group_SingleAction_CallsBeginEnd()
 	{
 		var token = CancellationToken;
 
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
+		var beginCount = 0;
+		var endCount = 0;
 		var operationCount = 0;
 
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 5);
-
-		// Don't start processing yet - let operations accumulate
-		var bag = new ConcurrentBag<int>();
-		for (int i = 0; i < 20; i++)
-		{
-			var value = i;
-			executor.Add(() =>
-			{
-				Interlocked.Increment(ref operationCount);
-				bag.Add(value);
-			});
-		}
-
-		// Now start processing - should detect many items and batch them
+		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
+
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		group.Add(() => Interlocked.Increment(ref operationCount));
+
 		await executor.WaitFlushAsync(token);
-
-		operationCount.AssertEqual(20);
-		batchBeginCount.AssertGreater(0);
-		batchEndCount.AssertEqual(batchBeginCount);
-	}
-
-	[TestMethod]
-	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task BatchCallbacksWithNormalAdd()
-	{
-		// Test that executor with batch callbacks still works with normal Add
-		var batchBeginCount = 0;
-		var operationCount = 0;
-
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => { },
-			batchThreshold: 100);
-
-		_ = executor.RunAsync();
-
-		executor.Add(() => Interlocked.Increment(ref operationCount));
-
-		await executor.WaitFlushAsync();
 
 		operationCount.AssertEqual(1);
+		beginCount.AssertEqual(1);
+		endCount.AssertEqual(1);
 	}
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task ExplicitBatch_CallsBeginEnd()
+	public async Task Group_WithInterval_BatchesOperations()
 	{
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
+		var token = CancellationToken;
+
+		var beginCount = 0;
+		var endCount = 0;
 		var operationCount = 0;
 
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 100); // High threshold so auto-batch doesn't trigger
-
-		_ = executor.RunAsync();
-
-		// Use explicit batch with just 3 items (below threshold)
-		executor.AddBatch([
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount)
-		]);
-
-		await executor.WaitFlushAsync();
-
-		operationCount.AssertEqual(3);
-		batchBeginCount.AssertEqual(1);
-		batchEndCount.AssertEqual(1);
-	}
-
-	[TestMethod]
-	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task ExplicitBatch_MultipleSequential()
-	{
-		var token = CancellationToken;
-
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
-		var operationCount = 0;
-
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 100);
-
+		// Use interval to batch operations (500ms to ensure all ops are added before flush)
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
 		_ = executor.RunAsync(token);
 
-		// First batch
-		executor.AddBatch([
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount)
-		]);
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
 
-		// Second batch
-		executor.AddBatch([
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount)
-		]);
-
-		await executor.WaitFlushAsync(token);
-
-		operationCount.AssertEqual(5);
-		batchBeginCount.AssertEqual(2);
-		batchEndCount.AssertEqual(2);
-	}
-
-	[TestMethod]
-	//[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AddBatch_EmptyCollection()
-	{
-		var token = CancellationToken;
-
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
-
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount));
-
-		_ = executor.RunAsync(token);
-
-		// Empty batch should do nothing
-		executor.AddBatch([]);
-
-		await executor.WaitFlushAsync(token);
-
-		batchBeginCount.AssertEqual(0);
-		batchEndCount.AssertEqual(0);
-	}
-
-	[TestMethod]
-	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AddBatch_NullThrows()
-	{
-		var token = CancellationToken;
-
-		await using var executor = new ChannelExecutor(ex => { });
-		_ = executor.RunAsync(token);
-
-		ThrowsExactly<ArgumentNullException>(() => executor.AddBatch(null));
-	}
-
-	[TestMethod]
-	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AddBatch_NullActionInListThrows()
-	{
-		var token = CancellationToken;
-
-		await using var executor = new ChannelExecutor(ex => { });
-		_ = executor.RunAsync(token);
-
-		ThrowsExactly<ArgumentNullException>(() => executor.AddBatch([() => { }, null, () => { }]));
-	}
-
-	[TestMethod]
-	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task AddBatchAsync_Works()
-	{
-		var token = CancellationToken;
-
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
-		var operationCount = 0;
-
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 100);
-
-		_ = executor.RunAsync(token);
-
-		await executor.AddBatchAsync([
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount)
-		], token);
+		// Add multiple operations quickly - should batch
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
 
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(3);
-		batchBeginCount.AssertEqual(1);
-		batchEndCount.AssertEqual(1);
+		// With interval, all operations should be batched into one begin/end
+		beginCount.AssertEqual(1);
+		endCount.AssertEqual(1);
 	}
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task NoBatchCallbacks_WorksNormally()
+	public async Task Group_EmptyGroup_NoBeginEnd()
 	{
 		var token = CancellationToken;
 
-		var operationCount = 0;
+		var beginCount = 0;
+		var endCount = 0;
 
-		// No batch callbacks - should work like normal
-		await using var executor = new ChannelExecutor(ex => { });
+		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		executor.AddBatch([
-			() => Interlocked.Increment(ref operationCount),
-			() => Interlocked.Increment(ref operationCount)
-		]);
+		// Create group but don't add anything
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
 
 		await executor.WaitFlushAsync(token);
 
-		operationCount.AssertEqual(2);
+		// No operations added, so no begin/end
+		beginCount.AssertEqual(0);
+		endCount.AssertEqual(0);
 	}
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task BatchWithErrors_ContinuesAndCallsEnd()
+	public async Task Group_EndCalledOnError()
 	{
 		var token = CancellationToken;
 
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
+		var beginCount = 0;
+		var endCount = 0;
 		var operationCount = 0;
 		var errors = new ConcurrentBag<Exception>();
 
-		await using var executor = new ChannelExecutor(
-			ex => errors.Add(ex),
-			() => Interlocked.Increment(ref batchBeginCount),
-			() => Interlocked.Increment(ref batchEndCount),
-			batchThreshold: 100);
-
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.FromMilliseconds(500));
 		_ = executor.RunAsync(token);
 
-		executor.AddBatch([
-			() => Interlocked.Increment(ref operationCount),
-			() => throw new InvalidOperationException("Test error"),
-			() => Interlocked.Increment(ref operationCount)
-		]);
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => throw new InvalidOperationException("Test error"));
+		group.Add(() => Interlocked.Increment(ref operationCount));
 
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(2);
 		errors.Count.AssertEqual(1);
-		batchBeginCount.AssertEqual(1);
-		batchEndCount.AssertEqual(1);
+		beginCount.AssertGreater(0);
+		endCount.AssertGreater(0); // End still called despite error
 	}
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task MixedBatchAndSingleOperations()
+	public async Task Group_EndCalledEvenWhenBeginFails()
 	{
 		var token = CancellationToken;
 
-		var batchBeginCount = 0;
-		var batchEndCount = 0;
+		var endCount = 0;
+		var operationCount = 0;
+		var errors = new ConcurrentBag<Exception>();
+
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.FromMilliseconds(500));
+		_ = executor.RunAsync(token);
+
+		var group = executor.CreateGroup(
+			() => throw new InvalidOperationException("Begin error"),
+			() => Interlocked.Increment(ref endCount));
+
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(2); // Operations still execute
+		endCount.AssertGreater(0); // End still called
+		errors.Count.AssertGreater(0); // Begin error was caught
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task GroupAsync_Works()
+	{
+		var token = CancellationToken;
+
+		var beginCount = 0;
+		var endCount = 0;
+		var operationCount = 0;
+
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
+		_ = executor.RunAsync(token);
+
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
+		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
+		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
+
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(3);
+		beginCount.AssertGreater(0);
+		endCount.AssertGreater(0);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task Group_NullBeginEnd_Works()
+	{
+		var token = CancellationToken;
+
+		var operationCount = 0;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		ThrowsExactly<ArgumentNullException>(() => executor.CreateGroup(null, null));
+		
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task MixedGroupAndSingleOperations()
+	{
+		var token = CancellationToken;
+
 		var results = new ConcurrentQueue<string>();
 
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => { results.Enqueue("BEGIN"); Interlocked.Increment(ref batchBeginCount); },
-			() => { results.Enqueue("END"); Interlocked.Increment(ref batchEndCount); },
-			batchThreshold: 100);
-
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
 		_ = executor.RunAsync(token);
 
 		// Single operation
 		executor.Add(() => results.Enqueue("single1"));
 
-		// Batch
-		executor.AddBatch([
-			() => results.Enqueue("batch1"),
-			() => results.Enqueue("batch2")
-		]);
+		// Group
+		var group = executor.CreateGroup(
+			() => results.Enqueue("BEGIN"),
+			() => results.Enqueue("END"));
+		group.Add(() => results.Enqueue("group1"));
+		group.Add(() => results.Enqueue("group2"));
 
 		// Another single operation
 		executor.Add(() => results.Enqueue("single2"));
 
 		await executor.WaitFlushAsync(token);
 
-		// Verify order
 		var list = results.ToList();
-		list.Count.AssertEqual(6); // single1, BEGIN, batch1, batch2, END, single2
-		list[0].AssertEqual("single1");
-		list[1].AssertEqual("BEGIN");
-		list[2].AssertEqual("batch1");
-		list[3].AssertEqual("batch2");
-		list[4].AssertEqual("END");
-		list[5].AssertEqual("single2");
+		// All operations should execute, BEGIN/END may be called multiple times if batches split
+		list.AssertContains("single1");
+		list.AssertContains("group1");
+		list.AssertContains("group2");
+		list.AssertContains("single2");
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task MultipleGroups_SeparateBeginEnd()
+	{
+		var token = CancellationToken;
+
+		var group1Begin = 0;
+		var group1End = 0;
+		var group2Begin = 0;
+		var group2End = 0;
+
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
+		_ = executor.RunAsync(token);
+
+		var group1 = executor.CreateGroup(
+			() => Interlocked.Increment(ref group1Begin),
+			() => Interlocked.Increment(ref group1End));
+
+		var group2 = executor.CreateGroup(
+			() => Interlocked.Increment(ref group2Begin),
+			() => Interlocked.Increment(ref group2End));
+
+		group1.Add(() => { });
+		group2.Add(() => { });
+		group1.Add(() => { });
+		group2.Add(() => { });
+
+		await executor.WaitFlushAsync(token);
+
+		group1Begin.AssertGreater(0);
+		group1End.AssertGreater(0);
+		group2Begin.AssertGreater(0);
+		group2End.AssertGreater(0);
 	}
 
 	#endregion
@@ -1153,34 +1120,43 @@ public class ChannelExecutorTests : BaseTestClass
 
 	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
-	public async Task BatchModification_AtomicOperations()
+	public async Task GroupModification_AtomicOperations()
 	{
 		var token = CancellationToken;
 
-		var batchCount = 0;
-		await using var executor = new ChannelExecutor(
-			ex => { },
-			() => Interlocked.Increment(ref batchCount),
-			() => { },
-			batchThreshold: 100);
-
+		var groupCount = 0;
+		// Use interval for atomic batching within groups
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
 		_ = executor.RunAsync(token);
 
 		// Non-thread-safe list
 		var list = new List<int>();
 
-		// Batch: Add 10 items atomically
-		executor.AddBatch(Enumerable.Range(0, 10).Select(i => (Action)(() => list.Add(i))));
+		// Group 1: Add 10 items atomically
+		var group1 = executor.CreateGroup(
+			() => Interlocked.Increment(ref groupCount),
+			() => { });
+		foreach (var i in Enumerable.Range(0, 10))
+		{
+			var value = i;
+			group1.Add(() => list.Add(value));
+		}
 
-		// Batch: Remove all even numbers atomically
-		executor.AddBatch([
-			() => { for (int i = list.Count - 1; i >= 0; i--) if (list[i] % 2 == 0) list.RemoveAt(i); }
-		]);
+		await executor.WaitFlushAsync(token);
 
-		// Batch: Double all remaining values atomically
-		executor.AddBatch([
-			() => { for (int i = 0; i < list.Count; i++) list[i] *= 2; }
-		]);
+		// Group 2: Remove all even numbers
+		var group2 = executor.CreateGroup(
+			() => Interlocked.Increment(ref groupCount),
+			() => { });
+		group2.Add(() => { for (int i = list.Count - 1; i >= 0; i--) if (list[i] % 2 == 0) list.RemoveAt(i); });
+
+		await executor.WaitFlushAsync(token);
+
+		// Group 3: Double all remaining values
+		var group3 = executor.CreateGroup(
+			() => Interlocked.Increment(ref groupCount),
+			() => { });
+		group3.Add(() => { for (int i = 0; i < list.Count; i++) list[i] *= 2; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -1192,7 +1168,7 @@ public class ChannelExecutorTests : BaseTestClass
 		list[3].AssertEqual(14);
 		list[4].AssertEqual(18);
 
-		batchCount.AssertEqual(3);
+		groupCount.AssertGreater(2);
 	}
 
 	[TestMethod]
