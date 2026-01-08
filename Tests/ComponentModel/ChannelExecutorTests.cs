@@ -912,6 +912,98 @@ public class ChannelExecutorTests : BaseTestClass
 		group2End.AssertGreater(0);
 	}
 
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task Group_ReusableAcrossMultipleFlushes()
+	{
+		var token = CancellationToken;
+
+		var beginCount = 0;
+		var endCount = 0;
+		var operationCount = 0;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		// Create group once
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		// First batch
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(2);
+		beginCount.AssertGreater(0);
+		endCount.AssertGreater(0);
+
+		var beginAfterFirst = beginCount;
+		var endAfterFirst = endCount;
+
+		// Second batch - reuse same group
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(5);
+		beginCount.AssertGreater(beginAfterFirst);
+		endCount.AssertGreater(endAfterFirst);
+
+		var beginAfterSecond = beginCount;
+		var endAfterSecond = endCount;
+
+		// Third batch - reuse same group again
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(6);
+		beginCount.AssertGreater(beginAfterSecond);
+		endCount.AssertGreater(endAfterSecond);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task Group_ReusableWithInterval()
+	{
+		var token = CancellationToken;
+
+		var beginCount = 0;
+		var endCount = 0;
+		var operationCount = 0;
+
+		// Use interval to batch operations
+		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(100));
+		_ = executor.RunAsync(token);
+
+		var group = executor.CreateGroup(
+			() => Interlocked.Increment(ref beginCount),
+			() => Interlocked.Increment(ref endCount));
+
+		// First usage
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(2);
+		beginCount.AssertEqual(1);
+		endCount.AssertEqual(1);
+
+		// Wait a bit to ensure next batch is separate
+		await Task.Delay(150, token);
+
+		// Second usage - should trigger new begin/end
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(() => Interlocked.Increment(ref operationCount));
+		await executor.WaitFlushAsync(token);
+
+		operationCount.AssertEqual(4);
+		beginCount.AssertEqual(2);
+		endCount.AssertEqual(2);
+	}
+
 	#endregion
 
 	#region Collection Modification Tests
