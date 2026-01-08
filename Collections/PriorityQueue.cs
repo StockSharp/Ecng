@@ -635,7 +635,27 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	void ICollection<(TPriority, TElement)>.Add((TPriority, TElement) item) => Enqueue(item.Item1, item.Item2);
 
 	bool ICollection<(TPriority, TElement)>.Contains((TPriority, TElement) item) => throw new NotSupportedException();
-	void ICollection<(TPriority, TElement)>.CopyTo((TPriority, TElement)[] array, int arrayIndex) => throw new NotSupportedException();
+	void ICollection<(TPriority, TElement)>.CopyTo((TPriority, TElement)[] array, int arrayIndex)
+	{
+		if (array is null)
+			throw new ArgumentNullException(nameof(array));
+
+		if (arrayIndex < 0 || arrayIndex > array.Length)
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+		if (array.Length - arrayIndex < _count)
+			throw new ArgumentException("Destination array is not long enough.");
+
+		var index = arrayIndex;
+
+		foreach (var node in _nodes)
+		{
+			foreach (var element in node)
+			{
+				array[index++] = (node.Priority, element);
+			}
+		}
+	}
 	bool ICollection<(TPriority, TElement)>.Remove((TPriority, TElement) item) => throw new NotSupportedException();
 	IEnumerator<(TPriority, TElement)> IEnumerable<(TPriority, TElement)>.GetEnumerator() => new Enumerator(this);
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<(TPriority, TElement)>)this).GetEnumerator();
