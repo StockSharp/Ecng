@@ -2,7 +2,9 @@ namespace Ecng.Tests.ComponentModel;
 
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+
 using Ecng.ComponentModel;
+using Ecng.IO;
 
 using Nito.AsyncEx;
 
@@ -1319,6 +1321,158 @@ public class ChannelExecutorTests : BaseTestClass
 		// Verify
 		data.Users.Count.AssertEqual(30); // 3 threads * 10 users
 		data.Stats.Values.Sum().AssertEqual(30); // 30 stat increments
+	}
+
+	#endregion
+
+	#region Load Tests
+
+	[TestMethod]
+	[Timeout(120000, CooperativeCancellation = true)]
+	public async Task LoadTest_CsvWriterWithTransactionStream()
+	{
+		var token = CancellationToken;
+
+		const int rowCount = 10000;
+		const int colCount = 50;
+
+		var fs = new MemoryFileSystem();
+		var filePath = "/test.csv";
+		var deleteExecuted = false;
+
+		// Use interval to batch operations
+		await using var executor = new ChannelExecutor(ex => throw ex, TimeSpan.FromMilliseconds(50));
+		_ = executor.RunAsync(token);
+
+		// Create TransactionFileStream and CsvFileWriter
+		var stream = new TransactionFileStream(fs, filePath, FileMode.Create);
+		var writer = new CsvFileWriter(stream);
+		writer.LineSeparator = "\n";
+
+		// Create group: begin = nothing (already open), end = commit transaction
+		var group = executor.CreateGroup(
+			() => { },
+			() => stream.Commit());
+
+		// Write 10000 rows with 50 columns each into the group
+		for (int r = 0; r < rowCount; r++)
+		{
+			var row = new string[colCount];
+			for (int c = 0; c < colCount; c++)
+				row[c] = $"R{r}C{c}";
+
+			var rowCopy = row;
+#pragma warning disable CS0618
+			group.Add(() => writer.WriteRow(rowCopy));
+#pragma warning restore CS0618
+		}
+
+		// Add delete operation directly to channel (not to group)
+		executor.Add(() =>
+		{
+			writer.Dispose();
+			stream.Dispose();
+			fs.DeleteFile(filePath);
+			deleteExecuted = true;
+		});
+
+		// Wait for all operations to complete
+		await executor.WaitFlushAsync(token);
+
+		// Verify delete was executed
+		deleteExecuted.AssertTrue();
+
+		// File should be deleted
+		fs.FileExists(filePath).AssertFalse();
+	}
+
+	[TestMethod]
+	[Timeout(120000, CooperativeCancellation = true)]
+	public async Task LoadTest_CsvWriterWithTransactionStream_VerifyContent()
+	{
+		var token = CancellationToken;
+
+		const int rowCount = 10000;
+		const int colCount = 50;
+
+		var fs = new MemoryFileSystem();
+		var filePath = "/test.csv";
+
+		// Use immediate mode for predictable behavior
+		await using var executor = new ChannelExecutor(ex => throw ex, TimeSpan.Zero);
+		_ = executor.RunAsync(token);
+
+		var stream = new TransactionFileStream(fs, filePath, FileMode.Create);
+		var writer = new CsvFileWriter(stream);
+		writer.LineSeparator = "\n";
+
+		// Write rows directly (no group - simpler case)
+		for (int r = 0; r < rowCount; r++)
+		{
+			var row = new string[colCount];
+			for (int c = 0; c < colCount; c++)
+				row[c] = $"R{r}C{c}";
+
+			var rowCopy = row;
+#pragma warning disable CS0618
+			executor.Add(() => writer.WriteRow(rowCopy));
+#pragma warning restore CS0618
+		}
+
+		// Final flush, commit and close
+		executor.Add(() =>
+		{
+			writer.Flush();
+			stream.Commit();
+			writer.Dispose();
+			stream.Dispose();
+		});
+
+		await executor.WaitFlushAsync(token);
+
+		// Verify file exists
+		fs.FileExists(filePath).AssertTrue();
+
+		// Read and verify content
+		using var readStream = fs.OpenRead(filePath);
+		using var reader = new CsvFileReader(readStream, "\n");
+		reader.Delimiter = ';'; // match writer's default delimiter
+		var cols = new List<string>();
+		var readCount = 0;
+
+#pragma warning disable CS0618
+		while (reader.ReadRow(cols))
+		{
+			cols.Count.AssertEqual(colCount);
+			cols[0].AssertEqual($"R{readCount}C0");
+			cols[colCount - 1].AssertEqual($"R{readCount}C{colCount - 1}");
+			readCount++;
+		}
+#pragma warning restore CS0618
+
+		readCount.AssertEqual(rowCount);
+	}
+
+	[TestMethod]
+	[Timeout(10000, CooperativeCancellation = true)]
+	public async Task DoubleDispose_DoesNotThrow()
+	{
+		var token = CancellationToken;
+
+		var executor = new ChannelExecutor(ex => { }, TimeSpan.Zero);
+		_ = executor.RunAsync(token);
+
+		var counter = 0;
+		executor.Add(() => counter++);
+
+		await executor.WaitFlushAsync(token);
+		counter.AssertEqual(1);
+
+		// First dispose
+		await executor.DisposeAsync();
+
+		// Second dispose should not throw
+		await executor.DisposeAsync();
 	}
 
 	#endregion

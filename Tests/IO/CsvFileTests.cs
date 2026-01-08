@@ -143,8 +143,8 @@ public class CsvFileTests : BaseTestClass
 			var arr = new string[colsCount];
 			for (int c = 0; c < colsCount; c++)
 				arr[c] = $"R{r}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-            writer.WriteRow(arr);
-        }
+			writer.WriteRow(arr);
+		}
 		writer.Flush();
 
 		ms.Position = 0;
