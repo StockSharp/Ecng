@@ -417,7 +417,6 @@ public class MemoryFileSystem : IFileSystem
 			fileNode.OpenHandles.Add(writeHandle);
 
 			var baseData = truncate ? [] : (fileNode.Data ?? []);
-			var oldSize = fileNode.Length;
 			var ms = new MemoryStream();
 			if (baseData.Length > 0)
 				ms.Write(baseData, 0, baseData.Length);
@@ -433,6 +432,7 @@ public class MemoryFileSystem : IFileSystem
 				using (_lock.EnterScope())
 				{
 					var newSize = bytes.LongLength;
+					var oldSize = fileNode.Length; // use actual size at commit time, not at open time
 					if (HandleSizeLimit(oldSize, newSize))
 					{
 						_totalSize += newSize - oldSize;
