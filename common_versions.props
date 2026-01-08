@@ -37,5 +37,6 @@
     <NuGetApiVer>7.0.1</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>6.*</MsSqlClientVer>
+    <OpenXmlVer>3.*</OpenXmlVer>
   </PropertyGroup>
 </Project>

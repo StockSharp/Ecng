@@ -6,13 +6,21 @@ using Ecng.Interop;
 [TestCategory("Integration")]
 public class ExcelWorkerTests : BaseTestClass
 {
-	private static IExcelWorkerProvider GetProvider() => new DevExpExcelWorkerProvider();
+	private static IExcelWorkerProvider CreateProvider(string providerName)
+		=> providerName switch
+		{
+			nameof(DevExpExcelWorkerProvider) => new DevExpExcelWorkerProvider(),
+			nameof(OpenXmlExcelWorkerProvider) => new OpenXmlExcelWorkerProvider(),
+			_ => throw new ArgumentException($"Unknown provider: {providerName}")
+		};
 
 	[TestMethod]
-	public void CreateNew_AddSheet_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void CreateNew_AddSheet_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -22,10 +30,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetCell_GetCell_StringValue_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCell_GetCell_StringValue_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -35,10 +45,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetCell_GetCell_IntValue_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCell_GetCell_IntValue_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -48,10 +60,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetCell_GetCell_DecimalValue_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCell_GetCell_DecimalValue_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -61,10 +75,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetCell_GetCell_DateTimeValue_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCell_GetCell_DateTimeValue_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		var dt = new DateTime(2024, 1, 15, 10, 30, 0);
 		worker
@@ -75,10 +91,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetCell_GetCell_BoolValue_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCell_GetCell_BoolValue_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -88,41 +106,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetStyle_ColumnFormat_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void MultipleSheets_SwitchSheet_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetStyle(1, "yyyy-MM-dd")
-			.SetCell(1, 1, DateTime.Now);
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void MultipleCells_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "A1")
-			.SetCell(2, 1, "B1")
-			.SetCell(1, 2, "A2")
-			.SetCell(2, 2, "B2");
-
-		worker.GetColumnsCount().AssertEqual(2);
-		worker.GetRowsCount().AssertEqual(2);
-	}
-
-	[TestMethod]
-	public void MultipleSheets_SwitchSheet_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -143,137 +132,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetColumnWidth_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void GetSheetNames_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetColumnWidth(1, 20.5)
-			.SetCell(1, 1, "Test");
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void SetRowHeight_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetRowHeight(1, 30.0)
-			.SetCell(1, 1, "Test");
-
-		worker.GetRowsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void AutoFitColumn_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "This is a long text that should auto-fit")
-			.AutoFitColumn(1);
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void FreezeRows_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "Header")
-			.SetCell(1, 2, "Data")
-			.FreezeRows(1);
-
-		worker.GetRowsCount().AssertEqual(2);
-	}
-
-	[TestMethod]
-	public void FreezeCols_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "Label")
-			.SetCell(2, 1, "Value")
-			.FreezeCols(1);
-
-		worker.GetColumnsCount().AssertEqual(2);
-	}
-
-	[TestMethod]
-	public void MergeCells_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "Merged Header")
-			.MergeCells(1, 1, 3, 1);
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void SetHyperlink_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetHyperlink(1, 1, "https://stocksharp.com", "StockSharp");
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void SetCellFormat_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, 12345.6789)
-			.SetCellFormat(1, 1, "#,##0.00");
-
-		worker.GetCell<double>(1, 1).AssertEqual(12345.6789);
-	}
-
-	[TestMethod]
-	public void SetCellColor_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "Colored Cell")
-			.SetCellColor(1, 1, "#FF0000", "#FFFFFF");
-
-		worker.GetCell<string>(1, 1).AssertEqual("Colored Cell");
-	}
-
-	[TestMethod]
-	public void GetSheetNames_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -290,11 +154,171 @@ public class ExcelWorkerTests : BaseTestClass
 		names.AssertContains("Gamma");
 	}
 
+	// DevExp-specific tests (features not fully implemented in OpenXml)
+
 	[TestMethod]
-	public void DeleteSheet_Success()
+	public void DevExp_SetStyle_ColumnFormat_Success()
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetStyle(1, "yyyy-MM-dd")
+			.SetCell(1, 1, DateTime.Now);
+
+		worker.GetColumnsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_MultipleCells_CountsCorrect()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "A1")
+			.SetCell(2, 1, "B1")
+			.SetCell(1, 2, "A2")
+			.SetCell(2, 2, "B2");
+
+		worker.GetColumnsCount().AssertEqual(2);
+		worker.GetRowsCount().AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void DevExp_SetColumnWidth_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetColumnWidth(1, 20.5)
+			.SetCell(1, 1, "Test");
+
+		worker.GetColumnsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_SetRowHeight_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetRowHeight(1, 30.0)
+			.SetCell(1, 1, "Test");
+
+		worker.GetRowsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_AutoFitColumn_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "This is a long text that should auto-fit")
+			.AutoFitColumn(1);
+
+		worker.GetColumnsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_FreezeRows_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Header")
+			.SetCell(1, 2, "Data")
+			.FreezeRows(1);
+
+		worker.GetRowsCount().AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void DevExp_FreezeCols_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Label")
+			.SetCell(2, 1, "Value")
+			.FreezeCols(1);
+
+		worker.GetColumnsCount().AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void DevExp_MergeCells_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Merged Header")
+			.MergeCells(1, 1, 3, 1);
+
+		worker.GetColumnsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_SetHyperlink_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetHyperlink(1, 1, "https://stocksharp.com", "StockSharp");
+
+		worker.GetColumnsCount().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DevExp_SetCellFormat_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, 12345.6789)
+			.SetCellFormat(1, 1, "#,##0.00");
+
+		worker.GetCell<double>(1, 1).AssertEqual(12345.6789);
+	}
+
+	[TestMethod]
+	public void DevExp_SetCellColor_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Colored Cell")
+			.SetCellColor(1, 1, "#FF0000", "#FFFFFF");
+
+		worker.GetCell<string>(1, 1).AssertEqual("Colored Cell");
+	}
+
+	[TestMethod]
+	public void DevExp_DeleteSheet_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -309,10 +333,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SetConditionalFormatting_Success()
+	public void DevExp_SetConditionalFormatting_Success()
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -325,10 +349,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void ComplexWorkflow_Success()
+	public void DevExp_ComplexWorkflow_Success()
 	{
 		using var stream = new MemoryStream();
-		using var worker = GetProvider().CreateNew(stream);
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
 
 		worker
 			.AddSheet()

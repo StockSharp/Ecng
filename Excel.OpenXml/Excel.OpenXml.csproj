@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="$(OpenXmlVer)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interop\Interop.csproj" />
+  </ItemGroup>
+</Project>

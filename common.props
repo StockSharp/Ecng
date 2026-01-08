@@ -43,9 +43,9 @@
   <PropertyGroup Condition="
         $(MSBuildProjectName.StartsWith('Backup')) or
         $(MSBuildProjectName.StartsWith('Compilation')) or
+        $(MSBuildProjectName.StartsWith('Excel.')) or
         '$(MSBuildProjectName)' == 'Net.SocketIO' or
-        '$(MSBuildProjectName)' == 'Net.Udp' or
-        '$(MSBuildProjectName)' == 'Interop.Excel'
+        '$(MSBuildProjectName)' == 'Net.Udp'
       ">
     <TargetFrameworks>net6.0;net10.0</TargetFrameworks>
   </PropertyGroup>
