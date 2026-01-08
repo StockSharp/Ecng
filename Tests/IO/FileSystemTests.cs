@@ -179,9 +179,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Contract(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Contract(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		RunContract(fs, root);
@@ -221,9 +221,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveDirectory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveDirectory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 
@@ -248,9 +248,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveDirectory_ToNestedPath(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveDirectory_ToNestedPath(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 
@@ -268,9 +268,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveDirectory_NonExistentSource_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveDirectory_NonExistentSource_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "nonexistent");
@@ -280,9 +280,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveDirectory_DestinationExists_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveDirectory_DestinationExists_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -295,9 +295,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CopyFile_OverwriteExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CopyFile_OverwriteExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Test that CopyFile with overwrite=true REPLACES the destination content,
@@ -314,9 +314,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveFile_OverwriteExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveFile_OverwriteExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Test that MoveFile with overwrite=true REPLACES the destination content,
@@ -334,9 +334,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Extensions_ReadWriteAllText(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Extensions_ReadWriteAllText(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "text.txt");
@@ -346,9 +346,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Extensions_ReadWriteAllTextAsync(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Extensions_ReadWriteAllTextAsync(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "async_text.txt");
@@ -359,9 +359,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Extensions_AppendAllText(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Extensions_AppendAllText(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "append.txt");
@@ -372,9 +372,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Extensions_AppendAllTextAsync(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Extensions_AppendAllTextAsync(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "append_async.txt");
@@ -386,9 +386,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Extensions_ReadWriteAllBytes(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Extensions_ReadWriteAllBytes(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "bytes.bin");
@@ -399,9 +399,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Extensions_ReadWriteAllBytesAsync(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Extensions_ReadWriteAllBytesAsync(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "bytes_async.bin");
@@ -413,9 +413,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Extensions_ReadWriteAllLines(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Extensions_ReadWriteAllLines(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "lines.txt");
@@ -426,9 +426,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Extensions_ReadWriteAllLinesAsync(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Extensions_ReadWriteAllLinesAsync(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "lines_async.txt");
@@ -440,9 +440,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Extensions_ReadWriteAllText_WithEncoding(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Extensions_ReadWriteAllText_WithEncoding(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "unicode.txt");
@@ -453,9 +453,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ReadAccess_CannotWrite(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ReadAccess_CannotWrite(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -472,9 +472,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_WriteAccess_CannotRead(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_WriteAccess_CannotRead(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -489,9 +489,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ExistingFile_PositionAtStart(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ExistingFile_PositionAtStart(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -502,9 +502,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ReadWriteAccess_CanDoAll(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ReadWriteAccess_CanDoAll(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -522,9 +522,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_Append_CannotRead(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_Append_CannotRead(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -536,9 +536,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_Append_SeekBeforeEnd_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_Append_SeekBeforeEnd_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -549,9 +549,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_Append_ReadAccess_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_Append_ReadAccess_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -561,12 +561,12 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ShareNone_BlocksSecondOpen(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ShareNone_BlocksSecondOpen(string fsType)
 	{
 		// FileShare locking is Windows-specific for local FS
-		if (fsType == typeof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
 			return;
 
 		var (fs, root) = Config.CreateFs(fsType);
@@ -578,9 +578,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ShareRead_AllowsMultipleReaders(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ShareRead_AllowsMultipleReaders(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -593,9 +593,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ShareReadWrite_AllowsReadAndWrite(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ShareReadWrite_AllowsReadAndWrite(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -608,11 +608,11 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ShareRead_BlocksWriter(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ShareRead_BlocksWriter(string fsType)
 	{
-		if (fsType == typeof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
 			return;
 
 		var (fs, root) = Config.CreateFs(fsType);
@@ -624,11 +624,11 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ShareWrite_BlocksReader(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ShareWrite_BlocksReader(string fsType)
 	{
-		if (fsType == typeof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
 			return;
 
 		var (fs, root) = Config.CreateFs(fsType);
@@ -640,11 +640,11 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WhileOpen_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WhileOpen_Throws(string fsType)
 	{
-		if (fsType == typeof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
 			return;
 
 		var (fs, root) = Config.CreateFs(fsType);
@@ -656,11 +656,11 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveFile_WhileOpen_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveFile_WhileOpen_Throws(string fsType)
 	{
-		if (fsType == typeof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
 			return;
 
 		var (fs, root) = Config.CreateFs(fsType);
@@ -673,9 +673,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WithShareDelete_Succeeds(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WithShareDelete_Succeeds(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -687,9 +687,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WithShareDelete_FileNotAccessibleAfterDelete(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -707,9 +707,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WithShareDelete_CanCreateNewFileWithSameName(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -729,9 +729,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WithShareDelete_WriteStillWorks(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WithShareDelete_WriteStillWorks(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -755,9 +755,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_WithShareDelete_DataLostAfterClose(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_WithShareDelete_DataLostAfterClose(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "test.txt");
@@ -773,9 +773,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void SetReadOnly_GetAttributes(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SetReadOnly_GetAttributes(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "rofile.txt");
@@ -807,9 +807,9 @@ public class FileSystemTests : BaseTestClass
 	#region FileMode comprehensive tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_CreateNew_FailsIfExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_CreateNew_FailsIfExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -819,9 +819,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_CreateNew_CreatesIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_CreateNew_CreatesIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "new.txt");
@@ -836,9 +836,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Create_TruncatesExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Create_TruncatesExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -853,9 +853,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Create_CreatesIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Create_CreatesIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "new.txt");
@@ -870,9 +870,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Open_FailsIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Open_FailsIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "nonexistent.txt");
@@ -881,9 +881,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Open_OpensExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Open_OpensExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -896,9 +896,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_OpenOrCreate_CreatesIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_OpenOrCreate_CreatesIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "new.txt");
@@ -913,9 +913,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_OpenOrCreate_OpensExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_OpenOrCreate_OpensExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -931,9 +931,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_OpenOrCreate_DoesNotTruncate(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_OpenOrCreate_DoesNotTruncate(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -949,9 +949,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Truncate_FailsIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Truncate_FailsIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "nonexistent.txt");
@@ -960,9 +960,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Truncate_TruncatesExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Truncate_TruncatesExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -977,9 +977,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Append_CreatesIfNotExists(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Append_CreatesIfNotExists(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "new.txt");
@@ -994,9 +994,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Append_AppendsToExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Append_AppendsToExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -1011,9 +1011,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileMode_Append_PositionAtEnd(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileMode_Append_PositionAtEnd(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "existing.txt");
@@ -1028,9 +1028,9 @@ public class FileSystemTests : BaseTestClass
 	#region Directory enumeration tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateFiles_NonExistingDirectory_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateFiles_NonExistingDirectory_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var nonExistent = Path.Combine(root, "nonexistent");
@@ -1039,9 +1039,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateDirectories_NonExistingDirectory_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateDirectories_NonExistingDirectory_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var nonExistent = Path.Combine(root, "nonexistent");
@@ -1050,9 +1050,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateFiles_EmptyDirectory_ReturnsEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateFiles_EmptyDirectory_ReturnsEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var emptyDir = Path.Combine(root, "empty");
@@ -1062,9 +1062,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateDirectories_EmptyDirectory_ReturnsEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateDirectories_EmptyDirectory_ReturnsEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var emptyDir = Path.Combine(root, "empty");
@@ -1074,9 +1074,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateFiles_WithPattern(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateFiles_WithPattern(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteAll(fs, Path.Combine(root, "file1.txt"), "a");
@@ -1091,9 +1091,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateDirectories_WithPattern(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateDirectories_WithPattern(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(Path.Combine(root, "test_dir"));
@@ -1105,9 +1105,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateFiles_AllDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateFiles_AllDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteAll(fs, Path.Combine(root, "root.txt"), "r");
@@ -1126,9 +1126,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EnumerateDirectories_AllDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EnumerateDirectories_AllDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dir1 = Path.Combine(root, "dir1");
@@ -1150,9 +1150,9 @@ public class FileSystemTests : BaseTestClass
 	#region Directory operations tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateDirectory_NestedPath(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateDirectory_NestedPath(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var nested = Path.Combine(root, "a", "b", "c");
@@ -1164,9 +1164,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateDirectory_AlreadyExists_NoError(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateDirectory_AlreadyExists_NoError(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dir = Path.Combine(root, "existing");
@@ -1177,9 +1177,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteDirectory_NonRecursive_FailsIfNotEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteDirectory_NonRecursive_FailsIfNotEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dir = Path.Combine(root, "nonempty");
@@ -1190,9 +1190,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteDirectory_Recursive_DeletesContents(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteDirectory_Recursive_DeletesContents(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dir = Path.Combine(root, "nonempty");
@@ -1208,9 +1208,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteDirectory_NonExistent_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteDirectory_NonExistent_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dir = Path.Combine(root, "nonexistent");
@@ -1223,9 +1223,9 @@ public class FileSystemTests : BaseTestClass
 	#region File deletion tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_NonExistent_NoError(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_NonExistent_NoError(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "nonexistent.txt");
@@ -1235,9 +1235,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteFile_ExistingFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteFile_ExistingFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "todelete.txt");
@@ -1253,9 +1253,9 @@ public class FileSystemTests : BaseTestClass
 	#region Open file in non-existing directory tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_InNonExistingDirectory_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_InNonExistingDirectory_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Both LocalFileSystem and MemoryFileSystem should throw DirectoryNotFoundException
@@ -1266,9 +1266,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_InNonExistingNestedDirectory_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_InNonExistingNestedDirectory_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "a", "b", "c", "file.txt");
@@ -1277,9 +1277,9 @@ public class FileSystemTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_OpenOrCreate_InNonExistingDirectory_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_OpenOrCreate_InNonExistingDirectory_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var file = Path.Combine(root, "nonexistent", "file.txt");

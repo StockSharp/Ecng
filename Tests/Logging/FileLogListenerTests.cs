@@ -80,9 +80,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Exact Format Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_ExactFormat_WithDate(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_ExactFormat_WithDate(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -125,9 +125,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_ExactFormat_WithoutDate(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_ExactFormat_WithoutDate(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -169,9 +169,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_ExactFormat_InfoLevelEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_ExactFormat_InfoLevelEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -196,9 +196,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_ExactFormat_WithSourceId(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_ExactFormat_WithSourceId(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -232,9 +232,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_DateFormat_Correct(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_DateFormat_Correct(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -261,9 +261,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_DateFormat_WithLocalTime(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_DateFormat_WithLocalTime(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -292,9 +292,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_TimeOnlyFormat_Correct(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_TimeOnlyFormat_Correct(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -322,9 +322,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_AllLevels_CorrectPadding(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_AllLevels_CorrectPadding(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -360,9 +360,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_LongSourceName_NotTruncated(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_LongSourceName_NotTruncated(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -386,9 +386,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_ShortSourceName_PaddedTo10(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_ShortSourceName_PaddedTo10(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -412,9 +412,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task LogLine_MultipleMessages_ExactOrder(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogLine_MultipleMessages_ExactOrder(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -457,9 +457,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Basic Write Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WritesToSingleFile_WhenSeparateByDatesNone(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WritesToSingleFile_WhenSeparateByDatesNone(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -483,9 +483,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteMessages_CorrectFormat_ContainsAllFields(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteMessages_CorrectFormat_ContainsAllFields(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -512,9 +512,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteMessages_MultipleMessages_CorrectOrder(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteMessages_MultipleMessages_CorrectOrder(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -544,9 +544,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteMessages_DifferentLogLevels_CorrectlyFormatted(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteMessages_DifferentLogLevels_CorrectlyFormatted(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -580,9 +580,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region SeparateByDates Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task CreatesDatePrefixedFile_WhenSeparateByDatesFileName(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task CreatesDatePrefixedFile_WhenSeparateByDatesFileName(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -603,9 +603,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task CreatesSubdirectory_WhenSeparateByDatesSubDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task CreatesSubdirectory_WhenSeparateByDatesSubDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -627,9 +627,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task SeparateByDatesFileName_DoesNotIncludeDateInContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task SeparateByDatesFileName_DoesNotIncludeDateInContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -662,9 +662,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Rolling (MaxLength/MaxCount) Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Rolling_CreatesRollingFiles_WhenMaxLengthExceeded(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Rolling_CreatesRollingFiles_WhenMaxLengthExceeded(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -695,9 +695,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Rolling_RespectMaxCount_DeletesOldFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Rolling_RespectMaxCount_DeletesOldFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -730,9 +730,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Rolling_NewestDataInBaseFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Rolling_NewestDataInBaseFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -770,9 +770,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task Rolling_NoRollingWhenMaxLengthZero(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task Rolling_NoRollingWhenMaxLengthZero(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -805,9 +805,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Delete Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Delete_RemovesOldFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Delete_RemovesOldFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -835,9 +835,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Delete_RemovesOldDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Delete_RemovesOldDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -860,9 +860,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Delete_KeepsRecentFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Delete_KeepsRecentFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -893,9 +893,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Compression Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Compression_CreatesZipAndDeletesOriginal(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Compression_CreatesZipAndDeletesOriginal(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -921,9 +921,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Compression_ZipContainsCorrectContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Compression_ZipContainsCorrectContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -952,9 +952,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Compression_DirectoryToZip(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Compression_DirectoryToZip(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -987,9 +987,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Compression_MultipleFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Compression_MultipleFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1026,9 +1026,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Move Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Move_FilesMovedToHistory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Move_FilesMovedToHistory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1058,9 +1058,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Move_DirectoriesMovedToHistory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Move_DirectoriesMovedToHistory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1089,9 +1089,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_Move_PreservesContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_Move_PreservesContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1124,9 +1124,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task TryDoHistoryPolicy_MoveDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task TryDoHistoryPolicy_MoveDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1164,9 +1164,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task TryDoHistoryPolicy_MoveFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task TryDoHistoryPolicy_MoveFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1204,9 +1204,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - None Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task HistoryPolicy_None_DoesNothing(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task HistoryPolicy_None_DoesNothing(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1232,9 +1232,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Append Mode Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task AppendMode_AppendsToExistingFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task AppendMode_AppendsToExistingFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1258,9 +1258,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task AppendMode_False_OverwritesFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task AppendMode_False_OverwritesFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1288,9 +1288,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Source Name Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteChildDataToRootFile_UsesParentName(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteChildDataToRootFile_UsesParentName(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1311,9 +1311,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteChildDataToRootFile_False_UsesChildName(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteChildDataToRootFile_False_UsesChildName(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1337,9 +1337,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task WriteSourceId_IncludesSourceIdInLog(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task WriteSourceId_IncludesSourceIdInLog(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1364,9 +1364,9 @@ public class FileLogListenerTests : BaseTestClass
 	#region Extension and Filename Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task CustomExtension_IsApplied(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task CustomExtension_IsApplied(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1384,9 +1384,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetFileName_SanitizesInvalidChars(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetFileName_SanitizesInvalidChars(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1404,9 +1404,9 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task MultipleSourcesCreateSeparateFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task MultipleSourcesCreateSeparateFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 

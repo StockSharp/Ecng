@@ -459,9 +459,9 @@ public class CompressTests : BaseTestClass
 	#region FileSystem Zip Extensions Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ZipFrom_UnzipTo_RoundTrip(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_UnzipTo_RoundTrip(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Create source directory with files
@@ -492,9 +492,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_ZipFromAsync_UnzipToAsync_RoundTrip(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_ZipFromAsync_UnzipToAsync_RoundTrip(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -515,9 +515,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_Zip_FromEntries(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Zip_FromEntries(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var zipPath = Path.Combine(root, "entries.zip");
@@ -537,9 +537,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_Unzip_ReturnsEntries(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Unzip_ReturnsEntries(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Create a zip file first
@@ -562,9 +562,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_UnzipTo_OverwriteOption(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_UnzipTo_OverwriteOption(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Create initial zip
@@ -593,9 +593,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_Zip_ToStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Zip_ToStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var entries = new List<(string name, Stream body)>
@@ -616,9 +616,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_ZipAsync_ToStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_ZipAsync_ToStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var entries = new List<(string name, Stream body)>
@@ -636,9 +636,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_ZipAsync_FromEntries(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_ZipAsync_FromEntries(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var zipPath = Path.Combine(root, "async_entries.zip");
@@ -657,9 +657,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ZipFrom_ToStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_ToStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -676,9 +676,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_ZipFromAsync_ToStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_ZipFromAsync_ToStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -694,9 +694,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_UnzipTo_FromStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_UnzipTo_FromStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Create zip in memory
@@ -718,9 +718,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_UnzipToAsync_FromStream(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_UnzipToAsync_FromStream(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var entries = new List<(string name, Stream body)>
@@ -740,9 +740,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ZipFrom_IncludeBaseDirectory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ZipFrom_IncludeBaseDirectory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "mydir");
@@ -764,9 +764,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_Unzip_WithFilter(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Unzip_WithFilter(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var zipPath = Path.Combine(root, "filter_test.zip");
@@ -787,9 +787,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ReadEntries_ReturnsStreams(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_ReturnsStreams(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -817,9 +817,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ReadEntries_WithPattern(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_WithPattern(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var sourceDir = Path.Combine(root, "source");
@@ -838,9 +838,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_WriteEntries_CreatesFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_WriteEntries_CreatesFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var destDir = Path.Combine(root, "dest");
@@ -861,9 +861,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_WriteEntries_OverwriteOption(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_WriteEntries_OverwriteOption(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var destDir = Path.Combine(root, "dest");
@@ -893,9 +893,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task FileSystem_WriteEntriesAsync_CreatesFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_WriteEntriesAsync_CreatesFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var destDir = Path.Combine(root, "dest");
@@ -913,9 +913,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void FileSystem_ReadEntries_WriteEntries_RoundTrip(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_ReadEntries_WriteEntries_RoundTrip(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Create source

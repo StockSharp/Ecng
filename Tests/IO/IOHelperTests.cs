@@ -21,9 +21,9 @@ public class IOHelperTests : BaseTestClass
 	#region CreateDirIfNotExists
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateDirIfNotExists_CreatesDirectory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateDirIfNotExists_CreatesDirectory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var path = NewPath(root,"subdir", "file.txt");
@@ -35,9 +35,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateDirIfNotExists_ExistingDir_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateDirIfNotExists_ExistingDir_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "subdir"));
@@ -48,9 +48,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateDirIfNotExists_EmptyDir_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateDirIfNotExists_EmptyDir_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var result = fs.CreateDirIfNotExists("file.txt");
@@ -63,9 +63,9 @@ public class IOHelperTests : BaseTestClass
 	#region SafeDeleteDir
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void SafeDeleteDir_DeletesDirectory(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SafeDeleteDir_DeletesDirectory(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var subdir = NewPath(root, "subdir");
@@ -78,9 +78,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void SafeDeleteDir_NonExistent_NoException(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SafeDeleteDir_NonExistent_NoException(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.SafeDeleteDir(NewPath(root, "nonexistent"));
@@ -91,9 +91,9 @@ public class IOHelperTests : BaseTestClass
 	#region CheckInstallation
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckInstallation_WithFiles_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckInstallation_WithFiles_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var install = NewPath(root, "install");
@@ -104,9 +104,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckInstallation_WithSubdirs_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckInstallation_WithSubdirs_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "install", "subdir"));
@@ -115,9 +115,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckInstallation_Empty_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckInstallation_Empty_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var install = NewPath(root, "install");
@@ -127,18 +127,18 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckInstallation_NonExistent_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckInstallation_NonExistent_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CheckInstallation(NewPath(root, "install")).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckInstallation_EmptyPath_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckInstallation_EmptyPath_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CheckInstallation("").AssertFalse();
@@ -149,9 +149,9 @@ public class IOHelperTests : BaseTestClass
 	#region CreateFile
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateFile_CreatesFileWithContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateFile_CreatesFileWithContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var content = new byte[] { 1, 2, 3, 4, 5 };
@@ -166,9 +166,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateFile_WithRelativePath_CreatesDirectoryAndFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateFile_WithRelativePath_CreatesDirectoryAndFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var content = new byte[] { 10, 20, 30 };
@@ -184,9 +184,9 @@ public class IOHelperTests : BaseTestClass
 	#region DeleteEmptyDirs
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteEmptyDirs_DeletesEmptyDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteEmptyDirs_DeletesEmptyDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "a", "b", "c"));
@@ -198,9 +198,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DeleteEmptyDirs_KeepsNonEmptyDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DeleteEmptyDirs_KeepsNonEmptyDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "a", "b"));
@@ -219,9 +219,9 @@ public class IOHelperTests : BaseTestClass
 	#region GetDirectories
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void GetDirectories_ReturnsDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void GetDirectories_ReturnsDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "a"));
@@ -237,9 +237,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void GetDirectories_NonExistent_ReturnsEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void GetDirectories_NonExistent_ReturnsEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dirs = fs.GetDirectories(NewPath(root, "nonexistent"));
@@ -248,9 +248,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void GetDirectories_WithPattern_FiltersResults(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void GetDirectories_WithPattern_FiltersResults(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "test1"));
@@ -267,9 +267,9 @@ public class IOHelperTests : BaseTestClass
 	#region GetDirectoriesAsync
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetDirectoriesAsync_ReturnsDirectories(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetDirectoriesAsync_ReturnsDirectories(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "dir1"));
@@ -281,9 +281,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetDirectoriesAsync_NonExistent_ReturnsEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetDirectoriesAsync_NonExistent_ReturnsEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var dirs = await fs.GetDirectoriesAsync(NewPath(root, "nonexistent"), cancellationToken: CancellationToken);
@@ -296,9 +296,9 @@ public class IOHelperTests : BaseTestClass
 	#region GetFilesAsync
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetFilesAsync_ReturnsFiles(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetFilesAsync_ReturnsFiles(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"a.txt"), 1);
@@ -312,9 +312,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetFilesAsync_NonExistent_ReturnsEmpty(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetFilesAsync_NonExistent_ReturnsEmpty(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var files = await fs.GetFilesAsync(NewPath(root, "nonexistent"), cancellationToken: CancellationToken);
@@ -323,9 +323,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetFilesAsync_WithPattern_FiltersResults(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetFilesAsync_WithPattern_FiltersResults(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"file.txt"), 1);
@@ -342,9 +342,9 @@ public class IOHelperTests : BaseTestClass
 	#region Save
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Save_Stream_SavesContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Save_Stream_SavesContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var data = new byte[] { 1, 2, 3, 4, 5 };
@@ -360,9 +360,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Save_Stream_RestoresPosition(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Save_Stream_RestoresPosition(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var data = new byte[] { 1, 2, 3 };
@@ -375,9 +375,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Save_ByteArray_SavesContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Save_ByteArray_SavesContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var data = new byte[] { 10, 20, 30, 40 };
@@ -393,9 +393,9 @@ public class IOHelperTests : BaseTestClass
 	#region TrySave
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void TrySave_Success_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void TrySave_Success_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var data = new byte[] { 1, 2, 3 };
@@ -409,9 +409,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void TrySave_Failure_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void TrySave_Failure_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// Directory doesn't exist, should fail with DirectoryNotFoundException
@@ -430,9 +430,9 @@ public class IOHelperTests : BaseTestClass
 	#region CheckDirContainFiles
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainFiles_WithFiles_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainFiles_WithFiles_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"file.txt"));
@@ -441,9 +441,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainFiles_WithFilesInSubdir_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainFiles_WithFilesInSubdir_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "sub"));
@@ -453,9 +453,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainFiles_EmptyDir_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainFiles_EmptyDir_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "sub"));
@@ -464,9 +464,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainFiles_NonExistent_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainFiles_NonExistent_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CheckDirContainFiles(NewPath(root, "nonexistent")).AssertFalse();
@@ -477,9 +477,9 @@ public class IOHelperTests : BaseTestClass
 	#region CheckDirContainsAnything
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainsAnything_WithFiles_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainsAnything_WithFiles_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"file.txt"));
@@ -488,9 +488,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainsAnything_WithSubdir_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainsAnything_WithSubdir_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "sub"));
@@ -499,9 +499,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainsAnything_Empty_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainsAnything_Empty_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		// root exists and is empty
@@ -509,9 +509,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CheckDirContainsAnything_NonExistent_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CheckDirContainsAnything_NonExistent_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CheckDirContainsAnything(NewPath(root, "nonexistent")).AssertFalse();
@@ -522,18 +522,18 @@ public class IOHelperTests : BaseTestClass
 	#region IsFileLocked
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void IsFileLocked_NonExistent_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void IsFileLocked_NonExistent_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.IsFileLocked(NewPath(root, "nonexistent.txt")).AssertFalse();
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void IsFileLocked_UnlockedFile_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void IsFileLocked_UnlockedFile_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"file.txt"));
@@ -542,9 +542,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void IsFileLocked_LockedFile_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void IsFileLocked_LockedFile_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		using var s = fs.Open(NewPath(root, "file.txt"), FileMode.Create, FileAccess.Write, FileShare.None);
@@ -576,9 +576,9 @@ public class IOHelperTests : BaseTestClass
 	#region Async Cancellation and Materialization Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetFilesAsync_Cancellation_ThrowsOperationCanceled(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetFilesAsync_Cancellation_ThrowsOperationCanceled(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		WriteFile(fs, NewPath(root,"f.txt"));
@@ -600,9 +600,9 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public async Task GetDirectoriesAsync_Materialized_AfterDeleteStillAvailable(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task GetDirectoriesAsync_Materialized_AfterDeleteStillAvailable(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		fs.CreateDirectory(NewPath(root, "d1"));

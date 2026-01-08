@@ -34,9 +34,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	#region DataRow Tests
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateNew_CommitAndCleanup(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateNew_CommitAndCleanup(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -55,9 +55,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_NonExisting_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_NonExisting_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -66,9 +66,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void OpenOrCreate_CreatesAndWrites(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void OpenOrCreate_CreatesAndWrites(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -86,9 +86,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Append_AppendsToExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Append_AppendsToExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -108,9 +108,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Truncate_Existing_ReplacesContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Truncate_Existing_ReplacesContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -130,9 +130,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void AfterDispose_ThrowsObjectDisposed(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void AfterDispose_ThrowsObjectDisposed(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -145,9 +145,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CreateNew_ExistingFile_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CreateNew_ExistingFile_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -158,9 +158,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Create_OverwritesExisting(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Create_OverwritesExisting(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -180,9 +180,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Truncate_NonExisting_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Truncate_NonExisting_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -191,9 +191,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void OpenOrCreate_ExistingFile_AppendsContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void OpenOrCreate_ExistingFile_AppendsContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -213,9 +213,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Seek_ThrowsNotSupported(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Seek_ThrowsNotSupported(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -225,9 +225,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void SetLength_ThrowsNotSupported(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SetLength_ThrowsNotSupported(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -237,9 +237,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void PositionSet_ThrowsNotSupported(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void PositionSet_ThrowsNotSupported(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -249,9 +249,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CanRead_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CanRead_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -261,9 +261,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Read_ThrowsNotSupported(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Read_ThrowsNotSupported(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -273,9 +273,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CanSeek_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CanSeek_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -285,9 +285,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CanWrite_ReturnsTrue(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CanWrite_ReturnsTrue(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -297,9 +297,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CanWrite_AfterDispose_ReturnsFalse(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CanWrite_AfterDispose_ReturnsFalse(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -310,9 +310,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Flush_Works(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Flush_Works(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -324,9 +324,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MultipleDispose_NoException(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MultipleDispose_NoException(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -337,9 +337,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Append_NonExisting_CreatesFile(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Append_NonExisting_CreatesFile(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -357,9 +357,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Open_ExistingFile_AppendsContent(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Open_ExistingFile_AppendsContent(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -379,9 +379,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Commit_AfterDispose_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Commit_AfterDispose_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -392,9 +392,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MultipleCommits_AppendData(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MultipleCommits_AppendData(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -427,9 +427,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MultipleCommits_PositionAndLengthPreserved(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MultipleCommits_PositionAndLengthPreserved(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -451,9 +451,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MultipleCommits_RollbackUncommittedWrites(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MultipleCommits_RollbackUncommittedWrites(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -480,9 +480,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DisposeWithoutCommit_Rollback(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DisposeWithoutCommit_Rollback(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -502,9 +502,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void CommitRequired_ForChangesToPersist(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CommitRequired_ForChangesToPersist(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -526,9 +526,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void DisposeWithoutCommit_NoTarget(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void DisposeWithoutCommit_NoTarget(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -547,9 +547,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void PositionGet_ReturnsCurrentPosition(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void PositionGet_ReturnsCurrentPosition(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -563,9 +563,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void IsCommitted_Property(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void IsCommitted_Property(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -589,9 +589,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void EmptyName_Throws(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void EmptyName_Throws(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(fs, "", FileMode.Create));
@@ -642,9 +642,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	/// When exception is thrown inside using block (before Commit), original file should remain unchanged (rollback).
 	/// </summary>
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void ExceptionInUsing_ShouldRollback_OriginalFilePreserved(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -673,9 +673,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	/// Stale .tmp file from previous crash should not affect new Append operation.
 	/// </summary>
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void Append_WithStaleTmpFile_ShouldStartFresh(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void Append_WithStaleTmpFile_ShouldStartFresh(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var target = NewFilePath(root);
@@ -702,9 +702,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	/// When MoveFile fails in Commit, written data should be preserved in .tmp for recovery.
 	/// </summary>
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveFileFailure_ShouldPreserveTmpForRecovery(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveFileFailure_ShouldPreserveTmpForRecovery(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var faultyFs = new FaultyFileSystem(fs);
@@ -739,9 +739,9 @@ public class TransactionFileStreamTests : BaseTestClass
 	/// After MoveFile failure in Commit, Dispose should not throw and should preserve .tmp.
 	/// </summary>
 	[TestMethod]
-	[DataRow(typeof(LocalFileSystem))]
-	[DataRow(typeof(MemoryFileSystem))]
-	public void MoveFileFailure_DisposeAfterFailedCommit_PreservesTmp(Type fsType)
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void MoveFileFailure_DisposeAfterFailedCommit_PreservesTmp(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType);
 		var faultyFs = new FaultyFileSystem(fs);

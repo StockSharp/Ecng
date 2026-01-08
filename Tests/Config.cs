@@ -49,9 +49,9 @@ public static class Config
 		return path;
 	}
 
-	public static (IFileSystem fs, string root) CreateFs(Type fsType, string memRootName = "data")
+	public static (IFileSystem fs, string root) CreateFs(string fsType, string memRootName = "data")
 	{
-		if (fsType == typeof(LocalFileSystem))
+		if (fsType == nameof(LocalFileSystem))
 		{
 			var fs = LocalFileSystem.Instance;
 			var root = fs.GetTempPath();

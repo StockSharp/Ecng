@@ -12,9 +12,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 {
 	// Note: we create new LocalFileSystem instances (not the singleton) because each test needs its own TotalSize tracking.
 	// Cleanup is handled by Config.AssemblyCleanup which deletes _tempRoot.
-	private static (IFileSystem fs, string root) CreateFs(Type fsType)
+	private static (IFileSystem fs, string root) CreateFs(string fsType)
 	{
-		if (fsType == typeof(MemoryFileSystem))
+		if (fsType == nameof(MemoryFileSystem))
 		{
 			var fs = new MemoryFileSystem();
 			var root = "/data";
@@ -42,9 +42,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(MemoryFileSystem))]
-	[DataRow(typeof(LocalFileSystem))]
-	public void TotalSize_TracksFileSize(Type fsType)
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void TotalSize_TracksFileSize(string fsType)
 	{
 		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 1000, FileSystemOverflowBehavior.ThrowException);
@@ -68,9 +68,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(MemoryFileSystem))]
-	[DataRow(typeof(LocalFileSystem))]
-	public void MaxSize_ThrowException_WhenExceeded(Type fsType)
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void MaxSize_ThrowException_WhenExceeded(string fsType)
 	{
 		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.ThrowException);
@@ -86,9 +86,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(MemoryFileSystem))]
-	[DataRow(typeof(LocalFileSystem))]
-	public void MaxSize_IgnoreWrites_WhenExceeded(Type fsType)
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void MaxSize_IgnoreWrites_WhenExceeded(string fsType)
 	{
 		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.IgnoreWrites);
@@ -104,9 +104,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(MemoryFileSystem))]
-	[DataRow(typeof(LocalFileSystem))]
-	public void MaxSize_NoLimit_WhenZero(Type fsType)
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void MaxSize_NoLimit_WhenZero(string fsType)
 	{
 		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 0, FileSystemOverflowBehavior.ThrowException);
@@ -122,9 +122,9 @@ public class FileSystemSizeLimitTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(typeof(MemoryFileSystem))]
-	[DataRow(typeof(LocalFileSystem))]
-	public void MaxSize_ExactLimit(Type fsType)
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void MaxSize_ExactLimit(string fsType)
 	{
 		var (fs, root) = CreateFs(fsType);
 		SetMaxSize(fs, 10, FileSystemOverflowBehavior.ThrowException);
