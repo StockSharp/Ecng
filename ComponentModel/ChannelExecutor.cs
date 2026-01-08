@@ -14,18 +14,18 @@ using Ecng.Common;
 public interface IChannelExecutorGroup
 {
 	/// <summary>
-	/// Add operation to the group.
+	/// Add async operation to the group.
 	/// </summary>
-	/// <param name="action">Operation to execute.</param>
-	void Add(Action action);
+	/// <param name="action">Async operation to execute (receives CancellationToken).</param>
+	void Add(Func<CancellationToken, ValueTask> action);
 
 	/// <summary>
-	/// Add operation to the group asynchronously.
+	/// Add async operation to the group asynchronously.
 	/// </summary>
-	/// <param name="action">Operation to execute.</param>
+	/// <param name="action">Async operation to execute (receives CancellationToken).</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Task.</returns>
-	ValueTask AddAsync(Action action, CancellationToken cancellationToken = default);
+	ValueTask AddAsync(Func<CancellationToken, ValueTask> action, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -36,19 +36,19 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 {
 	private sealed class Operation
 	{
-		public Action Action { get; set; }
+		public Func<CancellationToken, ValueTask> Action { get; set; }
 		public TaskCompletionSource<bool> CompletionSource { get; set; }
 		public Group Group { get; set; }
 	}
 
-	private class Group(ChannelExecutor executor, Action begin, Action end) : IChannelExecutorGroup
+	private class Group(ChannelExecutor executor, Func<CancellationToken, ValueTask> begin, Func<CancellationToken, ValueTask> end) : IChannelExecutorGroup
 	{
 		private readonly ChannelExecutor _executor = executor ?? throw new ArgumentNullException(nameof(executor));
 
-		public Action Begin { get; } = begin ?? throw new ArgumentNullException(nameof(begin));
-		public Action End { get; } = end ?? throw new ArgumentNullException(nameof(end));
+		public Func<CancellationToken, ValueTask> Begin { get; } = begin ?? throw new ArgumentNullException(nameof(begin));
+		public Func<CancellationToken, ValueTask> End { get; } = end ?? throw new ArgumentNullException(nameof(end));
 
-		void IChannelExecutorGroup.Add(Action action)
+		void IChannelExecutorGroup.Add(Func<CancellationToken, ValueTask> action)
 		{
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
@@ -60,7 +60,7 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 			});
 		}
 
-		ValueTask IChannelExecutorGroup.AddAsync(Action action, CancellationToken cancellationToken)
+		ValueTask IChannelExecutorGroup.AddAsync(Func<CancellationToken, ValueTask> action, CancellationToken cancellationToken)
 		{
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
@@ -97,12 +97,12 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	}
 
 	/// <summary>
-	/// Creates a new operation group with begin/end callbacks.
+	/// Creates a new operation group with async begin/end callbacks.
 	/// </summary>
-	/// <param name="begin">Action called before first operation in the group.</param>
-	/// <param name="end">Action called after last operation in the group (always, like finally).</param>
+	/// <param name="begin">Async action called before first operation in the group (receives CancellationToken).</param>
+	/// <param name="end">Async action called after last operation in the group (always, like finally; receives CancellationToken).</param>
 	/// <returns>Group object to add operations to.</returns>
-	public IChannelExecutorGroup CreateGroup(Action begin, Action end)
+	public IChannelExecutorGroup CreateGroup(Func<CancellationToken, ValueTask> begin, Func<CancellationToken, ValueTask> end)
 	{
 		return new Group(this, begin, end);
 	}
@@ -146,7 +146,7 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 				// If we have operations, process them
 				if (pendingOperations.Count > 0)
 				{
-					FlushOperations(pendingOperations);
+					await FlushOperationsAsync(pendingOperations, cancellationToken).NoWait();
 					pendingOperations.Clear();
 					continue;
 				}
@@ -195,7 +195,7 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 			}
 
 			if (pendingOperations.Count > 0)
-				FlushOperations(pendingOperations);
+				await FlushOperationsAsync(pendingOperations, CancellationToken.None).NoWait();
 
 			// Complete any pending TCS with exception
 			var completionException = fatalException ?? new OperationCanceledException(cancellationToken);
@@ -204,21 +204,27 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 		}
 	}
 
-	private void FlushOperations(List<Operation> operations)
+	private async ValueTask FlushOperationsAsync(List<Operation> operations, CancellationToken cancellationToken)
 	{
 		Group currentGroup = null;
 
-		void SafeBegin(Group g)
+		async ValueTask SafeBeginAsync(Group g)
 		{
 			try
-			{ g?.Begin?.Invoke(); }
+			{
+				if (g?.Begin != null)
+					await g.Begin(cancellationToken).NoWait();
+			}
 			catch (Exception ex) { _errorHandler(ex); }
 		}
 
-		void SafeEnd(Group g)
+		async ValueTask SafeEndAsync(Group g)
 		{
 			try
-			{ g?.End?.Invoke(); }
+			{
+				if (g?.End != null)
+					await g.End(cancellationToken).NoWait();
+			}
 			catch (Exception ex) { _errorHandler(ex); }
 		}
 
@@ -227,26 +233,26 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 			if (!ReferenceEquals(op.Group, currentGroup))
 			{
 				if (currentGroup != null)
-					SafeEnd(currentGroup);
+					await SafeEndAsync(currentGroup).NoWait();
 
 				currentGroup = op.Group;
 
 				if (currentGroup != null)
-					SafeBegin(currentGroup);
+					await SafeBeginAsync(currentGroup).NoWait();
 			}
 
-			ExecuteOperation(op);
+			await ExecuteOperationAsync(op, cancellationToken).NoWait();
 		}
 
 		if (currentGroup != null)
-			SafeEnd(currentGroup);
+			await SafeEndAsync(currentGroup).NoWait();
 	}
 
-	private void ExecuteOperation(Operation operation)
+	private async ValueTask ExecuteOperationAsync(Operation operation, CancellationToken cancellationToken)
 	{
 		try
 		{
-			operation.Action();
+			await operation.Action(cancellationToken).NoWait();
 			operation.CompletionSource?.TrySetResult(true);
 		}
 		catch (Exception ex)
@@ -257,10 +263,10 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	}
 
 	/// <summary>
-	/// Add operation to the execution queue.
+	/// Add async operation to the execution queue.
 	/// </summary>
-	/// <param name="action">Operation to execute.</param>
-	public void Add(Action action)
+	/// <param name="action">Async operation to execute (receives CancellationToken).</param>
+	public void Add(Func<CancellationToken, ValueTask> action)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
@@ -269,12 +275,12 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	}
 
 	/// <summary>
-	/// Add operation to the execution queue asynchronously.
+	/// Add async operation to the execution queue asynchronously.
 	/// </summary>
-	/// <param name="action">Operation to execute.</param>
+	/// <param name="action">Async operation to execute (receives CancellationToken).</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Task.</returns>
-	public ValueTask AddAsync(Action action, CancellationToken cancellationToken = default)
+	public ValueTask AddAsync(Func<CancellationToken, ValueTask> action, CancellationToken cancellationToken = default)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
@@ -309,12 +315,12 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	}
 
 	/// <summary>
-	/// Add operation to the execution queue and wait for it to complete.
+	/// Add async operation to the execution queue and wait for it to complete.
 	/// </summary>
-	/// <param name="action">Operation to execute.</param>
+	/// <param name="action">Async operation to execute (receives CancellationToken).</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>Task that completes when the operation has been executed.</returns>
-	public async Task AddAndWaitAsync(Action action, CancellationToken cancellationToken = default)
+	public async Task AddAndWaitAsync(Func<CancellationToken, ValueTask> action, CancellationToken cancellationToken = default)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
@@ -341,7 +347,7 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 
 		await EnqueueAsync(new Operation
 		{
-			Action = () => { },
+			Action = _ => default,
 			CompletionSource = tcs
 		}, cancellationToken).NoWait();
 

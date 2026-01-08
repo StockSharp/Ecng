@@ -24,9 +24,9 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		executor.Add(() => counter++);
-		executor.Add(() => counter++);
-		executor.Add(() => counter++);
+		executor.Add(_ => { counter++; return default; });
+		executor.Add(_ => { counter++; return default; });
+		executor.Add(_ => { counter++; return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -46,7 +46,7 @@ public class ChannelExecutorTests : BaseTestClass
 		for (int i = 0; i < 10; i++)
 		{
 			var value = i;
-			executor.Add(() => list.Add(value));
+			executor.Add(_ => { list.Add(value); return default; });
 		}
 
 		await executor.WaitFlushAsync(token);
@@ -68,9 +68,9 @@ public class ChannelExecutorTests : BaseTestClass
 		await using var executor = new ChannelExecutor(ex => errors.Add(ex), TimeSpan.Zero);
 		_ = executor.RunAsync(token);
 
-		executor.Add(() => throw new InvalidOperationException("Test error 1"));
-		executor.Add(() => { }); // This should execute despite previous error
-		executor.Add(() => throw new ArgumentException("Test error 2"));
+		executor.Add(_ => throw new InvalidOperationException("Test error 1"));
+		executor.Add(_ => default); // This should execute despite previous error
+		executor.Add(_ => throw new ArgumentException("Test error 2"));
 
 		await executor.WaitFlushAsync(token);
 
@@ -89,8 +89,8 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		await executor.AddAsync(() => counter++, token);
-		await executor.AddAsync(() => counter++, token);
+		await executor.AddAsync(_ => { counter++; return default; }, token);
+		await executor.AddAsync(_ => { counter++; return default; }, token);
 
 		await executor.WaitFlushAsync(token);
 
@@ -110,7 +110,7 @@ public class ChannelExecutorTests : BaseTestClass
 		cts.Cancel();
 
 		await ThrowsAsync<OperationCanceledException>(async () =>
-			await executor.AddAsync(() => { }, cts.Token));
+			await executor.AddAsync(_ => default, cts.Token));
 	}
 
 	[TestMethod]
@@ -124,9 +124,9 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(cts.Token);
 
 		var counter = 0;
-		executor.Add(() => { Thread.Sleep(100); counter++; });
-		executor.Add(() => { Thread.Sleep(100); counter++; });
-		executor.Add(() => { Thread.Sleep(100); counter++; });
+		executor.Add(async _ => { await Task.Delay(100); counter++; });
+		executor.Add(async _ => { await Task.Delay(100); counter++; });
+		executor.Add(async _ => { await Task.Delay(100); counter++; });
 
 		// Cancel after a short delay
 		await Task.Delay(50, token);
@@ -148,7 +148,7 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var executed = false;
-		executor.Add(() => { Thread.Sleep(100); executed = true; });
+		executor.Add(async _ => { await Task.Delay(100); executed = true; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -165,8 +165,8 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		executor.Add(() => { Thread.Sleep(20); counter++; });
-		executor.Add(() => { Thread.Sleep(20); counter++; });
+		executor.Add(async _ => { await Task.Delay(20); counter++; });
+		executor.Add(async _ => { await Task.Delay(20); counter++; });
 
 		// Ensure operations start executing
 		await Task.Delay(50, token);
@@ -204,7 +204,7 @@ public class ChannelExecutorTests : BaseTestClass
 
 		for (int i = 0; i < 100; i++)
 		{
-			tasks.Add(Task.Run(() => executor.Add(() => Interlocked.Increment(ref counter)), token));
+			tasks.Add(Task.Run(() => executor.Add(_ => { Interlocked.Increment(ref counter); return default; }), token));
 		}
 
 		await tasks.WhenAll();
@@ -223,8 +223,8 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var executed = false;
-		executor.Add(() => throw new InvalidOperationException("Test error"));
-		executor.Add(() => executed = true); // Should still execute
+		executor.Add(_ => throw new InvalidOperationException("Test error"));
+		executor.Add(_ => { executed = true; return default; }); // Should still execute
 
 		await executor.WaitFlushAsync(token);
 
@@ -255,7 +255,7 @@ public class ChannelExecutorTests : BaseTestClass
 		await executor.DisposeAsync();
 
 		ThrowsExactly<ChannelClosedException>(() =>
-			executor.Add(() => { }));
+			executor.Add(_ => default));
 	}
 
 	[TestMethod]
@@ -268,12 +268,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		executor.Add(() => counter++);
+		executor.Add(_ => { counter++; return default; });
 
 		await executor.WaitFlushAsync(token);
 		counter.AssertEqual(1);
 
-		executor.Add(() => counter++);
+		executor.Add(_ => { counter++; return default; });
 		await executor.WaitFlushAsync(token);
 		counter.AssertEqual(2);
 	}
@@ -288,7 +288,7 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		executor.Add(() => { Thread.Sleep(100); counter++; });
+		executor.Add(async _ => { await Task.Delay(100); counter++; });
 
 		var task1 = executor.WaitFlushAsync(token);
 		var task2 = executor.WaitFlushAsync(token);
@@ -330,10 +330,10 @@ public class ChannelExecutorTests : BaseTestClass
 		var expectedException2 = new ArgumentException("Second error");
 		var expectedException3 = new NotSupportedException("Third error");
 
-		executor.Add(() => throw expectedException1);
-		executor.Add(() => { }); // Normal operation between errors
-		executor.Add(() => throw expectedException2);
-		executor.Add(() => throw expectedException3);
+		executor.Add(_ => throw expectedException1);
+		executor.Add(_ => default); // Normal operation between errors
+		executor.Add(_ => throw expectedException2);
+		executor.Add(_ => throw expectedException3);
 
 		await executor.WaitFlushAsync(token);
 
@@ -361,12 +361,13 @@ public class ChannelExecutorTests : BaseTestClass
 		for (int i = 0; i < operationCount; i++)
 		{
 			var value = i;
-			executor.Add(() =>
+			executor.Add(_ =>
 			{
 				// Non-thread-safe operations
 				list.Add(value);
 				// Verify list wasn't corrupted
 				list[list.Count - 1].AssertEqual(value);
+				return default;
 			});
 		}
 
@@ -406,10 +407,11 @@ public class ChannelExecutorTests : BaseTestClass
 				for (int i = 0; i < operations / threadCount; i++)
 				{
 					var value = threadIndex * 1000 + i;
-					executor.Add(() =>
+					executor.Add(_ =>
 					{
 						Interlocked.Increment(ref counter);
 						sharedList.Add(value);
+						return default;
 					});
 				}
 			}, token));
@@ -451,7 +453,7 @@ public class ChannelExecutorTests : BaseTestClass
 					if (i % 10 == 0)
 					{
 						// Every 10th operation fails
-						executor.Add(() =>
+						executor.Add(_ =>
 						{
 							Interlocked.Increment(ref failedOps);
 							throw new InvalidOperationException("Planned failure");
@@ -459,7 +461,7 @@ public class ChannelExecutorTests : BaseTestClass
 					}
 					else
 					{
-						executor.Add(() => Interlocked.Increment(ref successfulOps));
+						executor.Add(_ => { Interlocked.Increment(ref successfulOps); return default; });
 					}
 				}
 			}, token));
@@ -486,9 +488,9 @@ public class ChannelExecutorTests : BaseTestClass
 		var executed = false;
 		var startTime = DateTime.UtcNow;
 
-		await executor.AddAndWaitAsync(() =>
+		await executor.AddAndWaitAsync(async _ =>
 		{
-			Thread.Sleep(100);
+			await Task.Delay(100);
 			executed = true;
 		}, token);
 
@@ -514,7 +516,7 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// AddAndWaitAsync should propagate the exception through the Task
 		var thrownException = await ThrowsAsync<InvalidOperationException>(async () =>
-			await executor.AddAndWaitAsync(() => throw expectedException, token));
+			await executor.AddAndWaitAsync(_ => throw expectedException, token));
 
 		// Exception is propagated to both errorHandler and through TaskCompletionSource
 		thrownException.AssertEqual(expectedException);
@@ -537,13 +539,13 @@ public class ChannelExecutorTests : BaseTestClass
 		var counter = 0;
 
 		// Each AddAndWaitAsync should wait for its operation to complete before returning
-		await executor.AddAndWaitAsync(() => counter++, token);
+		await executor.AddAndWaitAsync(_ => { counter++; return default; }, token);
 		counter.AssertEqual(1);
 
-		await executor.AddAndWaitAsync(() => counter++, token);
+		await executor.AddAndWaitAsync(_ => { counter++; return default; }, token);
 		counter.AssertEqual(2);
 
-		await executor.AddAndWaitAsync(() => counter++, token);
+		await executor.AddAndWaitAsync(_ => { counter++; return default; }, token);
 		counter.AssertEqual(3);
 	}
 
@@ -564,9 +566,9 @@ public class ChannelExecutorTests : BaseTestClass
 		{
 			tasks.Add(Task.Run(async () =>
 			{
-				await executor.AddAndWaitAsync(() =>
+				await executor.AddAndWaitAsync(async _ =>
 				{
-					Thread.Sleep(10);
+					await Task.Delay(10);
 					Interlocked.Increment(ref counter);
 				}, token);
 			}, token));
@@ -590,7 +592,7 @@ public class ChannelExecutorTests : BaseTestClass
 		cts.Cancel();
 
 		await ThrowsAsync<OperationCanceledException>(async () =>
-			await executor.AddAndWaitAsync(() => { }, cts.Token));
+			await executor.AddAndWaitAsync(_ => default, cts.Token));
 	}
 
 	[TestMethod]
@@ -617,13 +619,13 @@ public class ChannelExecutorTests : BaseTestClass
 		{
 			_ = executor.RunAsync(token);
 
-			executor.Add(() =>
+			executor.Add(async _ =>
 			{
-				Thread.Sleep(TimeSpan.FromSeconds(6));
+				await Task.Delay(TimeSpan.FromSeconds(6));
 				Interlocked.Increment(ref counter);
 			});
 
-			executor.Add(() => Interlocked.Increment(ref counter));
+			executor.Add(_ => { Interlocked.Increment(ref counter); return default; });
 		}
 
 		// Both operations should still complete even though the first exceeds the default timeout
@@ -646,12 +648,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -675,10 +677,10 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -702,13 +704,13 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
 		// Add multiple operations quickly - should batch
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -732,8 +734,8 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// Create group but don't add anything
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -757,12 +759,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => throw new InvalidOperationException("Test error"));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => throw new InvalidOperationException("Test error"));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -786,11 +788,11 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => throw new InvalidOperationException("Begin error"),
-			() => Interlocked.Increment(ref endCount));
+			_ => throw new InvalidOperationException("Begin error"),
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -813,12 +815,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
-		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
-		await group.AddAsync(() => Interlocked.Increment(ref operationCount), token);
+		await group.AddAsync(_ => { Interlocked.Increment(ref operationCount); return default; }, token);
+		await group.AddAsync(_ => { Interlocked.Increment(ref operationCount); return default; }, token);
+		await group.AddAsync(_ => { Interlocked.Increment(ref operationCount); return default; }, token);
 
 		await executor.WaitFlushAsync(token);
 
@@ -839,7 +841,7 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		ThrowsExactly<ArgumentNullException>(() => executor.CreateGroup(null, null));
-		
+
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(0);
@@ -857,17 +859,17 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		// Single operation
-		executor.Add(() => results.Enqueue("single1"));
+		executor.Add(_ => { results.Enqueue("single1"); return default; });
 
 		// Group
 		var group = executor.CreateGroup(
-			() => results.Enqueue("BEGIN"),
-			() => results.Enqueue("END"));
-		group.Add(() => results.Enqueue("group1"));
-		group.Add(() => results.Enqueue("group2"));
+			_ => { results.Enqueue("BEGIN"); return default; },
+			_ => { results.Enqueue("END"); return default; });
+		group.Add(_ => { results.Enqueue("group1"); return default; });
+		group.Add(_ => { results.Enqueue("group2"); return default; });
 
 		// Another single operation
-		executor.Add(() => results.Enqueue("single2"));
+		executor.Add(_ => { results.Enqueue("single2"); return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -894,17 +896,17 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group1 = executor.CreateGroup(
-			() => Interlocked.Increment(ref group1Begin),
-			() => Interlocked.Increment(ref group1End));
+			_ => { Interlocked.Increment(ref group1Begin); return default; },
+			_ => { Interlocked.Increment(ref group1End); return default; });
 
 		var group2 = executor.CreateGroup(
-			() => Interlocked.Increment(ref group2Begin),
-			() => Interlocked.Increment(ref group2End));
+			_ => { Interlocked.Increment(ref group2Begin); return default; },
+			_ => { Interlocked.Increment(ref group2End); return default; });
 
-		group1.Add(() => { });
-		group2.Add(() => { });
-		group1.Add(() => { });
-		group2.Add(() => { });
+		group1.Add(_ => default);
+		group2.Add(_ => default);
+		group1.Add(_ => default);
+		group2.Add(_ => default);
 
 		await executor.WaitFlushAsync(token);
 
@@ -929,12 +931,12 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// Create group once
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
 		// First batch
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(2);
@@ -945,9 +947,9 @@ public class ChannelExecutorTests : BaseTestClass
 		var endAfterFirst = endCount;
 
 		// Second batch - reuse same group
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(5);
@@ -958,7 +960,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var endAfterSecond = endCount;
 
 		// Third batch - reuse same group again
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(6);
@@ -981,12 +983,12 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
-			() => Interlocked.Increment(ref beginCount),
-			() => Interlocked.Increment(ref endCount));
+			_ => { Interlocked.Increment(ref beginCount); return default; },
+			_ => { Interlocked.Increment(ref endCount); return default; });
 
 		// First usage
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(2);
@@ -997,8 +999,8 @@ public class ChannelExecutorTests : BaseTestClass
 		await Task.Delay(150, token);
 
 		// Second usage - should trigger new begin/end
-		group.Add(() => Interlocked.Increment(ref operationCount));
-		group.Add(() => Interlocked.Increment(ref operationCount));
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
+		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(4);
@@ -1026,33 +1028,33 @@ public class ChannelExecutorTests : BaseTestClass
 		for (int i = 0; i < 100; i++)
 		{
 			var value = i;
-			executor.Add(() => list.Add(value));
+			executor.Add(_ => { list.Add(value); return default; });
 		}
 
 		// Remove some items (every 3rd)
 		for (int i = 99; i >= 0; i -= 3)
 		{
 			var idx = i;
-			executor.Add(() => { if (idx < list.Count) list.RemoveAt(idx); });
+			executor.Add(_ => { if (idx < list.Count) list.RemoveAt(idx); return default; });
 		}
 
 		// Add more items
 		for (int i = 100; i < 150; i++)
 		{
 			var value = i;
-			executor.Add(() => list.Add(value));
+			executor.Add(_ => { list.Add(value); return default; });
 		}
 
 		// Insert at specific positions
-		executor.Add(() => list.Insert(0, -1));
-		executor.Add(() => list.Insert(list.Count / 2, -2));
+		executor.Add(_ => { list.Insert(0, -1); return default; });
+		executor.Add(_ => { list.Insert(list.Count / 2, -2); return default; });
 
 		// Clear and rebuild
-		executor.Add(() => list.Clear());
+		executor.Add(_ => { list.Clear(); return default; });
 		for (int i = 0; i < 10; i++)
 		{
 			var value = i * 10;
-			executor.Add(() => list.Add(value));
+			executor.Add(_ => { list.Add(value); return default; });
 		}
 
 		await executor.WaitFlushAsync(token);
@@ -1094,14 +1096,15 @@ public class ChannelExecutorTests : BaseTestClass
 					switch (op)
 					{
 						case 0: // Add
-							executor.Add(() =>
+							executor.Add(_ =>
 							{
 								list.Add(value);
 								operationLog.Add($"Add:{value}");
+								return default;
 							});
 							break;
 						case 1: // Remove last if exists
-							executor.Add(() =>
+							executor.Add(_ =>
 							{
 								if (list.Count > 0)
 								{
@@ -1109,23 +1112,26 @@ public class ChannelExecutorTests : BaseTestClass
 									list.RemoveAt(list.Count - 1);
 									operationLog.Add($"RemoveLast:{removed}");
 								}
+								return default;
 							});
 							break;
 						case 2: // Insert at beginning
-							executor.Add(() =>
+							executor.Add(_ =>
 							{
 								list.Insert(0, value);
 								operationLog.Add($"Insert0:{value}");
+								return default;
 							});
 							break;
 						case 3: // Clear if too large
-							executor.Add(() =>
+							executor.Add(_ =>
 							{
 								if (list.Count > 20)
 								{
 									list.Clear();
 									operationLog.Add("Clear");
 								}
+								return default;
 							});
 							break;
 					}
@@ -1182,18 +1188,19 @@ public class ChannelExecutorTests : BaseTestClass
 
 					if (i % 3 == 0)
 					{
-						executor.Add(() => dict[key] = value); // Add or update
+						executor.Add(_ => { dict[key] = value; return default; }); // Add or update
 					}
 					else if (i % 3 == 1)
 					{
-						executor.Add(() => dict.Remove(key)); // Remove
+						executor.Add(_ => { dict.Remove(key); return default; }); // Remove
 					}
 					else
 					{
-						executor.Add(() =>
+						executor.Add(_ =>
 						{
 							if (dict.TryGetValue(key, out var v))
 								dict[key] = v + 1; // Increment if exists
+							return default;
 						});
 					}
 				}
@@ -1228,29 +1235,29 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// Group 1: Add 10 items atomically
 		var group1 = executor.CreateGroup(
-			() => Interlocked.Increment(ref groupCount),
-			() => { });
+			_ => { Interlocked.Increment(ref groupCount); return default; },
+			_ => default);
 		foreach (var i in Enumerable.Range(0, 10))
 		{
 			var value = i;
-			group1.Add(() => list.Add(value));
+			group1.Add(_ => { list.Add(value); return default; });
 		}
 
 		await executor.WaitFlushAsync(token);
 
 		// Group 2: Remove all even numbers
 		var group2 = executor.CreateGroup(
-			() => Interlocked.Increment(ref groupCount),
-			() => { });
-		group2.Add(() => { for (int i = list.Count - 1; i >= 0; i--) if (list[i] % 2 == 0) list.RemoveAt(i); });
+			_ => { Interlocked.Increment(ref groupCount); return default; },
+			_ => default);
+		group2.Add(_ => { for (int i = list.Count - 1; i >= 0; i--) if (list[i] % 2 == 0) list.RemoveAt(i); return default; });
 
 		await executor.WaitFlushAsync(token);
 
 		// Group 3: Double all remaining values
 		var group3 = executor.CreateGroup(
-			() => Interlocked.Increment(ref groupCount),
-			() => { });
-		group3.Add(() => { for (int i = 0; i < list.Count; i++) list[i] *= 2; });
+			_ => { Interlocked.Increment(ref groupCount); return default; },
+			_ => default);
+		group3.Add(_ => { for (int i = 0; i < list.Count; i++) list[i] *= 2; return default; });
 
 		await executor.WaitFlushAsync(token);
 
@@ -1294,22 +1301,24 @@ public class ChannelExecutorTests : BaseTestClass
 					var userName = $"User_{userId}";
 
 					// Add user
-					executor.Add(() => data.Users.Add((userId, userName, new List<string>())));
+					executor.Add(_ => { data.Users.Add((userId, userName, new List<string>())); return default; });
 
 					// Add tags
-					executor.Add(() =>
+					executor.Add(_ =>
 					{
 						var user = data.Users.Find(u => u.Id == userId);
 						if (user != default)
 							user.Tags.Add($"tag_{i % 3}");
+						return default;
 					});
 
 					// Update stats
-					executor.Add(() =>
+					executor.Add(_ =>
 					{
 						if (!data.Stats.ContainsKey(userId % 10))
 							data.Stats[userId % 10] = 0;
 						data.Stats[userId % 10]++;
+						return default;
 					});
 				}
 			}, token));
@@ -1351,8 +1360,8 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// Create group: begin = nothing (already open), end = commit transaction
 		var group = executor.CreateGroup(
-			() => { },
-			() => stream.Commit());
+			_ => default,
+			stream.CommitAsync);
 
 		// Write 10000 rows with 50 columns each into the group
 		for (int r = 0; r < rowCount; r++)
@@ -1362,16 +1371,14 @@ public class ChannelExecutorTests : BaseTestClass
 				row[c] = $"R{r}C{c}";
 
 			var rowCopy = row;
-#pragma warning disable CS0618
-			group.Add(() => writer.WriteRow(rowCopy));
-#pragma warning restore CS0618
+			group.Add(t => writer.WriteRowAsync(rowCopy, t));
 		}
 
 		// Add delete operation directly to channel (not to group)
-		executor.Add(() =>
+		executor.Add(async t =>
 		{
 			writer.Dispose();
-			stream.Dispose();
+			await stream.DisposeAsync();
 			fs.DeleteFile(filePath);
 			deleteExecuted = true;
 		});
@@ -1414,18 +1421,16 @@ public class ChannelExecutorTests : BaseTestClass
 				row[c] = $"R{r}C{c}";
 
 			var rowCopy = row;
-#pragma warning disable CS0618
-			executor.Add(() => writer.WriteRow(rowCopy));
-#pragma warning restore CS0618
+			executor.Add(t => writer.WriteRowAsync(rowCopy, t));
 		}
 
 		// Final flush, commit and close
-		executor.Add(() =>
+		executor.Add(async t =>
 		{
-			writer.Flush();
-			stream.Commit();
+			await writer.FlushAsync(t);
+			await stream.CommitAsync(t);
 			writer.Dispose();
-			stream.Dispose();
+			await stream.DisposeAsync();
 		});
 
 		await executor.WaitFlushAsync(token);
@@ -1440,15 +1445,13 @@ public class ChannelExecutorTests : BaseTestClass
 		var cols = new List<string>();
 		var readCount = 0;
 
-#pragma warning disable CS0618
-		while (reader.ReadRow(cols))
+		while (await reader.ReadRowAsync(cols, token))
 		{
 			cols.Count.AssertEqual(colCount);
 			cols[0].AssertEqual($"R{readCount}C0");
 			cols[colCount - 1].AssertEqual($"R{readCount}C{colCount - 1}");
 			readCount++;
 		}
-#pragma warning restore CS0618
 
 		readCount.AssertEqual(rowCount);
 	}
@@ -1463,7 +1466,7 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 
 		var counter = 0;
-		executor.Add(() => counter++);
+		executor.Add(_ => { counter++; return default; });
 
 		await executor.WaitFlushAsync(token);
 		counter.AssertEqual(1);
