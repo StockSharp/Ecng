@@ -1350,7 +1350,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var deleteExecuted = false;
 
 		// Use interval to batch operations
-		await using var executor = new ChannelExecutor(ex => throw ex, TimeSpan.FromMilliseconds(50));
+		await using var executor = new ChannelExecutor(ex => throw ex, TimeSpan.FromSeconds(1));
 		_ = executor.RunAsync(token);
 
 		// Create TransactionFileStream and CsvFileWriter
@@ -1363,6 +1363,8 @@ public class ChannelExecutorTests : BaseTestClass
 			_ => default,
 			stream.CommitAsync);
 
+		var writeCount = 0;
+
 		// Write 10000 rows with 50 columns each into the group
 		for (int r = 0; r < rowCount; r++)
 		{
@@ -1371,7 +1373,11 @@ public class ChannelExecutorTests : BaseTestClass
 				row[c] = $"R{r}C{c}";
 
 			var rowCopy = row;
-			group.Add(t => writer.WriteRowAsync(rowCopy, t));
+			group.Add(t =>
+			{
+				writeCount++;
+				return writer.WriteRowAsync(rowCopy, t);
+			});
 		}
 
 		// Add delete operation directly to channel (not to group)
@@ -1391,6 +1397,8 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// File should be deleted
 		fs.FileExists(filePath).AssertFalse();
+
+		writeCount.AssertEqual(rowCount);
 	}
 
 	[TestMethod]
