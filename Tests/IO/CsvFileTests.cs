@@ -8,15 +8,17 @@ using Ecng.IO;
 public class CsvFileTests : BaseTestClass
 {
 	[TestMethod]
-	public void WriteAndRead_SimpleRow_Sync()
+	public async Task WriteAndRead_SimpleRow()
 	{
+		var ct = CancellationToken;
+
 		using var ms = new MemoryStream();
 		// writer
 		using var writer = new CsvFileWriter(ms, Encoding.UTF8);
 		writer.Delimiter = ',';
 		writer.LineSeparator = "\n";
-		writer.WriteRow(["col1", "col2", "col,3"]);
-		writer.Flush();
+		await writer.WriteRowAsync(["col1", "col2", "col,3"], ct);
+		await writer.FlushAsync(ct);
 
 		ms.Position = 0;
 
@@ -24,7 +26,7 @@ public class CsvFileTests : BaseTestClass
 		using var reader = new CsvFileReader(ms, "\n");
 		reader.Delimiter = ',';
 		var cols = new List<string>();
-		reader.ReadRow(cols).AssertTrue();
+		(await reader.ReadRowAsync(cols, ct)).AssertTrue();
 		cols.Count.AssertEqual(3);
 		cols[0].AssertEqual("col1");
 		cols[1].AssertEqual("col2");
@@ -61,8 +63,9 @@ public class CsvFileTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void EmptyLineBehavior_Various()
+	public async Task EmptyLineBehavior_Various()
 	{
+		var ct = CancellationToken;
 		var content = "a,b\n\n c,d\n"; // note: space before c to ensure trimming not applied by reader
 
 		// NoColumns
@@ -71,13 +74,13 @@ public class CsvFileTests : BaseTestClass
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.NoColumns);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.Count.AssertEqual(0);
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			r.ReadRow(cols).AssertFalse();
+			(await r.ReadRowAsync(cols, ct)).AssertFalse();
 		}
 
 		// EmptyColumn
@@ -86,14 +89,14 @@ public class CsvFileTests : BaseTestClass
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EmptyColumn);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.Count.AssertEqual(1);
 			cols[0].AssertEqual(string.Empty);
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			r.ReadRow(cols).AssertFalse();
+			(await r.ReadRowAsync(cols, ct)).AssertFalse();
 		}
 
 		// Ignore
@@ -102,11 +105,11 @@ public class CsvFileTests : BaseTestClass
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.Ignore);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			r.ReadRow(cols).AssertFalse();
+			(await r.ReadRowAsync(cols, ct)).AssertFalse();
 		}
 
 		// EndOfFile
@@ -115,13 +118,14 @@ public class CsvFileTests : BaseTestClass
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EndOfFile);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			r.ReadRow(cols).AssertTrue();
+			(await r.ReadRowAsync(cols, ct)).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			r.ReadRow(cols).AssertFalse();
+			(await r.ReadRowAsync(cols, ct)).AssertFalse();
 		}
 	}
 
 	// Large data tests
+#pragma warning disable CS0618 // Type or member is obsolete
 	[TestMethod]
 	public void LargeWriteRead_Sync()
 	{
@@ -139,8 +143,8 @@ public class CsvFileTests : BaseTestClass
 			var arr = new string[colsCount];
 			for (int c = 0; c < colsCount; c++)
 				arr[c] = $"R{r}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-			writer.WriteRow(arr);
-		}
+            writer.WriteRow(arr);
+        }
 		writer.Flush();
 
 		ms.Position = 0;
@@ -163,9 +167,10 @@ public class CsvFileTests : BaseTestClass
 		}
 		ri.AssertEqual(rows);
 	}
+#pragma warning restore CS0618 // Type or member is obsolete
 
 	[TestMethod]
-	public async Task LargeWriteRead_Async()
+	public async Task LargeWriteRead()
 	{
 		var token = CancellationToken;
 

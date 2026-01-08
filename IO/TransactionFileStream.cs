@@ -3,6 +3,8 @@ namespace Ecng.IO;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 
@@ -22,7 +24,7 @@ using Ecng.Common;
 /// // If exception occurs before Commit(), original file is preserved (rollback)
 /// </code>
 /// </remarks>
-public class TransactionFileStream : Stream, ICommitable
+public class TransactionFileStream : Stream, ICommitable, IAsyncCommitable
 {
 	private readonly string _name;
 	private readonly string _nameTemp;
@@ -145,11 +147,30 @@ public class TransactionFileStream : Stream, ICommitable
 	/// </summary>
 	/// <exception cref="ObjectDisposedException">The stream has been disposed.</exception>
 	public void Commit()
+		=> AsyncHelper.Run(() => CommitAsync());
+
+	/// <summary>
+	/// Asynchronously commits the transaction, moving the temporary file to the target location.
+	/// Can be called multiple times. After commit, stream continues appending.
+	/// </summary>
+	/// <remarks>
+	/// The cancellation token is only checked at the beginning of the operation.
+	/// Once commit starts, it runs to completion to maintain transaction integrity.
+	/// </remarks>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="ValueTask"/></returns>
+	/// <exception cref="ObjectDisposedException">The stream has been disposed.</exception>
+	/// <exception cref="OperationCanceledException">The operation was canceled before it started.</exception>
+	public async ValueTask CommitAsync(CancellationToken cancellationToken = default)
 	{
+		// Check cancellation only at the start - once commit begins, it must complete
+		// to maintain transaction integrity
+		cancellationToken.ThrowIfCancellationRequested();
+
 		if (_disposed)
 			throw new ObjectDisposedException(nameof(TransactionFileStream));
 
-		_temp.Flush();
+		await _temp.FlushAsync(CancellationToken.None).NoWait();
 		_temp.Dispose();
 		_temp = null;
 
@@ -159,9 +180,9 @@ public class TransactionFileStream : Stream, ICommitable
 		// Reopen temp with committed data for continued appending
 		_temp = _fs.OpenWrite(_nameTemp, append: false);
 
-        using var rs = _fs.OpenRead(_name);
-        rs.CopyTo(_temp);
-    }
+		using var rs = _fs.OpenRead(_name);
+		await rs.CopyToAsync(_temp, CancellationToken.None).NoWait();
+	}
 
 	/// <summary>
 	/// Releases the unmanaged resources used by the <see cref="TransactionFileStream"/> and optionally releases the managed resources.

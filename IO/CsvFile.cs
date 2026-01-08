@@ -154,8 +154,9 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 	/// </summary>
 	/// <param name="columns">Collection to hold the columns read</param>
 	/// <returns><see langword="true"/> if a row was successfully read; <see langword="false"/> if the end of the file was reached.</returns>
+	[Obsolete("Use ReadRowAsync instead.")]
 	public bool ReadRow(List<string> columns)
-		=> AsyncContext.Run(() => ReadRowAsync(columns, default));
+		=> AsyncHelper.Run(() => ReadRowAsync(columns, default));
 
 	/// <summary>
 	/// Asynchronously reads a row of columns from the current CSV file. Returns false if no
@@ -164,7 +165,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 	/// <param name="columns">Collection to hold the columns read</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns><see cref="Task"/></returns>
-	public async Task<bool> ReadRowAsync(List<string> columns, CancellationToken cancellationToken = default)
+	public async ValueTask<bool> ReadRowAsync(List<string> columns, CancellationToken cancellationToken = default)
 	{
 		if (columns is null)
 			throw new ArgumentNullException(nameof(columns));
@@ -350,16 +351,17 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 	/// Writes a row of columns to the current CSV file.
 	/// </summary>
 	/// <param name="columns">The list of columns to write</param>
+	[Obsolete("Use WriteRowAsync instead.")]
 	public void WriteRow(IEnumerable<string> columns)
-		=> AsyncContext.Run(() => WriteRowAsync(columns));
+		=> AsyncHelper.Run(() => WriteRowAsync(columns));
 
 	/// <summary>
 	/// Asynchronously writes a row of columns to the current CSV file.
 	/// </summary>
 	/// <param name="columns">The list of columns to write</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="Task"/></returns>
-	public async Task WriteRowAsync(IEnumerable<string> columns, CancellationToken cancellationToken = default)
+	/// <returns><see cref="ValueTask"/></returns>
+	public async ValueTask WriteRowAsync(IEnumerable<string> columns, CancellationToken cancellationToken = default)
 	{
 		if (columns is null)
 			throw new ArgumentNullException(nameof(columns));
@@ -390,8 +392,6 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 	/// <returns><see cref="Task"/></returns>
 	public Task FlushAsync(CancellationToken cancellationToken = default)
 	{
-		// StreamWriter's FlushAsync does not accept a CancellationToken in .NET Standard2.0;
-		// the token is provided for API symmetry.
 		return _writer.FlushAsync(cancellationToken);
 	}
 
@@ -420,6 +420,7 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 	/// <summary>
 	/// Clears all buffers for the current writer and causes any buffered data to be written to the underlying stream.
 	/// </summary>
+	[Obsolete("Use FlushAsync instead.")]
 	public void Flush() => AsyncContext.Run(() => FlushAsync());
 
 	/// <summary>
@@ -430,12 +431,28 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 	/// <summary>
 	/// Commits the transaction by flushing data and propagating commit to the underlying stream if it supports transactions.
 	/// </summary>
+	[Obsolete("Use CommitAsync instead.")]
 	public void Commit()
 	{
 		_writer.Flush();
 
 		if (_writer.BaseStream is ICommitable tfs)
 			tfs.Commit();
+	}
+
+	/// <summary>
+	/// Asynchronously commits the transaction by flushing data and propagating commit to the underlying stream if it supports transactions.
+	/// </summary>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public async ValueTask CommitAsync(CancellationToken cancellationToken = default)
+	{
+		await _writer.FlushAsync(cancellationToken).NoWait();
+
+		if (_writer.BaseStream is IAsyncCommitable tfs)
+			await tfs.CommitAsync(cancellationToken).NoWait();
+		else if (_writer.BaseStream is ICommitable syncTfs)
+			syncTfs.Commit();
 	}
 
 	/// <inheritdoc />
