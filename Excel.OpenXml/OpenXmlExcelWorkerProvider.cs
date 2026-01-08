@@ -207,31 +207,187 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		public IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor) => this;
 
 		/// <inheritdoc />
-		public int GetColumnsCount() => 0;
+		public int GetColumnsCount()
+		{
+			var sheetData = _currentWorksheetPart?.Worksheet?.GetFirstChild<SheetData>();
+			if (sheetData == null)
+				return 0;
+
+			var columns = new HashSet<int>();
+			foreach (var row in sheetData.Elements<Row>())
+			{
+				foreach (var cell in row.Elements<Cell>())
+				{
+					var (col, _) = ParseCellReference(cell.CellReference?.Value);
+					if (col >= 0)
+						columns.Add(col);
+				}
+			}
+			return columns.Count;
+		}
 
 		/// <inheritdoc />
-		public int GetRowsCount() => 0;
+		public int GetRowsCount()
+		{
+			var sheetData = _currentWorksheetPart?.Worksheet?.GetFirstChild<SheetData>();
+			if (sheetData == null)
+				return 0;
+
+			// Count rows that have at least one cell with content
+			var count = 0;
+			foreach (var row in sheetData.Elements<Row>())
+			{
+				if (row.Elements<Cell>().Any())
+					count++;
+			}
+			return count;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetColumnWidth(int col, double width) => this;
+		public IExcelWorker SetColumnWidth(int col, double width)
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null)
+				return this;
+
+			var columns = worksheet.GetFirstChild<Columns>();
+			if (columns == null)
+			{
+				columns = new Columns();
+				worksheet.InsertAt(columns, 0);
+			}
+
+			var colIndex = (uint)(col + 1);
+			var existingCol = columns.Elements<Column>()
+				.FirstOrDefault(c => c.Min <= colIndex && c.Max >= colIndex);
+
+			if (existingCol != null)
+			{
+				existingCol.Width = width;
+				existingCol.CustomWidth = true;
+			}
+			else
+			{
+				columns.Append(new Column
+				{
+					Min = colIndex,
+					Max = colIndex,
+					Width = width,
+					CustomWidth = true
+				});
+			}
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetRowHeight(int row, double height) => this;
+		public IExcelWorker SetRowHeight(int row, double height)
+		{
+			var rowRef = GetOrCreateRow(row);
+			rowRef.Height = height;
+			rowRef.CustomHeight = true;
+			return this;
+		}
 
 		/// <inheritdoc />
 		public IExcelWorker AutoFitColumn(int col) => this;
 
 		/// <inheritdoc />
-		public IExcelWorker FreezeRows(int count) => this;
+		public IExcelWorker FreezeRows(int count)
+		{
+			if (count <= 0)
+				return this;
+
+			EnsureSheetView();
+			var sheetView = _currentWorksheetPart.Worksheet.SheetViews.Elements<SheetView>().First();
+
+			var pane = sheetView.GetFirstChild<Pane>() ?? sheetView.AppendChild(new Pane());
+			pane.VerticalSplit = count;
+			pane.TopLeftCell = $"A{count + 1}";
+			pane.ActivePane = PaneValues.BottomLeft;
+			pane.State = PaneStateValues.Frozen;
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker FreezeCols(int count) => this;
+		public IExcelWorker FreezeCols(int count)
+		{
+			if (count <= 0)
+				return this;
+
+			EnsureSheetView();
+			var sheetView = _currentWorksheetPart.Worksheet.SheetViews.Elements<SheetView>().First();
+
+			var pane = sheetView.GetFirstChild<Pane>() ?? sheetView.AppendChild(new Pane());
+			pane.HorizontalSplit = count;
+			pane.TopLeftCell = $"{ToColumnName(count)}1";
+			pane.ActivePane = PaneValues.TopRight;
+			pane.State = PaneStateValues.Frozen;
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker MergeCells(int startCol, int startRow, int endCol, int endRow) => this;
+		public IExcelWorker MergeCells(int startCol, int startRow, int endCol, int endRow)
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null)
+				return this;
+
+			var mergeCells = worksheet.GetFirstChild<MergeCells>();
+			if (mergeCells == null)
+			{
+				mergeCells = new MergeCells();
+				// MergeCells must be after SheetData
+				var sheetData = worksheet.GetFirstChild<SheetData>();
+				if (sheetData != null)
+					worksheet.InsertAfter(mergeCells, sheetData);
+				else
+					worksheet.Append(mergeCells);
+			}
+
+			var startRef = ToCellReference(startCol, startRow);
+			var endRef = ToCellReference(endCol, endRow);
+			mergeCells.Append(new MergeCell { Reference = $"{startRef}:{endRef}" });
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetHyperlink(int col, int row, string url, string text) => this;
+		public IExcelWorker SetHyperlink(int col, int row, string url, string text)
+		{
+			// Set the text in the cell
+			if (!string.IsNullOrEmpty(text))
+				SetCellValue(col, row, text);
+			else if (!string.IsNullOrEmpty(url))
+				SetCellValue(col, row, url);
+
+			// Add hyperlink relationship and element
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null || string.IsNullOrEmpty(url))
+				return this;
+
+			var hyperlinks = worksheet.GetFirstChild<Hyperlinks>();
+			if (hyperlinks == null)
+			{
+				hyperlinks = new Hyperlinks();
+				var sheetData = worksheet.GetFirstChild<SheetData>();
+				if (sheetData != null)
+					worksheet.InsertAfter(hyperlinks, sheetData);
+				else
+					worksheet.Append(hyperlinks);
+			}
+
+			var relId = _currentWorksheetPart.AddHyperlinkRelationship(new Uri(url, UriKind.Absolute), true).Id;
+			hyperlinks.Append(new Hyperlink
+			{
+				Reference = ToCellReference(col, row),
+				Id = relId
+			});
+
+			return this;
+		}
 
 		/// <inheritdoc />
 		public IExcelWorker SetCellFormat(int col, int row, string format) => this;
@@ -244,7 +400,84 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			=> _workbookPart.Workbook.Sheets!.Elements<Sheet>().Select(s => s.Name?.Value).Where(n => !string.IsNullOrWhiteSpace(n));
 
 		/// <inheritdoc />
-		public IExcelWorker DeleteSheet(string name) => this;
+		public IExcelWorker DeleteSheet(string name)
+		{
+			if (string.IsNullOrWhiteSpace(name))
+				return this;
+
+			var sheet = _workbookPart.Workbook.Sheets!.Elements<Sheet>()
+				.FirstOrDefault(s => string.Equals(s.Name?.Value, name, StringComparison.OrdinalIgnoreCase));
+
+			if (sheet == null)
+				return this;
+
+			var relId = sheet.Id?.Value;
+			sheet.Remove();
+
+			if (!string.IsNullOrEmpty(relId))
+			{
+				var part = _workbookPart.GetPartById(relId);
+				if (part != null)
+					_workbookPart.DeletePart(part);
+			}
+
+			// If we deleted the current sheet, switch to first available
+			if (_currentSheet == sheet)
+			{
+				var firstSheet = _workbookPart.Workbook.Sheets!.Elements<Sheet>().FirstOrDefault();
+				if (firstSheet != null)
+				{
+					_currentSheet = firstSheet;
+					_currentWorksheetPart = (WorksheetPart)_workbookPart.GetPartById(firstSheet.Id!);
+				}
+				else
+				{
+					_currentSheet = null;
+					_currentWorksheetPart = null;
+				}
+			}
+
+			return this;
+		}
+
+		private void EnsureSheetView()
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null)
+				return;
+
+			var sheetViews = worksheet.GetFirstChild<SheetViews>();
+			if (sheetViews == null)
+			{
+				sheetViews = new SheetViews(new SheetView { WorkbookViewId = 0 });
+				worksheet.InsertAt(sheetViews, 0);
+			}
+			else if (!sheetViews.Elements<SheetView>().Any())
+			{
+				sheetViews.Append(new SheetView { WorkbookViewId = 0 });
+			}
+		}
+
+		private Row GetOrCreateRow(int row)
+		{
+			var sheetData = _currentWorksheetPart.Worksheet.GetFirstChild<SheetData>()
+				?? _currentWorksheetPart.Worksheet.AppendChild(new SheetData());
+
+			var rowIndex = (uint)(row + 1);
+			var rowRef = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == rowIndex);
+
+			if (rowRef == null)
+			{
+				rowRef = new Row { RowIndex = rowIndex };
+				var nextRow = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex.Value > rowIndex);
+				if (nextRow != null)
+					sheetData.InsertBefore(rowRef, nextRow);
+				else
+					sheetData.Append(rowRef);
+			}
+
+			return rowRef;
+		}
 
 		/// <inheritdoc />
 		public void Dispose()
