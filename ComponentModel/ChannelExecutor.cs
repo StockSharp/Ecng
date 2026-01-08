@@ -351,8 +351,8 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	/// <inheritdoc />
 	public async ValueTask DisposeAsync()
 	{
-		// Complete the channel to signal no more items
-		_channel.Writer.Complete();
+		// Complete the channel to signal no more items (TryComplete to avoid exception on double-dispose)
+		_channel.Writer.TryComplete();
 
 		// Wait for processing to complete
 		if (_processingTask != null)
