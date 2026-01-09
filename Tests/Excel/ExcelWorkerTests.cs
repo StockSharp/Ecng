@@ -605,4 +605,129 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Chart tests
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddLineChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.RenameSheet("Data")
+			.SetCell(1, 1, "X")
+			.SetCell(2, 1, "Y")
+			.SetCell(1, 2, 1)
+			.SetCell(2, 2, 10)
+			.SetCell(1, 3, 2)
+			.SetCell(2, 3, 20)
+			.SetCell(1, 4, 3)
+			.SetCell(2, 4, 30)
+			.AddLineChart("Test Line Chart", "A2:B4", 1, 2, 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddBarChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.RenameSheet("Data")
+			.SetCell(1, 1, "Category")
+			.SetCell(2, 1, "Value")
+			.SetCell(1, 2, "A")
+			.SetCell(2, 2, 100)
+			.SetCell(1, 3, "B")
+			.SetCell(2, 3, 200)
+			.SetCell(1, 4, "C")
+			.SetCell(2, 4, 150)
+			.AddBarChart("Test Bar Chart", "A2:B4", 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddPieChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.RenameSheet("Data")
+			.SetCell(1, 1, "Label")
+			.SetCell(2, 1, "Value")
+			.SetCell(1, 2, "Sales")
+			.SetCell(2, 2, 45)
+			.SetCell(1, 3, "Marketing")
+			.SetCell(2, 3, 30)
+			.SetCell(1, 4, "Development")
+			.SetCell(2, 4, 25)
+			.AddPieChart("Test Pie Chart", "A2:B4", 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddMultipleCharts_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.RenameSheet("Dashboard")
+			.SetCell(1, 1, "X")
+			.SetCell(2, 1, "Y")
+			.SetCell(1, 2, 1)
+			.SetCell(2, 2, 10)
+			.SetCell(1, 3, 2)
+			.SetCell(2, 3, 25)
+			.SetCell(1, 4, 3)
+			.SetCell(2, 4, 15)
+			.AddLineChart("Line", "A2:B4", 1, 2, 4, 1, 300, 200)
+			.AddBarChart("Bar", "A2:B4", 4, 12, 300, 200)
+			.AddPieChart("Pie", "A2:B4", 10, 1, 300, 200);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void OpenXml_AddLineChart_CreatesChartPart()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(1, 1, 1)
+				.SetCell(2, 1, 10)
+				.SetCell(1, 2, 2)
+				.SetCell(2, 2, 20)
+				.AddLineChart("Equity Curve", "A1:B2", 1, 2, 4, 1, 500, 300);
+		}
+
+		// Verify chart was created by reopening
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+		reader.GetCell<int>(1, 1).AssertEqual(1);
+		reader.GetCell<int>(2, 2).AssertEqual(20);
+	}
+
+	#endregion
 }

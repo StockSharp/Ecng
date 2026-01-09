@@ -12,6 +12,10 @@ using DocumentFormat.OpenXml.Spreadsheet;
 
 using Ecng.Common;
 
+using A = DocumentFormat.OpenXml.Drawing;
+using C = DocumentFormat.OpenXml.Drawing.Charts;
+using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
+
 /// <summary>
 /// The <see cref="IExcelWorkerProvider"/> implementation based on Open XML SDK.
 /// It can open and modify an existing XLSX template (keeping styles, charts, conditional formatting),
@@ -563,6 +567,321 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			}
 
 			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddLineChart(string name, string dataRange, int xCol, int yCol, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var lineChart = new C.LineChart();
+				lineChart.Append(new C.Grouping { Val = C.GroupingValues.Standard });
+				lineChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateLineSeries(0, name, dataRange, xCol, yCol);
+				lineChart.Append(series);
+
+				lineChart.Append(new C.AxisId { Val = 1 });
+				lineChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(lineChart);
+				plotArea.Append(CreateCategoryAxis(1, 2));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddBarChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var barChart = new C.BarChart();
+				barChart.Append(new C.BarDirection { Val = C.BarDirectionValues.Column });
+				barChart.Append(new C.BarGrouping { Val = C.BarGroupingValues.Clustered });
+				barChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateBarSeries(0, name, dataRange);
+				barChart.Append(series);
+
+				barChart.Append(new C.AxisId { Val = 1 });
+				barChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(barChart);
+				plotArea.Append(CreateCategoryAxis(1, 2));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var pieChart = new C.PieChart();
+				pieChart.Append(new C.VaryColors { Val = true });
+
+				var series = CreatePieSeries(0, name, dataRange);
+				pieChart.Append(series);
+
+				plotArea.Append(pieChart);
+			});
+
+			return this;
+		}
+
+		private void AddChartCore(string name, string dataRange, int anchorCol, int anchorRow, int width, int height, Action<C.PlotArea> configureChart)
+		{
+			var drawingsPart = _currentWorksheetPart.DrawingsPart;
+			if (drawingsPart == null)
+			{
+				drawingsPart = _currentWorksheetPart.AddNewPart<DrawingsPart>();
+				drawingsPart.WorksheetDrawing = new Xdr.WorksheetDrawing();
+
+				// Link drawing to worksheet
+				var worksheet = _currentWorksheetPart.Worksheet;
+				var drawing = worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Drawing>();
+				if (drawing == null)
+				{
+					drawing = new DocumentFormat.OpenXml.Spreadsheet.Drawing { Id = _currentWorksheetPart.GetIdOfPart(drawingsPart) };
+					worksheet.Append(drawing);
+				}
+			}
+
+			var chartPart = drawingsPart.AddNewPart<ChartPart>();
+			var chart = CreateChart(name, configureChart);
+			chartPart.ChartSpace = chart;
+
+			// Create anchor
+			var twoCellAnchor = new Xdr.TwoCellAnchor
+			{
+				FromMarker = new Xdr.FromMarker
+				{
+					ColumnId = new Xdr.ColumnId((anchorCol - 1).ToString()),
+					ColumnOffset = new Xdr.ColumnOffset("0"),
+					RowId = new Xdr.RowId((anchorRow - 1).ToString()),
+					RowOffset = new Xdr.RowOffset("0")
+				},
+				ToMarker = new Xdr.ToMarker
+				{
+					ColumnId = new Xdr.ColumnId((anchorCol - 1 + (width / 64)).ToString()),
+					ColumnOffset = new Xdr.ColumnOffset("0"),
+					RowId = new Xdr.RowId((anchorRow - 1 + (height / 20)).ToString()),
+					RowOffset = new Xdr.RowOffset("0")
+				}
+			};
+
+			var graphicFrame = new Xdr.GraphicFrame
+			{
+				Macro = string.Empty,
+				NonVisualGraphicFrameProperties = new Xdr.NonVisualGraphicFrameProperties
+				{
+					NonVisualDrawingProperties = new Xdr.NonVisualDrawingProperties { Id = 1, Name = name ?? "Chart" },
+					NonVisualGraphicFrameDrawingProperties = new Xdr.NonVisualGraphicFrameDrawingProperties()
+				},
+				Transform = new Xdr.Transform
+				{
+					Offset = new A.Offset { X = 0, Y = 0 },
+					Extents = new A.Extents { Cx = width * 9525, Cy = height * 9525 }
+				},
+				Graphic = new A.Graphic
+				{
+					GraphicData = new A.GraphicData
+					{
+						Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart",
+						InnerXml = $"<c:chart xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:id=\"{drawingsPart.GetIdOfPart(chartPart)}\"/>"
+					}
+				}
+			};
+
+			twoCellAnchor.Append(graphicFrame);
+			twoCellAnchor.Append(new Xdr.ClientData());
+
+			drawingsPart.WorksheetDrawing.Append(twoCellAnchor);
+		}
+
+		private static C.ChartSpace CreateChart(string name, Action<C.PlotArea> configureChart)
+		{
+			var chartSpace = new C.ChartSpace();
+			chartSpace.AddNamespaceDeclaration("c", "http://schemas.openxmlformats.org/drawingml/2006/chart");
+			chartSpace.AddNamespaceDeclaration("a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+
+			var chart = new C.Chart();
+
+			// Add title if provided
+			if (!string.IsNullOrEmpty(name))
+			{
+				chart.Title = new C.Title
+				{
+					ChartText = new C.ChartText
+					{
+						RichText = new C.RichText
+						{
+							BodyProperties = new A.BodyProperties(),
+							ListStyle = new A.ListStyle(),
+							InnerXml = $"<a:p xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:r><a:t>{name}</a:t></a:r></a:p>"
+						}
+					},
+					Overlay = new C.Overlay { Val = false }
+				};
+			}
+
+			var plotArea = new C.PlotArea();
+			plotArea.Append(new C.Layout());
+
+			configureChart(plotArea);
+
+			chart.Append(plotArea);
+			var legend = new C.Legend();
+			legend.Append(new C.LegendPosition { Val = C.LegendPositionValues.Bottom });
+			legend.Append(new C.Overlay { Val = false });
+			chart.Append(legend);
+			chart.Append(new C.PlotVisibleOnly { Val = true });
+
+			chartSpace.Append(chart);
+			return chartSpace;
+		}
+
+		private static C.LineChartSeries CreateLineSeries(uint index, string name, string dataRange, int xCol, int yCol)
+		{
+			var series = new C.LineChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.None } });
+
+			// Add category (X) axis reference
+			series.Append(new C.CategoryAxisData
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			// Add values (Y) axis reference
+			series.Append(new C.Values
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Smooth { Val = false });
+
+			return series;
+		}
+
+		private static C.BarChartSeries CreateBarSeries(uint index, string name, string dataRange)
+		{
+			var series = new C.BarChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.CategoryAxisData
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Values
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			return series;
+		}
+
+		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange)
+		{
+			var series = new C.PieChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.CategoryAxisData
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Values
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			return series;
+		}
+
+		private static C.CategoryAxis CreateCategoryAxis(uint id, uint crossingAxisId)
+		{
+			var axis = new C.CategoryAxis();
+			axis.Append(new C.AxisId { Val = id });
+			axis.Append(new C.Scaling { Orientation = new C.Orientation { Val = C.OrientationValues.MinMax } });
+			axis.Append(new C.Delete { Val = false });
+			axis.Append(new C.AxisPosition { Val = C.AxisPositionValues.Bottom });
+			axis.Append(new C.TickLabelPosition { Val = C.TickLabelPositionValues.NextTo });
+			axis.Append(new C.CrossingAxis { Val = crossingAxisId });
+			axis.Append(new C.Crosses { Val = C.CrossesValues.AutoZero });
+			axis.Append(new C.AutoLabeled { Val = true });
+			axis.Append(new C.LabelAlignment { Val = C.LabelAlignmentValues.Center });
+			axis.Append(new C.LabelOffset { Val = 100 });
+
+			return axis;
+		}
+
+		private static C.ValueAxis CreateValueAxis(uint id, uint crossingAxisId)
+		{
+			var axis = new C.ValueAxis();
+			axis.Append(new C.AxisId { Val = id });
+			axis.Append(new C.Scaling { Orientation = new C.Orientation { Val = C.OrientationValues.MinMax } });
+			axis.Append(new C.Delete { Val = false });
+			axis.Append(new C.AxisPosition { Val = C.AxisPositionValues.Left });
+			axis.Append(new C.MajorGridlines());
+			axis.Append(new C.NumberingFormat { FormatCode = "General", SourceLinked = true });
+			axis.Append(new C.TickLabelPosition { Val = C.TickLabelPositionValues.NextTo });
+			axis.Append(new C.CrossingAxis { Val = crossingAxisId });
+			axis.Append(new C.Crosses { Val = C.CrossesValues.AutoZero });
+			axis.Append(new C.CrossBetween { Val = C.CrossBetweenValues.Between });
+
+			return axis;
 		}
 
 		private void EnsureSheetView()

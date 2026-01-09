@@ -184,6 +184,44 @@ public interface IExcelWorker : IDisposable
 	/// <param name="name">The name of the sheet to delete.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker DeleteSheet(string name);
+
+	/// <summary>
+	/// Adds a line chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="xCol">Column index for X-axis values (1-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddLineChart(string name, string dataRange, int xCol, int yCol, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a bar/column chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddBarChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a pie chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
 }
 
 /// <summary>
