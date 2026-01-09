@@ -4,9 +4,6 @@
     <RootNamespace>Ecng.Excel</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="$(OpenXmlVer)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Excel\Excel.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 </Project>

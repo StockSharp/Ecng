@@ -1,7 +1,7 @@
-namespace Ecng.Tests.Interop;
+namespace Ecng.Tests.Excel;
 
-using Ecng.Interop;
-using Ecng.Interop.Excel;
+using Ecng.Common;
+using Ecng.Excel;
 
 [TestClass]
 [TestCategory("Integration")]

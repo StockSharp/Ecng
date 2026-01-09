@@ -1,4 +1,4 @@
-namespace Ecng.Interop.Excel;
+namespace Ecng.Excel;
 
 using System;
 using System.Collections.Generic;
@@ -7,10 +7,10 @@ using System.IO;
 using System.Linq;
 
 using DocumentFormat.OpenXml;
-
-using Ecng.Common;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+
+using Ecng.Common;
 
 /// <summary>
 /// The <see cref="IExcelWorkerProvider"/> implementation based on Open XML SDK.

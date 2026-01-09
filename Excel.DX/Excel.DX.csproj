@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <RootNamespace>Ecng.Interop.Excel</RootNamespace>
+    <RootNamespace>Ecng.Excel</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ecng.DXRefs" Version="$(EcngVer)" />
@@ -9,6 +9,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Excel\Excel.csproj" />
   </ItemGroup>
 </Project>
