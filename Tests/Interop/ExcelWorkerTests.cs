@@ -294,13 +294,13 @@ public class ExcelWorkerTests : BaseTestClass
 
 	#endregion
 
-	#region DevExp-specific tests (features not implemented in OpenXml)
-
 	[TestMethod]
-	public void DevExp_SetStyle_ColumnFormat_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetStyle_ColumnFormat_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -311,24 +311,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DevExp_AutoFitColumn_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCellFormat_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
-
-		worker
-			.AddSheet()
-			.SetCell(1, 1, "This is a long text that should auto-fit")
-			.AutoFitColumn(1);
-
-		worker.GetColumnsCount().AssertEqual(1);
-	}
-
-	[TestMethod]
-	public void DevExp_SetCellFormat_Success()
-	{
-		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -339,10 +327,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DevExp_SetCellColor_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetCellColor_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -353,10 +343,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DevExp_SetConditionalFormatting_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void SetConditionalFormatting_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -369,10 +361,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void DevExp_ComplexWorkflow_Success()
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void ComplexWorkflow_Success(string providerName)
 	{
 		using var stream = new MemoryStream();
-		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+		using var worker = CreateProvider(providerName).CreateNew(stream);
 
 		worker
 			.AddSheet()
@@ -405,6 +399,22 @@ public class ExcelWorkerTests : BaseTestClass
 
 		worker.GetRowsCount().AssertEqual(13);
 		worker.GetColumnsCount().AssertEqual(3);
+	}
+
+	#region DevExp-specific tests (features not yet implemented in OpenXml)
+
+	[TestMethod]
+	public void DevExp_AutoFitColumn_Success()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "This is a long text that should auto-fit")
+			.AutoFitColumn(1);
+
+		worker.GetColumnsCount().AssertEqual(1);
 	}
 
 	#endregion

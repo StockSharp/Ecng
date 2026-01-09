@@ -47,6 +47,12 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		// Column style map captured from a sample row (e.g. Trades/Orders data row).
 		private Dictionary<int, uint> _columnStyleIndex = new();
 
+		// Style caches to avoid duplicates
+		private readonly Dictionary<string, uint> _numberFormatIdCache = new();
+		private readonly Dictionary<string, uint> _fillIndexCache = new();
+		private readonly Dictionary<(uint? numFmtId, uint? fillId), uint> _cellFormatCache = new();
+		private readonly Dictionary<int, uint> _columnStyleIndex2 = new();
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OpenXmlExcelWorker"/>.
 		/// </summary>
@@ -198,13 +204,106 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetStyle(int col, Type type) => this;
+		public IExcelWorker SetStyle(int col, Type type)
+		{
+			// Determine format based on type
+			string format = null;
+			if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
+				format = "yyyy-MM-dd HH:mm:ss";
+			else if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
+				format = "#,##0.00";
+
+			return format != null ? SetStyle(col, format) : this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetStyle(int col, string format) => this;
+		public IExcelWorker SetStyle(int col, string format)
+		{
+			if (string.IsNullOrEmpty(format))
+				return this;
+
+			var numFmtId = GetOrCreateNumberFormatId(format);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null);
+			_columnStyleIndex2[col] = styleIndex;
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor) => this;
+		public IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor)
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null || string.IsNullOrEmpty(condition))
+				return this;
+
+			// Get the range for the column (e.g., "A:A" for column 0)
+			var colName = ToColumnName(col);
+			var sqRef = $"{colName}:{colName}";
+
+			// Create the conditional formatting
+			var conditionalFormatting = new ConditionalFormatting
+			{
+				SequenceOfReferences = new ListValue<StringValue> { InnerText = sqRef }
+			};
+
+			var cfRule = new ConditionalFormattingRule
+			{
+				Type = ConditionalFormatValues.CellIs,
+				Priority = 1,
+				Operator = op switch
+				{
+					ComparisonOperator.Equal => ConditionalFormattingOperatorValues.Equal,
+					ComparisonOperator.NotEqual => ConditionalFormattingOperatorValues.NotEqual,
+					ComparisonOperator.Greater => ConditionalFormattingOperatorValues.GreaterThan,
+					ComparisonOperator.GreaterOrEqual => ConditionalFormattingOperatorValues.GreaterThanOrEqual,
+					ComparisonOperator.Less => ConditionalFormattingOperatorValues.LessThan,
+					ComparisonOperator.LessOrEqual => ConditionalFormattingOperatorValues.LessThanOrEqual,
+					ComparisonOperator.Any => ConditionalFormattingOperatorValues.Equal,
+					_ => ConditionalFormattingOperatorValues.Equal
+				}
+			};
+
+			cfRule.Append(new Formula(condition));
+
+			// Create DifferentialFormat for the style
+			var dxf = new DifferentialFormat();
+			if (!string.IsNullOrEmpty(bgColor))
+			{
+				dxf.Fill = new Fill(new PatternFill
+				{
+					PatternType = PatternValues.Solid,
+					BackgroundColor = new BackgroundColor { Rgb = ParseColor(bgColor) }
+				});
+			}
+			if (!string.IsNullOrEmpty(fgColor))
+			{
+				dxf.Font = new Font(new Color { Rgb = ParseColor(fgColor) });
+			}
+
+			// Add DifferentialFormat to stylesheet
+			var stylesheet = EnsureStylesheet();
+			if (stylesheet.DifferentialFormats == null)
+			{
+				stylesheet.DifferentialFormats = new DifferentialFormats { Count = 0 };
+			}
+
+			stylesheet.DifferentialFormats.Append(dxf);
+			stylesheet.DifferentialFormats.Count = (uint)stylesheet.DifferentialFormats.ChildElements.Count;
+
+			// Reference the DifferentialFormat
+			cfRule.FormatId = stylesheet.DifferentialFormats.Count.Value - 1;
+
+			conditionalFormatting.Append(cfRule);
+
+			// Insert ConditionalFormatting after SheetData
+			var sheetData = worksheet.GetFirstChild<SheetData>();
+			if (sheetData != null)
+				worksheet.InsertAfter(conditionalFormatting, sheetData);
+			else
+				worksheet.Append(conditionalFormatting);
+
+			return this;
+		}
 
 		/// <inheritdoc />
 		public int GetColumnsCount()
@@ -390,10 +489,36 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetCellFormat(int col, int row, string format) => this;
+		public IExcelWorker SetCellFormat(int col, int row, string format)
+		{
+			if (string.IsNullOrEmpty(format))
+				return this;
+
+			var cell = GetCell(col, row, createIfMissing: true);
+			var numFmtId = GetOrCreateNumberFormatId(format);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null);
+			cell.StyleIndex = styleIndex;
+
+			return this;
+		}
 
 		/// <inheritdoc />
-		public IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor) => this;
+		public IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null)
+		{
+			if (string.IsNullOrEmpty(bgColor) && string.IsNullOrEmpty(fgColor))
+				return this;
+
+			var cell = GetCell(col, row, createIfMissing: true);
+			uint? fillId = null;
+
+			if (!string.IsNullOrEmpty(bgColor))
+				fillId = GetOrCreateFillIndex(bgColor);
+
+			var styleIndex = GetOrCreateCellFormatIndex(null, fillId);
+			cell.StyleIndex = styleIndex;
+
+			return this;
+		}
 
 		/// <inheritdoc />
 		public IEnumerable<string> GetSheetNames()
@@ -456,6 +581,161 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				sheetViews.Append(new SheetView { WorkbookViewId = 0 });
 			}
+		}
+
+		private Stylesheet EnsureStylesheet()
+		{
+			var stylesPart = _workbookPart.WorkbookStylesPart;
+			if (stylesPart == null)
+			{
+				stylesPart = _workbookPart.AddNewPart<WorkbookStylesPart>();
+				stylesPart.Stylesheet = new Stylesheet();
+			}
+
+			var stylesheet = stylesPart.Stylesheet;
+
+			// Ensure required elements exist
+			if (stylesheet.Fonts == null)
+			{
+				stylesheet.Fonts = new Fonts(new Font());
+				stylesheet.Fonts.Count = 1;
+			}
+
+			if (stylesheet.Fills == null)
+			{
+				// Excel requires at least 2 fills: none and gray125
+				stylesheet.Fills = new Fills(
+					new Fill(new PatternFill { PatternType = PatternValues.None }),
+					new Fill(new PatternFill { PatternType = PatternValues.Gray125 }));
+				stylesheet.Fills.Count = 2;
+			}
+
+			if (stylesheet.Borders == null)
+			{
+				stylesheet.Borders = new Borders(new Border());
+				stylesheet.Borders.Count = 1;
+			}
+
+			if (stylesheet.CellFormats == null)
+			{
+				stylesheet.CellFormats = new CellFormats(new CellFormat { FontId = 0, FillId = 0, BorderId = 0 });
+				stylesheet.CellFormats.Count = 1;
+			}
+
+			if (stylesheet.NumberingFormats == null)
+			{
+				stylesheet.NumberingFormats = new NumberingFormats { Count = 0 };
+			}
+
+			return stylesheet;
+		}
+
+		private uint GetOrCreateNumberFormatId(string format)
+		{
+			if (_numberFormatIdCache.TryGetValue(format, out var cached))
+				return cached;
+
+			var stylesheet = EnsureStylesheet();
+			var numFmts = stylesheet.NumberingFormats;
+
+			// Custom number formats start at 164
+			var nextId = numFmts.Elements<NumberingFormat>()
+				.Select(nf => nf.NumberFormatId?.Value ?? 0)
+				.DefaultIfEmpty(163u)
+				.Max() + 1;
+
+			numFmts.Append(new NumberingFormat { NumberFormatId = nextId, FormatCode = format });
+			numFmts.Count = (uint)numFmts.ChildElements.Count;
+
+			_numberFormatIdCache[format] = nextId;
+			return nextId;
+		}
+
+		private uint GetOrCreateFillIndex(string bgColor)
+		{
+			if (string.IsNullOrEmpty(bgColor))
+				return 0;
+
+			if (_fillIndexCache.TryGetValue(bgColor, out var cached))
+				return cached;
+
+			var stylesheet = EnsureStylesheet();
+			var fills = stylesheet.Fills;
+
+			var color = ParseColor(bgColor);
+			var fill = new Fill(new PatternFill
+			{
+				PatternType = PatternValues.Solid,
+				ForegroundColor = new ForegroundColor { Rgb = color },
+				BackgroundColor = new BackgroundColor { Indexed = 64 }
+			});
+
+			fills.Append(fill);
+			fills.Count = (uint)fills.ChildElements.Count;
+
+			var index = fills.Count.Value - 1;
+			_fillIndexCache[bgColor] = index;
+			return index;
+		}
+
+		private uint GetOrCreateCellFormatIndex(uint? numFmtId, uint? fillId)
+		{
+			var key = (numFmtId, fillId);
+			if (_cellFormatCache.TryGetValue(key, out var cached))
+				return cached;
+
+			var stylesheet = EnsureStylesheet();
+			var cellFormats = stylesheet.CellFormats;
+
+			var cellFormat = new CellFormat
+			{
+				FontId = 0,
+				BorderId = 0,
+				FillId = fillId ?? 0,
+				ApplyFill = fillId.HasValue
+			};
+
+			if (numFmtId.HasValue)
+			{
+				cellFormat.NumberFormatId = numFmtId.Value;
+				cellFormat.ApplyNumberFormat = true;
+			}
+
+			cellFormats.Append(cellFormat);
+			cellFormats.Count = (uint)cellFormats.ChildElements.Count;
+
+			var index = cellFormats.Count.Value - 1;
+			_cellFormatCache[key] = index;
+			return index;
+		}
+
+		private static string ParseColor(string color)
+		{
+			if (string.IsNullOrEmpty(color))
+				return "FF000000";
+
+			// Handle named colors
+			color = color.ToUpperInvariant() switch
+			{
+				"LIGHTGRAY" or "LIGHTGREY" => "FFD3D3D3",
+				"RED" => "FFFF0000",
+				"GREEN" => "FF00FF00",
+				"BLUE" => "FF0000FF",
+				"YELLOW" => "FFFFFF00",
+				"WHITE" => "FFFFFFFF",
+				"BLACK" => "FF000000",
+				_ => color
+			};
+
+			// Handle #RRGGBB or RRGGBB format
+			if (color.StartsWith("#"))
+				color = color.Substring(1);
+
+			// Ensure ARGB format (add FF alpha if only RGB)
+			if (color.Length == 6)
+				color = "FF" + color;
+
+			return color.ToUpperInvariant();
 		}
 
 		private Row GetOrCreateRow(int row)
@@ -541,9 +821,16 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		{
 			var cell = GetCell(col, row, createIfMissing: true);
 
-			// If this cell is newly created (no StyleIndex), apply column style from sample row.
-			if (cell.StyleIndex == null && _columnStyleIndex.TryGetValue(col, out var styleIdx))
-				cell.StyleIndex = styleIdx;
+			// If this cell is newly created (no StyleIndex), apply column style
+			if (cell.StyleIndex == null)
+			{
+				// First check if column style was set via SetStyle()
+				if (_columnStyleIndex2.TryGetValue(col, out var styleIdx2))
+					cell.StyleIndex = styleIdx2;
+				// Otherwise use style from sample row (template)
+				else if (_columnStyleIndex.TryGetValue(col, out var styleIdx))
+					cell.StyleIndex = styleIdx;
+			}
 
 			cell.RemoveAllChildren<CellValue>();
 			cell.InlineString = null;
