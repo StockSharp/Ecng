@@ -35,6 +35,18 @@ public static class Converter
 	private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = [];
 	private static readonly Dictionary<(Type, Type), Func<object, object>> _typedConverters2 = [];
 
+	/// <summary>
+	/// Fallback handler for Type conversion from string when type is not found.
+	/// Returns the resolved type, or null to throw exception.
+	/// </summary>
+	public static Func<string, Type> TypeFallback { get; set; }
+
+	/// <summary>
+	/// Fallback handler for Enum conversion from string when value is not found.
+	/// Returns the resolved enum value, or null to throw exception.
+	/// </summary>
+	public static Func<Type, string, object> EnumFallback { get; set; }
+
 	static Converter()
 	{
 		_dbTypes.Add(typeof(string), DbType.String);
@@ -220,7 +232,16 @@ public static class Converter
 				if (type != null)
 					_typeCache.Add(key, type);
 				else
+				{
+					var result = TypeFallback?.Invoke(input);
+					if (result != null)
+					{
+						_typeCache.Add(key, result);
+						return result;
+					}
+
 					throw new ArgumentException($"Type {input} doesn't exists.", nameof(input));
+				}
 			}
 
 			return type;
@@ -562,7 +583,20 @@ public static class Converter
 			else if ((value is string || sourceType.IsPrimitive) && destinationType.IsEnum())
 			{
 				if (value is string s)
-					return Enum.Parse(destinationType, s, true);
+				{
+					try
+					{
+						return Enum.Parse(destinationType, s, true);
+					}
+					catch (ArgumentException)
+					{
+						var result = EnumFallback?.Invoke(destinationType, s);
+						if (result != null)
+							return result;
+
+						throw;
+					}
+				}
 				else
 					return Enum.ToObject(destinationType, value);
 			}
