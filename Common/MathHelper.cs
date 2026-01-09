@@ -666,6 +666,16 @@ public static class MathHelper
 	}
 
 	/// <summary>
+	/// Returns the square root of the decimal value.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <returns>The square root of the value.</returns>
+	public static decimal Sqrt(this decimal value)
+	{
+		return (decimal)Math.Sqrt((double)value);
+	}
+
+	/// <summary>
 	/// Raises a decimal number to the power of another decimal number.
 	/// </summary>
 	/// <param name="x">The base decimal value.</param>

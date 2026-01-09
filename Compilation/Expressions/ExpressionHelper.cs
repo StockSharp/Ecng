@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,6 +35,10 @@ public static class ExpressionHelper
 		{
 			if (input.IsEmpty())
 				throw new ArgumentNullException(nameof(input));
+
+			// Auto-add 'm' suffix to decimal literals without type suffix (e.g., 0.5 → 0.5m)
+			// This makes formulas more user-friendly since users don't need to remember the suffix
+			input = Regex.Replace(input, @"(\d+\.\d+)(?![mMdDfFeE])", "$1m");
 
 			var variables = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
 

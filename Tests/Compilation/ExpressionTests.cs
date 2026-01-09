@@ -469,4 +469,72 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([4, 6]).AssertTrue();
 		formula.Calculate([6, 4]).AssertFalse();
 	}
+
+	[DataTestMethod]
+	[DataRow("x * 2", 10, 20, DisplayName = "Integer literal")]
+	[DataRow("x * 0.5", 10, 5, DisplayName = "Decimal without suffix")]
+	[DataRow("x * 0.5m", 10, 5, DisplayName = "Decimal with suffix")]
+	public void DecimalMultiply(string expression, int input, int expected)
+	{
+		var formula = Compile(expression);
+		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
+	}
+
+	[DataTestMethod]
+	[DataRow("x + 10", 5, 15, DisplayName = "Integer addition")]
+	[DataRow("x + 10.5", 5, 15.5, DisplayName = "Decimal addition without suffix")]
+	[DataRow("x + 10.5m", 5, 15.5, DisplayName = "Decimal addition with suffix")]
+	public void DecimalAddition(string expression, int input, double expected)
+	{
+		var formula = Compile(expression);
+		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
+	}
+
+	[DataTestMethod]
+	[DataRow("abs(x - 10)", 7, 3, DisplayName = "abs with integer")]
+	[DataRow("abs(x - 10.5)", 7, 3.5, DisplayName = "abs with decimal")]
+	[DataRow("floor(x + 0.7)", 10, 10, DisplayName = "floor with decimal")]
+	[DataRow("ceiling(x + 0.3)", 10, 11, DisplayName = "ceiling with decimal")]
+	[DataRow("round(x * 0.333, 2)", 10, 3.33, DisplayName = "round with decimal")]
+	public void DecimalFunctions(string expression, int input, double expected)
+	{
+		var formula = Compile(expression);
+		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
+	}
+
+	[DataTestMethod]
+	[DataRow("pow(x, 2)", 3, 9, DisplayName = "pow with integer exponent")]
+	[DataRow("pow(x, 2.0)", 3, 9, DisplayName = "pow with decimal exponent")]
+	[DataRow("sqrt(x)", 16, 4, DisplayName = "sqrt")]
+	[DataRow("pow(x, 0.5)", 16, 4, DisplayName = "pow as sqrt")]
+	public void DecimalPowSqrt(string expression, int input, int expected)
+	{
+		var formula = Compile(expression);
+		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
+	}
+
+	[TestMethod]
+	public void DecimalComplexFormula()
+	{
+		// abs(x - 10.5) + round(y * 0.25, 2) + max(z, 1.0)
+		var formula = Compile("abs(x - 10.5) + round(y * 0.25, 2) + max(z, 1.0)");
+		// abs(10 - 10.5) + round(8 * 0.25, 2) + max(0.5, 1.0) = 0.5 + 2 + 1 = 3.5
+		formula.Calculate([10m, 8m, 0.5m]).AssertEqual(3.5m);
+	}
+
+	[TestMethod]
+	public void DecimalTrigonometry()
+	{
+		// sin(0) + cos(0) = 0 + 1 = 1
+		var formula = Compile("sin(x * 3.14159) + cos(y * 0.5)");
+		formula.Calculate([0m, 0m]).AssertEqual(1m);
+	}
+
+	[TestMethod]
+	public void DecimalMultipleVariables()
+	{
+		// x * 0.5 + y * 0.25 + z * 0.125 = 5 + 5 + 5 = 15
+		var formula = Compile("x * 0.5 + y * 0.25 + z * 0.125");
+		formula.Calculate([10m, 20m, 40m]).AssertEqual(15m);
+	}
 }
