@@ -1,4 +1,4 @@
-namespace Ecng.Interop;
+namespace Ecng.Interop.Excel;
 
 using System;
 using System.Collections.Generic;

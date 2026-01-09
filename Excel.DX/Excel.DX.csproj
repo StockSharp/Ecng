@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <PropertyGroup>
+    <RootNamespace>Ecng.Interop.Excel</RootNamespace>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ecng.DXRefs" Version="$(EcngVer)" />
     <PackageReference Include="System.Drawing.Common" Version="$(MsExtensionsVer)" />
