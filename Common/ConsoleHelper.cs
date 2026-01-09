@@ -62,6 +62,9 @@ public static class ConsoleHelper
 	/// <param name="ex">The exception to write.</param>
 	public static void ConsoleError(this Exception ex)
 	{
+		if (ex is null)
+			return;
+
 		ex.ToString().ConsoleWithColor(Error);
 	}
 
