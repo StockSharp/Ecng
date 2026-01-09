@@ -59,7 +59,7 @@ public sealed class Client : IDisposable
 
 	private static async ValueTask<Stream> ConnectWithRetryAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
 	{
-		var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host).ConfigureAwait(false);
+		var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host).NoWait();
 		Exception lastError = null;
 
 		foreach (var address in addresses)
@@ -71,7 +71,7 @@ public sealed class Client : IDisposable
 				using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 				attemptCts.CancelAfter(TimeSpan.FromSeconds(5));
 
-				await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), attemptCts.Token).ConfigureAwait(false);
+				await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), attemptCts.Token).NoWait();
 				return new NetworkStream(socket, ownsSocket: true);
 			}
 			catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
@@ -118,14 +118,14 @@ public sealed class Client : IDisposable
 		if (IsLoggedIn)
 			throw new InvalidOperationException("Already logged in.");
 
-		var pre = await RequestAsync<PreLoginResponse>(new PreLoginRequest { User = email }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var pre = await RequestAsync<PreLoginResponse>(new PreLoginRequest { User = email }, hashcash: null, cancellationToken).NoWait();
 		if (pre.Version != 1)
 			throw new NotSupportedException($"Unsupported account version {pre.Version}.");
 
 		var passwordKey = Crypto.PrepareKey(password.ToBytesPassword());
 		var hash = Crypto.GenerateHash(email.ToLowerInvariant(), passwordKey);
 
-		var login = await RequestAsync<LoginResponse>(new LoginRequest { User = email, PasswordHash = hash }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var login = await RequestAsync<LoginResponse>(new LoginRequest { User = email, PasswordHash = hash }, hashcash: null, cancellationToken).NoWait();
 
 		var masterKeyEnc = login.MasterKey.FromBase64Url();
 		var masterKey = Crypto.DecryptKey(masterKeyEnc, passwordKey);
@@ -150,7 +150,7 @@ public sealed class Client : IDisposable
 		{
 			try
 			{
-				await RequestAsync<string>(new LogoutRequest(), hashcash: null, cancellationToken).ConfigureAwait(false);
+				await RequestAsync<string>(new LogoutRequest(), hashcash: null, cancellationToken).NoWait();
 			}
 			catch
 			{
@@ -170,7 +170,7 @@ public sealed class Client : IDisposable
 	public async Task<IReadOnlyList<Node>> GetNodesAsync(CancellationToken cancellationToken = default)
 	{
 		EnsureLoggedIn();
-		var root = await RequestElementAsync(new GetNodesRequest(), hashcash: null, cancellationToken).ConfigureAwait(false);
+		var root = await RequestElementAsync(new GetNodesRequest(), hashcash: null, cancellationToken).NoWait();
 		return ParseNodes(root);
 	}
 
@@ -200,7 +200,7 @@ public sealed class Client : IDisposable
 			]
 		};
 
-		var resp = await RequestElementAsync(req, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var resp = await RequestElementAsync(req, hashcash: null, cancellationToken).NoWait();
 		return ParseNodes(resp).Single();
 	}
 
@@ -212,7 +212,7 @@ public sealed class Client : IDisposable
 		ArgumentNullException.ThrowIfNull(stream);
 		EnsureLoggedIn();
 
-		var uploadUrl = await RequestAsync<UploadUrlResponse>(new UploadUrlRequest { Size = stream.Length }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var uploadUrl = await RequestAsync<UploadUrlResponse>(new UploadUrlRequest { Size = stream.Length }, hashcash: null, cancellationToken).NoWait();
 
 		string completionHandle = null;
 
@@ -239,7 +239,7 @@ public sealed class Client : IDisposable
 				var url = new Uri(uploadUrl.Url + "/" + sent);
 				sent += read;
 
-				completionHandle = await PostRawAsync(url, ms, cancellationToken).ConfigureAwait(false);
+				completionHandle = await PostRawAsync(url, ms, cancellationToken).NoWait();
 				progress?.Report((double)sent / total * 100d);
 			}
 
@@ -278,7 +278,7 @@ public sealed class Client : IDisposable
 				]
 			};
 
-			var resp = await RequestElementAsync(req, hashcash: null, cancellationToken).ConfigureAwait(false);
+			var resp = await RequestElementAsync(req, hashcash: null, cancellationToken).NoWait();
 			return ParseNodes(resp).Single();
 		}
 	}
@@ -297,7 +297,7 @@ public sealed class Client : IDisposable
 		if (node.NodeKey is null || node.NodeKey.Length == 0)
 			throw new InvalidOperationException("Node key is missing.");
 
-		var el = await RequestElementAsync(new ExportLinkRequest { NodeId = node.Id }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var el = await RequestElementAsync(new ExportLinkRequest { NodeId = node.Id }, hashcash: null, cancellationToken).NoWait();
 
 		string publicHandle;
 
@@ -325,7 +325,7 @@ public sealed class Client : IDisposable
 			throw new ArgumentNullException(nameof(nodeId));
 
 		EnsureLoggedIn();
-		await RequestAsync<string>(new ExportLinkRequest { NodeId = nodeId, Disable = 1 }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		await RequestAsync<string>(new ExportLinkRequest { NodeId = nodeId, Disable = 1 }, hashcash: null, cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -340,9 +340,9 @@ public sealed class Client : IDisposable
 		if (node.Type != NodeType.File)
 			throw new ArgumentException("Only file nodes can be downloaded.", nameof(node));
 
-		var dl = await RequestAsync<DownloadUrlResponse>(new DownloadUrlRequest { Id = node.Id }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		var dl = await RequestAsync<DownloadUrlResponse>(new DownloadUrlRequest { Id = node.Id }, hashcash: null, cancellationToken).NoWait();
 
-		using var raw = await _http.GetStreamAsync(new Uri(dl.Url), cancellationToken).ConfigureAwait(false);
+		using var raw = await _http.GetStreamAsync(new Uri(dl.Url), cancellationToken).NoWait();
 		using var decrypt = new MegaAesCtrStreamDecrypter(raw, dl.Size, node.FileKey, node.Iv, node.MetaMac);
 
 		var buffer = new byte[64 * 1024];
@@ -356,7 +356,7 @@ public sealed class Client : IDisposable
 			if (r == 0)
 				break;
 
-			await destination.WriteAsync(buffer.AsMemory(0, r), cancellationToken).ConfigureAwait(false);
+			await destination.WriteAsync(buffer.AsMemory(0, r), cancellationToken).NoWait();
 			readTotal += r;
 			progress?.Report((double)readTotal / dl.Size * 100d);
 		}
@@ -379,7 +379,7 @@ public sealed class Client : IDisposable
 	public async Task DeleteAsync(string nodeId, CancellationToken cancellationToken = default)
 	{
 		EnsureLoggedIn();
-		await RequestAsync<string>(new DeleteRequest { NodeId = nodeId }, hashcash: null, cancellationToken).ConfigureAwait(false);
+		await RequestAsync<string>(new DeleteRequest { NodeId = nodeId }, hashcash: null, cancellationToken).NoWait();
 	}
 
 	private void EnsureLoggedIn()
@@ -393,9 +393,9 @@ public sealed class Client : IDisposable
 		using var content = new StreamContent(data);
 		content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-		using var resp = await _http.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+		using var resp = await _http.PostAsync(url, content, cancellationToken).NoWait();
 		resp.EnsureSuccessStatusCode();
-		return (await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)).Trim();
+		return (await resp.Content.ReadAsStringAsync(cancellationToken).NoWait()).Trim();
 	}
 
 	private Uri BuildApiUrl(string requestId, Dictionary<string, string> extraQuery)
@@ -435,10 +435,10 @@ public sealed class Client : IDisposable
 			{
 				using var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-				using var resp = await _http.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+				using var resp = await _http.PostAsync(url, content, cancellationToken).NoWait();
 				resp.EnsureSuccessStatusCode();
 
-				var text = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+				var text = await resp.Content.ReadAsStringAsync(cancellationToken).NoWait();
 
 				if (text.IsEmpty())
 				{
@@ -447,7 +447,7 @@ public sealed class Client : IDisposable
 					if (attempt >= maxAttempts)
 						throw new InvalidOperationException("Empty API response.");
 
-					await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).ConfigureAwait(false);
+					await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).NoWait();
 					continue;
 				}
 
@@ -468,7 +468,7 @@ public sealed class Client : IDisposable
 						if (attempt >= maxAttempts)
 							throw new MegaApiException(rawCode);
 
-						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).ConfigureAwait(false);
+						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).NoWait();
 						continue;
 					}
 
@@ -507,7 +507,7 @@ public sealed class Client : IDisposable
 						if (attempt >= maxAttempts)
 							throw new MegaApiException(rawCode);
 
-						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).ConfigureAwait(false);
+						await Task.Delay(GetRetryDelay(errorCode, attempt), cancellationToken).NoWait();
 						continue;
 					}
 
@@ -523,7 +523,7 @@ public sealed class Client : IDisposable
 				if (attempt >= maxAttempts)
 					throw;
 
-				await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).ConfigureAwait(false);
+				await Task.Delay(GetRetryDelay(null, attempt), cancellationToken).NoWait();
 			}
 		}
 	}
@@ -553,7 +553,7 @@ public sealed class Client : IDisposable
 
 	private async Task<T> RequestAsync<T>(MegaRequest request, string hashcash, CancellationToken cancellationToken)
 	{
-		var el = await RequestElementAsync(request, hashcash, cancellationToken).ConfigureAwait(false);
+		var el = await RequestElementAsync(request, hashcash, cancellationToken).NoWait();
 
 		if (typeof(T) == typeof(string))
 			return (T)(object)el.GetRawText().Trim('"');
