@@ -57,6 +57,15 @@ public static class ConsoleHelper
 	}
 
 	/// <summary>
+	/// Writes an exception to the console using the predefined error color.
+	/// </summary>
+	/// <param name="ex">The exception to write.</param>
+	public static void ConsoleError(this Exception ex)
+	{
+		ex.ToString().ConsoleWithColor(Error);
+	}
+
+	/// <summary>
 	/// Writes a success message to the console using the predefined success color.
 	/// </summary>
 	/// <param name="message">The success message to write.</param>
