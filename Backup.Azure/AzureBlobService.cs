@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using global::Azure.Storage.Blobs;
+using global::Azure.Storage.Blobs.Models;
 using global::Azure.Storage.Blobs.Specialized;
 
 using Ecng.Common;
@@ -56,7 +57,7 @@ public class AzureBlobService : Disposable, IBackupService
 
 		var prefix = parent?.GetFullPath();
 
-		await foreach (var item in _container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+		await foreach (var item in _container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken))
 		{
 			if (!criteria.IsEmpty() && !item.Name.ContainsIgnoreCase(criteria))
 				continue;
