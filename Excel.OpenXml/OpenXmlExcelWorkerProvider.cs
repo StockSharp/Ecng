@@ -106,7 +106,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public bool ContainsSheet(string name)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			if (name.IsEmptyOrWhiteSpace())
 				throw new ArgumentNullException(nameof(name));
 
 			return _workbookPart.Workbook.Sheets!.Elements<Sheet>()
@@ -136,7 +136,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker RenameSheet(string name)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			if (name.IsEmptyOrWhiteSpace())
 				throw new ArgumentNullException(nameof(name));
 
 			_currentSheet.Name = name;
@@ -146,7 +146,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker SwitchSheet(string name)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			if (name.IsEmptyOrWhiteSpace())
 				throw new ArgumentNullException(nameof(name));
 
 			var sheet = _workbookPart.Workbook.Sheets!.Elements<Sheet>()
@@ -223,7 +223,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker SetStyle(int col, string format)
 		{
-			if (string.IsNullOrEmpty(format))
+			if (format.IsEmpty())
 				return this;
 
 			var numFmtId = GetOrCreateNumberFormatId(format);
@@ -237,7 +237,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		public IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor)
 		{
 			var worksheet = _currentWorksheetPart?.Worksheet;
-			if (worksheet == null || string.IsNullOrEmpty(condition))
+			if (worksheet == null || condition.IsEmpty())
 				return this;
 
 			// Get the range for the column (e.g., "A:A" for column 0)
@@ -271,7 +271,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			// Create DifferentialFormat for the style
 			var dxf = new DifferentialFormat();
-			if (!string.IsNullOrEmpty(bgColor))
+			if (!bgColor.IsEmpty())
 			{
 				dxf.Fill = new Fill(new PatternFill
 				{
@@ -279,7 +279,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 					BackgroundColor = new BackgroundColor { Rgb = ParseColor(bgColor) }
 				});
 			}
-			if (!string.IsNullOrEmpty(fgColor))
+			if (!fgColor.IsEmpty())
 			{
 				dxf.Font = new Font(new Color { Rgb = ParseColor(fgColor) });
 			}
@@ -461,14 +461,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		public IExcelWorker SetHyperlink(int col, int row, string url, string text)
 		{
 			// Set the text in the cell
-			if (!string.IsNullOrEmpty(text))
+			if (!text.IsEmpty())
 				SetCellValue(col, row, text);
-			else if (!string.IsNullOrEmpty(url))
+			else if (!url.IsEmpty())
 				SetCellValue(col, row, url);
 
 			// Add hyperlink relationship and element
 			var worksheet = _currentWorksheetPart?.Worksheet;
-			if (worksheet == null || string.IsNullOrEmpty(url))
+			if (worksheet == null || url.IsEmpty())
 				return this;
 
 			var hyperlinks = worksheet.GetFirstChild<Hyperlinks>();
@@ -495,7 +495,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker SetCellFormat(int col, int row, string format)
 		{
-			if (string.IsNullOrEmpty(format))
+			if (format.IsEmpty())
 				return this;
 
 			var cell = GetCell(col, row, createIfMissing: true);
@@ -509,13 +509,13 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null)
 		{
-			if (string.IsNullOrEmpty(bgColor) && string.IsNullOrEmpty(fgColor))
+			if (bgColor.IsEmpty() && string.IsNullOrEmpty(fgColor))
 				return this;
 
 			var cell = GetCell(col, row, createIfMissing: true);
 			uint? fillId = null;
 
-			if (!string.IsNullOrEmpty(bgColor))
+			if (!bgColor.IsEmpty())
 				fillId = GetOrCreateFillIndex(bgColor);
 
 			var styleIndex = GetOrCreateCellFormatIndex(null, fillId);
@@ -526,12 +526,12 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		/// <inheritdoc />
 		public IEnumerable<string> GetSheetNames()
-			=> _workbookPart.Workbook.Sheets!.Elements<Sheet>().Select(s => s.Name?.Value).Where(n => !string.IsNullOrWhiteSpace(n));
+			=> _workbookPart.Workbook.Sheets!.Elements<Sheet>().Select(s => s.Name?.Value).Where(n => !n.IsEmptyOrWhiteSpace());
 
 		/// <inheritdoc />
 		public IExcelWorker DeleteSheet(string name)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			if (name.IsEmptyOrWhiteSpace())
 				return this;
 
 			var sheet = _workbookPart.Workbook.Sheets!.Elements<Sheet>()
@@ -543,7 +543,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var relId = sheet.Id?.Value;
 			sheet.Remove();
 
-			if (!string.IsNullOrEmpty(relId))
+			if (!relId.IsEmpty())
 			{
 				var part = _workbookPart.GetPartById(relId);
 				if (part != null)
@@ -855,7 +855,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var chart = new C.Chart();
 
 			// Add title if provided
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				chart.Title = new C.Title
 				{
@@ -894,7 +894,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -933,7 +933,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -966,7 +966,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -999,7 +999,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -1032,7 +1032,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -1069,7 +1069,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -1104,7 +1104,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			series.Append(new C.Index { Val = index });
 			series.Append(new C.Order { Val = index });
 
-			if (!string.IsNullOrEmpty(name))
+			if (!name.IsEmpty())
 			{
 				series.Append(new C.SeriesText
 				{
@@ -1283,7 +1283,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		private uint GetOrCreateFillIndex(string bgColor)
 		{
-			if (string.IsNullOrEmpty(bgColor))
+			if (bgColor.IsEmpty())
 				return 0;
 
 			if (_fillIndexCache.TryGetValue(bgColor, out var cached))
@@ -1341,7 +1341,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		private static string ParseColor(string color)
 		{
-			if (string.IsNullOrEmpty(color))
+			if (color.IsEmpty())
 				return "FF000000";
 
 			// Handle named colors
@@ -1591,7 +1591,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		private static (int col, int row) ParseCellReference(string cellRef)
 		{
-			if (string.IsNullOrWhiteSpace(cellRef))
+			if (cellRef.IsEmptyOrWhiteSpace())
 				return (-1, -1);
 
 			int i = 0;
