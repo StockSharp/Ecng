@@ -304,10 +304,10 @@ public class AsyncHelperTests : BaseTestClass
 			await Task.Delay(10, CancellationToken);
 		});
 
-		timer.Start(TimeSpan.FromMilliseconds(100));
-		await Task.Delay(350, CancellationToken);
+		timer.Start(TimeSpan.FromMilliseconds(50));
+		await Task.Delay(500, CancellationToken);
 
-		count.AssertInRange(1, 6);
+		count.AssertInRange(3, 15);
 
 		timer.Dispose();
 	}
