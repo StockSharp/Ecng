@@ -425,6 +425,48 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			// Use OpenXmlExcelWorkerProvider for chart support.
 			return this;
 		}
+
+		IExcelWorker IExcelWorker.AddAreaChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.AddDoughnutChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.AddScatterChart(string name, string dataRange, int xCol, int yCol, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.AddRadarChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.AddBubbleChart(string name, string dataRange, int xCol, int yCol, int sizeCol, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.AddStockChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
 	}
 
 	IExcelWorker IExcelWorkerProvider.CreateNew(Stream stream, bool readOnly)

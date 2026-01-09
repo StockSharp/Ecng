@@ -222,6 +222,83 @@ public interface IExcelWorker : IDisposable
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds an area chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddAreaChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a doughnut chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddDoughnutChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a scatter (XY) chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="xCol">Column index for X-axis values (1-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddScatterChart(string name, string dataRange, int xCol, int yCol, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a radar (spider) chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddRadarChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a bubble chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:C100") with X, Y, and size columns.</param>
+	/// <param name="xCol">Column index for X-axis values (1-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
+	/// <param name="sizeCol">Column index for bubble size values (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddBubbleChart(string name, string dataRange, int xCol, int yCol, int sizeCol, int anchorCol, int anchorRow, int width, int height);
+
+	/// <summary>
+	/// Adds a stock (OHLC) chart to the current sheet.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation with Open, High, Low, Close columns.</param>
+	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddStockChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
 }
 
 /// <summary>

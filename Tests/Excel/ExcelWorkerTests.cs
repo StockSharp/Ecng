@@ -729,5 +729,156 @@ public class ExcelWorkerTests : BaseTestClass
 		reader.GetCell<int>(2, 2).AssertEqual(20);
 	}
 
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddAreaChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Month")
+			.SetCell(2, 1, "Value")
+			.SetCell(1, 2, "Jan")
+			.SetCell(2, 2, 100)
+			.SetCell(1, 3, "Feb")
+			.SetCell(2, 3, 150)
+			.SetCell(1, 4, "Mar")
+			.SetCell(2, 4, 120)
+			.AddAreaChart("Test Area Chart", "A2:B4", 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddDoughnutChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Category")
+			.SetCell(2, 1, "Value")
+			.SetCell(1, 2, "Product A")
+			.SetCell(2, 2, 35)
+			.SetCell(1, 3, "Product B")
+			.SetCell(2, 3, 40)
+			.SetCell(1, 4, "Product C")
+			.SetCell(2, 4, 25)
+			.AddDoughnutChart("Test Doughnut Chart", "A2:B4", 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddScatterChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "X")
+			.SetCell(2, 1, "Y")
+			.SetCell(1, 2, 1.0)
+			.SetCell(2, 2, 2.5)
+			.SetCell(1, 3, 2.0)
+			.SetCell(2, 3, 4.0)
+			.SetCell(1, 4, 3.0)
+			.SetCell(2, 4, 3.5)
+			.AddScatterChart("Test Scatter Chart", "A2:B4", 1, 2, 4, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddRadarChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Attribute")
+			.SetCell(2, 1, "Score")
+			.SetCell(1, 2, "Speed")
+			.SetCell(2, 2, 80)
+			.SetCell(1, 3, "Reliability")
+			.SetCell(2, 3, 90)
+			.SetCell(1, 4, "Cost")
+			.SetCell(2, 4, 70)
+			.SetCell(1, 5, "Features")
+			.SetCell(2, 5, 85)
+			.AddRadarChart("Test Radar Chart", "A2:B5", 4, 1, 400, 400);
+
+		worker.GetRowsCount().AssertEqual(5);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddBubbleChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "X")
+			.SetCell(2, 1, "Y")
+			.SetCell(3, 1, "Size")
+			.SetCell(1, 2, 10)
+			.SetCell(2, 2, 20)
+			.SetCell(3, 2, 5)
+			.SetCell(1, 3, 30)
+			.SetCell(2, 3, 40)
+			.SetCell(3, 3, 10)
+			.SetCell(1, 4, 50)
+			.SetCell(2, 4, 25)
+			.SetCell(3, 4, 15)
+			.AddBubbleChart("Test Bubble Chart", "A2:C4", 1, 2, 3, 5, 1, 400, 300);
+
+		worker.GetRowsCount().AssertEqual(4);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void AddStockChart_Success(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(1, 1, "Date")
+			.SetCell(2, 1, "Open")
+			.SetCell(3, 1, "High")
+			.SetCell(4, 1, "Low")
+			.SetCell(5, 1, "Close")
+			.SetCell(1, 2, "2024-01-01")
+			.SetCell(2, 2, 100.0)
+			.SetCell(3, 2, 105.0)
+			.SetCell(4, 2, 98.0)
+			.SetCell(5, 2, 103.0)
+			.SetCell(1, 3, "2024-01-02")
+			.SetCell(2, 3, 103.0)
+			.SetCell(3, 3, 108.0)
+			.SetCell(4, 3, 101.0)
+			.SetCell(5, 3, 106.0)
+			.AddStockChart("Test Stock Chart", "A2:E3", 6, 1, 500, 300);
+
+		worker.GetRowsCount().AssertEqual(3);
+	}
+
 	#endregion
 }

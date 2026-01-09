@@ -633,6 +633,149 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return this;
 		}
 
+		/// <inheritdoc />
+		public IExcelWorker AddAreaChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var areaChart = new C.AreaChart();
+				areaChart.Append(new C.Grouping { Val = C.GroupingValues.Standard });
+				areaChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateAreaSeries(0, name, dataRange);
+				areaChart.Append(series);
+
+				areaChart.Append(new C.AxisId { Val = 1 });
+				areaChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(areaChart);
+				plotArea.Append(CreateCategoryAxis(1, 2));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddDoughnutChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var doughnutChart = new C.DoughnutChart();
+				doughnutChart.Append(new C.VaryColors { Val = true });
+
+				var series = CreatePieSeries(0, name, dataRange);
+				doughnutChart.Append(series);
+
+				doughnutChart.Append(new C.HoleSize { Val = 50 });
+
+				plotArea.Append(doughnutChart);
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddScatterChart(string name, string dataRange, int xCol, int yCol, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var scatterChart = new C.ScatterChart();
+				scatterChart.Append(new C.ScatterStyle { Val = C.ScatterStyleValues.LineMarker });
+				scatterChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateScatterSeries(0, name, dataRange, xCol, yCol);
+				scatterChart.Append(series);
+
+				scatterChart.Append(new C.AxisId { Val = 1 });
+				scatterChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(scatterChart);
+				plotArea.Append(CreateValueAxis(1, 2, C.AxisPositionValues.Bottom));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddRadarChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var radarChart = new C.RadarChart();
+				radarChart.Append(new C.RadarStyle { Val = C.RadarStyleValues.Marker });
+				radarChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateRadarSeries(0, name, dataRange);
+				radarChart.Append(series);
+
+				radarChart.Append(new C.AxisId { Val = 1 });
+				radarChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(radarChart);
+				plotArea.Append(CreateCategoryAxis(1, 2));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddBubbleChart(string name, string dataRange, int xCol, int yCol, int sizeCol, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var bubbleChart = new C.BubbleChart();
+				bubbleChart.Append(new C.VaryColors { Val = false });
+
+				var series = CreateBubbleSeries(0, name, dataRange, xCol, yCol, sizeCol);
+				bubbleChart.Append(series);
+
+				bubbleChart.Append(new C.AxisId { Val = 1 });
+				bubbleChart.Append(new C.AxisId { Val = 2 });
+
+				plotArea.Append(bubbleChart);
+				plotArea.Append(CreateValueAxis(1, 2, C.AxisPositionValues.Bottom));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker AddStockChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+		{
+			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
+			{
+				var stockChart = new C.StockChart();
+
+				// Stock chart requires 4 series: Open, High, Low, Close
+				stockChart.Append(CreateLineSeries(0, "Open", dataRange, 0, 0));
+				stockChart.Append(CreateLineSeries(1, "High", dataRange, 0, 0));
+				stockChart.Append(CreateLineSeries(2, "Low", dataRange, 0, 0));
+				stockChart.Append(CreateLineSeries(3, "Close", dataRange, 0, 0));
+
+				stockChart.Append(new C.AxisId { Val = 1 });
+				stockChart.Append(new C.AxisId { Val = 2 });
+
+				// Add high-low lines and up-down bars for proper stock chart appearance
+				stockChart.Append(new C.HighLowLines());
+				stockChart.Append(new C.UpDownBars
+				{
+					GapWidth = new C.GapWidth { Val = 150 },
+					UpBars = new C.UpBars(),
+					DownBars = new C.DownBars()
+				});
+
+				plotArea.Append(stockChart);
+				plotArea.Append(CreateDateAxis(1, 2));
+				plotArea.Append(CreateValueAxis(2, 1));
+			});
+
+			return this;
+		}
+
 		private void AddChartCore(string name, string dataRange, int anchorCol, int anchorRow, int width, int height, Action<C.PlotArea> configureChart)
 		{
 			var drawingsPart = _currentWorksheetPart.DrawingsPart;
@@ -850,6 +993,154 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
+		private static C.AreaChartSeries CreateAreaSeries(uint index, string name, string dataRange)
+		{
+			var series = new C.AreaChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.CategoryAxisData
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Values
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			return series;
+		}
+
+		private static C.ScatterChartSeries CreateScatterSeries(uint index, string name, string dataRange, int xCol, int yCol)
+		{
+			var series = new C.ScatterChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.Circle } });
+
+			series.Append(new C.XValues
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.YValues
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Smooth { Val = false });
+
+			return series;
+		}
+
+		private static C.RadarChartSeries CreateRadarSeries(uint index, string name, string dataRange)
+		{
+			var series = new C.RadarChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.Circle } });
+
+			series.Append(new C.CategoryAxisData
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Values
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			return series;
+		}
+
+		private static C.BubbleChartSeries CreateBubbleSeries(uint index, string name, string dataRange, int xCol, int yCol, int sizeCol)
+		{
+			var series = new C.BubbleChartSeries();
+			series.Append(new C.Index { Val = index });
+			series.Append(new C.Order { Val = index });
+
+			if (!string.IsNullOrEmpty(name))
+			{
+				series.Append(new C.SeriesText
+				{
+					NumericValue = new C.NumericValue(name)
+				});
+			}
+
+			series.Append(new C.XValues
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.YValues
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.BubbleSize
+			{
+				NumberReference = new C.NumberReference
+				{
+					Formula = new C.Formula(dataRange)
+				}
+			});
+
+			series.Append(new C.Bubble3D { Val = false });
+
+			return series;
+		}
+
 		private static C.CategoryAxis CreateCategoryAxis(uint id, uint crossingAxisId)
 		{
 			var axis = new C.CategoryAxis();
@@ -868,18 +1159,38 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		}
 
 		private static C.ValueAxis CreateValueAxis(uint id, uint crossingAxisId)
+			=> CreateValueAxis(id, crossingAxisId, C.AxisPositionValues.Left);
+
+		private static C.ValueAxis CreateValueAxis(uint id, uint crossingAxisId, C.AxisPositionValues position)
 		{
 			var axis = new C.ValueAxis();
 			axis.Append(new C.AxisId { Val = id });
 			axis.Append(new C.Scaling { Orientation = new C.Orientation { Val = C.OrientationValues.MinMax } });
 			axis.Append(new C.Delete { Val = false });
-			axis.Append(new C.AxisPosition { Val = C.AxisPositionValues.Left });
+			axis.Append(new C.AxisPosition { Val = position });
 			axis.Append(new C.MajorGridlines());
 			axis.Append(new C.NumberingFormat { FormatCode = "General", SourceLinked = true });
 			axis.Append(new C.TickLabelPosition { Val = C.TickLabelPositionValues.NextTo });
 			axis.Append(new C.CrossingAxis { Val = crossingAxisId });
 			axis.Append(new C.Crosses { Val = C.CrossesValues.AutoZero });
 			axis.Append(new C.CrossBetween { Val = C.CrossBetweenValues.Between });
+
+			return axis;
+		}
+
+		private static C.DateAxis CreateDateAxis(uint id, uint crossingAxisId)
+		{
+			var axis = new C.DateAxis();
+			axis.Append(new C.AxisId { Val = id });
+			axis.Append(new C.Scaling { Orientation = new C.Orientation { Val = C.OrientationValues.MinMax } });
+			axis.Append(new C.Delete { Val = false });
+			axis.Append(new C.AxisPosition { Val = C.AxisPositionValues.Bottom });
+			axis.Append(new C.NumberingFormat { FormatCode = "d-mmm", SourceLinked = false });
+			axis.Append(new C.TickLabelPosition { Val = C.TickLabelPositionValues.NextTo });
+			axis.Append(new C.CrossingAxis { Val = crossingAxisId });
+			axis.Append(new C.Crosses { Val = C.CrossesValues.AutoZero });
+			axis.Append(new C.AutoLabeled { Val = true });
+			axis.Append(new C.LabelOffset { Val = 100 });
 
 			return axis;
 		}
