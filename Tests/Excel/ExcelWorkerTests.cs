@@ -1,6 +1,5 @@
 namespace Ecng.Tests.Excel;
 
-using Ecng.Common;
 using Ecng.Excel;
 
 [TestClass]

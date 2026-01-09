@@ -58,13 +58,10 @@ public class FileSystemSizeLimitTests : BaseTestClass
 		fs.TotalSize.AssertEqual(11L);
 
 		fs.DeleteFile(Path.Combine(root, "file1.txt"));
-		// Note: LocalFileSystem doesn't track deletes, only MemoryFileSystem does
-		if (fs is MemoryFileSystem)
-		{
-			fs.TotalSize.AssertEqual(6L);
-			fs.DeleteFile(Path.Combine(root, "file2.txt"));
-			fs.TotalSize.AssertEqual(0L);
-		}
+		fs.TotalSize.AssertEqual(6L);
+
+		fs.DeleteFile(Path.Combine(root, "file2.txt"));
+		fs.TotalSize.AssertEqual(0L);
 	}
 
 	[TestMethod]
@@ -134,6 +131,70 @@ public class FileSystemSizeLimitTests : BaseTestClass
 
 		// Should throw on any addition
 		ThrowsExactly<IOException>(() => WriteBytes(fs, Path.Combine(root, "file2.txt"), 1));
+	}
+
+	[TestMethod]
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void TotalSize_TracksDeleteDirectory(string fsType)
+	{
+		var (fs, root) = CreateFs(fsType);
+		SetMaxSize(fs, 1000, FileSystemOverflowBehavior.ThrowException);
+
+		var dir = Path.Combine(root, "dir");
+		fs.CreateDirectory(dir);
+		WriteBytes(fs, Path.Combine(dir, "file1.txt"), 4);
+		WriteBytes(fs, Path.Combine(dir, "file2.txt"), 4);
+		var sub = Path.Combine(dir, "sub");
+		fs.CreateDirectory(sub);
+		WriteBytes(fs, Path.Combine(sub, "file3.txt"), 2);
+
+		fs.TotalSize.AssertEqual(10L);
+
+		fs.DeleteDirectory(dir, recursive: true);
+		fs.TotalSize.AssertEqual(0L);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void TotalSize_TracksCopyFile(string fsType)
+	{
+		var (fs, root) = CreateFs(fsType);
+		SetMaxSize(fs, 1000, FileSystemOverflowBehavior.ThrowException);
+
+		var src = Path.Combine(root, "src.txt");
+		var dst = Path.Combine(root, "dst.txt");
+
+		WriteBytes(fs, src, 10);
+		fs.TotalSize.AssertEqual(10L);
+
+		fs.CopyFile(src, dst);
+		fs.TotalSize.AssertEqual(20L);
+
+		// Overwrite with same size
+		fs.CopyFile(src, dst, overwrite: true);
+		fs.TotalSize.AssertEqual(20L);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(MemoryFileSystem))]
+	[DataRow(nameof(LocalFileSystem))]
+	public void TotalSize_TracksMoveFileOverwrite(string fsType)
+	{
+		var (fs, root) = CreateFs(fsType);
+		SetMaxSize(fs, 1000, FileSystemOverflowBehavior.ThrowException);
+
+		var src = Path.Combine(root, "src.txt");
+		var dst = Path.Combine(root, "dst.txt");
+
+		WriteBytes(fs, src, 10);
+		WriteBytes(fs, dst, 5);
+		fs.TotalSize.AssertEqual(15L);
+
+		// Move with overwrite - should subtract old dst size
+		fs.MoveFile(src, dst, overwrite: true);
+		fs.TotalSize.AssertEqual(10L);
 	}
 
 	#region MemoryFileSystem-specific tests

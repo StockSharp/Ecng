@@ -139,10 +139,36 @@ public class LocalFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void CreateDirectory(string path) => Directory.CreateDirectory(path);
 	/// <inheritdoc />
-	public void DeleteDirectory(string path, bool recursive = false) => Directory.Delete(path, recursive);
+	public void DeleteDirectory(string path, bool recursive = false)
+	{
+		if (MaxSize > 0 && Directory.Exists(path))
+		{
+			var size = CalculateDirectorySize(path);
+			using (_lock.EnterScope())
+				_totalSize -= size;
+		}
+		Directory.Delete(path, recursive);
+	}
+
+	private static long CalculateDirectorySize(string path)
+	{
+		long size = 0;
+		foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+			size += new FileInfo(file).Length;
+		return size;
+	}
 
 	/// <inheritdoc />
-	public void DeleteFile(string path) => File.Delete(path);
+	public void DeleteFile(string path)
+	{
+		if (MaxSize > 0 && File.Exists(path))
+		{
+			var size = new FileInfo(path).Length;
+			using (_lock.EnterScope())
+				_totalSize -= size;
+		}
+		File.Delete(path);
+	}
 
 	/// <inheritdoc />
 	public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
@@ -153,7 +179,15 @@ public class LocalFileSystem : IFileSystem
 			Directory.CreateDirectory(dir);
 
 		if (overwrite && File.Exists(destFileName))
+		{
+			if (MaxSize > 0)
+			{
+				var size = new FileInfo(destFileName).Length;
+				using (_lock.EnterScope())
+					_totalSize -= size;
+			}
 			File.Delete(destFileName);
+		}
 
 		File.Move(sourceFileName, destFileName);
 	}
@@ -177,7 +211,18 @@ public class LocalFileSystem : IFileSystem
 		if (!dir.IsEmpty() && !Directory.Exists(dir))
 			Directory.CreateDirectory(dir);
 
+		long oldDestSize = 0;
+		if (MaxSize > 0 && overwrite && File.Exists(destFileName))
+			oldDestSize = new FileInfo(destFileName).Length;
+
 		File.Copy(sourceFileName, destFileName, overwrite);
+
+		if (MaxSize > 0)
+		{
+			var newSize = new FileInfo(destFileName).Length;
+			using (_lock.EnterScope())
+				_totalSize += newSize - oldDestSize;
+		}
 	}
 
 	/// <inheritdoc />
