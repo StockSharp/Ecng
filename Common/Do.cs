@@ -113,4 +113,29 @@ public static class Do
 		using (WithInvariantCulture())
 			await actionAsync().NoWait();
 	}
+
+	/// <summary>
+	/// A no-op action that does nothing. Use instead of <c>() => {}</c>.
+	/// </summary>
+	public static void Nothing() { }
+
+	/// <summary>
+	/// A no-op action that does nothing. Use instead of <c>_ => {}</c>.
+	/// </summary>
+	public static void Nothing<T>(T _) { }
+
+	/// <summary>
+	/// A no-op action that does nothing. Use instead of <c>(_, _) => {}</c>.
+	/// </summary>
+	public static void Nothing<T1, T2>(T1 _1, T2 _2) { }
+
+	/// <summary>
+	/// A no-op action that does nothing. Use instead of <c>(_, _, _) => {}</c>.
+	/// </summary>
+	public static void Nothing<T1, T2, T3>(T1 _1, T2 _2, T3 _3) { }
+
+	/// <summary>
+	/// A no-op action that does nothing. Use instead of <c>(_, _, _, _) => {}</c>.
+	/// </summary>
+	public static void Nothing<T1, T2, T3, T4>(T1 _1, T2 _2, T3 _3, T4 _4) { }
 }
