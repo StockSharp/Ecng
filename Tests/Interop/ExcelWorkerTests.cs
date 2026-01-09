@@ -418,4 +418,191 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region OpenXml-specific tests (template support - DevExp is write-only)
+
+	[TestMethod]
+	public void OpenXml_OpenExist_ReadValues_Success()
+	{
+		using var stream = new MemoryStream();
+
+		// Create template
+		using (var writer = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			writer
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(1, 1, "Header1")
+				.SetCell(2, 1, "Header2")
+				.SetCell(1, 2, 100)
+				.SetCell(2, 2, 200.5m)
+				.SetCell(1, 3, true)
+				.SetCell(2, 3, new DateTime(2024, 6, 15, 14, 30, 0));
+		}
+
+		// Open and read
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+
+		reader.ContainsSheet("Data").AssertTrue();
+		reader.GetCell<string>(1, 1).AssertEqual("Header1");
+		reader.GetCell<string>(2, 1).AssertEqual("Header2");
+		reader.GetCell<int>(1, 2).AssertEqual(100);
+		reader.GetCell<decimal>(2, 2).AssertEqual(200.5m);
+		reader.GetCell<bool>(1, 3).AssertEqual(true);
+		reader.GetCell<DateTime>(2, 3).AssertEqual(new DateTime(2024, 6, 15, 14, 30, 0));
+	}
+
+	[TestMethod]
+	public void OpenXml_OpenExist_ModifyValues_Success()
+	{
+		using var stream = new MemoryStream();
+
+		// Create template
+		using (var writer = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			writer
+				.AddSheet()
+				.RenameSheet("Sheet1")
+				.SetCell(1, 1, "Original")
+				.SetCell(1, 2, 100);
+		}
+
+		// Open, modify, save
+		stream.Position = 0;
+		using (var editor = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			editor.GetCell<string>(1, 1).AssertEqual("Original");
+			editor.GetCell<int>(1, 2).AssertEqual(100);
+
+			editor
+				.SetCell(1, 1, "Modified")
+				.SetCell(1, 2, 999)
+				.SetCell(1, 3, "New Row");
+		}
+
+		// Reopen and verify
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+
+		reader.GetCell<string>(1, 1).AssertEqual("Modified");
+		reader.GetCell<int>(1, 2).AssertEqual(999);
+		reader.GetCell<string>(1, 3).AssertEqual("New Row");
+	}
+
+	[TestMethod]
+	public void OpenXml_OpenExist_MultipleSheets_Success()
+	{
+		using var stream = new MemoryStream();
+
+		// Create template with multiple sheets
+		using (var writer = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			writer
+				.AddSheet()
+				.RenameSheet("Sales")
+				.SetCell(1, 1, "Q1")
+				.SetCell(1, 2, 1000)
+				.AddSheet()
+				.RenameSheet("Expenses")
+				.SetCell(1, 1, "Rent")
+				.SetCell(1, 2, 500);
+		}
+
+		// Open and navigate sheets
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+
+		var sheets = reader.GetSheetNames().ToArray();
+		sheets.Length.AssertEqual(2);
+		sheets.AssertContains("Sales");
+		sheets.AssertContains("Expenses");
+
+		// First sheet is active by default
+		reader.GetCell<string>(1, 1).AssertEqual("Q1");
+
+		reader.SwitchSheet("Expenses");
+		reader.GetCell<string>(1, 1).AssertEqual("Rent");
+		reader.GetCell<int>(1, 2).AssertEqual(500);
+
+		reader.SwitchSheet("Sales");
+		reader.GetCell<int>(1, 2).AssertEqual(1000);
+	}
+
+	[TestMethod]
+	public void OpenXml_OpenExist_AddNewSheet_Success()
+	{
+		using var stream = new MemoryStream();
+
+		// Create template
+		using (var writer = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			writer
+				.AddSheet()
+				.RenameSheet("Original")
+				.SetCell(1, 1, "Data");
+		}
+
+		// Open and add new sheet
+		stream.Position = 0;
+		using (var editor = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			editor
+				.AddSheet()
+				.RenameSheet("Added")
+				.SetCell(1, 1, "New Data");
+		}
+
+		// Verify both sheets exist
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+
+		var sheets = reader.GetSheetNames().ToArray();
+		sheets.Length.AssertEqual(2);
+		sheets.AssertContains("Original");
+		sheets.AssertContains("Added");
+
+		reader.SwitchSheet("Original");
+		reader.GetCell<string>(1, 1).AssertEqual("Data");
+
+		reader.SwitchSheet("Added");
+		reader.GetCell<string>(1, 1).AssertEqual("New Data");
+	}
+
+	[TestMethod]
+	public void OpenXml_OpenExist_PreserveStyles_Success()
+	{
+		using var stream = new MemoryStream();
+
+		// Create template with styles
+		using (var writer = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			writer
+				.AddSheet()
+				.SetStyle(1, "#,##0.00")
+				.SetCell(1, 1, 1234.5678)
+				.SetCellColor(2, 1, "#FF0000")
+				.SetCell(2, 1, "Red");
+		}
+
+		// Open and add more data (styles should be preserved)
+		stream.Position = 0;
+		using (var editor = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			editor
+				.SetCell(1, 2, 9999.1234)
+				.SetCell(2, 2, "Plain");
+		}
+
+		// Verify values (style verification would require opening in Excel)
+		stream.Position = 0;
+		using var reader = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream);
+
+		reader.GetCell<double>(1, 1).AssertEqual(1234.5678);
+		reader.GetCell<double>(1, 2).AssertEqual(9999.1234);
+		reader.GetCell<string>(2, 1).AssertEqual("Red");
+		reader.GetCell<string>(2, 2).AssertEqual("Plain");
+	}
+
+	#endregion
 }
