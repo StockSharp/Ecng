@@ -67,73 +67,28 @@ public class LocalFileSystem : IFileSystem
 			? 0L
 			: (FileExists(path) ? new FileInfo(path).Length : 0L);
 
-		return new SizeLimitedStream(stream, this, oldSize);
+		return new SizeTrackingStream(
+			stream,
+			CheckSizeLimit,
+			CommitSizeChange,
+			OverflowBehavior,
+			oldSize);
 	}
 
-	private class SizeLimitedStream(FileStream inner, LocalFileSystem fs, long oldSize) : Stream
-	{
-		private bool _disposed;
-
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			if (!fs.CheckAndReserveSpace(count))
-			{
-				if (fs.OverflowBehavior == FileSystemOverflowBehavior.ThrowException)
-					throw new IOException($"LocalFileSystem size limit exceeded. Limit: {fs.MaxSize}, Current: {fs.TotalSize}, Required: {fs.TotalSize + count}");
-				return; // IgnoreWrites
-			}
-
-			inner.Write(buffer, offset, count);
-		}
-
-		public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-		{
-			if (!fs.CheckAndReserveSpace(count))
-			{
-				if (fs.OverflowBehavior == FileSystemOverflowBehavior.ThrowException)
-					throw new IOException($"LocalFileSystem size limit exceeded. Limit: {fs.MaxSize}, Current: {fs.TotalSize}, Required: {fs.TotalSize + count}");
-				return;
-			}
-
-			await inner.WriteAsync(buffer, offset, count, cancellationToken);
-		}
-
-		protected override void Dispose(bool disposing)
-		{
-			if (!_disposed && disposing)
-			{
-				_disposed = true;
-
-				// Adjust total size: subtract old size, new size is already tracked via writes
-				using (fs._lock.EnterScope())
-					fs._totalSize -= oldSize;
-
-				inner.Dispose();
-			}
-			base.Dispose(disposing);
-		}
-
-		public override void Flush() => inner.Flush();
-		public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
-		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
-		public override void SetLength(long value) => inner.SetLength(value);
-		public override bool CanRead => inner.CanRead;
-		public override bool CanSeek => inner.CanSeek;
-		public override bool CanWrite => inner.CanWrite;
-		public override long Length => inner.Length;
-		public override long Position { get => inner.Position; set => inner.Position = value; }
-	}
-
-	private bool CheckAndReserveSpace(long bytes)
+	private bool CheckSizeLimit(long newSize, long oldSize)
 	{
 		using (_lock.EnterScope())
 		{
-			if (_totalSize + bytes > MaxSize)
-				return false;
-
-			_totalSize += bytes;
-			return true;
+			// Check if new size fits within limit (crediting the old file size that will be replaced)
+			var delta = newSize - oldSize;
+			return _totalSize + delta <= MaxSize;
 		}
+	}
+
+	private void CommitSizeChange(long newSize, long oldSize)
+	{
+		using (_lock.EnterScope())
+			_totalSize += newSize - oldSize;
 	}
 
 	/// <inheritdoc />

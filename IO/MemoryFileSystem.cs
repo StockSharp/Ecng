@@ -180,48 +180,6 @@ public class MemoryFileSystem : IFileSystem
 			dir.Children.Remove(fileName);
 		}
 	}
-
-	/// <summary>
-	/// Handles size limit check and returns whether the write should proceed.
-	/// Must be called with lock held.
-	/// </summary>
-	/// <param name="oldSize">Previous file size.</param>
-	/// <param name="newSize">New file size.</param>
-	/// <returns>True if write is allowed; false if it should be ignored.</returns>
-	private bool HandleSizeLimit(long oldSize, long newSize)
-	{
-		if (MaxSize <= 0)
-			return true; // No limit
-
-		var delta = newSize - oldSize;
-		if (delta <= 0)
-			return true; // Shrinking or same size
-
-		var projectedTotal = _totalSize + delta;
-		if (projectedTotal <= MaxSize)
-			return true; // Within limit
-
-		// Limit exceeded
-		switch (OverflowBehavior)
-		{
-			case FileSystemOverflowBehavior.ThrowException:
-				throw new IOException($"MemoryFileSystem size limit exceeded. Limit: {MaxSize}, Current: {_totalSize}, Required: {projectedTotal}");
-
-			case FileSystemOverflowBehavior.IgnoreWrites:
-				return false;
-
-			case FileSystemOverflowBehavior.EvictOldest:
-				var needed = projectedTotal - MaxSize;
-				if (TryEvictOldest(needed))
-					return true;
-				// Could not free enough space
-				throw new IOException($"MemoryFileSystem size limit exceeded and cannot evict enough files. Limit: {MaxSize}, Current: {_totalSize}, Required: {projectedTotal}");
-
-			default:
-				return true;
-		}
-	}
-
 	private static bool CanDeleteWithExistingHandles(Node node)
 	{
 		if (node.OpenHandles == null || node.OpenHandles.Count == 0)
@@ -427,19 +385,14 @@ public class MemoryFileSystem : IFileSystem
 			else
 				ms.Seek(0, SeekOrigin.Begin);
 
-			return new CommittingStream(ms, bytes =>
+			var oldFileSize = fileNode.Length;
+
+			Stream result = new CommittingStream(ms, bytes =>
 			{
 				using (_lock.EnterScope())
 				{
-					var newSize = bytes.LongLength;
-					var oldSize = fileNode.Length; // use actual size at commit time, not at open time
-					if (HandleSizeLimit(oldSize, newSize))
-					{
-						_totalSize += newSize - oldSize;
-						fileNode.Data = bytes;
-						fileNode.UpdatedUtc = DateTime.UtcNow;
-					}
-					// else: IgnoreWrites - keep old data
+					fileNode.Data = bytes;
+					fileNode.UpdatedUtc = DateTime.UtcNow;
 				}
 			}, () =>
 			{
@@ -449,7 +402,47 @@ public class MemoryFileSystem : IFileSystem
 					fileNode.LastClosedUtc = DateTime.UtcNow;
 				}
 			}, access, appendStart);
+
+			// Always wrap with size tracking for MemoryFileSystem (TotalSize must be tracked)
+			result = new SizeTrackingStream(
+				result,
+				CheckSizeLimit,
+				CommitSizeChange,
+				OverflowBehavior,
+				oldFileSize);
+
+			return result;
 		}
+	}
+
+	private bool CheckSizeLimit(long newSize, long oldSize)
+	{
+		using (_lock.EnterScope())
+		{
+			// No limit - always allow
+			if (MaxSize <= 0)
+				return true;
+
+			var delta = newSize - oldSize;
+			if (_totalSize + delta <= MaxSize)
+				return true;
+
+			// Try eviction if configured
+			if (OverflowBehavior == FileSystemOverflowBehavior.EvictOldest)
+			{
+				var needed = _totalSize + delta - MaxSize;
+				if (TryEvictOldest(needed))
+					return true;
+			}
+
+			return false;
+		}
+	}
+
+	private void CommitSizeChange(long newSize, long oldSize)
+	{
+		using (_lock.EnterScope())
+			_totalSize += newSize - oldSize;
 	}
 
 	private class ReadOnlyHandleStream(MemoryStream inner, Action onDispose) : Stream
