@@ -159,10 +159,19 @@ public static class NetworkHelper
 		if (address is null)
 			throw new ArgumentNullException(nameof(address));
 
-		if (address.SourceAddress is null)
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
+		if (address.GroupAddress.AddressFamily == AddressFamily.InterNetworkV6)
+		{
+			// IPv6 multicast
+			socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.AddMembership, new IPv6MulticastOption(address.GroupAddress));
+		}
 		else
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
+		{
+			// IPv4 multicast
+			if (address.SourceAddress is null)
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
+			else
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
+		}
 	}
 
 	/// <summary>
@@ -191,10 +200,19 @@ public static class NetworkHelper
 		if (address is null)
 			throw new ArgumentNullException(nameof(address));
 
-		if (address.SourceAddress is null)
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropMembership, new MulticastOption(address.GroupAddress));
+		if (address.GroupAddress.AddressFamily == AddressFamily.InterNetworkV6)
+		{
+			// IPv6 multicast
+			socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.DropMembership, new IPv6MulticastOption(address.GroupAddress));
+		}
 		else
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
+		{
+			// IPv4 multicast
+			if (address.SourceAddress is null)
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropMembership, new MulticastOption(address.GroupAddress));
+			else
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
+		}
 	}
 
 	private static byte[] GetBytes(MulticastSourceAddress address)

@@ -2,6 +2,8 @@ namespace Ecng.Net;
 
 using System;
 using System.Buffers;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -138,15 +140,19 @@ public class RealPacketReceiver(
 
 	private async Task ReceivePackets(CancellationToken token)
 	{
-		using var socket = _socketFactory.Create();
+		var addressFamily = _address.GroupAddress.AddressFamily;
+		using var socket = _socketFactory.Create(addressFamily);
 
 		try
 		{
-			socket.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReuseAddress, true);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
 			_logs.LogInfo("{0} joining...", _address);
 
-			socket.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Any, _address.Port));
+			var bindAddress = addressFamily == AddressFamily.InterNetworkV6
+				? IPAddress.IPv6Any
+				: IPAddress.Any;
+			socket.Bind(new IPEndPoint(bindAddress, _address.Port));
 			socket.JoinMulticast(_address);
 
 			var errorCount = 0;
@@ -158,7 +164,7 @@ public class RealPacketReceiver(
 				try
 				{
 					var packet = _processor.AllocatePacket(packetSize);
-					var len = await socket.ReceiveAsync(packet.Memory, System.Net.Sockets.SocketFlags.None, token);
+					var len = await socket.ReceiveAsync(packet.Memory, SocketFlags.None, token);
 
 					if (len <= 0)
 					{
