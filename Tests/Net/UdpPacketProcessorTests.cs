@@ -265,4 +265,74 @@ public class UdpPacketProcessorTests : BaseTestClass
 			IsEnabled = true
 		};
 	}
+
+	/// <summary>
+	/// BUG: RealPacketReceiver creates socket without considering AddressFamily from GroupAddress.
+	/// It always creates IPv4 socket (default) and binds to IPAddress.Any.
+	/// When GroupAddress is IPv6, the socket creation/binding will fail or not receive packets.
+	///
+	/// Expected: Should detect IPv6 address and create IPv6 socket, bind to IPv6Any.
+	/// Actual: Creates IPv4 socket, fails for IPv6 multicast.
+	/// </summary>
+	[TestMethod]
+	public async Task RealPacketReceiver_IPv6Multicast_ShouldWorkCorrectly()
+	{
+		var processor = new MockPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			MaxUdpDatagramSize = 65535,
+		};
+
+		// Use REAL socket factory, not mock - to expose the bug
+		var socketFactory = new RealUdpSocketFactory();
+
+		// IPv6 multicast address
+		var ipv6Address = new MulticastSourceAddress
+		{
+			GroupAddress = IPAddress.Parse("ff02::1"), // IPv6 link-local multicast
+			Port = 54321,
+			IsEnabled = true
+		};
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, ipv6Address, socketFactory, logs);
+
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+		// BUG: This should throw or fail because:
+		// 1. Socket is created with default AddressFamily (IPv4)
+		// 2. Bind is called with IPAddress.Any (IPv4)
+		// 3. IPv6 multicast group join will fail
+
+		try
+		{
+			await receiver.RunAsync(cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			// Expected - timeout
+		}
+
+		receiver.Dispose();
+
+		// The bug manifests in two possible ways:
+		// 1. Error in ErrorHandler (receive loop errors)
+		// 2. Error in logs (JoinMulticast failure during startup)
+		//
+		// Check both for the bug confirmation
+		if (processor.Errors.Count > 0)
+		{
+			var error = processor.Errors[0];
+			Assert.Fail($"IPv6 multicast failed with processor error: {error.ex.GetType().Name}: {error.ex.Message}. " +
+				"BUG: RealPacketReceiver doesn't handle IPv6 addresses correctly.");
+		}
+
+		if (logs.HasErrors)
+		{
+			var error = logs.Errors.First();
+			Assert.Fail($"IPv6 multicast failed with logged error: {error.Message}. " +
+				"BUG: RealPacketReceiver creates IPv4 socket but tries to join IPv6 multicast group. " +
+				"JoinMulticast uses SocketOptionLevel.IP instead of SocketOptionLevel.IPv6.");
+		}
+	}
 }

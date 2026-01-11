@@ -362,4 +362,60 @@ public class UdpServerTests : BaseTestClass
 		socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
 		return ((IPEndPoint)socket.LocalEndPoint).Port;
 	}
+
+	/// <summary>
+	/// Test: When packets have out-of-order (decreasing) timestamps, negative delays should be ignored.
+	/// This prevents accumulatedDelay from going negative, which could cause issues.
+	///
+	/// Expected: Packets with decreasing timestamps are sent without delay (no crash, no negative accumulation).
+	/// </summary>
+	[TestMethod]
+	public async Task UdpServer_ReplayAsync_OutOfOrderTimestamps_ShouldHandleCorrectly()
+	{
+		// Arrange
+		var port = GetAvailablePort();
+		var endpoint = new IPEndPoint(IPAddress.Loopback, port);
+
+		using var receiver = new UdpClient(port);
+		using var server = new UdpServer();
+
+		var receivedPackets = new List<byte>();
+
+		// Continuously decreasing timestamps - each 100ms EARLIER than the previous!
+		// With proper handling, negative delays are ignored and packets are sent immediately.
+		var baseTime = DateTime.UtcNow;
+		var packets = new List<(IPEndPoint EndPoint, byte[] Payload, DateTime PacketTime)>
+		{
+			(endpoint, new byte[] { 1 }, baseTime),
+			(endpoint, new byte[] { 2 }, baseTime.AddMilliseconds(-100)),  // 100ms earlier
+			(endpoint, new byte[] { 3 }, baseTime.AddMilliseconds(-200)),  // 200ms earlier
+			(endpoint, new byte[] { 4 }, baseTime.AddMilliseconds(-300)),  // 300ms earlier
+			(endpoint, new byte[] { 5 }, baseTime.AddMilliseconds(-400)),  // 400ms earlier
+		};
+
+		var source = new MemoryPacketSource(packets);
+		var groups = new Dictionary<IPEndPoint, double> { { endpoint, 0 } };
+
+		// Act - receive packets
+		var receiveTask = Task.Run(async () =>
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				var result = await receiver.ReceiveAsync(CancellationToken);
+				receivedPackets.Add(result.Buffer[0]);
+			}
+		}, CancellationToken);
+
+		await Task.Delay(100, CancellationToken);
+		await server.ReplayAsync(groups, source, 1, CancellationToken);
+		await receiveTask;
+
+		// Assert - all packets should be received in order (by source order, not timestamp order)
+		AreEqual(5, receivedPackets.Count);
+		AreEqual((byte)1, receivedPackets[0]);
+		AreEqual((byte)2, receivedPackets[1]);
+		AreEqual((byte)3, receivedPackets[2]);
+		AreEqual((byte)4, receivedPackets[3]);
+		AreEqual((byte)5, receivedPackets[4]);
+	}
 }
