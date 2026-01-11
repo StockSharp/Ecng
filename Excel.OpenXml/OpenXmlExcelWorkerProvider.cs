@@ -54,8 +54,11 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		// Style caches to avoid duplicates
 		private readonly Dictionary<string, uint> _numberFormatIdCache = new();
 		private readonly Dictionary<string, uint> _fillIndexCache = new();
-		private readonly Dictionary<(uint? numFmtId, uint? fillId), uint> _cellFormatCache = new();
+		private readonly Dictionary<string, uint> _fontIndexCache = new();
+		private readonly Dictionary<(uint? numFmtId, uint? fillId, uint? fontId), uint> _cellFormatCache = new();
 		private readonly Dictionary<int, uint> _columnStyleIndex2 = new();
+		private int _conditionalFormattingPriority = 0;
+		private uint _chartId = 0;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OpenXmlExcelWorker"/>.
@@ -183,6 +186,28 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				raw = cell.InlineString?.Text?.Text;
 			}
+			// Handle SharedString (cell value is index into SharedStringTable)
+			else if (cell.DataType?.Value == CellValues.SharedString)
+			{
+				var index = cell.CellValue?.Text;
+				if (index != null && int.TryParse(index, out var ssIndex))
+				{
+					var sst = _workbookPart.SharedStringTablePart?.SharedStringTable;
+					if (sst != null)
+					{
+						var item = sst.ElementAt(ssIndex);
+						raw = item?.InnerText;
+					}
+					else
+					{
+						raw = null;
+					}
+				}
+				else
+				{
+					raw = null;
+				}
+			}
 			else
 			{
 				raw = cell.CellValue?.Text;
@@ -227,7 +252,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				return this;
 
 			var numFmtId = GetOrCreateNumberFormatId(format);
-			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null, null);
 			_columnStyleIndex2[col] = styleIndex;
 
 			return this;
@@ -253,7 +278,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var cfRule = new ConditionalFormattingRule
 			{
 				Type = ConditionalFormatValues.CellIs,
-				Priority = 1,
+				Priority = ++_conditionalFormattingPriority,
 				Operator = op switch
 				{
 					ComparisonOperator.Equal => ConditionalFormattingOperatorValues.Equal,
@@ -276,7 +301,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				dxf.Fill = new Fill(new PatternFill
 				{
 					PatternType = PatternValues.Solid,
-					BackgroundColor = new BackgroundColor { Rgb = ParseColor(bgColor) }
+					ForegroundColor = new ForegroundColor { Rgb = ParseColor(bgColor) },
+					BackgroundColor = new BackgroundColor { Indexed = 64 }
 				});
 			}
 			if (!fgColor.IsEmpty())
@@ -500,7 +526,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			var cell = GetCell(col, row, createIfMissing: true);
 			var numFmtId = GetOrCreateNumberFormatId(format);
-			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null, null);
 			cell.StyleIndex = styleIndex;
 
 			return this;
@@ -509,16 +535,20 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null)
 		{
-			if (bgColor.IsEmpty() && string.IsNullOrEmpty(fgColor))
+			if (bgColor.IsEmpty() && fgColor.IsEmpty())
 				return this;
 
 			var cell = GetCell(col, row, createIfMissing: true);
 			uint? fillId = null;
+			uint? fontId = null;
 
 			if (!bgColor.IsEmpty())
 				fillId = GetOrCreateFillIndex(bgColor);
 
-			var styleIndex = GetOrCreateCellFormatIndex(null, fillId);
+			if (!fgColor.IsEmpty())
+				fontId = GetOrCreateFontIndex(fgColor);
+
+			var styleIndex = GetOrCreateCellFormatIndex(null, fillId, fontId);
 			cell.StyleIndex = styleIndex;
 
 			return this;
@@ -822,7 +852,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				Macro = string.Empty,
 				NonVisualGraphicFrameProperties = new Xdr.NonVisualGraphicFrameProperties
 				{
-					NonVisualDrawingProperties = new Xdr.NonVisualDrawingProperties { Id = 1, Name = name ?? "Chart" },
+					NonVisualDrawingProperties = new Xdr.NonVisualDrawingProperties { Id = ++_chartId, Name = name ?? "Chart" },
 					NonVisualGraphicFrameDrawingProperties = new Xdr.NonVisualGraphicFrameDrawingProperties()
 				},
 				Transform = new Xdr.Transform
@@ -857,17 +887,19 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			// Add title if provided
 			if (!name.IsEmpty())
 			{
+				var richText = new C.RichText();
+				richText.Append(new A.BodyProperties());
+				richText.Append(new A.ListStyle());
+
+				var paragraph = new A.Paragraph();
+				var run = new A.Run();
+				run.Append(new A.Text(name));
+				paragraph.Append(run);
+				richText.Append(paragraph);
+
 				chart.Title = new C.Title
 				{
-					ChartText = new C.ChartText
-					{
-						RichText = new C.RichText
-						{
-							BodyProperties = new A.BodyProperties(),
-							ListStyle = new A.ListStyle(),
-							InnerXml = $"<a:p xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:r><a:t>{name}</a:t></a:r></a:p>"
-						}
-					},
+					ChartText = new C.ChartText { RichText = richText },
 					Overlay = new C.Overlay { Val = false }
 				};
 			}
@@ -904,12 +936,15 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.None } });
 
+			// Parse dataRange to extract sheet name and row range, then build column-specific formulas
+			var (xFormula, yFormula) = BuildColumnFormulas(dataRange, xCol, yCol);
+
 			// Add category (X) axis reference
 			series.Append(new C.CategoryAxisData
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(xFormula)
 				}
 			});
 
@@ -918,7 +953,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(yFormula)
 				}
 			});
 
@@ -927,7 +962,50 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.BarChartSeries CreateBarSeries(uint index, string name, string dataRange)
+		private static (string xFormula, string yFormula) BuildColumnFormulas(string dataRange, int xCol, int yCol)
+		{
+			return (BuildSingleColumnFormula(dataRange, xCol), BuildSingleColumnFormula(dataRange, yCol));
+		}
+
+		private static string BuildSingleColumnFormula(string dataRange, int col)
+		{
+			// dataRange format: "SheetName!$A$2:$B$10" or "Sheet!A2:B10"
+			// We need to extract sheet name and row range, then build a single column reference
+
+			var exclamationIdx = dataRange.IndexOf('!');
+			if (exclamationIdx < 0)
+				return dataRange; // fallback
+
+			var sheetName = dataRange[..exclamationIdx];
+			var cellRange = dataRange[(exclamationIdx + 1)..];
+
+			// Parse cell range like "$A$2:$B$10" or "A2:B10"
+			var colonIdx = cellRange.IndexOf(':');
+			if (colonIdx < 0)
+				return dataRange; // fallback
+
+			var startCell = cellRange[..colonIdx];
+			var endCell = cellRange[(colonIdx + 1)..];
+
+			// Extract row numbers from cells
+			var startRow = ExtractRowNumber(startCell);
+			var endRow = ExtractRowNumber(endCell);
+
+			// Build column letter (col is 1-based per interface, ToColumnName expects 0-based)
+			var colLetter = ToColumnName(col - 1);
+
+			return $"{sheetName}!${colLetter}${startRow}:${colLetter}${endRow}";
+		}
+
+		private static int ExtractRowNumber(string cell)
+		{
+			// Remove $ signs and extract numeric part
+			var cleaned = cell.Replace("$", "");
+			var digits = new string(cleaned.Where(char.IsDigit).ToArray());
+			return int.TryParse(digits, out var row) ? row : 1;
+		}
+
+		private static C.BarChartSeries CreateBarSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
 		{
 			var series = new C.BarChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -941,11 +1019,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				});
 			}
 
+			// Use separate columns for categories and values
+			var (catFormula, valFormula) = BuildColumnFormulas(dataRange, catCol, valCol);
+
 			series.Append(new C.CategoryAxisData
 			{
-				NumberReference = new C.NumberReference
+				StringReference = new C.StringReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(catFormula)
 				}
 			});
 
@@ -953,14 +1034,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(valFormula)
 				}
 			});
 
 			return series;
 		}
 
-		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange)
+		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
 		{
 			var series = new C.PieChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -974,11 +1055,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				});
 			}
 
+			// Use separate columns for categories and values
+			var (catFormula, valFormula) = BuildColumnFormulas(dataRange, catCol, valCol);
+
 			series.Append(new C.CategoryAxisData
 			{
-				NumberReference = new C.NumberReference
+				StringReference = new C.StringReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(catFormula)
 				}
 			});
 
@@ -986,14 +1070,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(valFormula)
 				}
 			});
 
 			return series;
 		}
 
-		private static C.AreaChartSeries CreateAreaSeries(uint index, string name, string dataRange)
+		private static C.AreaChartSeries CreateAreaSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
 		{
 			var series = new C.AreaChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1007,11 +1091,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				});
 			}
 
+			// Use separate columns for categories and values
+			var (catFormula, valFormula) = BuildColumnFormulas(dataRange, catCol, valCol);
+
 			series.Append(new C.CategoryAxisData
 			{
-				NumberReference = new C.NumberReference
+				StringReference = new C.StringReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(catFormula)
 				}
 			});
 
@@ -1019,7 +1106,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(valFormula)
 				}
 			});
 
@@ -1042,11 +1129,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.Circle } });
 
+			// Parse dataRange to extract sheet name and row range, then build column-specific formulas
+			var (xFormula, yFormula) = BuildColumnFormulas(dataRange, xCol, yCol);
+
 			series.Append(new C.XValues
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(xFormula)
 				}
 			});
 
@@ -1054,7 +1144,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(yFormula)
 				}
 			});
 
@@ -1063,7 +1153,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.RadarChartSeries CreateRadarSeries(uint index, string name, string dataRange)
+		private static C.RadarChartSeries CreateRadarSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
 		{
 			var series = new C.RadarChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1079,11 +1169,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			series.Append(new C.Marker { Symbol = new C.Symbol { Val = C.MarkerStyleValues.Circle } });
 
+			// Use separate columns for categories and values
+			var (catFormula, valFormula) = BuildColumnFormulas(dataRange, catCol, valCol);
+
 			series.Append(new C.CategoryAxisData
 			{
-				NumberReference = new C.NumberReference
+				StringReference = new C.StringReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(catFormula)
 				}
 			});
 
@@ -1091,7 +1184,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(valFormula)
 				}
 			});
 
@@ -1112,11 +1205,16 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				});
 			}
 
+			// Build column formulas from the column indices
+			var xFormula = BuildSingleColumnFormula(dataRange, xCol);
+			var yFormula = BuildSingleColumnFormula(dataRange, yCol);
+			var sizeFormula = BuildSingleColumnFormula(dataRange, sizeCol);
+
 			series.Append(new C.XValues
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(xFormula)
 				}
 			});
 
@@ -1124,7 +1222,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(yFormula)
 				}
 			});
 
@@ -1132,7 +1230,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				NumberReference = new C.NumberReference
 				{
-					Formula = new C.Formula(dataRange)
+					Formula = new C.Formula(sizeFormula)
 				}
 			});
 
@@ -1308,9 +1406,31 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return index;
 		}
 
-		private uint GetOrCreateCellFormatIndex(uint? numFmtId, uint? fillId)
+		private uint GetOrCreateFontIndex(string fgColor)
 		{
-			var key = (numFmtId, fillId);
+			if (fgColor.IsEmpty())
+				return 0;
+
+			if (_fontIndexCache.TryGetValue(fgColor, out var cached))
+				return cached;
+
+			var stylesheet = EnsureStylesheet();
+			var fonts = stylesheet.Fonts;
+
+			var color = ParseColor(fgColor);
+			var font = new Font(new Color { Rgb = color });
+
+			fonts.Append(font);
+			fonts.Count = (uint)fonts.ChildElements.Count;
+
+			var index = fonts.Count.Value - 1;
+			_fontIndexCache[fgColor] = index;
+			return index;
+		}
+
+		private uint GetOrCreateCellFormatIndex(uint? numFmtId, uint? fillId, uint? fontId)
+		{
+			var key = (numFmtId, fillId, fontId);
 			if (_cellFormatCache.TryGetValue(key, out var cached))
 				return cached;
 
@@ -1319,10 +1439,11 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			var cellFormat = new CellFormat
 			{
-				FontId = 0,
+				FontId = fontId ?? 0,
 				BorderId = 0,
 				FillId = fillId ?? 0,
-				ApplyFill = fillId.HasValue
+				ApplyFill = fillId.HasValue,
+				ApplyFont = fontId.HasValue
 			};
 
 			if (numFmtId.HasValue)
@@ -1582,8 +1703,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				var modulo = (dividend - 1) % 26;
 				columnName = Convert.ToChar('A' + modulo) + columnName;
-				dividend = (dividend - modulo) / 26;
-				dividend--;
+				dividend = (dividend - 1) / 26;
 			}
 
 			return columnName;

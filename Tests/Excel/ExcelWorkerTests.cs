@@ -1,5 +1,9 @@
 namespace Ecng.Tests.Excel;
 
+using System.Linq;
+
+using DocumentFormat.OpenXml.Packaging;
+
 using Ecng.Excel;
 
 [TestClass]
@@ -730,6 +734,35 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void OpenXml_LineChart_ColumnFormulas_AreCorrect()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(1, 1, 1.0)   // A1
+				.SetCell(2, 1, 10.0)  // B1
+				.SetCell(1, 2, 2.0)   // A2
+				.SetCell(2, 2, 20.0)  // B2
+				.AddLineChart("Test", "Data!$A$1:$B$2", xCol: 1, yCol: 2, 4, 1, 400, 300);
+		}
+
+		// Reopen and check formulas in chart XML
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var chartPart = doc.WorkbookPart!.WorksheetParts.First()
+			.DrawingsPart!.ChartParts.First();
+		var xml = chartPart.ChartSpace.OuterXml;
+
+		// xCol=1 should reference column A, yCol=2 should reference column B
+		xml.Contains("$A$").AssertTrue("X formula should reference column A");
+		xml.Contains("$B$").AssertTrue("Y formula should reference column B");
+	}
+
+	[TestMethod]
 	[DataRow(nameof(DevExpExcelWorkerProvider))]
 	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
 	public void AddAreaChart_Success(string providerName)
@@ -878,6 +911,40 @@ public class ExcelWorkerTests : BaseTestClass
 			.AddStockChart("Test Stock Chart", "A2:E3", 6, 1, 500, 300);
 
 		worker.GetRowsCount().AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void OpenXml_SetCell_ColumnsBeyondZ_Success()
+	{
+		// Test columns beyond Z (AA, AB, etc.) to verify ToColumnName fix
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				// Column 0 = A, Column 25 = Z, Column 26 = AA, Column 27 = AB
+				.SetCell(0, 0, "A1")
+				.SetCell(25, 0, "Z1")
+				.SetCell(26, 0, "AA1")
+				.SetCell(27, 0, "AB1")
+				.SetCell(51, 0, "AZ1")
+				.SetCell(52, 0, "BA1");
+		}
+
+		// Read back and verify
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var sheetData = doc.WorkbookPart!.WorksheetParts.First().Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.SheetData>()!;
+		var cells = sheetData.Elements<DocumentFormat.OpenXml.Spreadsheet.Row>().First().Elements<DocumentFormat.OpenXml.Spreadsheet.Cell>().ToList();
+
+		// Verify cell references
+		cells.Any(c => c.CellReference?.Value == "A1").AssertTrue("Cell A1 should exist");
+		cells.Any(c => c.CellReference?.Value == "Z1").AssertTrue("Cell Z1 should exist");
+		cells.Any(c => c.CellReference?.Value == "AA1").AssertTrue("Cell AA1 should exist");
+		cells.Any(c => c.CellReference?.Value == "AB1").AssertTrue("Cell AB1 should exist");
+		cells.Any(c => c.CellReference?.Value == "AZ1").AssertTrue("Cell AZ1 should exist");
+		cells.Any(c => c.CellReference?.Value == "BA1").AssertTrue("Cell BA1 should exist");
 	}
 
 	#endregion
