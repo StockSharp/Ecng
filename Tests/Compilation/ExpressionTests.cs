@@ -470,7 +470,7 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([6, 4]).AssertFalse();
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow("x * 2", 10, 20, DisplayName = "Integer literal")]
 	[DataRow("x * 0.5", 10, 5, DisplayName = "Decimal without suffix")]
 	[DataRow("x * 0.5m", 10, 5, DisplayName = "Decimal with suffix")]
@@ -480,7 +480,7 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow("x + 10", 5, 15, DisplayName = "Integer addition")]
 	[DataRow("x + 10.5", 5, 15.5, DisplayName = "Decimal addition without suffix")]
 	[DataRow("x + 10.5m", 5, 15.5, DisplayName = "Decimal addition with suffix")]
@@ -490,7 +490,7 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow("abs(x - 10)", 7, 3, DisplayName = "abs with integer")]
 	[DataRow("abs(x - 10.5)", 7, 3.5, DisplayName = "abs with decimal")]
 	[DataRow("floor(x + 0.7)", 10, 10, DisplayName = "floor with decimal")]
@@ -502,7 +502,7 @@ public class ExpressionTests : BaseTestClass
 		formula.Calculate([(decimal)input]).AssertEqual((decimal)expected);
 	}
 
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow("pow(x, 2)", 3, 9, DisplayName = "pow with integer exponent")]
 	[DataRow("pow(x, 2.0)", 3, 9, DisplayName = "pow with decimal exponent")]
 	[DataRow("sqrt(x)", 16, 4, DisplayName = "sqrt")]
