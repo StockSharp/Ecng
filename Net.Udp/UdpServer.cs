@@ -75,13 +75,18 @@ public class UdpServer : Disposable
 				if (lastPacketTime.HasValue)
 				{
 					var delay = (packetTime - lastPacketTime.Value).TotalMilliseconds / speedMultiplier;
-					accumulatedDelay += delay;
 
-					if (accumulatedDelay >= 1)
+					// Ignore negative delays (out-of-order timestamps)
+					if (delay > 0)
 					{
-						var delayMs = (int)accumulatedDelay;
-						accumulatedDelay -= delayMs;
-						await Task.Delay(delayMs, cancellationToken);
+						accumulatedDelay += delay;
+
+						if (accumulatedDelay >= 1)
+						{
+							var delayMs = (int)accumulatedDelay;
+							accumulatedDelay -= delayMs;
+							await Task.Delay(delayMs, cancellationToken);
+						}
 					}
 				}
 
