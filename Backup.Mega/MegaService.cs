@@ -102,6 +102,8 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 
 	async Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
 	{
+		ArgumentNullException.ThrowIfNull(entry);
+
 		var client = await EnsureLogin(cancellationToken);
 
 		var folders = new List<BackupEntry>();
@@ -145,12 +147,14 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 
 	async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
+		var client = await EnsureLogin(cancellationToken);
+
 		var node = Find(entry);
 
 		if (node is null)
 			return;
 
-		await (await EnsureLogin(cancellationToken)).DeleteAsync(node.Id, cancellationToken).NoWait();
+		await client.DeleteAsync(node.Id, cancellationToken).NoWait();
 		_nodes.Remove(node);
 	}
 
@@ -163,9 +167,11 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		if (offset is not null || length is not null)
 			throw new NotSupportedException("Partial download is not supported.");
 
+		var client = await EnsureLogin(cancellationToken);
+
 		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
 
-		await (await EnsureLogin(cancellationToken)).DownloadAsync(node, stream, new ProgressHandler(progress), cancellationToken).NoWait();
+		await client.DownloadAsync(node, stream, new ProgressHandler(progress), cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
@@ -174,10 +180,12 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(progress);
 
+		var client = await EnsureLogin(cancellationToken);
+
 		var parent = (entry.Parent is null ? GetRoot() : Find(entry.Parent))
 			?? throw new ArgumentOutOfRangeException(nameof(entry), "Parent entry not found.");
 
-		var node = await (await EnsureLogin(cancellationToken)).UploadAsync(parent.Id, entry.Name, stream, modificationDate: null, new ProgressHandler(progress), cancellationToken).NoWait();
+		var node = await client.UploadAsync(parent.Id, entry.Name, stream, modificationDate: null, new ProgressHandler(progress), cancellationToken).NoWait();
 		_nodes.Add(node);
 	}
 
@@ -225,9 +233,11 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		if (expiresIn is not null)
 			throw new NotSupportedException("Expiring links are not supported by MEGA export links.");
 
+		var client = await EnsureLogin(cancellationToken);
+
 		var node = Find(entry) ?? throw new ArgumentOutOfRangeException(nameof(entry), "Entry not found.");
 
-		var url = await (await EnsureLogin(cancellationToken)).PublishAsync(node, cancellationToken).NoWait();
+		var url = await client.PublishAsync(node, cancellationToken).NoWait();
 
 		_nodes.Clear();
 		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
@@ -237,12 +247,14 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 
 	async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
+		var client = await EnsureLogin(cancellationToken);
+
 		var node = Find(entry);
 
 		if (node is null)
 			return;
 
-		await (await EnsureLogin(cancellationToken)).UnpublishAsync(node.Id, cancellationToken).NoWait();
+		await client.UnpublishAsync(node.Id, cancellationToken).NoWait();
 
 		_nodes.Clear();
 		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
