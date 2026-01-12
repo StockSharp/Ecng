@@ -537,4 +537,20 @@ public class ExpressionTests : BaseTestClass
 		var formula = Compile("x * 0.5 + y * 0.25 + z * 0.125");
 		formula.Calculate([10m, 20m, 40m]).AssertEqual(15m);
 	}
+
+	[TestMethod]
+	public void EmptyExpression_ShouldThrow()
+	{
+		Throws<ArgumentNullException>(() => Compile(""));
+	}
+
+	[TestMethod]
+	public void WhitespaceOnlyExpression_ShouldThrow()
+	{
+		// Expression consisting only of whitespace should be treated as empty/invalid
+		Throws<ArgumentException>(() => Compile("   "));
+		Throws<ArgumentException>(() => Compile("\t"));
+		Throws<ArgumentException>(() => Compile("  \t  "));
+		Throws<ArgumentException>(() => Compile("\n"));
+	}
 }

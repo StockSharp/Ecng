@@ -36,6 +36,9 @@ public static class ExpressionHelper
 			if (input.IsEmpty())
 				throw new ArgumentNullException(nameof(input));
 
+			if (input.IsEmptyOrWhiteSpace())
+				throw new ArgumentException("Expression cannot consist only of whitespace characters.", nameof(input));
+
 			// Auto-add 'm' suffix to decimal literals without type suffix (e.g., 0.5 → 0.5m)
 			// This makes formulas more user-friendly since users don't need to remember the suffix
 			input = Regex.Replace(input, @"(\d+\.\d+)(?![mMdDfFeE])", "$1m");
@@ -286,6 +289,9 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 		if (context is null)		throw new ArgumentNullException(nameof(context));
 		if (getType is null)		throw new ArgumentNullException(nameof(getType));
 		if (fileSystem is null)		throw new ArgumentNullException(nameof(fileSystem));
+		if (expression.IsEmpty())	throw new ArgumentNullException(nameof(expression));
+		if (expression.IsEmptyOrWhiteSpace())
+			throw new ArgumentException("Expression cannot consist only of whitespace characters.", nameof(expression));
 
 		try
 		{
