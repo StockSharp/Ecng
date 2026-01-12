@@ -33,7 +33,13 @@ using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
 public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 {
 	/// <inheritdoc />
-	public IExcelWorker CreateNew(Stream stream, bool readOnly) => new OpenXmlExcelWorker(stream, createNew: true);
+	public IExcelWorker CreateNew(Stream stream, bool readOnly)
+	{
+		if (readOnly)
+			throw new InvalidOperationException("Cannot create new file in read-only mode.");
+
+		return new OpenXmlExcelWorker(stream, createNew: true);
+	}
 
 	/// <inheritdoc />
 	public IExcelWorker OpenExist(Stream stream) => new OpenXmlExcelWorker(stream, createNew: false);
@@ -342,17 +348,17 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (sheetData == null)
 				return 0;
 
-			var columns = new HashSet<int>();
+			var maxCol = -1;
 			foreach (var row in sheetData.Elements<Row>())
 			{
 				foreach (var cell in row.Elements<Cell>())
 				{
 					var (col, _) = ParseCellReference(cell.CellReference?.Value);
-					if (col >= 0)
-						columns.Add(col);
+					if (col > maxCol)
+						maxCol = col;
 				}
 			}
-			return columns.Count;
+			return maxCol + 1;
 		}
 
 		/// <inheritdoc />
@@ -362,14 +368,17 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (sheetData == null)
 				return 0;
 
-			// Count rows that have at least one cell with content
-			var count = 0;
+			var maxRow = -1;
 			foreach (var row in sheetData.Elements<Row>())
 			{
-				if (row.Elements<Cell>().Any())
-					count++;
+				foreach (var cell in row.Elements<Cell>())
+				{
+					var (_, rowIdx) = ParseCellReference(cell.CellReference?.Value);
+					if (rowIdx > maxRow)
+						maxRow = rowIdx;
+				}
 			}
-			return count;
+			return maxRow + 1;
 		}
 
 		/// <inheritdoc />

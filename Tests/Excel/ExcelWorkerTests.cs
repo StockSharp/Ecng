@@ -1462,4 +1462,66 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Bug Reproduction Tests
+
+	// BUG REPRODUCTION: GetColumnsCount returns unique column count, not span
+	// Expected: If columns A (0) and C (2) have data, count should be 3 (A, B, C span)
+	// Actual: Returns 2 (only counts unique columns with data)
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void GetColumnsCount_SparseData_ReturnsSpan(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(0, 0, "A1")   // Column A (0)
+			.SetCell(2, 0, "C1");  // Column C (2), skip column B
+
+		// BUG: Currently returns 2 (unique columns with data)
+		// Expected: Should return 3 (columns A, B, C span - max column index + 1)
+		worker.GetColumnsCount().AssertEqual(3, "GetColumnsCount should return max column span, not unique count");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(DevExpExcelWorkerProvider))]
+	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
+	public void GetRowsCount_SparseData_ReturnsSpan(string providerName)
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(providerName).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(0, 0, "A1")   // Row 1 (0)
+			.SetCell(0, 4, "A5");  // Row 5 (4), skip rows 2-4
+
+		// BUG: Currently returns 2 (unique rows with data)
+		// Expected: Should return 5 (rows 1-5 span - max row index + 1)
+		worker.GetRowsCount().AssertEqual(5, "GetRowsCount should return max row span, not unique count");
+	}
+
+	// BUG REPRODUCTION: readOnly parameter should prevent any modifications
+	// CreateNew with readOnly=true doesn't make logical sense - you can't create a new file in read-only mode
+	// Expected: CreateNew(readOnly=true) should throw InvalidOperationException immediately
+	// Actual: readOnly parameter is ignored, file is created and saved normally
+	[TestMethod]
+	public void OpenXml_CreateNew_ReadOnly_ShouldThrowImmediately()
+	{
+		using var stream = new MemoryStream();
+
+		// BUG: CreateNew with readOnly=true should throw - can't create new file in readOnly mode
+		Throws<InvalidOperationException>(
+			() => CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream, true),
+			"CreateNew with readOnly=true should throw InvalidOperationException");
+	}
+
+	// Note: OpenExist does NOT have readOnly parameter in interface
+	// This is a design issue - OpenExist always opens for editing
+	// If readOnly support is needed for OpenExist, interface should be extended
+
+	#endregion
 }

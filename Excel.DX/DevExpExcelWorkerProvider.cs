@@ -321,8 +321,8 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			return this;
 		}
 
-		int IExcelWorker.GetColumnsCount() => _currSheet.Columns.Count;
-		int IExcelWorker.GetRowsCount() => _currSheet.Rows.Count;
+		int IExcelWorker.GetColumnsCount() => _currSheet.Columns.Count > 0 ? _currSheet.Columns.Keys.Max() + 1 : 0;
+		int IExcelWorker.GetRowsCount() => _currSheet.Rows.Count > 0 ? _currSheet.Rows.Max() + 1 : 0;
 
 		IExcelWorker IExcelWorker.SetColumnWidth(int col, double width)
 		{
