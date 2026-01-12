@@ -300,6 +300,13 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			return this;
 		}
 
+		IExcelWorker IExcelWorker.SetColorScale(int col, int startRow, string minColor, string midColor, string maxColor)
+		{
+			// Note: DevExpress XlExport streaming API has limited conditional formatting support.
+			// This is a no-op in this implementation.
+			return this;
+		}
+
 		IExcelWorker IExcelWorker.RenameSheet(string name)
 		{
 			_currSheet.Name = name;

@@ -342,6 +342,57 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		}
 
 		/// <inheritdoc />
+		public IExcelWorker SetColorScale(int col, int startRow, string minColor, string midColor, string maxColor)
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null)
+				return this;
+
+			// Get the range for the column starting from startRow (e.g., "G2:G10001")
+			var colName = ToColumnName(col);
+			var sqRef = $"{colName}{startRow + 1}:{colName}10001";
+
+			// Create the conditional formatting with colorScale
+			var conditionalFormatting = new ConditionalFormatting
+			{
+				SequenceOfReferences = new ListValue<StringValue> { InnerText = sqRef }
+			};
+
+			var cfRule = new ConditionalFormattingRule
+			{
+				Type = ConditionalFormatValues.ColorScale,
+				Priority = ++_conditionalFormattingPriority
+			};
+
+			// Create 3-color scale: min (red) -> percentile 50 (yellow) -> max (green)
+			var colorScale = new ColorScale();
+
+			// Min value
+			colorScale.Append(new ConditionalFormatValueObject { Type = ConditionalFormatValueObjectValues.Min });
+			// Mid value (percentile 50)
+			colorScale.Append(new ConditionalFormatValueObject { Type = ConditionalFormatValueObjectValues.Percentile, Val = "50" });
+			// Max value
+			colorScale.Append(new ConditionalFormatValueObject { Type = ConditionalFormatValueObjectValues.Max });
+
+			// Colors
+			colorScale.Append(new Color { Rgb = ParseColor(minColor) });
+			colorScale.Append(new Color { Rgb = ParseColor(midColor) });
+			colorScale.Append(new Color { Rgb = ParseColor(maxColor) });
+
+			cfRule.Append(colorScale);
+			conditionalFormatting.Append(cfRule);
+
+			// Insert ConditionalFormatting after SheetData
+			var sheetData = worksheet.GetFirstChild<SheetData>();
+			if (sheetData != null)
+				worksheet.InsertAfter(conditionalFormatting, sheetData);
+			else
+				worksheet.Append(conditionalFormatting);
+
+			return this;
+		}
+
+		/// <inheritdoc />
 		public int GetColumnsCount()
 		{
 			var sheetData = _currentWorksheetPart?.Worksheet?.GetFirstChild<SheetData>();

@@ -58,6 +58,17 @@ public interface IExcelWorker : IDisposable
 	IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor);
 
 	/// <summary>
+	/// Sets a 3-color scale conditional formatting for a column (gradient from min to mid to max).
+	/// </summary>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="startRow">The starting row for the formatting range (0-based, typically 1 to skip header).</param>
+	/// <param name="minColor">Color for minimum values (hex, e.g., "F8696B" for red).</param>
+	/// <param name="midColor">Color for middle values (hex, e.g., "FFEB84" for yellow).</param>
+	/// <param name="maxColor">Color for maximum values (hex, e.g., "63BE7B" for green).</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetColorScale(int col, int startRow, string minColor, string midColor, string maxColor);
+
+	/// <summary>
 	/// Renames the current sheet to the specified name.
 	/// </summary>
 	/// <param name="name">The new name for the sheet.</param>
