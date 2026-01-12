@@ -828,21 +828,21 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var chart = CreateChart(name, configureChart);
 			chartPart.ChartSpace = chart;
 
-			// Create anchor
+			// Create anchor (coordinates are 0-based, same as SetCell API)
 			var twoCellAnchor = new Xdr.TwoCellAnchor
 			{
 				FromMarker = new Xdr.FromMarker
 				{
-					ColumnId = new Xdr.ColumnId((anchorCol - 1).ToString()),
+					ColumnId = new Xdr.ColumnId(anchorCol.ToString()),
 					ColumnOffset = new Xdr.ColumnOffset("0"),
-					RowId = new Xdr.RowId((anchorRow - 1).ToString()),
+					RowId = new Xdr.RowId(anchorRow.ToString()),
 					RowOffset = new Xdr.RowOffset("0")
 				},
 				ToMarker = new Xdr.ToMarker
 				{
-					ColumnId = new Xdr.ColumnId((anchorCol - 1 + (width / 64)).ToString()),
+					ColumnId = new Xdr.ColumnId((anchorCol + (width / 64)).ToString()),
 					ColumnOffset = new Xdr.ColumnOffset("0"),
-					RowId = new Xdr.RowId((anchorRow - 1 + (height / 20)).ToString()),
+					RowId = new Xdr.RowId((anchorRow + (height / 20)).ToString()),
 					RowOffset = new Xdr.RowOffset("0")
 				}
 			};
