@@ -1431,10 +1431,8 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[Ignore("Known issue: hiLowLines element position in StockChart violates OpenXML schema order")]
 	public void OpenXml_AddStockChart_ValidStructure()
 	{
-		// TODO: Fix OpenXmlExcelWorkerProvider - hiLowLines must come before ser elements per schema
 		using var stream = new MemoryStream();
 		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
 		{

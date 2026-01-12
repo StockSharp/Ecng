@@ -786,10 +786,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				stockChart.Append(CreateLineSeries(2, "Low", dataRange, 0, 0));
 				stockChart.Append(CreateLineSeries(3, "Close", dataRange, 0, 0));
 
-				stockChart.Append(new C.AxisId { Val = 1 });
-				stockChart.Append(new C.AxisId { Val = 2 });
-
 				// Add high-low lines and up-down bars for proper stock chart appearance
+				// Per OpenXML schema (CT_StockChart): ser, dLbls, dropLines, hiLowLines, upDownBars, axId
 				stockChart.Append(new C.HighLowLines());
 				stockChart.Append(new C.UpDownBars
 				{
@@ -797,6 +795,10 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 					UpBars = new C.UpBars(),
 					DownBars = new C.DownBars()
 				});
+
+				// AxisId must be last per schema
+				stockChart.Append(new C.AxisId { Val = 1 });
+				stockChart.Append(new C.AxisId { Val = 2 });
 
 				plotArea.Append(stockChart);
 				plotArea.Append(CreateDateAxis(1, 2));
