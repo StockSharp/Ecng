@@ -57,16 +57,20 @@ public class AssemblyReference : BaseCodeReference
 			if (fileName.IsEmpty())
 				return string.Empty;
 
-			fileName = Path.GetFileName(fileName);
+			var justFileName = Path.GetFileName(fileName);
 
-			if (fileName.EqualsIgnoreCase(FileName))
+			// If FileName is just a filename (no path), try to find it in RuntimePath
+			if (justFileName.EqualsIgnoreCase(fileName))
 			{
-				var tmp = Path.Combine(ICompilerExtensions.RuntimePath, fileName);
+				var tmp = Path.Combine(ICompilerExtensions.RuntimePath, justFileName);
 
 				if (FileSystem.FileExists(tmp))
 					return tmp;
+
+				return justFileName;
 			}
 
+			// FileName contains a path, return it as-is
 			return fileName;
 		}
 	}

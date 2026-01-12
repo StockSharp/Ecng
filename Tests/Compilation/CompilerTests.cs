@@ -518,4 +518,55 @@ class AnalyticsScript_{i}:
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 	}
+
+	[TestMethod]
+	public void AssemblyReference_Location_WithFullPath_ShouldPreservePath()
+	{
+		// Bug: When FileName is set to a full path, Location should return that path,
+		// not just the filename. Currently Path.GetFileName() strips the directory.
+		var fullPath = Path.Combine(Path.GetTempPath(), "CustomLibs", "MyLibrary.dll");
+
+		var asmRef = new AssemblyReference
+		{
+			FileName = fullPath
+		};
+
+		// Location should preserve the full path when it's provided
+		// Currently this fails because Location returns just "MyLibrary.dll"
+		asmRef.Location.AssertEqual(fullPath);
+	}
+
+	[TestMethod]
+	public void AssemblyReference_Location_WithRelativePath_ShouldPreservePath()
+	{
+		// Bug: When FileName is a relative path, Location should preserve it
+		var relativePath = Path.Combine("libs", "subdir", "MyLibrary.dll");
+
+		var asmRef = new AssemblyReference
+		{
+			FileName = relativePath
+		};
+
+		// Location should preserve the relative path
+		// Currently this fails because Location returns just "MyLibrary.dll"
+		asmRef.Location.AssertEqual(relativePath);
+	}
+
+	[TestMethod]
+	public void AssemblyReference_Location_WithJustFileName_ShouldSearchRuntime()
+	{
+		// When FileName is just a filename (no path), Location should work as before:
+		// look in RuntimePath first, otherwise return just the filename
+		var fileName = "System.Runtime.dll";
+
+		var asmRef = new AssemblyReference
+		{
+			FileName = fileName
+		};
+
+		// Since System.Runtime.dll exists in runtime path, it should find it there
+		var location = asmRef.Location;
+		string.IsNullOrEmpty(location).AssertFalse();
+		Path.GetFileName(location).AssertEqual(fileName);
+	}
 }
