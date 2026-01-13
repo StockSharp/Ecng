@@ -649,28 +649,15 @@ public static class IOHelper
 		if (stream is null)
 			throw new ArgumentNullException(nameof(stream));
 
-		var totalRead = 0;
-
-		while (totalRead < bytesToRead)
+		try
 		{
-			var bytesRead = await stream.ReadAsync(
-#if NET5_0_OR_GREATER
-				buffer.AsMemory(offset + totalRead, bytesToRead - totalRead)
-#else
-				buffer, offset + totalRead, bytesToRead - totalRead
-#endif
-				, cancellationToken
-			).NoWait();
-
-			if (bytesRead == 0)
-				break;
-
-			totalRead += bytesRead;
+			await stream.ReadExactlyAsync(buffer, offset, bytesToRead, cancellationToken).NoWait();
+		}
+		catch (EndOfStreamException ex)
+		{
+			throw new IOException("Connection dropped.", ex);
 		}
 
-		if (totalRead < bytesToRead)
-			throw new IOException("Connection dropped.");
-
-		return totalRead;
+		return bytesToRead;
 	}
 }

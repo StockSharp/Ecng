@@ -801,9 +801,7 @@ public static class StringHelper
 	/// <returns>True if the strings are equal ignoring case; otherwise, false.</returns>
 	[Obsolete("Use EqualsIgnoreCase.")]
 	public static bool CompareIgnoreCase(this string str1, string str2)
-	{
-		return string.Compare(str1, str2, StringComparison.InvariantCultureIgnoreCase) == 0;
-	}
+		=> str1.EqualsIgnoreCase(str2);
 
 	/// <summary>
 	/// Determines whether the first string contains the second string, ignoring case.
