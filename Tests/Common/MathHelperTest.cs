@@ -692,6 +692,60 @@ public class MathHelperTest : BaseTestClass
 		dt1.Max(dt2).AssertEqual(dt1);
 	}
 
+	[TestMethod]
+	public void Min_ThreeArgs()
+	{
+		MathHelper.Min(5m, 3m, 7m).AssertEqual(3m);
+		MathHelper.Min(3m, 5m, 7m).AssertEqual(3m);
+		MathHelper.Min(7m, 5m, 3m).AssertEqual(3m);
+		MathHelper.Min(-1m, -5m, -3m).AssertEqual(-5m);
+	}
+
+	[TestMethod]
+	public void Min_FourArgs()
+	{
+		MathHelper.Min(5m, 3m, 7m, 1m).AssertEqual(1m);
+		MathHelper.Min(1m, 2m, 3m, 4m).AssertEqual(1m);
+		MathHelper.Min(4m, 3m, 2m, 1m).AssertEqual(1m);
+		MathHelper.Min(-1m, -5m, -3m, -2m).AssertEqual(-5m);
+	}
+
+	[TestMethod]
+	public void Min_FiveArgs()
+	{
+		MathHelper.Min(5m, 3m, 7m, 1m, 9m).AssertEqual(1m);
+		MathHelper.Min(9m, 8m, 7m, 6m, 5m).AssertEqual(5m);
+		MathHelper.Min(1m, 2m, 3m, 4m, 5m).AssertEqual(1m);
+		MathHelper.Min(-1m, -5m, -3m, -2m, -4m).AssertEqual(-5m);
+	}
+
+	[TestMethod]
+	public void Max_ThreeArgs()
+	{
+		MathHelper.Max(5m, 3m, 7m).AssertEqual(7m);
+		MathHelper.Max(7m, 5m, 3m).AssertEqual(7m);
+		MathHelper.Max(3m, 7m, 5m).AssertEqual(7m);
+		MathHelper.Max(-1m, -5m, -3m).AssertEqual(-1m);
+	}
+
+	[TestMethod]
+	public void Max_FourArgs()
+	{
+		MathHelper.Max(5m, 3m, 7m, 1m).AssertEqual(7m);
+		MathHelper.Max(1m, 2m, 3m, 4m).AssertEqual(4m);
+		MathHelper.Max(4m, 3m, 2m, 1m).AssertEqual(4m);
+		MathHelper.Max(-1m, -5m, -3m, -2m).AssertEqual(-1m);
+	}
+
+	[TestMethod]
+	public void Max_FiveArgs()
+	{
+		MathHelper.Max(5m, 3m, 7m, 1m, 9m).AssertEqual(9m);
+		MathHelper.Max(9m, 8m, 7m, 6m, 5m).AssertEqual(9m);
+		MathHelper.Max(1m, 2m, 3m, 4m, 5m).AssertEqual(5m);
+		MathHelper.Max(-1m, -5m, -3m, -2m, -4m).AssertEqual(-1m);
+	}
+
 	#endregion
 
 	#region Abs Tests

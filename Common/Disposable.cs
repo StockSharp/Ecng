@@ -1,14 +1,6 @@
 namespace Ecng.Common;
 
-#region Using Directives
-
 using System;
-using System.Threading;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Xml.Serialization;
-
-#endregion
 
 /// <summary>
 /// Interface for disposable objects that can be disposed with a reason.
@@ -31,52 +23,12 @@ public interface IReasonDisposable : IDisposable
 #pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
 
 /// <summary>
-/// Provides a base class for implementing the dispose pattern. 
+/// Provides a base class for implementing the dispose pattern.
 /// This class helps manage the disposal of managed and native resources.
 /// </summary>
 [Serializable]
-public abstract class Disposable : IReasonDisposable
+public abstract class Disposable : DisposableBase, IReasonDisposable
 {
-	private readonly Lock _lock = new();
-
-	enum DisposeState : byte
-	{
-		None,
-		Disposing,
-		Disposed
-	}
-
-	#region IsDisposed
-
-	private DisposeState _state = DisposeState.None;
-
-	/// <summary>
-	/// Gets a value indicating whether this instance is disposed.
-	/// </summary>
-	/// <value>
-	///   <c>true</c> if this instance is disposed; otherwise, <c>false</c>.
-	/// </value>
-	[XmlIgnore]
-	[Browsable(false)]
-	public bool IsDisposed => _state == DisposeState.Disposed;
-
-	/// <summary>
-	/// Gets a value indicating whether the dispose process has been started.
-	/// </summary>
-	/// <value>
-	///   <c>true</c> if the dispose process has been initiated; otherwise, <c>false</c>.
-	/// </value>
-	[XmlIgnore]
-	[Browsable(false)]
-	public bool IsDisposeStarted => _state > DisposeState.None;
-
-	#endregion
-
-	/// <summary>
-	/// Occurs when the object has been disposed.
-	/// </summary>
-	public event Action Disposed;
-
 	#region IReasonDisposable Members
 
 	private string _reason;
@@ -84,13 +36,8 @@ public abstract class Disposable : IReasonDisposable
 
 	bool IReasonDisposable.Dispose(string reason)
 	{
-		using (_lock.EnterScope())
-		{
-			if (IsDisposeStarted)
-				return false;
-
-			_state = DisposeState.Disposing;
-		}
+		if (!TryBeginDispose())
+			return false;
 
 		_reason = reason;
 
@@ -101,9 +48,7 @@ public abstract class Disposable : IReasonDisposable
 		}
 		finally
 		{
-			_state = DisposeState.Disposed;
-			Disposed?.Invoke();
-			GC.SuppressFinalize(this);
+			EndDispose();
 		}
 
 		return true;
@@ -128,55 +73,4 @@ public abstract class Disposable : IReasonDisposable
 	protected virtual void DisposeManaged()
 	{
 	}
-
-	/// <summary>
-	/// Disposes the native resources.
-	/// Override this method to add custom clean up of native resources.
-	/// </summary>
-	protected virtual void DisposeNative()
-	{
-	}
-
-	/// <summary>
-	/// Throws an exception if the dispose process has already been started.
-	/// </summary>
-	/// <exception cref="ObjectDisposedException">Thrown if the dispose process has already been initiated.</exception>
-	protected void ThrowIfDisposeStarted()
-	{
-		ThrowIfDisposed();
-
-		if (IsDisposeStarted)
-			throw new ObjectDisposedException(GetType().Name + " has started dispose process");
-	}
-
-	/// <summary>
-	/// Throws an exception if the object is already disposed.
-	/// </summary>
-	/// <exception cref="ObjectDisposedException">Thrown if the object is already disposed.</exception>
-	protected void ThrowIfDisposed()
-	{
-		if (IsDisposed)
-			throw new ObjectDisposedException(GetType().Name);
-	}
-
-	#region Finalize
-
-	/// <summary>
-	/// Releases unmanaged resources and performs other cleanup operations before the
-	/// object is reclaimed by garbage collection.
-	/// </summary>
-	~Disposable()
-	{
-		// http://stackoverflow.com/a/9903121
-		try
-		{
-			DisposeNative();
-		}
-		catch (Exception ex)
-		{
-			Trace.WriteLine(ex);
-		}
-	}
-
-	#endregion
 }

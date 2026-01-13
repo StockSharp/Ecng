@@ -444,6 +444,24 @@ public static class MathHelper
 	}
 
 	/// <summary>
+	/// Returns the smallest of three decimal values.
+	/// </summary>
+	public static decimal Min(decimal v1, decimal v2, decimal v3)
+		=> Math.Min(Math.Min(v1, v2), v3);
+
+	/// <summary>
+	/// Returns the smallest of four decimal values.
+	/// </summary>
+	public static decimal Min(decimal v1, decimal v2, decimal v3, decimal v4)
+		=> Math.Min(Math.Min(Math.Min(v1, v2), v3), v4);
+
+	/// <summary>
+	/// Returns the smallest of five decimal values.
+	/// </summary>
+	public static decimal Min(decimal v1, decimal v2, decimal v3, decimal v4, decimal v5)
+		=> Math.Min(Math.Min(Math.Min(Math.Min(v1, v2), v3), v4), v5);
+
+	/// <summary>
 	/// Returns the earlier TimeSpan.
 	/// </summary>
 	/// <param name="value1">The first TimeSpan.</param>
@@ -600,6 +618,24 @@ public static class MathHelper
 	{
 		return Math.Max(value1, value2);
 	}
+
+	/// <summary>
+	/// Returns the largest of three decimal values.
+	/// </summary>
+	public static decimal Max(decimal v1, decimal v2, decimal v3)
+		=> Math.Max(Math.Max(v1, v2), v3);
+
+	/// <summary>
+	/// Returns the largest of four decimal values.
+	/// </summary>
+	public static decimal Max(decimal v1, decimal v2, decimal v3, decimal v4)
+		=> Math.Max(Math.Max(Math.Max(v1, v2), v3), v4);
+
+	/// <summary>
+	/// Returns the largest of five decimal values.
+	/// </summary>
+	public static decimal Max(decimal v1, decimal v2, decimal v3, decimal v4, decimal v5)
+		=> Math.Max(Math.Max(Math.Max(Math.Max(v1, v2), v3), v4), v5);
 
 	/// <summary>
 	/// Returns the maximum of two TimeSpan values.
