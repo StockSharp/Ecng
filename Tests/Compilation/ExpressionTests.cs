@@ -539,6 +539,86 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Min_TwoArgs()
+	{
+		var formula = Compile("min(x, y)");
+		formula.Calculate([5m, 3m]).AssertEqual(3m);
+		formula.Calculate([2m, 8m]).AssertEqual(2m);
+	}
+
+	[TestMethod]
+	public void Min_ThreeArgs()
+	{
+		var formula = Compile("min(x, y, z)");
+		formula.Calculate([5m, 3m, 7m]).AssertEqual(3m);
+		formula.Calculate([1m, 8m, 4m]).AssertEqual(1m);
+	}
+
+	[TestMethod]
+	public void Min_FourArgs()
+	{
+		var formula = Compile("min(a, b, c, d)");
+		formula.Calculate([5m, 3m, 7m, 1m]).AssertEqual(1m);
+		formula.Calculate([9m, 8m, 4m, 6m]).AssertEqual(4m);
+	}
+
+	[TestMethod]
+	public void Min_FiveArgs()
+	{
+		var formula = Compile("min(a, b, c, d, e)");
+		formula.Calculate([5m, 3m, 7m, 1m, 9m]).AssertEqual(1m);
+		formula.Calculate([9m, 8m, 4m, 6m, 2m]).AssertEqual(2m);
+	}
+
+	[TestMethod]
+	public void Max_TwoArgs()
+	{
+		var formula = Compile("max(x, y)");
+		formula.Calculate([5m, 3m]).AssertEqual(5m);
+		formula.Calculate([2m, 8m]).AssertEqual(8m);
+	}
+
+	[TestMethod]
+	public void Max_ThreeArgs()
+	{
+		var formula = Compile("max(x, y, z)");
+		formula.Calculate([5m, 3m, 7m]).AssertEqual(7m);
+		formula.Calculate([1m, 8m, 4m]).AssertEqual(8m);
+	}
+
+	[TestMethod]
+	public void Max_FourArgs()
+	{
+		var formula = Compile("max(a, b, c, d)");
+		formula.Calculate([5m, 3m, 7m, 1m]).AssertEqual(7m);
+		formula.Calculate([9m, 8m, 4m, 6m]).AssertEqual(9m);
+	}
+
+	[TestMethod]
+	public void Max_FiveArgs()
+	{
+		var formula = Compile("max(a, b, c, d, e)");
+		formula.Calculate([5m, 3m, 7m, 1m, 9m]).AssertEqual(9m);
+		formula.Calculate([2m, 8m, 4m, 6m, 3m]).AssertEqual(8m);
+	}
+
+	[TestMethod]
+	public void MinMax_Combined()
+	{
+		// min(max(a, b), max(c, d)) = min(5, 7) = 5
+		var formula = Compile("min(max(a, b), max(c, d))");
+		formula.Calculate([5m, 3m, 7m, 1m]).AssertEqual(5m);
+	}
+
+	[TestMethod]
+	public void MinMax_WithArithmetic()
+	{
+		// max(x + y, z) = max(8, 7) = 8
+		var formula = Compile("max(x + y, z)");
+		formula.Calculate([5m, 3m, 7m]).AssertEqual(8m);
+	}
+
+	[TestMethod]
 	public void EmptyExpression_ShouldThrow()
 	{
 		Throws<ArgumentNullException>(() => Compile(""));

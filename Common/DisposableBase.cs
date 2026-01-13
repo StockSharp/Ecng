@@ -4,7 +4,44 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
+
+/// <summary>
+/// Interface for disposable objects that can be disposed with a reason.
+/// </summary>
+public interface IReasonDisposable : IDisposable
+{
+	/// <summary>
+	/// The reason for disposal.
+	/// </summary>
+	string Reason { get; }
+
+	/// <summary>
+	/// Disposes the object with a reason.
+	/// </summary>
+	/// <param name="reason">The reason for disposal.</param>
+	/// <returns><c>true</c> if the object was successfully disposed; otherwise, <c>false</c>.</returns>
+	bool Dispose(string reason);
+}
+
+/// <summary>
+/// Interface for async disposable objects that can be disposed with a reason.
+/// </summary>
+public interface IAsyncReasonDisposable : IAsyncDisposable
+{
+	/// <summary>
+	/// The reason for disposal.
+	/// </summary>
+	string Reason { get; }
+
+	/// <summary>
+	/// Disposes the object asynchronously with a reason.
+	/// </summary>
+	/// <param name="reason">The reason for disposal.</param>
+	/// <returns><c>true</c> if the object was successfully disposed; otherwise, <c>false</c>.</returns>
+	ValueTask<bool> DisposeAsync(string reason);
+}
 
 /// <summary>
 /// Base class with common dispose state management for both sync and async dispose patterns.

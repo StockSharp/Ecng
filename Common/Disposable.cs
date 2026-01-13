@@ -2,24 +2,6 @@ namespace Ecng.Common;
 
 using System;
 
-/// <summary>
-/// Interface for disposable objects that can be disposed with a reason.
-/// </summary>
-public interface IReasonDisposable : IDisposable
-{
-	/// <summary>
-	/// The reason for disposal.
-	/// </summary>
-	string Reason { get; }
-
-	/// <summary>
-	/// Disposes the object with a reason.
-	/// </summary>
-	/// <param name="reason">The reason for disposal.</param>
-	/// <returns><c>true</c> if the object was successfully disposed; otherwise, <c>false</c>.</returns>
-	bool Dispose(string reason);
-}
-
 #pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
 
 /// <summary>

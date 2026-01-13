@@ -7,17 +7,19 @@ using System.Threading.Tasks;
 /// Provides a base class for implementing the async dispose pattern.
 /// This class helps manage the disposal of managed and native resources asynchronously.
 /// </summary>
-public abstract class AsyncDisposable : DisposableBase, IAsyncDisposable, IDisposable
+public abstract class AsyncDisposable : DisposableBase, IAsyncReasonDisposable, IDisposable
 {
-	#region IAsyncDisposable Members
+	#region IAsyncReasonDisposable Members
 
-	/// <summary>
-	/// Performs tasks associated with freeing, releasing, or resetting unmanaged resources asynchronously.
-	/// </summary>
-	public async ValueTask DisposeAsync()
+	private string _reason;
+	string IAsyncReasonDisposable.Reason => _reason;
+
+	async ValueTask<bool> IAsyncReasonDisposable.DisposeAsync(string reason)
 	{
 		if (!TryBeginDispose())
-			return;
+			return false;
+
+		_reason = reason;
 
 		try
 		{
@@ -28,7 +30,19 @@ public abstract class AsyncDisposable : DisposableBase, IAsyncDisposable, IDispo
 		{
 			EndDispose();
 		}
+
+		return true;
 	}
+
+	#endregion
+
+	#region IAsyncDisposable Members
+
+	/// <summary>
+	/// Performs tasks associated with freeing, releasing, or resetting unmanaged resources asynchronously.
+	/// </summary>
+	public ValueTask DisposeAsync()
+		=> ((IAsyncReasonDisposable)this).DisposeAsync(nameof(IAsyncDisposable.DisposeAsync)).AsValueTask();
 
 	#endregion
 
