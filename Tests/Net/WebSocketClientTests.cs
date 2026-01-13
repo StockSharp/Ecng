@@ -24,11 +24,11 @@ public class WebSocketClientTests : BaseTestClass
 	private static Action<string, object> Log(string tag)
 		=> (fmt, arg) => Debug.WriteLine($"[{tag}] " + string.Format(fmt ?? string.Empty, arg));
 
-	private sealed class LocalWebSocketEchoServer(IHost host, string url) : IAsyncDisposable
+	private sealed class LocalWebSocketEchoServer(IHost host, string url) : AsyncDisposable
 	{
 		private readonly IHost _host = host ?? throw new ArgumentNullException(nameof(host));
 
-        public string Url { get; } = url.ThrowIfEmpty(nameof(url));
+		public string Url { get; } = url.ThrowIfEmpty(nameof(url));
 
         public static async Task<LocalWebSocketEchoServer> StartAsync(CancellationToken cancellationToken = default)
 		{
@@ -118,7 +118,7 @@ public class WebSocketClientTests : BaseTestClass
 			return new LocalWebSocketEchoServer(app, wsUri);
 		}
 
-		public async ValueTask DisposeAsync()
+		protected override async ValueTask DisposeManaged()
 		{
 			try
 			{

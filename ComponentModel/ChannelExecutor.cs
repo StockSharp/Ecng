@@ -32,7 +32,7 @@ public interface IChannelExecutorGroup
 /// Sequential operation executor based on channels.
 /// Ensures operations are executed sequentially to prevent file access conflicts.
 /// </summary>
-public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
+public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 {
 	private sealed class Operation
 	{
@@ -355,7 +355,7 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 	}
 
 	/// <inheritdoc />
-	public async ValueTask DisposeAsync()
+	protected override async ValueTask DisposeManaged()
 	{
 		// Complete the channel to signal no more items (TryComplete to avoid exception on double-dispose)
 		_channel.Writer.TryComplete();
@@ -375,7 +375,5 @@ public class ChannelExecutor : IAsyncDisposable, IChannelExecutorGroup
 
 		// Cleanup
 		_internalCts?.Dispose();
-
-		GC.SuppressFinalize(this);
 	}
 }
