@@ -643,6 +643,7 @@ public static class IOHelper
 	/// <param name="bytesToRead">The number of bytes to read.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns><see cref="ValueTask{T}"/></returns>
+	[Obsolete("Use Stream.ReadExactlyAsync instead.")]
 	public static async ValueTask<int> ReadFullAsync(this Stream stream, byte[] buffer, int offset, int bytesToRead, CancellationToken cancellationToken)
 	{
 		if (stream is null)
