@@ -1,0 +1,434 @@
+#if NET10_0_OR_GREATER
+namespace Ecng.Tests.Data;
+
+using System.Diagnostics;
+
+using Ecng.Common;
+using Ecng.Data;
+
+using Microsoft.Data.SqlClient;
+
+[TestClass]
+[TestCategory("Integration")]
+[DoNotParallelize]
+public class DatabaseTableIntegrationTests : BaseTestClass
+{
+	private const string _testTableName = "ecng_table_test";
+
+	[ClassInitialize]
+	public static void ClassInit(TestContext context)
+	{
+		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SqlServer, SqlClientFactory.Instance);
+	}
+
+	private static DatabaseConnectionPair GetSqlServerConnectionPair()
+	{
+		return new()
+		{
+			Provider = DatabaseProviderRegistry.SqlServer,
+			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
+		};
+	}
+
+	private static IDatabaseProvider CreateProvider(string providerName)
+	{
+		return providerName switch
+		{
+			nameof(Linq2dbDatabaseProvider) => Linq2dbDatabaseProvider.Instance,
+			nameof(AdoDatabaseProvider) => AdoDatabaseProvider.Instance,
+			nameof(DapperDatabaseProvider) => DapperDatabaseProvider.Instance,
+			_ => throw new InvalidOperationException($"Unknown provider: {providerName}"),
+		};
+	}
+
+	private static IDictionary<string, object> ToDict(int id, string name)
+		=> new Dictionary<string, object> { ["Id"] = id, ["Name"] = name };
+
+	private static IDictionary<string, object> ToDict(int id, string name, decimal value)
+		=> new Dictionary<string, object> { ["Id"] = id, ["Name"] = name, ["Value"] = value };
+
+	#region DDL Tests
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_CreateAndDrop_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Drop if exists
+		await table.DropAsync(CancellationToken);
+
+		// Create
+		var columns = new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+			["Value"] = typeof(decimal),
+			["CreatedAt"] = typeof(DateTime),
+		};
+		await table.CreateAsync(columns, CancellationToken);
+
+		// Drop
+		await table.DropAsync(CancellationToken);
+	}
+
+	#endregion
+
+	#region DML Tests
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_InsertAndSelect_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert
+		await table.InsertAsync(ToDict(1, "Test"), CancellationToken);
+
+		// Select
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(1);
+		Convert.ToInt32(list[0]["Id"]).AssertEqual(1);
+		list[0]["Name"].ToString().AssertEqual("Test");
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_BulkInsert_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Bulk insert
+		var rows = Enumerable.Range(1, 100)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Verify
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		results.Count().AssertEqual(100);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_BulkInsert_LargeDataset_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+			["Value"] = typeof(decimal),
+		}, CancellationToken);
+
+		// Bulk insert 10000 items
+		var rows = Enumerable.Range(1, 10000)
+			.Select(i => ToDict(i, $"Bulk Item {i}", i * 0.01m))
+			.ToList();
+
+		var sw = Stopwatch.StartNew();
+		await table.BulkInsertAsync(rows, CancellationToken);
+		sw.Stop();
+
+		Console.WriteLine($"{providerName}: Inserted 10000 rows in {sw.ElapsedMilliseconds}ms");
+
+		// Verify count
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		results.Count().AssertEqual(10000);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_SelectWithFilter_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 10)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Select with filter
+		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Greater, 5) };
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(5);
+		list.All(row => Convert.ToInt32(row["Id"]) > 5).AssertEqual(true);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_SelectWithOrderBy_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 5)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Select with order by descending
+		var orderBy = new[] { new OrderByCondition("Id", descending: true) };
+		var results = await table.SelectAsync(null, orderBy, null, null, CancellationToken);
+		var list = results.ToList();
+
+		Convert.ToInt32(list[0]["Id"]).AssertEqual(5);
+		Convert.ToInt32(list[4]["Id"]).AssertEqual(1);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_SelectWithPagination_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 20)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Select with pagination (skip 5, take 10), ordered by Id
+		var orderBy = new[] { new OrderByCondition("Id") };
+		var results = await table.SelectAsync(null, orderBy, skip: 5, take: 10, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(10);
+		Convert.ToInt32(list[0]["Id"]).AssertEqual(6);
+		Convert.ToInt32(list[9]["Id"]).AssertEqual(15);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_Update_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert
+		await table.InsertAsync(ToDict(1, "Original"), CancellationToken);
+
+		// Update
+		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Equal, 1) };
+		await table.UpdateAsync(new Dictionary<string, object> { ["Name"] = "Updated" }, filters, CancellationToken);
+
+		// Verify
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(1);
+		list[0]["Name"].ToString().AssertEqual("Updated");
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_Delete_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 10)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Delete items with Id > 5
+		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Greater, 5) };
+		await table.DeleteAsync(filters, CancellationToken);
+
+		// Verify
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(5);
+		list.All(row => Convert.ToInt32(row["Id"]) <= 5).AssertEqual(true);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_SelectWithInOperator_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 10)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Select with IN operator
+		var filters = new[] { new FilterCondition("Id", ComparisonOperator.In, new[] { 2, 4, 6, 8 }) };
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(4);
+		list.Select(row => Convert.ToInt32(row["Id"])).OrderBy(x => x).ToArray().AssertEqual([2, 4, 6, 8]);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	#endregion
+
+	#region Validation Tests
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public void Table_GetTable_NullConnection_Throws(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		Throws<ArgumentNullException>(() => provider.GetTable(null, "test"));
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public void Table_GetTable_EmptyTableName_Throws(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		Throws<ArgumentNullException>(() => provider.GetTable(connection, ""));
+	}
+
+	#endregion
+}
+#endif

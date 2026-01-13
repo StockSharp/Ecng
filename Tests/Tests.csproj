@@ -47,6 +47,7 @@
     <ProjectReference Include="..\Nuget\Nuget.csproj" />
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
     <ProjectReference Include="..\Data.Ado\Data.Ado.csproj" />
+    <ProjectReference Include="..\Data.Dapper\Data.Dapper.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net10.0' ">
     <Compile Remove="Nuget\**" />
