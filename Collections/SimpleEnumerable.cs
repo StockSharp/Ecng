@@ -8,7 +8,7 @@ using System.Collections.Generic;
 /// Represents a simple implementation of an enumerable that uses a factory function to create its enumerator.
 /// </summary>
 /// <typeparam name="T">The type of elements in the enumerable.</typeparam>
-[System.Obsolete("Use yield return instead.")]
+[Obsolete("Use yield return instead.")]
 public class SimpleEnumerable<T>(Func<IEnumerator<T>> createEnumerator) : IEnumerable<T>
 {
 	private readonly Func<IEnumerator<T>> _createEnumerator = createEnumerator ?? throw new ArgumentNullException(nameof(createEnumerator));

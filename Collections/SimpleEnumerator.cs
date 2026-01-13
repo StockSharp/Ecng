@@ -1,5 +1,6 @@
 namespace Ecng.Collections;
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -9,7 +10,7 @@ using Ecng.Common;
 /// Provides an abstract base class for implementing a simple enumerator with disposable functionality.
 /// </summary>
 /// <typeparam name="T">The type of elements being enumerated.</typeparam>
-[System.Obsolete("Use yield return instead.")]
+[Obsolete("Use yield return instead.")]
 public abstract class SimpleEnumerator<T> : Disposable, IEnumerator<T>
 {
 	/// <summary>
