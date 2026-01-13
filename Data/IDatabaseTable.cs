@@ -81,5 +81,13 @@ public interface IDatabaseTable
 	/// <param name="cancellationToken">Cancellation token.</param>
 	Task DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken);
 
+	/// <summary>
+	/// Inserts a row if it doesn't exist, or updates it if it does (MERGE/UPSERT).
+	/// </summary>
+	/// <param name="values">Column values (name -> value).</param>
+	/// <param name="keyColumns">Key column names used to determine if the row exists.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken);
+
 	#endregion
 }

@@ -247,6 +247,43 @@ internal class Linq2dbTable : IDatabaseTable
 		await _dc.ExecuteAsync(sqlBuilder.ToString(), cancellationToken, parameters.ToArray()).NoWait();
 	}
 
+	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
+	{
+		if (values is null)
+			throw new ArgumentNullException(nameof(values));
+		if (keyColumns is null)
+			throw new ArgumentNullException(nameof(keyColumns));
+
+		var keys = keyColumns.ToList();
+		if (keys.Count == 0)
+			throw new ArgumentException("At least one key column is required.", nameof(keyColumns));
+
+		var allColumns = values.Keys.ToList();
+		var updateColumns = allColumns.Except(keys).ToList();
+
+		// Build MERGE statement
+		var sqlBuilder = new StringBuilder();
+		sqlBuilder.Append($"MERGE [{Name}] AS target USING (SELECT ");
+		sqlBuilder.Append(keys.Select(k => $"@{k} AS [{k}]").JoinCommaSpace());
+		sqlBuilder.Append(") AS source ON ");
+		sqlBuilder.Append(keys.Select(k => $"target.[{k}] = source.[{k}]").Join(" AND "));
+
+		if (updateColumns.Count > 0)
+		{
+			sqlBuilder.Append(" WHEN MATCHED THEN UPDATE SET ");
+			sqlBuilder.Append(updateColumns.Select(c => $"[{c}] = @{c}").JoinCommaSpace());
+		}
+
+		sqlBuilder.Append(" WHEN NOT MATCHED THEN INSERT (");
+		sqlBuilder.Append(allColumns.Select(c => $"[{c}]").JoinCommaSpace());
+		sqlBuilder.Append(") VALUES (");
+		sqlBuilder.Append(allColumns.Select(c => $"@{c}").JoinCommaSpace());
+		sqlBuilder.Append(");");
+
+		var parameters = values.Select(kv => new DataParameter(kv.Key, kv.Value)).ToArray();
+		await _dc.ExecuteAsync(sqlBuilder.ToString(), cancellationToken, parameters).NoWait();
+	}
+
 	#endregion
 
 	#region Helpers

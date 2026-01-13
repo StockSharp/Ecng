@@ -404,6 +404,51 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.DropAsync(CancellationToken);
 	}
 
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_Upsert_InsertAndUpdate_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Upsert - should insert
+		await table.UpsertAsync(ToDict(1, "First"), ["Id"], CancellationToken);
+
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		var list = results.ToList();
+		list.Count.AssertEqual(1);
+		list[0]["Name"].ToString().AssertEqual("First");
+
+		// Upsert - should update
+		await table.UpsertAsync(ToDict(1, "Updated"), ["Id"], CancellationToken);
+
+		results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		list = results.ToList();
+		list.Count.AssertEqual(1);
+		list[0]["Name"].ToString().AssertEqual("Updated");
+
+		// Upsert - should insert second row
+		await table.UpsertAsync(ToDict(2, "Second"), ["Id"], CancellationToken);
+
+		results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		list = results.ToList();
+		list.Count.AssertEqual(2);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
 	#endregion
 
 	#region Validation Tests

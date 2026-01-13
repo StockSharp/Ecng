@@ -242,6 +242,43 @@ internal class DapperTable : IDatabaseTable
 		await _connection.Connection.ExecuteAsync(new CommandDefinition(sqlBuilder.ToString(), parameters, cancellationToken: cancellationToken)).NoWait();
 	}
 
+	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
+	{
+		if (values is null)
+			throw new ArgumentNullException(nameof(values));
+		if (keyColumns is null)
+			throw new ArgumentNullException(nameof(keyColumns));
+
+		var keys = keyColumns.ToList();
+		if (keys.Count == 0)
+			throw new ArgumentException("At least one key column is required.", nameof(keyColumns));
+
+		var allColumns = values.Keys.ToList();
+		var updateColumns = allColumns.Except(keys).ToList();
+
+		// Build MERGE statement
+		var sqlBuilder = new StringBuilder();
+		sqlBuilder.Append($"MERGE [{Name}] AS target USING (SELECT ");
+		sqlBuilder.Append(keys.Select(k => $"@{k} AS [{k}]").JoinCommaSpace());
+		sqlBuilder.Append(") AS source ON ");
+		sqlBuilder.Append(keys.Select(k => $"target.[{k}] = source.[{k}]").Join(" AND "));
+
+		if (updateColumns.Count > 0)
+		{
+			sqlBuilder.Append(" WHEN MATCHED THEN UPDATE SET ");
+			sqlBuilder.Append(updateColumns.Select(c => $"[{c}] = @{c}").JoinCommaSpace());
+		}
+
+		sqlBuilder.Append(" WHEN NOT MATCHED THEN INSERT (");
+		sqlBuilder.Append(allColumns.Select(c => $"[{c}]").JoinCommaSpace());
+		sqlBuilder.Append(") VALUES (");
+		sqlBuilder.Append(allColumns.Select(c => $"@{c}").JoinCommaSpace());
+		sqlBuilder.Append(");");
+
+		_connection.EnsureOpen();
+		await _connection.Connection.ExecuteAsync(new CommandDefinition(sqlBuilder.ToString(), values, cancellationToken: cancellationToken)).NoWait();
+	}
+
 	#endregion
 
 	#region Helpers
