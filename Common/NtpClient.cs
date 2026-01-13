@@ -65,27 +65,15 @@ public class NtpClient(EndPoint ntpServer)
 		s.SendTimeout = timeout;
 		s.ReceiveTimeout = timeout;
 
-#if NET5_0_OR_GREATER
-		await s.ConnectAsync(_ntpServer, cancellationToken);
-#else
-		s.Connect(_ntpServer);
-#endif
+		await s.ConnectAsync(_ntpServer, cancellationToken).NoWait();
 
 		var ntpData = new byte[48]; // RFC 2030
 		ntpData[0] = 0x1B;
 		for (var i = 1; i < 48; i++)
 			ntpData[i] = 0;
 
-#if NET5_0_OR_GREATER
 		await s.SendAsync(ntpData, SocketFlags.None, cancellationToken).NoWait();
 		await s.ReceiveAsync(ntpData, SocketFlags.None, cancellationToken).NoWait();
-#else
-		await Task.Run(() =>
-		{
-			s.Send(ntpData);
-			s.Receive(ntpData);
-		}, cancellationToken).NoWait();
-#endif
 
 		const byte offsetTransmitTime = 40;
 		ulong intpart = 0;

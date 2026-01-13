@@ -49,11 +49,7 @@ public static class MailHelper
 			throw new ArgumentNullException(nameof(message));
 
 		using var mail = new SmtpClient();
-		await mail.SendMailAsync(message
-#if NET5_0_OR_GREATER
-			, cancellationToken
-#endif
-		).NoWait();
+		await mail.SendMailAsync(message, cancellationToken).NoWait();
 	}
 
 	/// <summary>

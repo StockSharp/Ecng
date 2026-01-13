@@ -73,11 +73,7 @@ public class EmailLogListener : LogListener
 					try
 					{
 						using var email = CreateClient();
-						await email.SendMailAsync(message.from, message.to, message.subj, message.body
-#if NET6_0_OR_GREATER
-							, token
-#endif
-						);
+						await email.SendMailAsync(message.from, message.to, message.subj, message.body, token);
 					}
 					catch (Exception ex)
 					{
