@@ -38,5 +38,6 @@
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>6.*</MsSqlClientVer>
     <OpenXmlVer>3.*</OpenXmlVer>
+    <DapperVer>2.*</DapperVer>
   </PropertyGroup>
 </Project>
