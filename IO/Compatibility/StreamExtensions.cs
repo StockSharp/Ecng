@@ -4,6 +4,8 @@ namespace System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 /// <summary>
 /// Extension methods for <see cref="Stream"/>.
 /// </summary>
@@ -105,7 +107,7 @@ public static class StreamExtensions
 		var totalRead = 0;
 		while (totalRead < count)
 		{
-			var read = await stream.ReadAsync(buffer, offset + totalRead, count - totalRead, cancellationToken).ConfigureAwait(false);
+			var read = await stream.ReadAsync(buffer, offset + totalRead, count - totalRead, cancellationToken).NoWait();
 			if (read == 0)
 				throw new EndOfStreamException();
 			totalRead += read;
@@ -150,7 +152,7 @@ public static class StreamExtensions
 		var totalRead = 0;
 		while (totalRead < buffer.Length)
 		{
-			var read = await stream.ReadAsync(buffer.Slice(totalRead), cancellationToken).ConfigureAwait(false);
+			var read = await stream.ReadAsync(buffer.Slice(totalRead), cancellationToken).NoWait();
 			if (read == 0)
 				throw new EndOfStreamException();
 			totalRead += read;
