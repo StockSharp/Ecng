@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 using System;
 using System.ComponentModel;
@@ -9,10 +9,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 /// <summary>
 /// Provides fast CSV reading capabilities from various input sources.
 /// </summary>
-public class FastCsvReader : IDisposable
+public class FastCsvReader : Disposable
 {
 	private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
 	private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
@@ -28,7 +30,6 @@ public class FastCsvReader : IDisposable
 
 	private int _lineSeparatorCharPos;
 	private readonly bool _disposeReader;
-	private bool _disposed;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a stream, encoding, and line separator.
@@ -775,30 +776,11 @@ public class FastCsvReader : IDisposable
 	}
 
 	/// <inheritdoc />
-	public void Dispose()
+	protected override void DisposeManaged()
 	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	/// <summary>
-	/// Releases resources used by the reader.
-	/// </summary>
-	/// <param name="disposing">True to dispose managed resources.</param>
-	protected virtual void Dispose(bool disposing)
-	{
-		if (_disposed)
-			return;
-
-		_disposed = true;
-
-		if (disposing && _disposeReader)
+		if (_disposeReader)
 			Reader.Dispose();
-	}
 
-	private void ThrowIfDisposed()
-	{
-		if (_disposed)
-			throw new ObjectDisposedException(nameof(FastCsvReader));
+		base.DisposeManaged();
 	}
 }

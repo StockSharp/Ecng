@@ -5,7 +5,7 @@ namespace System.Diagnostics.CodeAnalysis;
 /// Specifies the syntax used in a string.
 /// </summary>
 [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-internal sealed class StringSyntaxAttribute : Attribute
+public sealed class StringSyntaxAttribute : Attribute
 {
 	/// <summary>
 	/// The syntax identifier for strings containing composite formats for string formatting.
