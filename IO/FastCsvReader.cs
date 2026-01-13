@@ -303,11 +303,7 @@ public class FastCsvReader : Disposable
 				{
 					cancellationToken.ThrowIfCancellationRequested();
 
-#if NETSTANDARD2_0
-					var read = await Reader.ReadBlockAsync(_buffer, _bufferLen, _buffer.Length - _bufferLen).NoWait();
-#else
 					var read = await Reader.ReadBlockAsync(_buffer.AsMemory(_bufferLen, _buffer.Length - _bufferLen), cancellationToken).NoWait();
-#endif
 
 					if (read == 0)
 						break;

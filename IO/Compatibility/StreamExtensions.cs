@@ -115,6 +115,39 @@ public static class StreamExtensions
 	}
 #endif
 
+#if NETSTANDARD2_0
+	/// <summary>
+	/// Asynchronously reads bytes from the current stream and advances the position within the stream until the buffer is filled.
+	/// </summary>
+	/// <param name="stream">The stream to read from.</param>
+	/// <param name="buffer">A region of memory. When this method returns, the contents of this region are replaced by the bytes read from the current stream.</param>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <exception cref="EndOfStreamException">The end of the stream is reached before filling the buffer.</exception>
+	public static async ValueTask ReadExactlyAsync(this Stream stream, Memory<byte> buffer, CancellationToken cancellationToken = default)
+	{
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (System.Runtime.InteropServices.MemoryMarshal.TryGetArray(buffer, out ArraySegment<byte> segment))
+		{
+			await stream.ReadExactlyAsync(segment.Array, segment.Offset, segment.Count, cancellationToken).NoWait();
+		}
+		else
+		{
+			var tempBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(buffer.Length);
+			try
+			{
+				await stream.ReadExactlyAsync(tempBuffer, 0, buffer.Length, cancellationToken).NoWait();
+				tempBuffer.AsSpan(0, buffer.Length).CopyTo(buffer.Span);
+			}
+			finally
+			{
+				System.Buffers.ArrayPool<byte>.Shared.Return(tempBuffer);
+			}
+		}
+	}
+#endif
+
 #if NET6_0
 	/// <summary>
 	/// Reads bytes from the current stream and advances the position within the stream until the buffer is filled.
