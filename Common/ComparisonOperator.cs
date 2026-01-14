@@ -54,4 +54,10 @@ public enum ComparisonOperator
 	/// </summary>
 	[Display(Name = "IN")]
 	In,
+
+	/// <summary>
+	/// Indicates that the left parameter value matches the pattern (SQL LIKE).
+	/// </summary>
+	[Display(Name = "LIKE")]
+	Like,
 }

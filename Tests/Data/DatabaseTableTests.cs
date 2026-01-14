@@ -449,6 +449,91 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.DropAsync(CancellationToken);
 	}
 
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_SelectWithLikeOperator_Success(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		await table.InsertAsync(ToDict(1, "Apple"), CancellationToken);
+		await table.InsertAsync(ToDict(2, "Banana"), CancellationToken);
+		await table.InsertAsync(ToDict(3, "Apricot"), CancellationToken);
+		await table.InsertAsync(ToDict(4, "Cherry"), CancellationToken);
+		await table.InsertAsync(ToDict(5, "Avocado"), CancellationToken);
+
+		// Select with LIKE operator - names starting with 'A'
+		var filters = new[] { new FilterCondition("Name", ComparisonOperator.Like, "A%") };
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(3);
+		list.All(row => row["Name"].ToString().StartsWith("A")).AssertEqual(true);
+
+		// Select with LIKE operator - names containing 'an'
+		filters = [new FilterCondition("Name", ComparisonOperator.Like, "%an%")];
+		results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		list = results.ToList();
+
+		list.Count.AssertEqual(1);
+		list[0]["Name"].ToString().AssertEqual("Banana");
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(Linq2dbDatabaseProvider))]
+	[DataRow(nameof(AdoDatabaseProvider))]
+	[DataRow(nameof(DapperDatabaseProvider))]
+	public async Task Table_Delete_ReturnsDeletedCount(string providerName)
+	{
+		var provider = CreateProvider(providerName);
+		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		var rows = Enumerable.Range(1, 10)
+			.Select(i => ToDict(i, $"Item {i}"))
+			.ToList();
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Delete items with Id > 7 (should delete 3 rows: 8, 9, 10)
+		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Greater, 7) };
+		var deletedCount = await table.DeleteAsync(filters, CancellationToken);
+
+		deletedCount.AssertEqual(3);
+
+		// Delete non-existing items (should return 0)
+		filters = [new FilterCondition("Id", ComparisonOperator.Greater, 100)];
+		deletedCount = await table.DeleteAsync(filters, CancellationToken);
+
+		deletedCount.AssertEqual(0);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
 	#endregion
 
 	#region Validation Tests

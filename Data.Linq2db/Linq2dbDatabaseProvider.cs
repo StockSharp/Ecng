@@ -237,14 +237,14 @@ internal class Linq2dbTable : IDatabaseTable
 		await _dc.ExecuteAsync(sqlBuilder.ToString(), cancellationToken, parameters.ToArray()).NoWait();
 	}
 
-	public async Task DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
+	public async Task<int> DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
 	{
 		var sqlBuilder = new StringBuilder($"DELETE FROM [{Name}]");
 		var parameters = new List<DataParameter>();
 
 		BuildWhereClause(sqlBuilder, parameters, filters);
 
-		await _dc.ExecuteAsync(sqlBuilder.ToString(), cancellationToken, parameters.ToArray()).NoWait();
+		return await _dc.ExecuteAsync(sqlBuilder.ToString(), cancellationToken, parameters.ToArray()).NoWait();
 	}
 
 	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
@@ -311,6 +311,7 @@ internal class Linq2dbTable : IDatabaseTable
 				ComparisonOperator.Less => "<",
 				ComparisonOperator.LessOrEqual => "<=",
 				ComparisonOperator.In => "IN",
+				ComparisonOperator.Like => "LIKE",
 				_ => "=",
 			};
 

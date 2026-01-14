@@ -223,14 +223,14 @@ internal class AdoTable : IDatabaseTable
 		await ExecuteAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
 	}
 
-	public async Task DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
+	public async Task<int> DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
 	{
 		var sqlBuilder = new StringBuilder($"DELETE FROM [{Name}]");
 		var parameters = new Dictionary<string, object>();
 
 		BuildWhereClause(sqlBuilder, parameters, filters);
 
-		await ExecuteAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
+		return await ExecuteAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
 	}
 
 	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
@@ -273,7 +273,7 @@ internal class AdoTable : IDatabaseTable
 
 	#region Helpers
 
-	private async Task ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
+	private async Task<int> ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
 		_connection.EnsureOpen();
 
@@ -281,7 +281,7 @@ internal class AdoTable : IDatabaseTable
 		cmd.CommandText = sql;
 		AddParameters(cmd, parameters);
 
-		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
+		return await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 	}
 
 	private async Task<IEnumerable<IDictionary<string, object>>> QueryAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
@@ -332,6 +332,7 @@ internal class AdoTable : IDatabaseTable
 				ComparisonOperator.Less => "<",
 				ComparisonOperator.LessOrEqual => "<=",
 				ComparisonOperator.In => "IN",
+				ComparisonOperator.Like => "LIKE",
 				_ => "=",
 			};
 

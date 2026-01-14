@@ -231,7 +231,7 @@ internal class DapperTable : IDatabaseTable
 		await _connection.Connection.ExecuteAsync(new CommandDefinition(sqlBuilder.ToString(), parameters, cancellationToken: cancellationToken)).NoWait();
 	}
 
-	public async Task DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
+	public async Task<int> DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
 	{
 		var sqlBuilder = new StringBuilder($"DELETE FROM [{Name}]");
 		var parameters = new DynamicParameters();
@@ -239,7 +239,7 @@ internal class DapperTable : IDatabaseTable
 		BuildWhereClause(sqlBuilder, parameters, filters);
 
 		_connection.EnsureOpen();
-		await _connection.Connection.ExecuteAsync(new CommandDefinition(sqlBuilder.ToString(), parameters, cancellationToken: cancellationToken)).NoWait();
+		return await _connection.Connection.ExecuteAsync(new CommandDefinition(sqlBuilder.ToString(), parameters, cancellationToken: cancellationToken)).NoWait();
 	}
 
 	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
@@ -306,6 +306,7 @@ internal class DapperTable : IDatabaseTable
 				ComparisonOperator.Less => "<",
 				ComparisonOperator.LessOrEqual => "<=",
 				ComparisonOperator.In => "IN",
+				ComparisonOperator.Like => "LIKE",
 				_ => "=",
 			};
 

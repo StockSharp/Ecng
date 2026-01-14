@@ -79,7 +79,8 @@ public interface IDatabaseTable
 	/// </summary>
 	/// <param name="filters">Filter conditions to identify rows to delete.</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
-	Task DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken);
+	/// <returns>Number of deleted rows.</returns>
+	Task<int> DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Inserts a row if it doesn't exist, or updates it if it does (MERGE/UPSERT).
