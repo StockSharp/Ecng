@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <ItemGroup>
-    <PackageReference Include="linq2db" Version="$(linq2dbVer)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Data\Data.csproj" />
-  </ItemGroup>
-</Project>

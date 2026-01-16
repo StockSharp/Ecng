@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <ItemGroup>
-    <ProjectReference Include="..\Data\Data.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Dapper" Version="$(DapperVer)" />
-  </ItemGroup>
-</Project>
