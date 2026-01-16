@@ -117,6 +117,79 @@ public static class StreamExtensions
 
 #if NETSTANDARD2_0
 	/// <summary>
+	/// Asynchronously writes a sequence of bytes to the current stream.
+	/// </summary>
+	/// <param name="stream">The stream.</param>
+	/// <param name="buffer">The region of memory to write data from.</param>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous write operation.</returns>
+	public static ValueTask WriteAsync(this Stream stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+	{
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (System.Runtime.InteropServices.MemoryMarshal.TryGetArray(buffer, out ArraySegment<byte> segment))
+		{
+			return new ValueTask(stream.WriteAsync(segment.Array, segment.Offset, segment.Count, cancellationToken));
+		}
+		else
+		{
+			var tempBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(buffer.Length);
+			buffer.Span.CopyTo(tempBuffer);
+			return WriteAsyncWithRent(stream, tempBuffer, buffer.Length, cancellationToken);
+		}
+	}
+
+	private static async ValueTask WriteAsyncWithRent(Stream stream, byte[] buffer, int length, CancellationToken cancellationToken)
+	{
+		try
+		{
+			await stream.WriteAsync(buffer, 0, length, cancellationToken).NoWait();
+		}
+		finally
+		{
+			System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+		}
+	}
+
+	/// <summary>
+	/// Asynchronously reads a sequence of bytes from the current stream.
+	/// </summary>
+	/// <param name="stream">The stream.</param>
+	/// <param name="buffer">The region of memory to write the data into.</param>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous read operation. The value contains the total number of bytes read into the buffer.</returns>
+	public static ValueTask<int> ReadAsync(this Stream stream, Memory<byte> buffer, CancellationToken cancellationToken = default)
+	{
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (System.Runtime.InteropServices.MemoryMarshal.TryGetArray(buffer, out ArraySegment<byte> segment))
+		{
+			return new ValueTask<int>(stream.ReadAsync(segment.Array, segment.Offset, segment.Count, cancellationToken));
+		}
+		else
+		{
+			return ReadAsyncWithRent(stream, buffer, cancellationToken);
+		}
+	}
+
+	private static async ValueTask<int> ReadAsyncWithRent(Stream stream, Memory<byte> buffer, CancellationToken cancellationToken)
+	{
+		var tempBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(buffer.Length);
+		try
+		{
+			var read = await stream.ReadAsync(tempBuffer, 0, buffer.Length, cancellationToken).NoWait();
+			tempBuffer.AsSpan(0, read).CopyTo(buffer.Span);
+			return read;
+		}
+		finally
+		{
+			System.Buffers.ArrayPool<byte>.Shared.Return(tempBuffer);
+		}
+	}
+
+	/// <summary>
 	/// Asynchronously reads bytes from the current stream and advances the position within the stream until the buffer is filled.
 	/// </summary>
 	/// <param name="stream">The stream to read from.</param>
