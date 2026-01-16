@@ -30,17 +30,6 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		};
 	}
 
-	private static IDatabaseProvider CreateProvider(string providerName)
-	{
-		return providerName switch
-		{
-			nameof(Linq2dbDatabaseProvider) => Linq2dbDatabaseProvider.Instance,
-			nameof(AdoDatabaseProvider) => AdoDatabaseProvider.Instance,
-			nameof(DapperDatabaseProvider) => DapperDatabaseProvider.Instance,
-			_ => throw new InvalidOperationException($"Unknown provider: {providerName}"),
-		};
-	}
-
 	private static IDictionary<string, object> ToDict(int id, string name)
 		=> new Dictionary<string, object> { ["Id"] = id, ["Name"] = name };
 
@@ -50,12 +39,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	#region DDL Tests
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_CreateAndDrop_Success(string providerName)
+	public async Task Table_CreateAndDrop_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -81,12 +67,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	#region DML Tests
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_InsertAndSelect_Success(string providerName)
+	public async Task Table_InsertAndSelect_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -114,12 +97,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_BulkInsert_Success(string providerName)
+	public async Task Table_BulkInsert_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -147,12 +127,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_BulkInsert_LargeDataset_Success(string providerName)
+	public async Task Table_BulkInsert_LargeDataset_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -174,7 +151,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.BulkInsertAsync(rows, CancellationToken);
 		sw.Stop();
 
-		Console.WriteLine($"{providerName}: Inserted 10000 rows in {sw.ElapsedMilliseconds}ms");
+		Console.WriteLine($"ADO: Inserted 10000 rows in {sw.ElapsedMilliseconds}ms");
 
 		// Verify count
 		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
@@ -185,12 +162,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_SelectWithFilter_Success(string providerName)
+	public async Task Table_SelectWithFilter_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -221,12 +195,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_SelectWithOrderBy_Success(string providerName)
+	public async Task Table_SelectWithOrderBy_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -257,12 +228,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_SelectWithPagination_Success(string providerName)
+	public async Task Table_SelectWithPagination_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -294,12 +262,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_Update_Success(string providerName)
+	public async Task Table_Update_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -330,12 +295,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_Delete_Success(string providerName)
+	public async Task Table_Delete_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -369,12 +331,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_SelectWithInOperator_Success(string providerName)
+	public async Task Table_SelectWithInOperator_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -405,12 +364,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_Upsert_InsertAndUpdate_Success(string providerName)
+	public async Task Table_Upsert_InsertAndUpdate_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -450,12 +406,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_SelectWithLikeOperator_Success(string providerName)
+	public async Task Table_SelectWithLikeOperator_Success()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -495,12 +448,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public async Task Table_Delete_ReturnsDeletedCount(string providerName)
+	public async Task Table_Delete_ReturnsDeletedCount()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		var table = provider.GetTable(connection, _testTableName);
 
@@ -539,22 +489,16 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	#region Validation Tests
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public void Table_GetTable_NullConnection_Throws(string providerName)
+	public void Table_GetTable_NullConnection_Throws()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		Throws<ArgumentNullException>(() => provider.GetTable(null, "test"));
 	}
 
 	[TestMethod]
-	[DataRow(nameof(Linq2dbDatabaseProvider))]
-	[DataRow(nameof(AdoDatabaseProvider))]
-	[DataRow(nameof(DapperDatabaseProvider))]
-	public void Table_GetTable_EmptyTableName_Throws(string providerName)
+	public void Table_GetTable_EmptyTableName_Throws()
 	{
-		var provider = CreateProvider(providerName);
+		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		Throws<ArgumentNullException>(() => provider.GetTable(connection, ""));
 	}

@@ -33,6 +33,11 @@ public static class DatabaseProviderRegistry
 	public const string PostgreSql = "PostgreSQL";
 
 	private static readonly Dictionary<string, DbProviderFactory> _factories = [];
+	private static readonly Dictionary<string, ISqlDialect> _dialects = new()
+	{
+		[SqlServer] = SqlServerDialect.Instance,
+		[SQLite] = SQLiteDialect.Instance,
+	};
 	private static readonly Lock _sync = new();
 
 	/// <summary>
@@ -128,5 +133,60 @@ public static class DatabaseProviderRegistry
 
 		using (_sync.EnterScope())
 			return _factories.ContainsKey(providerName);
+	}
+
+	/// <summary>
+	/// Gets the SQL dialect for a provider.
+	/// </summary>
+	/// <param name="providerName">Provider name.</param>
+	/// <returns>SQL dialect instance.</returns>
+	/// <exception cref="InvalidOperationException">Dialect for provider is not registered.</exception>
+	public static ISqlDialect GetDialect(string providerName)
+	{
+		if (providerName.IsEmpty())
+			throw new ArgumentNullException(nameof(providerName));
+
+		using (_sync.EnterScope())
+		{
+			if (_dialects.TryGetValue(providerName, out var dialect))
+				return dialect;
+		}
+
+		throw new InvalidOperationException($"Dialect for provider '{providerName}' is not registered.");
+	}
+
+	/// <summary>
+	/// Tries to get the SQL dialect for a provider.
+	/// </summary>
+	/// <param name="providerName">Provider name.</param>
+	/// <param name="dialect">SQL dialect instance if found.</param>
+	/// <returns><c>true</c> if the dialect was found; otherwise, <c>false</c>.</returns>
+	public static bool TryGetDialect(string providerName, out ISqlDialect dialect)
+	{
+		if (providerName.IsEmpty())
+		{
+			dialect = null;
+			return false;
+		}
+
+		using (_sync.EnterScope())
+			return _dialects.TryGetValue(providerName, out dialect);
+	}
+
+	/// <summary>
+	/// Registers a SQL dialect for a provider.
+	/// </summary>
+	/// <param name="providerName">Provider name.</param>
+	/// <param name="dialect">SQL dialect instance.</param>
+	public static void RegisterDialect(string providerName, ISqlDialect dialect)
+	{
+		if (providerName.IsEmpty())
+			throw new ArgumentNullException(nameof(providerName));
+
+		if (dialect is null)
+			throw new ArgumentNullException(nameof(dialect));
+
+		using (_sync.EnterScope())
+			_dialects[providerName] = dialect;
 	}
 }

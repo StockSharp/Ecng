@@ -58,7 +58,8 @@ public class AdoDatabaseProvider(Func<DatabaseConnectionPair, DbConnection> conn
 		if (connStr.IsEmpty())
 			throw new InvalidOperationException("Connection string is not set.");
 
-		return new AdoConnection(_connectionFactory(pair));
+		var dialect = DatabaseProviderRegistry.GetDialect(pair.Provider);
+		return new AdoConnection(_connectionFactory(pair), dialect);
 	}
 
 	/// <inheritdoc />
@@ -76,6 +77,7 @@ public class AdoDatabaseProvider(Func<DatabaseConnectionPair, DbConnection> conn
 internal class AdoTable : IDatabaseTable
 {
 	private readonly AdoConnection _connection;
+	private ISqlDialect Dialect => _connection.Dialect;
 
 	public AdoTable(AdoConnection connection, string name)
 	{
@@ -92,8 +94,7 @@ internal class AdoTable : IDatabaseTable
 		if (columns is null)
 			throw new ArgumentNullException(nameof(columns));
 
-		var columnDefs = columns.Select(kv => $"[{kv.Key}] {MapTypeToSql(kv.Value)}");
-		var sql = $"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{Name}') CREATE TABLE [{Name}] ({columnDefs.JoinCommaSpace()})";
+		var sql = Dialect.GenerateCreateTable(Name, columns);
 		await ExecuteAsync(sql, null, cancellationToken).NoWait();
 	}
 
@@ -105,15 +106,16 @@ internal class AdoTable : IDatabaseTable
 		foreach (var (columnName, columnType) in columns)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var sqlType = MapTypeToSql(columnType);
-			var sql = $"ALTER TABLE [{Name}] ADD [{columnName}] {sqlType}";
+			var sqlType = Dialect.GetSqlTypeName(columnType);
+			var sql = $"ALTER TABLE {Dialect.QuoteIdentifier(Name)} ADD {Dialect.QuoteIdentifier(columnName)} {sqlType}";
 			await ExecuteAsync(sql, null, cancellationToken).NoWait();
 		}
 	}
 
 	public async Task DropAsync(CancellationToken cancellationToken)
 	{
-		await ExecuteAsync($"IF OBJECT_ID('{Name}', 'U') IS NOT NULL DROP TABLE [{Name}]", null, cancellationToken).NoWait();
+		var sql = Dialect.GenerateDropTable(Name);
+		await ExecuteAsync(sql, null, cancellationToken).NoWait();
 	}
 
 	#endregion
@@ -125,10 +127,7 @@ internal class AdoTable : IDatabaseTable
 		if (values is null)
 			throw new ArgumentNullException(nameof(values));
 
-		var columnNames = values.Keys.Select(k => $"[{k}]").JoinCommaSpace();
-		var paramNames = values.Keys.Select(k => $"@{k}").JoinCommaSpace();
-		var sql = $"INSERT INTO [{Name}] ({columnNames}) VALUES ({paramNames})";
-
+		var sql = Dialect.GenerateInsert(Name, values.Keys);
 		await ExecuteAsync(sql, values, cancellationToken).NoWait();
 	}
 
@@ -147,7 +146,7 @@ internal class AdoTable : IDatabaseTable
 
 		// Get column names from first row
 		var columns = rowsList[0].Keys.ToList();
-		var columnNames = columns.Select(c => $"[{c}]").JoinCommaSpace();
+		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
 		using var transaction = _connection.Connection.BeginTransaction();
 
@@ -171,19 +170,20 @@ internal class AdoTable : IDatabaseTable
 
 					foreach (var column in columns)
 					{
-						var paramName = $"@{column}_{rowIdx}";
-						paramNames.Add(paramName);
+						var paramName = $"{column}_{rowIdx}";
+						paramNames.Add(Dialect.ParameterPrefix + paramName);
 
 						var param = cmd.CreateParameter();
-						param.ParameterName = paramName;
-						param.Value = row.TryGetValue(column, out var val) ? val ?? DBNull.Value : DBNull.Value;
+						param.ParameterName = Dialect.ParameterPrefix + paramName;
+						var value = row.TryGetValue(column, out var val) ? val : null;
+						param.Value = Dialect.ConvertToDbValue(value, value?.GetType() ?? typeof(object));
 						cmd.Parameters.Add(param);
 					}
 
 					valuesClauses.Add($"({paramNames.JoinCommaSpace()})");
 				}
 
-				cmd.CommandText = $"INSERT INTO [{Name}] ({columnNames}) VALUES {valuesClauses.JoinCommaSpace()}";
+				cmd.CommandText = $"INSERT INTO {Dialect.QuoteIdentifier(Name)} ({columnNames}) VALUES {valuesClauses.JoinCommaSpace()}";
 
 				await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 			}
@@ -199,14 +199,13 @@ internal class AdoTable : IDatabaseTable
 
 	public async Task<IEnumerable<IDictionary<string, object>>> SelectAsync(IEnumerable<FilterCondition> filters, IEnumerable<OrderByCondition> orderBy, long? skip, long? take, CancellationToken cancellationToken)
 	{
-		var sqlBuilder = new StringBuilder($"SELECT * FROM [{Name}]");
 		var parameters = new Dictionary<string, object>();
+		var whereClause = BuildWhereClause(parameters, filters);
+		var orderByClause = BuildOrderByClause(orderBy);
 
-		BuildWhereClause(sqlBuilder, parameters, filters);
-		BuildOrderByClause(sqlBuilder, orderBy);
-		BuildPaginationClause(sqlBuilder, skip, take);
+		var sql = Dialect.GenerateSelect(Name, whereClause, orderByClause, skip, take);
 
-		return await QueryAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
+		return await QueryAsync(sql, parameters, cancellationToken).NoWait();
 	}
 
 	public async Task UpdateAsync(IDictionary<string, object> values, IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
@@ -214,23 +213,22 @@ internal class AdoTable : IDatabaseTable
 		if (values is null)
 			throw new ArgumentNullException(nameof(values));
 
-		var setClauses = values.Keys.Select(k => $"[{k}] = @{k}");
-		var sqlBuilder = new StringBuilder($"UPDATE [{Name}] SET {setClauses.JoinCommaSpace()}");
-
 		var parameters = new Dictionary<string, object>(values);
-		BuildWhereClause(sqlBuilder, parameters, filters);
+		var whereClause = BuildWhereClause(parameters, filters);
 
-		await ExecuteAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
+		var sql = Dialect.GenerateUpdate(Name, values.Keys, whereClause);
+
+		await ExecuteAsync(sql, parameters, cancellationToken).NoWait();
 	}
 
 	public async Task<int> DeleteAsync(IEnumerable<FilterCondition> filters, CancellationToken cancellationToken)
 	{
-		var sqlBuilder = new StringBuilder($"DELETE FROM [{Name}]");
 		var parameters = new Dictionary<string, object>();
+		var whereClause = BuildWhereClause(parameters, filters);
 
-		BuildWhereClause(sqlBuilder, parameters, filters);
+		var sql = Dialect.GenerateDelete(Name, whereClause);
 
-		return await ExecuteAsync(sqlBuilder.ToString(), parameters, cancellationToken).NoWait();
+		return await ExecuteAsync(sql, parameters, cancellationToken).NoWait();
 	}
 
 	public async Task UpsertAsync(IDictionary<string, object> values, IEnumerable<string> keyColumns, CancellationToken cancellationToken)
@@ -244,29 +242,9 @@ internal class AdoTable : IDatabaseTable
 		if (keys.Count == 0)
 			throw new ArgumentException("At least one key column is required.", nameof(keyColumns));
 
-		var allColumns = values.Keys.ToList();
-		var updateColumns = allColumns.Except(keys).ToList();
+		var sql = Dialect.GenerateUpsert(Name, values.Keys, keys);
 
-		// Build MERGE statement
-		var sqlBuilder = new StringBuilder();
-		sqlBuilder.Append($"MERGE [{Name}] AS target USING (SELECT ");
-		sqlBuilder.Append(keys.Select(k => $"@{k} AS [{k}]").JoinCommaSpace());
-		sqlBuilder.Append(") AS source ON ");
-		sqlBuilder.Append(keys.Select(k => $"target.[{k}] = source.[{k}]").Join(" AND "));
-
-		if (updateColumns.Count > 0)
-		{
-			sqlBuilder.Append(" WHEN MATCHED THEN UPDATE SET ");
-			sqlBuilder.Append(updateColumns.Select(c => $"[{c}] = @{c}").JoinCommaSpace());
-		}
-
-		sqlBuilder.Append(" WHEN NOT MATCHED THEN INSERT (");
-		sqlBuilder.Append(allColumns.Select(c => $"[{c}]").JoinCommaSpace());
-		sqlBuilder.Append(") VALUES (");
-		sqlBuilder.Append(allColumns.Select(c => $"@{c}").JoinCommaSpace());
-		sqlBuilder.Append(");");
-
-		await ExecuteAsync(sqlBuilder.ToString(), values, cancellationToken).NoWait();
+		await ExecuteAsync(sql, values, cancellationToken).NoWait();
 	}
 
 	#endregion
@@ -309,13 +287,12 @@ internal class AdoTable : IDatabaseTable
 		return results;
 	}
 
-	private static void BuildWhereClause(StringBuilder sqlBuilder, Dictionary<string, object> parameters, IEnumerable<FilterCondition> filters)
+	private string BuildWhereClause(Dictionary<string, object> parameters, IEnumerable<FilterCondition> filters)
 	{
 		var filterList = filters?.ToList();
 		if (filterList == null || filterList.Count == 0)
-			return;
+			return null;
 
-		sqlBuilder.Append(" WHERE ");
 		var conditions = new List<string>();
 		var paramIndex = 0;
 
@@ -323,62 +300,44 @@ internal class AdoTable : IDatabaseTable
 		{
 			var paramName = $"p{paramIndex++}";
 
-			var op = filter.Operator switch
-			{
-				ComparisonOperator.Equal => "=",
-				ComparisonOperator.NotEqual => "<>",
-				ComparisonOperator.Greater => ">",
-				ComparisonOperator.GreaterOrEqual => ">=",
-				ComparisonOperator.Less => "<",
-				ComparisonOperator.LessOrEqual => "<=",
-				ComparisonOperator.In => "IN",
-				ComparisonOperator.Like => "LIKE",
-				_ => "=",
-			};
-
 			if (filter.Operator == ComparisonOperator.In && filter.Value is System.Collections.IEnumerable enumerable && filter.Value is not string)
 			{
-				var values = new List<string>();
+				var paramNames = new List<string>();
 				var idx = 0;
 				foreach (var val in enumerable)
 				{
 					var inParamName = $"{paramName}_{idx++}";
-					values.Add($"@{inParamName}");
+					paramNames.Add(inParamName);
 					parameters[inParamName] = val;
 				}
-				conditions.Add($"[{filter.Column}] IN ({values.JoinCommaSpace()})");
+
+				conditions.Add(Dialect.BuildInCondition(filter.Column, paramNames));
 			}
 			else
 			{
-				conditions.Add($"[{filter.Column}] {op} @{paramName}");
+				conditions.Add(Dialect.BuildCondition(filter.Column, filter.Operator, paramName));
 				parameters[paramName] = filter.Value;
 			}
 		}
 
-		sqlBuilder.Append(conditions.Join(" AND "));
+		return conditions.JoinAnd();
 	}
 
-	private static void BuildOrderByClause(StringBuilder sqlBuilder, IEnumerable<OrderByCondition> orderBy)
+	private string BuildOrderByClause(IEnumerable<OrderByCondition> orderBy)
 	{
 		var orderList = orderBy?.ToList();
 		if (orderList == null || orderList.Count == 0)
-			return;
+			return null;
 
-		var orderClauses = orderList.Select(o => o.Descending ? $"[{o.Column}] DESC" : $"[{o.Column}] ASC");
-		sqlBuilder.Append($" ORDER BY {orderClauses.JoinCommaSpace()}");
+		var orderClauses = orderList.Select(o =>
+			o.Descending
+				? $"{Dialect.QuoteIdentifier(o.Column)} DESC"
+				: $"{Dialect.QuoteIdentifier(o.Column)} ASC");
+
+		return orderClauses.JoinCommaSpace();
 	}
 
-	private static void BuildPaginationClause(StringBuilder sqlBuilder, long? skip, long? take)
-	{
-		if (skip.HasValue || take.HasValue)
-		{
-			sqlBuilder.Append($" OFFSET {skip ?? 0} ROWS");
-			if (take.HasValue)
-				sqlBuilder.Append($" FETCH NEXT {take.Value} ROWS ONLY");
-		}
-	}
-
-	private static void AddParameters(DbCommand cmd, IDictionary<string, object> parameters)
+	private void AddParameters(DbCommand cmd, IDictionary<string, object> parameters)
 	{
 		if (parameters == null)
 			return;
@@ -386,34 +345,10 @@ internal class AdoTable : IDatabaseTable
 		foreach (var kv in parameters)
 		{
 			var param = cmd.CreateParameter();
-			param.ParameterName = $"@{kv.Key}";
-			param.Value = kv.Value ?? DBNull.Value;
+			param.ParameterName = Dialect.ParameterPrefix + kv.Key;
+			param.Value = Dialect.ConvertToDbValue(kv.Value, kv.Value?.GetType() ?? typeof(object));
 			cmd.Parameters.Add(param);
 		}
-	}
-
-	private static string MapTypeToSql(Type type)
-	{
-		var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-
-		return Type.GetTypeCode(underlyingType) switch
-		{
-			TypeCode.Boolean => "BIT",
-			TypeCode.Byte => "TINYINT",
-			TypeCode.Int16 => "SMALLINT",
-			TypeCode.Int32 => "INT",
-			TypeCode.Int64 => "BIGINT",
-			TypeCode.Single => "REAL",
-			TypeCode.Double => "FLOAT",
-			TypeCode.Decimal => "DECIMAL(18,4)",
-			TypeCode.DateTime => "DATETIME2",
-			TypeCode.String => "NVARCHAR(MAX)",
-			_ when underlyingType == typeof(Guid) => "UNIQUEIDENTIFIER",
-			_ when underlyingType == typeof(byte[]) => "VARBINARY(MAX)",
-			_ when underlyingType == typeof(DateTimeOffset) => "DATETIMEOFFSET",
-			_ when underlyingType == typeof(TimeSpan) => "BIGINT",
-			_ => "NVARCHAR(MAX)",
-		};
 	}
 
 	#endregion
@@ -430,12 +365,19 @@ internal class AdoConnection : Disposable, IDatabaseConnection
 	public DbConnection Connection { get; }
 
 	/// <summary>
+	/// Gets the SQL dialect for this connection.
+	/// </summary>
+	public ISqlDialect Dialect { get; }
+
+	/// <summary>
 	/// Creates a new ADO.NET connection wrapper.
 	/// </summary>
 	/// <param name="connection">Database connection.</param>
-	public AdoConnection(DbConnection connection)
+	/// <param name="dialect">SQL dialect.</param>
+	public AdoConnection(DbConnection connection, ISqlDialect dialect)
 	{
 		Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+		Dialect = dialect ?? throw new ArgumentNullException(nameof(dialect));
 	}
 
 	/// <summary>
