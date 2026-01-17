@@ -160,4 +160,16 @@ public class UrlTests
         url1.QueryString.Equals(url2.QueryString).AssertTrue();
         (url1.QueryString == url2.QueryString).AssertTrue();
     }
+
+	/// <summary>
+	/// Verifies that QueryString handles duplicate keys in URLs.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_ShouldHandleDuplicateKeys()
+	{
+		// URLs can have duplicate query parameters like ?a=1&a=2
+		// This should not throw ArgumentException
+		var url = new Url("https://example.com?foo=1&foo=2");
+		url.ToString().AssertEqual("https://example.com/?foo=1&foo=2");
+	}
 }
