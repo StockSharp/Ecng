@@ -43,6 +43,7 @@
     <ProjectReference Include="..\Linq\Linq.csproj" />
     <ProjectReference Include="..\Licensing\Licensing.csproj" />
     <ProjectReference Include="..\Net.Udp\Net.Udp.csproj" />
+    <ProjectReference Include="..\StringSearch\StringSearch.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
     <ProjectReference Include="..\Nuget\Nuget.csproj" />
