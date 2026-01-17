@@ -129,30 +129,31 @@ public static class AsyncHelper
 		if (tasks is null)
 			throw new ArgumentNullException(nameof(tasks));
 
-		// We don't allocate the list if no task throws
-		List<Exception> exceptions = null;
-
+		// Convert ValueTasks to Tasks for parallel execution
 		var source = tasks.ToArray();
-
-		var results = new T[source.Length];
+		var taskArray = new Task<T>[source.Length];
 
 		for (var i = 0; i < source.Length; i++)
+			taskArray[i] = source[i].AsTask();
+
+		// Wait for all tasks in parallel
+		try
 		{
-			try
-			{
-				results[i] = await source[i].NoWait();
-			}
-			catch (Exception ex)
-			{
-				exceptions ??= new List<Exception>(source.Length);
-				exceptions.Add(ex);
-			}
+			return await Task.WhenAll(taskArray).NoWait();
 		}
+		catch
+		{
+			// Collect all exceptions from failed tasks
+			var exceptions = taskArray
+				.Where(t => t.IsFaulted)
+				.SelectMany(t => t.Exception?.InnerExceptions ?? [])
+				.ToList();
 
-		if (exceptions is not null)
-			throw new AggregateException(exceptions);
+			if (exceptions.Count > 0)
+				throw new AggregateException(exceptions);
 
-		return results;
+			throw;
+		}
 	}
 
 	/// <summary>
@@ -167,26 +168,31 @@ public static class AsyncHelper
 		if (tasks is null)
 			throw new ArgumentNullException(nameof(tasks));
 
-		// We don't allocate the list if no task throws
-		List<Exception> exceptions = null;
-
+		// Convert ValueTasks to Tasks for parallel execution
 		var source = tasks.ToArray();
+		var taskArray = new Task[source.Length];
 
 		for (var i = 0; i < source.Length; i++)
-		{
-			try
-			{
-				await source[i].NoWait();
-			}
-			catch (Exception ex)
-			{
-				exceptions ??= new List<Exception>(source.Length);
-				exceptions.Add(ex);
-			}
-		}
+			taskArray[i] = source[i].AsTask();
 
-		if (exceptions is not null)
-			throw new AggregateException(exceptions);
+		// Wait for all tasks in parallel
+		try
+		{
+			await Task.WhenAll(taskArray).NoWait();
+		}
+		catch
+		{
+			// Collect all exceptions from failed tasks
+			var exceptions = taskArray
+				.Where(t => t.IsFaulted)
+				.SelectMany(t => t.Exception?.InnerExceptions ?? [])
+				.ToList();
+
+			if (exceptions.Count > 0)
+				throw new AggregateException(exceptions);
+
+			throw;
+		}
 	}
 
 	/// <summary>

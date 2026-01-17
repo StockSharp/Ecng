@@ -188,4 +188,61 @@ public class BitArrayTest
 		var reader = new BitArrayReader(stream);
 		reader.ReadDecimal().AssertEqual(decimal.MinValue);
 	}
+
+	/// <summary>
+	/// BUG: BitArrayWriter.WriteInt doesn't handle int.MinValue.
+	/// Negating int.MinValue overflows back to int.MinValue (negative).
+	/// </summary>
+	[TestMethod]
+	public void WriteInt_ShouldHandleMinValue()
+	{
+		using var stream = new MemoryStream();
+
+		// This should not corrupt data or throw
+		try
+		{
+			using (var writer = new BitArrayWriter(stream))
+			{
+				writer.WriteInt(int.MinValue);
+			}
+
+			stream.Position = 0;
+			var reader = new BitArrayReader(stream);
+			var result = reader.ReadInt();
+
+			result.AssertEqual(int.MinValue, "int.MinValue should round-trip correctly");
+		}
+		catch (OverflowException)
+		{
+			Assert.Fail("WriteInt should handle int.MinValue without overflow");
+		}
+	}
+
+	/// <summary>
+	/// BUG: BitArrayWriter.WriteLong doesn't handle long.MinValue.
+	/// Math.Abs(long.MinValue) throws OverflowException.
+	/// </summary>
+	[TestMethod]
+	public void WriteLong_ShouldHandleMinValue()
+	{
+		using var stream = new MemoryStream();
+
+		try
+		{
+			using (var writer = new BitArrayWriter(stream))
+			{
+				writer.WriteLong(long.MinValue);
+			}
+
+			stream.Position = 0;
+			var reader = new BitArrayReader(stream);
+			var result = reader.ReadLong();
+
+			result.AssertEqual(long.MinValue, "long.MinValue should round-trip correctly");
+		}
+		catch (OverflowException)
+		{
+			Assert.Fail("WriteLong should handle long.MinValue without overflow");
+		}
+	}
 }

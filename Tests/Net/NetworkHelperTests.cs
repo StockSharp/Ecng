@@ -424,6 +424,29 @@ public class NetworkHelperTests : BaseTestClass
 		((string)null).IsHostPortAddress().AssertFalse();
 	}
 
+	/// <summary>
+	/// BUG: NetworkHelper.IsHostPortAddress doesn't handle IPv6 correctly.
+	/// Address "::1" is treated as host ":" with port 1.
+	/// </summary>
+	[TestMethod]
+	public void IsHostPortAddress_ShouldHandleIPv6()
+	{
+		// IPv6 localhost - "::1" should NOT be detected as host:port address
+		var ipv6Localhost = "::1";
+
+		var result = ipv6Localhost.IsHostPortAddress();
+
+		// ::1 is a valid IPv6 address, not a host:port
+		// The bug causes it to be parsed as host=":" port=1 (returns true)
+		// Correct behavior: should return false (it's an IPv6 address, not host:port)
+		result.AssertFalse($"IPv6 address '::1' should not be considered a host:port address");
+
+		// Additional IPv6 test cases
+		"::".IsHostPortAddress().AssertFalse("IPv6 '::' should not be host:port");
+		"2001:db8::1".IsHostPortAddress().AssertFalse("IPv6 '2001:db8::1' should not be host:port");
+		"fe80::1".IsHostPortAddress().AssertFalse("IPv6 'fe80::1' should not be host:port");
+	}
+
 	[TestMethod]
 	public void IsFileUriPath()
 	{
@@ -615,5 +638,26 @@ public class NetworkHelperTests : BaseTestClass
 	public void IsMulticastAddress_ThrowsOnNull()
 	{
 		Throws<ArgumentNullException>(() => ((IPAddress)null).IsMulticastAddress());
+	}
+
+	/// <summary>
+	/// BUG: NetworkHelper.IsLocalhost uses StartsWithIgnoreCase("localhost").
+	/// This means "localhost.evil.com" would be considered localhost - SECURITY BUG!
+	/// </summary>
+	[TestMethod]
+	public void IsLocalhost_ShouldNotMatchSubdomains()
+	{
+		var legitimateLocalhost = new Uri("http://localhost/path");
+		var localhostWithPort = new Uri("http://localhost:8080/path");
+		var maliciousUrl = new Uri("http://localhost.evil.com/path");
+		var anotherMalicious = new Uri("http://localhost-fake.com/path");
+
+		// These should be localhost
+		legitimateLocalhost.IsLocalhost().AssertTrue("localhost should be localhost");
+		localhostWithPort.IsLocalhost().AssertTrue("localhost:8080 should be localhost");
+
+		// These should NOT be localhost - if they are, it's a security bug!
+		maliciousUrl.IsLocalhost().AssertFalse("localhost.evil.com should NOT be considered localhost!");
+		anotherMalicious.IsLocalhost().AssertFalse("localhost-fake.com should NOT be considered localhost!");
 	}
 }

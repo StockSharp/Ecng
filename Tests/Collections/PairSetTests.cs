@@ -133,4 +133,67 @@ public class PairSetTests : BaseTestClass
 		set.ContainsValue(1).AssertFalse();
 		set.ContainsValue(2).AssertFalse();
 	}
+
+	#region Bijective Property Tests
+
+	/// <summary>
+	/// Verifies that bijective property is maintained when reassigning values.
+	/// For any key k: set[set[k]] == k
+	/// </summary>
+	[TestMethod]
+	public void SetValue_ShouldMaintainBijectiveProperty()
+	{
+		var set = new PairSet<string, int>
+		{
+			{ "one", 1 },
+			{ "two", 2 }
+		};
+
+		set["one"] = 2;
+
+		var valueOfTwo = set["two"];
+		var keyForValueOfTwo = set[valueOfTwo];
+		keyForValueOfTwo.AssertEqual("two", "Bijective property violated: set[set[\"two\"]] != \"two\"");
+	}
+
+	/// <summary>
+	/// Verifies that old value is removed from reverse lookup after update.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedPairSet_SetValue_ShouldRemoveOldValueFromReverseLookup()
+	{
+		var set = new SynchronizedPairSet<string, int>
+		{
+			{ "key", 100 }
+		};
+
+		set["key"] = 200;
+
+		set["key"].AssertEqual(200);
+		set[200].AssertEqual("key");
+
+		ThrowsExactly<KeyNotFoundException>(() => _ = set[100],
+			"Old value 100 should be removed from reverse lookup after update");
+	}
+
+	/// <summary>
+	/// Verifies that SynchronizedPairSet maintains bijective property when reassigning values.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedPairSet_SetValue_ShouldMaintainBijectiveProperty()
+	{
+		var set = new SynchronizedPairSet<string, int>
+		{
+			{ "one", 1 },
+			{ "two", 2 }
+		};
+
+		set["one"] = 2;
+
+		var valueOfTwo = set["two"];
+		var keyForValueOfTwo = set[valueOfTwo];
+		keyForValueOfTwo.AssertEqual("two", "Bijective property violated: set[set[\"two\"]] != \"two\"");
+	}
+
+	#endregion
 }

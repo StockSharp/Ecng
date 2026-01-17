@@ -330,6 +330,28 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 		second.AssertEqual(line2);
 	}
 
+	/// <summary>
+	/// Verifies that empty lines are handled correctly and do not terminate reading.
+	/// </summary>
+	[TestMethod]
+	public async Task EmptyLine_ShouldNotBeEOF()
+	{
+		var csv = "A\n\nB";
+		using var reader = new FastCsvReader(csv, "\n");
+
+		// First line
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		reader.ReadString().AssertEqual("A");
+
+		// Empty line - should return true with 0 or 1 empty column, NOT false
+		var hasEmptyLine = await reader.NextLineAsync(CancellationToken);
+		// Note: This might legitimately return false for empty lines - need to verify intended behavior
+
+		// Third line - this is the critical test
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue("Should be able to read line after empty line");
+		reader.ReadString().AssertEqual("B");
+	}
+
 	private Task AssertAsync(string value, int lineCount, Action<int, FastCsvReader> assertLine)
 	{
 		return Do.InvariantAsync(async () =>

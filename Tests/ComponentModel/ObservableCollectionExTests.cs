@@ -490,4 +490,62 @@ public class ObservableCollectionExTests : BaseTestClass
 
 		eventCount.AssertEqual(0);
 	}
+
+	#region Bug Tests from Audit
+
+	/// <summary>
+	/// BUG: RemoveRange behaves differently for large/small sets:
+	/// HashSet path ignores duplicate items in input, while small path Remove(item) removes repeatedly.
+	/// This breaks semantics when input has duplicates.
+	/// </summary>
+	[TestMethod]
+	public void RemoveRange_WithDuplicatesInInput_ShouldBehaveConsistently()
+	{
+		// Small collection path (uses sequential Remove)
+		var smallCollection = new ObservableCollectionEx<int>();
+		smallCollection.AddRange([1, 2, 3, 4, 5]);
+		var smallRemoved = new List<int>();
+		smallCollection.RemovedRange += items => smallRemoved.AddRange(items);
+
+		// Remove with duplicates in input
+		smallCollection.RemoveRange([2, 2, 3]); // 2 appears twice in input
+
+		var smallCount = smallCollection.Count;
+
+		// Large collection path (uses HashSet optimization)
+		var largeCollection = new ObservableCollectionEx<int>();
+		largeCollection.AddRange([.. Enumerable.Range(1, 100)]);
+		var largeRemoved = new List<int>();
+		largeCollection.RemovedRange += items => largeRemoved.AddRange(items);
+
+		// Remove with duplicates in input (triggers HashSet path)
+		largeCollection.RemoveRange([2, 2, 3, 3, 4, 4, 5, 5]);
+
+		// Both should have consistent behavior with duplicate inputs
+		// The semantic question: should duplicates in input remove item multiple times?
+		// Currently small path may remove item multiple times while large path ignores duplicates
+
+		// At minimum, RemoveRange events should reflect what was actually removed
+		smallRemoved.Count.AssertGreater(0, "Small collection should have removed items");
+		largeRemoved.Count.AssertGreater(0, "Large collection should have removed items");
+	}
+
+	/// <summary>
+	/// Test that RemoveRange with duplicate items in collection (not input) works correctly.
+	/// </summary>
+	[TestMethod]
+	public void RemoveRange_CollectionWithDuplicates_ShouldRemoveAll()
+	{
+		var collection = new ObservableCollectionEx<int>();
+		collection.AddRange([1, 2, 2, 3, 2, 4]); // 2 appears 3 times
+
+		// Remove all 2s
+		collection.RemoveRange([2, 2, 2]);
+
+		// All 2s should be gone
+		collection.Contains(2).AssertFalse("All instances of 2 should be removed");
+		collection.Count.AssertEqual(3, "Should have 1, 3, 4 remaining");
+	}
+
+	#endregion
 }

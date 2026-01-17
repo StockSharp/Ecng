@@ -490,4 +490,70 @@ public class AsyncHelperTests : BaseTestClass
 		Action<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int> action = null;
 		Throws<ArgumentNullException>(() => action.ToAsync());
 	}
+
+	#region Bug reproduction tests
+
+	/// <summary>
+	/// Verifies that first handler call happens after initialDelay, not after initialDelay + interval.
+	/// </summary>
+	[TestMethod]
+	public async Task StartPeriodicTimer_FirstCallShouldBeAfterInitialDelay_NotAfterInitialPlusInterval()
+	{
+		var count = 0;
+		var sw = Stopwatch.StartNew();
+		var firstCallTime = TimeSpan.Zero;
+		using var cts = new CancellationTokenSource();
+
+		var initialDelay = TimeSpan.FromMilliseconds(100);
+		var interval = TimeSpan.FromMilliseconds(200);
+
+		var timerTask = AsyncHelper.StartPeriodicTimer(() =>
+		{
+			if (count == 0)
+				firstCallTime = sw.Elapsed;
+			count++;
+		}, initialDelay, interval, cts.Token);
+
+		await Task.Delay(500, CancellationToken); // Wait enough for at least one call
+		cts.Cancel();
+
+		try { await timerTask; }
+		catch (OperationCanceledException) { }
+
+		(count > 0).AssertTrue($"Handler should have been called at least once, count={count}");
+
+		// First call should happen after ~100ms (initialDelay), not after ~300ms (initialDelay + interval)
+		firstCallTime.TotalMilliseconds.AssertLess(250, $"First call should be after initialDelay (~100ms), not after initialDelay+interval (~300ms). Actual: {firstCallTime.TotalMilliseconds}ms");
+	}
+
+	/// <summary>
+	/// Verifies that CatchHandle distinguishes real errors from cancellation.
+	/// Real exceptions should not be treated as cancellation even if token is cancelled.
+	/// </summary>
+	[TestMethod]
+	public async Task CatchHandle_ShouldDistinguishRealErrorsFromCancellation()
+	{
+		using var cts = new CancellationTokenSource();
+		cts.Cancel(); // Cancel before execution
+
+		var realError = new InvalidOperationException("Real error, not cancellation");
+		Exception caughtError = null;
+		var wasCancellation = false;
+
+		await AsyncHelper.CatchHandle(
+			() => Task.FromException(realError), // Throw real error
+			cts.Token,
+			e =>
+			{
+				caughtError = e;
+				wasCancellation = e is OperationCanceledException;
+			});
+
+		// The error handler should receive the real error, not treat it as cancellation
+		caughtError.AssertNotNull("Error should have been caught");
+		wasCancellation.AssertFalse("Real InvalidOperationException should not be treated as cancellation just because token is cancelled");
+		caughtError.AssertEqual(realError, "Should catch the actual exception thrown");
+	}
+
+	#endregion
 }

@@ -126,4 +126,35 @@ public class FastDateTimeParserTests : BaseTestClass
 			parser.ToString(dt).AssertEqual("2024-01-02 03:04:05.006");
 		});
 	}
+
+	/// <summary>
+	/// BUG: FastDateTimeParser:280 - Sign only applied to hours, not minutes.
+	/// For "-05:30" timezone, minutes should also be negative.
+	/// TimeSpan(-5, 30, 0) = -4:30, but should be -5:30.
+	/// </summary>
+	[TestMethod]
+	public void NegativeTimezone_ShouldApplySignToMinutes()
+	{
+		Do.Invariant(() =>
+		{
+			// Format with timezone offset that has non-zero minutes
+			var parser = new FastDateTimeParser("yyyy-MM-dd HH:mm:sszzz");
+
+			// India Standard Time is +05:30
+			var istTime = parser.ParseDto("2024-01-15 10:30:00+05:30");
+			istTime.Offset.AssertEqual(TimeSpan.FromHours(5.5), "IST +05:30 should be 5.5 hours offset");
+
+			// Nepal Time is +05:45
+			var nptTime = parser.ParseDto("2024-01-15 10:30:00+05:45");
+			nptTime.Offset.AssertEqual(TimeSpan.FromMinutes(345), "NPT +05:45 should be 345 minutes offset");
+
+			// Newfoundland Standard Time is -03:30
+			var nstTime = parser.ParseDto("2024-01-15 10:30:00-03:30");
+			nstTime.Offset.AssertEqual(TimeSpan.FromHours(-3.5), "NST -03:30 should be -3.5 hours offset");
+
+			// Another negative offset with minutes
+			var customTime = parser.ParseDto("2024-01-15 10:30:00-05:30");
+			customTime.Offset.AssertEqual(TimeSpan.FromHours(-5.5), "-05:30 should be -5.5 hours offset, not -4.5!");
+		});
+	}
 }

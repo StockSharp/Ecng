@@ -1289,4 +1289,54 @@ public class FileSystemTests : BaseTestClass
 
 	#endregion
 
+	#region Size limit tests
+
+	/// <summary>
+	/// Verifies that SetLength cannot bypass file system size limit.
+	/// </summary>
+	[TestMethod]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SizeLimit_ShouldNotBeBypassedViaSetLength(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+		fs.MaxSize = 100; // Set 100 byte limit
+
+		var file = Path.Combine(root, "test.bin");
+
+		// Try to bypass limit using SetLength
+		using (var stream = fs.OpenWrite(file))
+		{
+			// SetLength to value larger than MaxSize should throw IOException
+			ThrowsExactly<IOException>(() => stream.SetLength(200),
+				"SetLength exceeding MaxSize should throw IOException");
+		}
+	}
+
+	/// <summary>
+	/// Verifies that CopyFile respects MaxSize limit.
+	/// </summary>
+	[TestMethod]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void CopyFile_ShouldRespectMaxSize(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create a file first (within limit)
+		var sourceFile = Path.Combine(root, "source.bin");
+		var content = new byte[80];
+		using (var s = fs.OpenWrite(sourceFile))
+			s.Write(content, 0, content.Length);
+
+		// Now set MaxSize that would be exceeded by copying
+		fs.MaxSize = 100; // 80 (source) + 80 (copy) = 160 > 100
+
+		var destFile = Path.Combine(root, "dest.bin");
+
+		// CopyFile should throw when it would exceed MaxSize
+		ThrowsExactly<IOException>(() => fs.CopyFile(sourceFile, destFile, overwrite: true),
+			"CopyFile exceeding MaxSize should throw IOException");
+	}
+
+	#endregion
+
 }

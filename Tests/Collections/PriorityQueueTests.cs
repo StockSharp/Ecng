@@ -464,6 +464,33 @@ public class PriorityQueueTests : BaseTestClass
 		ThrowsExactly<ArgumentNullException>(() => pq.EnqueueRange(null));
 	}
 
+	/// <summary>
+	/// BUG: EnqueueRange with empty sequence creates Node with HasData=true.
+	/// This causes InvalidOperationException on Peek/Dequeue.
+	/// </summary>
+	[TestMethod]
+	public void EnqueueRange_EmptySequence_ShouldNotBreakQueue()
+	{
+		var pq = CreateQueue();
+
+		// Enqueue empty range - should not break queue
+		pq.EnqueueRange(1, Array.Empty<int>());
+
+		// Queue should remain empty and functional
+		pq.Count.AssertEqual(0, "Queue should be empty after enqueueing empty range");
+
+		// Peek should throw InvalidOperationException for empty queue, not crash
+		ThrowsExactly<InvalidOperationException>(() => pq.Peek());
+
+		// TryPeek should return false, not crash
+		pq.TryPeek(out _, out _).AssertFalse("TryPeek on empty queue should return false");
+
+		// Should still be able to use the queue
+		pq.Enqueue(1, 10);
+		pq.Count.AssertEqual(1);
+		pq.Peek().AssertEqual((1L, 10));
+	}
+
 	#endregion
 
 	#region ICollection interface

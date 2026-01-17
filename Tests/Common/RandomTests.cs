@@ -309,4 +309,26 @@ public class RandomTests : BaseTestClass
 		RandomGen.GetElement(source);
 		source.GetEnumeratorCalls.AssertEqual(1);
 	}
+
+	/// <summary>
+	/// BUG: RandomGen.GetInt(min, max) - int.MaxValue is unreachable.
+	/// Random.Next uses exclusive upper bound, but GetInt claims inclusive.
+	/// </summary>
+	[TestMethod]
+	public void GetInt_MaxValueShouldBeReachable()
+	{
+		// This is a probabilistic test - we try many times
+		var hitMax = false;
+		const int attempts = 1000000;
+
+		for (var i = 0; i < attempts && !hitMax; i++)
+		{
+			var value = RandomGen.GetInt(int.MaxValue - 1, int.MaxValue);
+			if (value == int.MaxValue)
+				hitMax = true;
+		}
+
+		// With truly inclusive bounds, probability of NOT hitting max in 1M tries is negligible
+		hitMax.AssertTrue("GetInt should be able to return int.MaxValue when it's the upper bound");
+	}
 }
