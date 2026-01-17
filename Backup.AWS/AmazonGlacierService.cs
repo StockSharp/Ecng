@@ -52,11 +52,30 @@ public class AmazonGlacierService : Disposable, IBackupService
 	/// <param name="secretKey">Secret.</param>
 	[CLSCompliant(false)]
 	public AmazonGlacierService(RegionEndpoint endpoint, string vaultName, string accessKey, string secretKey)
+		: this(endpoint, vaultName, new BasicAWSCredentials(accessKey, secretKey))
 	{
-		_credentials = new BasicAWSCredentials(accessKey, secretKey);
+	}
+
+	[CLSCompliant(false)]
+	public AmazonGlacierService(RegionEndpoint endpoint, string vaultName, AWSCredentials credentials)
+		: this(new AmazonGlacierClient(credentials, endpoint), endpoint, vaultName, credentials)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance with a custom <see cref="IAmazonGlacier"/> implementation.
+	/// </summary>
+	/// <param name="client">The Glacier client.</param>
+	/// <param name="endpoint">Region endpoint.</param>
+	/// <param name="vaultName">Vault name.</param>
+	/// <param name="credentials">Optional credentials.</param>
+	[CLSCompliant(false)]
+	public AmazonGlacierService(IAmazonGlacier client, RegionEndpoint endpoint, string vaultName, AWSCredentials credentials = null)
+	{
+		_client = client ?? throw new ArgumentNullException(nameof(client));
 		_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 		_vaultName = vaultName.ThrowIfEmpty(nameof(vaultName));
-		_client = new AmazonGlacierClient(_credentials, _endpoint);
+		_credentials = credentials;
 	}
 
 	private TimeSpan _jobTimeOut = TimeSpan.FromHours(6);
