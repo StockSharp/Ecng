@@ -19,6 +19,9 @@ public class SQLiteDialect : SqlDialectBase
 	private SQLiteDialect() { }
 
 	/// <inheritdoc />
+	public override int MaxParameters => 900; // SQLite default limit is 999, use 900 for safety
+
+	/// <inheritdoc />
 	public override string ParameterPrefix => "@";
 
 	/// <inheritdoc />

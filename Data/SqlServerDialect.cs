@@ -19,6 +19,9 @@ public class SqlServerDialect : SqlDialectBase
 	private SqlServerDialect() { }
 
 	/// <inheritdoc />
+	public override int MaxParameters => 2000; // SQL Server limit is 2100, use 2000 for safety
+
+	/// <inheritdoc />
 	public override string ParameterPrefix => "@";
 
 	/// <inheritdoc />

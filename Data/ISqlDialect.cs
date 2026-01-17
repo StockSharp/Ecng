@@ -12,6 +12,14 @@ using Ecng.Common;
 public interface ISqlDialect
 {
 	/// <summary>
+	/// Gets the maximum number of parameters allowed in a single query.
+	/// </summary>
+	/// <remarks>
+	/// SQL Server: 2100, SQLite: 999, PostgreSQL: 65535, MySQL: 65535.
+	/// </remarks>
+	int MaxParameters { get; }
+
+	/// <summary>
 	/// Gets the parameter prefix (e.g., "@" for SQL Server, "$" for PostgreSQL).
 	/// </summary>
 	string ParameterPrefix { get; }

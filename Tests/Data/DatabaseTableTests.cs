@@ -7,6 +7,7 @@ using Ecng.Common;
 using Ecng.Data;
 
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 
 [TestClass]
 [TestCategory("Integration")]
@@ -14,21 +15,49 @@ using Microsoft.Data.SqlClient;
 public class DatabaseTableIntegrationTests : BaseTestClass
 {
 	private const string _testTableName = "ecng_table_test";
+	private static string _sqliteDbPath;
 
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
 		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SqlServer, SqlClientFactory.Instance);
+		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SQLite, SqliteFactory.Instance);
+
+		_sqliteDbPath = Path.Combine(Path.GetTempPath(), "ecng_integration_test.db");
+		if (File.Exists(_sqliteDbPath))
+			File.Delete(_sqliteDbPath);
+	}
+
+	[ClassCleanup]
+	public static void ClassCleanup()
+	{
+		if (File.Exists(_sqliteDbPath))
+		{
+			try { File.Delete(_sqliteDbPath); }
+			catch { /* ignore */ }
+		}
+	}
+
+	private static DatabaseConnectionPair GetConnectionPair(string provider)
+	{
+		return provider switch
+		{
+			DatabaseProviderRegistry.SqlServer => new()
+			{
+				Provider = DatabaseProviderRegistry.SqlServer,
+				ConnectionString = GetSecret("DB_CONNECTION_STRING"),
+			},
+			DatabaseProviderRegistry.SQLite => new()
+			{
+				Provider = DatabaseProviderRegistry.SQLite,
+				ConnectionString = $"Data Source={_sqliteDbPath}",
+			},
+			_ => throw new ArgumentException($"Unknown provider: {provider}"),
+		};
 	}
 
 	private static DatabaseConnectionPair GetSqlServerConnectionPair()
-	{
-		return new()
-		{
-			Provider = DatabaseProviderRegistry.SqlServer,
-			ConnectionString = GetSecret("DB_CONNECTION_STRING"),
-		};
-	}
+		=> GetConnectionPair(DatabaseProviderRegistry.SqlServer);
 
 	private static IDictionary<string, object> ToDict(int id, string name)
 		=> new Dictionary<string, object> { ["Id"] = id, ["Name"] = name };
@@ -501,6 +530,65 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetSqlServerConnectionPair());
 		Throws<ArgumentNullException>(() => provider.GetTable(connection, ""));
+	}
+
+	#endregion
+
+	#region Batch Size Tests
+
+	/// <summary>
+	/// Tests bulk insert with many columns to verify batch size calculation respects parameter limits.
+	/// SQL Server: 2100 params, SQLite: 999 params.
+	/// With 100 columns: SQL Server = 20 rows/batch, SQLite = 9 rows/batch.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Table_BulkInsert_ManyColumns_Success(string providerName)
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		var table = provider.GetTable(connection, _testTableName + "_manycols");
+
+		// Setup - create table with 100 columns
+		const int columnCount = 100;
+		var columns = new Dictionary<string, Type> { ["Id"] = typeof(int) };
+		for (var i = 1; i < columnCount; i++)
+			columns[$"Col{i}"] = typeof(string);
+
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(columns, CancellationToken);
+
+		// Create 100 rows with all columns filled
+		// This will test multiple batches due to parameter limits
+		var rows = Enumerable.Range(1, 100)
+			.Select(i =>
+			{
+				var row = new Dictionary<string, object> { ["Id"] = i };
+				for (var c = 1; c < columnCount; c++)
+					row[$"Col{c}"] = $"V{i}_{c}";
+				return (IDictionary<string, object>)row;
+			})
+			.ToList();
+
+		var sw = Stopwatch.StartNew();
+		await table.BulkInsertAsync(rows, CancellationToken);
+		sw.Stop();
+
+		Console.WriteLine($"{providerName}: Inserted 100 rows with {columnCount} columns in {sw.ElapsedMilliseconds}ms");
+
+		// Verify count
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		results.Count().AssertEqual(100);
+
+		// Verify data integrity
+		var resultsList = results.ToList();
+		Convert.ToInt32(resultsList[0]["Id"]).AssertEqual(1);
+		resultsList[0]["Col1"].AssertEqual("V1_1");
+		resultsList[0]["Col99"].AssertEqual("V1_99");
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
 	}
 
 	#endregion

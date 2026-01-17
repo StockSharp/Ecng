@@ -13,6 +13,9 @@ using Ecng.Common;
 public abstract class SqlDialectBase : ISqlDialect
 {
 	/// <inheritdoc />
+	public abstract int MaxParameters { get; }
+
+	/// <inheritdoc />
 	public abstract string ParameterPrefix { get; }
 
 	/// <inheritdoc />

@@ -131,8 +131,6 @@ internal class AdoTable : IDatabaseTable
 		await ExecuteAsync(sql, values, cancellationToken).NoWait();
 	}
 
-	private const int _batchSize = 100;
-
 	public async Task BulkInsertAsync(IEnumerable<IDictionary<string, object>> rows, CancellationToken cancellationToken)
 	{
 		if (rows is null)
@@ -148,15 +146,18 @@ internal class AdoTable : IDatabaseTable
 		var columns = rowsList[0].Keys.ToList();
 		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
+		// Calculate batch size based on number of columns to stay within parameter limit
+		var batchSize = Math.Max(1, Dialect.MaxParameters / columns.Count);
+
 		using var transaction = _connection.Connection.BeginTransaction();
 
 		try
 		{
-			for (var i = 0; i < rowsList.Count; i += _batchSize)
+			for (var i = 0; i < rowsList.Count; i += batchSize)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
-				var batch = rowsList.Skip(i).Take(_batchSize).ToList();
+				var batch = rowsList.Skip(i).Take(batchSize).ToList();
 
 				using var cmd = _connection.Connection.CreateCommand();
 				cmd.Transaction = transaction;
