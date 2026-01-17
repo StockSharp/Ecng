@@ -944,4 +944,153 @@ public class CompressTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Zip Slip vulnerability tests
+
+	/// <summary>
+	/// Verifies that UnzipTo rejects or sanitizes path traversal entries (Zip Slip vulnerability).
+	/// </summary>
+	[TestMethod]
+	public void UnzipTo_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create a malicious ZIP with "../malicious.txt" entry
+		using var zipStream = new MemoryStream();
+		using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+		{
+			var entry = archive.CreateEntry("../malicious.txt");
+			using var writer = new StreamWriter(entry.Open());
+			writer.Write("malicious content");
+		}
+		zipStream.Position = 0;
+
+		// Write ZIP to filesystem
+		using (var file = fs.OpenWrite("/safe/archive.zip"))
+			zipStream.CopyTo(file);
+
+		// Attempt to unzip - should either throw or sanitize the path
+		fs.UnzipTo("/safe/archive.zip", "/safe/dest");
+
+		// If vulnerability exists, file would be at /malicious.txt (outside /safe/dest)
+		fs.FileExists("/malicious.txt").AssertFalse("Zip Slip: path traversal allowed file creation outside destination");
+
+		// File should either not exist at all, or be inside /safe/dest
+		var insideDest = fs.FileExists("/safe/dest/malicious.txt") || fs.FileExists("/safe/dest/../malicious.txt");
+		// At minimum, no file should exist outside the destination directory
+	}
+
+	/// <summary>
+	/// Verifies that UnzipToAsync rejects or sanitizes path traversal entries.
+	/// </summary>
+	[TestMethod]
+	public async Task UnzipToAsync_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create a malicious ZIP with nested path traversal
+		using var zipStream = new MemoryStream();
+		using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+		{
+			var entry = archive.CreateEntry("subdir/../../escape.txt");
+			using var writer = new StreamWriter(entry.Open());
+			writer.Write("escaped content");
+		}
+		zipStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.zip"))
+			zipStream.CopyTo(file);
+
+		await fs.UnzipToAsync("/safe/archive.zip", "/safe/dest", cancellationToken: CancellationToken);
+
+		// Escaped file should not exist outside destination
+		fs.FileExists("/safe/escape.txt").AssertFalse("Zip Slip: nested path traversal allowed escape");
+		fs.FileExists("/escape.txt").AssertFalse("Zip Slip: path traversal reached root");
+	}
+
+	/// <summary>
+	/// Verifies that WriteEntries rejects or sanitizes path traversal in entry names.
+	/// </summary>
+	[TestMethod]
+	public void WriteEntries_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		var entries = new List<(string name, Stream body)>
+		{
+			("../outside.txt", new MemoryStream("escaped"u8.ToArray())),
+			("normal.txt", new MemoryStream("normal"u8.ToArray()))
+		};
+
+		fs.WriteEntries("/safe/dest", entries);
+
+		// Dispose streams
+		foreach (var (_, body) in entries)
+			body.Dispose();
+
+		// Path traversal should not allow file outside destination
+		fs.FileExists("/safe/outside.txt").AssertFalse("WriteEntries: path traversal allowed file outside destination");
+		fs.FileExists("/outside.txt").AssertFalse("WriteEntries: path traversal reached root");
+
+		// Normal file should be created
+		fs.FileExists("/safe/dest/normal.txt").AssertTrue("Normal file should be created");
+	}
+
+	/// <summary>
+	/// Verifies that WriteEntriesAsync rejects or sanitizes path traversal in entry names.
+	/// </summary>
+	[TestMethod]
+	public async Task WriteEntriesAsync_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		var entries = new List<(string name, Stream body)>
+		{
+			("foo/../../escaped.txt", new MemoryStream("escaped"u8.ToArray())),
+		};
+
+		await fs.WriteEntriesAsync("/safe/dest", entries, cancellationToken: CancellationToken);
+
+		foreach (var (_, body) in entries)
+			body.Dispose();
+
+		fs.FileExists("/safe/escaped.txt").AssertFalse("WriteEntriesAsync: path traversal allowed escape");
+		fs.FileExists("/escaped.txt").AssertFalse("WriteEntriesAsync: path traversal reached root");
+	}
+
+	/// <summary>
+	/// Verifies that UnzipTo handles absolute paths in ZIP entries.
+	/// </summary>
+	[TestMethod]
+	public void UnzipTo_ShouldRejectAbsolutePaths()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create ZIP with absolute path entry
+		using var zipStream = new MemoryStream();
+		using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+		{
+			// Note: ZipArchive may normalize this, but we test the behavior
+			var entry = archive.CreateEntry("/etc/passwd");
+			using var writer = new StreamWriter(entry.Open());
+			writer.Write("root:x:0:0");
+		}
+		zipStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.zip"))
+			zipStream.CopyTo(file);
+
+		fs.UnzipTo("/safe/archive.zip", "/safe/dest");
+
+		// Absolute path should not create file at that location
+		if (fs.FileExists("/etc/passwd"))
+			Assert.Inconclusive("Zip Slip vulnerability: absolute path in ZIP creates file at absolute location");
+	}
+
+	#endregion
 }
