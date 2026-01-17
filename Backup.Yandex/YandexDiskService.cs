@@ -27,11 +27,17 @@ public class YandexDiskService : Disposable, IBackupService
 	/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 	/// </summary>
 	public YandexDiskService(SecureString token)
+		: this(new DiskHttpApi(token.IsEmpty() ? throw new ArgumentNullException(nameof(token)) : token.UnSecure()))
 	{
-		if (token.IsEmpty())
-			throw new ArgumentNullException(nameof(token));
+	}
 
-		_client = new DiskHttpApi(token.UnSecure());
+	/// <summary>
+	/// Initializes a new instance with a custom <see cref="IDiskApi"/> implementation.
+	/// </summary>
+	/// <param name="client">The Yandex.Disk client.</param>
+	public YandexDiskService(IDiskApi client)
+	{
+		_client = client ?? throw new ArgumentNullException(nameof(client));
 	}
 
 	/// <inheritdoc />
