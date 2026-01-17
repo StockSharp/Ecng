@@ -192,6 +192,22 @@ public class StringTests : BaseTestClass
 		ThrowsExactly<ArgumentOutOfRangeException>(() => "abcdef".Reduce(0, "..."));
 	}
 
+	/// <summary>
+	/// Verifies that Reduce handles count greater than string length gracefully.
+	/// Should return original string or clamp, not throw.
+	/// </summary>
+	[TestMethod]
+	public void Reduce_CountGreaterThanLength_ShouldNotThrow()
+	{
+		var str = "short";
+
+		// Reduce with count greater than string length should not throw
+		// and should return original string or clamp gracefully
+		var result = str.Reduce(100, "...");
+		// If no exception, the result should be at most the original string
+		(result.Length <= str.Length + 3).AssertTrue($"Reduce result '{result}' should be reasonable");
+	}
+
 	[TestMethod]
 	public void SplitBySepAndVariants()
 	{
@@ -697,5 +713,26 @@ public class StringTests : BaseTestClass
 		// ASCII
 		ReadOnlySpan<byte> asciiBytes = str.ASCII();
 		asciiBytes.ASCII().AssertEqual(str);
+	}
+
+	/// <summary>
+	/// Verifies that DictionarySourceEx handles different key types correctly.
+	/// The key cache should consider the dictionary key type.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_ShouldHandleDifferentKeyTypes()
+	{
+		// First use with int key
+		var intDict = new Dictionary<int, string> { { 123, "int-value" } };
+		var result1 = "{123}".PutEx(intDict);
+		result1.AssertEqual("int-value");
+
+		// Then use same selector with string key
+		var stringDict = new Dictionary<string, string> { { "123", "string-value" } };
+		var result2 = "{123}".PutEx(stringDict);
+
+		// Should return "string-value", not fail or return "int-value"
+		result2.AssertEqual("string-value",
+			"Same selector with different key types should work independently");
 	}
 }

@@ -585,5 +585,210 @@ public class DatabaseTableSQLiteTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region BulkInsert Edge Cases
+
+	/// <summary>
+	/// Verifies that BulkInsert with empty rows list does not throw.
+	/// </summary>
+	[TestMethod]
+	public async Task SQLite_BulkInsert_EmptyList_DoesNotThrow()
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetSQLiteConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// BulkInsert with empty list - should not throw
+		var emptyRows = new List<IDictionary<string, object>>();
+		await table.BulkInsertAsync(emptyRows, CancellationToken);
+
+		// Verify table is still empty
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		results.Count().AssertEqual(0);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	/// <summary>
+	/// Verifies that BulkInsert with empty first row is handled gracefully.
+	/// Empty first row should not cause DivideByZeroException.
+	/// </summary>
+	[TestMethod]
+	public async Task SQLite_BulkInsert_EmptyFirstRow_ShouldHandleGracefully()
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetSQLiteConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// BulkInsert with empty first row (no columns)
+		var rows = new List<IDictionary<string, object>>
+		{
+			new Dictionary<string, object>(), // Empty row - columns.Count = 0
+			ToDict(1, "Test")
+		};
+
+		// This should either:
+		// 1. Throw a clear ArgumentException (not DivideByZeroException)
+		// 2. Or skip empty rows and insert the rest
+		try
+		{
+			await table.BulkInsertAsync(rows, CancellationToken);
+			// If it succeeds, verify only non-empty row was inserted
+			var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+			(results.Count() <= 1).AssertTrue("Should insert at most the non-empty row");
+		}
+		catch (DivideByZeroException)
+		{
+			Assert.Fail("BulkInsert should not throw DivideByZeroException for empty first row");
+		}
+		catch (ArgumentException)
+		{
+			// This is acceptable - clear error about empty row
+		}
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	/// <summary>
+	/// Verifies that BulkInsert with inconsistent columns across rows is handled.
+	/// </summary>
+	[TestMethod]
+	public async Task SQLite_BulkInsert_InconsistentColumns_ShouldNotLoseData()
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetSQLiteConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup - create table with all columns that will be used
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+			["Extra"] = typeof(string),
+		}, CancellationToken);
+
+		// First row has Id, Name
+		// Second row has Id, Name, Extra
+		var rows = new List<IDictionary<string, object>>
+		{
+			new Dictionary<string, object> { ["Id"] = 1, ["Name"] = "First" },
+			new Dictionary<string, object> { ["Id"] = 2, ["Name"] = "Second", ["Extra"] = "ExtraData" }
+		};
+
+		await table.BulkInsertAsync(rows, CancellationToken);
+
+		// Verify data - the "Extra" column in second row might be lost due to the bug
+		var results = await table.SelectAsync(null, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(2);
+
+		// Check if Extra column data was preserved in second row
+		var secondRow = list.FirstOrDefault(r => Convert.ToInt32(r["Id"]) == 2);
+		secondRow.AssertNotNull();
+
+		// If bug exists, Extra will be null/missing even though we provided it
+		var extraValue = secondRow.TryGetValue("Extra", out var val) ? val?.ToString() : null;
+		extraValue.AssertEqual("ExtraData",
+			"BulkInsert should not silently ignore columns that exist in subsequent rows but not in first row");
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	#endregion
+
+	#region NULL Filter Handling
+
+	/// <summary>
+	/// Verifies that filtering with NULL value uses IS NULL syntax.
+	/// </summary>
+	[TestMethod]
+	public async Task SQLite_SelectWithNullFilter_ShouldUseIsNull()
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetSQLiteConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data - one with NULL name, one with value
+		await table.InsertAsync(new Dictionary<string, object> { ["Id"] = 1, ["Name"] = null }, CancellationToken);
+		await table.InsertAsync(new Dictionary<string, object> { ["Id"] = 2, ["Name"] = "HasValue" }, CancellationToken);
+
+		// Select where Name = NULL
+		// If bug exists: generates "Name = @p0" with @p0 = null, which never matches (NULL != NULL in SQL)
+		// Correct: should generate "Name IS NULL"
+		var filters = new[] { new FilterCondition("Name", ComparisonOperator.Equal, null) };
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(1, "Filter with NULL should find the row with NULL value");
+		Convert.ToInt32(list[0]["Id"]).AssertEqual(1);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	/// <summary>
+	/// Verifies that filtering with NOT NULL value uses IS NOT NULL syntax.
+	/// </summary>
+	[TestMethod]
+	public async Task SQLite_SelectWithNotNullFilter_ShouldUseIsNotNull()
+	{
+		var provider = AdoDatabaseProvider.Instance;
+		using var connection = provider.CreateConnection(GetSQLiteConnectionPair());
+		var table = provider.GetTable(connection, _testTableName);
+
+		// Setup
+		await table.DropAsync(CancellationToken);
+		await table.CreateAsync(new Dictionary<string, Type>
+		{
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		}, CancellationToken);
+
+		// Insert test data
+		await table.InsertAsync(new Dictionary<string, object> { ["Id"] = 1, ["Name"] = null }, CancellationToken);
+		await table.InsertAsync(new Dictionary<string, object> { ["Id"] = 2, ["Name"] = "HasValue" }, CancellationToken);
+
+		// Select where Name <> NULL (should find rows where Name is NOT NULL)
+		var filters = new[] { new FilterCondition("Name", ComparisonOperator.NotEqual, null) };
+		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
+		var list = results.ToList();
+
+		list.Count.AssertEqual(1, "Filter with NotEqual NULL should find rows with non-NULL values");
+		Convert.ToInt32(list[0]["Id"]).AssertEqual(2);
+
+		// Cleanup
+		await table.DropAsync(CancellationToken);
+	}
+
+	#endregion
 }
 #endif

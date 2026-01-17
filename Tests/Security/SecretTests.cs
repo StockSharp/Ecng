@@ -297,4 +297,26 @@ public class SecretTests : BaseTestClass
 		restored.Modulus.AssertEqual(rsa.Modulus);
 		restored.Exponent.AssertEqual(rsa.Exponent);
 	}
+
+	/// <summary>
+	/// Verifies that GetHashCode updates when Hash/Salt are changed via public setters.
+	/// </summary>
+	[TestMethod]
+	public void HashCode_ShouldUpdateWhenDataChanges()
+	{
+		var secret = new Secret
+		{
+			Hash = [1, 2, 3],
+			Salt = [4, 5, 6]
+		};
+
+		var hash1 = secret.GetHashCode();
+
+		// Change data via public setter
+		secret.Hash = [7, 8, 9];
+
+		var hash2 = secret.GetHashCode();
+
+		hash1.AssertNotEqual(hash2, "GetHashCode should update when Hash changes");
+	}
 }
