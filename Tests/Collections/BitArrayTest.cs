@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class BitArrayTest
+public class BitArrayTest : BaseTestClass
 {
 	private static void Check(List<bool> bools, List<int> ints, List<long> longs, List<decimal> decs)
 	{
@@ -199,23 +199,16 @@ public class BitArrayTest
 		using var stream = new MemoryStream();
 
 		// This should not corrupt data or throw
-		try
+		using (var writer = new BitArrayWriter(stream))
 		{
-			using (var writer = new BitArrayWriter(stream))
-			{
-				writer.WriteInt(int.MinValue);
-			}
-
-			stream.Position = 0;
-			var reader = new BitArrayReader(stream);
-			var result = reader.ReadInt();
-
-			result.AssertEqual(int.MinValue, "int.MinValue should round-trip correctly");
+			writer.WriteInt(int.MinValue);
 		}
-		catch (OverflowException)
-		{
-			Fail("WriteInt should handle int.MinValue without overflow");
-		}
+
+		stream.Position = 0;
+		var reader = new BitArrayReader(stream);
+		var result = reader.ReadInt();
+
+		result.AssertEqual(int.MinValue, "int.MinValue should round-trip correctly");
 	}
 
 	/// <summary>
@@ -227,22 +220,15 @@ public class BitArrayTest
 	{
 		using var stream = new MemoryStream();
 
-		try
+		using (var writer = new BitArrayWriter(stream))
 		{
-			using (var writer = new BitArrayWriter(stream))
-			{
-				writer.WriteLong(long.MinValue);
-			}
-
-			stream.Position = 0;
-			var reader = new BitArrayReader(stream);
-			var result = reader.ReadLong();
-
-			result.AssertEqual(long.MinValue, "long.MinValue should round-trip correctly");
+			writer.WriteLong(long.MinValue);
 		}
-		catch (OverflowException)
-		{
-			Fail("WriteLong should handle long.MinValue without overflow");
-		}
+
+		stream.Position = 0;
+		var reader = new BitArrayReader(stream);
+		var result = reader.ReadLong();
+
+		result.AssertEqual(long.MinValue, "long.MinValue should round-trip correctly");
 	}
 }

@@ -1,10 +1,9 @@
 namespace Ecng.Tests.Data;
 
-using Ecng.Common;
 using Ecng.Data;
 
 [TestClass]
-public class FilterConditionTests
+public class FilterConditionTests : BaseTestClass
 {
 	[TestMethod]
 	public void Constructor_SetsProperties()

@@ -3,7 +3,6 @@ namespace Ecng.Tests.Data;
 
 using System.Diagnostics;
 
-using Ecng.Common;
 using Ecng.Data;
 
 using Microsoft.Data.SqlClient;
