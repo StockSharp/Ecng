@@ -146,7 +146,7 @@ public static class AsyncHelper
 			// Collect all exceptions from failed tasks
 			var exceptions = taskArray
 				.Where(t => t.IsFaulted)
-				.SelectMany(t => t.Exception?.InnerExceptions ?? [])
+				.SelectMany(t => (IEnumerable<Exception>)t.Exception?.InnerExceptions ?? Array.Empty<Exception>())
 				.ToList();
 
 			if (exceptions.Count > 0)
@@ -185,7 +185,7 @@ public static class AsyncHelper
 			// Collect all exceptions from failed tasks
 			var exceptions = taskArray
 				.Where(t => t.IsFaulted)
-				.SelectMany(t => t.Exception?.InnerExceptions ?? [])
+				.SelectMany(t => (IEnumerable<Exception>)t.Exception?.InnerExceptions ?? Array.Empty<Exception>())
 				.ToList();
 
 			if (exceptions.Count > 0)
