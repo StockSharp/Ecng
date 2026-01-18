@@ -129,7 +129,29 @@ internal class SizeTrackingStream : Stream
 	public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
 
 	/// <inheritdoc />
-	public override void SetLength(long value) => _inner.SetLength(value);
+	public override void SetLength(long value)
+	{
+		if (_limitExceeded)
+			return;
+
+		// Check if the new length exceeds the limit
+		if (value > _writtenBytes)
+		{
+			if (!_checkAndReserve(value, _oldFileSize))
+			{
+				_limitExceeded = true;
+
+				if (_behavior == FileSystemOverflowBehavior.ThrowException ||
+				    _behavior == FileSystemOverflowBehavior.EvictOldest)
+					throw new IOException("File system size limit exceeded.");
+
+				return;
+			}
+		}
+
+		_writtenBytes = value;
+		_inner.SetLength(value);
+	}
 
 	/// <inheritdoc />
 	public override bool CanRead => _inner.CanRead;
