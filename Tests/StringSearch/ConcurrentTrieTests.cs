@@ -29,8 +29,7 @@ public class ConcurrentTrieTests : BaseTestClass
 		// "abc" should still be retrievable - the "ab" node should NOT be deleted
 		// because it has a child node "c"
 		var remaining = trie.Retrieve("abc").ToArray();
-		if (!remaining.Contains("value2"))
-			Assert.Inconclusive("Bug: removing value from parent node also removes child nodes");
+		remaining.AssertContains("value2", "Child node should still be retrievable after removing parent value");
 	}
 
 	/// <summary>
@@ -82,8 +81,9 @@ public class ConcurrentTrieTests : BaseTestClass
 		var resultAbc = trie.Retrieve("abc").ToArray();
 		var resultAbd = trie.Retrieve("abd").ToArray();
 
-		if (!resultA.Contains(1) || !resultAbc.Contains(3) || !resultAbd.Contains(4))
-			Assert.Inconclusive("Bug: removing value breaks retrieval of other values in trie");
+		resultA.AssertContains(1, "Value at 'a' should still be retrievable");
+		resultAbc.AssertContains(3, "Value at 'abc' should still be retrievable");
+		resultAbd.AssertContains(4, "Value at 'abd' should still be retrievable");
 
 		// "ab" should return empty but not break the trie
 		trie.Retrieve("ab").Contains(2).AssertFalse();

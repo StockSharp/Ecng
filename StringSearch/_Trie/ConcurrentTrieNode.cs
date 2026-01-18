@@ -82,7 +82,7 @@ namespace Gma.DataStructures.StringSearch
 
 				node.RemoveRange(values);
 
-				if (node.m_Values.IsEmpty)
+				if (node.m_Values.IsEmpty && node.m_Children.IsEmpty)
 					emptyNodes.Add(pair.Key);
 			}
 
