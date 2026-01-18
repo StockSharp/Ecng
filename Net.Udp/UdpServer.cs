@@ -48,13 +48,13 @@ public class UdpServer : Disposable
 		}
 
 		var clients = new Dictionary<IPEndPoint, (UdpClient client, double probability)>();
-		var createdClients = new List<UdpClient>();
+		var createdEndpoints = new List<IPEndPoint>();
 
 		try
 		{
 			foreach (var entry in multicastGroups)
 			{
-				var client = GetOrCreateClient(entry.Key, createdClients);
+				var client = GetOrCreateClient(entry.Key, createdEndpoints);
 				clients[entry.Key] = (client, entry.Value);
 			}
 
@@ -96,16 +96,19 @@ public class UdpServer : Disposable
 		}
 		catch
 		{
-			// Dispose only newly created clients on error
-			foreach (var client in createdClients)
+			// Remove and dispose newly created clients on error
+			foreach (var endpoint in createdEndpoints)
 			{
-				try
+				if (_clients.TryRemove(endpoint, out var client))
 				{
-					client.Dispose();
-				}
-				catch
-				{
-					// Ignore disposal errors
+					try
+					{
+						client.Dispose();
+					}
+					catch
+					{
+						// Ignore disposal errors
+					}
 				}
 			}
 
@@ -128,7 +131,7 @@ public class UdpServer : Disposable
 		await client.SendAsync(data, endpoint, cancellationToken);
 	}
 
-	private UdpClient GetOrCreateClient(IPEndPoint endpoint, List<UdpClient> trackNewClients)
+	private UdpClient GetOrCreateClient(IPEndPoint endpoint, List<IPEndPoint> trackNewEndpoints)
 	{
 		return _clients.GetOrAdd(endpoint, ep =>
 		{
@@ -137,7 +140,7 @@ public class UdpServer : Disposable
 			if (ep.Address.IsMulticastAddress())
 				client.JoinMulticastGroup(ep.Address);
 
-			trackNewClients?.Add(client);
+			trackNewEndpoints?.Add(ep);
 			return client;
 		});
 	}
