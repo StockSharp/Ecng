@@ -616,14 +616,17 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Normalizes the provided file path for comparison purposes and converts it to lowercase based on the specified culture.
+	/// Normalizes the provided file path for comparison purposes and converts it to lowercase.
+	/// Uses invariant culture for case conversion to ensure consistent behavior across all locales.
 	/// </summary>
 	/// <param name="path">The file path to normalize.</param>
-	/// <param name="culture">The culture info to use for lowercasing. Defaults to InstalledUICulture if null.</param>
+	/// <param name="culture">Ignored. Kept for backward compatibility. Always uses invariant culture.</param>
 	/// <returns>The normalized and lowercased file path.</returns>
 	public static string NormalizePath(this string path, CultureInfo culture = null)
 	{
-		return path.NormalizePathNoLowercase()?.ToLower(culture ?? CultureInfo.InstalledUICulture);
+		// Always use invariant culture for path normalization to avoid issues with Turkish I/i
+		// and other culture-specific case mappings that break file path comparisons.
+		return path.NormalizePathNoLowercase()?.ToLowerInvariant();
 	}
 
 	/// <summary>
