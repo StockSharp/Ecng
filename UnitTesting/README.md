@@ -809,6 +809,20 @@ The library detects the following CI environments:
 5. **Use BaseTestClass**: Inherit from BaseTestClass for consistent test infrastructure
 6. **Test Cleanup**: Use TestCleanup or implement IDisposable for resource cleanup
 7. **Environment Detection**: Use IsLocalHost to conditionally run tests
+8. **Use CancellationToken from BaseTestClass**: When calling async methods that accept a CancellationToken, always use the `CancellationToken` property from `BaseTestClass`. This ensures proper test timeout handling and cancellation support:
+
+```csharp
+[TestMethod]
+public async Task TestAsyncOperation()
+{
+    // CORRECT: Use CancellationToken from BaseTestClass
+    await SomeAsyncMethod(CancellationToken);
+    await Task.Delay(100, CancellationToken);
+
+    // INCORRECT: Don't use CancellationToken.None or default
+    // await SomeAsyncMethod(CancellationToken.None);
+}
+```
 
 ## See Also
 
