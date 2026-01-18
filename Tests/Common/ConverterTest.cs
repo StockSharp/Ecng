@@ -370,6 +370,29 @@ public class ConverterTest
 		var ep = new IPEndPoint(ip, 8080);
 		ep.To<string>().To<EndPoint>().AssertEqual(ep);
 
+		// IPv6 EndPoint parsing - bracket notation
+		var ipv6Loopback = new IPEndPoint(IPAddress.IPv6Loopback, 8080);
+		var ipv6Str = "[::1]:8080";
+		var parsed = ipv6Str.To<EndPoint>();
+		(parsed is IPEndPoint).AssertTrue($"'{ipv6Str}' should parse as IPEndPoint, got {parsed.GetType().Name}");
+		parsed.AssertEqual(ipv6Loopback, $"'{ipv6Str}' should parse to IPv6 loopback endpoint");
+
+		// IPv6 round-trip (endpoint to string and back)
+		var ipv6RoundTrip = ipv6Loopback.To<string>().To<EndPoint>();
+		ipv6RoundTrip.AssertEqual(ipv6Loopback, "IPv6 endpoint should round-trip correctly");
+
+		// IPv6 without brackets (common format from ToString)
+		var ipv6NoBrackets = "::1:8080"; // This is how IPv6 endpoint converts to string
+		var parsedNoBrackets = ipv6NoBrackets.To<EndPoint>();
+		(parsedNoBrackets is IPEndPoint).AssertTrue($"'{ipv6NoBrackets}' should parse as IPEndPoint");
+		parsedNoBrackets.AssertEqual(ipv6Loopback, $"'{ipv6NoBrackets}' should equal IPv6 loopback:8080");
+
+		// Full IPv6 address with port
+		var fullIpv6 = "[2001:db8::1]:443";
+		var parsedFull = fullIpv6.To<EndPoint>();
+		(parsedFull is IPEndPoint ipv6Full).AssertTrue($"'{fullIpv6}' should parse as IPEndPoint");
+		ipv6Full.Port.AssertEqual(443);
+
 		// StringBuilder <-> string
 		var sb = new StringBuilder("abc");
 		sb.To<string>().To<StringBuilder>().ToString().AssertEqual("abc");
