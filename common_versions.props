@@ -37,5 +37,6 @@
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>6.*</MsSqlClientVer>
     <OpenXmlVer>3.*</OpenXmlVer>
+    <SharpCompressVer>0.38.*</SharpCompressVer>
   </PropertyGroup>
 </Project>

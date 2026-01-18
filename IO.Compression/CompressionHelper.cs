@@ -13,6 +13,8 @@ using Ecng.Common;
 
 using Nito.AsyncEx;
 
+using SharpCompress.Compressors.LZMA;
+
 /// <summary>
 /// Provides helper methods for compressing and decompressing data using various algorithms.
 /// </summary>
@@ -345,17 +347,61 @@ public static class CompressionHelper
 	/// Compresses the specified byte array using the 7Zip (LZMA) algorithm.
 	/// </summary>
 	/// <param name="input">The byte array to compress.</param>
-	/// <returns>A compressed byte array.</returns>
+	/// <returns>A compressed byte array with LZMA header (5 bytes properties + 8 bytes size + compressed data).</returns>
 	public static byte[] Do7Zip(this byte[] input)
-		=> input.Compress<Lzma.LzmaStream>();
+	{
+		if (input is null)
+			throw new ArgumentNullException(nameof(input));
+
+		using var compressedStream = new MemoryStream();
+		var props = new LzmaEncoderProperties(eos: true, dictionary: 1 << 20, numFastBytes: 32);
+		byte[] properties;
+
+		using (var lzma = new LzmaStream(props, false, compressedStream))
+		{
+			properties = lzma.Properties;
+			lzma.Write(input, 0, input.Length);
+		}
+
+		var compressedData = compressedStream.ToArray();
+
+		// Build LZMA file format: 5 bytes props + 8 bytes size + compressed data
+		using var result = new MemoryStream();
+		result.Write(properties, 0, 5);
+		result.Write(BitConverter.GetBytes((long)input.Length), 0, 8);
+		result.Write(compressedData, 0, compressedData.Length);
+
+		return result.ToArray();
+	}
 
 	/// <summary>
 	/// Decompresses a 7Zip (LZMA) compressed byte array.
 	/// </summary>
-	/// <param name="input">The byte array containing 7Zip-compressed data.</param>
+	/// <param name="input">The byte array containing 7Zip-compressed data with LZMA header.</param>
 	/// <returns>A decompressed byte array.</returns>
 	public static byte[] Un7Zip(this byte[] input)
-		=> input.Uncompress<Lzma.LzmaStream>();
+	{
+		if (input is null)
+			throw new ArgumentNullException(nameof(input));
+
+		if (input.Length < 13)
+			throw new ArgumentException("Input too short for LZMA format (minimum 13 bytes header).", nameof(input));
+
+		// Parse LZMA header: 5 bytes properties + 8 bytes uncompressed size
+		var properties = new byte[5];
+		Array.Copy(input, 0, properties, 0, 5);
+		var uncompressedSize = BitConverter.ToInt64(input, 5);
+
+		using var inputStream = new MemoryStream(input, 13, input.Length - 13);
+		using var outputStream = new MemoryStream();
+
+		using (var lzma = new LzmaStream(properties, inputStream, input.Length - 13, uncompressedSize, null, false))
+		{
+			lzma.CopyTo(outputStream);
+		}
+
+		return outputStream.ToArray();
+	}
 
 	/// <summary>
 	/// Compresses a portion of a byte array using the specified compression stream.

@@ -32,7 +32,6 @@
   <Project Path="Linq/Linq.csproj" />
   <Project Path="Localization/Localization.csproj" />
   <Project Path="Logging/Logging.csproj" />
-  <Project Path="Lzma/Lzma.csproj" />
   <Project Path="MathLight/MathLight.csproj" />
   <Project Path="Net/Net.csproj" />
   <Project Path="Net.Clients/Net.Clients.csproj" />

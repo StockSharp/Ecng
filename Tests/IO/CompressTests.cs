@@ -6,6 +6,8 @@ using System.Text;
 using Ecng.IO;
 using Ecng.IO.Compression;
 
+using SharpCompress.Compressors.LZMA;
+
 [TestClass]
 public class CompressTests : BaseTestClass
 {
@@ -63,9 +65,28 @@ public class CompressTests : BaseTestClass
 	{
 		var bytes = RandomGen.GetBytes(FileSizes.MB);
 
-		// TODO 7Zip compression not implemented
-		//bytes.Do7Zip().Un7Zip().SequenceEqual(bytes).AssertTrue();
-		//bytes.Compress<Lzma.LzmaStream>().Uncompress<Lzma.LzmaStream>().SequenceEqual(bytes).AssertTrue();
+		bytes.Do7Zip().Un7Zip().SequenceEqual(bytes).AssertTrue();
+	}
+
+	[TestMethod]
+	public void CompressionHelper_Un7Zip_HelloLzma()
+	{
+		var fs = LocalFileSystem.Instance;
+
+		var helloLzmaPath = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location)!, "..", "..", "..", "Resources", "hello.lzma");
+		if (!fs.FileExists(helloLzmaPath))
+			helloLzmaPath = Path.Combine(AppContext.BaseDirectory, "Resources", "hello.lzma");
+
+		fs.FileExists(helloLzmaPath).AssertTrue($"hello.lzma not found at {helloLzmaPath}");
+
+		var compressedBytes = fs.ReadAllBytes(helloLzmaPath);
+
+		// Decompress using CompressionHelper.Un7Zip
+		var decompressedBytes = compressedBytes.Un7Zip();
+		var decompressedText = decompressedBytes.UTF8();
+
+		const string expectedText = "Hello World! This is a test message for LZMA compression.";
+		decompressedText.AssertEqual(expectedText);
 	}
 
 	[TestMethod]
