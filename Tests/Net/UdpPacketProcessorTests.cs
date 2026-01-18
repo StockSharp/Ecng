@@ -323,7 +323,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		if (processor.Errors.Count > 0)
 		{
 			var error = processor.Errors[0];
-			Assert.Fail($"IPv6 multicast failed with processor error: {error.ex.GetType().Name}: {error.ex.Message}. " +
+			Fail($"IPv6 multicast failed with processor error: {error.ex.GetType().Name}: {error.ex.Message}. " +
 				"BUG: RealPacketReceiver doesn't handle IPv6 addresses correctly.");
 		}
 
@@ -337,11 +337,11 @@ public class UdpPacketProcessorTests : BaseTestClass
 				error.Message.Contains("EADDRNOTAVAIL") ||
 				error.Message.Contains("Network is unreachable"))
 			{
-				Assert.Inconclusive("IPv6 multicast not available in this environment (CI/container limitation).");
+				Inconclusive("IPv6 multicast not available in this environment (CI/container limitation).");
 				return;
 			}
 
-			Assert.Fail($"IPv6 multicast failed with logged error: {error.Message}. " +
+			Fail($"IPv6 multicast failed with logged error: {error.Message}. " +
 				"BUG: RealPacketReceiver creates IPv4 socket but tries to join IPv6 multicast group. " +
 				"JoinMulticast uses SocketOptionLevel.IP instead of SocketOptionLevel.IPv6.");
 		}

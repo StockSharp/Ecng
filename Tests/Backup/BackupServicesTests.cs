@@ -240,7 +240,7 @@ public class BackupServicesTests : BaseTestClass
 			}
 
 			if (!published)
-				Assert.Fail("Published resource did not get PublicUrl.");
+				Fail("Published resource did not get PublicUrl.");
 
 			await svc.UnPublishAsync(entry, CancellationToken);
 
@@ -273,7 +273,7 @@ public class BackupServicesTests : BaseTestClass
 			}
 
 			if (!unpublished)
-				Assert.Fail("Unpublished resource still has PublicUrl.");
+				Fail("Unpublished resource still has PublicUrl.");
 		}
 		finally
 		{

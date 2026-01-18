@@ -214,7 +214,7 @@ public class BitArrayTest
 		}
 		catch (OverflowException)
 		{
-			Assert.Fail("WriteInt should handle int.MinValue without overflow");
+			Fail("WriteInt should handle int.MinValue without overflow");
 		}
 	}
 
@@ -242,7 +242,7 @@ public class BitArrayTest
 		}
 		catch (OverflowException)
 		{
-			Assert.Fail("WriteLong should handle long.MinValue without overflow");
+			Fail("WriteLong should handle long.MinValue without overflow");
 		}
 	}
 }

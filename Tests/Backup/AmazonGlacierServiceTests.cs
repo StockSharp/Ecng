@@ -191,7 +191,7 @@ public class AmazonGlacierServiceTests : BaseTestClass
 		if (entry.Parent is null)
 		{
 			// Bug exists - hierarchy is flattened
-			Assert.Inconclusive("Hierarchy flattening bug exists - Parent is null instead of 'subfolder'");
+			Fail("Hierarchy flattening bug exists - Parent is null instead of 'subfolder'");
 		}
 		else
 		{

@@ -44,7 +44,7 @@ public class FilterConditionTests
 
 		filter.Column.AssertEqual("Column1");
 		filter.Operator.AssertEqual(ComparisonOperator.Equal);
-		Assert.IsNull(filter.Value);
+		IsNull(filter.Value);
 	}
 
 	[TestMethod]

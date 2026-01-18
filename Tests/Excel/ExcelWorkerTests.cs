@@ -976,7 +976,7 @@ public class ExcelWorkerTests : BaseTestClass
 		var msg = string.Join("\n", errors.Take(20).Select(e =>
 			$"- {e.Description}; Part={e.Part?.Uri}; Path={e.Path?.XPath}"));
 
-		Assert.Fail($"OpenXmlValidator found {errors.Length} error(s):\n{msg}");
+		Fail($"OpenXmlValidator found {errors.Length} error(s):\n{msg}");
 	}
 
 	/// <summary>

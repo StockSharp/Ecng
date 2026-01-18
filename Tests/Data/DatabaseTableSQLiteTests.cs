@@ -539,7 +539,7 @@ public class DatabaseTableSQLiteTests : BaseTestClass
 		}
 		else
 		{
-			Assert.Fail($"Unexpected Duration type: {storedDuration?.GetType()?.Name ?? "null"}");
+			Fail($"Unexpected Duration type: {storedDuration?.GetType()?.Name ?? "null"}");
 		}
 
 		// Cleanup
@@ -656,7 +656,7 @@ public class DatabaseTableSQLiteTests : BaseTestClass
 		}
 		catch (DivideByZeroException)
 		{
-			Assert.Fail("BulkInsert should not throw DivideByZeroException for empty first row");
+			Fail("BulkInsert should not throw DivideByZeroException for empty first row");
 		}
 		catch (ArgumentException)
 		{

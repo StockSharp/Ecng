@@ -637,7 +637,7 @@ public class WebSocketClientTests : BaseTestClass
 
 		if (!await TrySoftCloseAsync(client))
 		{
-			Assert.Inconclusive("SendOpCode not supported on this runtime, skipping reconnect test.");
+			Inconclusive("SendOpCode not supported on this runtime, skipping reconnect test.");
 			return;
 		}
 
