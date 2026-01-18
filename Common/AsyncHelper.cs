@@ -375,8 +375,9 @@ public static class AsyncHelper
 		{
 			await getTask().NoWait();
 		}
-		catch (Exception e) when (token.IsCancellationRequested)
+		catch (OperationCanceledException e) when (token.IsCancellationRequested)
 		{
+			// Only treat OperationCanceledException as cancellation, not other exceptions
 			handleCancel?.Invoke(e);
 
 			if (rethrowCancel)
@@ -678,19 +679,7 @@ public static class AsyncHelper
 
 		while (!cancellationToken.IsCancellationRequested)
 		{
-			// Wait for the next tick first
-			try
-			{
-				if (!await timer.WaitForNextTickAsync(cancellationToken).NoWait())
-					break;
-			}
-			catch (OperationCanceledException)
-			{
-				// Timer was cancelled, exit gracefully
-				break;
-			}
-
-			// Then execute handler
+			// Execute handler first (after initial delay or after interval wait)
 			try
 			{
 				await handler().NoWait();
@@ -704,6 +693,18 @@ public static class AsyncHelper
 			{
 				// Allow exceptions from handler to propagate
 				throw;
+			}
+
+			// Then wait for the next tick
+			try
+			{
+				if (!await timer.WaitForNextTickAsync(cancellationToken).NoWait())
+					break;
+			}
+			catch (OperationCanceledException)
+			{
+				// Timer was cancelled, exit gracefully
+				break;
 			}
 		}
 	}
