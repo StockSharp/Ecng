@@ -2,6 +2,7 @@
   <Import Project="..\common.props" />
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\YandexDisk.Client\YandexDisk.Client.csproj" />
   </ItemGroup>

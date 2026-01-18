@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.IO;
 
 using YandexDisk.Client;
 using YandexDisk.Client.Clients;
@@ -170,55 +171,12 @@ public class YandexDiskService : Disposable, IBackupService
 		else
 		{
 			var totalBytes = stream.Length;
-			var wrapper = new ProgressReportingStream(stream, totalBytes, progress);
+			var wrapper = new ProgressStream(stream, totalBytes, progress, trackReads: true, trackWrites: false, leaveOpen: true);
 			await _client.Files.UploadAsync(link, wrapper, cancellationToken).NoWait();
 
 			if (wrapper.LastReportedPercent != 100)
 				progress(100);
 		}
-	}
-
-	private sealed class ProgressReportingStream(Stream inner, long totalBytes, Action<int> progress) : Stream
-	{
-		private long _bytesRead;
-		public int LastReportedPercent { get; private set; }
-
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			var bytesRead = inner.Read(buffer, offset, count);
-			ReportProgress(bytesRead);
-			return bytesRead;
-		}
-
-		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-		{
-			var bytesRead = await inner.ReadAsync(buffer, offset, count, cancellationToken);
-			ReportProgress(bytesRead);
-			return bytesRead;
-		}
-
-		private void ReportProgress(int bytesRead)
-		{
-			if (bytesRead <= 0) return;
-
-			_bytesRead += bytesRead;
-			var percent = totalBytes > 0 ? (int)(_bytesRead * 100 / totalBytes) : 0;
-			if (percent != LastReportedPercent)
-			{
-				progress(percent);
-				LastReportedPercent = percent;
-			}
-		}
-
-		public override bool CanRead => inner.CanRead;
-		public override bool CanSeek => inner.CanSeek;
-		public override bool CanWrite => inner.CanWrite;
-		public override long Length => inner.Length;
-		public override long Position { get => inner.Position; set => inner.Position = value; }
-		public override void Flush() => inner.Flush();
-		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
-		public override void SetLength(long value) => inner.SetLength(value);
-		public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
 	}
 
 	async Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
