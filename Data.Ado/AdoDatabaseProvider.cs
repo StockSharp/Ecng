@@ -103,9 +103,12 @@ internal class AdoTable : IDatabaseTable
 		if (columns is null)
 			throw new ArgumentNullException(nameof(columns));
 
-		foreach (var (columnName, columnType) in columns)
+		foreach (var t in columns)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+
+			var columnName = t.Key;
+			var columnType = t.Value;
 			var sqlType = Dialect.GetSqlTypeName(columnType);
 			var sql = $"ALTER TABLE {Dialect.QuoteIdentifier(Name)} ADD {Dialect.QuoteIdentifier(columnName)} {sqlType}";
 			await ExecuteAsync(sql, null, cancellationToken).NoWait();

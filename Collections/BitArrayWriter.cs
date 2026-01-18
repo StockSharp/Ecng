@@ -179,6 +179,7 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	/// </summary>
 	/// <param name="value">The unsigned long integer value to write.</param>
 	/// <param name="bitCount">The number of bits to write.</param>
+	[CLSCompliant(false)]
 	public void WriteULongBits(ulong value, int bitCount)
 	{
 		for (var i = 0; i < bitCount; i++)
