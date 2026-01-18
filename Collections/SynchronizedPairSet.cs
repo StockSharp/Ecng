@@ -157,11 +157,36 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 
 	/// <summary>
 	/// Called when an existing item is being set. Updates the value/key mapping in the internal dictionary.
+	/// Maintains bijective property by swapping values when a collision occurs.
 	/// </summary>
 	/// <param name="key">The key being set.</param>
 	/// <param name="value">The value being set.</param>
 	protected override void OnSetting(TKey key, TValue value)
 	{
+		TValue oldValue = default;
+		var hadOldValue = InnerDictionary.TryGetValue(key, out oldValue);
+
+		if (hadOldValue)
+			_values.Remove(oldValue);
+
+		// If new value is already mapped to another key, handle the collision
+		// to maintain bijective property (each value maps to exactly one key)
+		if (_values.TryGetValue(value, out var existingKey))
+		{
+			if (hadOldValue)
+			{
+				// Swap: give the other key our old value
+				InnerDictionary[existingKey] = oldValue;
+				_values[oldValue] = existingKey;
+			}
+			else
+			{
+				// We don't have an old value to give, so remove the other key
+				_values.Remove(value);
+				InnerDictionary.Remove(existingKey);
+			}
+		}
+
 		_values[value] = key;
 	}
 
