@@ -45,7 +45,7 @@ jobs:
           NUGET_PRIVATE_API_KEY: ${{ secrets.NUGET_PRIVATE_API_KEY }}
           NUGET_PRIVATE_PACKAGE_ID: ${{ secrets.NUGET_PRIVATE_PACKAGE_ID }}
           NUGET_PRIVATE_PACKAGE_VERSION: ${{ secrets.NUGET_PRIVATE_PACKAGE_VERSION }}
-        run: dotnet test Ecng.sln --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure"
+        run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure"
 
   azurite:
     name: Azure (Azurite)
