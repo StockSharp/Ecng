@@ -154,10 +154,13 @@ public static class RandomGen
 		if (min > max)
 			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
 
-		if (max < int.MaxValue)
-			max++;
+		// When max == int.MaxValue, we can't use Random.Next because it has exclusive upper bound
+		// and incrementing max would overflow. Use GetLong instead which handles full ranges correctly.
+		if (max == int.MaxValue)
+			return (int)GetLong(min, max);
 
-		return Random.Next(min, max);
+		// Since max < int.MaxValue, we can safely increment it for inclusive upper bound
+		return Random.Next(min, max + 1);
 	}
 
 	/// <summary>
