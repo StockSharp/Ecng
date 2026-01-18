@@ -27,7 +27,6 @@
     <NewtonJsonVer>13.*</NewtonJsonVer>
     <RestSharpVer>112.*</RestSharpVer>
     <NDdeVer>4.0.0</NDdeVer>
-    <linq2dbVer>5.2.2</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
     <CsWin32Ver>0.3.106</CsWin32Ver>
     <WmiLightVer>6.5.2</WmiLightVer>
@@ -38,6 +37,5 @@
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>6.*</MsSqlClientVer>
     <OpenXmlVer>3.*</OpenXmlVer>
-    <DapperVer>2.*</DapperVer>
   </PropertyGroup>
 </Project>
