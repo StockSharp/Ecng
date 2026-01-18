@@ -18,17 +18,36 @@ public class Secret : Equatable<Secret>
 	{
 	}
 
+	private byte[] _salt;
+	private byte[] _hash;
+
 	/// <summary>
 	/// Gets or sets the salt.
 	/// </summary>
 	/// <value>The salt.</value>
-	public byte[] Salt { get; set; }
+	public byte[] Salt
+	{
+		get => _salt;
+		set
+		{
+			_salt = value;
+			_hashCode = null;
+		}
+	}
 
 	/// <summary>
 	/// Gets or sets the hash.
 	/// </summary>
 	/// <value>The hash.</value>
-	public byte[] Hash { get; set; }
+	public byte[] Hash
+	{
+		get => _hash;
+		set
+		{
+			_hash = value;
+			_hashCode = null;
+		}
+	}
 
 	/// <inheritdoc />
 	protected override bool OnEquals(Secret other)
@@ -87,8 +106,8 @@ public class Secret : Equatable<Secret>
 	public override Secret Clone()
 		=> new()
 		{
-			Hash = Hash?.ToArray(),
-			Salt = Salt?.ToArray(),
+			_hash = _hash?.ToArray(),
+			_salt = _salt?.ToArray(),
 			_hashCode = _hashCode,
 		};
 }
