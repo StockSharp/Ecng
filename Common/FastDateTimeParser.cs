@@ -277,7 +277,10 @@ public class FastDateTimeParser
 			var hours = (input[_timeZoneStart + 1] - '0') * 10 + (input[_timeZoneStart + 2] - '0');
 			var minutes = (input[_timeZoneStart + 4] - '0') * 10 + (input[_timeZoneStart + 5] - '0');
 
-			timeZone = new TimeSpan(pos ? hours : -hours, minutes, 0);
+			// Both hours and minutes must have the same sign for negative timezones
+			timeZone = new TimeSpan(hours, minutes, 0);
+			if (!pos)
+				timeZone = timeZone.Negate();
 		}
 
 		return dt.ApplyTimeZone(timeZone);
