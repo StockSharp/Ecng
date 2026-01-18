@@ -1,4 +1,3 @@
-#if NET10_0_OR_GREATER
 namespace Ecng.Tests.Data;
 
 using System.Diagnostics;
@@ -790,4 +789,3 @@ public class DatabaseTableSQLiteTests : BaseTestClass
 
 	#endregion
 }
-#endif

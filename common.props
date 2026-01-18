@@ -28,13 +28,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-        '$(MSBuildProjectName)' == 'Tests.Windows'
-      ">
-    <TargetFrameworks>net6.0-windows;net10.0-windows</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="
-        $(MSBuildProjectName.StartsWith('Data.')) or
         '$(MSBuildProjectName)' == 'Nuget'
       ">
     <TargetFrameworks>net10.0</TargetFrameworks>
