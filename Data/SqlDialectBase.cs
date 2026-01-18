@@ -43,14 +43,14 @@ public abstract class SqlDialectBase : ISqlDialect
 		var quotedCols = cols.Select(QuoteIdentifier);
 		var paramCols = cols.Select(c => ParameterPrefix + c);
 
-		return $"INSERT INTO {QuoteIdentifier(tableName)} ({quotedCols.JoinComma()}) VALUES ({paramCols.JoinComma()})";
+		return $"INSERT INTO {QuoteIdentifier(tableName)} ({quotedCols.JoinCommaSpace()}) VALUES ({paramCols.JoinCommaSpace()})";
 	}
 
 	/// <inheritdoc />
 	public virtual string GenerateUpdate(string tableName, IEnumerable<string> columns, string whereClause)
 	{
 		var setClauses = columns.Select(c => $"{QuoteIdentifier(c)} = {ParameterPrefix}{c}");
-		var sql = $"UPDATE {QuoteIdentifier(tableName)} SET {setClauses.JoinComma()}";
+		var sql = $"UPDATE {QuoteIdentifier(tableName)} SET {setClauses.JoinCommaSpace()}";
 
 		if (!whereClause.IsEmpty())
 			sql += $" WHERE {whereClause}";
@@ -73,6 +73,18 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual string BuildCondition(string column, ComparisonOperator op, string paramName)
 	{
 		var quotedCol = QuoteIdentifier(column);
+
+		// Handle NULL comparison - SQL requires IS NULL / IS NOT NULL syntax
+		if (paramName is null)
+		{
+			return op switch
+			{
+				ComparisonOperator.Equal => $"{quotedCol} IS NULL",
+				ComparisonOperator.NotEqual => $"{quotedCol} IS NOT NULL",
+				_ => throw new ArgumentOutOfRangeException(nameof(op), op, "Only Equal and NotEqual are supported with NULL"),
+			};
+		}
+
 		var param = ParameterPrefix + paramName;
 
 		return op switch
@@ -96,7 +108,7 @@ public abstract class SqlDialectBase : ISqlDialect
 			return "1 = 0"; // Empty IN - always false
 
 		var quotedCol = QuoteIdentifier(column);
-		var paramList = names.Select(p => ParameterPrefix + p).JoinComma();
+		var paramList = names.Select(p => ParameterPrefix + p).JoinCommaSpace();
 
 		return $"{quotedCol} IN ({paramList})";
 	}

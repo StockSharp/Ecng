@@ -105,16 +105,16 @@ CREATE TABLE {quotedName} ({columnDefs})";
 
 		var quotedTable = QuoteIdentifier(tableName);
 
-		// Build MERGE statement
-		var matchCondition = keys.Select(k => $"target.{QuoteIdentifier(k)} = source.{QuoteIdentifier(k)}").JoinAnd();
-		var sourceValues = cols.Select(c => $"{ParameterPrefix}{c} AS {QuoteIdentifier(c)}").JoinComma();
-		var insertCols = cols.Select(QuoteIdentifier).JoinComma();
-		var insertVals = cols.Select(c => $"source.{QuoteIdentifier(c)}").JoinComma();
+		// Build MERGE statement - use " AND " for SQL logical operator, not "&" (URL separator)
+		var matchCondition = keys.Select(k => $"target.{QuoteIdentifier(k)} = source.{QuoteIdentifier(k)}").Join(" AND ");
+		var sourceValues = cols.Select(c => $"{ParameterPrefix}{c} AS {QuoteIdentifier(c)}").JoinCommaSpace();
+		var insertCols = cols.Select(QuoteIdentifier).JoinCommaSpace();
+		var insertVals = cols.Select(c => $"source.{QuoteIdentifier(c)}").JoinCommaSpace();
 
 		var sql = $@"MERGE {quotedTable} AS target
 USING (SELECT {sourceValues}) AS source
 ON ({matchCondition})
-WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinComma()}
+WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinCommaSpace()}
 WHEN NOT MATCHED THEN INSERT ({insertCols}) VALUES ({insertVals});";
 
 		return sql;

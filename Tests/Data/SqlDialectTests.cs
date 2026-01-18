@@ -174,7 +174,8 @@ public class SqlDialectTests : BaseTestClass
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Equal, "@p0");
+		// paramName should be without prefix - BuildCondition adds the prefix
+		var sql = dialect.BuildCondition("Col", ComparisonOperator.Equal, "p0");
 
 		sql.AssertEqual($"{qCol} = @p0");
 	}
@@ -187,7 +188,7 @@ public class SqlDialectTests : BaseTestClass
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.NotEqual, "@p0");
+		var sql = dialect.BuildCondition("Col", ComparisonOperator.NotEqual, "p0");
 
 		sql.AssertEqual($"{qCol} <> @p0");
 	}
@@ -200,7 +201,7 @@ public class SqlDialectTests : BaseTestClass
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Greater, "@p0");
+		var sql = dialect.BuildCondition("Col", ComparisonOperator.Greater, "p0");
 
 		sql.AssertEqual($"{qCol} > @p0");
 	}
@@ -213,7 +214,7 @@ public class SqlDialectTests : BaseTestClass
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Less, "@p0");
+		var sql = dialect.BuildCondition("Col", ComparisonOperator.Less, "p0");
 
 		sql.AssertEqual($"{qCol} < @p0");
 	}
@@ -262,33 +263,36 @@ public class SqlDialectTests : BaseTestClass
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Status");
 
-		var sql = dialect.BuildInCondition("Status", ["@p0", "@p1", "@p2"]);
+		// paramNames without prefix - BuildInCondition adds the prefix
+		var sql = dialect.BuildInCondition("Status", ["p0", "p1", "p2"]);
 
 		sql.AssertEqual($"{qCol} IN (@p0, @p1, @p2)");
 	}
 
 	#endregion
 
-	#region JoinAnd Tests
+	#region JoinConditions Tests
 
 	/// <summary>
-	/// Verifies that JoinAnd uses " AND " SQL operator, not URL separator "&".
+	/// Verifies that SQL conditions can be joined with " AND " separator.
 	/// </summary>
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void JoinAnd_MultipleConditions(string dialectName)
+	public void JoinConditions_MultipleConditions(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol1 = Quote(dialectName, "Col1");
 		var qCol2 = Quote(dialectName, "Col2");
 		var qCol3 = Quote(dialectName, "Col3");
 
-		var cond1 = dialect.BuildCondition("Col1", ComparisonOperator.Equal, "@p0");
-		var cond2 = dialect.BuildCondition("Col2", ComparisonOperator.Equal, "@p1");
-		var cond3 = dialect.BuildCondition("Col3", ComparisonOperator.Greater, "@p2");
+		// paramName without prefix - BuildCondition adds the prefix
+		var cond1 = dialect.BuildCondition("Col1", ComparisonOperator.Equal, "p0");
+		var cond2 = dialect.BuildCondition("Col2", ComparisonOperator.Equal, "p1");
+		var cond3 = dialect.BuildCondition("Col3", ComparisonOperator.Greater, "p2");
 
-		var joined = new[] { cond1, cond2, cond3 }.JoinAnd();
+		// Use .Join(" AND ") for SQL logical AND - not .JoinAnd() which is for URL query strings
+		var joined = new[] { cond1, cond2, cond3 }.Join(" AND ");
 
 		joined.AssertEqual($"{qCol1} = @p0 AND {qCol2} = @p1 AND {qCol3} > @p2");
 	}

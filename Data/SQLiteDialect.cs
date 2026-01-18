@@ -101,14 +101,14 @@ public class SQLiteDialect : SqlDialectBase
 		var nonKeys = cols.Except(keys).ToArray();
 
 		var quotedTable = QuoteIdentifier(tableName);
-		var insertCols = cols.Select(QuoteIdentifier).JoinComma();
-		var insertParams = cols.Select(c => ParameterPrefix + c).JoinComma();
-		var conflictCols = keys.Select(QuoteIdentifier).JoinComma();
+		var insertCols = cols.Select(QuoteIdentifier).JoinCommaSpace();
+		var insertParams = cols.Select(c => ParameterPrefix + c).JoinCommaSpace();
+		var conflictCols = keys.Select(QuoteIdentifier).JoinCommaSpace();
 
 		// SQLite uses INSERT ... ON CONFLICT ... DO UPDATE
 		var sql = $"INSERT INTO {quotedTable} ({insertCols}) VALUES ({insertParams})";
 		sql += $" ON CONFLICT ({conflictCols}) DO UPDATE SET ";
-		sql += nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinComma();
+		sql += nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinCommaSpace();
 
 		return sql;
 	}

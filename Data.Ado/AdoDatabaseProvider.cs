@@ -338,7 +338,7 @@ internal class AdoTable : IDatabaseTable
 			}
 		}
 
-		return conditions.JoinAnd();
+		return conditions.Join(" AND ");
 	}
 
 	private string BuildOrderByClause(IEnumerable<OrderByCondition> orderBy)
