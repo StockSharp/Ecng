@@ -161,7 +161,15 @@ public class AmazonGlacierService : Disposable, IBackupService
 				continue;
 
 			var be = GetPath(fullPath);
-			be.Parent = parent;
+			// Connect the root of the hierarchy to the parent parameter (if any)
+			// instead of overwriting be.Parent which would flatten the hierarchy
+			if (parent != null)
+			{
+				var root = be;
+				while (root.Parent != null)
+					root = root.Parent;
+				root.Parent = parent;
+			}
 			be.Size = item.Size;
 			be.LastModified = item.CreationDate?.ToLocalTime() ?? default;
 			yield return be;
