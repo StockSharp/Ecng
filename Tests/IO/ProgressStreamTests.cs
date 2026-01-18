@@ -2,6 +2,8 @@ namespace Ecng.Tests.IO;
 
 using Ecng.IO;
 
+#pragma warning disable CA2022 // Avoid inexact read - MemoryStream always returns requested bytes
+
 [TestClass]
 public class ProgressStreamTests : BaseTestClass
 {
@@ -217,6 +219,7 @@ public class ProgressStreamTests : BaseTestClass
 		stream.Position.AssertEqual(90);
 	}
 
+#if NET6_0_OR_GREATER
 	[TestMethod]
 	public async Task ReadAsyncMemory_ReportsProgress()
 	{
@@ -258,6 +261,7 @@ public class ProgressStreamTests : BaseTestClass
 		(progressCalls.Count > 0).AssertTrue("Progress should be reported");
 		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
 	}
+#endif
 
 	[TestMethod]
 	public void ReadByte_ReportsProgress()
@@ -279,6 +283,7 @@ public class ProgressStreamTests : BaseTestClass
 		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
 	}
 
+#if NET6_0_OR_GREATER
 	[TestMethod]
 	public async Task WriteAsyncMemory_ReportsProgress()
 	{
@@ -320,6 +325,7 @@ public class ProgressStreamTests : BaseTestClass
 		(progressCalls.Count > 0).AssertTrue("Progress should be reported");
 		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
 	}
+#endif
 
 	[TestMethod]
 	public void WriteByte_ReportsProgress()

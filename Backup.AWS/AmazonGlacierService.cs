@@ -56,6 +56,12 @@ public class AmazonGlacierService : Disposable, IBackupService
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.
+	/// </summary>
+	/// <param name="endpoint">Region address.</param>
+	/// <param name="vaultName">Storage name.</param>
+	/// <param name="credentials">Credentials.</param>
 	[CLSCompliant(false)]
 	public AmazonGlacierService(RegionEndpoint endpoint, string vaultName, AWSCredentials credentials)
 		: this(new AmazonGlacierClient(credentials, endpoint), endpoint, vaultName, credentials)

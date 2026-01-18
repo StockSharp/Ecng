@@ -390,8 +390,8 @@ public class ConverterTest
 		// Full IPv6 address with port
 		var fullIpv6 = "[2001:db8::1]:443";
 		var parsedFull = fullIpv6.To<EndPoint>();
-		(parsedFull is IPEndPoint ipv6Full).AssertTrue($"'{fullIpv6}' should parse as IPEndPoint");
-		ipv6Full.Port.AssertEqual(443);
+		(parsedFull is IPEndPoint).AssertTrue($"'{fullIpv6}' should parse as IPEndPoint");
+		((IPEndPoint)parsedFull).Port.AssertEqual(443);
 
 		// StringBuilder <-> string
 		var sb = new StringBuilder("abc");

@@ -88,6 +88,7 @@ public class ProgressStream : Stream
 		return bytesRead;
 	}
 
+#if NET6_0_OR_GREATER
 	/// <inheritdoc />
 	public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
 	{
@@ -105,6 +106,7 @@ public class ProgressStream : Stream
 			ReportProgress(bytesRead);
 		return bytesRead;
 	}
+#endif
 
 	/// <inheritdoc />
 	public override int ReadByte()
@@ -131,6 +133,7 @@ public class ProgressStream : Stream
 			ReportProgress(count);
 	}
 
+#if NET6_0_OR_GREATER
 	/// <inheritdoc />
 	public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
 	{
@@ -146,6 +149,7 @@ public class ProgressStream : Stream
 		if (_trackWrites)
 			ReportProgress(buffer.Length);
 	}
+#endif
 
 	/// <inheritdoc />
 	public override void WriteByte(byte value)
