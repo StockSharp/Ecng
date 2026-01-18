@@ -51,7 +51,9 @@ public static class FileSystemZipExtensions
 
 		foreach (var entry in archive.Entries)
 		{
-			var fullPath = Path.Combine(destPath, entry.FullName);
+			var fullPath = GetSafeExtractPath(destPath, entry.FullName);
+			if (fullPath is null)
+				continue; // Skip dangerous entries
 
 			// Create directory if entry is a directory
 			if (entry.FullName.EndsWith("/") || entry.FullName.EndsWith("\\"))
@@ -114,7 +116,9 @@ public static class FileSystemZipExtensions
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var fullPath = Path.Combine(destPath, entry.FullName);
+			var fullPath = GetSafeExtractPath(destPath, entry.FullName);
+			if (fullPath is null)
+				continue; // Skip dangerous entries
 
 			// Create directory if entry is a directory
 			if (entry.FullName.EndsWith("/") || entry.FullName.EndsWith("\\"))
@@ -403,6 +407,39 @@ public static class FileSystemZipExtensions
 			using var fileStream = fs.OpenWrite(fullPath);
 			await body.CopyToAsync(fileStream, cancellationToken);
 		}
+	}
+
+	private static string GetSafeExtractPath(string destPath, string entryName)
+	{
+		// Reject entries with absolute paths
+		if (Path.IsPathRooted(entryName))
+			return null;
+
+		// Normalize the entry name to use the current platform's directory separator
+		var normalizedEntry = entryName.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+		// Reject entries containing path traversal sequences
+		var segments = normalizedEntry.Split(Path.DirectorySeparatorChar);
+		foreach (var segment in segments)
+		{
+			if (segment == "..")
+				return null;
+		}
+
+		// Combine paths and get the full path
+		var fullPath = Path.Combine(destPath, normalizedEntry);
+		var resolvedPath = Path.GetFullPath(fullPath);
+		var resolvedDest = Path.GetFullPath(destPath);
+
+		// Ensure the destination ends with a separator for proper prefix matching
+		if (!resolvedDest.EndsWith(Path.DirectorySeparatorChar.ToString()))
+			resolvedDest += Path.DirectorySeparatorChar;
+
+		// Verify the resolved path is within the destination directory
+		if (!resolvedPath.StartsWith(resolvedDest, StringComparison.OrdinalIgnoreCase))
+			return null;
+
+		return fullPath;
 	}
 
 	private static string GetRelativePath(string basePath, string fullPath)

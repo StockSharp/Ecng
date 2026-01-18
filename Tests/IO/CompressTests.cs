@@ -1088,8 +1088,7 @@ public class CompressTests : BaseTestClass
 		fs.UnzipTo("/safe/archive.zip", "/safe/dest");
 
 		// Absolute path should not create file at that location
-		if (fs.FileExists("/etc/passwd"))
-			Assert.Inconclusive("Zip Slip vulnerability: absolute path in ZIP creates file at absolute location");
+		fs.FileExists("/etc/passwd").AssertFalse("Zip Slip: absolute path in ZIP should not create file at absolute location");
 	}
 
 	#endregion
