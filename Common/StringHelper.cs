@@ -71,7 +71,8 @@ public static class StringHelper
 	{
 		private readonly Lock _sync = new();
 		private readonly Dictionary<Type, Type> _genericTypes = [];
-		private readonly Dictionary<string, object> _keys = [];
+		// Cache key is (selectorText, keyType) to handle different key types correctly
+		private readonly Dictionary<(string text, Type keyType), object> _keys = [];
 
 		bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 		{
@@ -94,15 +95,17 @@ public static class StringHelper
 			if (type is null)
 				return false;
 
+			var keyType = type.GetGenericArguments()[0];
 			object key;
 			var text = selectorInfo.SelectorText;
+			var cacheKey = (text, keyType);
 
 			using (_sync.EnterScope())
 			{
-				if (!_keys.TryGetValue(text, out key))
+				if (!_keys.TryGetValue(cacheKey, out key))
 				{
-					key = text.To(type.GetGenericArguments()[0]);
-					_keys.Add(text, key);
+					key = text.To(keyType);
+					_keys.Add(cacheKey, key);
 				}
 			}
 
@@ -495,6 +498,10 @@ public static class StringHelper
 	{
 		if (s is null)
 			throw new ArgumentNullException(nameof(s));
+
+		// If count is greater than string length, return as-is (nothing to reduce)
+		if (count > s.Length)
+			return s;
 
 		if (endings.IsEmpty())
 			return s.Substring(0, count);
