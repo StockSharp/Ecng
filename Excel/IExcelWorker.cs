@@ -15,8 +15,8 @@ public interface IExcelWorker : IDisposable
 	/// Sets the value of a cell at the specified column and row.
 	/// </summary>
 	/// <typeparam name="T">The type of the value to set.</typeparam>
-	/// <param name="col">The column index (1-based).</param>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <param name="value">The value to set in the cell.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetCell<T>(int col, int row, T value);
@@ -25,15 +25,15 @@ public interface IExcelWorker : IDisposable
 	/// Gets the value of a cell at the specified column and row.
 	/// </summary>
 	/// <typeparam name="T">The type of the value to retrieve.</typeparam>
-	/// <param name="col">The column index (1-based).</param>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <returns>The value of the cell cast to type <typeparamref name="T"/>.</returns>
 	T GetCell<T>(int col, int row);
 
 	/// <summary>
 	/// Sets the style of a column based on a specified type.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
 	/// <param name="type">The <see cref="Type"/> that determines the style.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetStyle(int col, Type type);
@@ -41,7 +41,7 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets the style of a column using a custom format string.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
 	/// <param name="format">The format string to apply to the column.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetStyle(int col, string format);
@@ -49,7 +49,7 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets conditional formatting for a column based on a condition.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
 	/// <param name="op">The <see cref="ComparisonOperator"/> to use for the condition.</param>
 	/// <param name="condition">The condition value as a string.</param>
 	/// <param name="bgColor">The background color to apply if the condition is met (e.g., hex code or name).</param>
@@ -110,7 +110,7 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets the width of a column.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
 	/// <param name="width">The width in characters.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetColumnWidth(int col, double width);
@@ -118,7 +118,7 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets the height of a row.
 	/// </summary>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <param name="height">The height in points.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetRowHeight(int row, double height);
@@ -126,7 +126,7 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Auto-fits the column width based on content.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker AutoFitColumn(int col);
 
@@ -147,18 +147,18 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Merges cells in the specified range.
 	/// </summary>
-	/// <param name="startCol">The starting column index (1-based).</param>
-	/// <param name="startRow">The starting row index (1-based).</param>
-	/// <param name="endCol">The ending column index (1-based).</param>
-	/// <param name="endRow">The ending row index (1-based).</param>
+	/// <param name="startCol">The starting column index (0-based).</param>
+	/// <param name="startRow">The starting row index (0-based).</param>
+	/// <param name="endCol">The ending column index (0-based).</param>
+	/// <param name="endRow">The ending row index (0-based).</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker MergeCells(int startCol, int startRow, int endCol, int endRow);
 
 	/// <summary>
 	/// Sets a hyperlink in a cell.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <param name="url">The URL for the hyperlink.</param>
 	/// <param name="text">The display text for the hyperlink. If null, the URL is used.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -167,8 +167,8 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets the format of a specific cell.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <param name="format">The format string to apply.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetCellFormat(int col, int row, string format);
@@ -176,8 +176,8 @@ public interface IExcelWorker : IDisposable
 	/// <summary>
 	/// Sets the colors of a specific cell.
 	/// </summary>
-	/// <param name="col">The column index (1-based).</param>
-	/// <param name="row">The row index (1-based).</param>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
 	/// <param name="bgColor">The background color (e.g., hex code or name).</param>
 	/// <param name="fgColor">The foreground (text) color. If null, default is used.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -201,10 +201,10 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="xCol">Column index for X-axis values (1-based).</param>
-	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="xCol">Column index for X-axis values (0-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (0-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -215,8 +215,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -227,8 +227,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -239,8 +239,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -251,8 +251,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -263,10 +263,10 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="xCol">Column index for X-axis values (1-based).</param>
-	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="xCol">Column index for X-axis values (0-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (0-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -277,8 +277,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -289,11 +289,11 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:C100") with X, Y, and size columns.</param>
-	/// <param name="xCol">Column index for X-axis values (1-based).</param>
-	/// <param name="yCol">Column index for Y-axis values (1-based).</param>
-	/// <param name="sizeCol">Column index for bubble size values (1-based).</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="xCol">Column index for X-axis values (0-based).</param>
+	/// <param name="yCol">Column index for Y-axis values (0-based).</param>
+	/// <param name="sizeCol">Column index for bubble size values (0-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
@@ -304,8 +304,8 @@ public interface IExcelWorker : IDisposable
 	/// </summary>
 	/// <param name="name">Chart title.</param>
 	/// <param name="dataRange">Data range in A1 notation with Open, High, Low, Close columns.</param>
-	/// <param name="anchorCol">Column where chart is anchored (1-based).</param>
-	/// <param name="anchorRow">Row where chart is anchored (1-based).</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
 	/// <param name="width">Chart width in pixels.</param>
 	/// <param name="height">Chart height in pixels.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
