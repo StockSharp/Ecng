@@ -139,10 +139,8 @@ public class YandexDiskClientTests : BaseTestClass
 
 		outputStream.ToArray().AssertEqual(fileContent);
 
-		if (progressCalls.Count == 0)
-			Assert.Inconclusive("Progress callback is never called during DownloadAsync (bug exists)");
-		else
-			progressCalls.Last().AssertEqual(100, "Final progress should be 100");
+		(progressCalls.Count > 0).AssertTrue("Progress callback should be called during DownloadAsync");
+		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
 	}
 
 	/// <summary>
@@ -167,10 +165,8 @@ public class YandexDiskClientTests : BaseTestClass
 		// GetFullPath returns "uploads/upload.txt" (no leading slash)
 		fakeApi.FilesClient.Files.ContainsKey("uploads/upload.txt").AssertTrue("File should be uploaded");
 
-		if (progressCalls.Count == 0)
-			Assert.Inconclusive("Progress callback is never called during UploadAsync (bug exists)");
-		else
-			progressCalls.Last().AssertEqual(100, "Final progress should be 100");
+		(progressCalls.Count > 0).AssertTrue("Progress callback should be called during UploadAsync");
+		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
 	}
 
 	#endregion
