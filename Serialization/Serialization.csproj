@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\Security\Security.csproj" />
   </ItemGroup>

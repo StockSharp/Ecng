@@ -5,6 +5,7 @@
     <NoWarn>3001,3002,3003,3008,3009</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
     <PackageReference Include="WmiLight" Version="$(WmiLightVer)" />
 
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="$(CsWin32Ver)">
