@@ -575,7 +575,7 @@ public static class NetworkHelper
 		if (url is null)
 			throw new ArgumentNullException(nameof(url));
 
-		return url.Host.StartsWithIgnoreCase("localhost");
+		return url.Host.EqualsIgnoreCase("localhost");
 	}
 
 	/// <summary>
@@ -1016,17 +1016,23 @@ public static class NetworkHelper
 		if (address.IsEmpty())
 			return false;
 
-		var colonIndex = address.LastIndexOf(':');
+		// IPv6 addresses contain multiple colons - exclude them unless in bracket notation [::1]:port
+		var firstColonIndex = address.IndexOf(':');
+		var lastColonIndex = address.LastIndexOf(':');
+
+		// Multiple colons without brackets = IPv6 address, not host:port
+		if (firstColonIndex != lastColonIndex && !address.StartsWith("["))
+			return false;
 
 		// No colon, or colon at the start/end
-		if (colonIndex <= 0 || colonIndex >= address.Length - 1)
+		if (lastColonIndex <= 0 || lastColonIndex >= address.Length - 1)
 			return false;
 
 		// Exclude Windows drive paths like "C:\folder" (colon at position 1 after drive letter)
-		if (colonIndex == 1 && char.IsLetter(address[0]))
+		if (lastColonIndex == 1 && char.IsLetter(address[0]))
 			return false;
 
-		var portStr = address.Substring(colonIndex + 1);
+		var portStr = address.Substring(lastColonIndex + 1);
 
 		// Port must be a valid number in range 1-65535
 		// Also reject if port part contains non-digits (e.g., paths like "C:\folder")
