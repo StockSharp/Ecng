@@ -294,12 +294,16 @@ public class BitArrayReader
 			if (bitOffset > 0)
 				bits |= Get(offset + 1) << (64 - bitOffset);
 
-			bitOffset += 63;
+			// Read 64 bits to handle long.MinValue whose absolute value (2^63) requires bit 63
+			bitOffset += 64;
 
-			value = (long)(bits & (ulong.MaxValue >> (64 - 63)));
+			// All 64 bits are used, so no masking needed
+			var absValue = bits;
 
 			if (!isPositive)
-				value = -value;
+				value = absValue == ((ulong)long.MaxValue + 1) ? long.MinValue : -(long)absValue;
+			else
+				value = (long)absValue;
 		}
 		else
 		{

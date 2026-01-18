@@ -66,56 +66,61 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 		{
 			Write(true);
 
+			// Use long to safely handle int.MinValue (whose absolute value overflows int)
+			long absValue;
 			if (value < 0)
 			{
-				value = -value;
+				absValue = -(long)value;
 				Write(false);
 			}
 			else
+			{
+				absValue = value;
 				Write(true);
+			}
 
-			if (value == 1)
+			if (absValue == 1)
 				Write(false);
 			else
 			{
 				Write(true);
 
-				if (value < 16)
+				if (absValue < 16)
 				{
 					Write(false);
-					WriteBits(value, 4);
+					WriteBits(absValue, 4);
 				}
 				else
 				{
 					Write(true);
 
-					if (value <= byte.MaxValue)
+					if (absValue <= byte.MaxValue)
 					{
 						Write(false);
-						WriteBits(value, 8);
+						WriteBits(absValue, 8);
 					}
 					else
 					{
 						Write(true);
 
-						if (value <= ushort.MaxValue)
+						if (absValue <= ushort.MaxValue)
 						{
 							Write(false);
-							WriteBits(value, 16);
+							WriteBits(absValue, 16);
 						}
 						else
 						{
 							Write(true);
 
-							if (value <= 16777216) // 24 bits
+							if (absValue <= 16777216) // 24 bits
 							{
 								Write(false);
-								WriteBits(value, 24);
+								WriteBits(absValue, 24);
 							}
 							else
 							{
 								Write(true);
-								WriteBits(value, 32);
+								WriteBits(absValue, 32);
 							}
 						}
 					}
@@ -130,11 +135,15 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	/// <param name="value">The long integer value to write.</param>
 	public void WriteLong(long value)
 	{
-		if (value.Abs() > int.MaxValue)
+		// Use ulong to safely get absolute value (long.MinValue.Abs() throws OverflowException)
+		var absValue = value >= 0 ? (ulong)value : (value == long.MinValue ? (ulong)long.MaxValue + 1 : (ulong)(-value));
+
+		if (absValue > int.MaxValue)
 		{
 			Write(true);
 			Write(value >= 0);
-			WriteBits(value.Abs(), 63);
+			// Write 64 bits to handle long.MinValue whose absolute value (2^63) requires bit 63
+			WriteULongBits(absValue, 64);
 		}
 		else
 		{
@@ -163,6 +172,17 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	{
 		for (var i = 0; i < bitCount; i++)
 			Write((value & (1L << i)) != 0);
+	}
+
+	/// <summary>
+	/// Writes a specified number of bits from an unsigned long integer value to the stream.
+	/// </summary>
+	/// <param name="value">The unsigned long integer value to write.</param>
+	/// <param name="bitCount">The number of bits to write.</param>
+	public void WriteULongBits(ulong value, int bitCount)
+	{
+		for (var i = 0; i < bitCount; i++)
+			Write((value & (1UL << i)) != 0);
 	}
 
 	/// <summary>
