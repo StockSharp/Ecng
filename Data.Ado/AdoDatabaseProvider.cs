@@ -136,14 +136,18 @@ internal class AdoTable : IDatabaseTable
 		if (rows is null)
 			throw new ArgumentNullException(nameof(rows));
 
-		var rowsList = rows.ToList();
+		// Filter out empty rows and convert to list
+		var rowsList = rows.Where(r => r != null && r.Count > 0).ToList();
 		if (rowsList.Count == 0)
 			return;
 
 		_connection.EnsureOpen();
 
-		// Get column names from first row
-		var columns = rowsList[0].Keys.ToList();
+		// Collect ALL unique column names from ALL rows to handle inconsistent data
+		var columns = rowsList.SelectMany(r => r.Keys).Distinct().ToList();
+		if (columns.Count == 0)
+			return;
+
 		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
 		// Calculate batch size based on number of columns to stay within parameter limit
@@ -299,6 +303,19 @@ internal class AdoTable : IDatabaseTable
 
 		foreach (var filter in filterList)
 		{
+			// Handle NULL values specially - SQL requires IS NULL / IS NOT NULL syntax
+			if (filter.Value is null)
+			{
+				var quotedColumn = Dialect.QuoteIdentifier(filter.Column);
+				if (filter.Operator == ComparisonOperator.Equal)
+					conditions.Add($"{quotedColumn} IS NULL");
+				else if (filter.Operator == ComparisonOperator.NotEqual)
+					conditions.Add($"{quotedColumn} IS NOT NULL");
+				else
+					throw new NotSupportedException($"Operator {filter.Operator} is not supported with NULL value");
+				continue;
+			}
+
 			var paramName = $"p{paramIndex++}";
 
 			if (filter.Operator == ComparisonOperator.In && filter.Value is System.Collections.IEnumerable enumerable && filter.Value is not string)
