@@ -3,6 +3,7 @@ namespace Ecng.Tests.Data;
 using System.Diagnostics;
 
 using Ecng.Data;
+using Ecng.IO;
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
@@ -28,19 +29,16 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 #endif
 		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SQLite, SqliteFactory.Instance);
 
-		_sqliteDbPath = Path.Combine(Path.GetTempPath(), "ecng_integration_test.db");
-		if (File.Exists(_sqliteDbPath))
-			File.Delete(_sqliteDbPath);
+		// Use Config temp folder (unique per test run, auto-cleaned)
+		var tempDir = LocalFileSystem.Instance.GetTempPath();
+		_sqliteDbPath = Path.Combine(tempDir, "integration_test.db");
 	}
 
 	[ClassCleanup]
 	public static void ClassCleanup()
 	{
-		if (File.Exists(_sqliteDbPath))
-		{
-			try { File.Delete(_sqliteDbPath); }
-			catch { /* ignore */ }
-		}
+		// Release pooled connections so temp folder can be deleted
+		SqliteConnection.ClearAllPools();
 	}
 
 	private static DatabaseConnectionPair GetConnectionPair(string provider)
