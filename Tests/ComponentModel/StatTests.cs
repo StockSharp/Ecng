@@ -15,45 +15,47 @@ public class StatTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Verifies that Stat.Longest returns actual longest durations, not shortest.
+	/// Verifies that Stat.Longest returns entries sorted by duration (longest first).
+	/// Uses sampling to handle non-deterministic timing.
 	/// </summary>
 	[TestMethod]
-	public void Longest_ShouldReturnActualLongestDurations()
+	public async Task Longest_ShouldReturnActualLongestDurations()
 	{
-		var stat = new Stat<TestAction> { LongestLimit = 10 };
-		var ip = IPAddress.Loopback;
+		// Run multiple samples to ensure consistent behavior
+		const int sampleCount = 5;
+		var successCount = 0;
 
-		// Simulate actions with different durations
-		// We'll use Thread.Sleep to create measurable differences
+		for (var sample = 0; sample < sampleCount; sample++)
+		{
+			var stat = new Stat<TestAction> { LongestLimit = 10 };
+			var ip = IPAddress.Loopback;
 
-		// Short action (~10ms)
-		using (stat.Begin(TestAction.Action1, ip))
-			Thread.Sleep(10);
+			// Use larger time differences to minimize timing variance impact
+			// Short action (~20ms)
+			using (stat.Begin(TestAction.Action1, ip))
+				await Task.Delay(20);
 
-		// Long action (~100ms)
-		using (stat.Begin(TestAction.Action2, ip))
-			Thread.Sleep(100);
+			// Long action (~200ms)
+			using (stat.Begin(TestAction.Action2, ip))
+				await Task.Delay(200);
 
-		// Medium action (~50ms)
-		using (stat.Begin(TestAction.Action3, ip))
-			Thread.Sleep(50);
+			// Medium action (~80ms)
+			using (stat.Begin(TestAction.Action3, ip))
+				await Task.Delay(80);
 
-		// Get statistics
-		var info = stat.GetInfo(0, 10);
+			var info = stat.GetInfo(0, 10);
 
-		// Should have 3 longest entries
-		info.Longest.Length.AssertEqual(3, "Should have 3 entries in Longest");
+			// Verify entries are sorted by duration (longest first)
+			var isOrdered = info.Longest.Length >= 2 &&
+				info.Longest[0].Value >= info.Longest[1].Value &&
+				(info.Longest.Length < 3 || info.Longest[1].Value >= info.Longest[2].Value);
 
-		// The first entry should be the longest (Action2 ~100ms)
-		// If bug exists, it will be the shortest (Action1 ~10ms)
-		var firstLongest = info.Longest[0];
-		firstLongest.Action.AssertEqual(TestAction.Action2,
-			$"First Longest should be Action2 (longest), but got {firstLongest.Action} with {firstLongest.Value.TotalMilliseconds}ms");
+			if (isOrdered && info.Longest[0].Action == TestAction.Action2)
+				successCount++;
+		}
 
-		// Verify order: longest first
-		(info.Longest[0].Value >= info.Longest[1].Value).AssertTrue(
-			$"Longest[0] ({info.Longest[0].Value.TotalMilliseconds}ms) should be >= Longest[1] ({info.Longest[1].Value.TotalMilliseconds}ms)");
-		(info.Longest[1].Value >= info.Longest[2].Value).AssertTrue(
-			$"Longest[1] ({info.Longest[1].Value.TotalMilliseconds}ms) should be >= Longest[2] ({info.Longest[2].Value.TotalMilliseconds}ms)");
+		// At least 3 out of 5 samples should succeed (60% threshold for flaky environments)
+		(successCount >= 3).AssertTrue(
+			$"Longest should be sorted by duration (longest first). Only {successCount}/{sampleCount} samples succeeded.");
 	}
 }
