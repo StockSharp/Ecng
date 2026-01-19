@@ -50,7 +50,7 @@ public class LockTests : BaseTestClass
 			using (l.EnterScope())
 			{
 				started.Set();
-				hold.Wait(TimeSpan.FromMilliseconds(200));
+				hold.Wait(TimeSpan.FromSeconds(5));
 			}
 		});
 
