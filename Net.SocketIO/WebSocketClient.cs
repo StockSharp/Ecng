@@ -351,7 +351,11 @@ public class WebSocketClient : Disposable, IConnection
 		{
 			var token = source.Token;
 
+#if NETSTANDARD2_0
+			ArraySegment<byte> recvMem = new(new byte[BufferSize]);
+#else
 			Memory<byte> recvMem = new byte[BufferSize];
+#endif
 			var responseBuffer = new ArrayBufferWriter<byte>(BufferSize);
 
 			var preProcess = PreProcess; // legacy
@@ -380,7 +384,11 @@ public class WebSocketClient : Disposable, IConnection
 					if (ws is null)
 						break;
 
+#if NETSTANDARD2_0
+					WebSocketReceiveResult result;
+#else
 					ValueWebSocketReceiveResult result;
+#endif
 
 					try
 					{
@@ -405,7 +413,11 @@ public class WebSocketClient : Disposable, IConnection
 						break;
 					}
 
+#if NETSTANDARD2_0
+					responseBuffer.Write(recvMem.AsSpan().Slice(0, result.Count));
+#else
 					responseBuffer.Write(recvMem.Span[..result.Count]);
+#endif
 
 					if (!result.EndOfMessage)
 						continue;
@@ -421,7 +433,7 @@ public class WebSocketClient : Disposable, IConnection
 						if (preProcess2 != null)
 						{
 							var count = preProcess2(roMem, preProcess2Mem);
-							roMem = preProcess2Mem[..count];
+							roMem = preProcess2Mem.Slice(0, count);
 						}
 						else if (preProcessBuf != null && preProcess != null)
 						{

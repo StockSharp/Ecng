@@ -38,5 +38,6 @@
     <MsSqlClientVer>6.*</MsSqlClientVer>
     <OpenXmlVer>3.*</OpenXmlVer>
     <SharpCompressVer>0.38.*</SharpCompressVer>
+    <SystemMemoryVer>4.6.*</SystemMemoryVer>
   </PropertyGroup>
 </Project>
