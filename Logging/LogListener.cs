@@ -111,7 +111,8 @@ public abstract class LogListener : Disposable, ILogListener, IAsyncLogListener
 	/// <returns>A task that represents the asynchronous write operation.</returns>
 	protected virtual ValueTask OnWriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
 	{
-		throw new NotSupportedException();
+		OnWriteMessages(messages);
+		return default;
 	}
 
 	/// <summary>
