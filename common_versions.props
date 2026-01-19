@@ -23,11 +23,12 @@
     <EcngVer>1.0.*</EcngVer>
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
-    <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
+    <SystemReflectionEmitLightweightVer>4.*</SystemReflectionEmitLightweightVer>
+    <SystemMemoryVer>4.*</SystemMemoryVer>
     <NewtonJsonVer>13.*</NewtonJsonVer>
     <RestSharpVer>112.*</RestSharpVer>
-    <NDdeVer>4.0.0</NDdeVer>
-    <NitoVer>5.1.2</NitoVer>
+    <NDdeVer>4.*</NDdeVer>
+    <NitoVer>5.*</NitoVer>
     <CsWin32Ver>0.3.106</CsWin32Ver>
     <WmiLightVer>6.5.2</WmiLightVer>
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
@@ -36,8 +37,8 @@
     <NuGetApiVer>7.0.1</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>6.*</MsSqlClientVer>
+    <MsDataSqliteVer>9.*</MsDataSqliteVer>
     <OpenXmlVer>3.*</OpenXmlVer>
     <SharpCompressVer>0.38.*</SharpCompressVer>
-    <SystemMemoryVer>4.6.*</SystemMemoryVer>
   </PropertyGroup>
 </Project>
