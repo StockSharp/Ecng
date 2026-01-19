@@ -1733,7 +1733,6 @@ public static class StringHelper
 	public static string GetString(this Encoding encoding, ArraySegment<byte> buffer)
 		=> encoding.CheckOnNull(nameof(encoding)).GetString(buffer.Array, buffer.Offset, buffer.Count);
 
-#if !NETSTANDARD2_0
 	/// <summary>
 	/// Gets the string from a span of bytes using UTF8 encoding.
 	/// </summary>
@@ -1808,8 +1807,6 @@ public static class StringHelper
 	/// <param name="destination">The destination span to write the encoded bytes.</param>
 	/// <returns>The number of bytes written to the destination.</returns>
 	public static int Cyrillic(this ReadOnlySpan<char> v, Span<byte> destination) => WindowsCyrillic.GetBytes(v, destination);
-
-#endif
 
 	/// <summary>
 	/// Converts the string to a <see cref="SecureString"/>.
