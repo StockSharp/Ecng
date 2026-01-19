@@ -5,6 +5,44 @@ using Ecng.Logging;
 [TestClass]
 public class LoggingTests : BaseTestClass
 {
+	/// <summary>
+	/// Mock listener that tracks all method calls for testing.
+	/// </summary>
+	private class MockLogListener : LogListener
+	{
+		public List<LogMessage> SyncMessages { get; } = [];
+		public List<LogMessage> AsyncMessages { get; } = [];
+		public int OnWriteMessageCalls { get; private set; }
+		public int OnWriteMessagesCalls { get; private set; }
+		public int OnWriteMessagesAsyncCalls { get; private set; }
+		public bool OverrideAsync { get; set; }
+
+		protected override void OnWriteMessage(LogMessage message)
+		{
+			OnWriteMessageCalls++;
+			SyncMessages.Add(message);
+		}
+
+		protected override void OnWriteMessages(IEnumerable<LogMessage> messages)
+		{
+			OnWriteMessagesCalls++;
+			base.OnWriteMessages(messages); // calls OnWriteMessage for each
+		}
+
+		protected override ValueTask OnWriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
+		{
+			OnWriteMessagesAsyncCalls++;
+
+			if (OverrideAsync)
+			{
+				AsyncMessages.AddRange(messages);
+				return default;
+			}
+
+			return base.OnWriteMessagesAsync(messages, cancellationToken); // fallback to sync
+		}
+	}
+
 	private class GuardedReceiver : BaseLogReceiver
 	{
 		[ThreadStatic]
@@ -155,5 +193,51 @@ public class LoggingTests : BaseTestClass
 
 		result.Length.AssertEqual(2);
 		result.All(m => m.Source.Name == "A").AssertTrue();
+	}
+
+	[TestMethod]
+	public void Listener_SyncPath_CallsOnWriteMessage()
+	{
+		var listener = new MockLogListener();
+		var src = new LogReceiver("S");
+		var messages = new[] { Msg(src, LogLevels.Info, "m1"), Msg(src, LogLevels.Warning, "m2") };
+
+		listener.WriteMessages(messages);
+
+		listener.OnWriteMessagesCalls.AssertEqual(1);
+		listener.OnWriteMessageCalls.AssertEqual(2);
+		listener.SyncMessages.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task Listener_AsyncPath_FallbackToSync()
+	{
+		var listener = new MockLogListener { OverrideAsync = false };
+		var src = new LogReceiver("S");
+		var messages = new[] { Msg(src, LogLevels.Info, "m1"), Msg(src, LogLevels.Error, "m2") };
+
+		await listener.WriteMessagesAsync(messages, CancellationToken);
+
+		listener.OnWriteMessagesAsyncCalls.AssertEqual(1);
+		listener.OnWriteMessagesCalls.AssertEqual(1); // fallback called sync
+		listener.OnWriteMessageCalls.AssertEqual(2);
+		listener.SyncMessages.Count.AssertEqual(2);
+		listener.AsyncMessages.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task Listener_AsyncPath_OverrideAsync()
+	{
+		var listener = new MockLogListener { OverrideAsync = true };
+		var src = new LogReceiver("S");
+		var messages = new[] { Msg(src, LogLevels.Info, "m1") };
+
+		await listener.WriteMessagesAsync(messages, CancellationToken);
+
+		listener.OnWriteMessagesAsyncCalls.AssertEqual(1);
+		listener.OnWriteMessagesCalls.AssertEqual(0); // no fallback
+		listener.OnWriteMessageCalls.AssertEqual(0);
+		listener.SyncMessages.Count.AssertEqual(0);
+		listener.AsyncMessages.Count.AssertEqual(1);
 	}
 }
