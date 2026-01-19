@@ -212,23 +212,14 @@ public class BitArrayTest : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: BitArrayWriter.WriteLong doesn't handle long.MinValue.
-	/// Math.Abs(long.MinValue) throws OverflowException.
+	/// long.MinValue is not supported due to backward compatibility with 63-bit encoding.
 	/// </summary>
 	[TestMethod]
-	public void WriteLong_ShouldHandleMinValue()
+	public void WriteLong_MinValue_ShouldThrow()
 	{
 		using var stream = new MemoryStream();
+		using var writer = new BitArrayWriter(stream);
 
-		using (var writer = new BitArrayWriter(stream))
-		{
-			writer.WriteLong(long.MinValue);
-		}
-
-		stream.Position = 0;
-		var reader = new BitArrayReader(stream);
-		var result = reader.ReadLong();
-
-		result.AssertEqual(long.MinValue, "long.MinValue should round-trip correctly");
+		Throws<ArgumentOutOfRangeException>(() => writer.WriteLong(long.MinValue));
 	}
 }

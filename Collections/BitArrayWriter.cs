@@ -133,17 +133,19 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	/// Writes a long integer value to the stream using a variable-length encoding.
 	/// </summary>
 	/// <param name="value">The long integer value to write.</param>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if value is long.MinValue (not supported).</exception>
 	public void WriteLong(long value)
 	{
-		// Use ulong to safely get absolute value (long.MinValue.Abs() throws OverflowException)
-		var absValue = value >= 0 ? (ulong)value : (value == long.MinValue ? (ulong)long.MaxValue + 1 : (ulong)(-value));
+		if (value == long.MinValue)
+			throw new ArgumentOutOfRangeException(nameof(value), value, "long.MinValue is not supported.");
+
+		var absValue = value >= 0 ? value : -value;
 
 		if (absValue > int.MaxValue)
 		{
 			Write(true);
 			Write(value >= 0);
-			// Write 64 bits to handle long.MinValue whose absolute value (2^63) requires bit 63
-			WriteULongBits(absValue, 64);
+			WriteBits(absValue, 63);
 		}
 		else
 		{
@@ -172,18 +174,6 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	{
 		for (var i = 0; i < bitCount; i++)
 			Write((value & (1L << i)) != 0);
-	}
-
-	/// <summary>
-	/// Writes a specified number of bits from an unsigned long integer value to the stream.
-	/// </summary>
-	/// <param name="value">The unsigned long integer value to write.</param>
-	/// <param name="bitCount">The number of bits to write.</param>
-	[CLSCompliant(false)]
-	public void WriteULongBits(ulong value, int bitCount)
-	{
-		for (var i = 0; i < bitCount; i++)
-			Write((value & (1UL << i)) != 0);
 	}
 
 	/// <summary>
