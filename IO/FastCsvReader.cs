@@ -527,6 +527,10 @@ public class FastCsvReader : Disposable
 			if (c == '.')
 				break;
 
+			// Scientific notation detected - fallback to double parsing
+			if (c == 'e' || c == 'E')
+				return (decimal)_toDouble(new string(_line, pair.First, pair.Second - pair.First));
+
 			if (c == '+')
 			{
 				if (i != pair.First)
@@ -567,6 +571,10 @@ public class FastCsvReader : Disposable
 
 			if (c == '.')
 				throw new InvalidOperationException();
+
+			// Scientific notation detected - fallback to double parsing
+			if (c == 'e' || c == 'E')
+				return (decimal)_toDouble(new string(_line, pair.First, pair.Second - pair.First));
 
 			if (c == '0' && canSkipZero)
 				continue;

@@ -419,5 +419,103 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 			base.Dispose(disposing);
 		}
 	}
+
+	#region Scientific Notation Tests
+
+	[TestMethod]
+	public async Task ScientificNotation_PositiveExponent()
+	{
+		await AssertAsync("1.5e+02", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(150m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_NegativeExponent()
+	{
+		await AssertAsync("1.772e-05", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(0.00001772m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_UppercaseE()
+	{
+		await AssertAsync("2.5E+03", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(2500m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_NoSign()
+	{
+		await AssertAsync("3.0e2", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(300m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_NegativeMantissa()
+	{
+		await AssertAsync("-1.5e+02", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(-150m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_NegativeMantissaNegativeExponent()
+	{
+		await AssertAsync("-5.0e-03", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(-0.005m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_WholeNumber()
+	{
+		await AssertAsync("5e+02", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(500m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_ZeroExponent()
+	{
+		await AssertAsync("1.5e0", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(1.5m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_MultipleColumns()
+	{
+		await AssertAsync("12;0.034;5.6", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(12m);
+			r.ReadDecimal().AssertEqual(0.034m);
+			r.ReadDecimal().AssertEqual(5.6m);
+		});
+	}
+
+	[TestMethod]
+	public async Task ScientificNotation_MultipleColumnsWithExp()
+	{
+		await AssertAsync("1.2e+01;3.4e-02;5.6e+00", 1, (_, r) =>
+		{
+			r.ReadDecimal().AssertEqual(12m);
+			r.ReadDecimal().AssertEqual(0.034m);
+			r.ReadDecimal().AssertEqual(5.6m);
+		});
+	}
+
+	#endregion
 }
 
