@@ -1867,6 +1867,70 @@ public class TimeHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void FromUnixAuto_Seconds_ShouldDetectAndConvert()
+	{
+		// 10 digits - seconds (e.g., 1700000000 = Nov 14, 2023)
+		var ts = 1700000000L;
+		var dt = ts.FromUnixAuto();
+
+		dt.AssertEqual(ts.FromUnix(true));
+		dt.Year.AssertEqual(2023);
+	}
+
+	[TestMethod]
+	public void FromUnixAuto_Milliseconds_ShouldDetectAndConvert()
+	{
+		// 13 digits - milliseconds (e.g., 1700000000000)
+		var ts = 1700000000000L;
+		var dt = ts.FromUnixAuto();
+
+		dt.AssertEqual(ts.FromUnix(false));
+		dt.Year.AssertEqual(2023);
+	}
+
+	[TestMethod]
+	public void FromUnixAuto_Microseconds_ShouldDetectAndConvert()
+	{
+		// 16 digits - microseconds (e.g., 1700000000000000)
+		var ts = 1700000000000000L;
+		var dt = ts.FromUnixAuto();
+
+		dt.AssertEqual(ts.FromUnixMcs());
+		dt.Year.AssertEqual(2023);
+	}
+
+	[TestMethod]
+	public void FromUnixAuto_TenThousandths_ShouldDetectAndConvert()
+	{
+		// 14-15 digits: 1/10000 seconds (e.g., 17000000000000)
+		var ts = 17000000000000L; // 14 digits
+		var dt = ts.FromUnixAuto();
+
+		// Should convert to microseconds by multiplying by 100
+		dt.AssertEqual((ts * 100).FromUnixMcs());
+		dt.Year.AssertEqual(2023);
+	}
+
+	[TestMethod]
+	public void FromUnixAuto_BoundaryValues_ShouldDetectCorrectly()
+	{
+		// Just above seconds threshold (13 digits) - should be milliseconds
+		var ms = 1_000_000_000_001L;
+		var dtMs = ms.FromUnixAuto();
+		dtMs.AssertEqual(ms.FromUnix(false));
+
+		// 14 digits - should be 1/10000 seconds
+		var tenK = 10_000_000_000_001L;
+		var dtTenK = tenK.FromUnixAuto();
+		dtTenK.AssertEqual((tenK * 100).FromUnixMcs());
+
+		// Just above 1/10000 threshold (16 digits) - should be microseconds
+		var mcs = 1_000_000_000_000_001L;
+		var dtMcs = mcs.FromUnixAuto();
+		dtMcs.AssertEqual(mcs.FromUnixMcs());
+	}
+
+	[TestMethod]
 	public void UnixNow_Properties_ShouldReturnCurrentUnixTime()
 	{
 		var nowS = TimeHelper.UnixNowS;

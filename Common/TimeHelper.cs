@@ -929,6 +929,38 @@ public static class TimeHelper
 	}
 
 	/// <summary>
+	/// Creates a <see cref="DateTime"/> from a Unix timestamp with auto-detection of unit (seconds, milliseconds, 1/10000 seconds, or microseconds).
+	/// </summary>
+	/// <param name="ts">The Unix timestamp to convert.</param>
+	/// <returns>A <see cref="DateTime"/> in UTC.</returns>
+	/// <remarks>
+	/// Detection is based on the magnitude of the value:
+	/// <list type="bullet">
+	/// <item><description>16+ digits: microseconds</description></item>
+	/// <item><description>14-15 digits: 1/10000 seconds (100 microseconds per unit)</description></item>
+	/// <item><description>13 digits: milliseconds</description></item>
+	/// <item><description>Less than 13 digits: seconds</description></item>
+	/// </list>
+	/// </remarks>
+	public static DateTime FromUnixAuto(this long ts)
+	{
+		// 16+ digits: microseconds
+		if (ts > 1_000_000_000_000_000)
+			return FromUnixMcs(ts);
+
+		// 14-15 digits: 1/10000 seconds → convert to microseconds (*100)
+		if (ts > 10_000_000_000_000)
+			return FromUnixMcs(ts * 100);
+
+		// 13 digits: milliseconds
+		if (ts > 1_000_000_000_000)
+			return FromUnix(ts, false);
+
+		// fallback: seconds
+		return FromUnix(ts, true);
+	}
+
+	/// <summary>
 	/// Converts the specified <see cref="DateTime"/> to Unix Microseconds since <see cref="GregorianStart"/>.
 	/// </summary>
 	/// <param name="time">The <see cref="DateTime"/> to convert.</param>
