@@ -107,8 +107,13 @@ public class SQLiteDialect : SqlDialectBase
 
 		// SQLite uses INSERT ... ON CONFLICT ... DO UPDATE
 		var sql = $"INSERT INTO {quotedTable} ({insertCols}) VALUES ({insertParams})";
-		sql += $" ON CONFLICT ({conflictCols}) DO UPDATE SET ";
-		sql += nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinCommaSpace();
+		sql += $" ON CONFLICT ({conflictCols})";
+
+		// If all columns are keys, there's nothing to update - use DO NOTHING
+		if (nonKeys.Length == 0)
+			sql += " DO NOTHING";
+		else
+			sql += $" DO UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinCommaSpace()}";
 
 		return sql;
 	}

@@ -114,8 +114,12 @@ CREATE TABLE {quotedName} ({columnDefs})";
 		var sql = $@"MERGE {quotedTable} AS target
 USING (SELECT {sourceValues}) AS source
 ON ({matchCondition})
-WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinCommaSpace()}
-WHEN NOT MATCHED THEN INSERT ({insertCols}) VALUES ({insertVals});";
+";
+		// If all columns are keys, there's nothing to update - skip WHEN MATCHED clause
+		if (nonKeys.Length > 0)
+			sql += $"WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinCommaSpace()}\n";
+
+		sql += $"WHEN NOT MATCHED THEN INSERT ({insertCols}) VALUES ({insertVals});";
 
 		return sql;
 	}
