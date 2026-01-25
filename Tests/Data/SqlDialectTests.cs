@@ -162,6 +162,39 @@ public class SqlDialectTests : BaseTestClass
 		}
 	}
 
+	/// <summary>
+	/// Verifies that GenerateUpsert handles the case when all columns are keys (no non-key columns).
+	/// Currently produces invalid SQL: "DO UPDATE SET " or "UPDATE SET " with nothing after it.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	public void GenerateUpsert_AllColumnsAreKeys_ShouldProduceValidSql(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		// All columns are keys - no columns to update
+		var columns = new[] { "Id", "Name" };
+		var keys = new[] { "Id", "Name" };
+
+		var sql = dialect.GenerateUpsert("TestTable", columns, keys);
+
+		// SQL should not end with "SET " or "SET" followed by whitespace/nothing
+		// Valid options: "DO NOTHING" for SQLite, skip UPDATE clause for SQL Server
+		var trimmed = sql.Trim();
+		trimmed.EndsWith("SET").AssertFalse($"UPSERT should not end with empty SET clause, got: {sql}");
+		trimmed.EndsWith("SET ").AssertFalse($"UPSERT should not end with empty SET clause, got: {sql}");
+
+		// Check that SQL doesn't contain "UPDATE SET" followed by nothing meaningful
+		var setIndex = sql.LastIndexOf("SET", StringComparison.OrdinalIgnoreCase);
+		if (setIndex >= 0)
+		{
+			var afterSet = sql.Substring(setIndex + 3).Trim();
+			// After "SET" there should be actual assignments, not empty or just whitespace/newline
+			(afterSet.Length > 0 && !afterSet.StartsWith("WHEN", StringComparison.OrdinalIgnoreCase))
+				.AssertTrue($"After SET should be column assignments, got: '{afterSet}' in SQL: {sql}");
+		}
+	}
+
 	#endregion
 
 	#region BuildCondition Tests

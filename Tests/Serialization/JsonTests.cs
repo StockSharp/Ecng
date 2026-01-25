@@ -1240,4 +1240,71 @@ public class JsonTests : BaseTestClass
 		arr[0].ToObject<double>().AssertEqual(1.1);
 		arr[1].ToObject<double>().AssertEqual(2.2);
 	}
+
+	#region Nested Arrays Tests
+
+	/// <summary>
+	/// Verifies that SettingsStorage can deserialize nested arrays correctly.
+	/// JSON like {"matrix": [[1,2],[3,4]]} should deserialize properly.
+	/// </summary>
+	[TestMethod]
+	public async Task SettingsStorage_NestedArrays_DeserializesCorrectly()
+	{
+		var storage = new SettingsStorage();
+		storage.Set("matrix", new[] { new[] { 1, 2 }, new[] { 3, 4 } });
+
+		var result = await Do(storage, fillMode: true);
+
+		var matrix = result.GetValue<object[]>("matrix");
+		matrix.AssertNotNull("Nested array should be deserialized");
+		matrix.Length.AssertEqual(2, "Should have 2 inner arrays");
+
+		var row0 = matrix[0] as object[];
+		var row1 = matrix[1] as object[];
+
+		row0.AssertNotNull("First inner array should exist");
+		row1.AssertNotNull("Second inner array should exist");
+
+		row0.Length.AssertEqual(2, "First row should have 2 elements");
+		row1.Length.AssertEqual(2, "Second row should have 2 elements");
+	}
+
+	/// <summary>
+	/// Verifies that deeply nested arrays are handled correctly.
+	/// </summary>
+	[TestMethod]
+	public async Task SettingsStorage_DeeplyNestedArrays_DeserializesCorrectly()
+	{
+		var storage = new SettingsStorage();
+		var deepArray = new[] { new[] { new[] { 1, 2 }, new[] { 3, 4 } } };
+		storage.Set("deep", deepArray);
+
+		var result = await Do(storage, fillMode: true);
+
+		var deep = result.GetValue<object[]>("deep");
+		deep.AssertNotNull("Deep nested array should be deserialized");
+		deep.Length.AssertEqual(1, "Should have 1 element at top level");
+	}
+
+	/// <summary>
+	/// Verifies that mixed nested structures (arrays with objects) deserialize correctly.
+	/// </summary>
+	[TestMethod]
+	public async Task SettingsStorage_ArrayOfObjects_DeserializesCorrectly()
+	{
+		var storage = new SettingsStorage();
+		var inner1 = new SettingsStorage();
+		inner1.Set("value", 1);
+		var inner2 = new SettingsStorage();
+		inner2.Set("value", 2);
+		storage.Set("items", new[] { inner1, inner2 });
+
+		var result = await Do(storage, fillMode: true);
+
+		var items = result.GetValue<object[]>("items");
+		items.AssertNotNull("Array of objects should be deserialized");
+		items.Length.AssertEqual(2, "Should have 2 objects in array");
+	}
+
+	#endregion
 }

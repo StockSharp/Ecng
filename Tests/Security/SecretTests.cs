@@ -4,6 +4,7 @@ using System.IO;
 using System.Security;
 
 using Ecng.Security;
+using Ecng.Security.Cryptographers;
 
 [TestClass]
 public class SecretTests : BaseTestClass
@@ -319,4 +320,56 @@ public class SecretTests : BaseTestClass
 
 		hash1.AssertNotEqual(hash2, "GetHashCode should update when Hash changes");
 	}
+
+	#region AsymmetricCryptographer Tests
+
+	/// <summary>
+	/// Verifies that AsymmetricCryptographer uses separate RSA instances for public and private keys.
+	/// When both keys are provided, encryption should use public key and decryption should use private key.
+	/// </summary>
+	[TestMethod]
+	public void AsymmetricCryptographer_SeparateKeys_EncryptDecryptWorks()
+	{
+		var rsa = CryptoHelper.GenerateRsa();
+		var publicKeyBytes = rsa.PublicPart().FromRsa();
+		var privateKeyBytes = rsa.FromRsa();
+
+		using var algo = System.Security.Cryptography.RSA.Create();
+		using var cryptographer = new AsymmetricCryptographer(algo, publicKeyBytes, privateKeyBytes);
+
+		var plainText = "Hello, World!"u8.ToArray();
+
+		// Encrypt with public key, decrypt with private key
+		var encrypted = cryptographer.Encrypt(plainText);
+		var decrypted = cryptographer.Decrypt(encrypted);
+
+		decrypted.AssertEqual(plainText, "Decrypted text should match original");
+	}
+
+	/// <summary>
+	/// Verifies that encryption uses public key (not private key).
+	/// Data encrypted with public key should be decryptable with private key.
+	/// </summary>
+	[TestMethod]
+	public void AsymmetricCryptographer_EncryptUsesPublicKey()
+	{
+		var rsa = CryptoHelper.GenerateRsa();
+		var publicKeyBytes = rsa.PublicPart().FromRsa();
+		var privateKeyBytes = rsa.FromRsa();
+
+		using var algo1 = System.Security.Cryptography.RSA.Create();
+		using var cryptographer = new AsymmetricCryptographer(algo1, publicKeyBytes, privateKeyBytes);
+
+		var plainText = "Test message"u8.ToArray();
+		var encrypted = cryptographer.Encrypt(plainText);
+
+		// Decrypt with a separate RSA instance using only private key
+		using var algo2 = System.Security.Cryptography.RSA.Create();
+		algo2.ImportParameters(privateKeyBytes.ToRsa());
+		var decrypted = algo2.Decrypt(encrypted, System.Security.Cryptography.RSAEncryptionPadding.Pkcs1);
+
+		decrypted.AssertEqual(plainText, "Data encrypted with public key should be decryptable with private key");
+	}
+
+	#endregion
 }

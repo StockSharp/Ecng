@@ -465,30 +465,68 @@ public class PriorityQueueTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: EnqueueRange with empty sequence creates Node with HasData=true.
-	/// This causes InvalidOperationException on Peek/Dequeue.
+	/// Verifies that EnqueueRange with empty sequence does not create garbage nodes.
 	/// </summary>
 	[TestMethod]
-	public void EnqueueRange_EmptySequence_ShouldNotBreakQueue()
+	public void EnqueueRange_EmptySequence_ShouldNotCreateNodes()
 	{
 		var pq = CreateQueue();
 
-		// Enqueue empty range - should not break queue
+		// Enqueue empty range - should not create any nodes
 		pq.EnqueueRange(1, Array.Empty<int>());
 
 		// Queue should remain empty and functional
 		pq.Count.AssertEqual(0, "Queue should be empty after enqueueing empty range");
 
-		// Peek should throw InvalidOperationException for empty queue, not crash
+		// Peek should throw InvalidOperationException for empty queue
 		ThrowsExactly<InvalidOperationException>(() => pq.Peek());
 
-		// TryPeek should return false, not crash
+		// TryPeek should return false
 		pq.TryPeek(out _, out _).AssertFalse("TryPeek on empty queue should return false");
 
 		// Should still be able to use the queue
 		pq.Enqueue(1, 10);
 		pq.Count.AssertEqual(1);
 		pq.Peek().AssertEqual((1L, 10));
+	}
+
+	/// <summary>
+	/// Verifies that multiple empty EnqueueRange calls don't break enumeration.
+	/// Scenario: empty nodes at the front of the linked list after dequeue.
+	/// </summary>
+	[TestMethod]
+	public void EnqueueRange_MultipleEmptySequences_EnumerationWorks()
+	{
+		var pq = CreateQueue();
+
+		// Add a real element first (priority 1 = best)
+		pq.Enqueue(1, 10);
+
+		// Add empty ranges with worse priorities (go to end of list)
+		pq.EnqueueRange(2, Array.Empty<int>());
+		pq.EnqueueRange(3, Array.Empty<int>());
+
+		// Add another real element with worst priority (goes last)
+		pq.EnqueueRange(4, new[] { 40 });
+
+		// Count should be 2
+		pq.Count.AssertEqual(2);
+
+		// Dequeue the first element - now empty nodes are at front!
+		// List becomes: [EmptyNode(2), EmptyNode(3), Node(4, 40)]
+		var first = pq.Dequeue();
+		first.AssertEqual((1L, 10));
+
+		pq.Count.AssertEqual(1);
+
+		// Direct enumeration test
+		var count = 0;
+		foreach (var item in pq)
+		{
+			count++;
+			item.AssertEqual((4L, 40));
+		}
+		count.AssertEqual(1, "Enumerator should find exactly 1 element after skipping empty nodes");
 	}
 
 	#endregion
