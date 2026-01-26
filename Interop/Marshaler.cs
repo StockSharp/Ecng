@@ -421,8 +421,10 @@ public unsafe static class Marshaler
 		if (value.IsEmpty())
 			return;
 
-		if (value.Length >= maxBytes)
-			throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, "Invalid value.");
+		// Check encoded byte count, not character count (important for multi-byte encodings like UTF-8)
+		var byteCount = encoding.GetByteCount(value);
+		if (byteCount >= maxBytes)
+			throw new ArgumentOutOfRangeException(nameof(value), byteCount, $"Encoded string requires {byteCount} bytes, but buffer is only {maxBytes} bytes.");
 
 		var charBuffer = stackalloc char[maxBytes];
 

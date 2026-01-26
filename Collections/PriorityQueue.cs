@@ -504,6 +504,9 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	{
 		var arr = elements.ToArray();
 
+		if (arr.Length == 0)
+			return;
+
 		if (_count == 0)
 		{
 			_nodes.AddFirst(new Node(priority, arr));

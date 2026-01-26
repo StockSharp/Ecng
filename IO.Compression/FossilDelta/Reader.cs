@@ -25,13 +25,12 @@ namespace Ecng.IO.Fossil
 			return this.pos < _length;
 		}
 
-		public byte GetByte () 
+		public byte GetByte()
 		{
-			byte b = this.a[this.pos];
-			this.pos++;
-			if (this.pos > _length) 
+			if (this.pos >= _length)
 				throw new IndexOutOfRangeException("out of bounds");
-			return b;
+
+			return this.a[this.pos++];
 		}
 
 		public char GetChar() 
