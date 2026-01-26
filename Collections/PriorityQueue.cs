@@ -611,20 +611,16 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 
 			if (!_currentEnum.MoveNext())
 			{
-				// Keep moving to next node until we find one with elements or reach the end
-				while (true)
-				{
-					_current = _current.Next;
+				_current = _current.Next;
 
-					if (_current is null)
-						return false;
+				if (_current is null)
+					return false;
 
-					_currentEnum.Dispose();
-					_currentEnum = _current.Value.GetEnumerator();
+				_currentEnum.Dispose();
+				_currentEnum = _current.Value.GetEnumerator();
 
-					if (_currentEnum.MoveNext())
-						break;
-				}
+				if (!_currentEnum.MoveNext())
+					return false;
 			}
 
 			return true;
