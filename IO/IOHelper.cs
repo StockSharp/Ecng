@@ -95,6 +95,18 @@ public static class IOHelper
 	}
 
 	/// <summary>
+	/// Builds an absolute path from a potentially relative path.
+	/// </summary>
+	/// <param name="path">A relative or absolute path.</param>
+	/// <param name="baseDir">The base directory used when <paramref name="path"/> is not rooted.</param>
+	/// <returns>
+	/// If <paramref name="path"/> is already rooted, the same value is returned;
+	/// otherwise the path combined with <paramref name="baseDir"/> is returned.
+	/// </returns>
+	public static string MakeFullPath(this string path, string baseDir)
+		=> Path.IsPathRooted(path) ? path : Path.Combine(baseDir, path);
+
+	/// <summary>
 	/// Creates the directory for the specified file if it does not already exist.
 	/// </summary>
 	/// <param name="fullPath">The full path to the file.</param>

@@ -660,4 +660,74 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region MakeFullPath
+
+	[TestMethod]
+	public void MakeFullPath_RootedPath_ReturnsSamePath()
+	{
+		var rooted = @"C:\absolute\path\file.txt";
+		var baseDir = @"D:\other\dir";
+
+		var result = rooted.MakeFullPath(baseDir);
+
+		result.AssertEqual(rooted);
+	}
+
+	[TestMethod]
+	public void MakeFullPath_RelativePath_CombinesWithBaseDir()
+	{
+		var relative = @"relative\path\file.txt";
+		var baseDir = @"C:\base\dir";
+
+		var result = relative.MakeFullPath(baseDir);
+
+		result.AssertEqual(Path.Combine(baseDir, relative));
+	}
+
+	[TestMethod]
+	public void MakeFullPath_JustFileName_CombinesWithBaseDir()
+	{
+		var fileName = "file.txt";
+		var baseDir = @"C:\base\dir";
+
+		var result = fileName.MakeFullPath(baseDir);
+
+		result.AssertEqual(Path.Combine(baseDir, fileName));
+	}
+
+	[TestMethod]
+	public void MakeFullPath_EmptyPath_ReturnsBaseDir()
+	{
+		var empty = "";
+		var baseDir = @"C:\base\dir";
+
+		var result = empty.MakeFullPath(baseDir);
+
+		result.AssertEqual(baseDir);
+	}
+
+	[TestMethod]
+	public void MakeFullPath_DotRelative_CombinesWithBaseDir()
+	{
+		var relative = @".\subdir\file.txt";
+		var baseDir = @"C:\base\dir";
+
+		var result = relative.MakeFullPath(baseDir);
+
+		result.AssertEqual(Path.Combine(baseDir, relative));
+	}
+
+	[TestMethod]
+	public void MakeFullPath_ParentRelative_CombinesWithBaseDir()
+	{
+		var relative = @"..\other\file.txt";
+		var baseDir = @"C:\base\dir";
+
+		var result = relative.MakeFullPath(baseDir);
+
+		result.AssertEqual(Path.Combine(baseDir, relative));
+	}
+
+	#endregion
 }
