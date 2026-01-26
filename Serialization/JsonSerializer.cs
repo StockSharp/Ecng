@@ -419,30 +419,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				}
 				case JsonToken.StartArray:
 				{
-					await reader.ReadWithCheckAsync(cancellationToken);
-
-					var list = new List<object>();
-
-					while (reader.TokenType != JsonToken.EndArray)
-					{
-						switch (reader.TokenType)
-						{
-							case JsonToken.StartObject:
-							{
-								var inner = new SettingsStorage();
-								await FillAsync(inner, reader, cancellationToken);
-								list.Add(inner);
-								break;
-							}
-							default:
-								list.Add(reader.Value);
-								break;
-						}
-
-						await reader.ReadWithCheckAsync(cancellationToken);
-					}
-
-					value = list.ToArray();
+					value = await ReadArrayAsync(reader, cancellationToken);
 					break;
 				}
 				default:
@@ -452,6 +429,39 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			storage.Set(propName, value);
 		}
+	}
+
+	private async ValueTask<object[]> ReadArrayAsync(JsonReader reader, CancellationToken cancellationToken)
+	{
+		await reader.ReadWithCheckAsync(cancellationToken);
+
+		var list = new List<object>();
+
+		while (reader.TokenType != JsonToken.EndArray)
+		{
+			switch (reader.TokenType)
+			{
+				case JsonToken.StartObject:
+				{
+					var inner = new SettingsStorage();
+					await FillAsync(inner, reader, cancellationToken);
+					list.Add(inner);
+					break;
+				}
+				case JsonToken.StartArray:
+				{
+					list.Add(await ReadArrayAsync(reader, cancellationToken));
+					break;
+				}
+				default:
+					list.Add(reader.Value);
+					break;
+			}
+
+			await reader.ReadWithCheckAsync(cancellationToken);
+		}
+
+		return list.ToArray();
 	}
 
 	private async ValueTask TryClearDeepLevel(JsonReader reader, SettingsStorage storage, CancellationToken cancellationToken)
