@@ -1,13 +1,14 @@
 #if !NET7_0_OR_GREATER
 namespace System.Formats.Tar;
 
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using SharpCompress.Archives.Tar;
+using SharpCompress.Common;
 using SharpCompress.Readers;
+
+using SharpTarReader = SharpCompress.Readers.Tar.TarReader;
 
 /// <summary>
 /// Polyfill for System.Formats.Tar.TarEntryType for .NET 6.
@@ -64,12 +65,11 @@ public sealed class TarEntry
 
 /// <summary>
 /// Polyfill for System.Formats.Tar.TarReader for .NET 6.
-/// Uses SharpCompress internally.
+/// Uses SharpCompress TarReader (streaming) internally.
 /// </summary>
 public sealed class TarReader : IDisposable
 {
-	private readonly TarArchive _archive;
-	private readonly IEnumerator<TarArchiveEntry> _entries;
+	private readonly IReader _reader;
 	private readonly bool _leaveOpen;
 	private readonly Stream _stream;
 	private bool _disposed;
@@ -83,8 +83,7 @@ public sealed class TarReader : IDisposable
 	{
 		_stream = archiveStream ?? throw new ArgumentNullException(nameof(archiveStream));
 		_leaveOpen = leaveOpen;
-		_archive = TarArchive.Open(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
-		_entries = _archive.Entries.GetEnumerator();
+		_reader = SharpTarReader.Open(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
 	}
 
 	/// <summary>
@@ -96,11 +95,11 @@ public sealed class TarReader : IDisposable
 	{
 		ThrowIfDisposed();
 
-		if (!_entries.MoveNext())
+		if (!_reader.MoveToNextEntry())
 			return null;
 
-		var sharpEntry = _entries.Current;
-		return ConvertEntry(sharpEntry, copyData);
+		var sharpEntry = _reader.Entry;
+		return ConvertEntry(_reader, sharpEntry, copyData);
 	}
 
 	/// <summary>
@@ -116,7 +115,7 @@ public sealed class TarReader : IDisposable
 		return Task.FromResult(GetNextEntry(copyData));
 	}
 
-	private static TarEntry ConvertEntry(TarArchiveEntry sharpEntry, bool copyData)
+	private static TarEntry ConvertEntry(IReader reader, IEntry sharpEntry, bool copyData)
 	{
 		var entryType = sharpEntry.IsDirectory
 			? TarEntryType.Directory
@@ -129,7 +128,7 @@ public sealed class TarReader : IDisposable
 			{
 				// Copy to MemoryStream for safe access
 				dataStream = new MemoryStream();
-				using (var entryStream = sharpEntry.OpenEntryStream())
+				using (var entryStream = reader.OpenEntryStream())
 				{
 					entryStream.CopyTo(dataStream);
 				}
@@ -137,7 +136,7 @@ public sealed class TarReader : IDisposable
 			}
 			else
 			{
-				dataStream = sharpEntry.OpenEntryStream();
+				dataStream = reader.OpenEntryStream();
 			}
 		}
 
@@ -165,8 +164,7 @@ public sealed class TarReader : IDisposable
 			return;
 
 		_disposed = true;
-		_entries.Dispose();
-		_archive.Dispose();
+		_reader.Dispose();
 
 		if (!_leaveOpen)
 			_stream.Dispose();
