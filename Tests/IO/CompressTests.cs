@@ -1113,4 +1113,463 @@ public class CompressTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region TAR archive tests
+
+	[TestMethod]
+	public void Tar_Untar_RoundTrip()
+	{
+		var original = new Dictionary<string, string>
+		{
+			["a.txt"] = "Hello",
+			["dir/b.txt"] = "World",
+			["dir/sub/c.txt"] = "Test"
+		};
+
+		// Create TAR archive using SharpCompress
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			foreach (var (name, content) in original)
+			{
+				var contentStream = new MemoryStream(content.UTF8());
+				archive.AddEntry(name, contentStream, true, contentStream.Length, null);
+			}
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		// Read back using our Untar extension
+		var count = 0;
+		foreach (var (name, body) in tarStream.Untar(leaveOpen: true))
+		{
+			using var reader = new StreamReader(body);
+			var content = reader.ReadToEnd();
+			original.TryGetValue(name, out var expected).AssertTrue($"Unexpected entry: {name}");
+			content.AssertEqual(expected);
+			count++;
+		}
+
+		count.AssertEqual(original.Count);
+	}
+
+	[TestMethod]
+	public void Tar_Untar_WithFilter()
+	{
+		// Create TAR archive
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content1 = new MemoryStream("include"u8.ToArray());
+			var content2 = new MemoryStream("exclude"u8.ToArray());
+			var content3 = new MemoryStream("also"u8.ToArray());
+			archive.AddEntry("include.txt", content1, true, content1.Length, null);
+			archive.AddEntry("exclude.dat", content2, true, content2.Length, null);
+			archive.AddEntry("also.txt", content3, true, content3.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		var names = new List<string>();
+		foreach (var (name, body) in tarStream.Untar(leaveOpen: true, filter: n => n.EndsWith(".txt")))
+		{
+			names.Add(name);
+			body.Dispose();
+		}
+
+		names.Count.AssertEqual(2);
+		names.All(n => n.EndsWith(".txt")).AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_UntarTo_ExtractsFiles(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR archive
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content1 = new MemoryStream("content1"u8.ToArray());
+			var content2 = new MemoryStream("content2"u8.ToArray());
+			archive.AddEntry("file1.txt", content1, true, content1.Length, null);
+			archive.AddEntry("subdir/file2.txt", content2, true, content2.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		// Write TAR to filesystem
+		var tarPath = Path.Combine(root, "archive.tar");
+		using (var file = fs.OpenWrite(tarPath))
+			tarStream.CopyTo(file);
+
+		// Extract TAR
+		var destDir = Path.Combine(root, "dest");
+		fs.UntarTo(tarPath, destDir);
+
+		// Verify extracted files
+		fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
+
+		fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_UntarToAsync_ExtractsFiles(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR archive
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content1 = new MemoryStream("async content 1"u8.ToArray());
+			var content2 = new MemoryStream("async content 2"u8.ToArray());
+			archive.AddEntry("async1.txt", content1, true, content1.Length, null);
+			archive.AddEntry("async2.txt", content2, true, content2.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		var tarPath = Path.Combine(root, "archive.tar");
+		using (var file = fs.OpenWrite(tarPath))
+			tarStream.CopyTo(file);
+
+		var destDir = Path.Combine(root, "dest");
+		await fs.UntarToAsync(tarPath, destDir, cancellationToken: CancellationToken);
+
+		fs.FileExists(Path.Combine(destDir, "async1.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "async1.txt")).AssertEqual("async content 1");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_UntarTo_OverwriteOption(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR archive
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("new content"u8.ToArray());
+			archive.AddEntry("file.txt", content, true, content.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		var tarPath = Path.Combine(root, "archive.tar");
+		using (var file = fs.OpenWrite(tarPath))
+			tarStream.CopyTo(file);
+
+		// Create dest with existing file
+		var destDir = Path.Combine(root, "dest");
+		fs.CreateDirectory(destDir);
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
+
+		// Untar with overwrite=true (default)
+		fs.UntarTo(tarPath, destDir, overwrite: true);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("new content");
+
+		// Reset
+		fs.WriteAllText(Path.Combine(destDir, "file.txt"), "old content");
+
+		// Untar with overwrite=false
+		fs.UntarTo(tarPath, destDir, overwrite: false);
+		fs.ReadAllText(Path.Combine(destDir, "file.txt")).AssertEqual("old content");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Untar_ReturnsEntries(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR archive
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var contentA = new MemoryStream("aaa"u8.ToArray());
+			var contentB = new MemoryStream("bbb"u8.ToArray());
+			archive.AddEntry("a.txt", contentA, true, contentA.Length, null);
+			archive.AddEntry("b.txt", contentB, true, contentB.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		var tarPath = Path.Combine(root, "test.tar");
+		using (var file = fs.OpenWrite(tarPath))
+			tarStream.CopyTo(file);
+
+		var names = new List<string>();
+		foreach (var (name, body) in fs.Untar(tarPath))
+		{
+			names.Add(name);
+			body.Dispose();
+		}
+
+		names.Count.AssertEqual(2);
+		names.Any(n => n == "a.txt").AssertTrue();
+		names.Any(n => n == "b.txt").AssertTrue();
+	}
+
+	[TestMethod]
+	public void Tgz_Untgz_RoundTrip()
+	{
+		var original = new Dictionary<string, string>
+		{
+			["a.txt"] = "Hello from tgz",
+			["dir/b.txt"] = "World tgz"
+		};
+
+		// Create TAR.GZ archive
+		using var tgzStream = new MemoryStream();
+		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			foreach (var (name, content) in original)
+			{
+				var contentStream = new MemoryStream(content.UTF8());
+				archive.AddEntry(name, contentStream, true, contentStream.Length, null);
+			}
+			archive.SaveTo(gzipStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tgzStream.Position = 0;
+
+		// Read back using Untgz extension
+		var count = 0;
+		foreach (var (name, body) in tgzStream.Untgz(leaveOpen: true))
+		{
+			using var reader = new StreamReader(body);
+			var content = reader.ReadToEnd();
+			original.TryGetValue(name, out var expected).AssertTrue($"Unexpected entry: {name}");
+			content.AssertEqual(expected);
+			count++;
+		}
+
+		count.AssertEqual(original.Count);
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_UntgzTo_ExtractsFiles(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR.GZ archive
+		using var tgzStream = new MemoryStream();
+		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content1 = new MemoryStream("tgz content 1"u8.ToArray());
+			var content2 = new MemoryStream("tgz content 2"u8.ToArray());
+			archive.AddEntry("file1.txt", content1, true, content1.Length, null);
+			archive.AddEntry("subdir/file2.txt", content2, true, content2.Length, null);
+			archive.SaveTo(gzipStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tgzStream.Position = 0;
+
+		var tgzPath = Path.Combine(root, "archive.tar.gz");
+		using (var file = fs.OpenWrite(tgzPath))
+			tgzStream.CopyTo(file);
+
+		var destDir = Path.Combine(root, "dest");
+		fs.UntgzTo(tgzPath, destDir);
+
+		fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "file1.txt")).AssertEqual("tgz content 1");
+
+		fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("tgz content 2");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task FileSystem_UntgzToAsync_ExtractsFiles(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR.GZ archive
+		using var tgzStream = new MemoryStream();
+		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("async tgz content"u8.ToArray());
+			archive.AddEntry("async_tgz.txt", content, true, content.Length, null);
+			archive.SaveTo(gzipStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tgzStream.Position = 0;
+
+		var tgzPath = Path.Combine(root, "archive.tgz");
+		using (var file = fs.OpenWrite(tgzPath))
+			tgzStream.CopyTo(file);
+
+		var destDir = Path.Combine(root, "dest");
+		await fs.UntgzToAsync(tgzPath, destDir, cancellationToken: CancellationToken);
+
+		fs.FileExists(Path.Combine(destDir, "async_tgz.txt")).AssertTrue();
+		fs.ReadAllText(Path.Combine(destDir, "async_tgz.txt")).AssertEqual("async tgz content");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void FileSystem_Untgz_ReturnsEntries(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType);
+
+		// Create TAR.GZ archive
+		using var tgzStream = new MemoryStream();
+		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content1 = new MemoryStream("content1"u8.ToArray());
+			var content2 = new MemoryStream("content2"u8.ToArray());
+			archive.AddEntry("entry1.txt", content1, true, content1.Length, null);
+			archive.AddEntry("entry2.txt", content2, true, content2.Length, null);
+			archive.SaveTo(gzipStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tgzStream.Position = 0;
+
+		var tgzPath = Path.Combine(root, "test.tgz");
+		using (var file = fs.OpenWrite(tgzPath))
+			tgzStream.CopyTo(file);
+
+		var names = new List<string>();
+		foreach (var (name, body) in fs.Untgz(tgzPath))
+		{
+			names.Add(name);
+			body.Dispose();
+		}
+
+		names.Count.AssertEqual(2);
+		names.Any(n => n == "entry1.txt").AssertTrue();
+		names.Any(n => n == "entry2.txt").AssertTrue();
+	}
+
+	#endregion
+
+	#region TAR Slip vulnerability tests
+
+	/// <summary>
+	/// Verifies that UntarTo rejects or sanitizes path traversal entries (Tar Slip vulnerability).
+	/// </summary>
+	[TestMethod]
+	public void UntarTo_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create a malicious TAR with "../malicious.txt" entry
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("malicious content"u8.ToArray());
+			archive.AddEntry("../malicious.txt", content, true, content.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.tar"))
+			tarStream.CopyTo(file);
+
+		fs.UntarTo("/safe/archive.tar", "/safe/dest");
+
+		fs.FileExists("/malicious.txt").AssertFalse("Tar Slip: path traversal allowed file creation outside destination");
+	}
+
+	/// <summary>
+	/// Verifies that UntarToAsync rejects or sanitizes path traversal entries.
+	/// </summary>
+	[TestMethod]
+	public async Task UntarToAsync_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create a malicious TAR with nested path traversal
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("escaped content"u8.ToArray());
+			archive.AddEntry("subdir/../../escape.txt", content, true, content.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.tar"))
+			tarStream.CopyTo(file);
+
+		await fs.UntarToAsync("/safe/archive.tar", "/safe/dest", cancellationToken: CancellationToken);
+
+		fs.FileExists("/safe/escape.txt").AssertFalse("Tar Slip: nested path traversal allowed escape");
+		fs.FileExists("/escape.txt").AssertFalse("Tar Slip: path traversal reached root");
+	}
+
+	/// <summary>
+	/// Verifies that UntarTo handles absolute paths in TAR entries.
+	/// </summary>
+	[TestMethod]
+	public void UntarTo_ShouldRejectAbsolutePaths()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create TAR with absolute path entry
+		using var tarStream = new MemoryStream();
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("root:x:0:0"u8.ToArray());
+			archive.AddEntry("/etc/passwd", content, true, content.Length, null);
+			archive.SaveTo(tarStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tarStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.tar"))
+			tarStream.CopyTo(file);
+
+		fs.UntarTo("/safe/archive.tar", "/safe/dest");
+
+		fs.FileExists("/etc/passwd").AssertFalse("Tar Slip: absolute path in TAR should not create file at absolute location");
+	}
+
+	/// <summary>
+	/// Verifies that UntgzTo rejects path traversal.
+	/// </summary>
+	[TestMethod]
+	public void UntgzTo_ShouldRejectPathTraversal()
+	{
+		var fs = new MemoryFileSystem();
+		fs.CreateDirectory("/safe");
+
+		// Create a malicious TAR.GZ with path traversal
+		using var tgzStream = new MemoryStream();
+		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
+		{
+			var content = new MemoryStream("escaped"u8.ToArray());
+			archive.AddEntry("../../escaped.txt", content, true, content.Length, null);
+			archive.SaveTo(gzipStream, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None));
+		}
+		tgzStream.Position = 0;
+
+		using (var file = fs.OpenWrite("/safe/archive.tgz"))
+			tgzStream.CopyTo(file);
+
+		fs.UntgzTo("/safe/archive.tgz", "/safe/dest");
+
+		fs.FileExists("/escaped.txt").AssertFalse("Tgz Slip: path traversal allowed file creation outside destination");
+		fs.FileExists("/safe/escaped.txt").AssertFalse("Tgz Slip: path traversal allowed escape one level");
+	}
+
+	#endregion
 }
