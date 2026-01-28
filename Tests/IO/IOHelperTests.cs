@@ -666,8 +666,12 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public void MakeFullPath_RootedPath_ReturnsSamePath()
 	{
-		var rooted = @"C:\absolute\path\file.txt";
-		var baseDir = @"D:\other\dir";
+		var rooted = OperatingSystem.IsWindows()
+			? @"C:\absolute\path\file.txt"
+			: "/absolute/path/file.txt";
+		var baseDir = OperatingSystem.IsWindows()
+			? @"D:\other\dir"
+			: "/other/dir";
 
 		var result = rooted.MakeFullPath(baseDir);
 
@@ -677,8 +681,10 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public void MakeFullPath_RelativePath_CombinesWithBaseDir()
 	{
-		var relative = @"relative\path\file.txt";
-		var baseDir = @"C:\base\dir";
+		var relative = Path.Combine("relative", "path", "file.txt");
+		var baseDir = OperatingSystem.IsWindows()
+			? @"C:\base\dir"
+			: "/base/dir";
 
 		var result = relative.MakeFullPath(baseDir);
 
@@ -689,7 +695,9 @@ public class IOHelperTests : BaseTestClass
 	public void MakeFullPath_JustFileName_CombinesWithBaseDir()
 	{
 		var fileName = "file.txt";
-		var baseDir = @"C:\base\dir";
+		var baseDir = OperatingSystem.IsWindows()
+			? @"C:\base\dir"
+			: "/base/dir";
 
 		var result = fileName.MakeFullPath(baseDir);
 
@@ -700,7 +708,9 @@ public class IOHelperTests : BaseTestClass
 	public void MakeFullPath_EmptyPath_ReturnsBaseDir()
 	{
 		var empty = "";
-		var baseDir = @"C:\base\dir";
+		var baseDir = OperatingSystem.IsWindows()
+			? @"C:\base\dir"
+			: "/base/dir";
 
 		var result = empty.MakeFullPath(baseDir);
 
@@ -710,8 +720,10 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public void MakeFullPath_DotRelative_CombinesWithBaseDir()
 	{
-		var relative = @".\subdir\file.txt";
-		var baseDir = @"C:\base\dir";
+		var relative = "." + Path.DirectorySeparatorChar + Path.Combine("subdir", "file.txt");
+		var baseDir = OperatingSystem.IsWindows()
+			? @"C:\base\dir"
+			: "/base/dir";
 
 		var result = relative.MakeFullPath(baseDir);
 
@@ -721,8 +733,10 @@ public class IOHelperTests : BaseTestClass
 	[TestMethod]
 	public void MakeFullPath_ParentRelative_CombinesWithBaseDir()
 	{
-		var relative = @"..\other\file.txt";
-		var baseDir = @"C:\base\dir";
+		var relative = ".." + Path.DirectorySeparatorChar + Path.Combine("other", "file.txt");
+		var baseDir = OperatingSystem.IsWindows()
+			? @"C:\base\dir"
+			: "/base/dir";
 
 		var result = relative.MakeFullPath(baseDir);
 
