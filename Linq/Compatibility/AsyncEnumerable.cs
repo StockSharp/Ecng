@@ -398,16 +398,19 @@ public static class AsyncEnumerable
 	/// <typeparam name="T">The type of the elements of source.</typeparam>
 	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> in which to locate a value.</param>
 	/// <param name="value">The value to locate in the sequence.</param>
+	/// <param name="comparer">An equality comparer to compare values.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>true if the source sequence contains an element that has the specified value; otherwise, false.</returns>
-	public static async ValueTask<bool> ContainsAsync<T>(this IAsyncEnumerable<T> source, T value, CancellationToken cancellationToken = default)
+	public static async ValueTask<bool> ContainsAsync<T>(this IAsyncEnumerable<T> source, T value, IEqualityComparer<T>? comparer = default, CancellationToken cancellationToken = default)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
 
+		comparer ??= EqualityComparer<T>.Default;
+
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
-			if (EqualityComparer<T>.Default.Equals(item, value))
+			if (comparer.Equals(item, value))
 				return true;
 		}
 
