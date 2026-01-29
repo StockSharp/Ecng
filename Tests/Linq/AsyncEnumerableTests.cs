@@ -343,10 +343,10 @@ public class AsyncEnumerableTests : BaseTestClass
 	public async Task ContainsAsync()
 	{
 		var token = CancellationToken;
-		var contains2 = await GetAsyncData(token).ContainsAsync(2, CancellationToken);
+		var contains2 = await GetAsyncData(token).ContainsAsync(2, cancellationToken: CancellationToken);
 		contains2.AssertTrue();
 
-		var contains10 = await GetAsyncData(token).ContainsAsync(10, CancellationToken);
+		var contains10 = await GetAsyncData(token).ContainsAsync(10, cancellationToken: CancellationToken);
 		contains10.AssertFalse();
 	}
 
