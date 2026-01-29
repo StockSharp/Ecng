@@ -17,8 +17,8 @@ public class WebSocketClient : Disposable, IConnection
 
 	private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = [];
 
-	private readonly Action<Exception> _error;
-	private readonly Action<ConnectionStates> _stateChanged;
+	private readonly Func<Exception, CancellationToken, ValueTask> _error;
+	private readonly Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
 	private readonly Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> _process;
 	private readonly Action<string, object> _infoLog;
 	private readonly Action<string, object> _errorLog;
@@ -41,7 +41,7 @@ public class WebSocketClient : Disposable, IConnection
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(url, stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
+		: this(url, stateChanged.ToAsync(), error.ToAsync(), (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
@@ -59,6 +59,44 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="verboseLog">Action to log verbose messages.</param>
 	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
+		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(url, stateChanged.ToAsync(), error.ToAsync(), process, infoLog, errorLog, verboseLog)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
+	/// </summary>
+	/// <param name="url">The URL to connect to.</param>
+	/// <param name="stateChanged">Async callback when connection state changes.</param>
+	/// <param name="error">Async callback to handle errors.</param>
+	/// <param name="process">Function to process incoming messages.</param>
+	/// <param name="infoLog">Action to log informational messages.</param>
+	/// <param name="errorLog">Action to log error messages.</param>
+	/// <param name="verboseLog">Action to log verbose messages.</param>
+	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
+	public WebSocketClient(string url, Func<ConnectionStates, CancellationToken, ValueTask> stateChanged, Func<Exception, CancellationToken, ValueTask> error,
+		Func<WebSocketMessage, CancellationToken, ValueTask> process,
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(url, stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
+	{
+		if (process is null)
+			throw new ArgumentNullException(nameof(process));
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
+	/// </summary>
+	/// <param name="url">The URL to connect to.</param>
+	/// <param name="stateChanged">Async callback when the connection state changes.</param>
+	/// <param name="error">Async callback to handle errors.</param>
+	/// <param name="process">Function to process incoming messages with reference to the client instance.</param>
+	/// <param name="infoLog">Action to log informational messages.</param>
+	/// <param name="errorLog">Action to log error messages.</param>
+	/// <param name="verboseLog">Action to log verbose messages.</param>
+	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
+	public WebSocketClient(string url, Func<ConnectionStates, CancellationToken, ValueTask> stateChanged, Func<Exception, CancellationToken, ValueTask> error,
 		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
 	{
@@ -183,7 +221,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <returns>A task that represents the asynchronous connect operation.</returns>
 	public async ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
-		RaiseStateChanged(ConnectionStates.Connecting);
+		await RaiseStateChangedAsync(ConnectionStates.Connecting, cancellationToken);
 
 		_reConnectCommands.Clear();
 
@@ -197,7 +235,7 @@ public class WebSocketClient : Disposable, IConnection
 		await ConnectImpl(source, false, 0, linked.Token);
 	}
 
-	private void RaiseStateChanged(ConnectionStates state)
+	private ValueTask RaiseStateChangedAsync(ConnectionStates state, CancellationToken cancellationToken)
 	{
 		if (state == ConnectionStates.Failed)
 			_errorLog("{0}", state);
@@ -206,11 +244,11 @@ public class WebSocketClient : Disposable, IConnection
 
 		State = state;
 		StateChanged?.Invoke(state);
-		_stateChanged(state);
+		return _stateChanged(state, cancellationToken);
 	}
 
-	private void RaiseError(Exception ex)
-		=> _error(ex);
+	private ValueTask RaiseErrorAsync(Exception ex, CancellationToken cancellationToken)
+		=> _error(ex, cancellationToken);
 
 	private async ValueTask ConnectImpl(CancellationTokenSource source, bool reconnect, int attempts, CancellationToken token)
 	{
@@ -254,7 +292,7 @@ public class WebSocketClient : Disposable, IConnection
 			}
 		}
 
-		RaiseStateChanged(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected);
+		await RaiseStateChangedAsync(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected, token);
 
 		_ = Task.Run(() => OnReceive(source));
 
@@ -305,7 +343,7 @@ public class WebSocketClient : Disposable, IConnection
 		if (source is null)
 			throw new InvalidOperationException("Not connected.");
 
-		RaiseStateChanged(ConnectionStates.Disconnecting);
+		await RaiseStateChangedAsync(ConnectionStates.Disconnecting, cancellationToken);
 
 		_disconnectionStates[source] = true;
 		source.Cancel();
@@ -398,7 +436,7 @@ public class WebSocketClient : Disposable, IConnection
 					{
 						if (!token.IsCancellationRequested)
 						{
-							RaiseError(ex);
+							await RaiseErrorAsync(ex, token);
 							needClose = false;
 						}
 
@@ -456,7 +494,7 @@ public class WebSocketClient : Disposable, IConnection
 						if (token.IsCancellationRequested)
 							break;
 
-						RaiseError(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex));
+						await RaiseErrorAsync(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex), token);
 
 						if (++errorCount < maxParsingErrors)
 							continue;
@@ -471,7 +509,7 @@ public class WebSocketClient : Disposable, IConnection
 				catch (AggregateException ex)
 				{
 					if (!token.IsCancellationRequested)
-						RaiseError(ex);
+						await RaiseErrorAsync(ex, token);
 
 					if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
 						break;
@@ -490,7 +528,7 @@ public class WebSocketClient : Disposable, IConnection
 				catch (Exception ex)
 				{
 					if (!token.IsCancellationRequested)
-						RaiseError(ex);
+						await RaiseErrorAsync(ex, token);
 				}
 			}
 
@@ -505,7 +543,7 @@ public class WebSocketClient : Disposable, IConnection
 			catch (Exception ex)
 			{
 				if (!token.IsCancellationRequested)
-					RaiseError(ex);
+					await RaiseErrorAsync(ex, token);
 			}
 
 			try
@@ -521,7 +559,7 @@ public class WebSocketClient : Disposable, IConnection
 
 			if (expected == true)
 			{
-				RaiseStateChanged(ConnectionStates.Disconnected);
+				await RaiseStateChangedAsync(ConnectionStates.Disconnected, token);
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -532,7 +570,7 @@ public class WebSocketClient : Disposable, IConnection
 			{
 				if (attempts > 0 || attempts == -1)
 				{
-					RaiseStateChanged(ConnectionStates.Reconnecting);
+					await RaiseStateChangedAsync(ConnectionStates.Reconnecting, token);
 
 					_infoLog("Socket re-connecting '{0}'.", _url);
 
@@ -544,11 +582,11 @@ public class WebSocketClient : Disposable, IConnection
 					catch (Exception ex)
 					{
 						if (!token.IsCancellationRequested)
-							RaiseError(ex);
+							await RaiseErrorAsync(ex, token);
 					}
 				}
 
-				RaiseStateChanged(ConnectionStates.Failed);
+				await RaiseStateChangedAsync(ConnectionStates.Failed, token);
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -558,7 +596,7 @@ public class WebSocketClient : Disposable, IConnection
 		}
 		catch (Exception ex)
 		{
-			RaiseError(ex);
+			await RaiseErrorAsync(ex, default);
 		}
 	}
 
@@ -685,7 +723,7 @@ public class WebSocketClient : Disposable, IConnection
 			catch (Exception ex)
 			{
 				if (!cancellationToken.IsCancellationRequested)
-					RaiseError(ex);
+					await RaiseErrorAsync(ex, cancellationToken);
 			}
 		}
 	}
