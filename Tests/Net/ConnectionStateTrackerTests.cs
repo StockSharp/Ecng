@@ -920,4 +920,82 @@ public class ConnectionStateTrackerTests : BaseTestClass
 
 		// Connection might still be called before cancellation
 	}
+
+	private static void SubscribeAsync(ConnectionStateTracker tracker, Func<ConnectionStates, CancellationToken, ValueTask> handler)
+		=> ((IAsyncConnection)tracker).StateChanged += handler;
+
+	[TestMethod]
+	public void AsyncStateChanged_AllConnected_Fires()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		ConnectionStates? firedState = null;
+		SubscribeAsync(tracker, (state, _) => { firedState = state; return default; });
+
+		conn1.SetState(ConnectionStates.Connected);
+		conn2.SetState(ConnectionStates.Connected);
+
+		firedState.AssertEqual(ConnectionStates.Connected);
+	}
+
+	[TestMethod]
+	public void AsyncStateChanged_TransitionSequence()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		var states = new List<ConnectionStates>();
+		SubscribeAsync(tracker, (state, _) => { states.Add(state); return default; });
+
+		conn1.SetState(ConnectionStates.Connected);
+		conn2.SetState(ConnectionStates.Connected);
+
+		states.Count.AssertEqual(1);
+		states[0].AssertEqual(ConnectionStates.Connected);
+
+		conn1.SetState(ConnectionStates.Reconnecting);
+
+		states.Count.AssertEqual(2);
+		states[1].AssertEqual(ConnectionStates.Reconnecting);
+
+		conn1.SetState(ConnectionStates.Connected);
+
+		states.Count.AssertEqual(3);
+		states[2].AssertEqual(ConnectionStates.Connected);
+
+		conn1.SetState(ConnectionStates.Failed);
+		conn2.SetState(ConnectionStates.Failed);
+
+		states.Count.AssertEqual(4);
+		states[3].AssertEqual(ConnectionStates.Failed);
+	}
+
+	[TestMethod]
+	public void AsyncStateChanged_BothSyncAndAsyncFire()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		ConnectionStates? syncState = null;
+		ConnectionStates? asyncState = null;
+
+		Subscribe(tracker, state => syncState = state);
+		SubscribeAsync(tracker, (state, _) => { asyncState = state; return default; });
+
+		conn.SetState(ConnectionStates.Connected);
+
+		syncState.AssertEqual(ConnectionStates.Connected);
+		asyncState.AssertEqual(ConnectionStates.Connected);
+	}
 }

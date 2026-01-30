@@ -14,7 +14,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	private class ConnectionWrapper : Disposable
 	{
 		private readonly IAsyncConnection _connection;
-		private readonly Action _stateChanged;
+		private readonly Func<CancellationToken, ValueTask> _stateChanged;
 
 		/// <summary>
 		/// Gets the current connection state of the wrapped connection.
@@ -27,7 +27,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		/// <param name="connection">The connection to wrap.</param>
 		/// <param name="stateChanged">Callback invoked when the connection state changes.</param>
 		/// <exception cref="ArgumentNullException">Thrown when connection or stateChanged is null.</exception>
-		public ConnectionWrapper(IAsyncConnection connection, Action stateChanged)
+		public ConnectionWrapper(IAsyncConnection connection, Func<CancellationToken, ValueTask> stateChanged)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
@@ -52,8 +52,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		private ValueTask OnStateChanged(ConnectionStates newState, CancellationToken cancellationToken)
 		{
 			State = newState;
-			_stateChanged();
-			return default;
+			return _stateChanged(cancellationToken);
 		}
 	}
 
@@ -127,7 +126,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	/// </summary>
 	/// <param name="connection">The connection to add.</param>
 	public void Add(IAsyncConnection connection)
-		=> _connections.Add(connection, new(connection, UpdateOverallState));
+		=> _connections.Add(connection, new(connection, UpdateOverallStateAsync));
 
 	/// <summary>
 	/// Adds a connection to be tracked.
@@ -188,7 +187,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	/// <summary>
 	/// Updates the overall state based on the states of all tracked connections.
 	/// </summary>
-	private void UpdateOverallState()
+	private async ValueTask UpdateOverallStateAsync(CancellationToken cancellationToken)
 	{
 		ConnectionStates newState;
 
@@ -226,5 +225,8 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		}
 
 		_syncStateChanged?.Invoke(newState);
+
+		if (_stateChanged is { } handler)
+			await handler(newState, cancellationToken);
 	}
 }
