@@ -81,7 +81,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	private readonly Lock _currStateLock = new();
 	private ConnectionStates _currState = ConnectionStates.Disconnected;
 
-	private event Func<ConnectionStates, CancellationToken, ValueTask> _asyncStateChanged;
+	private event Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
 #pragma warning disable CS0618 // Type or member is obsolete
 	private event Action<ConnectionStates> _syncStateChanged;
 
@@ -96,8 +96,8 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	/// <inheritdoc />
 	event Func<ConnectionStates, CancellationToken, ValueTask> IAsyncConnection.StateChanged
 	{
-		add => _asyncStateChanged += value;
-		remove => _asyncStateChanged -= value;
+		add => _stateChanged += value;
+		remove => _stateChanged -= value;
 	}
 
 	/// <summary>
