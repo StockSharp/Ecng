@@ -921,9 +921,6 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		// Connection might still be called before cancellation
 	}
 
-	private static void SubscribeAsync(ConnectionStateTracker tracker, Func<ConnectionStates, CancellationToken, ValueTask> handler)
-		=> ((IAsyncConnection)tracker).StateChanged += handler;
-
 	[TestMethod]
 	public void AsyncStateChanged_AllConnected_Fires()
 	{
@@ -935,7 +932,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		ConnectionStates? firedState = null;
-		SubscribeAsync(tracker, (state, _) => { firedState = state; return default; });
+		tracker.StateChanged += (state, _) => { firedState = state; return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connected);
@@ -954,7 +951,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn2);
 
 		var states = new List<ConnectionStates>();
-		SubscribeAsync(tracker, (state, _) => { states.Add(state); return default; });
+		tracker.StateChanged += (state, _) => { states.Add(state); return default; };
 
 		conn1.SetState(ConnectionStates.Connected);
 		conn2.SetState(ConnectionStates.Connected);
@@ -991,7 +988,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		ConnectionStates? asyncState = null;
 
 		Subscribe(tracker, state => syncState = state);
-		SubscribeAsync(tracker, (state, _) => { asyncState = state; return default; });
+		tracker.StateChanged += (state, _) => { asyncState = state; return default; };
 
 		conn.SetState(ConnectionStates.Connected);
 
