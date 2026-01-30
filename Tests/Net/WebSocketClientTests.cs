@@ -912,7 +912,7 @@ public class WebSocketClientTests : BaseTestClass
 			null
 		);
 
-		client.StateChanged += state => eventStates.Enqueue(state);
+		((IAsyncConnection)client).StateChanged += (state, _) => { eventStates.Enqueue(state); return default; };
 
 		client.ReconnectAttempts = 0;
 

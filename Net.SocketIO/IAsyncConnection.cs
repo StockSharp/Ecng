@@ -1,15 +1,14 @@
 namespace Ecng.Net;
 
 /// <summary>
-/// Defines a standard contract for a connection that can be established and disconnected.
+/// Defines an asynchronous contract for a connection that can be established and disconnected.
 /// </summary>
-[Obsolete("Use IAsyncConnection instead.")]
-public interface IConnection
+public interface IAsyncConnection
 {
 	/// <summary>
 	/// Occurs when the connection state has changed.
 	/// </summary>
-	event Action<ConnectionStates> StateChanged;
+	event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
 
 	/// <summary>
 	/// Asynchronously connects to a target.

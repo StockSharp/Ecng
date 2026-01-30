@@ -10,7 +10,10 @@ using Ecng.Localization;
 /// <summary>
 /// Represents a client for WebSocket connections.
 /// </summary>
-public class WebSocketClient : Disposable, IConnection
+public class WebSocketClient : Disposable, IAsyncConnection,
+#pragma warning disable CS0618 // Type or member is obsolete
+	IConnection
+#pragma warning restore CS0618
 {
 	private ClientWebSocket _ws;
 	private CancellationTokenSource _source;
@@ -18,7 +21,6 @@ public class WebSocketClient : Disposable, IConnection
 	private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = [];
 
 	private readonly Func<Exception, CancellationToken, ValueTask> _error;
-	private readonly Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
 	private readonly Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> _process;
 	private readonly Action<string, object> _infoLog;
 	private readonly Action<string, object> _errorLog;
@@ -38,6 +40,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="errorLog">Action to log error messages.</param>
 	/// <param name="verboseLog">Action to log verbose messages.</param>
 	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
+	[Obsolete("Use constructor with Func<T, CancellationToken, ValueTask> callbacks instead.")]
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
@@ -58,6 +61,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="errorLog">Action to log error messages.</param>
 	/// <param name="verboseLog">Action to log verbose messages.</param>
 	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
+	[Obsolete("Use constructor with Func<T, CancellationToken, ValueTask> callbacks instead.")]
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
@@ -180,10 +184,25 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
-	/// <summary>
-	/// Occurs when the connection state changes.
-	/// </summary>
-	public event Action<ConnectionStates> StateChanged;
+#pragma warning disable CS0618 // Type or member is obsolete
+	private event Action<ConnectionStates> _syncStateChanged;
+
+	/// <inheritdoc />
+	event Action<ConnectionStates> IConnection.StateChanged
+	{
+		add => _syncStateChanged += value;
+		remove => _syncStateChanged -= value;
+	}
+#pragma warning restore CS0618
+
+	private event Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
+
+	/// <inheritdoc />
+	event Func<ConnectionStates, CancellationToken, ValueTask> IAsyncConnection.StateChanged
+	{
+		add => _stateChanged += value;
+		remove => _stateChanged -= value;
+	}
 
 	/// <summary>
 	/// Occurs when the client web socket is initialized.
@@ -235,7 +254,7 @@ public class WebSocketClient : Disposable, IConnection
 		await ConnectImpl(source, false, 0, linked.Token);
 	}
 
-	private ValueTask RaiseStateChangedAsync(ConnectionStates state, CancellationToken cancellationToken)
+	private async ValueTask RaiseStateChangedAsync(ConnectionStates state, CancellationToken cancellationToken)
 	{
 		if (state == ConnectionStates.Failed)
 			_errorLog("{0}", state);
@@ -243,8 +262,10 @@ public class WebSocketClient : Disposable, IConnection
 			_infoLog("{0}", state);
 
 		State = state;
-		StateChanged?.Invoke(state);
-		return _stateChanged(state, cancellationToken);
+		_syncStateChanged?.Invoke(state);
+
+		if (_stateChanged is { } handler)
+			await handler(state, cancellationToken);
 	}
 
 	private ValueTask RaiseErrorAsync(Exception ex, CancellationToken cancellationToken)
