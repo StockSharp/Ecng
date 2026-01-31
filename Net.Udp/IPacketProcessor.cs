@@ -2,6 +2,8 @@ namespace Ecng.Net;
 
 using System;
 using System.Buffers;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Interface for packet processor that handles received packets.
@@ -28,8 +30,9 @@ public interface IPacketProcessor
 	/// </summary>
 	/// <param name="packet">The packet data.</param>
 	/// <param name="length">The packet length.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>True to continue processing, false to stop.</returns>
-	bool ProcessNewPacket(IMemoryOwner<byte> packet, int length);
+	ValueTask<bool> ProcessNewPacket(IMemoryOwner<byte> packet, int length, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Allocates a packet buffer.

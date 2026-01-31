@@ -77,7 +77,7 @@ class MockPacketProcessor : IPacketProcessor
 	}
 
 	/// <inheritdoc />
-	public bool ProcessNewPacket(IMemoryOwner<byte> packet, int length)
+	public ValueTask<bool> ProcessNewPacket(IMemoryOwner<byte> packet, int length, CancellationToken cancellationToken)
 	{
 		if (ProcessException != null)
 			throw ProcessException;
@@ -85,7 +85,7 @@ class MockPacketProcessor : IPacketProcessor
 		var data = packet.Memory.Span[..length].ToArray();
 		_processedPackets.Add((data, length));
 
-		return ContinueProcessing;
+		return new(ContinueProcessing);
 	}
 
 	/// <inheritdoc />

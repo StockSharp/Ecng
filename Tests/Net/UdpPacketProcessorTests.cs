@@ -11,14 +11,14 @@ using Ecng.Net;
 public class UdpPacketProcessorTests : BaseTestClass
 {
 	[TestMethod]
-	public void MockProcessor_ProcessNewPacket_StoresPacketData()
+	public async Task MockProcessor_ProcessNewPacket_StoresPacketData()
 	{
 		var processor = new MockPacketProcessor();
 		var testData = new byte[] { 1, 2, 3, 4, 5 };
 		var packet = processor.AllocatePacket(testData.Length);
 		testData.CopyTo(packet.Memory.Span);
 
-		var result = processor.ProcessNewPacket(packet, testData.Length);
+		var result = await processor.ProcessNewPacket(packet, testData.Length, CancellationToken);
 
 		result.AssertTrue();
 		processor.ProcessedCount.AssertEqual(1);
@@ -27,26 +27,26 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void MockProcessor_ProcessNewPacket_ReturnsFalseWhenConfigured()
+	public async Task MockProcessor_ProcessNewPacket_ReturnsFalseWhenConfigured()
 	{
 		var processor = new MockPacketProcessor();
 		processor.ContinueProcessing = false;
 		var packet = processor.AllocatePacket(10);
 
-		var result = processor.ProcessNewPacket(packet, 10);
+		var result = await processor.ProcessNewPacket(packet, 10, CancellationToken);
 
 		result.AssertFalse();
 	}
 
 	[TestMethod]
-	public void MockProcessor_ProcessNewPacket_ThrowsConfiguredException()
+	public async Task MockProcessor_ProcessNewPacket_ThrowsConfiguredException()
 	{
 		var processor = new MockPacketProcessor();
 		processor.ProcessException = new InvalidOperationException("Test exception");
 		var packet = processor.AllocatePacket(10);
 
-		ThrowsExactly<InvalidOperationException>(() =>
-			processor.ProcessNewPacket(packet, 10));
+		await ThrowsExactlyAsync<InvalidOperationException>(async () =>
+			await processor.ProcessNewPacket(packet, 10, CancellationToken));
 	}
 
 	[TestMethod]
@@ -87,7 +87,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 			{
 				await Task.Delay(20, CancellationToken);
 				var packet = processor.AllocatePacket(10);
-				processor.ProcessNewPacket(packet, 10);
+				await processor.ProcessNewPacket(packet, 10, CancellationToken);
 			}
 		}, CancellationToken);
 

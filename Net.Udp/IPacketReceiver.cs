@@ -108,7 +108,7 @@ public class RealPacketReceiver(
 			{
 				try
 				{
-					if (!_processor.ProcessNewPacket(packet, length))
+					if (!await _processor.ProcessNewPacket(packet, length, token))
 						break;
 
 					errorCount = 0;
