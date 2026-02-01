@@ -1210,4 +1210,28 @@ public static class ReflectionHelper
 
 		return true;
 	}
+
+	/// <summary>
+	/// Sets the value of a <see cref="Lazy{T}"/> instance by patching its internal fields.
+	/// </summary>
+	/// <typeparam name="T">The type of the lazy value.</typeparam>
+	/// <param name="lazy">The lazy instance.</param>
+	/// <param name="value">The value to set.</param>
+	public static void SetValue<T>(this Lazy<T> lazy, T value)
+	{
+		if (lazy is null)
+			throw new ArgumentNullException(nameof(lazy));
+
+		static FieldInfo GetField(string name)
+			=> typeof(Lazy<T>).GetField(name, AllInstanceMembers);
+
+		var stateField = GetField("_state");
+		var valueField = GetField("_value");
+
+		if (stateField is null || valueField is null)
+			throw new PlatformNotSupportedException("Lazy<T> internal layout is not supported.");
+
+		stateField.SetValue(lazy, null);
+		valueField.SetValue(lazy, value);
+	}
 }

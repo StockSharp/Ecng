@@ -134,7 +134,8 @@ public static class NugetExtensions
 		var proxy = new ProxyCache(new DummySettings(), EnvironmentVariableWrapper.Instance);
 
 		var f = typeof(ProxyCache).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
-		f.SetValue(null, new Lazy<ProxyCache>(() => proxy));
+		var lazy = (Lazy<ProxyCache>)f.GetValue(null);
+		lazy.SetValue(proxy);
 	}
 
 	/// <summary>

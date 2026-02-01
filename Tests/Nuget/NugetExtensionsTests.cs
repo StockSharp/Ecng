@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Ecng.Nuget;
 
 using NuGet.Common;
+using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Protocol;
@@ -397,5 +398,18 @@ public class NugetExtensionsTests : BaseTestClass
 		// Assert
 		frameworks.AssertNotNull();
 		(frameworks.Length > 0).AssertTrue($"frameworks.Length={frameworks.Length} should be >0");
+	}
+
+	[TestMethod]
+	public void DisableNugetConfig_ReplacesProxyCacheInstance()
+	{
+		NugetExtensions.DisableNugetConfig();
+
+		var instance = ProxyCache.Instance;
+		instance.AssertNotNull();
+
+		// replaced proxy should return null (no proxy configured in dummy settings)
+		Assert.IsNull(instance.GetUserConfiguredProxy());
+		Assert.IsNull(instance.GetProxy(new Uri("https://api.nuget.org/v3/index.json")));
 	}
 }
