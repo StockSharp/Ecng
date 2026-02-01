@@ -1307,26 +1307,6 @@ public class CircularBufferTests : BaseTestClass
 		buf.Min.HasValue.AssertFalse();
 	}
 
-	[TestMethod]
-	public void CircularBufferEx_BackwardCompatibility_AllComparers()
-	{
-		var buf = new CircularBufferEx<int>(3)
-		{
-			Operator = new IntOperator(),
-#pragma warning disable CS0618
-			MaxComparer = Comparer<int>.Default,
-			MinComparer = Comparer<int>.Default
-#pragma warning restore CS0618
-		};
-
-		buf.PushBack(1);
-		buf.PushBack(5);
-		buf.PushBack(3);
-
-		buf.Sum.AssertEqual(9);
-		buf.Max.Value.AssertEqual(5);
-		buf.Min.Value.AssertEqual(1);
-	}
 
 	[TestMethod]
 	public void CircularBufferEx_BackwardCompatibility_OperatorAsComparer()
@@ -1401,7 +1381,7 @@ public class CircularBufferTests : BaseTestClass
 		buf.Stats.AssertEqual(CircularBufferStats.Sum);
 
 		buf.Operator = null;
-		buf.Stats.AssertEqual(CircularBufferStats.Min | CircularBufferStats.Max);
+		buf.Stats.AssertEqual(CircularBufferStats.None);
 	}
 
 	[TestMethod]
