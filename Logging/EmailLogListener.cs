@@ -50,7 +50,7 @@ public class EmailLogListener : LogListener
 
 		var from = From.ThrowIfEmpty(nameof(From));
 		var to = To.ThrowIfEmpty(nameof(To));
-		var subj = $"[{message.Source.Name}] ({message.Level}) {ConvertToLocalTime(message.TimeUtc).ToString(TimeFormat)}";
+		var subj = $"[{message.Source.Name}] ({message.Level}) {ConvertToLocalTime(message.Time).ToString(TimeFormat)}";
 		return (from, to, subj, message.Message);
 	}
 

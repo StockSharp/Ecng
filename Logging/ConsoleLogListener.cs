@@ -30,7 +30,7 @@ public class ConsoleLogListener : LogListener
 			LogLevels.Error => ConsoleHelper.Error,
 			_ => throw new ArgumentOutOfRangeException(nameof(message), message.Level, "Invalid value.".Localize()),
 		};
-		var newLine = "{0} | {1, -15} | {2}".Put(ConvertToLocalTime(message.TimeUtc).ToString(TimeFormat), message.Source.Name, message.Message);
+		var newLine = "{0} | {1, -15} | {2}".Put(ConvertToLocalTime(message.Time).ToString(TimeFormat), message.Source.Name, message.Message);
 
 		newLine.ConsoleWithColor(color);
 	}

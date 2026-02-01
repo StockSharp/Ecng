@@ -1,19 +1,16 @@
 namespace Ecng.Net;
 
 /// <summary>
-/// Tracks the connection states of multiple <see cref="IAsyncConnection"/> instances and aggregates their overall state.
+/// Tracks the connection states of multiple <see cref="IConnection"/> instances and aggregates their overall state.
 /// </summary>
-public class ConnectionStateTracker : Disposable, IAsyncConnection,
-#pragma warning disable CS0618 // Type or member is obsolete
-	IConnection
-#pragma warning restore CS0618
+public class ConnectionStateTracker : Disposable, IConnection
 {
 	/// <summary>
-	/// Wraps an <see cref="IAsyncConnection"/> instance to listen for its state changes.
+	/// Wraps an <see cref="IConnection"/> instance to listen for its state changes.
 	/// </summary>
 	private class ConnectionWrapper : Disposable
 	{
-		private readonly IAsyncConnection _connection;
+		private readonly IConnection _connection;
 		private readonly Func<CancellationToken, ValueTask> _stateChanged;
 
 		/// <summary>
@@ -27,7 +24,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		/// <param name="connection">The connection to wrap.</param>
 		/// <param name="stateChanged">Callback invoked when the connection state changes.</param>
 		/// <exception cref="ArgumentNullException">Thrown when connection or stateChanged is null.</exception>
-		public ConnectionWrapper(IAsyncConnection connection, Func<CancellationToken, ValueTask> stateChanged)
+		public ConnectionWrapper(IConnection connection, Func<CancellationToken, ValueTask> stateChanged)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
@@ -56,40 +53,9 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		}
 	}
 
-#pragma warning disable CS0618 // Type or member is obsolete
-	/// <summary>
-	/// Adapts an <see cref="IConnection"/> to <see cref="IAsyncConnection"/>.
-	/// </summary>
-	private sealed class ConnectionAdapter(IConnection connection) : IAsyncConnection
-	{
-		public event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged
-		{
-			add => connection.StateChanged += state => value(state, default);
-			remove { }
-		}
-
-		public ValueTask ConnectAsync(CancellationToken cancellationToken)
-			=> connection.ConnectAsync(cancellationToken);
-
-		public void Disconnect()
-			=> connection.Disconnect();
-	}
-#pragma warning restore CS0618
-
-	private readonly CachedSynchronizedDictionary<IAsyncConnection, ConnectionWrapper> _connections = [];
+	private readonly CachedSynchronizedDictionary<IConnection, ConnectionWrapper> _connections = [];
 	private readonly Lock _currStateLock = new();
 	private ConnectionStates _currState = ConnectionStates.Disconnected;
-
-#pragma warning disable CS0618 // Type or member is obsolete
-	private event Action<ConnectionStates> _syncStateChanged;
-
-	/// <inheritdoc />
-	event Action<ConnectionStates> IConnection.StateChanged
-	{
-		add => _syncStateChanged += value;
-		remove => _syncStateChanged -= value;
-	}
-#pragma warning restore CS0618
 
 	/// <inheritdoc />
 	public event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
@@ -120,25 +86,15 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 	/// Adds a connection to be tracked.
 	/// </summary>
 	/// <param name="connection">The connection to add.</param>
-	public void Add(IAsyncConnection connection)
-		=> _connections.Add(connection, new(connection, UpdateOverallStateAsync));
-
-	/// <summary>
-	/// Adds a connection to be tracked.
-	/// </summary>
-	/// <param name="connection">The connection to add.</param>
-	[Obsolete("Use Add(IAsyncConnection) instead.")]
-#pragma warning disable CS0618 // Type or member is obsolete
 	public void Add(IConnection connection)
-#pragma warning restore CS0618
-		=> Add(new ConnectionAdapter(connection));
+		=> _connections.Add(connection, new(connection, UpdateOverallStateAsync));
 
 	/// <summary>
 	/// Removes a tracked connection.
 	/// </summary>
 	/// <param name="connection">The connection to remove.</param>
 	/// <returns>True if the connection was successfully removed; otherwise, false.</returns>
-	public bool Remove(IAsyncConnection connection)
+	public bool Remove(IConnection connection)
 	{
 		if (!_connections.TryGetAndRemove(connection, out var wrapper))
 			return false;
@@ -148,24 +104,7 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 		return true;
 	}
 
-	/// <summary>
-	/// Removes a tracked connection.
-	/// </summary>
-	/// <param name="connection">The connection to remove.</param>
-	/// <returns>True if the connection was successfully removed; otherwise, false.</returns>
-	[Obsolete("Use Remove(IAsyncConnection) instead.")]
-#pragma warning disable CS0618 // Type or member is obsolete
-	public bool Remove(IConnection connection)
-#pragma warning restore CS0618
-	{
-		var key = _connections.CachedPairs.FirstOrDefault(p => p.Key is ConnectionAdapter).Key;
-		if (key is null)
-			return false;
-
-		return Remove(key);
-	}
-
-	private IAsyncConnection[] Connections => _connections.CachedKeys;
+	private IConnection[] Connections => _connections.CachedKeys;
 	private ConnectionWrapper[] Wrappers => _connections.CachedValues;
 
 	/// <summary>
@@ -218,8 +157,6 @@ public class ConnectionStateTracker : Disposable, IAsyncConnection,
 
 			_currState = newState;
 		}
-
-		_syncStateChanged?.Invoke(newState);
 
 		if (StateChanged is { } handler)
 			await handler(newState, cancellationToken);

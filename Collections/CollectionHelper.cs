@@ -1528,12 +1528,6 @@ public static class CollectionHelper
 		if (source is ICollection col2)
 			return col2.Count == 0;
 
-#if !NET9_0_OR_GREATER
-#pragma warning disable CS0612 // Type or member is obsolete
-		if (source is IEnumerableEx ex)
-			return ex.Count == 0;
-#pragma warning restore CS0612 // Type or member is obsolete
-#endif
 
 		return !source.Any();
 	}

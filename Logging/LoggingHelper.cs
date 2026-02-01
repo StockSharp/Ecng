@@ -50,7 +50,7 @@ public static class LoggingHelper
 		if (receiver == null)
 			throw new ArgumentNullException(nameof(receiver));
 
-		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTimeUtc, level, getMessage));
+		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTime, level, getMessage));
 	}
 
 	/// <summary>
@@ -121,7 +121,7 @@ public static class LoggingHelper
 		if (exception == null)
 			throw new ArgumentNullException(nameof(exception));
 
-		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTimeUtc, LogLevels.Error, () =>
+		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTime, LogLevels.Error, () =>
 		{
 			var msg = exception.ToString();
 
@@ -160,7 +160,7 @@ public static class LoggingHelper
 		if (level < receiver.LogLevel)
 			return;
 
-		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTimeUtc, level, message, args));
+		receiver.AddLog(new LogMessage(receiver, receiver.CurrentTime, level, message, args));
 	}
 
 	/// <summary>

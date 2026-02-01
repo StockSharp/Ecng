@@ -17,8 +17,7 @@ public class LoggableStreamTests : BaseTestClass
 		public string Name { get; set; } = "TestReceiver";
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
-		public DateTimeOffset CurrentTime => CurrentTimeUtc;
-		public DateTime CurrentTimeUtc => DateTime.UtcNow;
+		public DateTime CurrentTime => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
 		public event Action<LogMessage> Log { add { } remove { } }
 
@@ -43,8 +42,7 @@ public class LoggableStreamTests : BaseTestClass
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
 		public LogLevels LogLevel { get; set; } = LogLevels.Debug;
-		public DateTimeOffset CurrentTime => CurrentTimeUtc;
-		public DateTime CurrentTimeUtc => DateTime.UtcNow;
+		public DateTime CurrentTime => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
 		public event Action<LogMessage> Log { add { } remove { } }
 

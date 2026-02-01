@@ -159,8 +159,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			ex => { if (!errorTcs.Task.IsCompleted) errorTcs.TrySetResult(ex); },
+			(_, _) => default,
+			(ex, _) => { if (!errorTcs.Task.IsCompleted) errorTcs.TrySetResult(ex); return default; },
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -206,8 +206,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -260,8 +260,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			st => states.Enqueue(st),
-			_ => { },
+			(st, _) => { states.Enqueue(st); return default; },
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -297,8 +297,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				if (msg.AsString() == subscribePayload)
@@ -353,8 +353,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -401,8 +401,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -445,8 +445,8 @@ public class WebSocketClientTests : BaseTestClass
 		var url = "ws://127.0.0.1:1/ws";
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -469,8 +469,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -502,8 +502,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -545,8 +545,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -606,8 +606,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -664,8 +664,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			st => states.Enqueue(st),
-			_ => { },
+			(st, _) => { states.Enqueue(st); return default; },
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -733,8 +733,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			st => states.Enqueue((st, DateTime.UtcNow)),
-			_ => { },
+			(st, _) => { states.Enqueue((st, DateTime.UtcNow)); return default; },
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -809,8 +809,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			_ => { },
-			_ => { },
+			(_, _) => default,
+			(_, _) => default,
 			async (self, msg, token) =>
 			{
 				var text = msg.AsString();
@@ -863,8 +863,8 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			st => states.Enqueue(st),
-			_ => { },
+			(st, _) => { states.Enqueue(st); return default; },
+			(_, _) => default,
 			async (self, msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
@@ -904,15 +904,15 @@ public class WebSocketClientTests : BaseTestClass
 
 		using var client = new WebSocketClient(
 			url,
-			state => eventStates.Enqueue(state),
-			_ => { },
+			(state, _) => { eventStates.Enqueue(state); return default; },
+			(_, _) => default,
 			async (msg, token) => await ValueTask.CompletedTask,
 			Log("INFO"),
 			Log("ERROR"),
 			null
 		);
 
-		((IAsyncConnection)client).StateChanged += (state, _) => { eventStates.Enqueue(state); return default; };
+		((IConnection)client).StateChanged += (state, _) => { eventStates.Enqueue(state); return default; };
 
 		client.ReconnectAttempts = 0;
 

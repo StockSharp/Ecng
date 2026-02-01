@@ -58,9 +58,4 @@ public readonly struct WebSocketMessage(Encoding encoding, ReadOnlyMemory<byte> 
 		return new JsonTextReader(new StreamReader(new MemoryStream(arr, 0, arr.Length), Encoding));
 	}
 
-	/// <summary>
-	/// Gets the buffer containing the message data.
-	/// </summary>
-	[Obsolete("Use Memory property instead.")]
-	public ArraySegment<byte> Buffer => new(Memory.ToArray());
 }

@@ -121,12 +121,6 @@ public class LogManager : Disposable, IPersistable
 		FlushInterval = TimeSpan.FromMilliseconds(500);
 	}
 
-	/// <summary>
-	/// Local time zone to convert all incoming messages. Not use in case of <see langword="null"/>.
-	/// </summary>
-	[Obsolete("Use ILogListener.IsLocalTime property.")]
-	public TimeZoneInfo LocalTimeZone { get; set; }
-
 	private async Task FlushAsync()
 	{
 		LogMessage[] temp;

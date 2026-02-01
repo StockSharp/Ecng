@@ -68,8 +68,6 @@ public class DelegateTests : BaseTestClass
 
 	#endregion
 
-	#endregion
-
 	#region Invoke Tests
 
 	[TestMethod]

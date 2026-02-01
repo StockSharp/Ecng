@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Net;
 
 using System.Net.WebSockets;
-using System.Runtime.InteropServices;
 using System.Buffers;
 
 using Ecng.Reflection;
@@ -10,10 +9,7 @@ using Ecng.Localization;
 /// <summary>
 /// Represents a client for WebSocket connections.
 /// </summary>
-public class WebSocketClient : Disposable, IAsyncConnection,
-#pragma warning disable CS0618 // Type or member is obsolete
-	IConnection
-#pragma warning restore CS0618
+public class WebSocketClient : Disposable, IConnection
 {
 	private ClientWebSocket _ws;
 	private CancellationTokenSource _source;
@@ -28,46 +24,6 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 	private readonly Uri _url;
 
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
-	/// </summary>
-	/// <param name="url">The URL to connect to.</param>
-	/// <param name="stateChanged">Action to call when connection state changes.</param>
-	/// <param name="error">Action to handle errors.</param>
-	/// <param name="process">Function to process incoming messages.</param>
-	/// <param name="infoLog">Action to log informational messages.</param>
-	/// <param name="errorLog">Action to log error messages.</param>
-	/// <param name="verboseLog">Action to log verbose messages.</param>
-	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
-	[Obsolete("Use constructor with Func<T, CancellationToken, ValueTask> callbacks instead.")]
-	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
-		Func<WebSocketMessage, CancellationToken, ValueTask> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(url, stateChanged.ToAsync(), error.ToAsync(), (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
-	/// </summary>
-	/// <param name="url">The URL to connect to.</param>
-	/// <param name="stateChanged">Action to call when the connection state changes.</param>
-	/// <param name="error">Action to handle errors.</param>
-	/// <param name="process">Function to process incoming messages with reference to the client instance.</param>
-	/// <param name="infoLog">Action to log informational messages.</param>
-	/// <param name="errorLog">Action to log error messages.</param>
-	/// <param name="verboseLog">Action to log verbose messages.</param>
-	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
-	[Obsolete("Use constructor with Func<T, CancellationToken, ValueTask> callbacks instead.")]
-	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
-		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(url, stateChanged.ToAsync(), error.ToAsync(), process, infoLog, errorLog, verboseLog)
-	{
-	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
@@ -184,21 +140,10 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 		}
 	}
 
-#pragma warning disable CS0618 // Type or member is obsolete
-	private event Action<ConnectionStates> _syncStateChanged;
-
-	/// <inheritdoc />
-	event Action<ConnectionStates> IConnection.StateChanged
-	{
-		add => _syncStateChanged += value;
-		remove => _syncStateChanged -= value;
-	}
-#pragma warning restore CS0618
-
 	private event Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
 
 	/// <inheritdoc />
-	event Func<ConnectionStates, CancellationToken, ValueTask> IAsyncConnection.StateChanged
+	event Func<ConnectionStates, CancellationToken, ValueTask> IConnection.StateChanged
 	{
 		add => _stateChanged += value;
 		remove => _stateChanged -= value;
@@ -213,12 +158,6 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 	/// Occurs after a successful connection.
 	/// </summary>
 	public event Func<bool, CancellationToken, ValueTask> PostConnect;
-
-	/// <summary>
-	/// Occurs before processing received data.
-	/// </summary>
-	[Obsolete("Use PreProcess2 event instead.")]
-	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
 	/// <summary>
 	/// Occurs before processing received data.
@@ -262,7 +201,6 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 			_infoLog("{0}", state);
 
 		State = state;
-		_syncStateChanged?.Invoke(state);
 
 		if (_stateChanged is { } handler)
 			await handler(state, cancellationToken);
@@ -417,10 +355,7 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 #endif
 			var responseBuffer = new ArrayBufferWriter<byte>(BufferSize);
 
-			var preProcess = PreProcess; // legacy
-			var preProcessBuf = preProcess != null ? new byte[BufferSizeUncompress] : null;
-
-			var preProcess2 = PreProcess2; // new Memory-based
+			var preProcess2 = PreProcess2;
 			var preProcess2Mem = preProcess2 != null ? new byte[BufferSizeUncompress] : Memory<byte>.Empty;
 
 			var errorCount = 0;
@@ -493,14 +428,6 @@ public class WebSocketClient : Disposable, IAsyncConnection,
 						{
 							var count = preProcess2(roMem, preProcess2Mem);
 							roMem = preProcess2Mem.Slice(0, count);
-						}
-						else if (preProcessBuf != null && preProcess != null)
-						{
-							if (!MemoryMarshal.TryGetArray(roMem, out var seg))
-								seg = new(roMem.ToArray());
-
-							var count = preProcess(seg, preProcessBuf);
-							roMem = new(preProcessBuf, 0, count);
 						}
 
 						if (_verboseLog is not null)

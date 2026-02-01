@@ -6,12 +6,10 @@ using Ecng.Net;
 [TestClass]
 public class ConnectionStateTrackerTests : BaseTestClass
 {
-#pragma warning disable CS0618 // Type or member is obsolete
 	private static void Subscribe(ConnectionStateTracker tracker, Action<ConnectionStates> handler)
-		=> ((IConnection)tracker).StateChanged += handler;
-#pragma warning restore CS0618
+		=> tracker.StateChanged += (state, _) => { handler(state); return default; };
 
-	private class MockConnection : IAsyncConnection
+	private class MockConnection : IConnection
 	{
 		public event Func<ConnectionStates, CancellationToken, ValueTask> StateChanged;
 
@@ -607,7 +605,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	{
 		var tracker = new ConnectionStateTracker();
 
-		ThrowsExactly<ArgumentNullException>(() => tracker.Add((IAsyncConnection)null));
+		ThrowsExactly<ArgumentNullException>(() => tracker.Add((IConnection)null));
 	}
 
 	[TestMethod]
@@ -615,7 +613,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	{
 		var tracker = new ConnectionStateTracker();
 
-		ThrowsExactly<ArgumentNullException>(() => tracker.Remove((IAsyncConnection)null));
+		ThrowsExactly<ArgumentNullException>(() => tracker.Remove((IConnection)null));
 	}
 
 	[TestMethod]

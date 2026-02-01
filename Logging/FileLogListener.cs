@@ -543,7 +543,7 @@ public class FileLogListener : LogListener
 		}
 
 		var date = SeparateByDates != SeparateByDateModes.None
-			? DateTime.Today /*message.Time.Date*/ // pyh: эмуляция года данных происходит за 5 секунд. На выходе 365 файлов лога? Бред.
+			? DateTime.Today /*message.Time.Date*/ // pyh: СЌРјСѓР»СЏС†РёСЏ РіРѕРґР° РґР°РЅРЅС‹С… РїСЂРѕРёСЃС…РѕРґРёС‚ Р·Р° 5 СЃРµРєСѓРЅРґ. РќР° РІС‹С…РѕРґРµ 365 С„Р°Р№Р»РѕРІ Р»РѕРіР°? Р‘СЂРµРґ.
 			: default;
 
 		string prevFileName = null;
@@ -612,7 +612,7 @@ public class FileLogListener : LogListener
 					if (writer.EstimatedLength < MaxLength)
 						continue;
 
-					// reached threshold — flush and check exact position
+					// reached threshold - flush and check exact position
 					await writer.FlushAsync(cancellationToken).NoWait();
 
 					// sync EstimatedLength with actual position
@@ -696,7 +696,7 @@ public class FileLogListener : LogListener
 		var bufferSize = (includeDateInLog ? (_maxDateChars + 1) : 0) + _maxTimeChars;
 
 		Span<char> timeChars = stackalloc char[bufferSize];
-		var length = FormatDateTime(timeChars, ConvertToLocalTime(message.TimeUtc), includeDateInLog);
+		var length = FormatDateTime(timeChars, ConvertToLocalTime(message.Time), includeDateInLog);
 
 		writer.Write(timeChars[..length]);
 		writer.Write('|');
@@ -788,7 +788,7 @@ public class FileLogListener : LogListener
 #else
 	private Task WriteMessage(TextWriter writer, LogMessage message, CancellationToken cancellationToken)
 	{
-		writer.Write(ToFastDateCharArray(ConvertToLocalTime(message.TimeUtc)));
+		writer.Write(ToFastDateCharArray(ConvertToLocalTime(message.Time)));
 		writer.Write("|");
 		writer.Write("{0, -7}".Put(message.Level == LogLevels.Info ? string.Empty : message.Level.ToString()));
 		writer.Write("|");

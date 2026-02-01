@@ -38,7 +38,7 @@ public class LogMessage
 	{
 		Source = source ?? throw new ArgumentNullException(nameof(source));
 		_getMessage = getMessage ?? throw new ArgumentNullException(nameof(getMessage));
-		TimeUtc = time;
+		Time = time;
 		Level = level;
 	}
 
@@ -50,17 +50,7 @@ public class LogMessage
 	/// <summary>
 	/// Message creating time.
 	/// </summary>
-	[Obsolete("Use TimeUtc instead.")]
-	public DateTimeOffset Time
-	{
-		get => TimeUtc;
-		set => TimeUtc = value.UtcDateTime;
-	}
-
-	/// <summary>
-	/// Message creating time.
-	/// </summary>
-	public DateTime TimeUtc { get; set; }
+	public DateTime Time { get; set; }
 
 	/// <summary>
 	/// The level of the log message.
@@ -105,5 +95,5 @@ public class LogMessage
 	}
 
 	/// <inheritdoc />
-	public override string ToString() => $"{TimeUtc} {Message}";
+	public override string ToString() => $"{Time} {Message}";
 }

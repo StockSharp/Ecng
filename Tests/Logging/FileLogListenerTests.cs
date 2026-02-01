@@ -19,8 +19,7 @@ public class FileLogListenerTests : BaseTestClass
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
 		public LogLevels LogLevel { get; set; } = LogLevels.Info;
-		public DateTimeOffset CurrentTime => CurrentTimeUtc;
-		public DateTime CurrentTimeUtc => DateTime.UtcNow;
+		public DateTime CurrentTime => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
 
 		public event Action<LogMessage> Log { add { } remove { } }
