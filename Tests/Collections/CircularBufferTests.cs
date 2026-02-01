@@ -1334,10 +1334,6 @@ public class CircularBufferTests : BaseTestClass
 		var buf = new CircularBufferEx<int>(3)
 		{
 			Operator = new IntOperator(),
-#pragma warning disable CS0618
-			MaxComparer = null,
-			MinComparer = null,
-#pragma warning restore CS0618
 			Stats = CircularBufferStats.All
 		};
 
@@ -1356,10 +1352,6 @@ public class CircularBufferTests : BaseTestClass
 		var buf = new CircularBufferEx<int>(3)
 		{
 			Operator = new IntOperator(),
-#pragma warning disable CS0618
-			MaxComparer = Comparer<int>.Default,
-			MinComparer = Comparer<int>.Default,
-#pragma warning restore CS0618
 			Stats = CircularBufferStats.Sum
 		};
 
@@ -1390,14 +1382,6 @@ public class CircularBufferTests : BaseTestClass
 	{
 		var buf = new CircularBufferEx<int>(3);
 		buf.Stats.AssertEqual(CircularBufferStats.None);
-
-#pragma warning disable CS0618
-		buf.MinComparer = Comparer<int>.Default;
-		buf.Stats.AssertEqual(CircularBufferStats.Min);
-
-		buf.MinComparer = null;
-		buf.Stats.AssertEqual(CircularBufferStats.None);
-#pragma warning restore CS0618
 	}
 
 	[TestMethod]
@@ -1405,14 +1389,6 @@ public class CircularBufferTests : BaseTestClass
 	{
 		var buf = new CircularBufferEx<int>(3);
 		buf.Stats.AssertEqual(CircularBufferStats.None);
-
-#pragma warning disable CS0618
-		buf.MaxComparer = Comparer<int>.Default;
-		buf.Stats.AssertEqual(CircularBufferStats.Max);
-
-		buf.MaxComparer = null;
-		buf.Stats.AssertEqual(CircularBufferStats.None);
-#pragma warning restore CS0618
 	}
 
 	[TestMethod]
@@ -1423,14 +1399,6 @@ public class CircularBufferTests : BaseTestClass
 			Operator = new IntOperator()
 		};
 		buf.Stats.AssertEqual(CircularBufferStats.Sum);
-
-#pragma warning disable CS0618
-		buf.MinComparer = Comparer<int>.Default;
-		buf.Stats.AssertEqual(CircularBufferStats.Sum | CircularBufferStats.Min);
-
-		buf.MaxComparer = Comparer<int>.Default;
-		buf.Stats.AssertEqual(CircularBufferStats.All);
-#pragma warning restore CS0618
 
 		buf.Operator = null;
 		buf.Stats.AssertEqual(CircularBufferStats.Min | CircularBufferStats.Max);
@@ -1447,11 +1415,6 @@ public class CircularBufferTests : BaseTestClass
 
 		buf.Stats = CircularBufferStats.Max;
 		buf.Stats.AssertEqual(CircularBufferStats.Max);
-
-#pragma warning disable CS0618
-		buf.MinComparer = Comparer<int>.Default;
-		buf.Stats.AssertEqual(CircularBufferStats.Max);
-#pragma warning restore CS0618
 
 		buf.Operator = null;
 		buf.Stats.AssertEqual(CircularBufferStats.Max);

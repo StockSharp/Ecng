@@ -64,60 +64,6 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 		}
 	}
 
-#if NET7_0_OR_GREATER
-	private IComparer<TItem> GetMinComparer() => _operator;
-	private IComparer<TItem> GetMaxComparer() => _operator;
-#else
-	private IComparer<TItem> _minComparer;
-
-	/// <summary>
-	/// Comparer for calculating <see cref="Min"/>.
-	/// </summary>
-	[Obsolete("Use Stats property with CircularBufferStats.Min flag instead.")]
-	public IComparer<TItem> MinComparer
-	{
-		get => _minComparer;
-		set
-		{
-			_minComparer = value;
-
-			if (_statsExplicitlySet)
-				return;
-
-			if (value is not null)
-				_stats |= CircularBufferStats.Min;
-			else
-				_stats &= ~CircularBufferStats.Min;
-		}
-	}
-
-	private IComparer<TItem> _maxComparer;
-
-	/// <summary>
-	/// Comparer for calculating <see cref="Max"/>.
-	/// </summary>
-	[Obsolete("Use Stats property with CircularBufferStats.Max flag instead.")]
-	public IComparer<TItem> MaxComparer
-	{
-		get => _maxComparer;
-		set
-		{
-			_maxComparer = value;
-
-			if (_statsExplicitlySet)
-				return;
-
-			if (value is not null)
-				_stats |= CircularBufferStats.Max;
-			else
-				_stats &= ~CircularBufferStats.Max;
-		}
-	}
-
-	private IComparer<TItem> GetMinComparer() => _minComparer ?? _operator;
-	private IComparer<TItem> GetMaxComparer() => _maxComparer ?? _operator;
-#endif
-
 	/// <summary>
 	/// Max value.
 	/// </summary>
@@ -165,14 +111,14 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 			if (CalcMax)
 			{
-				var maxComparer = GetMaxComparer();
+				var maxComparer = _operator;
 				if (Max.HasValue && maxComparer?.Compare(Max.Value, removed) == 0)
 					recalcMax = true;
 			}
 
 			if (CalcMin)
 			{
-				var minComparer = GetMinComparer();
+				var minComparer = _operator;
 				if (Min.HasValue && minComparer?.Compare(Min.Value, removed) == 0)
 					recalcMin = true;
 			}
@@ -202,14 +148,14 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 			if (CalcMax)
 			{
-				var maxComparer = GetMaxComparer();
+				var maxComparer = _operator;
 				if (Max.HasValue && maxComparer?.Compare(Max.Value, removed) == 0)
 					recalcMax = true;
 			}
 
 			if (CalcMin)
 			{
-				var minComparer = GetMinComparer();
+				var minComparer = _operator;
 				if (Min.HasValue && minComparer?.Compare(Min.Value, removed) == 0)
 					recalcMin = true;
 			}
@@ -227,7 +173,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 	{
 		if (CalcMax)
 		{
-			var maxComparer = GetMaxComparer();
+			var maxComparer = _operator;
 
 			if (maxComparer is not null)
 			{
@@ -240,7 +186,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 		if (CalcMin)
 		{
-			var minComparer = GetMinComparer();
+			var minComparer = _operator;
 
 			if (minComparer is not null)
 			{
@@ -326,7 +272,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 		if (CalcMax)
 		{
-			var maxComparer = GetMaxComparer();
+			var maxComparer = _operator;
 
 			if (maxComparer is not null)
 				Max.Value = this.Max(maxComparer);
@@ -340,7 +286,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>, ICircularBufferEx<
 
 		if (CalcMin)
 		{
-			var minComparer = GetMinComparer();
+			var minComparer = _operator;
 
 			if (minComparer is not null)
 				Min.Value = this.Min(minComparer);
