@@ -7,20 +7,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if NET9_0_OR_GREATER
-using SyncObject = System.Threading.Lock;
-#endif
-
 using Ecng.Collections;
 using Ecng.Common;
 
 /// <summary>
 /// The class represents a synchronized collection that can be used in WPF applications.
 /// </summary>
-public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IListEx<TItem> items) : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
-#if NET9_0_OR_GREATER
-	, ISynchronizable
-#endif
+public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IListEx<TItem> items) : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList, ISynchronizable
 {
 	private enum ActionTypes
 	{
@@ -382,7 +375,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// <summary>
 	/// Gets the synchronization root object.
 	/// </summary>
-	public SyncObject SyncRoot => _syncCopy.SyncRoot;
+	public Lock SyncRoot => _syncCopy.SyncRoot;
 
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.

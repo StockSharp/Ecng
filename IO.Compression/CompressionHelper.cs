@@ -144,17 +144,6 @@ public static class CompressionHelper
 	public static string UnGZip(this byte[] input)
 		=> input.UnGZip(0, input.Length);
 
-	/// <summary>
-	/// Decompresses a GZip-compressed segment of bytes into a UTF-8 encoded string.
-	/// </summary>
-	/// <param name="v">The byte array segment containing GZip-compressed data.</param>
-	/// <returns>A string resulting from decompression.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-#endif
-	public static string UnGZip(this ArraySegment<byte> v)
-		=> v.Array.UnGZip(v.Offset, v.Count);
-
 #if !NETSTANDARD2_0
 	/// <summary>
 	/// Decompresses a GZip-compressed span of bytes into a UTF-8 encoded string.
@@ -174,18 +163,6 @@ public static class CompressionHelper
 	/// <returns>A string resulting from decompression.</returns>
 	public static string UnGZip(this byte[] input, int index, int count)
 		=> input.Uncompress<GZipStream>(index, count).UTF8();
-
-	/// <summary>
-	/// Decompresses a GZip-compressed segment of bytes into the provided destination buffer.
-	/// </summary>
-	/// <param name="input">The byte array segment containing GZip-compressed data.</param>
-	/// <param name="destination">The buffer to store decompressed data.</param>
-	/// <returns>The number of bytes written into the destination buffer.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-#endif
-	public static int UnGZip(this ArraySegment<byte> input, byte[] destination)
-		=> UnGZip(input.Array, input.Offset, input.Count, destination);
 
 #if !NETSTANDARD2_0
 	/// <summary>
@@ -227,17 +204,6 @@ public static class CompressionHelper
 	public static string UnDeflate(this byte[] input)
 		=> input.UnDeflate(0, input.Length);
 
-	/// <summary>
-	/// Decompresses a segment of Deflate-compressed bytes into a UTF-8 encoded string.
-	/// </summary>
-	/// <param name="v">The byte array segment containing Deflate-compressed data.</param>
-	/// <returns>A string resulting from decompression.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-#endif
-	public static string UnDeflate(this ArraySegment<byte> v)
-		=> v.Array.UnDeflate(v.Offset, v.Count);
-
 #if !NETSTANDARD2_0
 	/// <summary>
 	/// Decompresses a Deflate-compressed span of bytes into a UTF-8 encoded string.
@@ -257,18 +223,6 @@ public static class CompressionHelper
 	/// <returns>A string resulting from decompression.</returns>
 	public static string UnDeflate(this byte[] input, int index, int count)
 		=> input.DeflateFrom(index, count).UTF8();
-
-	/// <summary>
-	/// Decompresses a Deflate-compressed segment of bytes into the provided destination buffer.
-	/// </summary>
-	/// <param name="input">The byte array segment containing Deflate-compressed data.</param>
-	/// <param name="destination">The buffer to store decompressed data.</param>
-	/// <returns>The number of bytes written into the destination buffer.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-#endif
-	public static int UnDeflate(this ArraySegment<byte> input, byte[] destination)
-		=> UnDeflate(input.Array, input.Offset, input.Count, destination);
 
 #if !NETSTANDARD2_0
 	/// <summary>
@@ -309,17 +263,6 @@ public static class CompressionHelper
 	/// <returns>A compressed byte array.</returns>
 	public static byte[] DeflateTo(this byte[] input)
 		=> input.Compress<DeflateStream>();
-
-	/// <summary>
-	/// Decompresses a segment of a byte array using the Deflate algorithm.
-	/// </summary>
-	/// <param name="v">The byte array segment to decompress.</param>
-	/// <returns>A decompressed byte array.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-#endif
-	public static byte[] DeflateFrom(this ArraySegment<byte> v)
-		=> v.Array.DeflateFrom(v.Offset, v.Count);
 
 #if !NETSTANDARD2_0
 	/// <summary>
@@ -429,21 +372,6 @@ public static class CompressionHelper
 	public static byte[] Uncompress<TCompressStream>(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 		where TCompressStream : Stream
 		=> AsyncContext.Run(() => input.UncompressAsync<TCompressStream>(index, count, bufferSize));
-
-	/// <summary>
-	/// Asynchronously compresses a segment of a byte array using the specified compression stream.
-	/// </summary>
-	/// <typeparam name="TCompressStream">The type of compression stream to use.</typeparam>
-	/// <param name="v">The segment of the byte array to compress.</param>
-	/// <param name="level">The compression level to use.</param>
-	/// <param name="bufferSize">The buffer size to use during compression.</param>
-	/// <returns>A task representing the asynchronous operation, with a compressed byte array as the result.</returns>
-#if !NETSTANDARD2_0
-	[Obsolete("Use ReadOnlyMemory<byte> overload instead for better performance.")]
-#endif
-	public static Task<byte[]> CompressAsync<TCompressStream>(this ArraySegment<byte> v, CompressionLevel level = CompressionLevel.Optimal, int bufferSize = DefaultBufferSize)
-		where TCompressStream : Stream
-		=> v.Array.CompressAsync<TCompressStream>(v.Offset, v.Count, level, bufferSize);
 
 #if !NETSTANDARD2_0
 	/// <summary>

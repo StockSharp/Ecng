@@ -75,8 +75,7 @@ public static class WindowsThreadingHelper
 		T retVal = default;
 		Exception threadEx = null;
 
-#pragma warning disable CS0618 // Type or member is obsolete
-		var staThread = ThreadingHelper.Thread(() =>
+		var staThread = new Thread(() =>
 		{
 			try
 			{
@@ -86,10 +85,9 @@ public static class WindowsThreadingHelper
 			{
 				threadEx = ex;
 			}
-		})
-		.STA()
-		.Launch();
-#pragma warning restore CS0618 // Type or member is obsolete
+		}) { IsBackground = true };
+		staThread.STA();
+		staThread.Start();
 
 		staThread.Join();
 
