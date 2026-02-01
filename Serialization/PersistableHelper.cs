@@ -271,20 +271,6 @@ public static class PersistableHelper
 	}
 
 	/// <summary>
-	/// </summary>
-	[Obsolete("Use overload with serializer param.")]
-	public static void LoadFromString<TSerializer>(this IPersistable persistable, string value)
-		where TSerializer : ISerializer<SettingsStorage>, new()
-		=> new TSerializer().LoadFromString(persistable, value);
-
-	/// <summary>
-	/// </summary>
-	[Obsolete("Use overload with serializer param.")]
-	public static SettingsStorage LoadFromString<TSerializer>(this string value)
-		where TSerializer : ISerializer<SettingsStorage>, new()
-		=> new TSerializer().LoadFromString(value);
-
-	/// <summary>
 	/// Loads the state of the persistable object from a string using the provided serializer.
 	/// </summary>
 	/// <param name="serializer">The serializer to use.</param>
@@ -312,20 +298,6 @@ public static class PersistableHelper
 
 		return Do.Invariant(() => serializer.Deserialize(value.UTF8()));
 	}
-
-	/// <summary>
-	/// </summary>
-	[Obsolete("Use overload with serializer param.")]
-	public static string SaveToString<TSerializer>(this IPersistable persistable)
-		where TSerializer : ISerializer<SettingsStorage>, new()
-		=> new TSerializer().SaveToString(persistable);
-
-	/// <summary>
-	/// </summary>
-	[Obsolete("Use overload with serializer param.")]
-	public static string SaveToString<TSerializer>(this SettingsStorage settings)
-		where TSerializer : ISerializer<SettingsStorage>, new()
-		=> new TSerializer().SaveToString(settings);
 
 	/// <summary>
 	/// Saves the state of the persistable object to a string using the provided serializer.

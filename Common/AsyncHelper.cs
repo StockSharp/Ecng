@@ -227,15 +227,6 @@ public static class AsyncHelper
 	}
 
 	/// <summary>
-	/// Creates a cancellation token that will be canceled after the specified timeout.
-	/// </summary>
-	/// <param name="timeout">The timeout after which the token is canceled.</param>
-	/// <returns>A CancellationToken that is canceled after the timeout.</returns>
-	/// <remarks>Warning: The underlying CancellationTokenSource is not disposed. Use <see cref="CreateTimeout"/> instead.</remarks>
-	[Obsolete("Use CreateTimeout instead to properly dispose the CancellationTokenSource.")]
-	public static CancellationToken CreateTimeoutToken(this TimeSpan timeout) => new CancellationTokenSource(timeout).Token;
-
-	/// <summary>
 	/// Creates a cancellation token source that will be canceled after the specified timeout.
 	/// </summary>
 	/// <param name="timeout">The timeout after which the token is canceled.</param>

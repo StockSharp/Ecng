@@ -204,19 +204,6 @@ public static class Enumerator
 	}
 
 	/// <summary>
-	/// Determines whether the specified enum value contains the given flag(s). (Obsolete: Use HasFlags method.)
-	/// </summary>
-	/// <typeparam name="T">The enum type.</typeparam>
-	/// <param name="enumSource">The source enum value.</param>
-	/// <param name="enumPart">The flag(s) to check for.</param>
-	/// <returns><c>true</c> if the source contains the flag(s); otherwise, <c>false</c>.</returns>
-	[Obsolete("Use HasFlags method.")]
-	public static bool Contains<T>(T enumSource, T enumPart)
-	{
-		return HasFlags(enumSource, enumPart);
-	}
-
-	/// <summary>
 	/// Determines whether the specified enum value has the given flag(s).
 	/// </summary>
 	/// <typeparam name="T">The enum type.</typeparam>
@@ -226,18 +213,6 @@ public static class Enumerator
 	public static bool HasFlags<T>(T enumSource, T enumPart)
 	{
 		return enumSource.To<Enum>().HasFlag(enumPart.To<Enum>());
-	}
-
-	/// <summary>
-	/// Determines whether the enum value contains the specified flag. (Obsolete: Use Enum.HasFlag method.)
-	/// </summary>
-	/// <param name="enumSource">The source enum value.</param>
-	/// <param name="enumPart">The flag to check for.</param>
-	/// <returns><c>true</c> if the flag is present; otherwise, <c>false</c>.</returns>
-	[Obsolete("Use Enum.HasFlag method.")]
-	public static bool Contains(this Enum enumSource, Enum enumPart)
-	{
-		return enumSource.HasFlag(enumPart);
 	}
 
 	/// <summary>

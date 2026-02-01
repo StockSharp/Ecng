@@ -311,31 +311,6 @@ public static class StringHelper
 		=> str.SplitBySep(N, removeEmptyEntries);
 
 	/// <summary>
-	/// Splits the string by Environment.NewLine.
-	/// </summary>
-	/// <param name="str">The string to split.</param>
-	/// <param name="removeEmptyEntries">If true, removes empty entries.</param>
-	/// <returns>An array of substrings.</returns>
-	[Obsolete("Use SplitByRN or SplitByN methods.")]
-	public static string[] SplitLines(this string str, bool removeEmptyEntries = true)
-	{
-		return str.SplitBySep(Environment.NewLine, removeEmptyEntries);
-	}
-
-	/// <summary>
-	/// Splits the string by the specified separator.
-	/// </summary>
-	/// <param name="str">The string to split.</param>
-	/// <param name="separator">The separator string.</param>
-	/// <param name="removeEmptyEntries">If true, removes empty entries.</param>
-	/// <returns>An array of substrings.</returns>
-	[Obsolete("Use SplitBySep method.")]
-	public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
-	{
-		return str.SplitBySep(separator, removeEmptyEntries);
-	}
-
-	/// <summary>
 	/// Splits the string by the specified separator.
 	/// </summary>
 	/// <param name="str">The string to split.</param>
@@ -424,16 +399,6 @@ public static class StringHelper
 	/// <returns>An array of substrings.</returns>
 	public static string[] SplitByAt(this string str, bool removeEmptyEntries = true)
 		=> str.SplitBySep("@", removeEmptyEntries);
-
-	/// <summary>
-	/// Splits the string using newline as the separator.
-	/// </summary>
-	/// <param name="str">The string to split.</param>
-	/// <param name="removeEmptyEntries">If true, removes empty entries.</param>
-	/// <returns>An array of substrings.</returns>
-	[Obsolete("Use SplitByN methods.")]
-	public static string[] SplitByLine(this string str, bool removeEmptyEntries = false)
-		=> str.SplitByN(removeEmptyEntries);
 
 	/// <summary>
 	/// Finds the last index of a specified character in a StringBuilder.
@@ -799,16 +764,6 @@ public static class StringHelper
 	{
 		return string.Equals(str1, str2, StringComparison.InvariantCultureIgnoreCase);
 	}
-
-	/// <summary>
-	/// Compares two strings for equality, ignoring case.
-	/// </summary>
-	/// <param name="str1">The first string to compare.</param>
-	/// <param name="str2">The second string to compare.</param>
-	/// <returns>True if the strings are equal ignoring case; otherwise, false.</returns>
-	[Obsolete("Use EqualsIgnoreCase.")]
-	public static bool CompareIgnoreCase(this string str1, string str2)
-		=> str1.EqualsIgnoreCase(str2);
 
 	/// <summary>
 	/// Determines whether the first string contains the second string, ignoring case.
@@ -1522,13 +1477,6 @@ public static class StringHelper
 	/// <returns>The decoded string.</returns>
 	public static string Default(this byte[] v, int index, int count) => Encoding.Default.GetString(v, index, count);
 	/// <summary>
-	/// Gets the string from an ArraySegment using the default encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string Default(this ArraySegment<byte> v) => v.Array.Default(v.Offset, v.Count);
-	/// <summary>
 	/// Gets the string from a byte array using the default encoding with a specified count.
 	/// </summary>
 	/// <param name="v">The byte array.</param>
@@ -1558,13 +1506,6 @@ public static class StringHelper
 	/// <param name="count">The number of bytes to decode.</param>
 	/// <returns>The decoded string.</returns>
 	public static string ASCII(this byte[] v, int index, int count) => Encoding.ASCII.GetString(v, index, count);
-	/// <summary>
-	/// Gets the string from an ArraySegment using ASCII encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string ASCII(this ArraySegment<byte> v) => v.Array.ASCII(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using ASCII encoding with a specified count.
 	/// </summary>
@@ -1596,13 +1537,6 @@ public static class StringHelper
 	/// <returns>The decoded string.</returns>
 	public static string UTF8(this byte[] v, int index, int count) => Encoding.UTF8.GetString(v, index, count);
 	/// <summary>
-	/// Gets the string from an ArraySegment using UTF8 encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string UTF8(this ArraySegment<byte> v) => v.Array.UTF8(v.Offset, v.Count);
-	/// <summary>
 	/// Gets the string from a byte array using UTF8 encoding with a specified count.
 	/// </summary>
 	/// <param name="v">The byte array.</param>
@@ -1632,13 +1566,6 @@ public static class StringHelper
 	/// <param name="count">The number of bytes to decode.</param>
 	/// <returns>The decoded string.</returns>
 	public static string Unicode(this byte[] v, int index, int count) => Encoding.Unicode.GetString(v, index, count);
-	/// <summary>
-	/// Gets the string from an ArraySegment using Unicode encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string Unicode(this ArraySegment<byte> v) => v.Array.Unicode(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using Unicode encoding with a specified count.
 	/// </summary>
@@ -1670,13 +1597,6 @@ public static class StringHelper
 	/// <returns>The decoded string.</returns>
 	public static string Cyrillic(this byte[] v, int index, int count) => WindowsCyrillic.GetString(v, index, count);
 	/// <summary>
-	/// Gets the string from an ArraySegment using Windows Cyrillic encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string Cyrillic(this ArraySegment<byte> v) => v.Array.Cyrillic(v.Offset, v.Count);
-	/// <summary>
 	/// Gets the string from a byte array using Windows Cyrillic encoding with a specified count.
 	/// </summary>
 	/// <param name="v">The byte array.</param>
@@ -1707,13 +1627,6 @@ public static class StringHelper
 	/// <returns>The decoded hexadecimal string.</returns>
 	public static string Hex(this byte[] v, int index, int count) => HexEncoding.GetString(v, index, count);
 	/// <summary>
-	/// Gets the string from an ArraySegment using hexadecimal encoding.
-	/// </summary>
-	/// <param name="v">The ArraySegment of bytes.</param>
-	/// <returns>The decoded hexadecimal string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string Hex(this ArraySegment<byte> v) => v.Array.Hex(v.Offset, v.Count);
-	/// <summary>
 	/// Gets the string from a byte array using hexadecimal encoding with a specified count.
 	/// </summary>
 	/// <param name="v">The byte array.</param>
@@ -1722,16 +1635,6 @@ public static class StringHelper
 	/// <returns>The decoded hexadecimal string.</returns>
 	[CLSCompliant(false)]
 	public static string Hex(this byte[] v, uint count, int index = 0) => Hex(v, index, (int)count);
-
-	/// <summary>
-	/// Decodes an ArraySegment of bytes into a string using the specified encoding.
-	/// </summary>
-	/// <param name="encoding">The encoding to use.</param>
-	/// <param name="buffer">The ArraySegment of bytes.</param>
-	/// <returns>The decoded string.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string GetString(this Encoding encoding, ArraySegment<byte> buffer)
-		=> encoding.CheckOnNull(nameof(encoding)).GetString(buffer.Array, buffer.Offset, buffer.Count);
 
 	/// <summary>
 	/// Gets the string from a span of bytes using UTF8 encoding.
@@ -1875,16 +1778,6 @@ public static class StringHelper
 	/// <returns>A new string constructed from the array.</returns>
 	public static string ToString(this char[] arr, int count, int index = 0)
 		=> count == 0 ? string.Empty : new string(arr, index, count);
-
-	/// <summary>
-	/// Converts an ArraySegment of bytes to its bit string representation with a specified separator.
-	/// </summary>
-	/// <param name="buffer">The byte array segment.</param>
-	/// <param name="separator">The character separator between byte bits.</param>
-	/// <returns>A string representing the bits of the bytes.</returns>
-	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
-	public static string ToBitString(this ArraySegment<byte> buffer, char separator = ' ')
-		=> buffer.Array.ToBitString(buffer.Offset, buffer.Count, separator);
 
 	/// <summary>
 	/// Converts a byte array to its bit string representation with a specified separator.
@@ -2068,15 +1961,6 @@ public static class StringHelper
 
 		return WhitespaceRegex().Replace(text, @" ");
 	}
-
-	/// <summary>
-	/// Escapes a URL string.
-	/// </summary>
-	/// <param name="url">The URL to escape.</param>
-	/// <returns>An escaped URL string.</returns>
-	[Obsolete]
-	public static string UrlEscape(this string url)
-		=> Uri.EscapeUriString(url);
 
 	/// <summary>
 	/// Escapes URL data.

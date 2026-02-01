@@ -124,34 +124,6 @@ public class AsyncEnumerableTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GroupByAsync()
-	{
-		var source = new[]
-		{
-			new RefItem { Id = 1, Name = "a" },
-			new RefItem { Id = 1, Name = "a2" },
-			new RefItem { Id = 2, Name = "b" },
-			new RefItem { Id = 2, Name = "b2" },
-			new RefItem { Id = 2, Name = "b3" },
-		};
-
-		var groups = new List<IGrouping<int, RefItem>>();
-
-#pragma warning disable CS0618 // Type or member is obsolete
-		await foreach (var group in source.ToAsyncEnumerable().GroupByAsync(x => x.Id))
-#pragma warning restore CS0618 // Type or member is obsolete
-		{
-			groups.Add(group);
-		}
-
-		groups.Count.AssertEqual(2);
-		groups[0].Key.AssertEqual(1);
-		groups[0].Count().AssertEqual(2);
-		groups[1].Key.AssertEqual(2);
-		groups[1].Count().AssertEqual(3);
-	}
-
-	[TestMethod]
 	public async Task Empty()
 	{
 		var token = CancellationToken;

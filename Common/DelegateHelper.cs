@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Provides helper methods for working with delegates.
@@ -34,34 +33,6 @@ public static class DelegateHelper
 		{
 			error(ex);
 		}
-	}
-
-	/// <summary>
-	/// Executes the specified action asynchronously and handles any exception using the provided error action.
-	/// </summary>
-	/// <param name="action">The action to execute asynchronously.</param>
-	/// <param name="error">The action to handle exceptions.</param>
-	/// <exception cref="ArgumentNullException">Thrown when action or error is null.</exception>
-	[Obsolete("Use Task.Run with try-catch directly for better async control and awaitable results.")]
-	public static void DoAsync(this Action action, Action<Exception> error)
-	{
-		if (action is null)
-			throw new ArgumentNullException(nameof(action));
-
-		if (error is null)
-			throw new ArgumentNullException(nameof(error));
-
-		_ = Task.Run(() =>
-		{
-			try
-			{
-				action();
-			}
-			catch (Exception ex)
-			{
-				error(ex);
-			}
-		});
 	}
 
 	/// <summary>
@@ -132,18 +103,6 @@ public static class DelegateHelper
 	public static TDelegate RemoveDelegate<TDelegate>(this TDelegate source, TDelegate value)
 	{
 		return Delegate.Remove(source.To<Delegate>(), value.To<Delegate>()).To<TDelegate>();
-	}
-
-	/// <summary>
-	/// Removes all invocation entries from the delegate.
-	/// </summary>
-	/// <typeparam name="TDelegate">The type of the delegate.</typeparam>
-	/// <param name="source">The delegate from which all delegates are removed.</param>
-	[Obsolete("This method does not work as expected because delegates are immutable. Use 'myDelegate = null;' instead.")]
-	public static void RemoveAllDelegates<TDelegate>(this TDelegate source)
-	{
-		foreach (var item in source.GetInvocationList())
-			source.RemoveDelegate(item);
 	}
 
 	/// <summary>

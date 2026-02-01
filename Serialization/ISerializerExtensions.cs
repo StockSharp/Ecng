@@ -13,16 +13,6 @@ using Ecng.IO;
 public static class ISerializerExtensions
 {
 	/// <summary>
-	/// Serializes the specified object graph and writes the output to a file.
-	/// </summary>
-	/// <param name="serializer">The serializer instance.</param>
-	/// <param name="graph">The object graph to serialize.</param>
-	/// <param name="fileName">The path of the file to write to.</param>
-	[Obsolete("Use overload accepting IFileSystem.")]
-	public static void Serialize(this ISerializer serializer, object graph, string fileName)
-		=> serializer.CheckOnNull(nameof(serializer)).Serialize(graph, LocalFileSystem.Instance, fileName);
-
-	/// <summary>
 	/// Serializes the specified object graph and writes the output to a file using the provided file system.
 	/// </summary>
 	/// <param name="serializer">The serializer instance.</param>
@@ -53,17 +43,6 @@ public static class ISerializerExtensions
 	/// <param name="stream">The stream to which to write the serialized data.</param>
 	public static void Serialize(this ISerializer serializer, object graph, Stream stream)
 		=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
-
-	/// <summary>
-	/// Deserializes the data from the specified file into an object of type T.
-	/// </summary>
-	/// <typeparam name="T">The type of object to deserialize.</typeparam>
-	/// <param name="serializer">The serializer instance.</param>
-	/// <param name="fileName">The path of the file to read from.</param>
-	/// <returns>An object of type T.</returns>
-	[Obsolete("Use overload accepting IFileSystem.")]
-	public static T Deserialize<T>(this ISerializer<T> serializer, string fileName)
-		=> serializer.CheckOnNull(nameof(serializer)).Deserialize(LocalFileSystem.Instance, fileName);
 
 	/// <summary>
 	/// Deserializes the data from the specified file into an object of type T using the provided file system.

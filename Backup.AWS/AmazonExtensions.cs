@@ -1,7 +1,6 @@
 namespace Ecng.Backup.Amazon;
 
 using System;
-using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,13 +14,6 @@ using Ecng.Common;
 [CLSCompliant(false)]
 public static class AmazonExtensions
 {
-	/// <summary>
-	/// All regions.
-	/// </summary>
-	[Obsolete("Use RegionEndpoint.EnumerableAllRegions instead.")]
-	public static IEnumerable<RegionEndpoint> Endpoints
-		=> RegionEndpoint.EnumerableAllRegions;
-
 	/// <summary>
 	/// Get region by name.
 	/// </summary>

@@ -1,8 +1,6 @@
 namespace Ecng.IO;
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
@@ -19,57 +17,6 @@ using Ecng.Common;
 /// </summary>
 public static class IOHelper
 {
-	/// <summary>
-	/// Clears the specified directory by deleting its files and subdirectories.
-	/// </summary>
-	/// <param name="path">The directory path to clear.</param>
-	/// <param name="filter">Optional filter to determine which files to delete.</param>
-	/// <returns>A DirectoryInfo for the cleared directory.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static DirectoryInfo ClearDirectory(string path, Func<string, bool> filter = null)
-		=> LocalFileSystem.Instance.ClearDirectory(path, filter);
-
-	/// <summary>
-	/// Asynchronously clears the specified directory by deleting its files and subdirectories.
-	/// </summary>
-	/// <param name="path">The directory path to clear.</param>
-	/// <param name="filter">Optional filter to determine which files to delete.</param>
-	/// <param name="cancellationToken">A cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation, containing a DirectoryInfo for the cleared directory.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static Task<DirectoryInfo> ClearDirectoryAsync(string path, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
-		=> LocalFileSystem.Instance.ClearDirectoryAsync(path, filter, cancellationToken);
-
-	/// <summary>
-	/// Copies the content of one directory to another.
-	/// </summary>
-	/// <param name="sourcePath">The source directory path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static void CopyDirectory(string sourcePath, string destPath)
-		=> LocalFileSystem.Instance.CopyDirectory(sourcePath, destPath);
-
-	/// <summary>
-	/// Asynchronously copies the content of one directory to another.
-	/// </summary>
-	/// <param name="sourcePath">The source directory path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	/// <param name="cancellationToken">A cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
-		=> LocalFileSystem.Instance.CopyDirectoryAsync(sourcePath, destPath, cancellationToken);
-
-	/// <summary>
-	/// Copies a file to the specified destination and makes the copy writable.
-	/// </summary>
-	/// <param name="fileName">The source file path.</param>
-	/// <param name="destPath">The destination directory path.</param>
-	/// <returns>The destination file path.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static string CopyAndMakeWritable(string fileName, string destPath)
-		=> LocalFileSystem.Instance.CopyAndMakeWritable(fileName, destPath);
-
 	/// <summary>
 	/// Converts a relative or partial path to a fully qualified path.
 	/// </summary>
@@ -107,32 +54,6 @@ public static class IOHelper
 		=> Path.IsPathRooted(path) ? path : Path.Combine(baseDir, path);
 
 	/// <summary>
-	/// Creates the directory for the specified file if it does not already exist.
-	/// </summary>
-	/// <param name="fullPath">The full path to the file.</param>
-	/// <returns>True if the directory was created; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool CreateDirIfNotExists(this string fullPath)
-		=> LocalFileSystem.Instance.CreateDirIfNotExists(fullPath);
-
-	/// <summary>
-	/// Safely deletes a directory.
-	/// </summary>
-	/// <param name="path">The directory path.</param>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static void SafeDeleteDir(this string path)
-		=> LocalFileSystem.Instance.SafeDeleteDir(path);
-
-	/// <summary>
-	/// Checks if the specified installation directory exists and contains files or subdirectories.
-	/// </summary>
-	/// <param name="path">The installation directory path.</param>
-	/// <returns>True if the installation is valid; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool CheckInstallation(string path)
-		=> LocalFileSystem.Instance.CheckInstallation(path);
-
-	/// <summary>
 	/// Gets the relative path from a folder to a file.
 	/// </summary>
 	/// <param name="fileFull">The full file path.</param>
@@ -160,25 +81,6 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Creates a file with the specified content.
-	/// </summary>
-	/// <param name="rootPath">The root path.</param>
-	/// <param name="relativePath">The relative path to the file.</param>
-	/// <param name="fileName">The file name.</param>
-	/// <param name="content">The content as a byte array.</param>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content)
-		=> LocalFileSystem.Instance.CreateFile(rootPath, relativePath, fileName, content);
-
-	/// <summary>
-	/// Recursively deletes empty directories starting from the specified directory.
-	/// </summary>
-	/// <param name="dir">The root directory to check and delete if empty.</param>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static void DeleteEmptyDirs(string dir)
-		=> LocalFileSystem.Instance.DeleteEmptyDirs(dir);
-
-	/// <summary>
 	/// The %Documents% variable.
 	/// </summary>
 	public const string DocsVar = "%Documents%";
@@ -197,53 +99,6 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Retrieves the directories within the specified path matching the search pattern.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <returns>An enumerable of matching directory paths.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static IEnumerable<string> GetDirectories(string path,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly)
-		=> LocalFileSystem.Instance.GetDirectories(path, searchPattern, searchOption);
-
-	/// <summary>
-	/// Asynchronously retrieves the directories within the specified path matching the search pattern.
-	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
-	/// <returns>A task producing an enumerable of matching directory paths.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static Task<IEnumerable<string>> GetDirectoriesAsync(
-		string path,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly,
-		CancellationToken cancellationToken = default)
-		=> LocalFileSystem.Instance.GetDirectoriesAsync(path, searchPattern, searchOption, cancellationToken);
-
-	/// <summary>
-	/// Asynchronously retrieves the files within the specified path matching the search pattern.
-	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
-	/// </summary>
-	/// <param name="path">The root directory to search.</param>
-	/// <param name="searchPattern">The search pattern.</param>
-	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
-	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
-	/// <returns>A task producing an enumerable of matching file paths.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static Task<IEnumerable<string>> GetFilesAsync(
-		string path,
-		string searchPattern = "*",
-		SearchOption searchOption = SearchOption.TopDirectoryOnly,
-		CancellationToken cancellationToken = default)
-		=> LocalFileSystem.Instance.GetFilesAsync(path, searchPattern, searchOption, cancellationToken);
-
-	/// <summary>
 	/// Gets the timestamp of the specified assembly.
 	/// </summary>
 	/// <param name="assembly">The assembly.</param>
@@ -255,15 +110,6 @@ public static class IOHelper
 
 		return LocalFileSystem.Instance.GetTimestamp(assembly.Location);
 	}
-
-	/// <summary>
-	/// Gets the timestamp of the specified file.
-	/// </summary>
-	/// <param name="filePath">The file path.</param>
-	/// <returns>The timestamp representing when the file was built.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static DateTime GetTimestamp(string filePath)
-		=> LocalFileSystem.Instance.GetTimestamp(filePath);
 
 	/// <summary>
 	/// Writes the specified bytes to a stream.
@@ -347,35 +193,6 @@ public static class IOHelper
             }
 		}
 #endif
-	}
-
-	/// <summary>
-	/// Reads exactly the specified number of bytes from the stream into a byte array.
-	/// </summary>
-	/// <param name="stream">The stream to read from.</param>
-	/// <param name="size">The number of bytes to read.</param>
-	/// <returns>A byte array containing the data read from the stream.</returns>
-	[Obsolete("Use Stream.ReadExactly extension method instead.")]
-	public static byte[] ReadBuffer(this Stream stream, int size)
-	{
-		if (stream is null)
-			throw new ArgumentNullException(nameof(stream));
-
-		if (size < 0)
-			throw new ArgumentOutOfRangeException(nameof(size), $"Size has negative value '{size}'.");
-
-		var buffer = new byte[size];
-
-		try
-		{
-			stream.ReadExactly(buffer, 0, size);
-		}
-		catch (EndOfStreamException ex)
-		{
-			throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream), ex);
-		}
-
-		return buffer;
 	}
 
 	/// <summary>
@@ -524,37 +341,6 @@ public static class IOHelper
 	#endregion
 
 	/// <summary>
-	/// Saves the content of the stream to a file specified by fileName.
-	/// </summary>
-	/// <param name="stream">The stream whose contents to save.</param>
-	/// <param name="fileName">The file path to save the stream's contents to.</param>
-	/// <returns>The original stream.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static Stream Save(this Stream stream, string fileName)
-		=> LocalFileSystem.Instance.Save(stream, fileName);
-
-	/// <summary>
-	/// Saves the byte array to a file specified by fileName.
-	/// </summary>
-	/// <param name="data">The byte array to save.</param>
-	/// <param name="fileName">The file path to save the data to.</param>
-	/// <returns>The original byte array.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static byte[] Save(this byte[] data, string fileName)
-		=> LocalFileSystem.Instance.Save(data, fileName);
-
-	/// <summary>
-	/// Attempts to save the byte array to a file and handles any exceptions using the provided errorHandler.
-	/// </summary>
-	/// <param name="data">The byte array to save.</param>
-	/// <param name="fileName">The file path to save the data to.</param>
-	/// <param name="errorHandler">The action to handle exceptions.</param>
-	/// <returns>True if the save operation was successful; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool TrySave(this byte[] data, string fileName, Action<Exception> errorHandler)
-		=> LocalFileSystem.Instance.TrySave(data, fileName, errorHandler);
-
-	/// <summary>
 	/// Truncates the underlying stream used by the StreamWriter by clearing its content.
 	/// </summary>
 	/// <param name="writer">The StreamWriter whose stream is to be truncated.</param>
@@ -582,33 +368,6 @@ public static class IOHelper
 
 		return new(stream.GetBuffer(), 0, (int)stream.Position);
 	}
-
-	/// <summary>
-	/// Checks whether the directory contains files or subdirectories that contain files.
-	/// </summary>
-	/// <param name="path">The directory path to check.</param>
-	/// <returns>True if the directory contains any files; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool CheckDirContainFiles(string path)
-		=> LocalFileSystem.Instance.CheckDirContainFiles(path);
-
-	/// <summary>
-	/// Checks whether the directory contains any files or subdirectories.
-	/// </summary>
-	/// <param name="path">The directory path to check.</param>
-	/// <returns>True if the directory contains any entries; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool CheckDirContainsAnything(string path)
-		=> LocalFileSystem.Instance.CheckDirContainsAnything(path);
-
-	/// <summary>
-	/// Determines whether the file specified by the path is locked by another process.
-	/// </summary>
-	/// <param name="path">The path to the file to check.</param>
-	/// <returns>True if the file is locked; otherwise, false.</returns>
-	[Obsolete("Use overload with IFileSystem parameter.")]
-	public static bool IsFileLocked(string path)
-		=> LocalFileSystem.Instance.IsFileLocked(path);
 
 	/// <summary>
 	/// Normalizes the provided file path for comparison purposes without converting to lowercase.
@@ -649,30 +408,4 @@ public static class IOHelper
 	/// <returns>True if both paths are equal; otherwise, false.</returns>
 	public static bool IsPathsEqual(string path1, string path2) => path1.NormalizePath() == path2.NormalizePath();
 
-	/// <summary>
-	/// Reads the specified number of bytes from the stream into the provided buffer.
-	/// </summary>
-	/// <param name="stream">The source stream.</param>
-	/// <param name="buffer">The buffer to store the data.</param>
-	/// <param name="offset">The offset in the buffer.</param>
-	/// <param name="bytesToRead">The number of bytes to read.</param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="ValueTask{T}"/></returns>
-	[Obsolete("Use Stream.ReadExactlyAsync instead.")]
-	public static async ValueTask<int> ReadFullAsync(this Stream stream, byte[] buffer, int offset, int bytesToRead, CancellationToken cancellationToken)
-	{
-		if (stream is null)
-			throw new ArgumentNullException(nameof(stream));
-
-		try
-		{
-			await stream.ReadExactlyAsync(buffer, offset, bytesToRead, cancellationToken).NoWait();
-		}
-		catch (EndOfStreamException ex)
-		{
-			throw new IOException("Connection dropped.", ex);
-		}
-
-		return bytesToRead;
-	}
 }

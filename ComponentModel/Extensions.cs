@@ -692,21 +692,6 @@ public static class Extensions
 	}
 
 	/// <summary>
-	/// Adds a custom validation attribute as a validator for the entity.
-	/// </summary>
-	/// <typeparam name="TEntity">The type of the attribute entity.</typeparam>
-	/// <param name="entity">The attribute entity.</param>
-	/// <param name="validator">The validation attribute to add.</param>
-	/// <returns>The updated attribute entity.</returns>
-	[Obsolete("Use ModifyAttributes instead.")]
-	public static TEntity SetValidator<TEntity>(this TEntity entity, ValidationAttribute validator)
-		where TEntity : IAttributesEntity
-	{
-		entity.ModifyAttributes(true, validator);
-		return entity;
-	}
-
-	/// <summary>
 	/// Validates the given value against all ValidationAttribute validators on the entity.
 	/// </summary>
 	/// <typeparam name="TEntity">The type of the attribute entity.</typeparam>

@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Common;
 
 using System;
-using System.Collections.Generic;
 
 /// <summary>
 /// Utility class for common array operations.
@@ -34,39 +33,6 @@ public static class ArrayHelper
 	}
 
 	/// <summary>
-	/// Returns a subarray that starts at the specified index and extends to the end of the array.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the array.</typeparam>
-	/// <param name="array">The source array.</param>
-	/// <param name="index">The starting index of the subarray.</param>
-	/// <returns>A new array containing the elements from the specified index to the end of the source array.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when the array is null.</exception>
-	[Obsolete("Use Span<T>.Slice instead.")]
-	public static T[] Range<T>(this T[] array, int index)
-	{
-		if (array is null)
-			throw new ArgumentNullException(nameof(array));
-
-		return array.Range(index, array.Length - index);
-	}
-
-	/// <summary>
-	/// Returns a subarray that begins at the specified index and contains the specified number of elements.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the array.</typeparam>
-	/// <param name="array">The source array.</param>
-	/// <param name="index">The starting index of the subarray.</param>
-	/// <param name="count">The number of elements to include in the subarray.</param>
-	/// <returns>A new array containing the specified range of elements from the source array.</returns>
-	[Obsolete("Use Span<T>.Slice instead.")]
-	public static T[] Range<T>(this T[] array, int index, int count)
-	{
-		var range = new T[count];
-		Array.Copy(array, index, range, 0, count);
-		return range;
-	}
-
-	/// <summary>
 	/// Creates a one-dimensional <see cref="Array"/> of the specified <see cref="Type"/> and length, with zero-based indexing.
 	/// </summary>
 	/// <param name="type">The type of the array to create.</param>
@@ -89,22 +55,6 @@ public static class ArrayHelper
 	public static int IndexOf<T>(this T[] array, T item)
 	{
 		return Array.IndexOf(array, item);
-	}
-
-	/// <summary>
-	/// Creates a shallow copy of the specified array.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the array.</typeparam>
-	/// <param name="array">The source array.</param>
-	/// <returns>A new array that is a shallow copy of the source array.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when the array is null.</exception>
-	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
-	public static T[] Clone<T>(this T[] array)
-	{
-		if (array is null)
-			throw new ArgumentNullException(nameof(array));
-
-		return (T[])array.Clone();
 	}
 
 	/// <summary>
@@ -134,39 +84,4 @@ public static class ArrayHelper
 		return result;
 	}
 
-	/// <summary>
-	/// Creates a copy of the source array.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the array.</typeparam>
-	/// <param name="source">The source array.</param>
-	/// <returns>A new array containing the same elements as the source array.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when the source array is null.</exception>
-	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
-	public static T[] CopyArray<T>(this T[] source)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		var copy = new T[source.Length];
-		source.CopyTo(copy, 0);
-		return copy;
-	}
-
-	/// <summary>
-	/// Creates a copy of the elements from the specified collection into a new array.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the collection.</typeparam>
-	/// <param name="source">The source collection.</param>
-	/// <returns>A new array containing the elements of the source collection.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when the source collection is null.</exception>
-	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
-	public static T[] CopyArray<T>(this ICollection<T> source)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		var copy = new T[source.Count];
-		source.CopyTo(copy, 0);
-		return copy;
-	}
 }

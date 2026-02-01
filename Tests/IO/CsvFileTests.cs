@@ -124,51 +124,6 @@ public class CsvFileTests : BaseTestClass
 		}
 	}
 
-	// Large data tests
-#pragma warning disable CS0618 // Type or member is obsolete
-	[TestMethod]
-	public void LargeWriteRead_Sync()
-	{
-		const int rows = 2000;
-		const int colsCount = 10;
-		const int cellSize = 200; // ~4MB total
-
-		using var ms = new MemoryStream();
-		using var writer = new CsvFileWriter(ms, Encoding.UTF8);
-		writer.Delimiter = ',';
-		writer.LineSeparator = "\n";
-
-		for (int r = 0; r < rows; r++)
-		{
-			var arr = new string[colsCount];
-			for (int c = 0; c < colsCount; c++)
-				arr[c] = $"R{r}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-			writer.WriteRow(arr);
-		}
-		writer.Flush();
-
-		ms.Position = 0;
-
-		using var reader = new CsvFileReader(ms, "\n");
-		reader.Delimiter = ',';
-		var cols = new List<string>();
-		int ri = 0;
-		while (reader.ReadRow(cols))
-		{
-			if (ri % 500 == 0)
-			{
-				for (int c = 0; c < colsCount; c++)
-				{
-					var expected = $"R{ri}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-					cols[c].AssertEqual(expected);
-				}
-			}
-			ri++;
-		}
-		ri.AssertEqual(rows);
-	}
-#pragma warning restore CS0618 // Type or member is obsolete
-
 	[TestMethod]
 	public async Task LargeWriteRead()
 	{

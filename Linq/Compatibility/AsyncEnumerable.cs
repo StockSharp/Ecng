@@ -2,7 +2,6 @@
 namespace System.Linq;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -697,65 +696,6 @@ public static class AsyncEnumerable
 			throw new InvalidOperationException("Sequence contains no elements");
 
 		return max;
-	}
-
-	private class Grouping<TKey, TSource>(TKey key, IEnumerable<TSource> source) : IGrouping<TKey, TSource>
-	{
-		public TKey Key => key;
-		public IEnumerator<TSource> GetEnumerator() => source.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	}
-
-	/// <summary>
-	/// Groups the elements of an <see cref="IAsyncEnumerable{T}"/> according to a specified key selector function.
-	/// </summary>
-	/// <typeparam name="TSource">The type of the elements of the source sequence.</typeparam>
-	/// <typeparam name="TKey">The type of the key returned by the key selector function.</typeparam>
-	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> to group.</param>
-	/// <param name="keySelector">A function to extract the key for each element.</param>
-	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains elements of type <see cref="IGrouping{TKey, TSource}"/></returns>
-	[Obsolete("This method assumes that the source is ordered by the key.")]
-	public static IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-		where TKey : IEquatable<TKey>
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		if (keySelector is null)
-			throw new ArgumentNullException(nameof(keySelector));
-
-		return Impl(source, keySelector);
-
-		static async IAsyncEnumerable<IGrouping<TKey, TSource>> Impl(IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-		{
-			List<TSource> group = null;
-			TKey currentKey = default;
-
-			await foreach (var item in source.WithCancellation(cancellationToken))
-			{
-				var key = keySelector(item);
-
-				if (group == null)
-				{
-					group = [item];
-					currentKey = key;
-				}
-				else if (currentKey.Equals(key))
-				{
-					group.Add(item);
-				}
-				else
-				{
-					yield return new Grouping<TKey, TSource>(currentKey, group);
-
-					group = [item];
-					currentKey = key;
-				}
-			}
-
-			if (group != null)
-				yield return new Grouping<TKey, TSource>(currentKey, group);
-		}
 	}
 
 	/// <summary>

@@ -71,69 +71,6 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
-	/// Determines whether the specified socket is connected.
-	/// </summary>
-	/// <param name="socket">The socket to check.</param>
-	/// <param name="timeOut">The timeout in microseconds.</param>
-	/// <returns><c>true</c> if the socket is connected; otherwise, <c>false</c>.</returns>
-	[Obsolete("Use different approach to check socket connectivity.")]
-	public static bool IsConnected(this Socket socket, int timeOut = 1)
-	{
-		if (socket is null)
-			throw new ArgumentNullException(nameof(socket));
-
-		try
-		{
-			return !(socket.Poll(timeOut, SelectMode.SelectRead) && socket.Available == 0);
-		}
-		catch (SocketException)
-		{
-			return false;
-		}
-	}
-
-	/// <summary>
-	/// Reads the specified number of bytes from the socket into the provided buffer.
-	/// </summary>
-	/// <param name="socket">The source socket.</param>
-	/// <param name="buffer">The buffer to store the data.</param>
-	/// <param name="offset">The offset in the buffer.</param>
-	/// <param name="len">The number of bytes to read.</param>
-	[Obsolete("Use async methods with CancellationToken instead.")]
-	public static void Read(this Socket socket, byte[] buffer, int offset, int len)
-	{
-		if (socket is null)
-			throw new ArgumentNullException(nameof(socket));
-
-		var left = len;
-
-		while (left > 0)
-		{
-			var read = socket.Receive(buffer, offset + (len - left), left, SocketFlags.None);
-
-			if (read <= 0)
-				throw new IOException($"Stream returned '{read}' bytes.");
-
-			left -= read;
-		}
-	}
-
-	/// <summary>
-	/// Waits for data availability on the socket.
-	/// </summary>
-	/// <param name="socket">The socket to wait on.</param>
-	/// <param name="timeOut">The timeout in microseconds.</param>
-	/// <returns><c>true</c> if data is available; otherwise, <c>false</c>.</returns>
-	[Obsolete("Use different approach to check socket data availability.")]
-	public static bool Wait(this Socket socket, int timeOut)
-	{
-		if (socket is null)
-			throw new ArgumentNullException(nameof(socket));
-
-		return socket.Poll(timeOut, SelectMode.SelectRead) && socket.Available != 0;
-	}
-
-	/// <summary>
 	/// Joins the specified multicast group using the provided IP address.
 	/// </summary>
 	/// <param name="socket">The socket to configure.</param>
@@ -265,23 +202,6 @@ public static class NetworkHelper
 		}
 
 		return ssl;
-	}
-
-	/// <summary>
-	/// Connects the <see cref="TcpClient"/> to the specified endpoint.
-	/// </summary>
-	/// <param name="client">The <see cref="TcpClient"/> instance.</param>
-	/// <param name="address">The endpoint to connect to.</param>
-	[Obsolete("Use ConnectAsync instead.")]
-	public static void Connect(this TcpClient client, EndPoint address)
-	{
-		if (client is null)
-			throw new ArgumentNullException(nameof(client));
-
-		if (address is null)
-			throw new ArgumentNullException(nameof(address));
-
-		client.Connect(address.GetHost(), address.GetPort());
 	}
 
 	/// <summary>

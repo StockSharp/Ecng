@@ -245,11 +245,3 @@ public class CompilerCache : ICompilerCache
 		=> Path.Combine(_path, $"{key}.bin");
 }
 
-/// <summary>
-/// Backward-compatible wrapper for legacy usage; uses local file system under the hood.
-/// </summary>
-[Obsolete("Use CompilerCache with LocalFileSystem instead.")]
-public class FileCompilerCache(string path, TimeSpan timeout)
-	: CompilerCache(LocalFileSystem.Instance, path, timeout)
-{
-}

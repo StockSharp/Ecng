@@ -45,28 +45,6 @@ public class Currency : Equatable<Currency>
 	/// <inheritdoc />
 	public override string ToString() => $"{Value} {Type}";
 
-	/// <summary>
-	/// Cast <see cref="decimal"/> object to the type <see cref="Currency"/>.
-	/// </summary>
-	/// <param name="value"><see cref="decimal"/> value.</param>
-	/// <returns>Object <see cref="Currency"/>.</returns>
-	[Obsolete]
-	public static implicit operator Currency(decimal value) => new() { Value = value };
-
-	/// <summary>
-	/// Cast object from <see cref="Currency"/> to <see cref="decimal"/>.
-	/// </summary>
-	/// <param name="value">Object <see cref="Currency"/>.</param>
-	/// <returns><see cref="decimal"/> value.</returns>
-	[Obsolete]
-	public static explicit operator decimal(Currency value)
-	{
-		if (value is null)
-			throw new ArgumentNullException(nameof(value));
-
-		return value.Value;
-	}
-
 	private static void CheckArgs(Currency c1, Currency c2)
 	{
 		if (c1 is null)

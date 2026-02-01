@@ -17,42 +17,6 @@ public static class MailHelper
 #endif
 {
 	/// <summary>
-	/// Sends the specified <see cref="MailMessage"/> synchronously.
-	/// </summary>
-	/// <param name="message">The mail message to send.</param>
-	/// <param name="dispose">If set to <c>true</c>, disposes the mail message after sending.</param>
-	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
-	[Obsolete("Synchronous sending is obsolete. Use SendAsync instead.")]
-	public static void Send(this MailMessage message, bool dispose = true)
-	{
-		if (message is null)
-			throw new ArgumentNullException(nameof(message));
-
-		using (var mail = new SmtpClient())
-			mail.Send(message);
-
-		if (dispose)
-			message.Dispose();
-	}
-
-	/// <summary>
-	/// Sends the specified <see cref="MailMessage"/> asynchronously.
-	/// </summary>
-	/// <param name="message">The mail message to send.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the asynchronous send operation.</param>
-	/// <returns>A task that represents the asynchronous send operation.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
-	[Obsolete("Use SendMailAsync extension method of SmtpClient instead.")]
-	public static async Task SendAsync(this MailMessage message, CancellationToken cancellationToken = default)
-	{
-		if (message is null)
-			throw new ArgumentNullException(nameof(message));
-
-		using var mail = new SmtpClient();
-		await mail.SendMailAsync(message, cancellationToken).NoWait();
-	}
-
-	/// <summary>
 	/// Adds an HTML body alternate view to the specified <see cref="MailMessage"/>.
 	/// </summary>
 	/// <param name="message">The mail message to add the HTML body to.</param>

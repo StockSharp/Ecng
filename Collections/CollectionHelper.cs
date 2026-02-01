@@ -1515,15 +1515,6 @@ public static class CollectionHelper
 	}
 
 	/// <summary>
-	/// Determines whether a sequence of characters is empty.
-	/// </summary>
-	/// <param name="source">The sequence of characters to check.</param>
-	/// <returns>True if the sequence is null or empty; otherwise, false.</returns>
-	[Obsolete("Use StringHelper.IsEmpty.")]
-	public static bool IsEmpty(this IEnumerable<char> source)
-		=> source is null || !source.Any();
-
-	/// <summary>
 	/// Determines whether a sequence is empty.
 	/// </summary>
 	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
@@ -1829,63 +1820,6 @@ public static class CollectionHelper
 
 	#endregion
 
-#if !NET9_0_OR_GREATER
-	/// <summary>
-	/// A private implementation of <see cref="IEnumerableEx{T}"/> that wraps an enumerable with a predefined count.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the enumerable.</typeparam>
-	[Obsolete]
-	private class EnumerableEx<T> : SimpleEnumerable<T>, IEnumerableEx<T>
-	{
-		private readonly int _count;
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="EnumerableEx{T}"/> class.
-		/// </summary>
-		/// <param name="enumerable">The underlying enumerable to wrap.</param>
-		/// <param name="count">The predefined count of elements.</param>
-		/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="count"/> is negative.</exception>
-		public EnumerableEx(IEnumerable<T> enumerable, int count)
-			: base(enumerable.GetEnumerator)
-		{
-			if (count < 0)
-				throw new ArgumentOutOfRangeException(nameof(count));
-
-			_count = count;
-		}
-
-		/// <summary>
-		/// Gets the predefined count of elements.
-		/// </summary>
-		int IEnumerableEx.Count => _count;
-	}
-
-	/// <summary>
-	/// Converts an enumerable to an <see cref="IEnumerableEx{T}"/> with a count determined by enumeration.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the enumerable.</typeparam>
-	/// <param name="values">The enumerable to convert.</param>
-	/// <returns>An <see cref="IEnumerableEx{T}"/> with the specified count.</returns>
-	[Obsolete]
-	public static IEnumerableEx<T> ToEx<T>(this IEnumerable<T> values)
-	{
-		return values.ToEx(values.Count());
-	}
-
-	/// <summary>
-	/// Converts an enumerable to an <see cref="IEnumerableEx{T}"/> with a specified count.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the enumerable.</typeparam>
-	/// <param name="values">The enumerable to convert.</param>
-	/// <param name="count">The predefined count of elements.</param>
-	/// <returns>An <see cref="IEnumerableEx{T}"/> with the specified count.</returns>
-	[Obsolete]
-	public static IEnumerableEx<T> ToEx<T>(this IEnumerable<T> values, int count)
-	{
-		return new EnumerableEx<T>(values, count);
-	}
-#endif
-
 	/// <summary>
 	/// Converts a list to a synchronized list, or returns it if already synchronized.
 	/// </summary>
@@ -2094,18 +2028,6 @@ public static class CollectionHelper
 	}
 
 	/// <summary>
-	/// Converts a sequence to a set using the default equality comparer.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
-	/// <param name="values">The sequence to convert.</param>
-	/// <returns>A set containing the unique elements from the sequence.</returns>
-	[Obsolete("Use ToHashSet method.")]	
-	public static ISet<T> ToSet<T>(this IEnumerable<T> values)
-	{
-		return values.ToHashSet();
-	}
-
-	/// <summary>
 	/// Converts a sequence of strings to a case-insensitive set.
 	/// </summary>
 	/// <param name="values">The sequence of strings to convert.</param>
@@ -2114,75 +2036,6 @@ public static class CollectionHelper
 	{
 		return values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 	}
-
-	/// <summary>
-	/// Splits a sequence into batches of a specified size.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
-	/// <param name="source">The sequence to batch.</param>
-	/// <param name="size">The size of each batch.</param>
-	/// <returns>An enumerable of arrays, each containing up to <paramref name="size"/> elements.</returns>
-	[Obsolete("Use Chunk instead.")]
-	public static IEnumerable<T[]> Batch<T>(this IEnumerable<T> source, int size)
-	{
-		return source.Chunk(size);
-	}
-
-	/// <summary>
-	/// Splits a sequence into batches with custom result selection and stopping condition.
-	/// </summary>
-	/// <typeparam name="TSource">The type of elements in the sequence.</typeparam>
-	/// <typeparam name="TResult">The type of the result for each batch.</typeparam>
-	/// <param name="source">The sequence to batch.</param>
-	/// <param name="size">The maximum size of each batch.</param>
-	/// <param name="resultSelector">The function to transform each batch into a result.</param>
-	/// <param name="needStop">The function to determine if batching should stop prematurely.</param>
-	/// <returns>An enumerable of results, each representing a batch.</returns>
-	[Obsolete("Use Chunk instead.")]
-	public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
-		Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
-	{
-		TSource[] bucket = null;
-		var count = 0;
-
-		foreach (var item in source)
-		{
-			bucket ??= new TSource[size];
-
-			bucket[count++] = item;
-
-			// The bucket is fully buffered before it's yielded
-			if (count != size)
-			{
-				if (needStop?.Invoke() != true)
-					continue;
-			}
-
-			// Select is necessary so bucket contents are streamed too
-			yield return resultSelector(bucket);
-
-			bucket = null;
-			count = 0;
-		}
-
-		// Return the last bucket with all remaining elements
-		if (bucket != null && count > 0)
-		{
-			Array.Resize(ref bucket, count);
-			yield return resultSelector(bucket);
-		}
-	}
-
-	/// <summary>
-	/// Appends a single value to the end of a sequence.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the sequence.</typeparam>
-	/// <param name="values">The sequence to append to.</param>
-	/// <param name="value">The value to append.</param>
-	/// <returns>An enumerable with the value appended.</returns>
-	[Obsolete("Use Enumerable.Append instead.")]
-	public static IEnumerable<T> Append2<T>(this IEnumerable<T> values, T value)
-		=> Enumerable.Append(values, value);
 
 	/// <summary>
 	/// Asynchronously flattens a sequence of tasks that each return a sequence into a single sequence.

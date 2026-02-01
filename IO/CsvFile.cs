@@ -18,8 +18,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Nito.AsyncEx;
-
 using Ecng.Common;
 
 /// <summary>
@@ -148,15 +146,6 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 		_lineSeparator = lineSeparator;
 		_emptyLineBehavior = emptyLineBehavior;
 	}
-
-	/// <summary>
-	/// Reads a row of columns from the current CSV file.
-	/// </summary>
-	/// <param name="columns">Collection to hold the columns read</param>
-	/// <returns><see langword="true"/> if a row was successfully read; <see langword="false"/> if the end of the file was reached.</returns>
-	[Obsolete("Use ReadRowAsync instead.")]
-	public bool ReadRow(List<string> columns)
-		=> AsyncHelper.Run(() => ReadRowAsync(columns, default));
 
 	/// <summary>
 	/// Asynchronously reads a row of columns from the current CSV file. Returns false if no
@@ -296,7 +285,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 /// <summary>
 /// Class for writing to comma-separated-value (CSV) files.
 /// </summary>
-public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
+public class CsvFileWriter : CsvFileCommon, IDisposable, IAsyncCommitable
 {
 	private readonly StreamWriter _writer;
 
@@ -346,14 +335,6 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 
 	/// <inheritdoc />
 	public override Stream BaseStream => _writer.BaseStream;
-
-	/// <summary>
-	/// Writes a row of columns to the current CSV file.
-	/// </summary>
-	/// <param name="columns">The list of columns to write</param>
-	[Obsolete("Use WriteRowAsync instead.")]
-	public void WriteRow(IEnumerable<string> columns)
-		=> AsyncHelper.Run(() => WriteRowAsync(columns));
 
 	/// <summary>
 	/// Asynchronously writes a row of columns to the current CSV file.
@@ -418,27 +399,9 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, ICommitable
 	}
 
 	/// <summary>
-	/// Clears all buffers for the current writer and causes any buffered data to be written to the underlying stream.
-	/// </summary>
-	[Obsolete("Use FlushAsync instead.")]
-	public void Flush() => AsyncContext.Run(() => FlushAsync());
-
-	/// <summary>
 	/// Truncates the underlying stream used by the <see cref="CsvFileWriter"/> by clearing its content.
 	/// </summary>
 	public void Truncate() => _writer.Truncate();
-
-	/// <summary>
-	/// Commits the transaction by flushing data and propagating commit to the underlying stream if it supports transactions.
-	/// </summary>
-	[Obsolete("Use CommitAsync instead.")]
-	public void Commit()
-	{
-		_writer.Flush();
-
-		if (_writer.BaseStream is ICommitable tfs)
-			tfs.Commit();
-	}
 
 	/// <summary>
 	/// Asynchronously commits the transaction by flushing data and propagating commit to the underlying stream if it supports transactions.

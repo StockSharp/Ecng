@@ -6,7 +6,6 @@ using System.Dynamic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Threading;
 
@@ -203,28 +202,6 @@ public static class TypeHelper
 		=> type.Is<Delegate>();
 
 	/// <summary>
-	/// Creates an uninitialized instance of the specified generic type parameter.
-	/// </summary>
-	/// <typeparam name="TEntity">The type to instantiate.</typeparam>
-	/// <returns>Returns the newly created uninitialized instance.</returns>
-	[Obsolete]
-	public static TEntity CreateUnitialized<TEntity>()
-	{
-		return (TEntity)typeof(TEntity).CreateUnitialized();
-	}
-
-	/// <summary>
-	/// Creates an uninitialized instance of the specified type.
-	/// </summary>
-	/// <param name="type">The type to instantiate.</param>
-	/// <returns>Returns the newly created uninitialized instance.</returns>
-	[Obsolete]
-	public static object CreateUnitialized(this Type type)
-	{
-		return FormatterServices.GetUninitializedObject(type);
-	}
-
-	/// <summary>
 	/// Disposes the source if it implements IDisposable.
 	/// </summary>
 	/// <typeparam name="TSource">The type of the source.</typeparam>
@@ -267,17 +244,6 @@ public static class TypeHelper
 	// http://stackoverflow.com/questions/8517159/how-to-detect-at-runtime-that-net-version-4-5-currently-running-your-code
 
 	/// <summary>
-	/// Determines if the current environment is .NET 4.5 or newer.
-	/// </summary>
-	/// <returns>Returns true if .NET 4.5 or newer is running.</returns>
-	[Obsolete]
-	public static bool IsNet45OrNewer()
-	{
-		// Class "ReflectionContext" exists from .NET 4.5 onwards.
-		return Type.GetType("System.Reflection.ReflectionContext", false) != null;
-	}
-
-	/// <summary>
 	/// Gets the fully qualified name of a type or its assembly-qualified name.
 	/// </summary>
 	/// <param name="type">The type to convert.</param>
@@ -304,19 +270,6 @@ public static class TypeHelper
 	}
 
 	// http://stackoverflow.com/questions/57383/in-c-how-can-i-rethrow-innerexception-without-losing-stack-trace
-
-	/// <summary>
-	/// Throws the specified exception while preserving the original stack trace.
-	/// </summary>
-	/// <param name="ex">The exception to throw.</param>
-	[Obsolete]
-	public static void Throw(this Exception ex)
-	{
-		if (ex is null)
-			throw new ArgumentNullException(nameof(ex));
-
-		throw ex;
-	}
 
 	/// <summary>
 	/// Generates a salt byte array of the specified size.
