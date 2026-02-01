@@ -11,12 +11,12 @@ using System.Threading;
 public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 {
 	private readonly LinkedList<T> _inner = new();
-	private readonly SyncObject _syncRoot = new();
+	private readonly Lock _syncRoot = new();
 
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the linked list.
 	/// </summary>
-	public SyncObject SyncRoot => _syncRoot;
+	public Lock SyncRoot => _syncRoot;
 
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.

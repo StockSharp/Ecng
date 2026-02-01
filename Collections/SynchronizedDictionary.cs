@@ -54,7 +54,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the dictionary.
 	/// </summary>
-	public SyncObject SyncRoot { get; } = new();
+	public Lock SyncRoot { get; } = new();
 
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.

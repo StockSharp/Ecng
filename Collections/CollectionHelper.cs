@@ -1246,16 +1246,6 @@ public static class CollectionHelper
 
 	#endregion
 
-#if !NET9_0_OR_GREATER
-	/// <summary>
-	/// Enters a synchronized scope for thread-safe operations on the collection.
-	/// </summary>
-	/// <param name="collection"><see cref="ISynchronizedCollection"/></param>
-	/// <returns>A <see cref="Lock.Scope"/> that represents the synchronized scope.</returns>
-	public static Lock.Scope EnterScope(this ISynchronizedCollection collection)
-		=> collection.CheckOnNull(nameof(collection)).SyncRoot.EnterScope();
-#endif
-
 	/// <summary>
 	/// Executes a function on a synchronized collection with thread-safe access.
 	/// </summary>

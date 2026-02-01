@@ -16,7 +16,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the collection.
 	/// </summary>
-	public SyncObject SyncRoot { get; } = new();
+	public Lock SyncRoot { get; } = new();
 
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.

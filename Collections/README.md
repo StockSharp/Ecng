@@ -307,7 +307,7 @@ Interface for thread-safe collections.
 ```csharp
 public interface ISynchronizedCollection<T> : ICollection<T>
 {
-    SyncObject SyncRoot { get; }
+    Lock SyncRoot { get; }
     LockScope EnterScope();
 }
 ```

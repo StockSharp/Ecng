@@ -1,23 +1,16 @@
 namespace Ecng.Collections;
 
+using System.Threading;
 using System.Collections.Generic;
 
+using Ecng.Common;
+
 /// <summary>
-/// Represents a collection that can be synchronized using a <see cref="SyncObject"/>.
+/// Represents a collection that can be synchronized using a <see cref="Lock"/>.
 /// </summary>
-public interface ISynchronizedCollection
-#if NET9_0_OR_GREATER
-	: Common.ISynchronizable
+public interface ISynchronizedCollection : ISynchronizable
 {
 }
-#else
-{
-	/// <summary>
-	/// Gets the synchronization object used for thread-safe operations.
-	/// </summary>
-	SyncObject SyncRoot { get; }
-}
-#endif
 
 /// <summary>
 /// Represents a generic synchronized collection.

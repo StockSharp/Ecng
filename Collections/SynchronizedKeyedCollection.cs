@@ -37,7 +37,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the collection.
 	/// </summary>
-	public SyncObject SyncRoot => SyncDict.SyncRoot;
+	public Lock SyncRoot => SyncDict.SyncRoot;
 
 	/// <summary>
 	/// Enters a synchronized scope for thread-safe operations on the collection.

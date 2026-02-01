@@ -400,7 +400,7 @@ public static class AsyncEnumerable
 	/// <param name="comparer">An equality comparer to compare values.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>true if the source sequence contains an element that has the specified value; otherwise, false.</returns>
-	public static async ValueTask<bool> ContainsAsync<T>(this IAsyncEnumerable<T> source, T value, IEqualityComparer<T>? comparer = default, CancellationToken cancellationToken = default)
+	public static async ValueTask<bool> ContainsAsync<T>(this IAsyncEnumerable<T> source, T value, IEqualityComparer<T> comparer = default, CancellationToken cancellationToken = default)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
