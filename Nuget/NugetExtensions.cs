@@ -134,11 +134,8 @@ public static class NugetExtensions
 		var proxy = new ProxyCache(new DummySettings(), EnvironmentVariableWrapper.Instance);
 
 		var f = typeof(ProxyCache).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
-		var lazy = (Lazy<ProxyCache>)f.GetValue(null);
-#pragma warning disable CS0618 // Type or member is obsolete
-        lazy.SetValue(proxy);
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
+		f.SetValue(null, new Lazy<ProxyCache>(() => proxy));
+	}
 
 	/// <summary>
 	/// Increment the version.
