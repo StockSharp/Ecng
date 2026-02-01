@@ -2136,23 +2136,6 @@ public static class CollectionHelper
 			return source.Count() == 1 ? source.First() : default;
 	}
 
-#if NETSTANDARD2_0
-	/// <summary>
-	/// Clears all elements from a concurrent queue.
-	/// </summary>
-	/// <typeparam name="T">The type of elements in the queue.</typeparam>
-	/// <param name="queue">The concurrent queue to clear.</param>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="queue"/> is null.</exception>
-	// .NET Standard 2.0 doesn't has Clear
-	public static void Clear<T>(this System.Collections.Concurrent.ConcurrentQueue<T> queue)
-	{
-		if (queue is null)
-			throw new ArgumentNullException(nameof(queue));
-
-		while (queue.TryDequeue(out _)) { }
-	}
-#endif
-
 	/// <summary>
 	/// Counts the number of elements in a non-generic sequence.
 	/// </summary>
