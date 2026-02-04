@@ -1115,8 +1115,8 @@ public class JsonTests : BaseTestClass
 		Do("123");
 		Do(123);
 		Do(123L);
-		Do(DateTime.UtcNow);
-		Do(DateTimeOffset.UtcNow);
+		Do(new DateTime(2024, 1, 15, 10, 30, 45, 123, DateTimeKind.Utc));
+		Do(new DateTimeOffset(2024, 1, 15, 10, 30, 45, 123, TimeSpan.Zero));
 		Do(TimeSpan.FromSeconds(123));
 		Do(new Uri("https://google.com"));
 	}
