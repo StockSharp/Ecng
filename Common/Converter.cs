@@ -705,9 +705,9 @@ public static class Converter
 				}
 			}
 			else if (value is DateTime dt && destinationType == typeof(string))
-				return dt.Millisecond > 0 ? dt.ToString("o") : value.ToString();
+				return (dt.Ticks % TimeSpan.TicksPerSecond) != 0 ? dt.ToString("o") : value.ToString();
 			else if (value is DateTimeOffset dto && destinationType == typeof(string))
-				return dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
+				return (dto.Ticks % TimeSpan.TicksPerSecond) != 0 ? dto.ToString("o") : value.ToString();
 			else if (value is string str4 && destinationType == typeof(DateTimeOffset))
 				return DateTimeOffset.Parse(str4);
 			else if (value is string s6 && destinationType == typeof(XDocument))
