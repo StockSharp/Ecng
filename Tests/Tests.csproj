@@ -39,7 +39,6 @@
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
-    <ProjectReference Include="..\MathLight\MathLight.csproj" />
     <ProjectReference Include="..\Linq\Linq.csproj" />
     <ProjectReference Include="..\Licensing\Licensing.csproj" />
     <ProjectReference Include="..\Net.Udp\Net.Udp.csproj" />
