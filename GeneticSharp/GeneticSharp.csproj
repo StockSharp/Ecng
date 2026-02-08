@@ -8,11 +8,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="repo\src\GeneticSharp.Infrastructure.Framework\**\*.cs"
-             Exclude="repo\src\GeneticSharp.Infrastructure.Framework\obj\**;repo\src\GeneticSharp.Infrastructure.Framework\Properties\**"
-             LinkBase="Infrastructure" />
-    <Compile Include="repo\src\GeneticSharp.Domain\**\*.cs"
-             Exclude="repo\src\GeneticSharp.Domain\obj\**;repo\src\GeneticSharp.Domain\Properties\**"
-             LinkBase="Domain" />
+    <Compile Include="Infrastructure\**\*.cs" />
+    <Compile Include="Domain\**\*.cs" />
   </ItemGroup>
 </Project>
