@@ -21,6 +21,7 @@
   <Project Path="Data/Data.csproj" />
   <Project Path="Data.Ado/Data.Ado.csproj" />
   <Project Path="Drawing/Drawing.csproj" />
+  <Project Path="GeneticSharp/GeneticSharp.csproj" />
   <Project Path="Excel/Excel.csproj" />
   <Project Path="Excel.DX/Excel.DX.csproj" />
   <Project Path="Excel.OpenXml/Excel.OpenXml.csproj" />

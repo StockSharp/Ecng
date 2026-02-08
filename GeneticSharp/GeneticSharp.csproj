@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <RootNamespace>GeneticSharp</RootNamespace>
+    <AssemblyName>GeneticSharp</AssemblyName>
+    <TargetFrameworks>net6.0;net10.0</TargetFrameworks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="repo\src\GeneticSharp.Infrastructure.Framework\**\*.cs"
+             Exclude="repo\src\GeneticSharp.Infrastructure.Framework\obj\**;repo\src\GeneticSharp.Infrastructure.Framework\Properties\**"
+             LinkBase="Infrastructure" />
+    <Compile Include="repo\src\GeneticSharp.Domain\**\*.cs"
+             Exclude="repo\src\GeneticSharp.Domain\obj\**;repo\src\GeneticSharp.Domain\Properties\**"
+             LinkBase="Domain" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,3 @@
+[submodule "GeneticSharp/repo"]
+	path = GeneticSharp/repo
+	url = https://github.com/StockSharp/GeneticSharp.git
