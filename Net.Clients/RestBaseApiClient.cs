@@ -11,7 +11,7 @@ using Ecng.Reflection;
 /// Abstract base class for creating REST API clients.
 /// Provides functionality to execute HTTP requests with retry and caching support.
 /// </summary>
-public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
+public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeFormatter request, IMediaTypeFormatter response)
 {
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
 
@@ -28,12 +28,12 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <summary>
 	/// Gets the media type formatter used for request serialization.
 	/// </summary>
-	protected MediaTypeFormatter RequestFormatter { get; } = request ?? throw new ArgumentNullException(nameof(request));
+	protected IMediaTypeFormatter RequestFormatter { get; } = request ?? throw new ArgumentNullException(nameof(request));
 
 	/// <summary>
 	/// Gets the media type formatter used for response deserialization.
 	/// </summary>
-	protected MediaTypeFormatter ResponseFormatter { get; } = response ?? throw new ArgumentNullException(nameof(response));
+	protected IMediaTypeFormatter ResponseFormatter { get; } = response ?? throw new ArgumentNullException(nameof(response));
 
 	/// <summary>
 	/// Gets the collection of headers to add per request.
@@ -166,7 +166,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	{
 		return typeof(TResult) == typeof(VoidType)
 			? default(TResult).FromResult()
-			: response.Content.ReadAsAsync<TResult>([ResponseFormatter], cancellationToken);
+			: ResponseFormatter.DeserializeAsync<TResult>(response.Content, cancellationToken);
 	}
 
 	/// <summary>
@@ -180,7 +180,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	{
 		var request = new HttpRequestMessage(method, uri);
 
-		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(RequestFormatter.SupportedMediaTypes.First().MediaType));
+		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(RequestFormatter.MediaType));
 
 		if (PerRequestHeaders.Count > 0)
 		{
@@ -203,7 +203,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		var request = CreateRequest(method, uri);
 
 		if (body is not null)
-			request.Content = new ObjectContent<object>(body, RequestFormatter);
+			request.Content = RequestFormatter.Serialize(body);
 
 		return request;
 	}
