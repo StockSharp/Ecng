@@ -1,5 +1,6 @@
 namespace Ecng.Tests.Net;
 
+using System.Buffers;
 using System.Net;
 
 using Ecng.Net;
@@ -255,9 +256,187 @@ public class UdpPacketProcessorTests : BaseTestClass
 		receiver.Dispose();
 	}
 
+	[TestMethod]
+	public async Task RealPacketReceiver_AllPacketsDisposed_AfterProcessing()
+	{
+		var processor = new TrackingPacketProcessor { MaxIncomingQueueSize = 1000 };
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		const int packetCount = 500;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)(i & 0xFF), (byte)(i >> 8)]);
+
+		await processor.WaitForProcessedAsync(packetCount, TimeSpan.FromSeconds(10));
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		AreEqual(packetCount, processor.Processed);
+		// receiver may allocate one extra packet on shutdown (cancelled ReceiveAsync)
+		IsTrue(processor.Allocated >= packetCount);
+		AreEqual(processor.Allocated, processor.Disposed);
+		AreEqual(0, processor.LiveCount);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_PacketDisposedBeforeSendOut()
+	{
+		// Simulate: parsing is fast (packet disposed immediately), SendOut is slow
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = 1000,
+			SendOutDelay = TimeSpan.FromMilliseconds(20),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		const int packetCount = 50;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		await processor.WaitForProcessedAsync(packetCount, TimeSpan.FromSeconds(30));
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		AreEqual(packetCount, processor.Processed);
+		AreEqual(processor.Allocated, processor.Disposed);
+		AreEqual(0, processor.LiveCount);
+
+		// verify packet was disposed at parse time, not after SendOut delay
+		foreach (var (disposedAt, processedAt) in processor.Timings)
+			IsTrue(disposedAt <= processedAt);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_QueueOverflow_DropNewest_AllDisposed()
+	{
+		const int queueSize = 10;
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = queueSize,
+			SendOutDelay = TimeSpan.FromMilliseconds(50),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullMode.DropNewest);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		// send many packets at once — queue will overflow
+		const int packetCount = 100;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		// wait for some processing
+		await Task.Delay(3000, CancellationToken);
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		// every allocated packet must be disposed (either processed or dropped)
+		AreEqual(processor.Allocated, processor.Disposed);
+		AreEqual(0, processor.LiveCount);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_QueueOverflow_DropOldest_AllDisposed()
+	{
+		const int queueSize = 10;
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = queueSize,
+			SendOutDelay = TimeSpan.FromMilliseconds(50),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullMode.DropOldest);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		const int packetCount = 100;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		await Task.Delay(3000, CancellationToken);
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		// every allocated packet must be disposed
+		AreEqual(processor.Allocated, processor.Disposed);
+		AreEqual(0, processor.LiveCount);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_LiveCount_BoundedByQueueSize()
+	{
+		const int queueSize = 20;
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = queueSize,
+			SendOutDelay = TimeSpan.FromMilliseconds(100),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		// send a burst
+		for (var i = 0; i < 200; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		// give receiver time to fill queue
+		await Task.Delay(500, CancellationToken);
+
+		// live count should never exceed queue size + a few in-flight
+		var maxLive = processor.MaxLiveCount;
+		IsTrue(maxLive <= queueSize + 5);
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+	}
+
 	private static MulticastSourceAddress CreateTestAddress()
 	{
-		// Create test multicast address
 		return new MulticastSourceAddress
 		{
 			GroupAddress = "239.255.0.1".To<IPAddress>(),
@@ -267,13 +446,103 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: RealPacketReceiver creates socket without considering AddressFamily from GroupAddress.
-	/// It always creates IPv4 socket (default) and binds to IPAddress.Any.
-	/// When GroupAddress is IPv6, the socket creation/binding will fail or not receive packets.
-	///
-	/// Expected: Should detect IPv6 address and create IPv6 socket, bind to IPv6Any.
-	/// Actual: Creates IPv4 socket, fails for IPv6 multicast.
+	/// Packet processor that tracks allocation/disposal counts (like the real CNT debug counter).
+	/// Simulates real behavior: packet is disposed during parsing, BEFORE SendOutMessageAsync.
 	/// </summary>
+	private class TrackingPacketProcessor : IPacketProcessor
+	{
+		private int _allocated;
+		private int _disposed;
+		private int _processed;
+		private int _maxLive;
+
+		private readonly List<(long disposedTicks, long processedTicks)> _timings = [];
+
+		public int LiveCount => _allocated - _disposed;
+		public int Processed => _processed;
+		public int Allocated => _allocated;
+		public int Disposed => _disposed;
+		public int MaxLiveCount => _maxLive;
+
+		public IReadOnlyList<(long disposedAt, long processedAt)> Timings => _timings;
+
+		public TimeSpan SendOutDelay { get; set; }
+
+		public int MaxIncomingQueueSize { get; set; } = 10000;
+		public int MaxUdpDatagramSize { get; set; } = 65535;
+		public string Name => "Tracking";
+
+		public IMemoryOwner<byte> AllocatePacket(int size)
+		{
+			Interlocked.Increment(ref _allocated);
+
+			// track max live
+			int live;
+			int prevMax;
+			do
+			{
+				live = _allocated - _disposed;
+				prevMax = _maxLive;
+			}
+			while (live > prevMax && Interlocked.CompareExchange(ref _maxLive, live, prevMax) != prevMax);
+
+			return new TrackingMemoryOwner(this, new byte[size]);
+		}
+
+		public async ValueTask<bool> ProcessNewPacket(IMemoryOwner<byte> packet, int length, CancellationToken ct)
+		{
+			// simulate real _processMessage: parse data, then DISPOSE packet
+			_ = packet.Memory.Span[..length].ToArray();
+			packet.Dispose();
+			var disposedTicks = Environment.TickCount64;
+
+			// simulate SendOutMessageAsync (packet already disposed at this point)
+			if (SendOutDelay > TimeSpan.Zero)
+				await Task.Delay(SendOutDelay, ct);
+
+			var processedTicks = Environment.TickCount64;
+			Interlocked.Increment(ref _processed);
+
+			lock (_timings)
+				_timings.Add((disposedTicks, processedTicks));
+
+			return true;
+		}
+
+		public void DisposePacket(IMemoryOwner<byte> packet, string reason)
+		{
+			packet.Dispose();
+		}
+
+		public void ErrorHandler(Exception ex, int errorCount, bool isFatal) { }
+
+		public async Task<bool> WaitForProcessedAsync(int count, TimeSpan timeout)
+		{
+			using var cts = new CancellationTokenSource(timeout);
+			try
+			{
+				while (Volatile.Read(ref _processed) < count && !cts.Token.IsCancellationRequested)
+					await Task.Delay(10, cts.Token);
+				return Volatile.Read(ref _processed) >= count;
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
+			}
+		}
+
+		private class TrackingMemoryOwner(TrackingPacketProcessor tracker, byte[] buffer) : IMemoryOwner<byte>
+		{
+			private int _disposed;
+			public Memory<byte> Memory => buffer;
+			public void Dispose()
+			{
+				if (Interlocked.Exchange(ref _disposed, 1) == 0)
+					Interlocked.Increment(ref tracker._disposed);
+			}
+		}
+	}
+
 	[TestMethod]
 	public async Task RealPacketReceiver_IPv6Multicast_ShouldWorkCorrectly()
 	{
@@ -283,13 +552,11 @@ public class UdpPacketProcessorTests : BaseTestClass
 			MaxUdpDatagramSize = 65535,
 		};
 
-		// Use REAL socket factory, not mock - to expose the bug
 		var socketFactory = new RealUdpSocketFactory();
 
-		// IPv6 multicast address
 		var ipv6Address = new MulticastSourceAddress
 		{
-			GroupAddress = IPAddress.Parse("ff02::1"), // IPv6 link-local multicast
+			GroupAddress = IPAddress.Parse("ff02::1"),
 			Port = 54321,
 			IsEnabled = true
 		};
@@ -299,27 +566,16 @@ public class UdpPacketProcessorTests : BaseTestClass
 
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
-		// BUG: This should throw or fail because:
-		// 1. Socket is created with default AddressFamily (IPv4)
-		// 2. Bind is called with IPAddress.Any (IPv4)
-		// 3. IPv6 multicast group join will fail
-
 		try
 		{
 			await receiver.RunAsync(cts.Token);
 		}
 		catch (OperationCanceledException)
 		{
-			// Expected - timeout
 		}
 
 		receiver.Dispose();
 
-		// The bug manifests in two possible ways:
-		// 1. Error in ErrorHandler (receive loop errors)
-		// 2. Error in logs (JoinMulticast failure during startup)
-		//
-		// Check both for the bug confirmation
 		if (processor.Errors.Count > 0)
 		{
 			var error = processor.Errors[0];
@@ -331,8 +587,6 @@ public class UdpPacketProcessorTests : BaseTestClass
 		{
 			var error = logs.Errors.First();
 
-			// Skip test if IPv6 multicast is not available in the environment (e.g., CI runners)
-			// Error 49 = EADDRNOTAVAIL on macOS, "Can't assign requested address"
 			if (error.Message.Contains("Can't assign requested address") ||
 				error.Message.Contains("EADDRNOTAVAIL") ||
 				error.Message.Contains("Network is unreachable"))

@@ -181,15 +181,18 @@ public class RealPacketReceiver(
 
 			while (!token.IsCancellationRequested)
 			{
+				IMemoryOwner<byte> packet = null;
+
 				try
 				{
-					var packet = _processor.AllocatePacket(packetSize);
+					packet = _processor.AllocatePacket(packetSize);
 					var len = await socket.ReceiveAsync(packet.Memory, SocketFlags.None, token);
 
 					if (len <= 0)
 					{
 						_logs.LogError($"{_address} returned 0 bytes.");
 						packet.Dispose();
+						packet = null;
 						break;
 					}
 
@@ -211,10 +214,13 @@ public class RealPacketReceiver(
 							_logs.LogWarning("Dropped packets total={0}", _dropped);
 					}
 
+					packet = null;
 					errorCount = 0;
 				}
 				catch (Exception ex)
 				{
+					packet?.Dispose();
+
 					if (!token.IsCancellationRequested)
 						_processor.ErrorHandler(ex, ++errorCount, false);
 				}
