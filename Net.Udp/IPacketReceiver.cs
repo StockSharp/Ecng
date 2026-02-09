@@ -68,7 +68,7 @@ public class RealPacketReceiver(
 		{
 			SingleReader = true,
 			SingleWriter = true,
-			FullMode = BoundedChannelFullMode.DropOldest
+			FullMode = BoundedChannelFullMode.Wait
 		});
 
 		var rt = RunThread(ReceivePackets, _processor.Name + "-receiver", token);
