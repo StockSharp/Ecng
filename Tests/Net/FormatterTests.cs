@@ -7,6 +7,8 @@ using System.Text;
 using Ecng.Net;
 using Ecng.Tests.Net.Mocks;
 
+using JsonFormatter = Ecng.Net.JsonMediaTypeFormatter;
+
 [TestClass]
 public class FormatterTests : BaseTestClass
 {
@@ -245,6 +247,123 @@ public class FormatterTests : BaseTestClass
 			using var content = new StringContent("test");
 			await fmt.DeserializeAsync<string>(content, default);
 		});
+	}
+
+	#endregion
+
+	#region JsonMediaTypeFormatter — side-by-side serialization & deserialization
+
+	private record TestDto(string Name, int Age);
+
+	private static readonly System.Net.Http.Formatting.JsonMediaTypeFormatter _legacyJson = new();
+
+	[TestMethod]
+	public void Json_MediaType_SameAsLegacy()
+	{
+		new JsonFormatter().MediaType.AssertEqual(_legacyJson.SupportedMediaTypes.First().MediaType);
+	}
+
+	[TestMethod]
+	public async Task Json_Serialize_Object_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		var obj = new { key = "value", num = 42 };
+
+		var expected = await SerializeLegacy(_legacyJson, obj);
+		var actual = await SerializeNew(current, obj);
+
+		actual.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task Json_Serialize_Array_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		var arr = new[] { 1, 2, 3 };
+
+		var expected = await SerializeLegacy(_legacyJson, arr);
+		var actual = await SerializeNew(current, arr);
+
+		actual.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task Json_Serialize_String_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		const string value = "hello world";
+
+		var expected = await SerializeLegacy(_legacyJson, value);
+		var actual = await SerializeNew(current, value);
+
+		actual.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task Json_Serialize_Null_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+
+		var expected = await SerializeLegacy(_legacyJson, null);
+		var actual = await SerializeNew(current, null);
+
+		actual.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task Json_Deserialize_Object_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		const string json = "{\"Name\":\"Alice\",\"Age\":30}";
+
+		var expected = await DeserializeLegacy<TestDto>(_legacyJson, json, "application/json");
+		var actual = await DeserializeNew<TestDto>(current, json, "application/json");
+
+		actual.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task Json_Deserialize_Array_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		const string json = "[1,2,3]";
+
+		var expected = await DeserializeLegacy<int[]>(_legacyJson, json, "application/json");
+		var actual = await DeserializeNew<int[]>(current, json, "application/json");
+
+		actual.SequenceEqual(expected).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task Json_Deserialize_Nested_SameAsLegacy()
+	{
+		var current = new JsonFormatter();
+		const string json = "{\"items\":[{\"Name\":\"A\",\"Age\":1},{\"Name\":\"B\",\"Age\":2}]}";
+
+		var expected = await DeserializeLegacy<Dictionary<string, TestDto[]>>(_legacyJson, json, "application/json");
+		var actual = await DeserializeNew<Dictionary<string, TestDto[]>>(current, json, "application/json");
+
+		actual["items"].Length.AssertEqual(expected["items"].Length);
+		actual["items"][0].AssertEqual(expected["items"][0]);
+		actual["items"][1].AssertEqual(expected["items"][1]);
+	}
+
+	[TestMethod]
+	public async Task Json_RoundTrip()
+	{
+		var fmt = new JsonFormatter();
+		var original = new TestDto("Bob", 25);
+
+		using var content = fmt.Serialize(original);
+		var deserialized = await fmt.DeserializeAsync<TestDto>(content, default);
+
+		deserialized.AssertEqual(original);
+	}
+
+	[TestMethod]
+	public void Json_NullOptions_Throws()
+	{
+		ThrowsExactly<ArgumentNullException>(() => new JsonFormatter(null));
 	}
 
 	#endregion
