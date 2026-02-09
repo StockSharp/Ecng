@@ -3,7 +3,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />
-  </ItemGroup>
 </Project>

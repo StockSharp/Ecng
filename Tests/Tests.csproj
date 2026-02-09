@@ -16,6 +16,7 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="$(ImageSharpVer)" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MsSqlClientVer)" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MsDataSqliteVer)" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
