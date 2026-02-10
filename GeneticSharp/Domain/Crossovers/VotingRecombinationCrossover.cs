@@ -7,6 +7,7 @@ namespace GeneticSharp
 {
     /// <summary>
     /// Voting Recombination Crossover (VR).
+    /// </summary>
     /// <remarks>
     /// <para>
     /// It can be seen as a P-sexual crossover operator, where p (parents number) is a natural number greater than, or equal to, 2.
@@ -25,10 +26,9 @@ namespace GeneticSharp
     /// </para>
     /// <para>
     /// The voting recombination produce one child of parents number (p) based on a threshold.
-    /// <see href="https://www.cs.vu.nl/~gusz/papers/Handbook-Multiparent-Eiben.pdf">Multiparent Recombination</see>
+    /// <see href="https://www.cs.vu.nl/~gusz/papers/Handbook-Multiparent-Eiben.pdf">Multi-parent Recombination</see>
     /// </para>
     /// </remarks>
-    /// </summary>
     [DisplayName("Voting Recombination (VR)")]
     public sealed class VotingRecombinationCrossover : CrossoverBase
     {
