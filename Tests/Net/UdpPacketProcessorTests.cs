@@ -540,6 +540,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		public IReadOnlyList<(long disposedAt, long processedAt)> Timings => _timings;
 
 		public TimeSpan SendOutDelay { get; set; }
+		public int? StopAfterCount { get; set; }
 
 		public int MaxIncomingQueueSize { get; set; } = 10000;
 		public int MaxUdpDatagramSize { get; set; } = 65535;
@@ -574,12 +575,12 @@ public class UdpPacketProcessorTests : BaseTestClass
 				await Task.Delay(SendOutDelay, ct);
 
 			var processedTicks = Environment.TickCount64;
-			Interlocked.Increment(ref _processed);
+			var count = Interlocked.Increment(ref _processed);
 
 			lock (_timings)
 				_timings.Add((disposedTicks, processedTicks));
 
-			return true;
+			return !StopAfterCount.HasValue || count < StopAfterCount.Value;
 		}
 
 		public void DisposePacket(IMemoryOwner<byte> packet, string reason)
@@ -614,6 +615,107 @@ public class UdpPacketProcessorTests : BaseTestClass
 					Interlocked.Increment(ref tracker._disposed);
 			}
 		}
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_ProcessorStops_RemainingPacketsDrained()
+	{
+		// When processor returns false mid-stream, packets still in the channel
+		// must be disposed. Without drain in ProcessPackets' finally, they leak.
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			StopAfterCount = 3,
+			SendOutDelay = TimeSpan.FromMilliseconds(100),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		// send many packets quickly - queue fills while processor is slow
+		const int totalPackets = 30;
+		for (var i = 0; i < totalPackets; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		// wait for processor to process StopAfterCount packets and return false
+		(await processor.WaitForProcessedAsync(3, TimeSpan.FromSeconds(5))).AssertTrue();
+
+		// cancel to stop receiver, then wait for full shutdown
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		// processor handled exactly 3 packets
+		AreEqual(3, processor.Processed);
+		// more packets were allocated than processed (they were queued)
+		IsTrue(processor.Allocated > processor.Processed,
+			$"Expected more allocations ({processor.Allocated}) than processed ({processor.Processed})");
+		// KEY: every allocated packet must be disposed - no leaks
+		AreEqual(processor.Allocated, processor.Disposed,
+			$"Leaked {processor.Allocated - processor.Disposed} packets (allocated={processor.Allocated}, disposed={processor.Disposed})");
+		AreEqual(0, processor.LiveCount);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_ReceiverExits_WhenProcessorCompletesChannel()
+	{
+		// Receiver loop must exit when processor completes the channel.
+		// Without reader.Completion.IsCompleted check, receiver loops forever
+		// and RunAsync never completes (only CancellationToken would stop it).
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			StopAfterCount = 1,
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+
+		// long timeout - we intentionally do NOT cancel to prove receiver stops on its own
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		// one packet triggers processor stop (returns false)
+		socket.EnqueuePacket([1, 2, 3]);
+
+		// wait for processor to stop
+		(await processor.WaitForProcessedAsync(1, TimeSpan.FromSeconds(5))).AssertTrue();
+
+		// allow ProcessPackets' finally to complete (TryComplete on channel)
+		await Task.Delay(200, CancellationToken);
+
+		// send more packets to unblock receiver's ReceiveAsync so it can see the completion
+		for (var i = 0; i < 5; i++)
+		{
+			socket.EnqueuePacket([(byte)(10 + i)]);
+			await Task.Delay(50, CancellationToken);
+		}
+
+		// receiver should exit on its own - RunAsync must complete WITHOUT cts cancellation
+		var completedTask = await Task.WhenAny(runTask, Task.Delay(TimeSpan.FromSeconds(5), CancellationToken));
+		var receiverStopped = ReferenceEquals(completedTask, runTask);
+
+		cts.Cancel();
+		try { await runTask; } catch { }
+		receiver.Dispose();
+
+		IsTrue(receiverStopped,
+			"Receiver did not stop after processor completed the channel. " +
+			"Without reader.Completion.IsCompleted check, receiver loops forever.");
+		AreEqual(1, processor.Processed);
+		AreEqual(processor.Allocated, processor.Disposed);
 	}
 
 	[TestMethod]

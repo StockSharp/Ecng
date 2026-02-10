@@ -152,6 +152,20 @@ public class RealPacketReceiver(
 		}
 		finally
 		{
+			// stop the receiver so it doesn't keep allocating packets
+			_packetsQueue.Writer.TryComplete();
+
+			// drain remaining packets from the channel
+			var drained = 0;
+			while (reader.TryRead(out var remaining))
+			{
+				remaining.packet.Dispose();
+				drained++;
+			}
+
+			if (drained > 0)
+				_logs.LogInfo("Drained {0} packets from channel.", drained);
+
 			_logs.LogInfo("Ending packet processor.");
 		}
 	}
@@ -165,6 +179,9 @@ public class RealPacketReceiver(
 
 	private async Task ReceivePackets(CancellationToken token)
 	{
+		var writer = _packetsQueue.Writer;
+		var reader = _packetsQueue.Reader;
+
 		var addressFamily = _address.GroupAddress.AddressFamily;
 		using var socket = _socketFactory.Create(addressFamily);
 
@@ -182,9 +199,8 @@ public class RealPacketReceiver(
 
 			var errorCount = 0;
 			var packetSize = _processor.MaxUdpDatagramSize;
-			var writer = _packetsQueue.Writer;
 
-			while (!token.IsCancellationRequested)
+			while (!token.IsCancellationRequested && !reader.Completion.IsCompleted)
 			{
 				IMemoryOwner<byte> packet = null;
 
@@ -201,6 +217,13 @@ public class RealPacketReceiver(
 						break;
 					}
 
+					if (reader.Completion.IsCompleted)
+					{
+						_processor.DisposePacket(packet, "writer completed");
+						packet = null;
+						break;
+					}
+
 					if (_fullMode == PacketQueueFullModes.Wait)
 					{
 						await writer.WriteAsync((packet, len), token);
@@ -209,7 +232,7 @@ public class RealPacketReceiver(
 					{
 						_dropped++;
 
-						if (_fullMode == PacketQueueFullModes.DropOldest && _packetsQueue.Reader.TryRead(out var oldest))
+						if (_fullMode == PacketQueueFullModes.DropOldest && reader.TryRead(out var oldest))
 						{
 							_processor.DisposePacket(oldest.packet, "queue overflow (oldest)");
 							writer.TryWrite((packet, len));
@@ -237,7 +260,7 @@ public class RealPacketReceiver(
 		}
 		finally
 		{
-			_packetsQueue.Writer.TryComplete();
+			writer.TryComplete();
 			_logs.LogInfo("{0} leaving...", _address);
 		}
 	}
