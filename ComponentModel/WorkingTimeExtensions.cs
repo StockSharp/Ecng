@@ -116,139 +116,105 @@ public static class WorkingTimeExtensions
 		return dow is not DayOfWeek.Saturday and not DayOfWeek.Sunday;
 	}
 
+	private const string _dateFormat = "yyyyMMdd";
+	private const string _timeFormat = "hh\\:mm";
+
 	/// <summary>
-	/// Encodes the working time periods to a compact string representation.
+	/// Encode <see cref="WorkingTime.Periods"/> to string.
 	/// </summary>
-	/// <param name="periods">The periods to encode.</param>
-	/// <returns>The encoded string.</returns>
+	/// <param name="periods">Schedule validity periods.</param>
+	/// <returns>Encoded string.</returns>
 	public static string EncodeToString(this IEnumerable<WorkingTimePeriod> periods)
 	{
-		if (periods is null)
-			throw new ArgumentNullException(nameof(periods));
-
 		return periods
-			.Select(p =>
-			{
-				var times = p.Times
-					.Select(t => $"{t.Min:c}-{t.Max:c}")
-					.Join(",");
-
-				return $"{p.Till:yyyy-MM-dd}={times}";
-			})
-			.Join(";");
+			.Select(p => $"{p.Till:yyyyMMdd}=" + p.Times.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--") + "=" + p.SpecialDays.Select(p2 => $"{p2.Key}:" + p2.Value.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--")).Join("//"))
+			.Join(",");
 	}
 
 	/// <summary>
-	/// Decodes a string representation back to working time periods.
+	/// Decode from string to <see cref="WorkingTime.Periods"/>.
 	/// </summary>
-	/// <param name="encoded">The encoded string.</param>
-	/// <returns>The decoded periods.</returns>
-	public static List<WorkingTimePeriod> DecodeToPeriods(this string encoded)
+	/// <param name="input">Encoded string.</param>
+	/// <returns>Schedule validity periods.</returns>
+	public static IEnumerable<WorkingTimePeriod> DecodeToPeriods(this string input)
 	{
-		if (encoded.IsEmpty())
-			return [];
-
 		var periods = new List<WorkingTimePeriod>();
 
-		foreach (var part in encoded.Split(';'))
+		if (input.IsEmpty())
+			return periods;
+
+		try
 		{
-			if (part.IsEmpty())
-				continue;
-
-			var eqIdx = part.IndexOf('=');
-			if (eqIdx < 0)
-				throw new FormatException($"Invalid period format: '{part}'. Expected 'date=times'.");
-
-			var datePart = part.Substring(0, eqIdx);
-			var timesPart = part.Substring(eqIdx + 1);
-
-			if (!DateTime.TryParse(datePart, out var till))
-				throw new FormatException($"Invalid date format: '{datePart}'.");
-
-			var times = new List<Range<TimeSpan>>();
-
-			if (!timesPart.IsEmpty())
+			foreach (var str in input.SplitByComma())
 			{
-				foreach (var tp in timesPart.Split(','))
+				var parts = str.Split('=');
+				periods.Add(new WorkingTimePeriod
 				{
-					var dashIdx = tp.IndexOf('-');
-					if (dashIdx < 0)
-						throw new FormatException($"Invalid time range format: '{tp}'. Expected 'min-max'.");
-
-					var minPart = tp.Substring(0, dashIdx);
-					if (!TimeSpan.TryParse(minPart, out var min))
-						throw new FormatException($"Invalid time format: '{minPart}'.");
-
-					var maxPart = tp.Substring(dashIdx + 1);
-					if (!TimeSpan.TryParse(maxPart, out var max))
-						throw new FormatException($"Invalid time format: '{maxPart}'.");
-
-					times.Add(new Range<TimeSpan>(min, max));
-				}
+					Till = parts[0].ToDateTime(_dateFormat).UtcKind(),
+					Times = [.. parts[1].SplitBySep("--").Select(s =>
+					{
+						var parts2 = s.Split('-');
+						return new Range<TimeSpan>(parts2[0].ToTimeSpan(_timeFormat), parts2[1].ToTimeSpan(_timeFormat));
+					})],
+					SpecialDays = parts[2].SplitBySep("//").Select(s =>
+					{
+						var idx = s.IndexOf(':');
+						return new KeyValuePair<DayOfWeek, Range<TimeSpan>[]>(s.Substring(0, idx).To<DayOfWeek>(), [.. s.Substring(idx + 1).SplitBySep("--").Select(s2 =>
+						{
+							var parts3 = s2.Split('-');
+							return new Range<TimeSpan>(parts3[0].ToTimeSpan(_timeFormat), parts3[1].ToTimeSpan(_timeFormat));
+						})]);
+					}).ToDictionary()
+				});
 			}
-
-			periods.Add(new()
-			{
-				Till = till,
-				Times = times,
-			});
+		}
+		catch (Exception ex)
+		{
+			throw new InvalidOperationException(LocalizedStrings.ErrorParsing.Put(input), ex);
 		}
 
 		return periods;
 	}
 
 	/// <summary>
-	/// Decodes a string representation to special days dictionary.
+	/// Encode <see cref="WorkingTime.SpecialDays"/> to string.
 	/// </summary>
-	/// <param name="encoded">The encoded string.</param>
-	/// <returns>The decoded special days dictionary.</returns>
-	public static IDictionary<DateTime, Range<TimeSpan>[]> DecodeToSpecialDays(this string encoded)
+	/// <param name="specialDays">Special working days and holidays.</param>
+	/// <returns>Encoded string.</returns>
+	public static string EncodeToString(this IDictionary<DateTime, Range<TimeSpan>[]> specialDays)
 	{
-		if (encoded.IsEmpty())
-			return new Dictionary<DateTime, Range<TimeSpan>[]>();
+		return specialDays.Select(p => $"{p.Key:yyyyMMdd}=" + p.Value.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--")).JoinComma();
+	}
 
-		var result = new Dictionary<DateTime, Range<TimeSpan>[]>();
+	/// <summary>
+	/// Decode from string to <see cref="WorkingTime.SpecialDays"/>.
+	/// </summary>
+	/// <param name="input">Encoded string.</param>
+	/// <returns>Special working days and holidays.</returns>
+	public static IDictionary<DateTime, Range<TimeSpan>[]> DecodeToSpecialDays(this string input)
+	{
+		var specialDays = new Dictionary<DateTime, Range<TimeSpan>[]>();
 
-		foreach (var part in encoded.Split(';'))
+		if (input.IsEmpty())
+			return specialDays;
+
+		try
 		{
-			if (part.IsEmpty())
-				continue;
-
-			var eqIdx = part.IndexOf('=');
-			if (eqIdx < 0)
-				throw new FormatException($"Invalid special day format: '{part}'. Expected 'date=times'.");
-
-			var datePart = part.Substring(0, eqIdx);
-			var timesPart = part.Substring(eqIdx + 1);
-
-			if (!DateTime.TryParse(datePart, out var date))
-				throw new FormatException($"Invalid date format: '{datePart}'.");
-
-			var ranges = new List<Range<TimeSpan>>();
-
-			if (!timesPart.IsEmpty())
+			foreach (var str in input.SplitByComma())
 			{
-				foreach (var tp in timesPart.Split(','))
+				var parts = str.Split('=');
+				specialDays[parts[0].ToDateTime(_dateFormat)] = [.. parts[1].SplitBySep("--").Select(s =>
 				{
-					var dashIdx = tp.IndexOf('-');
-					if (dashIdx < 0)
-						throw new FormatException($"Invalid time range format: '{tp}'. Expected 'min-max'.");
-
-					var minPart = tp.Substring(0, dashIdx);
-					if (!TimeSpan.TryParse(minPart, out var min))
-						throw new FormatException($"Invalid time format: '{minPart}'.");
-
-					var maxPart = tp.Substring(dashIdx + 1);
-					if (!TimeSpan.TryParse(maxPart, out var max))
-						throw new FormatException($"Invalid time format: '{maxPart}'.");
-
-					ranges.Add(new Range<TimeSpan>(min, max));
-				}
+					var parts2 = s.Split('-');
+					return new Range<TimeSpan>(parts2[0].ToTimeSpan(_timeFormat), parts2[1].ToTimeSpan(_timeFormat));
+				})];
 			}
-
-			result[date.Date] = [.. ranges];
+		}
+		catch (Exception ex)
+		{
+			throw new InvalidOperationException(LocalizedStrings.ErrorParsing.Put(input), ex);
 		}
 
-		return result;
+		return specialDays;
 	}
 }
