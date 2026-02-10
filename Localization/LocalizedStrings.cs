@@ -104,6 +104,48 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public const string AreaKey = nameof(Area);
+	/// <summary>
+	/// </summary>
+	public const string WorkScheduleKey = nameof(WorkSchedule);
+	/// <summary>
+	/// </summary>
+	public const string WorkScheduleDescKey = nameof(WorkScheduleDesc);
+	/// <summary>
+	/// </summary>
+	public const string ActiveKey = nameof(Active);
+	/// <summary>
+	/// </summary>
+	public const string TaskOnKey = nameof(TaskOn);
+	/// <summary>
+	/// </summary>
+	public const string GeneralKey = nameof(General);
+	/// <summary>
+	/// </summary>
+	public const string PeriodsKey = nameof(Periods);
+	/// <summary>
+	/// </summary>
+	public const string PeriodsDescKey = nameof(PeriodsDesc);
+	/// <summary>
+	/// </summary>
+	public const string SpecialDaysKey = nameof(SpecialDays);
+	/// <summary>
+	/// </summary>
+	public const string SpecialDaysDescKey = nameof(SpecialDaysDesc);
+	/// <summary>
+	/// </summary>
+	public const string ScheduleKey = nameof(Schedule);
+	/// <summary>
+	/// </summary>
+	public const string ScheduleValidityPeriodKey = nameof(ScheduleValidityPeriod);
+	/// <summary>
+	/// </summary>
+	public const string TillKey = nameof(Till);
+	/// <summary>
+	/// </summary>
+	public const string WorkingTimeTillKey = nameof(WorkingTimeTill);
+	/// <summary>
+	/// </summary>
+	public const string WorkScheduleDayKey = nameof(WorkScheduleDay);
 
 	/// <summary>
 	/// </summary>
@@ -183,6 +225,48 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public static string Area => LocalizeByKey(AreaKey);
+	/// <summary>
+	/// </summary>
+	public static string WorkSchedule => LocalizeByKey(WorkScheduleKey);
+	/// <summary>
+	/// </summary>
+	public static string WorkScheduleDesc => LocalizeByKey(WorkScheduleDescKey);
+	/// <summary>
+	/// </summary>
+	public static string Active => LocalizeByKey(ActiveKey);
+	/// <summary>
+	/// </summary>
+	public static string TaskOn => LocalizeByKey(TaskOnKey);
+	/// <summary>
+	/// </summary>
+	public static string General => LocalizeByKey(GeneralKey);
+	/// <summary>
+	/// </summary>
+	public static string Periods => LocalizeByKey(PeriodsKey);
+	/// <summary>
+	/// </summary>
+	public static string PeriodsDesc => LocalizeByKey(PeriodsDescKey);
+	/// <summary>
+	/// </summary>
+	public static string SpecialDays => LocalizeByKey(SpecialDaysKey);
+	/// <summary>
+	/// </summary>
+	public static string SpecialDaysDesc => LocalizeByKey(SpecialDaysDescKey);
+	/// <summary>
+	/// </summary>
+	public static string Schedule => LocalizeByKey(ScheduleKey);
+	/// <summary>
+	/// </summary>
+	public static string ScheduleValidityPeriod => LocalizeByKey(ScheduleValidityPeriodKey);
+	/// <summary>
+	/// </summary>
+	public static string Till => LocalizeByKey(TillKey);
+	/// <summary>
+	/// </summary>
+	public static string WorkingTimeTill => LocalizeByKey(WorkingTimeTillKey);
+	/// <summary>
+	/// </summary>
+	public static string WorkScheduleDay => LocalizeByKey(WorkScheduleDayKey);
 
 	/// <summary>
 	/// Localizes the string.
