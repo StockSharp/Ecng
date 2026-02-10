@@ -94,7 +94,7 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 				.Distinct()
 				.ToDictionary(
 					d => d,
-					d => holidays.Contains(d) ? [] : SpecialDays.TryGetValue(d, out var r) ? r : new[] { new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay) });
+					d => holidays.Contains(d) ? [] : SpecialDays.TryGetValue(d, out var r) ? r : [new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay)]);
 		}
 	}
 
@@ -114,7 +114,7 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 				.Distinct()
 				.ToDictionary(
 					d => d,
-					d => workDays.Contains(d) ? SpecialDays.TryGetValue(d, out var r) ? r : new[] { new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay) } : []);
+					d => workDays.Contains(d) ? SpecialDays.TryGetValue(d, out var r) ? r : [new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay)] : []);
 		}
 	}
 
@@ -132,17 +132,14 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	/// <inheritdoc />
 	public override WorkingTime Clone()
 	{
-		var clone = new WorkingTime
+		return new()
 		{
 			IsEnabled = IsEnabled,
+			_periods = [.. Periods.Select(p => p.Clone())],
+			_specialDays = SpecialDays.ToDictionary(
+				p => p.Key,
+				p => p.Value.Select(r => r.Clone()).ToArray())
 		};
-
-		clone._periods = [.. Periods.Select(p => p.Clone())];
-		clone._specialDays = SpecialDays.ToDictionary(
-			p => p.Key,
-			p => p.Value.Select(r => r.Clone()).ToArray());
-
-		return clone;
 	}
 
 	/// <inheritdoc />
@@ -161,7 +158,7 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 			?.ToDictionary(
 				p => p.Key.To<DateTime>(),
 				p => p.Value.Select(s => s.ToRange<TimeSpan>()).ToArray())
-			?? new Dictionary<DateTime, Range<TimeSpan>[]>();
+			?? [];
 	}
 
 	/// <inheritdoc />

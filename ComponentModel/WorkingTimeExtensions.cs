@@ -159,8 +159,8 @@ public static class WorkingTimeExtensions
 			if (eqIdx < 0)
 				throw new FormatException($"Invalid period format: '{part}'. Expected 'date=times'.");
 
-			var datePart = part[..eqIdx];
-			var timesPart = part[(eqIdx + 1)..];
+			var datePart = part.Substring(0, eqIdx);
+			var timesPart = part.Substring(eqIdx + 1);
 
 			if (!DateTime.TryParse(datePart, out var till))
 				throw new FormatException($"Invalid date format: '{datePart}'.");
@@ -175,17 +175,19 @@ public static class WorkingTimeExtensions
 					if (dashIdx < 0)
 						throw new FormatException($"Invalid time range format: '{tp}'. Expected 'min-max'.");
 
-					if (!TimeSpan.TryParse(tp[..dashIdx], out var min))
-						throw new FormatException($"Invalid time format: '{tp[..dashIdx]}'.");
+					var minPart = tp.Substring(0, dashIdx);
+					if (!TimeSpan.TryParse(minPart, out var min))
+						throw new FormatException($"Invalid time format: '{minPart}'.");
 
-					if (!TimeSpan.TryParse(tp[(dashIdx + 1)..], out var max))
-						throw new FormatException($"Invalid time format: '{tp[(dashIdx + 1)..]}'.");
+					var maxPart = tp.Substring(dashIdx + 1);
+					if (!TimeSpan.TryParse(maxPart, out var max))
+						throw new FormatException($"Invalid time format: '{maxPart}'.");
 
 					times.Add(new Range<TimeSpan>(min, max));
 				}
 			}
 
-			periods.Add(new WorkingTimePeriod
+			periods.Add(new()
 			{
 				Till = till,
 				Times = times,
@@ -216,8 +218,8 @@ public static class WorkingTimeExtensions
 			if (eqIdx < 0)
 				throw new FormatException($"Invalid special day format: '{part}'. Expected 'date=times'.");
 
-			var datePart = part[..eqIdx];
-			var timesPart = part[(eqIdx + 1)..];
+			var datePart = part.Substring(0, eqIdx);
+			var timesPart = part.Substring(eqIdx + 1);
 
 			if (!DateTime.TryParse(datePart, out var date))
 				throw new FormatException($"Invalid date format: '{datePart}'.");
@@ -232,17 +234,19 @@ public static class WorkingTimeExtensions
 					if (dashIdx < 0)
 						throw new FormatException($"Invalid time range format: '{tp}'. Expected 'min-max'.");
 
-					if (!TimeSpan.TryParse(tp[..dashIdx], out var min))
-						throw new FormatException($"Invalid time format: '{tp[..dashIdx]}'.");
+					var minPart = tp.Substring(0, dashIdx);
+					if (!TimeSpan.TryParse(minPart, out var min))
+						throw new FormatException($"Invalid time format: '{minPart}'.");
 
-					if (!TimeSpan.TryParse(tp[(dashIdx + 1)..], out var max))
-						throw new FormatException($"Invalid time format: '{tp[(dashIdx + 1)..]}'.");
+					var maxPart = tp.Substring(dashIdx + 1);
+					if (!TimeSpan.TryParse(maxPart, out var max))
+						throw new FormatException($"Invalid time format: '{maxPart}'.");
 
 					ranges.Add(new Range<TimeSpan>(min, max));
 				}
 			}
 
-			result[date.Date] = ranges.ToArray();
+			result[date.Date] = [.. ranges];
 		}
 
 		return result;

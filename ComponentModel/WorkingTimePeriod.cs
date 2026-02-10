@@ -92,7 +92,7 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 			?.ToDictionary(
 				p => p.Key.To<DayOfWeek>(),
 				p => p.Value.Select(s => s.ToRange<TimeSpan>()).ToArray())
-			?? new Dictionary<DayOfWeek, Range<TimeSpan>[]>();
+			?? [];
 	}
 
 	/// <inheritdoc />
