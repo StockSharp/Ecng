@@ -412,8 +412,8 @@ public class WorkingTimeTests : BaseTestClass
 		var encoded = periods.EncodeToString();
 		encoded.IsEmpty().AssertFalse();
 
-		var decoded = encoded.DecodeToPeriods();
-		decoded.Count.AssertEqual(2);
+		var decoded = encoded.DecodeToPeriods().ToArray();
+		decoded.Length.AssertEqual(2);
 		decoded[0].Till.AssertEqual(new DateTime(2025, 6, 30));
 		decoded[0].Times.Count.AssertEqual(2);
 		decoded[1].Till.AssertEqual(new DateTime(2025, 12, 31));
@@ -426,14 +426,14 @@ public class WorkingTimeTests : BaseTestClass
 		var periods = new List<WorkingTimePeriod>();
 		var encoded = periods.EncodeToString();
 
-		var decoded = encoded.DecodeToPeriods();
-		decoded.Count.AssertEqual(0);
+		var decoded = encoded.DecodeToPeriods().ToArray();
+		decoded.Length.AssertEqual(0);
 	}
 
 	[TestMethod]
 	public void DecodeToSpecialDays_Roundtrip()
 	{
-		var encoded = "2025-01-01=;2025-05-09=09:00:00-14:00:00";
+		var encoded = "20250101=,20250509=09:00-14:00";
 		var decoded = encoded.DecodeToSpecialDays();
 
 		decoded.Count.AssertEqual(2);
@@ -453,6 +453,85 @@ public class WorkingTimeTests : BaseTestClass
 	public void DecodeToSpecialDays_InvalidFormat_Throws()
 	{
 		ThrowsExactly<FormatException>(() => "invalid".DecodeToSpecialDays());
+	}
+
+	#endregion
+
+	#region EncodeToString / DecodeToSpecialDays
+
+	[TestMethod]
+	public void EncodeDecodeSpecialDays_Roundtrip()
+	{
+		var specialDays = new Dictionary<DateTime, Range<TimeSpan>[]>
+		{
+			{
+				new DateTime(2025, 1, 1),
+				new[] { new Range<TimeSpan>(new TimeSpan(10, 0, 0), new TimeSpan(14, 0, 0)) }
+			},
+		};
+
+		var encoded = specialDays.EncodeToString();
+		IsNotNull(encoded);
+		IsFalse(encoded.IsEmpty());
+
+		var decoded = encoded.DecodeToSpecialDays();
+		decoded.Count.AssertEqual(1);
+		IsTrue(decoded.ContainsKey(new DateTime(2025, 1, 1)));
+		decoded[new DateTime(2025, 1, 1)].Length.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void DecodeToSpecialDays_Empty_ReturnsEmpty()
+	{
+		var result = "".DecodeToSpecialDays();
+		result.Count.AssertEqual(0);
+	}
+
+	#endregion
+
+	#region GetPeriod
+
+	[TestMethod]
+	public void GetPeriod_FoundPeriod_ReturnsPeriod()
+	{
+		var wt = new WorkingTime
+		{
+			Periods =
+			[
+				new WorkingTimePeriod
+				{
+					Till = new DateTime(2025, 6, 1),
+					Times = [new Range<TimeSpan>(new TimeSpan(9, 0, 0), new TimeSpan(18, 0, 0))],
+				},
+				new WorkingTimePeriod
+				{
+					Till = new DateTime(2026, 1, 1),
+					Times = [new Range<TimeSpan>(new TimeSpan(10, 0, 0), new TimeSpan(17, 0, 0))],
+				},
+			],
+		};
+
+		var period = wt.GetPeriod(new DateTime(2025, 3, 1));
+		period.AssertNotNull();
+		period.Till.AssertEqual(new DateTime(2025, 6, 1));
+	}
+
+	[TestMethod]
+	public void GetPeriod_NoPeriod_ReturnsNull()
+	{
+		var wt = new WorkingTime
+		{
+			Periods =
+			[
+				new WorkingTimePeriod
+				{
+					Till = new DateTime(2020, 1, 1),
+					Times = [new Range<TimeSpan>(new TimeSpan(9, 0, 0), new TimeSpan(18, 0, 0))],
+				},
+			],
+		};
+
+		wt.GetPeriod(new DateTime(2025, 1, 1)).AssertNull();
 	}
 
 	#endregion

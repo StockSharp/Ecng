@@ -128,7 +128,7 @@ public static class WorkingTimeExtensions
 	{
 		return periods
 			.Select(p => $"{p.Till:yyyyMMdd}=" + p.Times.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--") + "=" + p.SpecialDays.Select(p2 => $"{p2.Key}:" + p2.Value.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--")).Join("//"))
-			.Join(",");
+			.JoinComma();
 	}
 
 	/// <summary>
@@ -148,7 +148,7 @@ public static class WorkingTimeExtensions
 			foreach (var str in input.SplitByComma())
 			{
 				var parts = str.Split('=');
-				periods.Add(new WorkingTimePeriod
+				periods.Add(new()
 				{
 					Till = parts[0].ToDateTime(_dateFormat).UtcKind(),
 					Times = [.. parts[1].SplitBySep("--").Select(s =>
@@ -170,10 +170,10 @@ public static class WorkingTimeExtensions
 		}
 		catch (Exception ex)
 		{
-			throw new InvalidOperationException(LocalizedStrings.ErrorParsing.Put(input), ex);
+			throw new FormatException($"Error parsing: '{input}'", ex);
 		}
 
-		return periods;
+		return [.. periods];
 	}
 
 	/// <summary>
@@ -212,7 +212,7 @@ public static class WorkingTimeExtensions
 		}
 		catch (Exception ex)
 		{
-			throw new InvalidOperationException(LocalizedStrings.ErrorParsing.Put(input), ex);
+			throw new FormatException($"Error parsing: '{input}'", ex);
 		}
 
 		return specialDays;
