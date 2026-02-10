@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
+using Ecng.Collections;
 using Ecng.Common;
 using Ecng.Localization;
 using Ecng.Serialization;
@@ -81,9 +82,9 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	/// <summary>
 	/// Special working days (non-standard working days, e.g., Saturday working days).
 	/// </summary>
-	public IEnumerable<DateTime> SpecialWorkingDays
+	public DateTime[] SpecialWorkingDays
 	{
-		get => SpecialDays.Where(p => p.Value.Length > 0).Select(p => p.Key);
+		get => [.. SpecialDays.Where(p => p.Value.Length > 0).Select(p => p.Key)];
 		set
 		{
 			var holidays = SpecialHolidays.ToHashSet();
@@ -101,9 +102,9 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	/// <summary>
 	/// Special holidays.
 	/// </summary>
-	public IEnumerable<DateTime> SpecialHolidays
+	public DateTime[] SpecialHolidays
 	{
-		get => SpecialDays.Where(p => p.Value.Length == 0).Select(p => p.Key);
+		get => [.. SpecialDays.Where(p => p.Value.Length == 0).Select(p => p.Key)];
 		set
 		{
 			var workDays = SpecialWorkingDays.ToHashSet();
@@ -145,20 +146,26 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	/// <inheritdoc />
 	public void Load(SettingsStorage storage)
 	{
-		IsEnabled = storage.GetValue<bool>(nameof(IsEnabled));
+		IsEnabled = storage.GetValue(nameof(IsEnabled), IsEnabled);
+		Periods = [.. storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Periods)).Select(s => s.Load<WorkingTimePeriod>())];
 
-		Periods = [.. storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Periods)).Select(s =>
+		if (storage.ContainsKey(nameof(SpecialDays)))
 		{
-			var p = new WorkingTimePeriod();
-			p.Load(s);
-			return p;
-		})];
-
-		_specialDays = storage.GetValue<IDictionary<string, SettingsStorage[]>>(nameof(SpecialDays))
-			?.ToDictionary(
-				p => p.Key.To<DateTime>(),
-				p => p.Value.Select(s => s.ToRange<TimeSpan>()).ToArray())
-			?? [];
+			SpecialDays.Clear();
+			SpecialDays.AddRange(storage
+				.GetValue<IEnumerable<SettingsStorage>>(nameof(SpecialDays))
+				.Select(s => new KeyValuePair<DateTime, Range<TimeSpan>[]>
+				(
+					s.GetValue<DateTime>("Day"),
+					[.. s.GetValue<IEnumerable<SettingsStorage>>("Periods").Select(s1 => s1.ToRange<TimeSpan>())]
+				))
+			);
+		}
+		else
+		{
+			SpecialWorkingDays = [.. storage.GetValue<List<DateTime>>(nameof(SpecialWorkingDays))];
+			SpecialHolidays = [.. storage.GetValue<List<DateTime>>(nameof(SpecialHolidays))];
+		}
 	}
 
 	/// <inheritdoc />
@@ -166,15 +173,12 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	{
 		storage
 			.Set(nameof(IsEnabled), IsEnabled)
-			.Set(nameof(Periods), Periods.Select(p =>
-			{
-				var s = new SettingsStorage();
-				p.Save(s);
-				return s;
-			}).ToArray())
-			.Set(nameof(SpecialDays), SpecialDays.ToDictionary(
-				p => p.Key.To<string>(),
-				p => p.Value.Select(r => r.ToStorage()).ToArray()));
+			.Set(nameof(Periods), Periods.Select(p => p.Save()).ToArray())
+			.Set(nameof(SpecialDays), SpecialDays.Select(p => new SettingsStorage()
+				.Set("Day", p.Key)
+				.Set("Periods", p.Value.Select(p1 => p1.ToStorage()).ToArray())
+			).ToArray());
+		;
 	}
 
 	/// <inheritdoc />
