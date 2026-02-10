@@ -14,7 +14,7 @@ using Ecng.Logging;
 /// <summary>
 /// Defines behavior when the packet queue is full.
 /// </summary>
-public enum PacketQueueFullMode
+public enum PacketQueueFullModes
 {
 	/// <summary>
 	/// Drop the newest (incoming) packet when queue is full.
@@ -25,6 +25,11 @@ public enum PacketQueueFullMode
 	/// Drop the oldest packet in queue to make room for the new one.
 	/// </summary>
 	DropOldest,
+
+	/// <summary>
+	/// Wait (block the sender) until space becomes available in the queue.
+	/// </summary>
+	Wait,
 }
 
 /// <summary>
@@ -52,7 +57,7 @@ public interface IPacketReceiverFactory
 	/// <param name="logs">The log receiver to use.</param>
 	/// <param name="fullMode">Behavior when the packet queue is full.</param>
 	/// <returns>The packet receiver.</returns>
-	IPacketReceiver Create(IPacketProcessor processor, MulticastSourceAddress address, ILogReceiver logs, PacketQueueFullMode fullMode = PacketQueueFullMode.DropNewest);
+	IPacketReceiver Create(IPacketProcessor processor, MulticastSourceAddress address, ILogReceiver logs, PacketQueueFullModes fullMode);
 }
 
 /// <summary>
@@ -71,13 +76,13 @@ public class RealPacketReceiver(
 	MulticastSourceAddress address,
 	IUdpSocketFactory socketFactory,
 	ILogReceiver logs,
-	PacketQueueFullMode fullMode = PacketQueueFullMode.DropNewest) : Disposable, IPacketReceiver
+	PacketQueueFullModes fullMode) : Disposable, IPacketReceiver
 {
 	private readonly IPacketProcessor _processor = processor ?? throw new ArgumentNullException(nameof(processor));
 	private readonly MulticastSourceAddress _address = address ?? throw new ArgumentNullException(nameof(address));
 	private readonly IUdpSocketFactory _socketFactory = socketFactory ?? throw new ArgumentNullException(nameof(socketFactory));
     private readonly ILogReceiver _logs = logs ?? throw new ArgumentNullException(nameof(logs));
-	private readonly PacketQueueFullMode _fullMode = fullMode;
+	private readonly PacketQueueFullModes _fullMode = fullMode;
 	private Channel<(IMemoryOwner<byte> packet, int length)> _packetsQueue;
 	private int _dropped;
 
@@ -86,7 +91,7 @@ public class RealPacketReceiver(
 	{
 		_packetsQueue = Channel.CreateBounded<(IMemoryOwner<byte>, int)>(new BoundedChannelOptions(_processor.MaxIncomingQueueSize)
 		{
-			SingleReader = _fullMode != PacketQueueFullMode.DropOldest,
+			SingleReader = _fullMode != PacketQueueFullModes.DropOldest,
 			SingleWriter = true,
 			FullMode = BoundedChannelFullMode.Wait
 		});
@@ -196,11 +201,15 @@ public class RealPacketReceiver(
 						break;
 					}
 
-					if (!writer.TryWrite((packet, len)))
+					if (_fullMode == PacketQueueFullModes.Wait)
+					{
+						await writer.WriteAsync((packet, len), token);
+					}
+					else if (!writer.TryWrite((packet, len)))
 					{
 						_dropped++;
 
-						if (_fullMode == PacketQueueFullMode.DropOldest && _packetsQueue.Reader.TryRead(out var oldest))
+						if (_fullMode == PacketQueueFullModes.DropOldest && _packetsQueue.Reader.TryRead(out var oldest))
 						{
 							_processor.DisposePacket(oldest.packet, "queue overflow (oldest)");
 							writer.TryWrite((packet, len));
@@ -246,6 +255,6 @@ public class RealPacketReceiverFactory(IUdpSocketFactory socketFactory) : IPacke
 	private readonly IUdpSocketFactory _socketFactory = socketFactory ?? throw new ArgumentNullException(nameof(socketFactory));
 
 	/// <inheritdoc />
-	public IPacketReceiver Create(IPacketProcessor processor, MulticastSourceAddress address, ILogReceiver logs, PacketQueueFullMode fullMode)
+	public IPacketReceiver Create(IPacketProcessor processor, MulticastSourceAddress address, ILogReceiver logs, PacketQueueFullModes fullMode)
 		=> new RealPacketReceiver(processor, address, _socketFactory, logs, fullMode);
 }

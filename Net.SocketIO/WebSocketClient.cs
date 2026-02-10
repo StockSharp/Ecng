@@ -140,6 +140,12 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the working time schedule. When enabled, reconnection attempts
+	/// are suppressed outside working hours.
+	/// </summary>
+	public WorkingTime WorkingTime { get; set; }
+
 	private event Func<ConnectionStates, CancellationToken, ValueTask> _stateChanged;
 
 	/// <inheritdoc />
@@ -516,7 +522,11 @@ public class WebSocketClient : Disposable, IConnection
 			}
 			else
 			{
-				if (attempts > 0 || attempts == -1)
+				if (WorkingTime is { IsEnabled: true } wt && !wt.IsWorkingTime(DateTime.UtcNow, out _, out _))
+				{
+					_infoLog("Outside working hours, skipping reconnect.", null);
+				}
+				else if (attempts > 0 || attempts == -1)
 				{
 					await RaiseStateChangedAsync(ConnectionStates.Reconnecting, token);
 

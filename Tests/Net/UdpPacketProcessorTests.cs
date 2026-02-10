@@ -135,7 +135,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		var address = CreateTestAddress();
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs, PacketQueueFullModes.DropNewest);
 
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
@@ -186,7 +186,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		var address = CreateTestAddress();
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs, PacketQueueFullModes.DropNewest);
 
 		// Configure processor to stop after first packet
 		processor.ContinueProcessing = false;
@@ -231,7 +231,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		var address = CreateTestAddress();
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, address, socketFactory, logs, PacketQueueFullModes.DropNewest);
 
 		// Configure processor to throw on first packet
 		processor.ProcessException = new InvalidOperationException("Test error");
@@ -265,7 +265,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		socketFactory.NextSocket = socket;
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
 
@@ -302,7 +302,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		socketFactory.NextSocket = socket;
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
 
@@ -341,7 +341,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		socketFactory.NextSocket = socket;
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullMode.DropNewest);
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
 
@@ -378,7 +378,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		socketFactory.NextSocket = socket;
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullMode.DropOldest);
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropOldest);
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
 
@@ -413,7 +413,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		socketFactory.NextSocket = socket;
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
 		using var cts = new CancellationTokenSource();
 		var runTask = receiver.RunAsync(cts.Token);
 
@@ -433,6 +433,79 @@ public class UdpPacketProcessorTests : BaseTestClass
 		cts.Cancel();
 		try { await runTask; } catch (OperationCanceledException) { }
 		receiver.Dispose();
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_QueueFull_Wait_AllProcessed()
+	{
+		const int queueSize = 5;
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = queueSize,
+			SendOutDelay = TimeSpan.FromMilliseconds(50),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.Wait);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		const int packetCount = 30;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		// all packets must be processed (no drops)
+		var received = await processor.WaitForProcessedAsync(packetCount, TimeSpan.FromSeconds(10));
+		received.AssertTrue();
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		AreEqual(packetCount, processor.Processed);
+		AreEqual(processor.Allocated, processor.Disposed);
+		AreEqual(0, processor.LiveCount);
+	}
+
+	[TestMethod]
+	public async Task RealPacketReceiver_QueueFull_Wait_NoneDropped()
+	{
+		const int queueSize = 3;
+		var processor = new TrackingPacketProcessor
+		{
+			MaxIncomingQueueSize = queueSize,
+			SendOutDelay = TimeSpan.FromMilliseconds(100),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.Wait);
+		using var cts = new CancellationTokenSource();
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(50, CancellationToken);
+
+		const int packetCount = 20;
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		var received = await processor.WaitForProcessedAsync(packetCount, TimeSpan.FromSeconds(15));
+		received.AssertTrue();
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		// Wait mode: all allocated == all processed (no DisposePacket calls for drops)
+		AreEqual(packetCount, processor.Processed);
+		AreEqual(processor.Allocated, processor.Disposed);
 	}
 
 	private static MulticastSourceAddress CreateTestAddress()
@@ -562,7 +635,7 @@ public class UdpPacketProcessorTests : BaseTestClass
 		};
 		var logs = new MockLogReceiver();
 
-		var receiver = new RealPacketReceiver(processor, ipv6Address, socketFactory, logs);
+		var receiver = new RealPacketReceiver(processor, ipv6Address, socketFactory, logs, PacketQueueFullModes.DropNewest);
 
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
