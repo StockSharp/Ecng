@@ -88,11 +88,11 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 	{
 		Till = storage.GetValue<DateTime>(nameof(Till));
 		Times = [.. storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Times)).Select(s => s.ToRange<TimeSpan>())];
-		SpecialDays = storage.GetValue<IDictionary<string, SettingsStorage[]>>(nameof(SpecialDays))
-			?.ToDictionary(
-				p => p.Key.To<DayOfWeek>(),
-				p => p.Value.Select(s => s.ToRange<TimeSpan>()).ToArray())
-			?? [];
+		SpecialDays = storage.GetValue<IEnumerable<SettingsStorage>>(nameof(SpecialDays)).Select(s =>
+			new KeyValuePair<DayOfWeek, Range<TimeSpan>[]>(
+				s.GetValue<DayOfWeek>("Day"),
+				[.. s.GetValue<IEnumerable<SettingsStorage>>("Periods").Select(s1 => s1.ToRange<TimeSpan>())]))
+		.ToDictionary();
 	}
 
 	/// <inheritdoc />
@@ -101,9 +101,10 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 		storage
 			.Set(nameof(Till), Till)
 			.Set(nameof(Times), Times.Select(t => t.ToStorage()).ToArray())
-			.Set(nameof(SpecialDays), SpecialDays.ToDictionary(
-				p => p.Key.To<string>(),
-				p => p.Value.Select(r => r.ToStorage()).ToArray()));
+			.Set(nameof(SpecialDays), SpecialDays.Select(p => new SettingsStorage()
+				.Set("Day", p.Key)
+				.Set("Periods", p.Value.Select(r => r.ToStorage()).ToArray())
+			).ToArray());
 	}
 
 	/// <inheritdoc />
