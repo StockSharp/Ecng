@@ -1289,6 +1289,32 @@ public class FileSystemTests : BaseTestClass
 
 	#endregion
 
+	#region OpenWrite allows concurrent read
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void OpenWrite_AllowsConcurrentRead(string fsType)
+	{
+		if (fsType == nameof(LocalFileSystem) && !OperatingSystemEx.IsWindows())
+			return;
+
+		var (fs, root) = Config.CreateFs(fsType);
+		var file = Path.Combine(root, "log.txt");
+		WriteAll(fs, file, "initial");
+
+		// Open file for writing (append mode, like logger does)
+		using var writer = fs.OpenWrite(file, append: true);
+
+		// Simulate external viewer (e.g. FAR F3) opening file with ReadWrite sharing
+		using var reader = fs.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+		using var ms = new MemoryStream();
+		reader.CopyTo(ms);
+		ms.ToArray().UTF8().AssertEqual("initial");
+	}
+
+	#endregion
+
 	#region Size limit tests
 
 	/// <summary>

@@ -32,7 +32,7 @@ public static class FileSystemExtensions
 	/// <param name="append">If true, appends to the file; otherwise overwrites.</param>
 	/// <returns>A write-capable stream.</returns>
 	public static Stream OpenWrite(this IFileSystem fs, string path, bool append = false)
-		=> fs.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None);
+		=> fs.Open(path, append ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.Read);
 
 	/// <summary>
 	/// Reads all text from a file.
