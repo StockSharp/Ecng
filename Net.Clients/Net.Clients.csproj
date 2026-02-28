@@ -1,9 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
-  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
-    <PackageReference Include="System.Text.Json" Version="$(MsExtensionsVer)" />
-  </ItemGroup>
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
 </Project>

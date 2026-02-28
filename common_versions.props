@@ -1,5 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net6'))">
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <LangVersion>12.0</LangVersion>
     <MsExtensionsVer>8.*</MsExtensionsVer>
     <MsCodeAnalysisVer>4.12.0</MsCodeAnalysisVer>
