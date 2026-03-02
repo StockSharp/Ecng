@@ -28,7 +28,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-        '$(MSBuildProjectName)' == 'Nuget'
+        '$(MSBuildProjectName)' == 'Nuget' or
+        '$(MSBuildProjectName)' == 'Data.ORM'
       ">
     <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>

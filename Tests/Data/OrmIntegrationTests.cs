@@ -348,6 +348,20 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task OrderBy_ByName()
+	{
+		EnsureDb();
+		await InsertItem("Charlie", priority: 3);
+		await InsertItem("Alice", priority: 1);
+		await InsertItem("Bob", priority: 2);
+
+		var results = await Query<TestItem>().OrderBy(x => x.Name).ToArrayAsyncEx(CancellationToken);
+		results[0].Name.AssertEqual("Alice");
+		results[1].Name.AssertEqual("Bob");
+		results[2].Name.AssertEqual("Charlie");
+	}
+
+	[TestMethod]
 	public async Task OrderBy_SkipTake()
 	{
 		EnsureDb();
@@ -487,6 +501,29 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task Join_InnerJoin_SelectFromTable()
+	{
+		EnsureDb();
+		var item1 = await InsertItem("Joined1", priority: 10);
+		var item2 = await InsertItem("Orphan", priority: 20);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(item1, cat);
+
+		await ClearCache();
+
+		// SELECT [e].* always returns the FROM table entity (TestItemCategory here)
+		// The join filters — only TestItemCategory rows with matching TestItem are returned
+		var results = await (
+			from ic in Query<TestItemCategory>()
+			join i in Query<TestItem>() on ic.Item.Id equals i.Id
+			select ic
+		).ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Item.Id.AssertEqual(item1.Id);
+	}
+
+	[TestMethod]
 	public async Task Join_InnerJoin_WithWhere()
 	{
 		EnsureDb();
@@ -507,6 +544,30 @@ public class OrmIntegrationTests : BaseTestClass
 
 		results.Length.AssertEqual(1);
 		results[0].Name.AssertEqual("Active1");
+	}
+
+	[TestMethod]
+	public async Task Join_InnerJoin_WithMultipleMatches()
+	{
+		EnsureDb();
+		var item1 = await InsertItem("Multi1");
+		var item2 = await InsertItem("Multi2");
+		var cat1 = await InsertCategory("CatM1");
+		var cat2 = await InsertCategory("CatM2");
+		await InsertItemCategory(item1, cat1);
+		await InsertItemCategory(item1, cat2);
+		await InsertItemCategory(item2, cat1);
+
+		await ClearCache();
+
+		// Join returns TestItemCategory rows matching TestItem rows — verifies 3 links exist
+		var results = await (
+			from ic in Query<TestItemCategory>()
+			join i in Query<TestItem>() on ic.Item.Id equals i.Id
+			select ic
+		).ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(3);
 	}
 
 	[TestMethod]
@@ -550,6 +611,27 @@ public class OrmIntegrationTests : BaseTestClass
 		).ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task Join_InnerJoin_ChainedJoins()
+	{
+		EnsureDb();
+		var item = await InsertItem("ItemForDoubleJoin");
+		var cat = await InsertCategory("CatForDoubleJoin");
+		await InsertItemCategory(item, cat);
+
+		await ClearCache();
+
+		// Chained joins using method syntax to avoid anonymous type intermediates
+		var results = await Query<TestItemCategory>()
+			.Join(Query<TestItem>(), ic => ic.Item.Id, i => i.Id, (ic, i) => ic)
+			.Join(Query<TestCategory>(), ic => ic.Category.Id, c => c.Id, (ic, c) => ic)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Item.Id.AssertEqual(item.Id);
+		results[0].Category.Id.AssertEqual(cat.Id);
 	}
 
 	#endregion
@@ -936,6 +1018,29 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task Complex_JoinWithTake()
+	{
+		EnsureDb();
+		var cat = await InsertCategory("Electronics");
+		for (var i = 0; i < 5; i++)
+		{
+			var item = await InsertItem($"Product{i}", priority: i);
+			await InsertItemCategory(item, cat);
+		}
+
+		await ClearCache();
+
+		// Join with Take — returns first 2 TestItemCategory rows that have matching TestItem
+		var results = await (
+			from ic in Query<TestItemCategory>()
+			join i in Query<TestItem>() on ic.Item.Id equals i.Id
+			select ic
+		).Take(2).ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+	}
+
+	[TestMethod]
 	public async Task Complex_MultipleStringFilters()
 	{
 		EnsureDb();
@@ -995,6 +1100,29 @@ public class OrmIntegrationTests : BaseTestClass
 		).ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public async Task Complex_JoinDoubleWithCounting()
+	{
+		EnsureDb();
+		var cat1 = await InsertCategory("Cat A");
+		var cat2 = await InsertCategory("Cat B");
+		var item1 = await InsertItem("Item1");
+		var item2 = await InsertItem("Item2");
+		await InsertItemCategory(item1, cat1);
+		await InsertItemCategory(item1, cat2);
+		await InsertItemCategory(item2, cat1);
+
+		await ClearCache();
+
+		// Chained double join — all 3 links exist with matching items and categories
+		var results = await Query<TestItemCategory>()
+			.Join(Query<TestItem>(), ic => ic.Item.Id, i => i.Id, (ic, i) => ic)
+			.Join(Query<TestCategory>(), ic => ic.Category.Id, c => c.Id, (ic, c) => ic)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(3);
 	}
 
 	[TestMethod]

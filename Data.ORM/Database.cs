@@ -557,26 +557,16 @@ public class Database : Disposable, IStorage
 		if (count == 0)
 			return [];
 
-		var keyColumns = new List<SchemaColumn>
-		{
-			new() { Name = nameof(startIndex), ClrType = typeof(long) },
-			new() { Name = nameof(count), ClrType = typeof(long) },
-		};
+		var orderByClause = orderByColumn is not null
+			? "{0} {1}".Put(Dialect.QuoteIdentifier(orderByColumn), (direction == ListSortDirection.Ascending) ? "asc" : "desc")
+			: null;
 
-		if (orderByColumn != null)
-			keyColumns.Add(new() { Name = "orderBy", ClrType = typeof(string) });
+		var sql = Dialect.GenerateSelect(meta.Name, null, orderByClause, startIndex > 0 ? startIndex : null, count < long.MaxValue ? count : null);
 
-		var input = new SerializationItemCollection
-		{
-			new(nameof(startIndex), typeof(long), startIndex),
-			new(nameof(count), typeof(long), count),
-			new("deleted", typeof(bool), deleted),
-		};
+		var command = _commandsByText.SafeAdd(sql, key =>
+			new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text)));
 
-		if (orderByColumn != null)
-			input.Add(new("orderBy", typeof(string), "{0} {1}".Put(Dialect.QuoteIdentifier(orderByColumn), (direction == ListSortDirection.Ascending) ? "asc" : "desc")));
-
-		return await ReadAllAsync(await GetCommand(meta, SqlCommandTypes.ReadAll, keyColumns, [], cancellationToken), meta, input, cancellationToken);
+		return await ReadAllAsync(command, meta, new SerializationItemCollection(), cancellationToken);
 	}
 
 	public virtual ValueTask<object[]> ReadAllAsync(DatabaseCommand command, Schema meta, SerializationItemCollection input, CancellationToken cancellationToken)
@@ -842,6 +832,7 @@ public class Database : Disposable, IStorage
 
 				var storage = input.ToStorage();
 				await noCachePersistable.LoadAsync(storage, this, cancellationToken);
+				noCachePersistable.InitLists(this);
 			}
 			else
 			{
@@ -898,6 +889,7 @@ public class Database : Disposable, IStorage
 		{
 			var storage = input.ToStorage();
 			await persistable2.LoadAsync(storage, this, cancellationToken);
+			persistable2.InitLists(this);
 		}
 		else
 		{

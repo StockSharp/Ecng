@@ -75,28 +75,28 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + idCol;
+	public override string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + idCol;
 
 	/// <inheritdoc />
-	public string FormatSkip(string skip) => $"OFFSET {skip}";
+	public override string FormatSkip(string skip) => $"OFFSET {skip}";
 
 	/// <inheritdoc />
-	public string FormatTake(string take) => $"LIMIT {take}";
+	public override string FormatTake(string take) => $"LIMIT {take}";
 
 	/// <inheritdoc />
-	public string Now() => "datetime('now', 'localtime')";
+	public override string Now() => "datetime('now', 'localtime')";
 
 	/// <inheritdoc />
-	public string UtcNow() => "datetime('now')";
+	public override string UtcNow() => "datetime('now')";
 
 	/// <inheritdoc />
-	public string SysNow() => "datetime('now', 'localtime')";
+	public override string SysNow() => "datetime('now', 'localtime')";
 
 	/// <inheritdoc />
-	public string SysUtcNow() => "datetime('now')";
+	public override string SysUtcNow() => "datetime('now')";
 
 	/// <inheritdoc />
-	public string NewId() => "lower(hex(randomblob(16)))";
+	public override string NewId() => "lower(hex(randomblob(16)))";
 
 	/// <inheritdoc />
 	public override string GenerateSelect(string tableName, string whereClause, string orderByClause, long? skip, long? take)

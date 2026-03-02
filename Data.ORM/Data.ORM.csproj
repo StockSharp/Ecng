@@ -1,11 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>14.0</LangVersion>
-    <AssemblyName>Ecng.Data.ORM</AssemblyName>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-
+  <Import Project="..\common.props" />
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Configuration\Configuration.csproj" />

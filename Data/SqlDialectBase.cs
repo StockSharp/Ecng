@@ -172,4 +172,28 @@ public abstract class SqlDialectBase : ISqlDialect
 	/// Gets the SQL suffix for an identity (auto-increment primary key) column definition.
 	/// </summary>
 	protected abstract string GetIdentityColumnSuffix();
+
+	/// <inheritdoc />
+	public virtual string GetIdentitySelect(string idCol) => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string FormatSkip(string skip) => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string FormatTake(string take) => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string Now() => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string UtcNow() => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string SysNow() => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string SysUtcNow() => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string NewId() => throw new NotSupportedException();
 }
