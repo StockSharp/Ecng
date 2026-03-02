@@ -28,6 +28,10 @@ public abstract class SqlDialectBase : ISqlDialect
 	public abstract string GenerateCreateTable(string tableName, IDictionary<string, Type> columns);
 
 	/// <inheritdoc />
+	public virtual string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
+		=> GenerateCreateTable(tableName, columns);
+
+	/// <inheritdoc />
 	public abstract string GenerateDropTable(string tableName);
 
 	/// <inheritdoc />
@@ -142,7 +146,7 @@ public abstract class SqlDialectBase : ISqlDialect
 	/// <summary>
 	/// Builds column definitions for CREATE TABLE.
 	/// </summary>
-	protected string BuildColumnDefinitions(IDictionary<string, Type> columns)
+	protected string BuildColumnDefinitions(IDictionary<string, Type> columns, string identityColumn = null)
 	{
 		var sb = new StringBuilder();
 		var first = true;
@@ -156,8 +160,16 @@ public abstract class SqlDialectBase : ISqlDialect
 			sb.Append(QuoteIdentifier(kv.Key));
 			sb.Append(' ');
 			sb.Append(GetSqlTypeName(kv.Value));
+
+			if (identityColumn is not null && kv.Key.EqualsIgnoreCase(identityColumn))
+				sb.Append(' ').Append(GetIdentityColumnSuffix());
 		}
 
 		return sb.ToString();
 	}
+
+	/// <summary>
+	/// Gets the SQL suffix for an identity (auto-increment primary key) column definition.
+	/// </summary>
+	protected abstract string GetIdentityColumnSuffix();
 }

@@ -56,9 +56,13 @@ public class SQLiteDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns)
+		=> GenerateCreateTable(tableName, columns, null);
+
+	/// <inheritdoc />
+	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
 	{
 		var quotedName = QuoteIdentifier(tableName);
-		var columnDefs = BuildColumnDefinitions(columns);
+		var columnDefs = BuildColumnDefinitions(columns, identityColumn);
 
 		return $"CREATE TABLE IF NOT EXISTS {quotedName} ({columnDefs})";
 	}
@@ -141,4 +145,7 @@ public class SQLiteDialect : SqlDialectBase
 
 		return sql;
 	}
+
+	/// <inheritdoc />
+	protected override string GetIdentityColumnSuffix() => "INTEGER PRIMARY KEY AUTOINCREMENT";
 }

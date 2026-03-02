@@ -55,9 +55,13 @@ public class SqlServerDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns)
+		=> GenerateCreateTable(tableName, columns, null);
+
+	/// <inheritdoc />
+	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
 	{
 		var quotedName = QuoteIdentifier(tableName);
-		var columnDefs = BuildColumnDefinitions(columns);
+		var columnDefs = BuildColumnDefinitions(columns, identityColumn);
 
 		return $@"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{tableName}')
 CREATE TABLE {quotedName} ({columnDefs})";
@@ -147,4 +151,7 @@ ON ({matchCondition})
 
 		return sql;
 	}
+
+	/// <inheritdoc />
+	protected override string GetIdentityColumnSuffix() => "IDENTITY(1,1) PRIMARY KEY";
 }

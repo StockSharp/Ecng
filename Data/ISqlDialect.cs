@@ -47,6 +47,16 @@ public interface ISqlDialect
 	string GenerateCreateTable(string tableName, IDictionary<string, Type> columns);
 
 	/// <summary>
+	/// Generates CREATE TABLE IF NOT EXISTS statement with identity (auto-increment) column.
+	/// </summary>
+	/// <param name="tableName">Table name.</param>
+	/// <param name="columns">Column definitions (name -> type). Must include the identity column.</param>
+	/// <param name="identityColumn">Name of the identity (auto-increment primary key) column, or null.</param>
+	/// <returns>SQL statement.</returns>
+	string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
+		=> GenerateCreateTable(tableName, columns);
+
+	/// <summary>
 	/// Generates DROP TABLE IF EXISTS statement.
 	/// </summary>
 	/// <param name="tableName">Table name.</param>

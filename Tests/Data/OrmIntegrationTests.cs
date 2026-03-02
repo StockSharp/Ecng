@@ -29,53 +29,29 @@ public class OrmIntegrationTests : BaseTestClass
 		_db = new Database("ORM Test Database", _connectionString, SqlClientFactory.Instance, SqlServerDialect.Instance);
 		_db.AllowDeleteAll = true;
 
-		// Create test tables via raw DDL
 		using var conn = new SqlConnection(_connectionString);
 		conn.Open();
 
-		Execute(conn, @"
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestItem')
-CREATE TABLE [TestItem] (
-    Id bigint identity(1,1) PRIMARY KEY,
-    [Name] nvarchar(200) NULL,
-    [Priority] int NOT NULL DEFAULT 0,
-    Price decimal(18,4) NOT NULL DEFAULT 0,
-    CreatedAt datetime NOT NULL DEFAULT getdate(),
-    IsActive bit NOT NULL DEFAULT 0,
-    NullableValue int NULL
-)");
+		EnsureTable<TestItem>(conn);
+		EnsureTable<TestCategory>(conn);
+		EnsureTable<TestItemCategory>(conn);
+		EnsureTable<TestPerson>(conn);
+		EnsureTable<TestTask>(conn);
+	}
 
-		Execute(conn, @"
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestCategory')
-CREATE TABLE [TestCategory] (
-    Id bigint identity(1,1) PRIMARY KEY,
-    CategoryName nvarchar(200) NULL,
-    [Description] nvarchar(max) NULL
-)");
+	private static void EnsureTable<T>(SqlConnection conn)
+	{
+		var meta = SchemaRegistry.Get(typeof(T));
+		var columns = new Dictionary<string, Type>();
 
-		Execute(conn, @"
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestItemCategory')
-CREATE TABLE [TestItemCategory] (
-    Id bigint identity(1,1) PRIMARY KEY,
-    Item bigint NOT NULL,
-    Category bigint NOT NULL
-)");
+		if (meta.Identity is not null)
+			columns[meta.Identity.Name] = meta.Identity.ClrType;
 
-		Execute(conn, @"
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestPerson')
-CREATE TABLE [TestPerson] (
-    Id bigint identity(1,1) PRIMARY KEY,
-    [Name] nvarchar(200) NULL
-)");
+		foreach (var col in meta.Columns)
+			columns[col.Name] = col.ClrType;
 
-		Execute(conn, @"
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestTask')
-CREATE TABLE [TestTask] (
-    Id bigint identity(1,1) PRIMARY KEY,
-    Title nvarchar(200) NULL,
-    [Priority] int NOT NULL DEFAULT 0,
-    Person bigint NOT NULL
-)");
+		var sql = SqlServerDialect.Instance.GenerateCreateTable(meta.TableName, columns, meta.Identity?.Name);
+		Execute(conn, sql);
 	}
 
 	private static void Execute(SqlConnection conn, string sql)
