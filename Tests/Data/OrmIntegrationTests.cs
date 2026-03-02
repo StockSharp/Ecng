@@ -60,6 +60,22 @@ CREATE TABLE [TestItemCategory] (
     Item bigint NOT NULL,
     Category bigint NOT NULL
 )");
+
+		Execute(conn, @"
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestPerson')
+CREATE TABLE [TestPerson] (
+    Id bigint identity(1,1) PRIMARY KEY,
+    [Name] nvarchar(200) NULL
+)");
+
+		Execute(conn, @"
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TestTask')
+CREATE TABLE [TestTask] (
+    Id bigint identity(1,1) PRIMARY KEY,
+    Title nvarchar(200) NULL,
+    [Priority] int NOT NULL DEFAULT 0,
+    Person bigint NOT NULL
+)");
 	}
 
 	private static void Execute(SqlConnection conn, string sql)
@@ -86,6 +102,8 @@ CREATE TABLE [TestItemCategory] (
 		Execute(conn, "DELETE FROM [TestItemCategory]");
 		Execute(conn, "DELETE FROM [TestItem]");
 		Execute(conn, "DELETE FROM [TestCategory]");
+		Execute(conn, "DELETE FROM [TestTask]");
+		Execute(conn, "DELETE FROM [TestPerson]");
 
 		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
 	}
@@ -128,6 +146,23 @@ CREATE TABLE [TestItemCategory] (
 			Description = desc,
 		};
 		return await Storage.AddAsync(cat, CancellationToken);
+	}
+
+	private async Task<TestPerson> InsertPerson(string name)
+	{
+		var person = new TestPerson { Name = name };
+		return await Storage.AddAsync(person, CancellationToken);
+	}
+
+	private async Task<TestTask> InsertTask(string title, TestPerson person, int priority = 0)
+	{
+		var task = new TestTask
+		{
+			Title = title,
+			Priority = priority,
+			Person = person,
+		};
+		return await Storage.AddAsync(task, CancellationToken);
 	}
 
 	private async Task<TestItemCategory> InsertItemCategory(TestItem item, TestCategory category)
@@ -1082,6 +1117,343 @@ CREATE TABLE [TestItemCategory] (
 
 		colNames.Contains("Name").AssertTrue();
 		colNames.Contains("Computed").AssertFalse();
+	}
+
+	#endregion
+
+	#region RelationMany Tests
+
+	[TestMethod]
+	public async Task RelationMany_TasksFilteredByPerson()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		await InsertTask("Alice Task 1", alice, priority: 1);
+		await InsertTask("Alice Task 2", alice, priority: 2);
+		await InsertTask("Alice Task 3", alice, priority: 3);
+		await InsertTask("Bob Task 1", bob, priority: 10);
+		await InsertTask("Bob Task 2", bob, priority: 20);
+
+		await ClearCache();
+
+		var loadedAlice = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		loadedAlice.AssertNotNull();
+		loadedAlice.Tasks.AssertNotNull();
+
+		var aliceTasks = await loadedAlice.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		aliceTasks.Length.AssertEqual(3);
+
+		foreach (var t in aliceTasks)
+			t.Person.Id.AssertEqual(alice.Id);
+
+		var loadedBob = await Storage.GetByIdAsync<long, TestPerson>(bob.Id, CancellationToken);
+		var bobTasks = await loadedBob.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		bobTasks.Length.AssertEqual(2);
+
+		foreach (var t in bobTasks)
+			t.Person.Id.AssertEqual(bob.Id);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_CountFiltered()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		await InsertTask("A1", alice);
+		await InsertTask("A2", alice);
+		await InsertTask("A3", alice);
+		await InsertTask("B1", bob);
+
+		await ClearCache();
+
+		var loadedAlice = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var count = await loadedAlice.Tasks.CountAsync(CancellationToken);
+		count.AssertEqual(3);
+
+		var loadedBob = await Storage.GetByIdAsync<long, TestPerson>(bob.Id, CancellationToken);
+		var bobCount = await loadedBob.Tasks.CountAsync(CancellationToken);
+		bobCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_EmptyCollection()
+	{
+		EnsureDb();
+		var charlie = await InsertPerson("Charlie");
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(charlie.Id, CancellationToken);
+		var tasks = await loaded.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		tasks.Length.AssertEqual(0);
+
+		var count = await loaded.Tasks.CountAsync(CancellationToken);
+		count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_QueryableWithFilter()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+
+		await InsertTask("Low", alice, priority: 1);
+		await InsertTask("Mid", alice, priority: 5);
+		await InsertTask("High", alice, priority: 10);
+		await InsertTask("VeryHigh", alice, priority: 20);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var highPriority = await loaded.Tasks.ToQueryable()
+			.Where(t => t.Priority > 5)
+			.ToArrayAsyncEx(CancellationToken);
+
+		highPriority.Length.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_QueryableWithOrderBy()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+
+		await InsertTask("C", alice, priority: 30);
+		await InsertTask("A", alice, priority: 10);
+		await InsertTask("B", alice, priority: 20);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var sorted = await loaded.Tasks.ToQueryable()
+			.OrderBy(t => t.Priority)
+			.ToArrayAsyncEx(CancellationToken);
+
+		sorted.Length.AssertEqual(3);
+		sorted[0].Title.AssertEqual("A");
+		sorted[1].Title.AssertEqual("B");
+		sorted[2].Title.AssertEqual("C");
+	}
+
+	[TestMethod]
+	public async Task RelationMany_AddViaList()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+		await InsertTask("Existing", alice);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+
+		var newTask = new TestTask { Title = "Added", Priority = 99, Person = loaded };
+		await loaded.Tasks.AddAsync(newTask, CancellationToken);
+
+		await ClearCache();
+
+		var reloaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var tasks = await reloaded.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		tasks.Length.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_RemoveViaList()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+		var t1 = await InsertTask("Keep", alice);
+		var t2 = await InsertTask("Remove", alice);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+
+		var taskToRemove = await Storage.GetByIdAsync<long, TestTask>(t2.Id, CancellationToken);
+		var removed = await loaded.Tasks.RemoveAsync(taskToRemove, CancellationToken);
+		removed.AssertTrue();
+
+		await ClearCache();
+
+		var reloaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var tasks = await reloaded.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		tasks.Length.AssertEqual(1);
+		tasks[0].Title.AssertEqual("Keep");
+	}
+
+	[TestMethod]
+	public async Task RelationMany_AsyncEnumeration()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+
+		for (var i = 0; i < 5; i++)
+			await InsertTask($"Task{i}", alice, priority: i);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+
+		var titles = new List<string>();
+		await foreach (var task in loaded.Tasks)
+			titles.Add(task.Title);
+
+		titles.Count.AssertEqual(5);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_IsolationBetweenPersons()
+	{
+		EnsureDb();
+		var persons = new List<TestPerson>();
+
+		for (var i = 0; i < 5; i++)
+		{
+			var p = await InsertPerson($"Person{i}");
+			persons.Add(p);
+
+			for (var j = 0; j <= i; j++)
+				await InsertTask($"P{i}_T{j}", p, priority: j);
+		}
+
+		await ClearCache();
+
+		for (var i = 0; i < 5; i++)
+		{
+			var loaded = await Storage.GetByIdAsync<long, TestPerson>(persons[i].Id, CancellationToken);
+			var tasks = await loaded.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+			tasks.Length.AssertEqual(i + 1);
+
+			foreach (var t in tasks)
+				t.Person.Id.AssertEqual(persons[i].Id);
+		}
+	}
+
+	#endregion
+
+	#region Identity Map Tests
+
+	[TestMethod]
+	public async Task IdentityMap_SameIdSameReference()
+	{
+		EnsureDb();
+		var item = await InsertItem("Singleton");
+
+		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+		var load2 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+
+		ReferenceEquals(load1, load2).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_FkReturnsSameReference()
+	{
+		EnsureDb();
+		var person = await InsertPerson("Alice");
+		var task = await InsertTask("Task1", person);
+
+		await ClearCache();
+
+		var loadedPerson = await Storage.GetByIdAsync<long, TestPerson>(person.Id, CancellationToken);
+		var loadedTask = await Storage.GetByIdAsync<long, TestTask>(task.Id, CancellationToken);
+
+		ReferenceEquals(loadedPerson, loadedTask.Person).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_MultipleFksSameObject()
+	{
+		EnsureDb();
+		var person = await InsertPerson("Shared");
+		await InsertTask("T1", person);
+		await InsertTask("T2", person);
+		await InsertTask("T3", person);
+
+		await ClearCache();
+
+		var tasks = await Query<TestTask>().ToArrayAsyncEx(CancellationToken);
+
+		tasks.Length.AssertEqual(3);
+
+		// all three tasks point to the same Person object in memory
+		ReferenceEquals(tasks[0].Person, tasks[1].Person).AssertTrue();
+		ReferenceEquals(tasks[1].Person, tasks[2].Person).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_RelationManyReturnsCachedPerson()
+	{
+		EnsureDb();
+		var alice = await InsertPerson("Alice");
+		await InsertTask("T1", alice);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestPerson>(alice.Id, CancellationToken);
+		var tasks = await loaded.Tasks.ToQueryable().ToArrayAsyncEx(CancellationToken);
+
+		// the Person FK on the task should be the same object we loaded
+		ReferenceEquals(loaded, tasks[0].Person).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_JoinSharesReferences()
+	{
+		EnsureDb();
+		var item = await InsertItem("Shared Item");
+		var cat = await InsertCategory("Shared Cat");
+		await InsertItemCategory(item, cat);
+		await InsertItemCategory(item, cat);
+
+		await ClearCache();
+
+		var results = await Query<TestItemCategory>().ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+
+		// both TestItemCategory rows reference the same TestItem object
+		ReferenceEquals(results[0].Item, results[1].Item).AssertTrue();
+
+		// both reference the same TestCategory object
+		ReferenceEquals(results[0].Category, results[1].Category).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_ClearCacheCreatesNewInstance()
+	{
+		EnsureDb();
+		var item = await InsertItem("Before");
+
+		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+
+		await ClearCache();
+
+		var load2 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+
+		// after cache clear, a different object is returned
+		ReferenceEquals(load1, load2).AssertFalse();
+
+		// but data is the same
+		load1.Id.AssertEqual(load2.Id);
+		load1.Name.AssertEqual(load2.Name);
+	}
+
+	[TestMethod]
+	public async Task IdentityMap_MutationVisibleWithoutReload()
+	{
+		EnsureDb();
+		var item = await InsertItem("Original");
+
+		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+		load1.Name = "Mutated";
+
+		// second load without cache clear — same object, sees mutation
+		var load2 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
+		load2.Name.AssertEqual("Mutated");
+		ReferenceEquals(load1, load2).AssertTrue();
 	}
 
 	#endregion

@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Data;
 
+using System.ComponentModel;
+
 using Ecng.Common;
 using Ecng.Serialization;
 
@@ -88,6 +90,92 @@ public class TestItemCategory : IDbPersistable
 		Item = await storage.LoadFkAsync<TestItem>(nameof(Item), db, cancellationToken);
 		Category = await storage.LoadFkAsync<TestCategory>(nameof(Category), db, cancellationToken);
 	}
+}
+
+public class TestPerson : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Name { get; set; }
+
+	[RelationMany(typeof(TestPersonTaskList))]
+	public TestPersonTaskList Tasks { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage.Set(nameof(Name), Name);
+	}
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Name = storage.GetValue<string>(nameof(Name));
+		return default;
+	}
+
+	public void InitLists(IStorage db)
+	{
+		Tasks = new TestPersonTaskList(db, this);
+	}
+}
+
+public class TestTask : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Title { get; set; }
+	public int Priority { get; set; }
+
+	[RelationSingle]
+	public TestPerson Person { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.Set(nameof(Title), Title)
+			.Set(nameof(Priority), Priority)
+			.SetFk(nameof(Person), Person?.Id);
+	}
+
+	public async ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Title = storage.GetValue<string>(nameof(Title));
+		Priority = storage.GetValue<int>(nameof(Priority));
+		Person = await storage.LoadFkAsync<TestPerson>(nameof(Person), db, cancellationToken);
+	}
+}
+
+public class TestPersonTaskList(IStorage storage, TestPerson person) : RelationManyList<TestTask, long>(storage)
+{
+	private readonly TestPerson _person = person ?? throw new ArgumentNullException(nameof(person));
+
+	public override IQueryable<TestTask> ToQueryable()
+		=> base.ToQueryable().Where(t => t.Person.Id == _person.Id);
+
+	protected override ValueTask<long> OnGetCount(bool deleted, CancellationToken cancellationToken)
+		=> ToQueryable().CountAsyncEx(cancellationToken);
+
+	protected override async ValueTask<TestTask[]> OnGetGroup(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+	{
+		var q = ToQueryable();
+
+		if (startIndex > 0)
+			q = q.Skip((int)startIndex);
+
+		if (count < long.MaxValue)
+			q = q.Take((int)count);
+
+		return await q.ToArrayAsyncEx(cancellationToken);
+	}
+
+	protected override ValueTask<bool> IsSaved(TestTask item, CancellationToken cancellationToken)
+		=> new(item.Id > 0);
+
+	public override ValueTask<bool> ContainsAsync(TestTask item, CancellationToken cancellationToken)
+		=> ToQueryable().Where(t => t.Id == item.Id).AnyAsyncEx(cancellationToken);
 }
 
 public class TestItemWithIgnored : IDbPersistable
