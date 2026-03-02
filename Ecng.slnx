@@ -38,6 +38,7 @@
   <Project Path="Net.SocketIO/Net.SocketIO.csproj" />
   <Project Path="Net.Udp/Net.Udp.csproj" />
   <Project Path="Nuget/Nuget.csproj" />
+  <Project Path="Data.ORM/Data.ORM.csproj" />
   <Project Path="Reflection/Reflection.csproj" />
   <Project Path="Security/Security.csproj" />
   <Project Path="Serialization/Serialization.csproj" />

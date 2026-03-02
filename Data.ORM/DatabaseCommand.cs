@@ -1,0 +1,185 @@
+namespace Ecng.Data;
+
+#if DEBUG
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+#endif
+
+[Serializable]
+public sealed class DatabaseCommand : Disposable
+{
+	private readonly DatabaseProvider _provider;
+	private readonly Func<CancellationToken, ValueTask<DbConnection>> _createConnection;
+	private readonly DbCommand _dbCommand;
+
+	internal DatabaseCommand(DatabaseProvider provider, Func<CancellationToken, ValueTask<DbConnection>> createConnection, DbCommand dbCommand)
+	{
+		_provider = provider ?? throw new ArgumentNullException(nameof(provider));
+		_createConnection = createConnection ?? throw new ArgumentNullException(nameof(createConnection));
+		_dbCommand = dbCommand ?? throw new ArgumentNullException(nameof(dbCommand));
+	}
+
+	public string CommandText => _dbCommand.CommandText;
+	public CommandType CommandType => _dbCommand.CommandType;
+	public DbParameterCollection Parameters => _dbCommand.Parameters;
+
+	private async ValueTask<TResult> Execute<TResult>(IEnumerable<SerializationItem> input, Func<DbCommand, ValueTask<TResult>> handler, CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(input);
+
+		ArgumentNullException.ThrowIfNull(handler);
+
+		//Debug.WriteLine(_dbCommand.CommandText);
+
+		using var connection = await _createConnection(cancellationToken);
+
+		using var cmd = CreateCommand(connection, input);
+#if DEBUG
+		var dbgStr = cmd.CommandText;
+
+		static string GetParamArg(DbParameter parameter)
+		{
+			ArgumentNullException.ThrowIfNull(parameter);
+
+			var pv = parameter.Value;
+
+			if (pv is bool b)
+				pv = b ? 1 : 0;
+			else if (pv is byte[] bytes)
+				return $"byte[{bytes.Length}]";
+
+			var arg = pv.To<string>();
+
+			if (pv is string || pv is DateTime || pv is DateTimeOffset)
+				return $"'{arg}'";
+			else
+				return (arg ?? string.Empty).IsEmpty("null");
+		}
+
+		if (cmd.CommandType == CommandType.Text)
+		{
+			foreach (DbParameter parameter in cmd.Parameters)
+			{
+				dbgStr = Regex.Replace(dbgStr, @$"{parameter.ParameterName}\b", GetParamArg(parameter), RegexOptions.IgnoreCase);
+			}
+		}
+		else
+		{
+			foreach (DbParameter parameter in cmd.Parameters)
+			{
+				dbgStr += $"{parameter.ParameterName} = {GetParamArg(parameter)}, ";
+			}
+		}
+
+		Debug.WriteLine(dbgStr);
+#endif
+		return await handler(cmd);
+	}
+
+	public ValueTask<int> ExecuteNonQuery(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
+		=> Execute(input, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken), cancellationToken);
+
+	public ValueTask<TScalar> ExecuteScalar<TScalar>(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
+		=> Execute(input, async cmd => (await cmd.ExecuteScalarAsync(cancellationToken)).To<TScalar>(), cancellationToken);
+
+	public ValueTask<SerializationItemCollection> ExecuteRow(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
+		=> Execute(input, async cmd =>
+		{
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+			// async version disable for a while
+			// https://github.com/dotnet/SqlClient/issues/593
+			//if (await reader.ReadAsync(cancellationToken))
+			if (reader.Read())
+			{
+				var row = new SerializationItemCollection();
+
+				for (var i = 0; i < reader.FieldCount; i++)
+				{
+					row.Add(new
+					(
+						reader.GetName(i),
+						reader.GetFieldType(i),
+						reader.GetValueEx(i)
+					));
+				}
+
+				return row;
+			}
+			else
+				return null;
+		}, cancellationToken);
+
+	public ValueTask<SerializationItemCollection> ExecuteTable(SerializationItemCollection input, CancellationToken cancellationToken)
+	{
+		return Execute(input, async cmd =>
+		{
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+			List<object>[] values = null;
+			var table = new SerializationItemCollection();
+
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				if (values == null)
+				{
+					values = new List<object>[reader.FieldCount];
+
+					for (var i = 0; i < reader.FieldCount; i++)
+					{
+						values[i] = [];
+						table.Add(new(reader.GetName(i), typeof(List<object>), values[i]));
+					}
+				}
+
+				for (var i = 0; i < reader.FieldCount; i++)
+					values[i].Add(reader.GetValueEx(i));
+			}
+
+			return table;
+		}, cancellationToken);
+	}
+
+	private DbCommand CreateCommand(DbConnection connection, IEnumerable<SerializationItem> source)
+	{
+		ArgumentNullException.ThrowIfNull(connection);
+
+		ArgumentNullException.ThrowIfNull(source);
+
+		var dict = source.ToDictionary(i => _provider.Renderer.FormatParameter(i.Name), i => i.Value, StringComparer.InvariantCultureIgnoreCase);
+
+		var command = _provider.CreateCommand(CommandText, CommandType);
+		command.Connection = connection;
+
+		var timeout = Scope<DatabaseCommandTimeout>.Current;
+		if (timeout != null)
+			command.CommandTimeout = (int)timeout.Value.Timeout.TotalSeconds;
+
+		foreach (DbParameter parameter in Parameters)
+		{
+			var clone = _provider.CreateParameter(parameter.ParameterName, parameter.DbType);
+
+			clone.Direction = parameter.Direction;
+			clone.IsNullable = parameter.IsNullable;
+			//clone.Size = parameter.Size;
+			clone.SourceColumn = parameter.SourceColumn;
+			clone.SourceColumnNullMapping = parameter.SourceColumnNullMapping;
+			clone.SourceVersion = parameter.SourceVersion;
+
+			command.Parameters.Add(clone);
+
+			if (dict.TryGetValue(clone.ParameterName, out var value) && value is not null)
+				clone.Value = value.To(clone.DbType.To<Type>());
+			else
+				clone.Value = DBNull.Value;
+		}
+
+		return command;
+	}
+
+	protected override void DisposeManaged()
+	{
+		_dbCommand.Dispose();
+		base.DisposeManaged();
+	}
+}
