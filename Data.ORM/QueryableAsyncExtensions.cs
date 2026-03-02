@@ -1,6 +1,6 @@
 ﻿namespace Ecng.Serialization;
 
-public static class BinaryHelper
+public static class QueryableAsyncExtensions
 {
 	public static async ValueTask<long> CountAsyncEx<T>(this IQueryable<T> source, CancellationToken cancellationToken)
 	{

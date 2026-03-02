@@ -130,4 +130,44 @@ public interface ISqlDialect
 	/// <param name="targetType">Target CLR type.</param>
 	/// <returns>Converted value.</returns>
 	object ConvertFromDbValue(object value, Type targetType);
+
+	/// <summary>
+	/// Gets the SQL expression for retrieving the last inserted identity value.
+	/// </summary>
+	string GetIdentitySelect(string idCol) => throw new NotSupportedException();
+
+	/// <summary>
+	/// Formats a SKIP/OFFSET clause.
+	/// </summary>
+	string FormatSkip(string skip) => throw new NotSupportedException();
+
+	/// <summary>
+	/// Formats a TAKE/FETCH clause.
+	/// </summary>
+	string FormatTake(string take) => throw new NotSupportedException();
+
+	/// <summary>
+	/// Gets the SQL expression for the current local date/time.
+	/// </summary>
+	string Now() => throw new NotSupportedException();
+
+	/// <summary>
+	/// Gets the SQL expression for the current UTC date/time.
+	/// </summary>
+	string UtcNow() => throw new NotSupportedException();
+
+	/// <summary>
+	/// Gets the SQL expression for the current system local date/time with offset.
+	/// </summary>
+	string SysNow() => throw new NotSupportedException();
+
+	/// <summary>
+	/// Gets the SQL expression for the current system UTC date/time.
+	/// </summary>
+	string SysUtcNow() => throw new NotSupportedException();
+
+	/// <summary>
+	/// Gets the SQL expression for generating a new unique identifier.
+	/// </summary>
+	string NewId() => throw new NotSupportedException();
 }

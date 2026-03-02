@@ -71,6 +71,30 @@ CREATE TABLE {quotedName} ({columnDefs})";
 	}
 
 	/// <inheritdoc />
+	public string GetIdentitySelect(string idCol) => "scope_identity() as " + idCol;
+
+	/// <inheritdoc />
+	public string FormatSkip(string skip) => $"offset {skip} rows";
+
+	/// <inheritdoc />
+	public string FormatTake(string take) => $"fetch next {take} rows only";
+
+	/// <inheritdoc />
+	public string Now() => "getDate()";
+
+	/// <inheritdoc />
+	public string UtcNow() => "getUtcDate()";
+
+	/// <inheritdoc />
+	public string SysNow() => "sysDateTimeOffset()";
+
+	/// <inheritdoc />
+	public string SysUtcNow() => "sysUtcDateTime()";
+
+	/// <inheritdoc />
+	public string NewId() => "newId()";
+
+	/// <inheritdoc />
 	public override string GenerateSelect(string tableName, string whereClause, string orderByClause, long? skip, long? take)
 	{
 		var sql = $"SELECT * FROM {QuoteIdentifier(tableName)}";

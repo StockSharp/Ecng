@@ -200,12 +200,14 @@ public class Database : Disposable, IStorage
 
 	#region Database.ctor()
 
-	public Database(string name, string connectionString)
+	public Database(string name, string connectionString, DbProviderFactory factory, ISqlDialect dialect)
 	{
 		Debug.WriteLine($"{nameof(Database)}.ctor()");
 
 		Name = name;
 		ConnectionString = connectionString;
+		Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+		Dialect = dialect ?? throw new ArgumentNullException(nameof(dialect));
 	}
 
 	public QueryProvider QueryProvider { get; } = new();
@@ -228,12 +230,20 @@ public class Database : Disposable, IStorage
 		set => _connectionString = value.IsEmpty() ? throw new ArgumentNullException(nameof(value)) : value;
 	}
 
-	private DatabaseProvider _provider = new SqlServerDatabaseProvider();
+	private DbProviderFactory _factory;
 
-	public DatabaseProvider Provider
+	public DbProviderFactory Factory
 	{
-		get => _provider;
-		set => _provider = value ?? throw new ArgumentNullException(nameof(value));
+		get => _factory;
+		set => _factory = value ?? throw new ArgumentNullException(nameof(value));
+	}
+
+	private ISqlDialect _dialect;
+
+	public ISqlDialect Dialect
+	{
+		get => _dialect;
+		set => _dialect = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
 	public CommandType CommandType { get; set; } = CommandType.Text;
@@ -245,8 +255,17 @@ public class Database : Disposable, IStorage
 
 	void IStorage.AddBulkLoad<TEntity>() => _bulkLoad.Add(typeof(TEntity), new(this, SchemaRegistry.Get(typeof(TEntity))));
 
-	public ValueTask<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken)
-		=> Provider.CreateConnectionAsync(ConnectionString, cancellationToken);
+	public async ValueTask<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken)
+	{
+		var connection = Factory.CreateConnection();
+
+		if (connection == null)
+			throw new InvalidOperationException();
+
+		connection.ConnectionString = ConnectionString;
+		await connection.OpenAsync(cancellationToken);
+		return connection;
+	}
 
 	private class StorageTransaction : IStorageTransaction
 	{
@@ -264,32 +283,35 @@ public class Database : Disposable, IStorage
 	{
 		var commandQuery = QueryProvider.Create(meta, type, keyColumns, valueColumns);
 
-		return _commandsByQuery.SafeAddAsync(commandQuery, async (key, t) =>
+		return _commandsByQuery.SafeAddAsync(commandQuery, (key, t) =>
 		{
-			var query = key.Render(Provider.Renderer);
-			var dbCommand = Provider.CreateCommand(query, CommandType.Text);
+			var query = key.Render(Dialect);
+			var dbCommand = CreateDbCommand(query, CommandType.Text);
 
-			var command = new DatabaseCommand(Provider, CreateConnectionAsync, dbCommand);
+			var command = new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, dbCommand);
 
-			if (dbCommand.CommandType == CommandType.StoredProcedure)
+			foreach (Match match in _parameterRegex.Matches(query))
 			{
-				using var cn = await CreateConnectionAsync(t);
-				dbCommand.Connection = cn;
-				Provider.DeriveParameters(dbCommand);
-			}
-			else
-			{
-				foreach (Match match in _parameterRegex.Matches(query))
+				if (match.Success)
 				{
-					if (match.Success)
+					var group = match.Groups["parameterName"];
+
+					var fieldName = group.Value;
+
+					SchemaColumn col = null;
+
+					foreach (var c in keyColumns)
 					{
-						var group = match.Groups["parameterName"];
+						if (c.Name.EqualsIgnoreCase(fieldName))
+						{
+							col = c;
+							break;
+						}
+					}
 
-						var fieldName = group.Value;
-
-						SchemaColumn col = null;
-
-						foreach (var c in keyColumns)
+					if (col is null)
+					{
+						foreach (var c in valueColumns)
 						{
 							if (c.Name.EqualsIgnoreCase(fieldName))
 							{
@@ -297,36 +319,37 @@ public class Database : Disposable, IStorage
 								break;
 							}
 						}
-
-						if (col is null)
-						{
-							foreach (var c in valueColumns)
-							{
-								if (c.Name.EqualsIgnoreCase(fieldName))
-								{
-									col = c;
-									break;
-								}
-							}
-						}
-
-						col ??= meta.TryGetColumn(fieldName);
-
-						if (col is null)
-							throw new InvalidOperationException($"Column '{fieldName}' not found in {meta.EntityType}.");
-
-						command.Parameters.Add(
-							Provider.Parameter(
-								Provider.Renderer.FormatParameter(fieldName),
-								ParameterDirection.Input,
-								col.ClrType.ToDbType(),
-								DBNull.Value));
 					}
+
+					col ??= meta.TryGetColumn(fieldName);
+
+					if (col is null)
+						throw new InvalidOperationException($"Column '{fieldName}' not found in {meta.EntityType}.");
+
+					command.Parameters.Add(
+						Factory.CreateDbParameter(
+							Dialect.ParameterPrefix + fieldName,
+							ParameterDirection.Input,
+							col.ClrType.ToDbType(),
+							DBNull.Value));
 				}
 			}
 
-			return command;
+			return Task.FromResult(command);
 		}, cancellationToken).AsValueTask();
+	}
+
+	private DbCommand CreateDbCommand(string text, CommandType type)
+	{
+		var command = Factory.CreateCommand();
+
+		if (command == null)
+			throw new InvalidOperationException();
+
+		command.CommandText = text;
+		command.CommandType = type;
+
+		return command;
 	}
 
 	#endregion
@@ -551,7 +574,7 @@ public class Database : Disposable, IStorage
 		};
 
 		if (orderByColumn != null)
-			input.Add(new("orderBy", typeof(string), "[{0}] {1}".Put(orderByColumn, (direction == ListSortDirection.Ascending) ? "asc" : "desc")));
+			input.Add(new("orderBy", typeof(string), "{0} {1}".Put(Dialect.QuoteIdentifier(orderByColumn), (direction == ListSortDirection.Ascending) ? "asc" : "desc")));
 
 		return await ReadAllAsync(await GetCommand(meta, SqlCommandTypes.ReadAll, keyColumns, [], cancellationToken), meta, input, cancellationToken);
 	}
@@ -1113,18 +1136,15 @@ public class Database : Disposable, IStorage
 		foreach (var arg in translator.Parameters)
 			input.Add(new(arg.Key, arg.Value.Item1, arg.Value.Item2));
 
-		var provider = Provider;
-		var renderer = provider.Renderer;
-
-		var command = _commandsByText.SafeAdd(query.Render(renderer), key =>
+		var command = _commandsByText.SafeAdd(query.Render(Dialect), key =>
 		{
-			var command = new DatabaseCommand(provider, CreateConnectionAsync, provider.CreateCommand(key, CommandType.Text));
+			var command = new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text));
 
 			foreach (var item in input)
 			{
 				command.Parameters.Add(
-					provider.Parameter(
-						renderer.FormatParameter(item.Name),
+					Factory.CreateDbParameter(
+						Dialect.ParameterPrefix + item.Name,
 						ParameterDirection.Input,
 						item.Type.ToDbType(),
 						item.Value));

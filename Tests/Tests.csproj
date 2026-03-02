@@ -51,9 +51,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Data.Ado\Data.Ado.csproj" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
+    <ProjectReference Include="..\Data.ORM\Data.ORM.csproj" />
+  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net10.0' ">
     <Compile Remove="Nuget\**" />
     <EmbeddedResource Remove="Nuget\**" />
     <None Remove="Nuget\**" />
+    <Compile Remove="Data\OrmIntegrationTests.cs" />
+    <Compile Remove="Data\OrmTestEntities.cs" />
   </ItemGroup>
 </Project>

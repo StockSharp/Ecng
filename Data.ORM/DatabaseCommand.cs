@@ -8,13 +8,15 @@ using System.Text.RegularExpressions;
 [Serializable]
 public sealed class DatabaseCommand : Disposable
 {
-	private readonly DatabaseProvider _provider;
+	private readonly DbProviderFactory _factory;
+	private readonly ISqlDialect _dialect;
 	private readonly Func<CancellationToken, ValueTask<DbConnection>> _createConnection;
 	private readonly DbCommand _dbCommand;
 
-	internal DatabaseCommand(DatabaseProvider provider, Func<CancellationToken, ValueTask<DbConnection>> createConnection, DbCommand dbCommand)
+	internal DatabaseCommand(DbProviderFactory factory, ISqlDialect dialect, Func<CancellationToken, ValueTask<DbConnection>> createConnection, DbCommand dbCommand)
 	{
-		_provider = provider ?? throw new ArgumentNullException(nameof(provider));
+		_factory = factory ?? throw new ArgumentNullException(nameof(factory));
+		_dialect = dialect ?? throw new ArgumentNullException(nameof(dialect));
 		_createConnection = createConnection ?? throw new ArgumentNullException(nameof(createConnection));
 		_dbCommand = dbCommand ?? throw new ArgumentNullException(nameof(dbCommand));
 	}
@@ -146,9 +148,11 @@ public sealed class DatabaseCommand : Disposable
 
 		ArgumentNullException.ThrowIfNull(source);
 
-		var dict = source.ToDictionary(i => _provider.Renderer.FormatParameter(i.Name), i => i.Value, StringComparer.InvariantCultureIgnoreCase);
+		var dict = source.ToDictionary(i => _dialect.ParameterPrefix + i.Name, i => i.Value, StringComparer.InvariantCultureIgnoreCase);
 
-		var command = _provider.CreateCommand(CommandText, CommandType);
+		var command = _factory.CreateCommand();
+		command.CommandText = CommandText;
+		command.CommandType = CommandType;
 		command.Connection = connection;
 
 		var timeout = Scope<DatabaseCommandTimeout>.Current;
@@ -157,8 +161,10 @@ public sealed class DatabaseCommand : Disposable
 
 		foreach (DbParameter parameter in Parameters)
 		{
-			var clone = _provider.CreateParameter(parameter.ParameterName, parameter.DbType);
+			var clone = _factory.CreateParameter();
 
+			clone.ParameterName = parameter.ParameterName;
+			clone.DbType = parameter.DbType;
 			clone.Direction = parameter.Direction;
 			clone.IsNullable = parameter.IsNullable;
 			//clone.Size = parameter.Size;
