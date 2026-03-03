@@ -5,6 +5,9 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 #endif
 
+/// <summary>
+/// Wraps a <see cref="DbCommand"/> and provides execution methods for database operations.
+/// </summary>
 [Serializable]
 public sealed class DatabaseCommand : Disposable
 {
@@ -21,8 +24,19 @@ public sealed class DatabaseCommand : Disposable
 		_dbCommand = dbCommand ?? throw new ArgumentNullException(nameof(dbCommand));
 	}
 
+	/// <summary>
+	/// Gets the SQL command text.
+	/// </summary>
 	public string CommandText => _dbCommand.CommandText;
+
+	/// <summary>
+	/// Gets the command type (text, stored procedure, etc.).
+	/// </summary>
 	public CommandType CommandType => _dbCommand.CommandType;
+
+	/// <summary>
+	/// Gets the collection of command parameters.
+	/// </summary>
 	public DbParameterCollection Parameters => _dbCommand.Parameters;
 
 	private async ValueTask<TResult> Execute<TResult>(IEnumerable<SerializationItem> input, Func<DbCommand, ValueTask<TResult>> handler, CancellationToken cancellationToken)
@@ -78,12 +92,21 @@ public sealed class DatabaseCommand : Disposable
 		return await handler(cmd);
 	}
 
+	/// <summary>
+	/// Executes the command and returns the number of rows affected.
+	/// </summary>
 	public ValueTask<int> ExecuteNonQuery(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
 		=> Execute(input, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken), cancellationToken);
 
+	/// <summary>
+	/// Executes the command and returns the first column of the first row as the specified type.
+	/// </summary>
 	public ValueTask<TScalar> ExecuteScalar<TScalar>(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
 		=> Execute(input, async cmd => (await cmd.ExecuteScalarAsync(cancellationToken)).To<TScalar>(), cancellationToken);
 
+	/// <summary>
+	/// Executes the command and returns the first result row as a serialization item collection.
+	/// </summary>
 	public ValueTask<SerializationItemCollection> ExecuteRow(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
 		=> Execute(input, async cmd =>
 		{
@@ -112,6 +135,9 @@ public sealed class DatabaseCommand : Disposable
 				return null;
 		}, cancellationToken);
 
+	/// <summary>
+	/// Executes the command and returns all result rows as a columnar serialization item collection.
+	/// </summary>
 	public ValueTask<SerializationItemCollection> ExecuteTable(SerializationItemCollection input, CancellationToken cancellationToken)
 	{
 		return Execute(input, async cmd =>
@@ -183,6 +209,7 @@ public sealed class DatabaseCommand : Disposable
 		return command;
 	}
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		_dbCommand.Dispose();

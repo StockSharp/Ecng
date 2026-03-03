@@ -4,6 +4,12 @@ using System.Data;
 
 using Nito.AsyncEx;
 
+/// <summary>
+/// Abstract base class for a many-relation list backed by <see cref="IStorage"/>.
+/// </summary>
+/// <typeparam name="TEntity">Entity type.</typeparam>
+/// <typeparam name="TId">Entity identifier type.</typeparam>
+/// <param name="storage">The underlying storage provider.</param>
 public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelationManyList<TEntity>
 {
 	#region private class RelationManyListEnumerator
@@ -56,12 +62,21 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	#endregion
 
+	/// <summary>
+	/// Gets or sets whether this list is read-only.
+	/// </summary>
 	public virtual bool IsReadOnly { get; protected set; }
 
 	private int? _count;
 
+	/// <summary>
+	/// Converts the list to an <see cref="IQueryable{T}"/>.
+	/// </summary>
 	public virtual IQueryable<TEntity> ToQueryable() => CreateQueryable();
 
+	/// <summary>
+	/// Creates an <see cref="IQueryable{T}"/> over the list data.
+	/// </summary>
 	protected virtual IQueryable<TEntity> CreateQueryable()
 	{
 		if (BulkLoad)
@@ -79,6 +94,10 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	}
 
 	private static Schema _meta;
+
+	/// <summary>
+	/// Gets the schema metadata for <typeparamref name="TEntity"/>.
+	/// </summary>
 	public static Schema Meta => _meta ??= SchemaRegistry.Get(typeof(TEntity));
 
 	private class StringIdComparer : IEqualityComparer<object>
@@ -110,10 +129,24 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		}
 	}
 
+	/// <summary>
+	/// Gets the underlying storage provider.
+	/// </summary>
 	public IStorage Storage { get; } = storage ?? throw new ArgumentNullException(nameof(storage));
 
+	/// <summary>
+	/// Gets or sets whether to load all entities in bulk on first access.
+	/// </summary>
 	public bool BulkLoad { get; set; }
+
+	/// <summary>
+	/// Gets or sets whether to cache the entity count.
+	/// </summary>
 	public bool CacheCount { get; set; }
+
+	/// <summary>
+	/// Gets or sets the cache expiration timeout.
+	/// </summary>
 	public TimeSpan CacheTimeOut { get; set; } = TimeSpan.MaxValue;
 
 	private DateTime? _cacheExpire;
@@ -130,6 +163,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		return _bulkInitialized;
 	}
 
+	/// <summary>
+	/// Resets the in-memory cache, forcing data to be reloaded from storage.
+	/// </summary>
 	public virtual void ResetCache()
 	{
 		var (sync, dict) = CachedEntities;
@@ -143,6 +179,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		_count = null;
 	}
 
+	/// <summary>
+	/// Reads an entity by its identifier.
+	/// </summary>
 	public virtual ValueTask<TEntity> ReadById(TId id, CancellationToken cancellationToken)
 	{
 		if (id is null)
@@ -158,6 +197,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	#region Save
 
+	/// <summary>
+	/// Saves an entity by adding it if new, or updating it if it already exists.
+	/// </summary>
 	public async ValueTask<TEntity> SaveAsync(TEntity item, CancellationToken cancellationToken)
 	{
 		if (Meta.Identity is null)
@@ -172,6 +214,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	#region Update
 
+	/// <summary>
+	/// Updates an existing entity in storage.
+	/// </summary>
 	public async ValueTask<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken)
 	{
 		if (IsReadOnly)
@@ -210,13 +255,22 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	#endregion
 
+	/// <summary>
+	/// Determines whether the specified entity has already been saved to storage.
+	/// </summary>
 	protected abstract ValueTask<bool> IsSaved(TEntity item, CancellationToken cancellationToken);
 
 	#region BaseListEx<E> Members
 
+	/// <summary>
+	/// Gets the count of non-deleted entities.
+	/// </summary>
 	public ValueTask<int> CountAsync(CancellationToken cancellationToken)
 		=> CountAsync(false, cancellationToken);
 
+	/// <summary>
+	/// Gets the count of entities, optionally including deleted ones.
+	/// </summary>
 	public async ValueTask<int> CountAsync(bool deleted, CancellationToken cancellationToken)
 	{
 		if (BulkLoad)
@@ -242,6 +296,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		}
 	}
 
+	/// <summary>
+	/// Adds a new entity to the list and storage.
+	/// </summary>
 	public async ValueTask<TEntity> AddAsync(TEntity item, CancellationToken cancellationToken)
 	{
 		if (IsReadOnly)
@@ -270,6 +327,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		return item;
 	}
 
+	/// <summary>
+	/// Removes all entities from the list and storage.
+	/// </summary>
 	public async ValueTask ClearAsync(CancellationToken cancellationToken)
 	{
 		if (IsReadOnly)
@@ -290,11 +350,20 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		_count = 0;
 	}
 
+	/// <summary>
+	/// Determines whether the list contains the specified entity.
+	/// </summary>
 	public abstract ValueTask<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken);
 
+	/// <summary>
+	/// Copies entities to the specified array starting at the given index.
+	/// </summary>
 	public async ValueTask CopyToAsync(TEntity[] array, int index, CancellationToken cancellationToken)
 		=> ((ICollection<TEntity>)await GetRangeAsync(index, long.MaxValue, false, default, default, cancellationToken)).CopyTo(array, index);
 
+	/// <summary>
+	/// Removes the specified entity from the list and storage.
+	/// </summary>
 	public async ValueTask<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
 	{
 		if (IsReadOnly)
@@ -322,6 +391,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	private ValueTask<IEnumerable<TEntity>> GetRangeAsync(CancellationToken cancellationToken)
 		=> GetRangeAsync(0, long.MaxValue, false, default, default, cancellationToken);
 
+	/// <summary>
+	/// Gets a range of entities with paging, sorting, and optional deleted filter.
+	/// </summary>
 	public async ValueTask<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, bool deleted, string sortExpression, ListSortDirection direction, CancellationToken cancellationToken)
 	{
 		var orderByColumn = sortExpression;
@@ -428,6 +500,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	private int _bufferSize = 20;
 
+	/// <summary>
+	/// Gets or sets the page size used for batched loading from storage.
+	/// </summary>
 	public int BufferSize
 	{
 		get => _bufferSize;
@@ -447,26 +522,47 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	#region Virtual CRUD Methods
 
+	/// <summary>
+	/// Gets the total count of entities from storage.
+	/// </summary>
 	protected virtual ValueTask<long> OnGetCount(bool deleted, CancellationToken cancellationToken)
 		=> Storage.GetCountAsync<TEntity>(cancellationToken);
 
+	/// <summary>
+	/// Adds an entity to the underlying storage.
+	/// </summary>
 	protected virtual ValueTask<TEntity> OnAdd(TEntity entity, CancellationToken cancellationToken)
 		=> Storage.AddAsync(entity, cancellationToken);
 
+	/// <summary>
+	/// Retrieves a page of entities from the underlying storage.
+	/// </summary>
 	protected virtual ValueTask<TEntity[]> OnGetGroup(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		=> Storage.GetGroupAsync<TEntity>(startIndex, count, deleted, orderBy, direction, cancellationToken);
 
+	/// <summary>
+	/// Updates an entity in the underlying storage.
+	/// </summary>
 	protected virtual ValueTask<TEntity> OnUpdate(TEntity entity, CancellationToken cancellationToken)
 		=> Storage.UpdateAsync(entity, cancellationToken);
 
+	/// <summary>
+	/// Removes an entity from the underlying storage.
+	/// </summary>
 	protected virtual ValueTask<bool> OnRemove(TEntity entity, CancellationToken cancellationToken)
 		=> Storage.RemoveAsync(entity, cancellationToken);
 
+	/// <summary>
+	/// Clears all entities from the underlying storage.
+	/// </summary>
 	protected virtual ValueTask OnClear(CancellationToken cancellationToken)
 		=> Storage.ClearAsync<TEntity>(cancellationToken);
 
 	#endregion
 
+	/// <summary>
+	/// Removes an entity by its identifier.
+	/// </summary>
 	public async ValueTask<bool> RemoveById(TId id, CancellationToken cancellationToken)
 		=> await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
 
@@ -478,6 +574,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		return ((IDbPersistable)entity).GetIdentity().To<TId>();
 	}
 
+	/// <summary>
+	/// Tries to add an entity, returning false if it already exists.
+	/// </summary>
 	public async ValueTask<bool> TryAddAsync(TEntity entity, CancellationToken cancellationToken)
 	{
 		if (await ContainsAsync(entity, cancellationToken))

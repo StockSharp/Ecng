@@ -13,6 +13,9 @@ using Ecng.Data.Sql;
 
 using Nito.AsyncEx;
 
+/// <summary>
+/// Provides database access and entity persistence via an ORM layer.
+/// </summary>
 public class Database : Disposable, IStorage
 {
 	private class BulkLoadInfo
@@ -200,6 +203,9 @@ public class Database : Disposable, IStorage
 
 	#region Database.ctor()
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Database"/> class.
+	/// </summary>
 	public Database(string name, string connectionString, DbProviderFactory factory, ISqlDialect dialect)
 	{
 		Debug.WriteLine($"{nameof(Database)}.ctor()");
@@ -210,12 +216,18 @@ public class Database : Disposable, IStorage
 		Dialect = dialect ?? throw new ArgumentNullException(nameof(dialect));
 	}
 
+	/// <summary>
+	/// Gets the query provider used to generate SQL commands.
+	/// </summary>
 	public QueryProvider QueryProvider { get; } = new();
 
 	#endregion
 
 	private string _name;
 
+	/// <summary>
+	/// Gets or sets the database name.
+	/// </summary>
 	public string Name
 	{
 		get => _name;
@@ -224,6 +236,9 @@ public class Database : Disposable, IStorage
 
 	private string _connectionString;
 
+	/// <summary>
+	/// Gets or sets the database connection string.
+	/// </summary>
 	public string ConnectionString
 	{
 		get => _connectionString;
@@ -232,6 +247,9 @@ public class Database : Disposable, IStorage
 
 	private DbProviderFactory _factory;
 
+	/// <summary>
+	/// Gets or sets the <see cref="DbProviderFactory"/> used to create database objects.
+	/// </summary>
 	public DbProviderFactory Factory
 	{
 		get => _factory;
@@ -240,21 +258,37 @@ public class Database : Disposable, IStorage
 
 	private ISqlDialect _dialect;
 
+	/// <summary>
+	/// Gets or sets the SQL dialect used for query generation.
+	/// </summary>
 	public ISqlDialect Dialect
 	{
 		get => _dialect;
 		set => _dialect = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
+	/// <summary>
+	/// Gets or sets the default command type for database commands.
+	/// </summary>
 	public CommandType CommandType { get; set; } = CommandType.Text;
+
+	/// <summary>
+	/// Gets or sets the culture used for data conversions.
+	/// </summary>
 	public CultureInfo CultureInfo { get; set; } = CultureInfo.InvariantCulture;
 
 	private ValueTask<T> Do<T>(Func<ValueTask<T>> func) => CultureInfo.DoInCulture(func);
 
+	/// <summary>
+	/// Gets or sets whether delete-all operations are permitted.
+	/// </summary>
 	public bool AllowDeleteAll { get; set; }
 
 	void IStorage.AddBulkLoad<TEntity>() => _bulkLoad.Add(typeof(TEntity), new(this, SchemaRegistry.Get(typeof(TEntity))));
 
+	/// <summary>
+	/// Creates and opens a new database connection asynchronously.
+	/// </summary>
 	public async ValueTask<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken)
 	{
 		var connection = Factory.CreateConnection();
@@ -279,6 +313,9 @@ public class Database : Disposable, IStorage
 
 	#region GetCommand
 
+	/// <summary>
+	/// Gets or creates a cached <see cref="DatabaseCommand"/> for the specified schema and command type.
+	/// </summary>
 	public virtual ValueTask<DatabaseCommand> GetCommand(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns, CancellationToken cancellationToken)
 	{
 		var commandQuery = QueryProvider.Create(meta, type, keyColumns, valueColumns);
@@ -354,6 +391,9 @@ public class Database : Disposable, IStorage
 
 	#endregion
 
+	/// <summary>
+	/// Tests the internal cache for incomplete entries and throws if any are found.
+	/// </summary>
 	public async ValueTask Test(CancellationToken cancellationToken)
 	{
 		using var _ = await _cacheLock.LockAsync(cancellationToken);
@@ -367,6 +407,9 @@ public class Database : Disposable, IStorage
 
 	#region GetCountAsync
 
+	/// <summary>
+	/// Gets the total number of entities of type <typeparamref name="TEntity"/> in the database.
+	/// </summary>
 	public virtual async ValueTask<long> GetCountAsync<TEntity>(CancellationToken cancellationToken)
 	{
 		var meta = SchemaRegistry.Get(typeof(TEntity));
@@ -384,6 +427,9 @@ public class Database : Disposable, IStorage
 
 	#region CreateAsync
 
+	/// <summary>
+	/// Creates (inserts) a new entity in the database asynchronously.
+	/// </summary>
 	public virtual ValueTask<object> CreateAsync(Schema meta, object entity, CancellationToken cancellationToken)
 	{
 		if (entity.IsNull(true))
@@ -440,6 +486,9 @@ public class Database : Disposable, IStorage
 
 	#region ReadAsync
 
+	/// <summary>
+	/// Reads a single entity by identity from the database asynchronously.
+	/// </summary>
 	public virtual async ValueTask<object> ReadAsync(Schema meta, object id, Func<Schema, ValueTask<DatabaseCommand>> getCommand, Func<Schema, ValueTask<SerializationItem>> getIdItem, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(meta);
@@ -515,6 +564,9 @@ public class Database : Disposable, IStorage
 		});
 	}
 
+	/// <summary>
+	/// Reads a single entity using the specified command and input parameters.
+	/// </summary>
 	public virtual ValueTask<object> Read(DatabaseCommand command, Schema meta, SerializationItemCollection input, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(command);
@@ -548,6 +600,9 @@ public class Database : Disposable, IStorage
 
 	#region ReadAllAsync
 
+	/// <summary>
+	/// Reads a paged set of entities from the database asynchronously.
+	/// </summary>
 	public virtual async ValueTask<object[]> ReadAllAsync(Schema meta, long startIndex, long count, bool deleted, string orderByColumn, ListSortDirection direction, CancellationToken cancellationToken)
 	{
 		ArgumentOutOfRangeException.ThrowIfNegative(startIndex);
@@ -569,6 +624,9 @@ public class Database : Disposable, IStorage
 		return await ReadAllAsync(command, meta, new SerializationItemCollection(), cancellationToken);
 	}
 
+	/// <summary>
+	/// Reads all entities matching the specified command and input parameters.
+	/// </summary>
 	public virtual ValueTask<object[]> ReadAllAsync(DatabaseCommand command, Schema meta, SerializationItemCollection input, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(command);
@@ -584,6 +642,9 @@ public class Database : Disposable, IStorage
 
 	#region UpdateAsync
 
+	/// <summary>
+	/// Updates an existing entity in the database asynchronously.
+	/// </summary>
 	public virtual ValueTask<TEntity> UpdateAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
 	{
 		if (entity.IsNull(true))
@@ -642,6 +703,9 @@ public class Database : Disposable, IStorage
 
 	#region DeleteAsync
 
+	/// <summary>
+	/// Deletes an entity from the database asynchronously and returns the number of affected rows.
+	/// </summary>
 	public virtual ValueTask<int> DeleteAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
 	{
 		var meta = SchemaRegistry.Get(typeof(TEntity));
@@ -686,6 +750,9 @@ public class Database : Disposable, IStorage
 
 	#region DeleteAllAsync
 
+	/// <summary>
+	/// Deletes all entities of type <typeparamref name="TEntity"/> from the database.
+	/// </summary>
 	public virtual async ValueTask DeleteAllAsync<TEntity>(CancellationToken cancellationToken)
 	{
 		if (!AllowDeleteAll)
@@ -724,6 +791,9 @@ public class Database : Disposable, IStorage
 
 	#endregion
 
+	/// <summary>
+	/// Executes a database command, optionally returning output values.
+	/// </summary>
 	public virtual async ValueTask<SerializationItemCollection> Execute(DatabaseCommand command, SerializationItemCollection source, bool needRetVal, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(command);
@@ -1004,6 +1074,7 @@ public class Database : Disposable, IStorage
 
 #region Disposable Members
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		//foreach (var command in _commands.Values)
@@ -1173,6 +1244,9 @@ public class Database : Disposable, IStorage
 	TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
 		=> AsyncHelper.Run(() => ExecuteResultAsync<TSource, TResult>(expression));
 
+	/// <summary>
+	/// Executes a LINQ expression and returns a single result asynchronously.
+	/// </summary>
 	public async ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression)
 	{
 		if (_bulkLoad.TryGetValue(typeof(TSource), out var info))

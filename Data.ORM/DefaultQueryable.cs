@@ -2,8 +2,17 @@
 
 using System.Collections;
 
+/// <summary>
+/// Default LINQ queryable implementation for database entities.
+/// </summary>
+/// <typeparam name="T">The element type.</typeparam>
 public class DefaultQueryable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>
 {
+	/// <summary>
+	/// Initializes a new instance with the specified query provider and expression.
+	/// </summary>
+	/// <param name="provider">The query provider.</param>
+	/// <param name="expression">The LINQ expression tree.</param>
 	public DefaultQueryable(IQueryProvider provider, Expression expression)
 	{
 		if (expression != null && !typeof(IQueryable<T>).IsAssignableFrom(expression.Type))

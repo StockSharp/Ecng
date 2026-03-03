@@ -1,7 +1,13 @@
 namespace Ecng.Data;
 
+/// <summary>
+/// Helper methods for creating and working with database command parameters.
+/// </summary>
 public static class DatabaseCommandHelper
 {
+	/// <summary>
+	/// Converts a CLR <see cref="Type"/> to the corresponding <see cref="DbType"/>.
+	/// </summary>
 	public static DbType ToDbType(this Type type)
 	{
 		if (type == typeof(TimeSpan))
@@ -12,6 +18,9 @@ public static class DatabaseCommandHelper
 		return type.To<DbType>();
 	}
 
+	/// <summary>
+	/// Creates a <see cref="DbParameter"/> with the specified name, direction, type, and value.
+	/// </summary>
 	public static DbParameter CreateDbParameter(this DbProviderFactory factory, string name, ParameterDirection direction, DbType type, object value)
 	{
 		ArgumentNullException.ThrowIfNull(factory);
@@ -26,6 +35,9 @@ public static class DatabaseCommandHelper
 		return parameter;
 	}
 
+	/// <summary>
+	/// Gets the value at the specified column index, returning null for DBNull and normalizing DateTime kinds.
+	/// </summary>
 	public static object GetValueEx(this DbDataReader reader, int idx)
 	{
 		ArgumentNullException.ThrowIfNull(reader);

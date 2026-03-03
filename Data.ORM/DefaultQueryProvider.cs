@@ -5,6 +5,11 @@ interface IDefaultQueryProvider
 	ValueTask<IQueryable> TryInitBulkLoad(CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Default LINQ query provider for database entities.
+/// </summary>
+/// <typeparam name="TEntity">The entity type.</typeparam>
+/// <param name="context">The query execution context.</param>
 public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvider, IDefaultQueryProvider
 {
 	private readonly IQueryContext _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -16,6 +21,10 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 	private readonly MethodInfo _execResultAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResultAsync));
 	private readonly MethodInfo _execResult = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResult));
 
+	/// <summary>
+	/// Initializes a new instance using a relation-many list as the data source.
+	/// </summary>
+	/// <param name="list">The relation-many list.</param>
 	internal DefaultQueryProvider(IRelationManyList<TEntity> list)
 		: this(list.CheckOnNull(nameof(list)).Storage)
 	{

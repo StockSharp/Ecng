@@ -1,9 +1,15 @@
 namespace Ecng.Data.Sql;
 
+/// <summary>
+/// Builds and caches SQL <see cref="Query"/> objects for standard CRUD operations.
+/// </summary>
 public class QueryProvider
 {
 	private readonly Dictionary<(Schema, SqlCommandTypes, string), Query> _queries = [];
 
+	/// <summary>
+	/// Creates or retrieves a cached SQL query for the specified schema, command type, and columns.
+	/// </summary>
 	public Query Create(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns)
 	{
 		ArgumentNullException.ThrowIfNull(meta);

@@ -4,19 +4,31 @@ using System.Reflection;
 
 using Ecng.Common;
 
+/// <summary>
+/// Global registry for entity <see cref="Schema"/> metadata.
+/// </summary>
 public static class SchemaRegistry
 {
 	private static readonly Dictionary<Type, Schema> _cache = [];
 
+	/// <summary>
+	/// Registers a schema for the given entity type.
+	/// </summary>
 	public static void Register(Schema meta)
 	{
 		ArgumentNullException.ThrowIfNull(meta);
 		_cache[meta.EntityType] = meta;
 	}
 
+	/// <summary>
+	/// Tries to get a registered schema for the specified entity type.
+	/// </summary>
 	public static bool TryGet(Type entityType, out Schema meta)
 		=> _cache.TryGetValue(entityType, out meta);
 
+	/// <summary>
+	/// Gets the schema for the specified entity type, creating one via reflection if not registered.
+	/// </summary>
 	public static Schema Get(Type entityType)
 	{
 		if (_cache.TryGetValue(entityType, out var meta))
