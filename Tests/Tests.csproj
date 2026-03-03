@@ -66,5 +66,6 @@
     <None Remove="Nuget\**" />
     <Compile Remove="Data\OrmIntegrationTests.cs" />
     <Compile Remove="Data\OrmTestEntities.cs" />
+    <Compile Remove="Data\QueryProviderTests.cs" />
   </ItemGroup>
 </Project>
