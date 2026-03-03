@@ -103,14 +103,14 @@ public class OrmIntegrationTests : BaseTestClass
 	private async Task ClearCache()
 		=> await Storage.ClearCacheAsync(CancellationToken);
 
-	private async Task<TestItem> InsertItem(string name = "Test", int priority = 1, decimal price = 9.99m, bool isActive = true, int? nullableValue = null)
+	private async Task<TestItem> InsertItem(string name = "Test", int priority = 1, decimal price = 9.99m, bool isActive = true, int? nullableValue = null, DateTime? createdAt = null)
 	{
 		var item = new TestItem
 		{
 			Name = name,
 			Priority = priority,
 			Price = price,
-			CreatedAt = DateTime.UtcNow,
+			CreatedAt = createdAt ?? DateTime.UtcNow,
 			IsActive = isActive,
 			NullableValue = nullableValue,
 		};
@@ -773,9 +773,10 @@ public class OrmIntegrationTests : BaseTestClass
 	public async Task DateTime_OrderByCreatedAt()
 	{
 		EnsureDb();
-		await InsertItem("First");
-		await InsertItem("Second");
-		await InsertItem("Third");
+		var baseTime = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+		await InsertItem("First", createdAt: baseTime);
+		await InsertItem("Second", createdAt: baseTime.AddHours(1));
+		await InsertItem("Third", createdAt: baseTime.AddHours(2));
 
 		var results = await Query<TestItem>()
 			.OrderByDescending(x => x.CreatedAt)

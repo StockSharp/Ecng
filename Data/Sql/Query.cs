@@ -763,7 +763,7 @@ public class Query
 					.AppendLine();
 		}
 
-		builder.RemoveLast(3);
+		builder.RemoveLast(1 + Environment.NewLine.Length); // remove trailing comma + newline
 		builder.AppendLine();
 	}
 
