@@ -52,6 +52,7 @@
     <ProjectReference Include="..\Data.Ado\Data.Ado.csproj" />
     <ProjectReference Include="..\Data.SqlServer\Data.SqlServer.csproj" />
     <ProjectReference Include="..\Data.SQLite\Data.SQLite.csproj" />
+    <ProjectReference Include="..\Data.PostgreSql\Data.PostgreSql.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
     <ProjectReference Include="..\Data.ORM\Data.ORM.csproj" />

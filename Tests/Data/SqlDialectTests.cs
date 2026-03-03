@@ -10,13 +10,14 @@ public class SqlDialectTests : BaseTestClass
 	{
 		"SqlServer" => SqlServerDialect.Instance,
 		"SQLite" => SQLiteDialect.Instance,
+		"PostgreSql" => PostgreSqlDialect.Instance,
 		_ => throw new ArgumentException($"Unknown dialect: {dialectName}")
 	};
 
 	private static string Quote(string dialectName, string identifier) => dialectName switch
 	{
 		"SqlServer" => $"[{identifier}]",
-		"SQLite" => $"\"{identifier}\"",
+		"SQLite" or "PostgreSql" => $"\"{identifier}\"",
 		_ => identifier
 	};
 
@@ -25,6 +26,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateSelect_Basic(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -38,6 +40,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateSelect_WithWhere(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -52,6 +55,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "OFFSET 10 ROWS", "FETCH NEXT 20 ROWS ONLY")]
 	[DataRow("SQLite", "OFFSET 10", "LIMIT 20")]
+	[DataRow("PostgreSql", "OFFSET 10", "LIMIT 20")]
 	public void CreateSelect_WithPagination(string dialectName, string expectedOffset, string expectedLimit)
 	{
 		var dialect = GetDialect(dialectName);
@@ -70,6 +74,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateInsert(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -90,6 +95,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateUpdate(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -111,6 +117,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateDelete(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -129,6 +136,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateUpsert_SingleKey(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -144,6 +152,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateUpsert_MultipleKeys_ShouldUseAND(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -169,6 +178,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateUpsert_AllColumnsAreKeys_ShouldProduceValidSql(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -202,6 +212,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_Equal(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -215,6 +226,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_NotEqual(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -228,6 +240,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_Greater(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -241,6 +254,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_Less(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -257,6 +271,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_NullEqual_ShouldUseIsNull(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -273,6 +288,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildCondition_NullNotEqual_ShouldUseIsNotNull(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -290,6 +306,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void CreateBuildInCondition(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -310,6 +327,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void JoinConditions_MultipleConditions(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -334,6 +352,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "[Column]")]
 	[DataRow("SQLite", "\"Column\"")]
+	[DataRow("PostgreSql", "\"Column\"")]
 	public void QuoteIdentifier(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);
@@ -348,6 +367,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "@")]
 	[DataRow("SQLite", "@")]
+	[DataRow("PostgreSql", "@")]
 	public void ParameterPrefix(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);

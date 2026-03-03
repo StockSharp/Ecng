@@ -22,6 +22,7 @@
   <Project Path="Data.Ado/Data.Ado.csproj" />
   <Project Path="Data.SqlServer/Data.SqlServer.csproj" />
   <Project Path="Data.SQLite/Data.SQLite.csproj" />
+  <Project Path="Data.PostgreSql/Data.PostgreSql.csproj" />
   <Project Path="Drawing/Drawing.csproj" />
   <Project Path="GeneticSharp/GeneticSharp.csproj" />
   <Project Path="Excel/Excel.csproj" />
