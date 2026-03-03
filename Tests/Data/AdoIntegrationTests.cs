@@ -301,6 +301,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 
 [TestClass]
 [TestCategory("Integration")]
+[TestCategory("Database")]
 [TestCategory("SqlServer")]
 [DoNotParallelize]
 public class AdoSqlServerIntegrationTests : AdoIntegrationTestsBase
@@ -339,6 +340,7 @@ public class AdoSqlServerIntegrationTests : AdoIntegrationTestsBase
 
 [TestClass]
 [TestCategory("Integration")]
+[TestCategory("Database")]
 [TestCategory("PostgreSql")]
 [DoNotParallelize]
 public class AdoPostgreSqlIntegrationTests : AdoIntegrationTestsBase
@@ -375,6 +377,7 @@ public class AdoPostgreSqlIntegrationTests : AdoIntegrationTestsBase
 
 [TestClass]
 [TestCategory("Integration")]
+[TestCategory("Database")]
 [TestCategory("SQLite")]
 [DoNotParallelize]
 public class AdoSQLiteIntegrationTests : AdoIntegrationTestsBase

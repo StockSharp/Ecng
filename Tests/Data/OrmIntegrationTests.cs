@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient;
 
 [TestClass]
 [TestCategory("Integration")]
+[TestCategory("Database")]
 [DoNotParallelize]
 public class OrmIntegrationTests : BaseTestClass
 {

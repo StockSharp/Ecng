@@ -115,7 +115,7 @@ jobs:
         env:
           PG_CONNECTION_STRING: "Host=localhost;Port=5432;Database=ecng_test;Username=ecng;Password=ecng_test_ci"
           SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=ecng_test;User Id=sa;Password=EcngTest_CI_2024!;TrustServerCertificate=True"
-        run: dotnet test Tests/Tests.csproj --no-build --configuration Release --settings Tests/test.runsettings --filter "TestCategory=Integration" -f net10.0
+        run: dotnet test Tests/Tests.csproj --no-build --configuration Release --settings Tests/test.runsettings --filter "TestCategory=Database" -f net10.0
 
   azurite:
     name: Azure (Azurite)

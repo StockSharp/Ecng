@@ -15,6 +15,7 @@ using Microsoft.Data.Sqlite;
 /// </summary>
 [TestClass]
 [TestCategory("Integration")]
+[TestCategory("Database")]
 [DoNotParallelize]
 public class DatabaseTableIntegrationTests : BaseTestClass
 {
