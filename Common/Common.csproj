@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(MsExtensionsVer)" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
+
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
 	  
     <ProjectReference Include="..\SmartFormat\SmartFormat.csproj" />
