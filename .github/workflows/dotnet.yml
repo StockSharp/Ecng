@@ -90,11 +90,18 @@ jobs:
             6.0.x
             10.0.x
 
-      - name: Create SQL Server test database
+      - name: Wait for SQL Server and create test database
         run: |
-          for i in {1..30}; do
-            /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q "CREATE DATABASE ecng_test" 2>/dev/null && break || \
-            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -Q "CREATE DATABASE ecng_test" 2>/dev/null && break || \
+          # Install sqlcmd
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
+          echo "$(curl -sSL https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list)" | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
+          sudo apt-get update -qq
+          sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 > /dev/null 2>&1 || true
+
+          # Wait for SQL Server to be ready and create database
+          for i in $(seq 1 30); do
+            /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q "CREATE DATABASE ecng_test" 2>/dev/null && echo "Database created" && break
+            echo "Waiting for SQL Server... ($i)"
             sleep 2
           done
 
@@ -108,7 +115,7 @@ jobs:
         env:
           PG_CONNECTION_STRING: "Host=localhost;Port=5432;Database=ecng_test;Username=ecng;Password=ecng_test_ci"
           SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=ecng_test;User Id=sa;Password=EcngTest_CI_2024!;TrustServerCertificate=True"
-        run: dotnet test Tests/Tests.csproj --no-build --configuration Release --settings Tests/test.runsettings --filter "TestCategory=Integration"
+        run: dotnet test Tests/Tests.csproj --no-build --configuration Release --settings Tests/test.runsettings --filter "TestCategory=Integration" -f net10.0
 
   azurite:
     name: Azure (Azurite)

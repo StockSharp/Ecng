@@ -297,6 +297,8 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 
 #region SQL Server
 
+#if !NET6_0
+
 [TestClass]
 [TestCategory("Integration")]
 [TestCategory("SqlServer")]
@@ -326,6 +328,8 @@ public class AdoSqlServerIntegrationTests : AdoIntegrationTestsBase
 	[TestMethod] public async Task BulkInsert() => await BulkInsert_Test();
 	[TestMethod] public async Task SelectWithPagination() => await SelectWithPagination_Test();
 }
+
+#endif
 
 #endregion
 
