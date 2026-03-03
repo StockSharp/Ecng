@@ -1,5 +1,6 @@
 namespace Ecng.Serialization;
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
 using Ecng.Common;
@@ -9,7 +10,7 @@ using Ecng.Common;
 /// </summary>
 public static class SchemaRegistry
 {
-	private static readonly Dictionary<Type, Schema> _cache = [];
+	private static readonly ConcurrentDictionary<Type, Schema> _cache = [];
 
 	/// <summary>
 	/// Registers a schema for the given entity type.
@@ -30,14 +31,7 @@ public static class SchemaRegistry
 	/// Gets the schema for the specified entity type, creating one via reflection if not registered.
 	/// </summary>
 	public static Schema Get(Type entityType)
-	{
-		if (_cache.TryGetValue(entityType, out var meta))
-			return meta;
-
-		meta = CreateFromReflection(entityType);
-		_cache[entityType] = meta;
-		return meta;
-	}
+		=> _cache.GetOrAdd(entityType, CreateFromReflection);
 
 	private static Schema CreateFromReflection(Type entityType)
 	{
