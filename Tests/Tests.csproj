@@ -18,6 +18,9 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MsDataSqliteVer)" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net6.0' ">
+    <PackageReference Include="Npgsql" Version="$(NpgsqlVer)" />
+  </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

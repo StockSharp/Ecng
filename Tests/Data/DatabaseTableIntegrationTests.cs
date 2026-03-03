@@ -25,9 +25,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	public static void ClassInit(TestContext context)
 	{
 #if NET10_0_OR_GREATER
-		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SqlServer, SqlClientFactory.Instance);
+		SqlServerDialect.Register(SqlClientFactory.Instance);
 #endif
-		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SQLite, SqliteFactory.Instance);
+		SQLiteDialect.Register(SqliteFactory.Instance);
 
 		// Use Config temp folder (unique per test run, auto-cleaned)
 		var tempDir = LocalFileSystem.Instance.GetTempPath();
@@ -48,7 +48,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 			DatabaseProviderRegistry.SqlServer => new()
 			{
 				Provider = DatabaseProviderRegistry.SqlServer,
-				ConnectionString = GetSecret("DB_CONNECTION_STRING"),
+				ConnectionString = GetSecret("SQLSERVER_CONNECTION_STRING"),
 			},
 			DatabaseProviderRegistry.SQLite => new()
 			{

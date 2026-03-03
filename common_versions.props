@@ -40,5 +40,6 @@
     <MsDataSqliteVer>9.*</MsDataSqliteVer>
     <OpenXmlVer>3.*</OpenXmlVer>
     <SharpCompressVer>0.38.*</SharpCompressVer>
+    <NpgsqlVer>10.*</NpgsqlVer>
   </PropertyGroup>
 </Project>

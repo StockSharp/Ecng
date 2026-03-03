@@ -23,7 +23,7 @@ public class OrmIntegrationTests : BaseTestClass
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
-		_connectionString = TryGetSecret("DB_CONNECTION_STRING");
+		_connectionString = TryGetSecret("SQLSERVER_CONNECTION_STRING");
 
 		if (_connectionString.IsEmpty())
 			return;
@@ -65,7 +65,7 @@ public class OrmIntegrationTests : BaseTestClass
 	private void EnsureDb()
 	{
 		if (_db is null)
-			Inconclusive("DB_CONNECTION_STRING secret not configured.");
+			Inconclusive("SQLSERVER_CONNECTION_STRING secret not configured.");
 	}
 
 	[TestInitialize]

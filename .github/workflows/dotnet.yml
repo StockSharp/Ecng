@@ -45,7 +45,70 @@ jobs:
           NUGET_PRIVATE_API_KEY: ${{ secrets.NUGET_PRIVATE_API_KEY }}
           NUGET_PRIVATE_PACKAGE_ID: ${{ secrets.NUGET_PRIVATE_PACKAGE_ID }}
           NUGET_PRIVATE_PACKAGE_VERSION: ${{ secrets.NUGET_PRIVATE_PACKAGE_VERSION }}
-        run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure"
+        run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure&TestCategory!=Integration"
+
+  database:
+    name: Database Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ecng
+          POSTGRES_PASSWORD: ecng_test_ci
+          POSTGRES_DB: ecng_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ecng"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: EcngTest_CI_2024!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            10.0.x
+
+      - name: Create SQL Server test database
+        run: |
+          for i in {1..30}; do
+            /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q "CREATE DATABASE ecng_test" 2>/dev/null && break || \
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -Q "CREATE DATABASE ecng_test" 2>/dev/null && break || \
+            sleep 2
+          done
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run database integration tests
+        env:
+          PG_CONNECTION_STRING: "Host=localhost;Port=5432;Database=ecng_test;Username=ecng;Password=ecng_test_ci"
+          SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=ecng_test;User Id=sa;Password=EcngTest_CI_2024!;TrustServerCertificate=True"
+        run: dotnet test Tests/Tests.csproj --no-build --configuration Release --settings Tests/test.runsettings --filter "TestCategory=Integration"
 
   azurite:
     name: Azure (Azurite)

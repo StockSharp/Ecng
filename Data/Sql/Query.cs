@@ -551,7 +551,11 @@ public class Query
 	/// <summary>
 	/// Creates a CREATE TABLE query.
 	/// </summary>
-	public static Query CreateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn = null)
+	/// <param name="tableName">Table name.</param>
+	/// <param name="columns">Column definitions (name → CLR type).</param>
+	/// <param name="identityColumn">Optional auto-increment identity column name.</param>
+	/// <param name="primaryKeyColumns">Optional primary key column(s) (without auto-increment). Ignored when <paramref name="identityColumn"/> is set.</param>
+	public static Query CreateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn = null, IEnumerable<string> primaryKeyColumns = null)
 	{
 		return new Query().AddAction((dialect, sb) =>
 		{
@@ -562,6 +566,10 @@ public class Query
 					def += " " + dialect.GetIdentityColumnSuffix();
 				return def;
 			}).JoinCommaSpace();
+
+			var pkCols = identityColumn is null ? primaryKeyColumns?.ToArray() : null;
+			if (pkCols is not null && pkCols.Length > 0)
+				colDefs += ", PRIMARY KEY (" + pkCols.Select(dialect.QuoteIdentifier).JoinCommaSpace() + ")";
 
 			dialect.AppendCreateTable(sb, tableName, colDefs);
 		});

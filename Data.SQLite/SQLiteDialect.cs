@@ -90,7 +90,7 @@ public class SQLiteDialect : SqlDialectBase
 	public override string NewId() => "lower(hex(randomblob(16)))";
 
 	/// <inheritdoc />
-	public override string GetIdentityColumnSuffix() => "INTEGER PRIMARY KEY AUTOINCREMENT";
+	public override string GetIdentityColumnSuffix() => "PRIMARY KEY AUTOINCREMENT";
 
 	/// <inheritdoc />
 	public override void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs)
