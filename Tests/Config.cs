@@ -1,5 +1,6 @@
 namespace Ecng.Tests;
 
+using Ecng.IO;
 using Ecng.Reflection;
 
 [TestClass]

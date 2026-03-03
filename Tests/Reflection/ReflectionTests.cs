@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Tests.Reflection;
 
 using Ecng.Reflection;
+using Ecng.Serialization;
 
 [TestClass]
 public class ReflectionTests : BaseTestClass

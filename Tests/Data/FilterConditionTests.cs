@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Data;
 
+using Ecng.Data;
+
 [TestClass]
 public class FilterConditionTests : BaseTestClass
 {

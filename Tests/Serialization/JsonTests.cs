@@ -1,5 +1,6 @@
 namespace Ecng.Tests.Serialization;
 
+using Ecng.Serialization;
 using Ecng.Reflection;
 
 using Newtonsoft.Json.Linq;

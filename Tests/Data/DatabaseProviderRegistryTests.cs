@@ -2,6 +2,8 @@ namespace Ecng.Tests.Data;
 
 using System.Data.Common;
 
+using Ecng.Data;
+
 using Microsoft.Data.Sqlite;
 
 [TestClass]

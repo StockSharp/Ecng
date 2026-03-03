@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Tests.Common;
 
+using Ecng.Serialization;
+
 [TestClass]
 public class TupleTests
 {

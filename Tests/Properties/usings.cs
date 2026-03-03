@@ -18,12 +18,6 @@ global using global::System.Threading.Tasks;
 
 global using global::Ecng.Collections;
 global using global::Ecng.Common;
-global using global::Ecng.ComponentModel;
-global using global::Ecng.Data;
-global using global::Ecng.IO;
-global using global::Ecng.Logging;
-global using global::Ecng.Net;
-global using global::Ecng.Serialization;
 global using global::Ecng.UnitTesting;
 
 global using global::Microsoft.VisualStudio.TestTools.UnitTesting;

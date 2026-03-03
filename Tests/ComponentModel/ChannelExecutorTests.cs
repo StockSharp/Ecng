@@ -2,6 +2,9 @@ namespace Ecng.Tests.ComponentModel;
 
 using System.Threading.Channels;
 
+using Ecng.ComponentModel;
+using Ecng.IO;
+
 [TestClass]
 public class ChannelExecutorTests : BaseTestClass
 {

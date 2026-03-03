@@ -2,6 +2,8 @@ namespace Ecng.Tests.ComponentModel;
 
 using System.Collections.Specialized;
 
+using Ecng.ComponentModel;
+
 [TestClass]
 public class ObservableCollectionExTests : BaseTestClass
 {

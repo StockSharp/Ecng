@@ -3,6 +3,8 @@ namespace Ecng.Tests.Net;
 using System.Net.Mail;
 using System.Net.Mime;
 
+using Ecng.Net;
+
 [TestClass]
 public class MailHelperTests : BaseTestClass
 {

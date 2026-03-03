@@ -1,5 +1,7 @@
 namespace Ecng.Tests.IO;
 
+using Ecng.IO;
+
 /// <summary>
 /// Tests for file system size limiting functionality (TotalSize, MaxSize, OverflowBehavior).
 /// </summary>

@@ -2,6 +2,7 @@ namespace Ecng.Tests.Data;
 
 using System.Data.Common;
 
+using Ecng.Data;
 using Ecng.Data.Sql;
 
 /// <summary>

@@ -4,6 +4,7 @@ using Ecng.Compilation;
 using Ecng.Compilation.FSharp;
 using Ecng.Compilation.Python;
 using Ecng.Compilation.Roslyn;
+using Ecng.IO;
 
 [TestClass]
 public class CompilerTests : BaseTestClass

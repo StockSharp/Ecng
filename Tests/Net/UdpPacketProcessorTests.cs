@@ -2,6 +2,8 @@ namespace Ecng.Tests.Net;
 
 using System.Buffers;
 
+using Ecng.Net;
+
 /// <summary>
 /// Tests for UDP packet processor layer.
 /// </summary>

@@ -1,5 +1,6 @@
 namespace Ecng.Tests.Data;
 
+using Ecng.Data;
 using Ecng.Data.Sql;
 
 [TestClass]

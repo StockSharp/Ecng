@@ -1,5 +1,7 @@
 namespace Ecng.Tests.ComponentModel;
 
+using Ecng.ComponentModel;
+
 [TestClass]
 public class LifetimeServiceTests : BaseTestClass
 {

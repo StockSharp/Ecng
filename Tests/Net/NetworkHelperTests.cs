@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.Net;
+
 using SixLabors.ImageSharp;
 
 [TestClass]

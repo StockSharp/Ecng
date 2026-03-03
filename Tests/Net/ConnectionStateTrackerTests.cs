@@ -1,5 +1,8 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.ComponentModel;
+using Ecng.Net;
+
 [TestClass]
 public class ConnectionStateTrackerTests : BaseTestClass
 {

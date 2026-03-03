@@ -2,6 +2,8 @@ namespace Ecng.Tests.Net.Mocks;
 
 using System.Net.Http.Formatting;
 
+using Ecng.Net;
+
 /// <summary>
 /// Exact copy of the old RestApiFormUrlEncodedMediaTypeFormatter (pre-refactor)
 /// that inherited from Microsoft's FormUrlEncodedMediaTypeFormatter.

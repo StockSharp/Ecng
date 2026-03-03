@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Serialization;
 
+using Ecng.Serialization;
+
 [TestClass]
 public class JsonHelperTests
 {

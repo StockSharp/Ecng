@@ -3,6 +3,8 @@ namespace Ecng.Tests.Common;
 using System.Collections.ObjectModel;
 using System.Data;
 
+using Ecng.ComponentModel;
+
 [TestClass]
 public class ConverterTest
 {

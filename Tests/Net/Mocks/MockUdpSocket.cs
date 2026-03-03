@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.Net;
+
 /// <summary>
 /// Mock UDP socket for testing.
 /// </summary>

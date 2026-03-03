@@ -3,6 +3,8 @@ namespace Ecng.Tests.ComponentModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
+using Ecng.ComponentModel;
+
 [TestClass]
 public class ExtensionsTests : BaseTestClass
 {

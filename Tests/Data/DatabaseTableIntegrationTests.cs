@@ -1,5 +1,8 @@
 namespace Ecng.Tests.Data;
 
+using Ecng.Data;
+using Ecng.IO;
+
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 

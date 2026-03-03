@@ -2,6 +2,7 @@
 
 using System.IO.Compression;
 
+using Ecng.IO;
 using Ecng.IO.Compression;
 
 using SharpCompress.Compressors.LZMA;

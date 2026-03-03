@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.Logging;
+
 class MockLogReceiver : BaseLogReceiver
 {
 	public ConcurrentBag<LogMessage> LoggedMessages { get; } = [];

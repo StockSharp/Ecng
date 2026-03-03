@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.Net;
+
 [TestClass]
 public class UdpSocketTests : BaseTestClass
 {

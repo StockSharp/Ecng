@@ -1,5 +1,8 @@
 namespace Ecng.Tests.ComponentModel;
 
+using Ecng.ComponentModel;
+using Ecng.Serialization;
+
 [TestClass]
 public class WorkingTimeTests : BaseTestClass
 {

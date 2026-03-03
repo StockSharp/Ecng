@@ -1,5 +1,7 @@
 namespace Ecng.Tests.IO;
 
+using Ecng.IO;
+
 [TestClass]
 public class FastCsvReaderTests : BaseTestClass
 {

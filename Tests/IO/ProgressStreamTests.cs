@@ -1,5 +1,7 @@
 namespace Ecng.Tests.IO;
 
+using Ecng.IO;
+
 #pragma warning disable CA2022 // Avoid inexact read - MemoryStream always returns requested bytes
 
 [TestClass]

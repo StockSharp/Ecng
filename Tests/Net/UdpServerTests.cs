@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Net;
 
+using Ecng.Net;
+
 [TestClass]
 public class UdpServerTests : BaseTestClass
 {

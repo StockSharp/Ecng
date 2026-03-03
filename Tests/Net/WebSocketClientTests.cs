@@ -2,6 +2,9 @@ namespace Ecng.Tests.Net;
 
 using System.Net.WebSockets;
 
+using Ecng.ComponentModel;
+using Ecng.Net;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;

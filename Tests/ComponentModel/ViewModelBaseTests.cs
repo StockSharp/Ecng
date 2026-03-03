@@ -3,6 +3,8 @@ namespace Ecng.Tests.ComponentModel;
 using System.ComponentModel;
 using System.Windows.Input;
 
+using Ecng.ComponentModel;
+
 [TestClass]
 public class ViewModelBaseTests : BaseTestClass
 {

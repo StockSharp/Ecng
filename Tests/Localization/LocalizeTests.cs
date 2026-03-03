@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Tests.Localization;
 
+using Ecng.ComponentModel;
 using Ecng.Localization;
+using Ecng.Logging;
 
 [TestClass]
 [DoNotParallelize]
