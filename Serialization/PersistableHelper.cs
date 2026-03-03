@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
 using Ecng.Collections;
+using Ecng.Common;
 
 /// <summary>
 /// Provides helper methods for persisting, cloning, loading and saving objects.

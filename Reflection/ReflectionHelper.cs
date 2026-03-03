@@ -9,6 +9,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 
 using Ecng.Collections;
+using Ecng.Common;
 
 /// <summary>
 /// Provides helper methods for reflection.

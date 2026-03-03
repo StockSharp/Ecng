@@ -1498,6 +1498,15 @@ public static class CollectionHelper
 	}
 
 	/// <summary>
+	/// Determines whether a character sequence is null or empty.
+	/// </summary>
+	/// <param name="source">The sequence of characters to check.</param>
+	/// <returns>True if the sequence is null or empty; otherwise, false.</returns>
+	[Obsolete("Use StringHelper.IsEmpty.")]
+	public static bool IsEmpty(this IEnumerable<char> source)
+		=> source is null || !source.Any();
+
+	/// <summary>
 	/// Determines whether a sequence is empty.
 	/// </summary>
 	/// <typeparam name="T">The type of elements in the sequence.</typeparam>

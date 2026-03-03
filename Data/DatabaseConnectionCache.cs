@@ -3,6 +3,7 @@ namespace Ecng.Data;
 using System.Linq;
 
 using Ecng.Collections;
+using Ecng.Common;
 using Ecng.Serialization;
 
 /// <summary>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Diagnostics;
 
 using Ecng.Collections;
+using Ecng.Common;
 
 /// <summary>
 /// Represents a composable SQL query built from a sequence of render actions.
