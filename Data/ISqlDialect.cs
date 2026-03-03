@@ -1,9 +1,7 @@
 namespace Ecng.Data;
 
 using System;
-using System.Collections.Generic;
-
-using Ecng.Common;
+using System.Text;
 
 /// <summary>
 /// Interface for database-specific SQL dialect.
@@ -37,93 +35,6 @@ public interface ISqlDialect
 	/// <param name="clrType">CLR type.</param>
 	/// <returns>SQL type name.</returns>
 	string GetSqlTypeName(Type clrType);
-
-	/// <summary>
-	/// Generates CREATE TABLE IF NOT EXISTS statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="columns">Column definitions (name -> type).</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateCreateTable(string tableName, IDictionary<string, Type> columns);
-
-	/// <summary>
-	/// Generates CREATE TABLE IF NOT EXISTS statement with identity (auto-increment) column.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="columns">Column definitions (name -> type). Must include the identity column.</param>
-	/// <param name="identityColumn">Name of the identity (auto-increment primary key) column, or null.</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
-		=> GenerateCreateTable(tableName, columns);
-
-	/// <summary>
-	/// Generates DROP TABLE IF EXISTS statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateDropTable(string tableName);
-
-	/// <summary>
-	/// Generates INSERT statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="columns">Column names.</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateInsert(string tableName, IEnumerable<string> columns);
-
-	/// <summary>
-	/// Generates UPDATE statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="columns">Columns to update.</param>
-	/// <param name="whereClause">WHERE clause (without WHERE keyword).</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateUpdate(string tableName, IEnumerable<string> columns, string whereClause);
-
-	/// <summary>
-	/// Generates DELETE statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="whereClause">WHERE clause (without WHERE keyword).</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateDelete(string tableName, string whereClause);
-
-	/// <summary>
-	/// Generates SELECT statement with optional pagination.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="whereClause">WHERE clause (without WHERE keyword), or null.</param>
-	/// <param name="orderByClause">ORDER BY clause (without ORDER BY keywords), or null.</param>
-	/// <param name="skip">Number of rows to skip, or null.</param>
-	/// <param name="take">Number of rows to take, or null.</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateSelect(string tableName, string whereClause, string orderByClause, long? skip, long? take);
-
-	/// <summary>
-	/// Generates UPSERT (INSERT or UPDATE) statement.
-	/// </summary>
-	/// <param name="tableName">Table name.</param>
-	/// <param name="columns">All columns.</param>
-	/// <param name="keyColumns">Key columns for matching.</param>
-	/// <returns>SQL statement.</returns>
-	string GenerateUpsert(string tableName, IEnumerable<string> columns, IEnumerable<string> keyColumns);
-
-	/// <summary>
-	/// Builds WHERE clause condition for a filter.
-	/// </summary>
-	/// <param name="column">Column name.</param>
-	/// <param name="op">Comparison operator.</param>
-	/// <param name="paramName">Parameter name (without prefix).</param>
-	/// <returns>Condition string.</returns>
-	string BuildCondition(string column, ComparisonOperator op, string paramName);
-
-	/// <summary>
-	/// Builds WHERE clause condition for IN operator with multiple values.
-	/// </summary>
-	/// <param name="column">Column name.</param>
-	/// <param name="paramNames">Parameter names (without prefix).</param>
-	/// <returns>Condition string.</returns>
-	string BuildInCondition(string column, IEnumerable<string> paramNames);
 
 	/// <summary>
 	/// Converts a value to database format if needed.
@@ -180,4 +91,42 @@ public interface ISqlDialect
 	/// Gets the SQL expression for generating a new unique identifier.
 	/// </summary>
 	string NewId() => throw new NotSupportedException();
+
+	/// <summary>
+	/// Appends CREATE TABLE IF NOT EXISTS statement to a <see cref="StringBuilder"/>.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="columnDefs">Pre-built column definitions string.</param>
+	void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
+
+	/// <summary>
+	/// Appends DROP TABLE IF EXISTS statement to a <see cref="StringBuilder"/>.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	void AppendDropTable(StringBuilder sb, string tableName);
+
+	/// <summary>
+	/// Appends pagination (OFFSET/FETCH or LIMIT/OFFSET) to a <see cref="StringBuilder"/>.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="skip">Rows to skip, or null.</param>
+	/// <param name="take">Rows to take, or null.</param>
+	/// <param name="hasOrderBy">Whether the query already has an ORDER BY clause.</param>
+	void AppendPagination(StringBuilder sb, long? skip, long? take, bool hasOrderBy);
+
+	/// <summary>
+	/// Appends UPSERT (MERGE / INSERT ON CONFLICT) statement to a <see cref="StringBuilder"/>.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="allColumns">All column names.</param>
+	/// <param name="keyColumns">Key column names for matching.</param>
+	void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns);
+
+	/// <summary>
+	/// Gets the SQL suffix for an identity (auto-increment primary key) column definition.
+	/// </summary>
+	string GetIdentityColumnSuffix();
 }

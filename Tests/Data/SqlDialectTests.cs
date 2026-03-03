@@ -1,6 +1,7 @@
 namespace Ecng.Tests.Data;
 
 using Ecng.Data;
+using Ecng.Data.Sql;
 
 [TestClass]
 public class SqlDialectTests : BaseTestClass
@@ -19,17 +20,17 @@ public class SqlDialectTests : BaseTestClass
 		_ => identifier
 	};
 
-	#region GenerateSelect Tests
+	#region CreateSelect Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateSelect_Basic(string dialectName)
+	public void CreateSelect_Basic(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var q = Quote(dialectName, "Users");
 
-		var sql = dialect.GenerateSelect("Users", null, null, null, null);
+		var sql = Query.CreateSelect("Users", null, null, null, null).Render(dialect);
 
 		sql.AssertEqual($"SELECT * FROM {q}");
 	}
@@ -37,13 +38,13 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateSelect_WithWhere(string dialectName)
+	public void CreateSelect_WithWhere(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qTable = Quote(dialectName, "Users");
 		var qCol = Quote(dialectName, "Status");
 
-		var sql = dialect.GenerateSelect("Users", $"{qCol} = @p0", null, null, null);
+		var sql = Query.CreateSelect("Users", $"{qCol} = @p0", null, null, null).Render(dialect);
 
 		sql.AssertEqual($"SELECT * FROM {qTable} WHERE {qCol} = @p0");
 	}
@@ -51,12 +52,12 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "OFFSET 10 ROWS", "FETCH NEXT 20 ROWS ONLY")]
 	[DataRow("SQLite", "OFFSET 10", "LIMIT 20")]
-	public void GenerateSelect_WithPagination(string dialectName, string expectedOffset, string expectedLimit)
+	public void CreateSelect_WithPagination(string dialectName, string expectedOffset, string expectedLimit)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Id");
 
-		var sql = dialect.GenerateSelect("Users", null, $"{qCol} ASC", 10, 20);
+		var sql = Query.CreateSelect("Users", null, $"{qCol} ASC", 10, 20).Render(dialect);
 
 		sql.Contains(expectedOffset).AssertTrue($"Should have offset pattern, got: {sql}");
 		sql.Contains(expectedLimit).AssertTrue($"Should have limit pattern, got: {sql}");
@@ -64,12 +65,12 @@ public class SqlDialectTests : BaseTestClass
 
 	#endregion
 
-	#region GenerateInsert Tests
+	#region CreateInsert Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateInsert(string dialectName)
+	public void CreateInsert(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var columns = new[] { "Name", "Value" };
@@ -77,19 +78,19 @@ public class SqlDialectTests : BaseTestClass
 		var qName = Quote(dialectName, "Name");
 		var qValue = Quote(dialectName, "Value");
 
-		var sql = dialect.GenerateInsert("TestTable", columns);
+		var sql = Query.CreateInsert("TestTable", columns).Render(dialect);
 
 		sql.AssertEqual($"INSERT INTO {qTable} ({qName}, {qValue}) VALUES (@Name, @Value)");
 	}
 
 	#endregion
 
-	#region GenerateUpdate Tests
+	#region CreateUpdate Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateUpdate(string dialectName)
+	public void CreateUpdate(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var columns = new[] { "Name", "Value" };
@@ -98,43 +99,43 @@ public class SqlDialectTests : BaseTestClass
 		var qValue = Quote(dialectName, "Value");
 		var qId = Quote(dialectName, "Id");
 
-		var sql = dialect.GenerateUpdate("TestTable", columns, $"{qId} = @p0");
+		var sql = Query.CreateUpdate("TestTable", columns, $"{qId} = @p0").Render(dialect);
 
 		sql.AssertEqual($"UPDATE {qTable} SET {qName} = @Name, {qValue} = @Value WHERE {qId} = @p0");
 	}
 
 	#endregion
 
-	#region GenerateDelete Tests
+	#region CreateDelete Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateDelete(string dialectName)
+	public void CreateDelete(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qTable = Quote(dialectName, "TestTable");
 		var qId = Quote(dialectName, "Id");
 
-		var sql = dialect.GenerateDelete("TestTable", $"{qId} = @p0");
+		var sql = Query.CreateDelete("TestTable", $"{qId} = @p0").Render(dialect);
 
 		sql.AssertEqual($"DELETE FROM {qTable} WHERE {qId} = @p0");
 	}
 
 	#endregion
 
-	#region GenerateUpsert Tests
+	#region CreateUpsert Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateUpsert_SingleKey(string dialectName)
+	public void CreateUpsert_SingleKey(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var columns = new[] { "Id", "Name", "Value" };
 		var keys = new[] { "Id" };
 
-		var sql = dialect.GenerateUpsert("TestTable", columns, keys);
+		var sql = Query.CreateUpsert("TestTable", columns, keys).Render(dialect);
 
 		// Should not contain bare "&" which would indicate JoinAnd bug
 		sql.Contains("&").AssertFalse($"UPSERT should not contain '&' character, got: {sql}");
@@ -143,13 +144,13 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateUpsert_MultipleKeys_ShouldUseAND(string dialectName)
+	public void CreateUpsert_MultipleKeys_ShouldUseAND(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var columns = new[] { "Id", "Name", "Value" };
 		var keys = new[] { "Id", "Name" };
 
-		var sql = dialect.GenerateUpsert("TestTable", columns, keys);
+		var sql = Query.CreateUpsert("TestTable", columns, keys).Render(dialect);
 
 		// Should not contain bare "&"
 		sql.Contains("&").AssertFalse($"Multiple keys UPSERT should not contain '&', got: {sql}");
@@ -163,20 +164,19 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Verifies that GenerateUpsert handles the case when all columns are keys (no non-key columns).
-	/// Currently produces invalid SQL: "DO UPDATE SET " or "UPDATE SET " with nothing after it.
+	/// Verifies that CreateUpsert handles the case when all columns are keys (no non-key columns).
 	/// </summary>
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void GenerateUpsert_AllColumnsAreKeys_ShouldProduceValidSql(string dialectName)
+	public void CreateUpsert_AllColumnsAreKeys_ShouldProduceValidSql(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		// All columns are keys - no columns to update
 		var columns = new[] { "Id", "Name" };
 		var keys = new[] { "Id", "Name" };
 
-		var sql = dialect.GenerateUpsert("TestTable", columns, keys);
+		var sql = Query.CreateUpsert("TestTable", columns, keys).Render(dialect);
 
 		// SQL should not end with "SET " or "SET" followed by whitespace/nothing
 		// Valid options: "DO NOTHING" for SQLite, skip UPDATE clause for SQL Server
@@ -197,18 +197,17 @@ public class SqlDialectTests : BaseTestClass
 
 	#endregion
 
-	#region BuildCondition Tests
+	#region CreateBuildCondition Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_Equal(string dialectName)
+	public void CreateBuildCondition_Equal(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		// paramName should be without prefix - BuildCondition adds the prefix
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Equal, "p0");
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.Equal, "p0").Render(dialect);
 
 		sql.AssertEqual($"{qCol} = @p0");
 	}
@@ -216,12 +215,12 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_NotEqual(string dialectName)
+	public void CreateBuildCondition_NotEqual(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.NotEqual, "p0");
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.NotEqual, "p0").Render(dialect);
 
 		sql.AssertEqual($"{qCol} <> @p0");
 	}
@@ -229,12 +228,12 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_Greater(string dialectName)
+	public void CreateBuildCondition_Greater(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Greater, "p0");
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.Greater, "p0").Render(dialect);
 
 		sql.AssertEqual($"{qCol} > @p0");
 	}
@@ -242,62 +241,61 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_Less(string dialectName)
+	public void CreateBuildCondition_Less(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Less, "p0");
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.Less, "p0").Render(dialect);
 
 		sql.AssertEqual($"{qCol} < @p0");
 	}
 
 	/// <summary>
-	/// Verifies that BuildCondition with null value uses IS NULL syntax.
+	/// Verifies that CreateBuildCondition with null value uses IS NULL syntax.
 	/// </summary>
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_NullEqual_ShouldUseIsNull(string dialectName)
+	public void CreateBuildCondition_NullEqual_ShouldUseIsNull(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.Equal, null);
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.Equal, null).Render(dialect);
 
 		sql.AssertEqual($"{qCol} IS NULL");
 	}
 
 	/// <summary>
-	/// Verifies that BuildCondition with null and NotEqual uses IS NOT NULL syntax.
+	/// Verifies that CreateBuildCondition with null and NotEqual uses IS NOT NULL syntax.
 	/// </summary>
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildCondition_NullNotEqual_ShouldUseIsNotNull(string dialectName)
+	public void CreateBuildCondition_NullNotEqual_ShouldUseIsNotNull(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Col");
 
-		var sql = dialect.BuildCondition("Col", ComparisonOperator.NotEqual, null);
+		var sql = Query.CreateBuildCondition("Col", ComparisonOperator.NotEqual, null).Render(dialect);
 
 		sql.AssertEqual($"{qCol} IS NOT NULL");
 	}
 
 	#endregion
 
-	#region BuildInCondition Tests
+	#region CreateBuildInCondition Tests
 
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
-	public void BuildInCondition(string dialectName)
+	public void CreateBuildInCondition(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
 		var qCol = Quote(dialectName, "Status");
 
-		// paramNames without prefix - BuildInCondition adds the prefix
-		var sql = dialect.BuildInCondition("Status", ["p0", "p1", "p2"]);
+		var sql = Query.CreateBuildInCondition("Status", ["p0", "p1", "p2"]).Render(dialect);
 
 		sql.AssertEqual($"{qCol} IN (@p0, @p1, @p2)");
 	}
@@ -319,10 +317,9 @@ public class SqlDialectTests : BaseTestClass
 		var qCol2 = Quote(dialectName, "Col2");
 		var qCol3 = Quote(dialectName, "Col3");
 
-		// paramName without prefix - BuildCondition adds the prefix
-		var cond1 = dialect.BuildCondition("Col1", ComparisonOperator.Equal, "p0");
-		var cond2 = dialect.BuildCondition("Col2", ComparisonOperator.Equal, "p1");
-		var cond3 = dialect.BuildCondition("Col3", ComparisonOperator.Greater, "p2");
+		var cond1 = Query.CreateBuildCondition("Col1", ComparisonOperator.Equal, "p0").Render(dialect);
+		var cond2 = Query.CreateBuildCondition("Col2", ComparisonOperator.Equal, "p1").Render(dialect);
+		var cond3 = Query.CreateBuildCondition("Col3", ComparisonOperator.Greater, "p2").Render(dialect);
 
 		// Use .Join(" AND ") for SQL logical AND - not .JoinAnd() which is for URL query strings
 		var joined = new[] { cond1, cond2, cond3 }.Join(" AND ");

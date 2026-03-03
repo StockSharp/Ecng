@@ -1,7 +1,13 @@
 namespace Ecng.Data.Sql;
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Diagnostics;
+
+using Ecng.Common;
+using Ecng.Collections;
 
 [Serializable]
 [DebuggerDisplay($"{{{nameof(DebuggerString)}}}")]
@@ -320,7 +326,7 @@ public class Query
 
 	#endregion
 
-	internal Query AddAction(Action<ISqlDialect, StringBuilder> action)
+	public Query AddAction(Action<ISqlDialect, StringBuilder> action)
 	{
 		ArgumentNullException.ThrowIfNull(action);
 
@@ -476,6 +482,172 @@ public class Query
 	public Query UnionAll() => AddAction((dialect, builder) => builder.Append("union all"));
 
 	public Query FormatMessage() => AddAction((dialect, builder) => builder.Append("formatmessage"));
+
+	#region Static Factories
+
+	/// <summary>
+	/// Creates an INSERT query.
+	/// </summary>
+	public static Query CreateInsert(string tableName, IEnumerable<string> columns)
+	{
+		var cols = columns.ToArray();
+		return new Query().AddAction((dialect, sb) =>
+		{
+			var quotedCols = cols.Select(dialect.QuoteIdentifier);
+			var paramCols = cols.Select(c => dialect.ParameterPrefix + c);
+			sb.Append($"INSERT INTO {dialect.QuoteIdentifier(tableName)} ({quotedCols.JoinCommaSpace()}) VALUES ({paramCols.JoinCommaSpace()})");
+		});
+	}
+
+	/// <summary>
+	/// Creates an UPDATE query.
+	/// </summary>
+	public static Query CreateUpdate(string tableName, IEnumerable<string> columns, string whereClause)
+	{
+		var cols = columns.ToArray();
+		return new Query().AddAction((dialect, sb) =>
+		{
+			var setClauses = cols.Select(c => $"{dialect.QuoteIdentifier(c)} = {dialect.ParameterPrefix}{c}");
+			sb.Append($"UPDATE {dialect.QuoteIdentifier(tableName)} SET {setClauses.JoinCommaSpace()}");
+
+			if (!whereClause.IsEmpty())
+				sb.Append($" WHERE {whereClause}");
+		});
+	}
+
+	/// <summary>
+	/// Creates a DELETE query.
+	/// </summary>
+	public static Query CreateDelete(string tableName, string whereClause)
+	{
+		return new Query().AddAction((dialect, sb) =>
+		{
+			sb.Append($"DELETE FROM {dialect.QuoteIdentifier(tableName)}");
+
+			if (!whereClause.IsEmpty())
+				sb.Append($" WHERE {whereClause}");
+		});
+	}
+
+	/// <summary>
+	/// Creates a SELECT query with optional pagination.
+	/// </summary>
+	public static Query CreateSelect(string tableName, string whereClause, string orderByClause, long? skip, long? take)
+	{
+		return new Query().AddAction((dialect, sb) =>
+		{
+			sb.Append($"SELECT * FROM {dialect.QuoteIdentifier(tableName)}");
+
+			if (!whereClause.IsEmpty())
+				sb.Append($" WHERE {whereClause}");
+
+			if (!orderByClause.IsEmpty())
+				sb.Append($" ORDER BY {orderByClause}");
+
+			dialect.AppendPagination(sb, skip, take, !orderByClause.IsEmpty());
+		});
+	}
+
+	/// <summary>
+	/// Creates a CREATE TABLE query.
+	/// </summary>
+	public static Query CreateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn = null)
+	{
+		return new Query().AddAction((dialect, sb) =>
+		{
+			var colDefs = columns.Select(kv =>
+			{
+				var def = $"{dialect.QuoteIdentifier(kv.Key)} {dialect.GetSqlTypeName(kv.Value)}";
+				if (identityColumn is not null && kv.Key.EqualsIgnoreCase(identityColumn))
+					def += " " + dialect.GetIdentityColumnSuffix();
+				return def;
+			}).JoinCommaSpace();
+
+			dialect.AppendCreateTable(sb, tableName, colDefs);
+		});
+	}
+
+	/// <summary>
+	/// Creates a DROP TABLE query.
+	/// </summary>
+	public static Query CreateDropTable(string tableName)
+	{
+		return new Query().AddAction((dialect, sb) =>
+		{
+			dialect.AppendDropTable(sb, tableName);
+		});
+	}
+
+	/// <summary>
+	/// Creates an UPSERT (INSERT or UPDATE) query.
+	/// </summary>
+	public static Query CreateUpsert(string tableName, IEnumerable<string> allColumns, IEnumerable<string> keyColumns)
+	{
+		var allCols = allColumns.ToArray();
+		var keyCols = keyColumns.ToArray();
+		return new Query().AddAction((dialect, sb) =>
+		{
+			dialect.AppendUpsert(sb, tableName, allCols, keyCols);
+		});
+	}
+
+	/// <summary>
+	/// Creates a single WHERE condition.
+	/// </summary>
+	public static Query CreateBuildCondition(string column, ComparisonOperator op, string paramName)
+	{
+		return new Query().AddAction((dialect, sb) =>
+		{
+			var quotedCol = dialect.QuoteIdentifier(column);
+
+			if (paramName is null)
+			{
+				sb.Append(op switch
+				{
+					ComparisonOperator.Equal => $"{quotedCol} IS NULL",
+					ComparisonOperator.NotEqual => $"{quotedCol} IS NOT NULL",
+					_ => throw new ArgumentOutOfRangeException(nameof(op), op, "Only Equal and NotEqual are supported with NULL"),
+				});
+				return;
+			}
+
+			var param = dialect.ParameterPrefix + paramName;
+
+			sb.Append(op switch
+			{
+				ComparisonOperator.Equal => $"{quotedCol} = {param}",
+				ComparisonOperator.NotEqual => $"{quotedCol} <> {param}",
+				ComparisonOperator.Greater => $"{quotedCol} > {param}",
+				ComparisonOperator.GreaterOrEqual => $"{quotedCol} >= {param}",
+				ComparisonOperator.Less => $"{quotedCol} < {param}",
+				ComparisonOperator.LessOrEqual => $"{quotedCol} <= {param}",
+				ComparisonOperator.Like => $"{quotedCol} LIKE {param}",
+				_ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported operator"),
+			});
+		});
+	}
+
+	/// <summary>
+	/// Creates an IN condition.
+	/// </summary>
+	public static Query CreateBuildInCondition(string column, IEnumerable<string> paramNames)
+	{
+		var names = paramNames.ToArray();
+		return new Query().AddAction((dialect, sb) =>
+		{
+			if (names.Length == 0)
+			{
+				sb.Append("1 = 0");
+				return;
+			}
+
+			var quotedCol = dialect.QuoteIdentifier(column);
+			var paramList = names.Select(p => dialect.ParameterPrefix + p).JoinCommaSpace();
+			sb.Append($"{quotedCol} IN ({paramList})");
+		});
+	}
+
+	#endregion
 }
 
 public class SetPart(string column, string valueName)

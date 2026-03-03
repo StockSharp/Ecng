@@ -33,11 +33,7 @@ public static class DatabaseProviderRegistry
 	public const string PostgreSql = "PostgreSQL";
 
 	private static readonly Dictionary<string, DbProviderFactory> _factories = [];
-	private static readonly Dictionary<string, ISqlDialect> _dialects = new()
-	{
-		[SqlServer] = SqlServerDialect.Instance,
-		[SQLite] = SQLiteDialect.Instance,
-	};
+	private static readonly Dictionary<string, ISqlDialect> _dialects = [];
 	private static readonly Lock _sync = new();
 
 	/// <summary>

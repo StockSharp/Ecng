@@ -1,8 +1,9 @@
 namespace Ecng.Data;
 
 using System;
-using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
+using System.Text;
 
 using Ecng.Common;
 
@@ -17,6 +18,16 @@ public class SQLiteDialect : SqlDialectBase
 	public static readonly SQLiteDialect Instance = new();
 
 	private SQLiteDialect() { }
+
+	/// <summary>
+	/// Registers the SQLite dialect and provider factory with <see cref="DatabaseProviderRegistry"/>.
+	/// </summary>
+	/// <param name="factory">The <see cref="DbProviderFactory"/> for SQLite.</param>
+	public static void Register(DbProviderFactory factory)
+	{
+		DatabaseProviderRegistry.Register(DatabaseProviderRegistry.SQLite, factory);
+		DatabaseProviderRegistry.RegisterDialect(DatabaseProviderRegistry.SQLite, Instance);
+	}
 
 	/// <inheritdoc />
 	public override int MaxParameters => 900; // SQLite default limit is 999, use 900 for safety
@@ -55,26 +66,6 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns)
-		=> GenerateCreateTable(tableName, columns, null);
-
-	/// <inheritdoc />
-	public override string GenerateCreateTable(string tableName, IDictionary<string, Type> columns, string identityColumn)
-	{
-		var quotedName = QuoteIdentifier(tableName);
-		var columnDefs = BuildColumnDefinitions(columns, identityColumn);
-
-		return $"CREATE TABLE IF NOT EXISTS {quotedName} ({columnDefs})";
-	}
-
-	/// <inheritdoc />
-	public override string GenerateDropTable(string tableName)
-	{
-		var quotedName = QuoteIdentifier(tableName);
-		return $"DROP TABLE IF EXISTS {quotedName}";
-	}
-
-	/// <inheritdoc />
 	public override string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + idCol;
 
 	/// <inheritdoc />
@@ -99,53 +90,49 @@ public class SQLiteDialect : SqlDialectBase
 	public override string NewId() => "lower(hex(randomblob(16)))";
 
 	/// <inheritdoc />
-	public override string GenerateSelect(string tableName, string whereClause, string orderByClause, long? skip, long? take)
+	public override string GetIdentityColumnSuffix() => "INTEGER PRIMARY KEY AUTOINCREMENT";
+
+	/// <inheritdoc />
+	public override void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs)
 	{
-		var sql = $"SELECT * FROM {QuoteIdentifier(tableName)}";
+		sb.Append($"CREATE TABLE IF NOT EXISTS {QuoteIdentifier(tableName)} ({columnDefs})");
+	}
 
-		if (!whereClause.IsEmpty())
-			sql += $" WHERE {whereClause}";
+	/// <inheritdoc />
+	public override void AppendDropTable(StringBuilder sb, string tableName)
+	{
+		sb.Append($"DROP TABLE IF EXISTS {QuoteIdentifier(tableName)}");
+	}
 
-		if (!orderByClause.IsEmpty())
-			sql += $" ORDER BY {orderByClause}";
+	/// <inheritdoc />
+	public override void AppendPagination(StringBuilder sb, long? skip, long? take, bool hasOrderBy)
+	{
+		if (!skip.HasValue && !take.HasValue)
+			return;
 
-		// SQLite uses LIMIT/OFFSET
 		if (take.HasValue)
-			sql += $" LIMIT {take.Value}";
+			sb.Append($" LIMIT {take.Value}");
 		else if (skip.HasValue)
-			sql += " LIMIT -1"; // -1 means no limit in SQLite
+			sb.Append(" LIMIT -1");
 
 		if (skip.HasValue)
-			sql += $" OFFSET {skip.Value}";
-
-		return sql;
+			sb.Append($" OFFSET {skip.Value}");
 	}
 
 	/// <inheritdoc />
-	public override string GenerateUpsert(string tableName, IEnumerable<string> columns, IEnumerable<string> keyColumns)
+	public override void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns)
 	{
-		var cols = columns.ToArray();
-		var keys = keyColumns.ToArray();
-		var nonKeys = cols.Except(keys).ToArray();
-
+		var nonKeys = allColumns.Except(keyColumns).ToArray();
 		var quotedTable = QuoteIdentifier(tableName);
-		var insertCols = cols.Select(QuoteIdentifier).JoinCommaSpace();
-		var insertParams = cols.Select(c => ParameterPrefix + c).JoinCommaSpace();
-		var conflictCols = keys.Select(QuoteIdentifier).JoinCommaSpace();
+		var insertCols = allColumns.Select(QuoteIdentifier).JoinCommaSpace();
+		var insertParams = allColumns.Select(c => ParameterPrefix + c).JoinCommaSpace();
+		var conflictCols = keyColumns.Select(QuoteIdentifier).JoinCommaSpace();
 
-		// SQLite uses INSERT ... ON CONFLICT ... DO UPDATE
-		var sql = $"INSERT INTO {quotedTable} ({insertCols}) VALUES ({insertParams})";
-		sql += $" ON CONFLICT ({conflictCols})";
+		sb.Append($"INSERT INTO {quotedTable} ({insertCols}) VALUES ({insertParams}) ON CONFLICT ({conflictCols})");
 
-		// If all columns are keys, there's nothing to update - use DO NOTHING
 		if (nonKeys.Length == 0)
-			sql += " DO NOTHING";
+			sb.Append(" DO NOTHING");
 		else
-			sql += $" DO UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinCommaSpace()}";
-
-		return sql;
+			sb.Append($" DO UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = excluded.{QuoteIdentifier(c)}").JoinCommaSpace()}");
 	}
-
-	/// <inheritdoc />
-	protected override string GetIdentityColumnSuffix() => "INTEGER PRIMARY KEY AUTOINCREMENT";
 }

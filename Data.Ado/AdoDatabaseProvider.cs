@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.ComponentModel;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// Pure ADO.NET implementation of <see cref="IDatabaseProvider"/>.
@@ -94,7 +94,7 @@ internal class AdoTable : IDatabaseTable
 		if (columns is null)
 			throw new ArgumentNullException(nameof(columns));
 
-		var sql = Dialect.GenerateCreateTable(Name, columns);
+		var sql = Query.CreateCreateTable(Name, columns).Render(Dialect);
 		await ExecuteAsync(sql, null, cancellationToken).NoWait();
 	}
 
@@ -117,7 +117,7 @@ internal class AdoTable : IDatabaseTable
 
 	public async Task DropAsync(CancellationToken cancellationToken)
 	{
-		var sql = Dialect.GenerateDropTable(Name);
+		var sql = Query.CreateDropTable(Name).Render(Dialect);
 		await ExecuteAsync(sql, null, cancellationToken).NoWait();
 	}
 
@@ -130,7 +130,7 @@ internal class AdoTable : IDatabaseTable
 		if (values is null)
 			throw new ArgumentNullException(nameof(values));
 
-		var sql = Dialect.GenerateInsert(Name, values.Keys);
+		var sql = Query.CreateInsert(Name, values.Keys).Render(Dialect);
 		await ExecuteAsync(sql, values, cancellationToken).NoWait();
 	}
 
@@ -211,7 +211,7 @@ internal class AdoTable : IDatabaseTable
 		var whereClause = BuildWhereClause(parameters, filters);
 		var orderByClause = BuildOrderByClause(orderBy);
 
-		var sql = Dialect.GenerateSelect(Name, whereClause, orderByClause, skip, take);
+		var sql = Query.CreateSelect(Name, whereClause, orderByClause, skip, take).Render(Dialect);
 
 		return await QueryAsync(sql, parameters, cancellationToken).NoWait();
 	}
@@ -224,7 +224,7 @@ internal class AdoTable : IDatabaseTable
 		var parameters = new Dictionary<string, object>(values);
 		var whereClause = BuildWhereClause(parameters, filters);
 
-		var sql = Dialect.GenerateUpdate(Name, values.Keys, whereClause);
+		var sql = Query.CreateUpdate(Name, values.Keys, whereClause).Render(Dialect);
 
 		await ExecuteAsync(sql, parameters, cancellationToken).NoWait();
 	}
@@ -234,7 +234,7 @@ internal class AdoTable : IDatabaseTable
 		var parameters = new Dictionary<string, object>();
 		var whereClause = BuildWhereClause(parameters, filters);
 
-		var sql = Dialect.GenerateDelete(Name, whereClause);
+		var sql = Query.CreateDelete(Name, whereClause).Render(Dialect);
 
 		return await ExecuteAsync(sql, parameters, cancellationToken).NoWait();
 	}
@@ -250,7 +250,7 @@ internal class AdoTable : IDatabaseTable
 		if (keys.Count == 0)
 			throw new ArgumentException("At least one key column is required.", nameof(keyColumns));
 
-		var sql = Dialect.GenerateUpsert(Name, values.Keys, keys);
+		var sql = Query.CreateUpsert(Name, values.Keys, keys).Render(Dialect);
 
 		await ExecuteAsync(sql, values, cancellationToken).NoWait();
 	}
@@ -332,11 +332,11 @@ internal class AdoTable : IDatabaseTable
 					parameters[inParamName] = val;
 				}
 
-				conditions.Add(Dialect.BuildInCondition(filter.Column, paramNames));
+				conditions.Add(Query.CreateBuildInCondition(filter.Column, paramNames).Render(Dialect));
 			}
 			else
 			{
-				conditions.Add(Dialect.BuildCondition(filter.Column, filter.Operator, paramName));
+				conditions.Add(Query.CreateBuildCondition(filter.Column, filter.Operator, paramName).Render(Dialect));
 				parameters[paramName] = filter.Value;
 			}
 		}

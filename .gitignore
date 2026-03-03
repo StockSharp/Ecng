@@ -139,6 +139,7 @@ AppPackages/
 
 # Others
 sql/
+!Data/Sql/
 !Data.ORM/Sql/
 *.Cache
 ClientBin/

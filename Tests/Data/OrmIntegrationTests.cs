@@ -52,7 +52,7 @@ public class OrmIntegrationTests : BaseTestClass
 		foreach (var col in meta.Columns)
 			columns[col.Name] = col.ClrType;
 
-		var sql = SqlServerDialect.Instance.GenerateCreateTable(meta.TableName, columns, meta.Identity?.Name);
+		var sql = Ecng.Data.Sql.Query.CreateCreateTable(meta.TableName, columns, meta.Identity?.Name).Render(SqlServerDialect.Instance);
 		Execute(conn, sql);
 	}
 

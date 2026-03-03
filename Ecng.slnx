@@ -20,6 +20,8 @@
   <Project Path="Configuration/Configuration.csproj" />
   <Project Path="Data/Data.csproj" />
   <Project Path="Data.Ado/Data.Ado.csproj" />
+  <Project Path="Data.SqlServer/Data.SqlServer.csproj" />
+  <Project Path="Data.SQLite/Data.SQLite.csproj" />
   <Project Path="Drawing/Drawing.csproj" />
   <Project Path="GeneticSharp/GeneticSharp.csproj" />
   <Project Path="Excel/Excel.csproj" />

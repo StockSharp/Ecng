@@ -561,7 +561,7 @@ public class Database : Disposable, IStorage
 			? "{0} {1}".Put(Dialect.QuoteIdentifier(orderByColumn), (direction == ListSortDirection.Ascending) ? "asc" : "desc")
 			: null;
 
-		var sql = Dialect.GenerateSelect(meta.Name, null, orderByClause, startIndex > 0 ? startIndex : null, count < long.MaxValue ? count : null);
+		var sql = Query.CreateSelect(meta.Name, null, orderByClause, startIndex > 0 ? startIndex : null, count < long.MaxValue ? count : null).Render(Dialect);
 
 		var command = _commandsByText.SafeAdd(sql, key =>
 			new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text)));
