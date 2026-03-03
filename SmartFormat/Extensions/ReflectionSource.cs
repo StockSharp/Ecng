@@ -3,13 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using System;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using SmartFormat.Core.Extensions;
-
 namespace SmartFormat.Extensions
 {
     public class ReflectionSource : IAsyncSource

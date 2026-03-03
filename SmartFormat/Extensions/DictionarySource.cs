@@ -3,11 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using SmartFormat.Core.Extensions;
-
 namespace SmartFormat.Extensions
 {
     public class DictionarySource : ISource

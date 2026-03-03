@@ -1,10 +1,6 @@
 #if !NET7_0_OR_GREATER
 namespace System.Formats.Tar;
 
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 using SharpCompress.Common;
 using SharpCompress.Readers;
 

@@ -1,15 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Collections;
-using Ecng.Common;
-
 /// <summary>
 /// The class represents a synchronized collection that can be used in WPF applications.
 /// </summary>

@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Provides operations for performing arithmetic calculations on objects of type T.
 /// </summary>

@@ -1,11 +1,5 @@
 ﻿namespace Ecng.Compilation.Python;
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-
-using Microsoft.Scripting.Hosting;
-
 class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {

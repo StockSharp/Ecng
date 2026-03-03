@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 #pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
 
 /// <summary>

@@ -1,7 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// Base class for custom observable collections.
 /// </summary>

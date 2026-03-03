@@ -1,6 +1,5 @@
 namespace Ecng.Tests.Linq;
 
-using System.Collections;
 using System.Linq.Expressions;
 
 using Ecng.Linq;

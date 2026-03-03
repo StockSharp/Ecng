@@ -2,8 +2,6 @@ namespace Ecng.ComponentModel;
 
 using System.Text.RegularExpressions;
 
-using Ecng.Common;
-
 /// <summary>
 /// Extensions for validating login values used by <see cref="ServerCredentials"/> and elsewhere.
 /// </summary>

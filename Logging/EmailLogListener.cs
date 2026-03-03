@@ -1,9 +1,7 @@
 namespace Ecng.Logging;
 
 using System.Net.Mail;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
 /// <summary>
 /// The logger sending data to the email.

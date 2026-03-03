@@ -1,14 +1,8 @@
 ﻿namespace Ecng.Linq;
 
-using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Reflection;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides extension methods for <see cref="IQueryable{T}"/> to support asynchronous operations and dynamic ordering.

@@ -3,11 +3,7 @@ namespace Ecng.Logging;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Ecng.Common;
-using Ecng.Localization;
 using Ecng.IO;
 
 using Nito.AsyncEx;

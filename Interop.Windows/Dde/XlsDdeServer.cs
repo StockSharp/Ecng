@@ -1,13 +1,10 @@
 namespace Ecng.Interop.Dde;
 
-using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 using Ecng.Collections;
-using Ecng.Common;
 
 using NDde.Server;
 

@@ -1,9 +1,5 @@
 namespace Ecng.Tests.ComponentModel;
 
-using System.Net;
-
-using Ecng.ComponentModel;
-
 [TestClass]
 public class StatTests : BaseTestClass
 {

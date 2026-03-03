@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Serialization;
 
-using System;
-using System.IO;
-
-using Ecng.Common;
 using Ecng.IO;
 
 /// <summary>

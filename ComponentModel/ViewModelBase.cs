@@ -1,12 +1,6 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 using System.Linq.Expressions;
-
-using Ecng.Common;
 
 /// <summary>
 /// Base class for implementing View-Model in MVVM pattern.

@@ -4,8 +4,6 @@
 //
 
 using System.IO;
-using SmartFormat.Core.Extensions;
-
 namespace SmartFormat.Core.Output
 {
     /// <summary>

@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// Specifies editor extension options for enums and properties.
 /// </summary>

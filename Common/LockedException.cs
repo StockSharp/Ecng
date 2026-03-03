@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Represents the exception that is thrown when an operation is attempted on a locked resource.
 /// </summary>

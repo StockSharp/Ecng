@@ -1,11 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Localization;
-
 /// <summary>
 /// Provides a registry for operators to perform mathematical and comparison operations.
 /// </summary>

@@ -1,9 +1,5 @@
 namespace Ecng.Tests.Security;
 
-using System.Net;
-using System.Security;
-
-using Ecng.Common;
 using Ecng.Security;
 
 [TestClass]

@@ -1,9 +1,5 @@
 namespace Ecng.Tests.Logging;
 
-using System.Text;
-
-using Ecng.Logging;
-
 [TestClass]
 public class LoggableStreamTests : BaseTestClass
 {

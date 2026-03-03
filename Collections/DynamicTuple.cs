@@ -1,11 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a dynamic tuple that holds a collection of objects and provides equality comparison.
 /// </summary>

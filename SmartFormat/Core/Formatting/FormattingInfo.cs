@@ -3,9 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using SmartFormat.Core.Extensions;
-using SmartFormat.Core.Parsing;
-
 namespace SmartFormat.Core.Formatting
 {
     public class FormattingInfo : IFormattingInfo, ISelectorInfo

@@ -1,10 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel.DataAnnotations;
-
-using Ecng.Common;
-
 /// <summary>
 /// Indicates that a TimeSpan value must be greater than zero when provided.
 /// </summary>

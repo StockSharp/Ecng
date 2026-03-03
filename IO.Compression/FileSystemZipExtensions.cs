@@ -1,14 +1,7 @@
 namespace Ecng.IO.Compression;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension methods for <see cref="IFileSystem"/> to work with ZIP archives.

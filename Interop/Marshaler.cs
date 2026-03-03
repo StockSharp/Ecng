@@ -1,11 +1,7 @@
 namespace Ecng.Interop;
 
-using System;
 using System.ComponentModel;
-using System.Text;
-using System.Runtime.InteropServices;
 
-using Ecng.Common;
 using Ecng.IO;
 
 #if NETCOREAPP

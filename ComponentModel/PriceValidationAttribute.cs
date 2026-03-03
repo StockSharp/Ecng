@@ -1,8 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel.DataAnnotations;
-
 /// <summary>
 /// Base validation attribute for <see cref="Price"/> that validates only the <see cref="Price.Value"/> component.
 /// </summary>

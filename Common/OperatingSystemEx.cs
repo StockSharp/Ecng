@@ -1,11 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System.Linq;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.IO;
-using System;
-
 /// <summary>
 /// Provides operating system related helper methods and properties.
 /// </summary>

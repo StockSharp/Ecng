@@ -4,11 +4,6 @@ namespace Ecng.Tests.Data;
 
 using System.ComponentModel;
 
-using Ecng.Common;
-using Ecng.Data;
-using Ecng.Serialization;
-using Ecng.UnitTesting;
-
 using Microsoft.Data.SqlClient;
 
 [TestClass]

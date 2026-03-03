@@ -1,11 +1,8 @@
 ﻿namespace Ecng.Linq;
 
-using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-
-using Ecng.Common;
 
 /// <summary>
 /// The extensions for <see cref="Expression"/>.

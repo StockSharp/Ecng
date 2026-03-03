@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace YandexDisk.Client.Protocol
+﻿namespace YandexDisk.Client.Protocol
 {
     /// <summary>
     /// Base class of protocol object

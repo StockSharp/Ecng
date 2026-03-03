@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System.Threading;
-
 /// <summary>
 /// Application level <see cref="CancellationToken"/>.
 /// </summary>

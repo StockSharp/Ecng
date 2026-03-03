@@ -1,12 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-
-using Ecng.Common;
-
 /// <summary>
 /// Abstract base class that wraps an object and exposes its properties and events
 /// through <see cref="ICustomTypeDescriptor"/> interface. Wrapped properties are read-only

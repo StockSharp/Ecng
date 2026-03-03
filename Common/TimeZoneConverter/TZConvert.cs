@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Ecng.Common.TimeZoneConverter;
+﻿namespace Ecng.Common.TimeZoneConverter;
 
 /// <summary>
 /// Converts time zone identifiers from various sources.

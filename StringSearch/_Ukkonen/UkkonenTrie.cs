@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Gma.DataStructures.StringSearch
+﻿namespace Gma.DataStructures.StringSearch
 {
     public class UkkonenTrie<T> : ITrie<T>
     {

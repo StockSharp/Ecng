@@ -1,10 +1,5 @@
 namespace Ecng.Tests.Serialization;
 
-using System.Runtime.CompilerServices;
-using System.Text;
-
-using Ecng.Serialization;
-
 [TestClass]
 public class SpanTests : BaseTestClass
 {

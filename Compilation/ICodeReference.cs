@@ -1,13 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.IO;
-using Ecng.Serialization;
-
 /// <summary>
 /// Represents a reference to code that supports persistence.
 /// </summary>

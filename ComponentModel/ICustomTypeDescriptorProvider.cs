@@ -1,8 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-
 /// <summary>
 /// Provides a mechanism to retrieve a custom type descriptor for a given type and instance.
 /// </summary>

@@ -1,16 +1,8 @@
 namespace Ecng.Tests.Data;
 
-using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Ecng.Common;
-using Ecng.Data;
 using Ecng.Data.Sql;
-using Ecng.UnitTesting;
 
 /// <summary>
 /// Base class for ADO-level integration tests.

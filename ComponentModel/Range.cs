@@ -1,10 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a generic range defined by a minimum and maximum value.
 /// </summary>

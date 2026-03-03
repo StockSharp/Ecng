@@ -1,8 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-
 /// <summary>
 /// Represents a range with a minimum and maximum value.
 /// </summary>

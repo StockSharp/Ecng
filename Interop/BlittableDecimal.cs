@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Interop;
 
-using System.Runtime.InteropServices;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a blittable version of a decimal value.
 /// </summary>

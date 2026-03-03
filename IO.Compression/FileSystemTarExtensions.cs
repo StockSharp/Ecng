@@ -1,14 +1,6 @@
 namespace Ecng.IO.Compression;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Formats.Tar;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension methods for <see cref="IFileSystem"/> and streams to work with TAR archives.

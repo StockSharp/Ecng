@@ -1,15 +1,11 @@
 ﻿namespace Ecng.Compilation.Python;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-using Ecng.Common;
 using Ecng.ComponentModel;
 using Ecng.Reflection;
 using Ecng.Collections;
@@ -17,7 +13,6 @@ using Ecng.Collections;
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
-using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Actions;
 
 static class PythonAttrs

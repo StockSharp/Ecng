@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Interop;
 
-using System;
-using System.Runtime.InteropServices;
-
 /// <summary>
 /// Provides methods to read data from an unmanaged memory pointer.
 /// </summary>

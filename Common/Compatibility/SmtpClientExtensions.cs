@@ -1,9 +1,6 @@
 #if !NET5_0_OR_GREATER
 namespace System.Net.Mail;
 
-using System.Threading;
-using System.Threading.Tasks;
-
 using Ecng.Common;
 
 /// <summary>

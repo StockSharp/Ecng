@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace Gma.DataStructures.StringSearch
+﻿namespace Gma.DataStructures.StringSearch
 {
     internal class Node<T>
     {

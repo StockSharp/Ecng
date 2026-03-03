@@ -1,8 +1,5 @@
 namespace Ecng.Interop;
 
-using System;
-using System.Runtime.InteropServices;
-
 /// <summary>
 /// Represents a decimal value with a fixed exponent of -2.
 /// </summary>

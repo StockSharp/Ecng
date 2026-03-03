@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Threading;
-
 /// <summary>
 /// Base identifier generator.
 /// </summary>

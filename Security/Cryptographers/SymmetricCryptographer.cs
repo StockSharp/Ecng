@@ -1,10 +1,6 @@
 ﻿namespace Ecng.Security.Cryptographers;
 
-using System;
 using System.IO;
-using System.Security.Cryptography;
-
-using Ecng.Common;
 
 /// <summary>
 /// <para>Represents basic cryptography services for a <see cref="SymmetricAlgorithm"/>.</para>

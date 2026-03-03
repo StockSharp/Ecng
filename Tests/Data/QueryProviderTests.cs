@@ -2,10 +2,7 @@
 
 namespace Ecng.Tests.Data;
 
-using Ecng.Data;
 using Ecng.Data.Sql;
-using Ecng.Serialization;
-using Ecng.UnitTesting;
 
 [TestClass]
 public class QueryProviderTests : BaseTestClass

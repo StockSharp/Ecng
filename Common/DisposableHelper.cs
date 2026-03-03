@@ -1,8 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides helper methods for creating and managing disposable objects.
 /// </summary>

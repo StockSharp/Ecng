@@ -1,9 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 /// <summary>
 /// Provides high-performance parsing and formatting of TimeSpan values based on a specified template.
 /// </summary>

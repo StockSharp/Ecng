@@ -1,10 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using System.Globalization;
-using System.Threading;
-
-using Ecng.Common;
-
 [TestClass]
 public class DoTests : BaseTestClass
 {

@@ -1,13 +1,7 @@
 ﻿#if !NET5_0_OR_GREATER
 namespace System.Diagnostics;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.IO;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides extension methods for <see cref="Process"/>.

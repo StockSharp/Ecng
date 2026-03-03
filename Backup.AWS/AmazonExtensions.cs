@@ -1,13 +1,5 @@
 namespace Ecng.Backup.Amazon;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using global::Amazon;
-
-using Ecng.Common;
-
 /// <summary>
 /// Extension class for AWS.
 /// </summary>

@@ -1,14 +1,11 @@
 ﻿namespace Ecng.Interop;
 
-using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 
 using Windows.Win32;
-
-using Ecng.Common;
 
 // https://stackoverflow.com/a/30687230/8029915
 

@@ -1,8 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.IO;
-
 /// <summary>
 /// Represents a stream wrapper that records all data read from and written to the underlying stream.
 /// </summary>

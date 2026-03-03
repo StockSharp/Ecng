@@ -1,19 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
-using System;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Security;
-using System.Linq;
-
-using Ecng.Common;
-using Ecng.Reflection;
-
-using Newtonsoft.Json;
 
 /// <summary>
 /// Contains custom JSON conversion logic.

@@ -1,11 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a base class for a generic collection with event notifications and inner collection management.
 /// </summary>

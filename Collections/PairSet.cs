@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a collection of key-value pairs that supports bidirectional lookup by key or value.
 /// </summary>

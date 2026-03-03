@@ -1,8 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides an extended set of methods and events for collections of a specified type.
 /// </summary>

@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Interop;
 
-using System;
-
 using Microsoft.Win32.SafeHandles;
 
 /// <summary>

@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Collections;
 
-using System.Collections.Concurrent;
-
 [TestClass]
 public class CollectionHelperTests : BaseTestClass
 {

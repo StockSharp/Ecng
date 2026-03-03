@@ -1,9 +1,5 @@
 namespace Ecng.Compilation;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Defines the contract for a compiler that supports compiling source files into an assembly.
 /// </summary>

@@ -1,10 +1,7 @@
 #if NET10_0_OR_GREATER == false
 namespace System.Threading.Channels;
 
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension methods for <see cref="ChannelReader{T}"/>.

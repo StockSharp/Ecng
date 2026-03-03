@@ -1,7 +1,6 @@
 namespace Ecng.Tests.Common;
 
 using System.ComponentModel;
-using System.Reflection;
 
 [TestClass]
 public class DelegateTests : BaseTestClass

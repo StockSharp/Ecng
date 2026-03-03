@@ -1,15 +1,6 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Collections;
-using Ecng.Common;
 using Ecng.Security;
-using Ecng.IO;
 
 /// <summary>
 /// Defines methods for caching compiled assemblies.

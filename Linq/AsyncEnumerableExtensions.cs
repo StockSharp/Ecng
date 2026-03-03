@@ -1,12 +1,6 @@
 namespace Ecng.Linq;
 
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension methods for <see cref="IAsyncEnumerable{T}"/>.

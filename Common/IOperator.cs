@@ -1,9 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides basic arithmetic operations and comparison functionality.
 /// </summary>

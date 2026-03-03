@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Tests.Data;
 
-using Ecng.Data;
-using Ecng.Serialization;
-
 [TestClass]
 public class DataTests
 {

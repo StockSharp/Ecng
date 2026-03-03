@@ -3,9 +3,7 @@
 // Licensed under the MIT license.
 //
 
-using System.Collections.Generic;
 using System.Xml.Linq;
-using SmartFormat.Core.Extensions;
 
 namespace SmartFormat.Extensions
 {

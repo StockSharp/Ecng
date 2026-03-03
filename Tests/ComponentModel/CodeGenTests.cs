@@ -1,9 +1,5 @@
 namespace Ecng.Tests.ComponentModel;
 
-using System.Text;
-
-using Ecng.ComponentModel;
-
 [TestClass]
 public class CodeGenTests : BaseTestClass
 {

@@ -1,7 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// The interface describing the type with a variable number of properties.
 /// </summary>

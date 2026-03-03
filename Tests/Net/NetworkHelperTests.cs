@@ -1,14 +1,5 @@
 namespace Ecng.Tests.Net;
 
-using System.Net;
-using System.Net.Sockets;
-using System.Net.Http;
-using System.Text;
-
-using Ecng.Net;
-
-using Nito.AsyncEx;
-
 using SixLabors.ImageSharp;
 
 [TestClass]

@@ -1,11 +1,6 @@
 namespace Ecng.Data;
 
-using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Threading;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides a registry of known database provider names and their factories.

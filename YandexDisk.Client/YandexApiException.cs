@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Net;
-using JetBrains.Annotations;
-using YandexDisk.Client.Protocol;
 
 namespace YandexDisk.Client
 {

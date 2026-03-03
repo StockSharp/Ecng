@@ -1,11 +1,5 @@
 namespace Ecng.Interop;
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a collection of debug information fields that can be used for logging or debugging purposes.
 /// </summary>

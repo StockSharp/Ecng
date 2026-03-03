@@ -4,9 +4,6 @@
 //
 
 using System.IO;
-using System.Text;
-using SmartFormat.Core.Formatting;
-using SmartFormat.Core.Output;
 
 namespace SmartFormat
 {

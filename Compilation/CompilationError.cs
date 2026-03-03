@@ -1,7 +1,5 @@
 namespace Ecng.Compilation;
 
-using Ecng.Common;
-
 /// <summary>
 /// Represents a compilation error with details about its location and type.
 /// </summary>

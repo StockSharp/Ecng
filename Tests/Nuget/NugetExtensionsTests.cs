@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Nuget;
 
-using System.Net.Http;
-using System.Linq;
 using System.Xml.Linq;
 
 using Ecng.Nuget;

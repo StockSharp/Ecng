@@ -3,13 +3,7 @@
 // Licensed under the MIT license.
 //
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using SmartFormat.Core.Extensions;
-using SmartFormat.Core.Formatting;
-using SmartFormat.Utilities;
 
 namespace SmartFormat.Extensions
 {

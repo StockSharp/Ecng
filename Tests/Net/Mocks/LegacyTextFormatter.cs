@@ -1,11 +1,6 @@
 namespace Ecng.Tests.Net.Mocks;
 
-using System.IO;
-using System.Net.Http;
 using System.Net.Http.Formatting;
-
-using Ecng.Common;
-using Ecng.Serialization;
 
 /// <summary>
 /// Exact copy of the old TextMediaTypeFormatter (pre-refactor)

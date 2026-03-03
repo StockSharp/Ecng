@@ -1,12 +1,6 @@
 #if !NET7_0_OR_GREATER
 namespace System.Linq;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
-
 /// <summary>
 /// Provides ToBlockingEnumerable extension method for <see cref="IAsyncEnumerable{T}"/>.
 /// Compatibility implementation for target frameworks below .NET 7.

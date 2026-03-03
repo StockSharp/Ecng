@@ -1,12 +1,6 @@
 namespace Ecng.Tests.ComponentModel;
 
-using System.Collections.Concurrent;
 using System.Threading.Channels;
-
-using Ecng.ComponentModel;
-using Ecng.IO;
-
-using Nito.AsyncEx;
 
 [TestClass]
 public class ChannelExecutorTests : BaseTestClass

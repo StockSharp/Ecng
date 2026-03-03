@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using YandexDisk.Client.Clients;
-using YandexDisk.Client.Protocol;
 
 namespace YandexDisk.Client.Http.Clients
 {

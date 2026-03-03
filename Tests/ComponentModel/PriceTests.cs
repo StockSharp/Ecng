@@ -1,7 +1,5 @@
 namespace Ecng.Tests.ComponentModel;
 
-using Ecng.ComponentModel;
-
 [TestClass]
 public class PriceTests : BaseTestClass
 {
@@ -42,16 +40,16 @@ public class PriceTests : BaseTestClass
 	}
 
 	//[TestMethod]
-	//[ExpectedException(typeof(ArgumentException), "Единица измерения не может быть 'Step' так как не передана информация об инструменте.")]
+	//[ExpectedException(typeof(ArgumentException), "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ 'Step' пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.")]
 	//public void InvalidParse()
 	//{
-	//    "10ш".ToPriceType(true);
+	//    "10пїЅ".ToPriceType(true);
 	//}
 
 	[TestMethod]
 	public void InvalidParse2()
 	{
-		ThrowsExactly<ArgumentOutOfRangeException>(() => "10н".ToPriceType());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => "10пїЅ".ToPriceType());
 	}
 
 	[TestMethod]

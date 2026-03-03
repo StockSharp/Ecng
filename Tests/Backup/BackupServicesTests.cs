@@ -1,8 +1,5 @@
 namespace Ecng.Tests.Backup;
 
-using System.Net;
-using System.Net.Http;
-
 using Ecng.Backup;
 using Ecng.Backup.Amazon;
 using Ecng.Backup.Azure;

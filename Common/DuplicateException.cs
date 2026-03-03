@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Represents an exception that is thrown when a duplicate operation is performed.
 /// </summary>

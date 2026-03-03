@@ -1,10 +1,5 @@
 namespace Ecng.Collections;
 
-using System.Threading;
-using System.Collections.Generic;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a collection that can be synchronized using a <see cref="Lock"/>.
 /// </summary>

@@ -2,9 +2,6 @@ namespace Ecng.ComponentModel;
 
 using System.Security;
 
-using Ecng.Common;
-using Ecng.Serialization;
-
 /// <summary>
 /// The class that contains a login and password.
 /// </summary>

@@ -1,8 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a base class for a strongly-typed list of items.
 /// </summary>

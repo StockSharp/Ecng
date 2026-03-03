@@ -1,11 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-
-using Ecng.Common;
-
 /// <summary>
 /// Provides a base class for validation attributes that compare values of a struct type.
 /// </summary>

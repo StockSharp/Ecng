@@ -1,7 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Threading;
-
 /// <summary>
 /// A debug message.
 /// </summary>

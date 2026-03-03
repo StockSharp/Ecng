@@ -1,9 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Provides utility methods for timing the execution of code.
 /// </summary>

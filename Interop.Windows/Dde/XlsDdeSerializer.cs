@@ -1,11 +1,8 @@
 ﻿namespace Ecng.Interop.Dde;
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-using Ecng.Common;
 using Ecng.IO;
 
 /// <summary>

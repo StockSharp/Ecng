@@ -1,7 +1,5 @@
 namespace Ecng.Serialization;
 
-using System;
-
 /// <summary>
 /// Defines a context for batch operations that supports committing transactions and resource disposal.
 /// </summary>

@@ -1,10 +1,5 @@
 ﻿namespace Ecng.Interop.Dde;
 
-using System;
-using System.Collections.Generic;
-
-using Ecng.Common;
-
 using NDde.Client;
 
 /// <summary>

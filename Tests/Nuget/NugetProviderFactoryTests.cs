@@ -1,8 +1,5 @@
 namespace Ecng.Tests.Nuget;
 
-using System.Security;
-
-using Ecng.Logging;
 using Ecng.Nuget;
 
 [TestClass]

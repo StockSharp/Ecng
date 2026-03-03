@@ -1,17 +1,11 @@
 ﻿namespace Ecng.Interop;
 
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Windows.Win32;
 using Windows.Win32.System.JobObjects;
-
-using Ecng.Common;
 
 using Microsoft.Win32.SafeHandles;
 

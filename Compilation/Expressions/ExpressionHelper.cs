@@ -1,17 +1,7 @@
 namespace Ecng.Compilation.Expressions;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.IO;
 
 /// <summary>
 /// Extension class for <see cref="ExpressionFormula{TResult}"/>.

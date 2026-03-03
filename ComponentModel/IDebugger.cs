@@ -1,9 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
-using Ecng.Serialization;
-
 /// <summary>
 /// The interfaces describes debugger.
 /// </summary>

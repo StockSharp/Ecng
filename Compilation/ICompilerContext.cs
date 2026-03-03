@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-using System.Reflection;
-
 /// <summary>
 /// Represents a context for compilation operations.
 /// Provides functionality to load assemblies from binary data.

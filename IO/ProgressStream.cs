@@ -1,10 +1,5 @@
 namespace Ecng.IO;
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Stream wrapper that reports progress during read or write operations.
 /// </summary>

@@ -1,12 +1,6 @@
 namespace Ecng.IO;
 
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Represents a transactional file stream that writes data to a temporary file.

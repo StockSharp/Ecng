@@ -1,10 +1,5 @@
 namespace Ecng.IO;
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Stream wrapper that tracks write operations against a file system size limit.
 /// Checks limits during Write (fail-fast), not during Dispose.

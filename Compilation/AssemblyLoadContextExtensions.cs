@@ -1,11 +1,6 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-using System.IO;
-using System.Reflection;
 using System.Runtime.Loader;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides extension methods for AssemblyLoadContext related to compilation operations.

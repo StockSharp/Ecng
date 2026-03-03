@@ -1,9 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Provides extension methods for comparing string values using a specified comparison operator.
 /// </summary>

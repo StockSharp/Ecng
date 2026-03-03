@@ -1,11 +1,6 @@
 namespace Ecng.ComponentModel;
 
-#region Using Directives
-
-using System.ComponentModel;
 using System.Globalization;
-
-#endregion
 
 /// <summary>
 /// Auxilary class for accessing typed data from type converters.

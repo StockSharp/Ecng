@@ -1,10 +1,7 @@
 ﻿#if NET7_0_OR_GREATER
 namespace Ecng.Collections;
 
-using System.Linq;
 using System.Numerics;
-
-using Ecng.Common;
 
 /// <summary>
 /// <see cref="CircularBuffer{TItem}"/> with additional features for numeric types.

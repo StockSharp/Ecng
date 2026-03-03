@@ -1,8 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// The base class that monitors the event <see cref="ILogSource.Log"/> and saves to some storage.
 /// </summary>

@@ -1,10 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel.DataAnnotations;
-
-using Ecng.Common;
-
 /// <summary>
 /// Validates that a numeric value lies on a discrete grid defined by Base + n * Step.
 /// </summary>

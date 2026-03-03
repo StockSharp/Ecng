@@ -1,9 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
 /// <summary>
 /// Extended version <see cref="INotifyPropertyChanged"/>.
 /// </summary>

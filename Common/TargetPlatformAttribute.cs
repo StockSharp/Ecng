@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Features attribute.
 /// </summary>

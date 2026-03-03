@@ -1,8 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System.Runtime.Serialization;
-using System;
-
 /// <summary>
 /// Specifies the possible connection states.
 /// </summary>

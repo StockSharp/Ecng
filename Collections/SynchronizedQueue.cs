@@ -1,7 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-
 /// <summary>
 /// Provides a thread-safe queue based on the <see cref="QueueEx{T}"/> collection.
 /// </summary>

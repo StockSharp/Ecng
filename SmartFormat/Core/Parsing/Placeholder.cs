@@ -3,10 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using System.Collections.Generic;
-using System.Text;
-using SmartFormat.Core.Settings;
-
 namespace SmartFormat.Core.Parsing
 {
     /// <summary>

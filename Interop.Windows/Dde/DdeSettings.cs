@@ -1,10 +1,8 @@
 ﻿namespace Ecng.Interop.Dde;
 
-using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-using Ecng.Common;
 using Ecng.Serialization;
 
 /// <summary>

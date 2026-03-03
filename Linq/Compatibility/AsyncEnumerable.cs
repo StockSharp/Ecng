@@ -1,13 +1,8 @@
 ﻿#if NET10_0_OR_GREATER == false
 namespace System.Linq;
 
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Ecng.Common;
 using Ecng.Linq;
 
 /// <summary>

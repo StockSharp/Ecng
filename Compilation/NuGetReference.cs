@@ -1,12 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.IO;
-using Ecng.Serialization;
-
 /// <summary>
 /// Represents a NuGet package reference with package identifier and version.
 /// </summary>

@@ -1,10 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-
 /// <summary>
 /// Provides helper methods for working with tuple types.
 /// </summary>

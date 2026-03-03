@@ -1,10 +1,5 @@
 ﻿namespace Ecng.Security.Cryptographers;
 
-using System;
-using System.Security.Cryptography;
-
-using Ecng.Common;
-
 /// <summary>
 /// <para>Represents basic cryptography services for a <see cref="HashAlgorithm"/>.</para>
 /// </summary>

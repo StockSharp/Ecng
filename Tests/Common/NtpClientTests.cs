@@ -1,8 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using System.Net;
-using System.Net.Sockets;
-
 [TestClass]
 public class NtpClientTests : BaseTestClass
 {

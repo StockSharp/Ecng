@@ -1,13 +1,5 @@
 namespace Ecng.ComponentModel;
 
-#region Using Directives
-
-using System;
-
-using Ecng.Common;
-
-#endregion
-
 /// <summary>
 /// File size format provider.
 /// </summary>

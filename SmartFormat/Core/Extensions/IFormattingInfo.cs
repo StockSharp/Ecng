@@ -4,9 +4,6 @@
 //
 
 using System.ComponentModel;
-using SmartFormat.Core.Formatting;
-using SmartFormat.Core.Parsing;
-
 namespace SmartFormat.Core.Extensions
 {
     /// <summary>

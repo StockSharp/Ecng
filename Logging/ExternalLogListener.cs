@@ -1,8 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// The logger sending messages to the external recipient <see cref="ILogListener"/>.
 /// </summary>

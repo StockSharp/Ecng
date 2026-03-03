@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System.Windows.Input;
-
 /// <summary>
 /// Undo/redo manager.
 /// </summary>

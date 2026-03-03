@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides a comparer that compares objects in reverse order.
 /// </summary>

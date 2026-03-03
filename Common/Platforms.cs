@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Enumeration for representing supported platform types.
 /// </summary>

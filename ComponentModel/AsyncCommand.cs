@@ -1,12 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Input;
-
-using Ecng.Common;
-
 /// <summary>
 /// Async delegate command capable of taking argument.
 /// </summary>

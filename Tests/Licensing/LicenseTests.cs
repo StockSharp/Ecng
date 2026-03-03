@@ -1,7 +1,6 @@
 namespace Ecng.Tests.Licensing;
 
 using System.Runtime.InteropServices;
-using System.Globalization;
 
 using Ecng.Licensing;
 

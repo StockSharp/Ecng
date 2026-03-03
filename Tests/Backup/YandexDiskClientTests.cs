@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Backup;
 
-using System.Net;
-
 using Ecng.Backup;
 using Ecng.Backup.Yandex;
 

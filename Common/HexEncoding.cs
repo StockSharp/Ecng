@@ -1,8 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Text;
-
 /// <summary>
 /// Summary description for HexEncoding.
 /// http://www.codeproject.com/KB/recipes/hexencoding.aspx

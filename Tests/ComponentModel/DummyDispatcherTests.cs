@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
-using System.Reflection;
-
-using Ecng.ComponentModel;
-
 [TestClass]
 public class DummyDispatcherTests : BaseTestClass
 {

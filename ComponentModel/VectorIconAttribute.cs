@@ -1,9 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents an attribute that specifies a vector icon.
 /// </summary>

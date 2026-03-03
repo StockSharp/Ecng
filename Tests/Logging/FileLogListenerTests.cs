@@ -1,11 +1,7 @@
 namespace Ecng.Tests.Logging;
 
 using System.IO.Compression;
-using System.Text;
 using System.Text.RegularExpressions;
-
-using Ecng.Logging;
-using Ecng.IO;
 
 [TestClass]
 public class FileLogListenerTests : BaseTestClass

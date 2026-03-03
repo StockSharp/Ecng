@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System.Threading;
-
 /// <summary>
 /// Defines an object that provides synchronization capabilities.
 /// </summary>

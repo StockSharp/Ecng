@@ -1,10 +1,5 @@
 ﻿namespace Ecng.Linq;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Wrapper that converts <see cref="IEnumerable{T}"/> to <see cref="IAsyncEnumerable{T}"/>.
 /// </summary>

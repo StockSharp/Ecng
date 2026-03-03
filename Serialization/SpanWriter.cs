@@ -1,10 +1,5 @@
 namespace Ecng.Serialization;
 
-using System;
-using System.Text;
-
-using Ecng.Common;
-
 /// <summary>
 /// Provides functionality for writing primitive data types to a span of bytes.
 /// </summary>

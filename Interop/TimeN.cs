@@ -1,9 +1,5 @@
 namespace Ecng.Interop;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a 4-second resolution time value.
 /// </summary>

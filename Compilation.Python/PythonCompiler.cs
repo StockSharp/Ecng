@@ -1,14 +1,9 @@
 ﻿namespace Ecng.Compilation.Python;
 
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
 
-using Ecng.Common;
-
 using Microsoft.Scripting;
-using Microsoft.Scripting.Hosting;
 
 using IronPython.Hosting;
 using IronPython.Compiler;

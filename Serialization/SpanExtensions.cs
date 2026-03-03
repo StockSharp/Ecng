@@ -1,6 +1,5 @@
 namespace Ecng.Serialization;
 
-using System;
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 

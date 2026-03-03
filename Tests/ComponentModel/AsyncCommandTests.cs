@@ -1,10 +1,5 @@
 namespace Ecng.Tests.ComponentModel;
 
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.ComponentModel;
-
 [TestClass]
 public class AsyncCommandTests : BaseTestClass
 {

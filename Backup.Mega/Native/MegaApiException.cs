@@ -1,5 +1,3 @@
-using System;
-
 namespace Ecng.Backup.Mega.Native;
 
 /// <summary>

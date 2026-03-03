@@ -1,6 +1,4 @@
-﻿using JetBrains.Annotations;
-
-namespace YandexDisk.Client.Protocol
+﻿namespace YandexDisk.Client.Protocol
 {
     /// <summary>
     /// Request of moving file on Disk

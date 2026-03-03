@@ -1,8 +1,5 @@
 namespace Ecng.Data;
 
-using System;
-using System.Text;
-
 /// <summary>
 /// Interface for database-specific SQL dialect.
 /// Provides SQL syntax variations for different database providers.

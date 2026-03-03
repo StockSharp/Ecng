@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Provides helper methods for performing cloning operations on objects that implement the ICloneable interface.
 /// </summary>

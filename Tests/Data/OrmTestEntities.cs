@@ -2,9 +2,6 @@ namespace Ecng.Tests.Data;
 
 using System.ComponentModel;
 
-using Ecng.Common;
-using Ecng.Serialization;
-
 public class TestItem : IDbPersistable
 {
 	public long Id { get; set; }
@@ -183,7 +180,7 @@ public class TestItemWithIgnored : IDbPersistable
 	public long Id { get; set; }
 	public string Name { get; set; }
 
-	[Ignore]
+	[Ecng.Serialization.Ignore]
 	public string Computed { get; set; }
 
 	object IDbPersistable.GetIdentity() => Id;

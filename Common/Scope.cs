@@ -1,14 +1,5 @@
 namespace Ecng.Common;
 
-#region Using Directives
-
-using System;
-using System.Collections.Generic;
-using System.Security;
-using System.Threading;
-
-#endregion
-
 /// <summary>
 /// Provides a scope for managing a resource with automatic disposal.
 /// </summary>

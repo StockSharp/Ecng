@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Provides extension methods for converting file sizes between bytes, kilobytes, and megabytes.
 /// </summary>

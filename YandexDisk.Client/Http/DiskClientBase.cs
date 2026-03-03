@@ -1,16 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Runtime.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
-using Newtonsoft.Json;
 using YandexDisk.Client.Http.Serialization;
-using YandexDisk.Client.Protocol;
 
 namespace YandexDisk.Client.Http
 {

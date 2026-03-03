@@ -1,9 +1,7 @@
 ﻿namespace Ecng.Tests.IO;
 
 using System.IO.Compression;
-using System.Text;
 
-using Ecng.IO;
 using Ecng.IO.Compression;
 
 using SharpCompress.Compressors.LZMA;

@@ -1,9 +1,5 @@
 namespace Ecng.Serialization;
 
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 /// <summary>
 /// Provides an abstract base class for type-specific serializers.
 /// </summary>

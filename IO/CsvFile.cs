@@ -10,15 +10,7 @@
 
 namespace Ecng.IO;
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Determines how empty lines are interpreted when reading CSV files.

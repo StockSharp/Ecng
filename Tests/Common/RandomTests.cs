@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using System.Collections;
-
 [TestClass]
 public class RandomTests : BaseTestClass
 {

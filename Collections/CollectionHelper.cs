@@ -1,15 +1,8 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Nito.AsyncEx;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides extension methods and helper utilities for working with collections.

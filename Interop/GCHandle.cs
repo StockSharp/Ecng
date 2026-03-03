@@ -1,11 +1,6 @@
 #if NET10_0_OR_GREATER == false
 namespace Ecng.Interop;
 
-using System;
-using System.Runtime.InteropServices;
-
-using Ecng.Common;
-
 /// <summary>
 /// Generic version of structure <see cref="T:System.Runtime.InteropServices.GCHandle"/>.
 /// </summary>

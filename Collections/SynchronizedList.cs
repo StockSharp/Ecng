@@ -1,11 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a thread-safe list that supports range operations and notification events.
 /// </summary>

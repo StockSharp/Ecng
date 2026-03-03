@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Utility class for common array operations.
 /// </summary>

@@ -1,7 +1,5 @@
 namespace Ecng.Logging;
 
-using Ecng.Localization;
-
 /// <summary>
 /// The logs source which receives information from <see cref="Trace"/>.
 /// </summary>

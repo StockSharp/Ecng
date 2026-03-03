@@ -1,9 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Online doc url attribute.
 /// </summary>

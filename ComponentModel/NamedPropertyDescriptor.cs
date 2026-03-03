@@ -1,10 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a property descriptor with a defined name used for display purposes.
 /// </summary>

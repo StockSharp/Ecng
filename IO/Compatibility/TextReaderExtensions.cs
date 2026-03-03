@@ -1,11 +1,6 @@
 #if !NET7_0_OR_GREATER
 namespace System.IO;
 
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
-
 /// <summary>
 /// Extension methods for <see cref="TextReader"/>.
 /// </summary>

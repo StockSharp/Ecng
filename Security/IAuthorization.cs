@@ -1,12 +1,9 @@
 namespace Ecng.Security;
 
-using System;
 using System.Net;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Defines the interface to an authorization module.

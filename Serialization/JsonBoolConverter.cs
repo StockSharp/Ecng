@@ -1,9 +1,5 @@
 namespace Ecng.Serialization;
 
-using System;
-
-using Newtonsoft.Json;
-
 /// <summary>
 /// Converts boolean values to and from JSON numeric representations (1 or 0).
 /// </summary>

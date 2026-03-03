@@ -1,7 +1,5 @@
 namespace Ecng.Data;
 
-using Ecng.Common;
-
 /// <summary>
 /// Represents a filter condition for database queries.
 /// </summary>

@@ -1,9 +1,6 @@
 namespace Ecng.Interop;
 
-using System;
 using System.Diagnostics;
-
-using Ecng.Common;
 
 /// <summary>
 /// Represents a base class that manages a DLL library and provides access to its exported functions.

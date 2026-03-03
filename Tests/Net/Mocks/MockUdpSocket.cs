@@ -1,12 +1,5 @@
 namespace Ecng.Tests.Net;
 
-using System.Net;
-using System.Net.Sockets;
-
-using Ecng.Net;
-
-using Nito.AsyncEx;
-
 /// <summary>
 /// Mock UDP socket for testing.
 /// </summary>

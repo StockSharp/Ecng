@@ -1,21 +1,15 @@
 namespace Ecng.Backup.Amazon;
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-using global::Amazon;
 using global::Amazon.Runtime;
 using global::Amazon.Glacier.Model;
 using global::Amazon.Glacier;
-
-using Ecng.Common;
 
 /// <summary>
 /// The data storage service based on Amazon Glacier https://aws.amazon.com/s3/glacier/ .

@@ -3,18 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using SmartFormat.Core.Extensions;
-using SmartFormat.Core.Formatting;
-using SmartFormat.Core.Output;
-using SmartFormat.Core.Parsing;
-using SmartFormat.Core.Settings;
-using SmartFormat.Utilities;
-
 namespace SmartFormat
 {
     /// <summary>

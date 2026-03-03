@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Provides helper extension methods for working with nullable types.
 /// </summary>

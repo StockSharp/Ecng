@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Serialization;
 
-using Ecng.Serialization;
-
 using Newtonsoft.Json;
 
 [TestClass]

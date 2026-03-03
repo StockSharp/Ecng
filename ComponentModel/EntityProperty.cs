@@ -1,10 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents an entity property with hierarchical structure.
 /// </summary>

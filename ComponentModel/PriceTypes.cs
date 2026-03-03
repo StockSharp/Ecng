@@ -1,8 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Runtime.Serialization;
-
 /// <summary>
 /// Measure units.
 /// </summary>

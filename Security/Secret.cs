@@ -1,9 +1,7 @@
 namespace Ecng.Security;
 
 using System.Linq;
-using System.Security.Cryptography;
 
-using Ecng.Common;
 using Ecng.Collections;
 
 /// <summary>

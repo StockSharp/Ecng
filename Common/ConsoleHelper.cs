@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Security;
-using System.Threading;
-
 /// <summary>
 /// Provides helper methods for writing colored messages to the console and reading secure passwords.
 /// </summary>

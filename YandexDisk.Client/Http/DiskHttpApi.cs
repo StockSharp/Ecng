@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using JetBrains.Annotations;
-using YandexDisk.Client.Clients;
 using YandexDisk.Client.Http.Clients;
 
 namespace YandexDisk.Client.Http

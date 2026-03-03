@@ -1,9 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a dynamically resizing array allocation.
 /// </summary>

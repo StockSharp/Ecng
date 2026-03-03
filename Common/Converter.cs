@@ -1,21 +1,8 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.IO;
-using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Security;
-using System.Text;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Globalization;
-using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 

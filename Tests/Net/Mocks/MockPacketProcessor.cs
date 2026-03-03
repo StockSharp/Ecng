@@ -2,8 +2,6 @@ namespace Ecng.Tests.Net;
 
 using System.Buffers;
 
-using Ecng.Net;
-
 /// <summary>
 /// Mock packet processor for testing.
 /// </summary>

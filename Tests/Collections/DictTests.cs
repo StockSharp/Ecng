@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Tests.Collections;
 
-using Nito.AsyncEx;
-
 [TestClass]
 public class DictTests : BaseTestClass
 {

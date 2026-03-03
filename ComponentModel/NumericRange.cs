@@ -1,7 +1,6 @@
 #if NET7_0_OR_GREATER
 namespace Ecng.ComponentModel;
 
-using System;
 using System.Numerics;
 
 /// <summary>

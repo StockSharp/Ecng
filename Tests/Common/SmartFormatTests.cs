@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Tests.Common;
 
-using System.Globalization;
-
 using SmartFormat;
 
 [TestClass]

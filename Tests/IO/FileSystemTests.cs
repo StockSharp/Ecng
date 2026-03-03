@@ -1,10 +1,5 @@
 namespace Ecng.Tests.IO;
 
-using System.Text;
-using System.IO;
-
-using Ecng.IO;
-
 [TestClass]
 public class FileSystemTests : BaseTestClass
 {

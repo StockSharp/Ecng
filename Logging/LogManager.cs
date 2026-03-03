@@ -1,8 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Threading;
-using System.Threading.Tasks;
-
 using Nito.AsyncEx;
 
 /// <summary>

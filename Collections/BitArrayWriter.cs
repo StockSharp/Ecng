@@ -1,9 +1,6 @@
 namespace Ecng.Collections;
 
-using System;
 using System.IO;
-
-using Ecng.Common;
 
 /// <summary>
 /// Provides a writer for bit-level data to a stream.

@@ -2,10 +2,6 @@ namespace Ecng.Collections;
 
 // Source: https://github.com/joaoportela/CircularBuffer-CSharp
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 /// <summary>
 /// Circular buffer.
 /// 

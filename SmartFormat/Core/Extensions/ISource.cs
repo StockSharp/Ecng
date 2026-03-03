@@ -3,10 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using SmartFormat.Core.Parsing;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace SmartFormat.Core.Extensions
 {
     /// <summary>

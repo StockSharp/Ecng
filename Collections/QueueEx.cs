@@ -1,8 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Extends the <see cref="Queue{T}"/> class to explicitly implement the <see cref="ICollection{T}"/> interface.
 /// </summary>

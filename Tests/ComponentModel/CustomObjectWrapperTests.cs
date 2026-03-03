@@ -2,8 +2,6 @@ namespace Ecng.Tests.ComponentModel;
 
 using System.ComponentModel;
 
-using Ecng.ComponentModel;
-
 [TestClass]
 public class CustomObjectWrapperTests : BaseTestClass
 {

@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System.ComponentModel;
-
 /// <summary>
 /// Provides an extended type descriptor that includes access to the underlying instance.
 /// </summary>

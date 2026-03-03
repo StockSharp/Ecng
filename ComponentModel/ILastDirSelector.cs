@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// Interface describes last directory selector.
 /// </summary>

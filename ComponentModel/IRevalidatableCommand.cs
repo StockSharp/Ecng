@@ -1,7 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System.Windows.Input;
-
 /// <summary>
 /// Interface for commands that support CanExecute revalidation.
 /// </summary>

@@ -1,17 +1,14 @@
 namespace Ecng.Reflection;
 
-using System;
 using System.ComponentModel;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 using System.IO;
 using System.Runtime.CompilerServices;
 
 using Ecng.Collections;
-using Ecng.Common;
 
 /// <summary>
 /// Provides helper methods for reflection.

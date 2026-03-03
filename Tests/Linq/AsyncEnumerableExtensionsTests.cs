@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Linq;
 
-using System.Runtime.CompilerServices;
-
 using Ecng.Linq;
 
 [TestClass]

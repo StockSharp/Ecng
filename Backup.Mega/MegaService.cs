@@ -1,12 +1,7 @@
 ﻿namespace Ecng.Backup.Mega;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Backup.Mega.Native;

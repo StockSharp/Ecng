@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides a thread-safe dictionary with keys ordered by a specified comparer.
 /// </summary>

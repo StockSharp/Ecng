@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Logging;
 
-using Ecng.Logging;
-
 [TestClass]
 public class LoggingTests : BaseTestClass
 {

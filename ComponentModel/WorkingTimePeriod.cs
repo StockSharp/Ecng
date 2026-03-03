@@ -1,14 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-
-using Ecng.Common;
-using Ecng.Localization;
-using Ecng.Serialization;
-
 /// <summary>
 /// Schedule validity period.
 /// </summary>

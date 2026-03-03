@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Interop;
 
-using System;
 using System.Windows.Forms;
 
 using Microsoft.Win32;

@@ -1,11 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Ecng.Common;
-
 /// <summary>
 /// <see cref="CircularBuffer{TItem}"/> with additional features based on <see cref="IOperator{TItem}"/>.
 /// </summary>

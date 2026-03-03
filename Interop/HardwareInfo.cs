@@ -1,14 +1,7 @@
 namespace Ecng.Interop;
 
-using System;
 using System.Linq;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 using Newtonsoft.Json.Linq;
 

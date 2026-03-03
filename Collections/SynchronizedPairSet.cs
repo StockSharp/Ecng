@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a thread-safe collection that maintains key/value pairs and allows bidirectional lookups.
 /// </summary>

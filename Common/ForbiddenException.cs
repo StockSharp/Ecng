@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Exception thrown when an operation is forbidden.
 /// </summary>

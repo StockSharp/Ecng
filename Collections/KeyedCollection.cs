@@ -1,9 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents an abstract dictionary-backed collection that manages key-value pairs with customizable behavior.
 /// </summary>

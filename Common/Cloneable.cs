@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// The base class for objects that can be cloned.
 /// </summary>

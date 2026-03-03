@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
-using System.Diagnostics;
-
-using Ecng.ComponentModel;
-
 [TestClass]
 public class PeriodicActionPlannerTests : BaseTestClass
 {

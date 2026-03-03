@@ -1,16 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
-using Ecng.IO;
-
 /// <summary>
 /// Provides extension methods for the ICompiler interface and compilation results.
 /// </summary>

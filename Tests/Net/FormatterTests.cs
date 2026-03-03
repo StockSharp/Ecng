@@ -1,10 +1,7 @@
 namespace Ecng.Tests.Net;
 
-using System.Net.Http;
 using System.Net.Http.Formatting;
-using System.Text;
 
-using Ecng.Net;
 using Ecng.Tests.Net.Mocks;
 
 using JsonFormatter = Ecng.Net.JsonMediaTypeFormatter;

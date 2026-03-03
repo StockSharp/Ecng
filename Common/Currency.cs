@@ -1,8 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Runtime.Serialization;
-
 /// <summary>
 /// Currency.
 /// </summary>

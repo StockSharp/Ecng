@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Gma.DataStructures.StringSearch
+﻿namespace Gma.DataStructures.StringSearch
 {
     internal class CharDictionary<T> : Dictionary<char, Edge<T>>
     {

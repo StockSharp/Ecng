@@ -1,12 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using System.Runtime.CompilerServices;
-
-using Ecng.Common;
-
 /// <summary>
 /// Provides base functionality for notifying property changes to registered observers.
 /// Implements both <see cref="INotifyPropertyChangedEx"/> and <see cref="INotifyPropertyChanging"/>.

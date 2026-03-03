@@ -1,8 +1,5 @@
 namespace Ecng.Backup.Mega.Native;
 
-using System;
-using System.IO;
-
 internal static class Crc32
 {
 	private const uint _poly = 3988292384u; // 0xEDB88320 (CryptoPP CRC32 polynomial)

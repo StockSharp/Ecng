@@ -1,14 +1,7 @@
 namespace Ecng.Tests.Common;
 
-using System.Security;
-using System.Collections;
-using System.Globalization;
 using System.Collections.ObjectModel;
-using System.Net;
-using System.Text;
 using System.Data;
-
-using Ecng.ComponentModel;
 
 [TestClass]
 public class ConverterTest

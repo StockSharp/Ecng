@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Tests.Net;
 
-using System.Globalization;
 using System.Xml.Linq;
 
 using Ecng.Net.Sitemap;

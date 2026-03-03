@@ -1,7 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-
 /// <summary>
 /// Represents a synchronized stack of items.
 /// </summary>

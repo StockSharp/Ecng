@@ -1,8 +1,5 @@
 namespace Ecng.Serialization;
 
-using System;
-using System.Text;
-
 /// <summary>
 /// A ref struct that reads primitive types from a span of bytes.
 /// </summary>

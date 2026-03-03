@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a reference tuple with enumerable object values.
 /// </summary>

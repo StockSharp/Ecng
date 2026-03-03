@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// Provides extension methods for <see cref="ICodeGenVisitor"/> for code generation tasks.
 /// </summary>

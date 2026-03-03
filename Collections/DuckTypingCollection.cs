@@ -1,10 +1,5 @@
 namespace Ecng.Collections;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// Represents a collection adapter that converts between <see cref="ICollection{TSource}"/> and <see cref="ICollection{TTarget}"/> using duck typing.
 /// Allows working with collections of different element types by providing conversion functions.

@@ -1,14 +1,5 @@
 ﻿namespace Ecng.Common;
 
-#region Using Directives
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-
-#endregion
-
 /// <summary>
 /// Provides extension methods and utilities for enum types.
 /// </summary>

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-
-namespace Ecng.IO.Fossil
+﻿namespace Ecng.IO.Fossil
 {
 	unsafe class Reader(byte* array, int length)
 	{

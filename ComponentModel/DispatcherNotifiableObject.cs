@@ -1,13 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-
-using Ecng.Collections;
-using Ecng.Common;
-
 /// <summary>
 /// Forward <see cref="INotifyPropertyChanged"/> notifications to dispatcher thread.
 /// Multiple notifications for the same property may be forwarded only once.

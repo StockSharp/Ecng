@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Interop;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Represents a safe wrapper around an unmanaged memory pointer with bounds checking and shifting capabilities.
 /// </summary>

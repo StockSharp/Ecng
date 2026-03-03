@@ -1,7 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// Template editor attribute.
 /// </summary>

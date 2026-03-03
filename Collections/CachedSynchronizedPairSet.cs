@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a thread-safe set of key-value pairs with cached keys, values, and pairs for improved performance.
 /// </summary>

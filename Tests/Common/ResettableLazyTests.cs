@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using Nito.AsyncEx;
-
 [TestClass]
 public class ResettableLazyTests : BaseTestClass
 {

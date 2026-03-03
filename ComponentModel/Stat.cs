@@ -1,15 +1,7 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
-using System.Linq;
 using System.Text;
-using System.Threading;
-
-using Ecng.Common;
-using Ecng.Collections;
 
 /// <summary>
 /// Contains statistical information related to actions.

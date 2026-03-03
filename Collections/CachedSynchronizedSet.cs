@@ -1,7 +1,5 @@
 namespace Ecng.Collections;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a thread-safe set with a cached array of its elements for improved performance.
 /// </summary>

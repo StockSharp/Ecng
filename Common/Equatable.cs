@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Provides a base implementation for objects that support equality, comparison, and cloning.
 /// </summary>

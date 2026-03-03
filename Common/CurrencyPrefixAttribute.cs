@@ -1,7 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Attribute that specifies the prefix/symbol for a currency enum member.
 /// </summary>

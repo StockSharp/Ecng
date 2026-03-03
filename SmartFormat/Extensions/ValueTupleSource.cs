@@ -3,10 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using SmartFormat.Core.Extensions;
-using SmartFormat.Core.Formatting;
-using SmartFormat.Utilities;
-
 namespace SmartFormat.Extensions
 {
     public class ValueTupleSource : ISource

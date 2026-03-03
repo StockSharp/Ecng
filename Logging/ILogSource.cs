@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 using Ecng.ComponentModel;
-using Ecng.Localization;
 
 /// <summary>
 /// Logs source interface.

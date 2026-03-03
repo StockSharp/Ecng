@@ -1,9 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
-using YandexDisk.Client.Protocol;
 
 namespace YandexDisk.Client.Clients
 {

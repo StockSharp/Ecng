@@ -1,11 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Ecng.Common;
-
 /// <summary>
 /// Extension methods for <see cref="WorkingTime"/>.
 /// </summary>

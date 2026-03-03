@@ -1,9 +1,5 @@
 namespace Ecng.Tests.Net;
 
-using System.Net;
-
-using Ecng.Net;
-
 [TestClass]
 public class PacketSourceTests : BaseTestClass
 {

@@ -1,8 +1,5 @@
 namespace Ecng.Data;
 
-using System;
-using System.Text;
-
 /// <summary>
 /// Base class for SQL dialect implementations.
 /// </summary>

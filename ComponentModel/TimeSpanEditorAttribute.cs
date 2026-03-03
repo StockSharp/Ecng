@@ -1,7 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-
 /// <summary>
 /// Show <see cref="TimeSpan"/> editor parts mask.
 /// </summary>

@@ -1,10 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Threading;
-using System.Linq;
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides various mathematical helper methods and extension methods for numeric types.
 /// </summary>

@@ -1,10 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
-using System;
-using System.Security;
 using System.Security.Cryptography;
 
-using Ecng.Common;
 using Ecng.Security;
 
 class SecureStringEncryptor

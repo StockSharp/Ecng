@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-
 /// <summary>
 /// Represents an exception that is thrown when an operation encounters too many elements.
 /// </summary>

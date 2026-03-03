@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Common;
 
-using System;
-using System.Threading;
-
 /// <summary>
 /// A lightweight synchronization scope that enters a lock on construction and exits on dispose.
 /// </summary>

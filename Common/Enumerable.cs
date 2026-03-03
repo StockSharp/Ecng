@@ -1,12 +1,5 @@
 namespace Ecng.Common;
 
-#region Using Directives
-
-using System.Collections;
-using System.Collections.Generic;
-
-#endregion
-
 /// <summary>
 /// Represents an abstract enumerable collection of elements.
 /// </summary>

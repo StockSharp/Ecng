@@ -1,8 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Threading;
-
 /// <summary>
 /// Interface for application lifecycle management.
 /// Provides abstraction over shutdown and restart operations.

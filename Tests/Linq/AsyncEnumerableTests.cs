@@ -1,8 +1,6 @@
 #if NET10_0_OR_GREATER == false
 namespace Ecng.Tests.Linq;
 
-using System.Runtime.CompilerServices;
-
 using Ecng.Linq;
 
 [TestClass]

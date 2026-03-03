@@ -1,8 +1,4 @@
-﻿using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace YandexDisk.Client.Http
+﻿namespace YandexDisk.Client.Http
 {
     internal class RealHttpClientWrapper: IHttpClient
     {

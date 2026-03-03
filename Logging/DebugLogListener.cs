@@ -2,8 +2,6 @@ namespace Ecng.Logging;
 
 using System.Text;
 
-using Ecng.Localization;
-
 /// <summary>
 /// The strategy logger that records the data to the debug window.
 /// </summary>

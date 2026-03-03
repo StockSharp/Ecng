@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
-
-using Ecng.Collections;
-
 /// <summary>
 /// Represents a provider for compilers.
 /// </summary>

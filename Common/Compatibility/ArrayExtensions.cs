@@ -1,8 +1,6 @@
 #if !NET8_0_OR_GREATER
 namespace System;
 
-using System.Linq;
-
 /// <summary>
 /// Compatibility extensions for arrays.
 /// </summary>

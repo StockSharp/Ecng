@@ -1,11 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Runtime.Serialization;
-
-using Ecng.Common;
-using Ecng.Serialization;
-
 /// <summary>
 /// Represents a price with a specific value and type.
 /// </summary>

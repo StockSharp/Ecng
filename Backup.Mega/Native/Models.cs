@@ -1,7 +1,5 @@
 namespace Ecng.Backup.Mega.Native;
 
-using System;
-
 /// <summary>
 /// MEGA node type.
 /// </summary>

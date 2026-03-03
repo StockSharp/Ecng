@@ -3,11 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using SmartFormat.Core.Extensions;
-
 namespace SmartFormat.Extensions
 {
     /// <summary>

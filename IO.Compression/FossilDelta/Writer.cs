@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Ecng.IO.Fossil
 {
 	class Writer

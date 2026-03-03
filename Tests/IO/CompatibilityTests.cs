@@ -1,9 +1,6 @@
 #if NET6_0
 namespace Ecng.Tests.IO;
 
-using System.IO;
-using System.Text;
-
 /// <summary>
 /// Tests for .NET 6.0 polyfills (methods added in .NET 7+).
 /// </summary>

@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Specifies which statistics to calculate in circular buffer with stats.
 /// </summary>

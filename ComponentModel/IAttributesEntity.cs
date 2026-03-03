@@ -1,8 +1,5 @@
 ﻿namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents an entity that contains a collection of attributes.
 /// </summary>

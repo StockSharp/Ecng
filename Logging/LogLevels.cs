@@ -3,8 +3,6 @@ namespace Ecng.Logging;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
-using Ecng.Localization;
-
 /// <summary>
 /// Levels of log messages <see cref="LogMessage"/>.
 /// </summary>

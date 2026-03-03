@@ -1,20 +1,14 @@
 namespace Ecng.Backup.Amazon;
 
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System.Runtime.CompilerServices;
 
-using global::Amazon;
 using global::Amazon.Runtime;
 using global::Amazon.S3;
 using global::Amazon.S3.Model;
-
-using Ecng.Common;
 
 /// <summary>
 /// The data storage service based on Amazon S3 https://aws.amazon.com/s3/ .

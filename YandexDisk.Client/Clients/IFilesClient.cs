@@ -1,10 +1,4 @@
-﻿using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
-using YandexDisk.Client.Protocol;
-
-namespace YandexDisk.Client.Clients
+﻿namespace YandexDisk.Client.Clients
 {
     /// <summary>
     /// Files operation client

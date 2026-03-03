@@ -1,7 +1,5 @@
 namespace Ecng.Net;
 
-using System.Net.Sockets;
-
 /// <summary>
 /// Factory for creating UDP sockets.
 /// </summary>

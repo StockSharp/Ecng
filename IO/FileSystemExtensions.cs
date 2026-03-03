@@ -1,14 +1,6 @@
 namespace Ecng.IO;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension methods for <see cref="IFileSystem"/>.

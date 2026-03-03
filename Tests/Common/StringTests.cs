@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Tests.Common;
 
-using System.Globalization;
-using System.Security;
-using System.Text;
-
 [TestClass]
 public class StringTests : BaseTestClass
 {

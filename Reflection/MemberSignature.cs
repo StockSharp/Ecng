@@ -1,15 +1,8 @@
 namespace Ecng.Reflection;
 
-#region Using Directives
-
-using System;
-using System.Reflection;
 using System.Linq;
 
 using Ecng.Collections;
-using Ecng.Common;
-
-#endregion
 
 /// <summary>
 /// Member signature.

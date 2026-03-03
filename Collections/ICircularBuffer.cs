@@ -1,7 +1,5 @@
 namespace Ecng.Collections;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// Common interface for circular buffers.
 /// </summary>

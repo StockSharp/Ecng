@@ -1,8 +1,5 @@
 namespace Ecng.Tests;
 
-using System.Net.Http;
-
-using Ecng.IO;
 using Ecng.Reflection;
 
 [TestClass]

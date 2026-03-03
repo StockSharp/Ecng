@@ -3,8 +3,6 @@
 // Licensed under the MIT license.
 //
 
-using SmartFormat.Core.Settings;
-
 namespace SmartFormat.Core.Parsing
 {
     /// <summary>

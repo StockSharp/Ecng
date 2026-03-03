@@ -1,8 +1,6 @@
 ﻿#if NET8_0_OR_GREATER == false
 namespace System.Linq;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// Provides additional extension methods for working with enumerables.
 /// Contains compatibility helpers that are not available in .NET Standard 2.0.

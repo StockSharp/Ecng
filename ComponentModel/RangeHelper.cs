@@ -1,13 +1,5 @@
 namespace Ecng.ComponentModel;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Serialization;
-
 /// <summary>
 /// Provides helper methods for manipulating Range objects.
 /// </summary>

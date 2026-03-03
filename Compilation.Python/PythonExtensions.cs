@@ -1,16 +1,11 @@
 ﻿namespace Ecng.Compilation.Python;
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Numerics;
 
-using Ecng.Common;
 using Ecng.Collections;
 
 using Microsoft.Scripting;
-using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Actions;
 
 using IronPython.Runtime;

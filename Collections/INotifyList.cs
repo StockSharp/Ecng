@@ -1,8 +1,5 @@
 ﻿namespace Ecng.Collections;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// Represents a collection that notifies about its changes.
 /// </summary>

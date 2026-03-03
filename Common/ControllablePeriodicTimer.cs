@@ -1,10 +1,5 @@
 namespace Ecng.Common;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics;
-
 /// <summary>
 /// Represents a controllable periodic timer that can be started, stopped, and have its interval changed.
 /// </summary>
