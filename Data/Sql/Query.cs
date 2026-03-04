@@ -184,7 +184,12 @@ public class Query
 	/// <param name="tableName">Table name.</param>
 	/// <param name="alias">Table alias.</param>
 	public Query Table(string tableName, string alias)
-		=> AddAction((dialect, builder) => builder.AppendFormat("{0} {1}", dialect.QuoteIdentifier(tableName), alias));
+		=> AddAction((dialect, builder) =>
+		{
+			builder.Append(dialect.QuoteIdentifier(tableName));
+			if (!string.IsNullOrEmpty(alias))
+				builder.Append(' ').Append(alias);
+		});
 
 	/// <summary>
 	/// Appends GROUP BY keyword.

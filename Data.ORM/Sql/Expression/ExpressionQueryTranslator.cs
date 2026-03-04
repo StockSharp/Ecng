@@ -1019,8 +1019,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		if (Context.JoinParts.Any(j => j.tableAlias.EqualsIgnoreCase(alias)))
 			return alias;
 
-		// Otherwise, map to the main table alias
-		return Context.TableAlias;
+		// Otherwise, map to the main table alias.
+		// When TableAlias is not yet set (e.g. inside a subquery before Build),
+		// return the alias as-is so both inner and outer scope references are preserved.
+		return Context.TableAlias.IsEmpty() ? alias : Context.TableAlias;
 	}
 
 	protected override Expression VisitMember(MemberExpression m)

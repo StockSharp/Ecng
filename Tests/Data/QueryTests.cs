@@ -145,6 +145,31 @@ public class QueryTests : BaseTestClass
 		sql.AssertContains("where [t].[Status] = @Status and ([t].[Age] > @MinAge or [t].[Role] = @Role)");
 	}
 
+	[TestMethod]
+	public void Table_EmptyAlias_NoTrailingSpace()
+	{
+		var sql = new Query()
+			.Select().Count().OpenBracket().Star().CloseBracket()
+			.NewLine()
+			.From().Table("Users", string.Empty)
+			.Render(_ss);
+
+		sql.AssertContains("from [Users]");
+		sql.Contains("from [Users] ").AssertFalse("Should not have trailing space after table name when alias is empty");
+	}
+
+	[TestMethod]
+	public void Table_NullAlias_NoTrailingSpace()
+	{
+		var sql = new Query()
+			.Select().Count().OpenBracket().Star().CloseBracket()
+			.NewLine()
+			.From().Table("Users", null)
+			.Render(_ss);
+
+		sql.AssertContains("from [Users]");
+	}
+
 	#endregion
 
 	#region INSERT chain

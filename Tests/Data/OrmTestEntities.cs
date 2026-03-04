@@ -2,6 +2,7 @@ namespace Ecng.Tests.Data;
 
 using System.ComponentModel;
 
+using Ecng.Data.Sql;
 using Ecng.Serialization;
 
 public class TestItem : IDbPersistable
@@ -95,6 +96,9 @@ public class TestPerson : IDbPersistable
 {
 	public long Id { get; set; }
 	public string Name { get; set; }
+
+	[AllColumnsField]
+	public object AllColumns;
 
 	[RelationMany(typeof(TestPersonTaskList))]
 	public TestPersonTaskList Tasks { get; set; }

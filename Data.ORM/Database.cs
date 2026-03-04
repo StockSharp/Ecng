@@ -1199,7 +1199,9 @@ public class Database : Disposable, IStorage
 		foreach (var arg in translator.Parameters)
 			input.Add(new(arg.Key, arg.Value.Item1, arg.Value.Item2));
 
-		var command = _commandsByText.SafeAdd(query.Render(Dialect), key =>
+		var sql = query.Render(Dialect);
+
+		var command = _commandsByText.SafeAdd(sql, key =>
 		{
 			var command = new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text));
 
