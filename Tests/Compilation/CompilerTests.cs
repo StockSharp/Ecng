@@ -566,7 +566,7 @@ class AnalyticsScript_{i}:
 
 		// Since System.Runtime.dll exists in runtime path, it should find it there
 		var location = asmRef.Location;
-		string.IsNullOrEmpty(location).AssertFalse();
+		location.IsEmpty().AssertFalse();
 		Path.GetFileName(location).AssertEqual(fileName);
 	}
 }

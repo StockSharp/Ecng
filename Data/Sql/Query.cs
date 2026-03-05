@@ -187,7 +187,7 @@ public class Query
 		=> AddAction((dialect, builder) =>
 		{
 			builder.Append(dialect.QuoteIdentifier(tableName));
-			if (!string.IsNullOrEmpty(alias))
+			if (!alias.IsEmpty())
 				builder.Append(' ').Append(alias);
 		});
 
