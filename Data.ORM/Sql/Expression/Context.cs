@@ -157,7 +157,7 @@ class Context
 				Take = null;
 			}
 
-			if (SelectColumns.Count > 0)
+			if (SelectColumns.Count > 0 && SelectColumns[0].Count > 0)
 			{
 				var idx = 0;
 				var top = SelectColumns[0];
@@ -194,6 +194,33 @@ class Context
 				if (SelectAlias is not null && JoinParts.Any(j => j.tableAlias.EqualsIgnoreCase(SelectAlias)))
 					selectFrom = SelectAlias;
 				query.All(selectFrom);
+
+				// include computed columns from deeper MemberInit layers
+				// (when outermost Select is anonymous access like e => e.Tag)
+				foreach (var layer in SelectColumns)
+				{
+					foreach (var pair in layer)
+					{
+						var mi = pair.Key;
+
+						if (mi.GetAttribute<AllColumnsFieldAttribute>() is not null)
+							continue;
+
+						var memberType = mi.GetMemberType();
+
+						if (!memberType.IsSerializablePrimitive() && SchemaRegistry.TryGet(memberType, out _))
+							continue;
+
+						var q = pair.Value.Item1;
+
+						if (q?.Actions.Count > 1)
+						{
+							query.Comma();
+							q.CopyTo(query);
+							query.As().Column(mi.Name);
+						}
+					}
+				}
 			}
 		}
 

@@ -203,3 +203,34 @@ public class TestItemWithIgnored : IDbPersistable
 		return default;
 	}
 }
+
+/// <summary>
+/// View entity for testing Join with MemberInit in result selector.
+/// Simulates a view where computed columns come from joined tables.
+/// </summary>
+public class VTestItemWithCategory : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Name { get; set; }
+	public string JoinedCategoryName { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken) => default;
+}
+
+/// <summary>
+/// View entity for testing SelectMany (left join) with MemberInit in result selector.
+/// </summary>
+public class VTestItemWithOptionalCategory : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Name { get; set; }
+	public string LeftJoinedDescription { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken) => default;
+}

@@ -159,6 +159,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 						if (isAnonymousAccess)
 						{
 							Context.SelectAlias = me.Member.Name;
+							Context.SelectColumns.Add(new());
 							return Visit(m.Arguments[0]);
 						}
 					}
@@ -218,10 +219,18 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 			case nameof(Queryable.SelectMany):
 			{
+				var resultSelector = m.Arguments[2].GetOperand();
+
 				var leftJoinAlias = Context.LeftJoinAlias;
-				Context.LeftJoinAlias = m.Arguments[2].GetOperand().Parameters[1].Name;
+				Context.LeftJoinAlias = resultSelector.Parameters[1].Name;
 				var retVal = Visit(m.Arguments[0]);
 				Context.LeftJoinAlias = leftJoinAlias;
+
+				if (resultSelector.Body is MemberInitExpression)
+				{
+					// final projection folded into SelectMany result selector
+					Visit(resultSelector.Body);
+				}
 
 				return retVal;
 			}
@@ -330,6 +339,12 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 					{
 						// select inner entity → SELECT [alias2].*
 						Context.SelectAlias = alias2;
+					}
+					else if (resultSelector.Body is MemberInitExpression)
+					{
+						// final projection folded into Join result selector
+						// (e.g., select new VError { Text = ec.Value, ... })
+						Visit(resultSelector.Body);
 					}
 
 					return m;
@@ -512,7 +527,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 				Curr.NewLine();
 
-				Context.JoinParts.Add((alias1, joinPart));
+				Context.JoinParts.Add((alias2, joinPart));
 
 				return m;
 			}

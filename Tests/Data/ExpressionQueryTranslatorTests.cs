@@ -108,6 +108,99 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		sql.Contains("[]").AssertFalse($"SQL should not contain empty alias '[]', got: {sql}");
 	}
+
+	/// <summary>
+	/// When C# compiler folds "select new VEntity { Prop = joined.Col }" into the
+	/// last Join's result selector (inner join without "into"), the translator must
+	/// visit the MemberInitExpression to include computed columns in SELECT.
+	/// Without the fix, the SQL would be missing computed columns like JoinedCategoryName.
+	/// </summary>
+	[TestMethod]
+	public void Join_MemberInitInResultSelector_IncludesComputedColumns()
+	{
+		var items = CreateQueryable<TestItem>();
+		var categories = CreateQueryable<TestCategory>();
+
+		// C# compiles this into Queryable.Join with MemberInit in the result selector (4th arg)
+		var query = from item in items
+					join cat in categories on item.Id equals cat.Id
+					select new VTestItemWithCategory
+					{
+						Id = item.Id,
+						Name = item.Name,
+						JoinedCategoryName = cat.CategoryName,
+					};
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("JoinedCategoryName").AssertTrue(
+			$"SQL must include computed column 'JoinedCategoryName' from Join result selector, got: {sql}");
+		sql.Contains("[TestCategory]").AssertTrue(
+			$"SQL must include INNER JOIN to TestCategory, got: {sql}");
+	}
+
+	/// <summary>
+	/// When C# compiler folds "select new VEntity { Prop = joined.Col }" into the
+	/// last SelectMany's result selector (left join via GroupJoin + SelectMany + DefaultIfEmpty),
+	/// the translator must visit the MemberInitExpression to include computed columns.
+	/// Without the fix, the SQL would be missing the left-joined computed columns.
+	/// </summary>
+	[TestMethod]
+	public void SelectMany_MemberInitInResultSelector_IncludesComputedColumns()
+	{
+		var items = CreateQueryable<TestItem>();
+		var categories = CreateQueryable<TestCategory>();
+
+		// C# compiles this into GroupJoin + SelectMany with MemberInit in SelectMany's result selector
+		var query = from item in items
+					join cat in categories on item.Id equals cat.Id into g
+					from cat in g.DefaultIfEmpty()
+					select new VTestItemWithOptionalCategory
+					{
+						Id = item.Id,
+						Name = item.Name,
+						LeftJoinedDescription = cat.Description,
+					};
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("LeftJoinedDescription").AssertTrue(
+			$"SQL must include computed column 'LeftJoinedDescription' from SelectMany result selector, got: {sql}");
+		sql.Contains("[TestCategory]").AssertTrue(
+			$"SQL must include LEFT JOIN to TestCategory, got: {sql}");
+	}
+
+	/// <summary>
+	/// When multiple joins fold their MemberInit into the result selector,
+	/// all computed columns from each join must appear in the generated SQL.
+	/// </summary>
+	[TestMethod]
+	public void MultipleJoins_MemberInitInResultSelector_IncludesAllComputedColumns()
+	{
+		var items = CreateQueryable<TestItem>();
+		var categories = CreateQueryable<TestCategory>();
+		var persons = CreateQueryable<TestPerson>();
+
+		// Two consecutive joins with MemberInit folded into the last Join's result selector
+		var query = from item in items
+					join cat in categories on item.Id equals cat.Id
+					join p in persons on item.Id equals p.Id
+					select new VTestItemWithCategory
+					{
+						Id = item.Id,
+						Name = p.Name,
+						JoinedCategoryName = cat.CategoryName,
+					};
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("JoinedCategoryName").AssertTrue(
+			$"SQL must include 'JoinedCategoryName' from multi-join MemberInit, got: {sql}");
+		sql.Contains("[TestCategory]").AssertTrue(
+			$"SQL must include JOIN to TestCategory, got: {sql}");
+		sql.Contains("[TestPerson]").AssertTrue(
+			$"SQL must include JOIN to TestPerson, got: {sql}");
+	}
 }
 
 public class VTestPersonWithTasks : IDbPersistable
