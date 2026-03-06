@@ -2,5 +2,10 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <RootNamespace>Ecng.Data</RootNamespace>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="bin\$(Configuration)\netstandard2.0\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
 </Project>
