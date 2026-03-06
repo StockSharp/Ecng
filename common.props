@@ -52,6 +52,15 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="
+        $(MSBuildProjectName.EndsWith('.Generator'))
+      ">
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>
@@ -84,6 +93,11 @@
       <_Parameter1>en-US</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Generator'))">
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MsCodeAnalysisVer)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="$(MsCodeAnalysisAnalyzersVer)" PrivateAssets="all" />
+  </ItemGroup>
+
   <!--<ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)IsExternalInit.cs" Link="Properties\IsExternalInit.cs" />
   </ItemGroup>-->

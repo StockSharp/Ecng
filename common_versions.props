@@ -9,11 +9,14 @@
     <MsTestSdkVer>17.13.0</MsTestSdkVer>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
-    <LangVersion>14.0</LangVersion>
-    <MsExtensionsVer>10.*</MsExtensionsVer>
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net10'))">
+    <LangVersion>latest</LangVersion>
     <MsCodeAnalysisVer>4.*</MsCodeAnalysisVer>
     <MsCodeAnalysisAnalyzersVer>3.*</MsCodeAnalysisAnalyzersVer>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
+    <MsExtensionsVer>10.*</MsExtensionsVer>
     <FSharpVer>43.*</FSharpVer>
     <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>18.*</MsTestSdkVer>
