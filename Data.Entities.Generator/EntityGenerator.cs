@@ -360,8 +360,8 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine($"\t\tvar meta = new Schema");
 		sb.AppendLine("\t\t{");
 
-		var tableAttr = GetEntityAttribute(entityType);
-		var tableName = tableAttr ?? entityName;
+		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
+		var tableName = entityAttrName ?? entityName;
 		var isView = IsViewEntity(entityType);
 
 		sb.AppendLine($"\t\t\tTableName = \"{tableName}\",");
@@ -369,6 +369,9 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine($"\t\t\tFactory = () => new {entityName}(),");
 		sb.AppendLine($"\t\t\tIdentity = new() {{ Name = nameof(Id), ClrType = typeof(long), IsReadOnly = true }},");
 		sb.AppendLine("\t\t\tColumns = columns,");
+
+		if (noCache)
+			sb.AppendLine("\t\t\tNoCache = true,");
 
 		if (isView)
 			sb.AppendLine("\t\t\tIsView = true,");
@@ -729,14 +732,29 @@ public class EntityGenerator : IIncrementalGenerator
 	private static bool HasAttribute(ISymbol symbol, string attrName)
 		=> symbol.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
 
-	private static string GetEntityAttribute(INamedTypeSymbol type)
+	private static (string name, bool noCache) GetEntityAttribute(INamedTypeSymbol type)
 	{
 		var attr = type.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "EntityAttribute");
 		if (attr is null)
-			return null;
+			return (null, false);
 
-		var nameArg = attr.ConstructorArguments.FirstOrDefault();
-		return nameArg.Value as string;
+		string name = null;
+		var noCache = false;
+
+		foreach (var arg in attr.NamedArguments)
+		{
+			switch (arg.Key)
+			{
+				case "Name":
+					name = arg.Value.Value as string;
+					break;
+				case "NoCache":
+					noCache = arg.Value.Value is true;
+					break;
+			}
+		}
+
+		return (name, noCache);
 	}
 
 	private static string GetEnumUnderlyingType(ITypeSymbol type)
