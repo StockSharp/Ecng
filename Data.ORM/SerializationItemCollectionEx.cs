@@ -21,7 +21,7 @@ public static class DbPersistableHelper
 	{
 		var id = storage.GetValue<long?>(name);
 
-		if (id is null or 0)
+		if (id is null)
 			return default;
 
 		return await db.GetByIdAsync<long, T>(id.Value, ct);

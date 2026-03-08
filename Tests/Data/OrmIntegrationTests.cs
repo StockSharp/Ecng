@@ -1789,6 +1789,34 @@ public class OrmIntegrationTests : BaseTestClass
 		return false;
 	}
 
+	[TestMethod]
+	public async Task RelationSingle_FkWithZeroId()
+	{
+		// Reproduces bug: LoadFkAsync treated id=0 as "no FK" and returned null.
+		// In production, Client Id=0 (Root) exists but was skipped.
+		EnsureDb();
+
+		// Insert a person with Id=0 via raw SQL (IDENTITY_INSERT ON)
+		using (var conn = new SqlConnection(_connectionString))
+		{
+			conn.Open();
+			Execute(conn, "SET IDENTITY_INSERT [TestPerson] ON");
+			Execute(conn, "INSERT INTO [TestPerson] (Id, Name) VALUES (0, 'ZeroRoot')");
+			Execute(conn, "SET IDENTITY_INSERT [TestPerson] OFF");
+		}
+
+		// Insert a task referencing Person Id=0
+		var task = new TestTask { Title = "TaskForZero", Priority = 1, Person = new TestPerson { Id = 0 } };
+		task = await Storage.AddAsync(task, CancellationToken);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestTask>(task.Id, CancellationToken);
+		loaded.AssertNotNull();
+		loaded.Person.AssertNotNull("FK with id=0 must not be null");
+		loaded.Person.Name.AssertEqual("ZeroRoot");
+	}
+
 	#endregion
 }
 
