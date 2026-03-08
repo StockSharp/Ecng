@@ -234,3 +234,96 @@ public class VTestItemWithOptionalCategory : IDbPersistable
 	public void Save(SettingsStorage storage) { }
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken) => default;
 }
+
+/// <summary>
+/// Self-referencing tree node for testing multi-level RelationMany nesting.
+/// Mirrors the Client → ClientGroup → Client pattern in the web app.
+/// </summary>
+public class TestNode : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Name { get; set; }
+
+	[RelationMany(typeof(TestNodeChildList))]
+	public TestNodeChildList Children { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage.Set(nameof(Name), Name);
+	}
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Name = storage.GetValue<string>(nameof(Name));
+		return default;
+	}
+
+	public void InitLists(IStorage db)
+	{
+		Children = new TestNodeChildList(db, this);
+	}
+}
+
+/// <summary>
+/// Junction entity linking a parent TestNode to a child TestNode.
+/// Mirrors ClientGroup (Client FK + Group FK).
+/// </summary>
+public class TestNodeChild : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[RelationSingle]
+	public TestNode Parent { get; set; }
+
+	[RelationSingle]
+	public TestNode Child { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.SetFk(nameof(Parent), Parent?.Id)
+			.SetFk(nameof(Child), Child?.Id);
+	}
+
+	public async ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Parent = await storage.LoadFkAsync<TestNode>(nameof(Parent), db, cancellationToken);
+		Child = await storage.LoadFkAsync<TestNode>(nameof(Child), db, cancellationToken);
+	}
+}
+
+public class TestNodeChildList(IStorage storage, TestNode parent) : RelationManyList<TestNodeChild, long>(storage)
+{
+	private readonly TestNode _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+
+	public override IQueryable<TestNodeChild> ToQueryable()
+		=> base.ToQueryable().Where(c => c.Parent.Id == _parent.Id);
+
+	protected override ValueTask<long> OnGetCount(bool deleted, CancellationToken cancellationToken)
+		=> ToQueryable().CountAsyncEx(cancellationToken);
+
+	protected override async ValueTask<TestNodeChild[]> OnGetGroup(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+	{
+		var q = ToQueryable();
+
+		if (startIndex > 0)
+			q = q.Skip((int)startIndex);
+
+		if (count < long.MaxValue)
+			q = q.Take((int)count);
+
+		return await q.ToArrayAsyncEx(cancellationToken);
+	}
+
+	protected override ValueTask<bool> IsSaved(TestNodeChild item, CancellationToken cancellationToken)
+		=> new(item.Id > 0);
+
+	public override ValueTask<bool> ContainsAsync(TestNodeChild item, CancellationToken cancellationToken)
+		=> ToQueryable().Where(c => c.Id == item.Id).AnyAsyncEx(cancellationToken);
+}

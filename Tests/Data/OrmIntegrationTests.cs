@@ -38,6 +38,8 @@ public class OrmIntegrationTests : BaseTestClass
 		EnsureTable<TestItemCategory>(conn);
 		EnsureTable<TestPerson>(conn);
 		EnsureTable<TestTask>(conn);
+		EnsureTable<TestNode>(conn);
+		EnsureTable<TestNodeChild>(conn);
 	}
 
 	private static void EnsureTable<T>(SqlConnection conn)
@@ -81,6 +83,8 @@ public class OrmIntegrationTests : BaseTestClass
 		Execute(conn, "DELETE FROM [TestCategory]");
 		Execute(conn, "DELETE FROM [TestTask]");
 		Execute(conn, "DELETE FROM [TestPerson]");
+		Execute(conn, "DELETE FROM [TestNodeChild]");
+		Execute(conn, "DELETE FROM [TestNode]");
 
 		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
 	}
@@ -150,6 +154,18 @@ public class OrmIntegrationTests : BaseTestClass
 			Category = category,
 		};
 		return await Storage.AddAsync(ic, CancellationToken);
+	}
+
+	private async Task<TestNode> InsertNode(string name)
+	{
+		var node = new TestNode { Name = name };
+		return await Storage.AddAsync(node, CancellationToken);
+	}
+
+	private async Task<TestNodeChild> InsertNodeChild(TestNode parent, TestNode child)
+	{
+		var nc = new TestNodeChild { Parent = parent, Child = child };
+		return await Storage.AddAsync(nc, CancellationToken);
 	}
 
 	#endregion
@@ -1560,6 +1576,217 @@ public class OrmIntegrationTests : BaseTestClass
 		var load2 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
 		load2.Name.AssertEqual("Mutated");
 		ReferenceEquals(load1, load2).AssertTrue();
+	}
+
+	#endregion
+
+	#region Nested RelationMany Tests
+
+	[TestMethod]
+	public async Task RelationMany_NestedTreeTraversal()
+	{
+		// Reproduces the Client → ClientGroup → Client.Group null FK bug
+		// Creates a 5-level deep tree: Node1 → Node2 → Node3 → Node4 → Node5
+		// Then traverses it level by level via RelationMany Children + Child FK
+
+		EnsureDb();
+
+		var node1 = await InsertNode("Level1");
+		var node2 = await InsertNode("Level2");
+		var node3 = await InsertNode("Level3");
+		var node4 = await InsertNode("Level4");
+		var node5 = await InsertNode("Level5");
+
+		// Create links: each node points to the next as a child
+		await InsertNodeChild(node1, node2);
+		await InsertNodeChild(node2, node3);
+		await InsertNodeChild(node3, node4);
+		await InsertNodeChild(node4, node5);
+
+		await ClearCache();
+
+		// Load root and traverse the tree through RelationMany + FK
+		var root = await Storage.GetByIdAsync<long, TestNode>(node1.Id, CancellationToken);
+		root.AssertNotNull();
+		root.Name.AssertEqual("Level1");
+		root.Children.AssertNotNull();
+
+		var currentNode = root;
+		var expectedNames = new[] { "Level2", "Level3", "Level4", "Level5" };
+
+		for (var level = 0; level < expectedNames.Length; level++)
+		{
+			var children = await currentNode.Children.ToQueryable().ToArrayAsyncEx(CancellationToken);
+			children.Length.AssertEqual(1, $"Level {level + 1} should have exactly 1 child");
+
+			var link = children[0];
+			link.Child.AssertNotNull($"Child FK is null at level {level + 2} ({expectedNames[level]})");
+			link.Child.Name.AssertNotNull($"Child.Name is null at level {level + 2}");
+			link.Child.Name.AssertEqual(expectedNames[level]);
+
+			// Check that Children list is initialized on the child node
+			link.Child.Children.AssertNotNull($"Child.Children (RelationManyList) is null at level {level + 2}");
+
+			currentNode = link.Child;
+		}
+
+		// Leaf node should have no children
+		var leafChildren = await currentNode.Children.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		leafChildren.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_NestedTreeWithMultipleChildren()
+	{
+		// Tests wider tree: Node1 has 3 children, each has 2 children
+		EnsureDb();
+
+		var root = await InsertNode("Root");
+		var a = await InsertNode("A");
+		var b = await InsertNode("B");
+		var c = await InsertNode("C");
+		var a1 = await InsertNode("A1");
+		var a2 = await InsertNode("A2");
+		var b1 = await InsertNode("B1");
+		var b2 = await InsertNode("B2");
+		var c1 = await InsertNode("C1");
+		var c2 = await InsertNode("C2");
+
+		await InsertNodeChild(root, a);
+		await InsertNodeChild(root, b);
+		await InsertNodeChild(root, c);
+		await InsertNodeChild(a, a1);
+		await InsertNodeChild(a, a2);
+		await InsertNodeChild(b, b1);
+		await InsertNodeChild(b, b2);
+		await InsertNodeChild(c, c1);
+		await InsertNodeChild(c, c2);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestNode>(root.Id, CancellationToken);
+		var rootChildren = await loaded.Children.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		rootChildren.Length.AssertEqual(3);
+
+		var totalGrandchildren = 0;
+
+		foreach (var link in rootChildren)
+		{
+			link.Child.AssertNotNull($"Child FK null for {link.Id}");
+			link.Child.Children.AssertNotNull($"Child.Children null for {link.Child.Name}");
+
+			var grandchildren = await link.Child.Children.ToQueryable().ToArrayAsyncEx(CancellationToken);
+			grandchildren.Length.AssertEqual(2, $"{link.Child.Name} should have 2 children");
+
+			foreach (var gc in grandchildren)
+			{
+				gc.Child.AssertNotNull($"Grandchild FK null for {gc.Id}");
+				gc.Child.Name.AssertNotNull($"Grandchild name null for {gc.Id}");
+				totalGrandchildren++;
+			}
+		}
+
+		totalGrandchildren.AssertEqual(6);
+	}
+
+	[TestMethod]
+	public async Task RelationMany_NestedAsyncForeach()
+	{
+		// Uses await foreach (like web code's HasAccess pattern) instead of ToQueryable
+		EnsureDb();
+
+		var node1 = await InsertNode("N1");
+		var node2 = await InsertNode("N2");
+		var node3 = await InsertNode("N3");
+		var node4 = await InsertNode("N4");
+
+		await InsertNodeChild(node1, node2);
+		await InsertNodeChild(node2, node3);
+		await InsertNodeChild(node3, node4);
+
+		await ClearCache();
+
+		var root = await Storage.GetByIdAsync<long, TestNode>(node1.Id, CancellationToken);
+		root.AssertNotNull();
+
+		// Traverse using await foreach — exactly like the web code
+		var depth = 0;
+		var currentNode = root;
+
+		while (true)
+		{
+			var foundChild = (TestNode)null;
+
+			await foreach (var link in currentNode.Children.WithCancellation(CancellationToken))
+			{
+				link.Child.AssertNotNull($"Child FK is null at depth {depth}");
+				link.Child.Name.AssertNotNull($"Child.Name is null at depth {depth}");
+				link.Child.Children.AssertNotNull($"Child.Children list is null at depth {depth}");
+				foundChild = link.Child;
+			}
+
+			if (foundChild is null)
+				break;
+
+			currentNode = foundChild;
+			depth++;
+		}
+
+		depth.AssertEqual(3); // N1→N2→N3→N4 (3 hops)
+		currentNode.Name.AssertEqual("N4");
+	}
+
+	[TestMethod]
+	public async Task RelationMany_NestedRecursiveHasAccess()
+	{
+		// Recursive traversal mimicking HasAccess pattern from web code
+		// Node1 is "root org", Node2-4 are "child orgs"
+		// Check if Node1 "has access" to Node4 via nested groups
+		EnsureDb();
+
+		var org1 = await InsertNode("Org1");
+		var org2 = await InsertNode("Org2");
+		var org3 = await InsertNode("Org3");
+		var org4 = await InsertNode("Org4");
+		var org5 = await InsertNode("Org5");
+
+		await InsertNodeChild(org1, org2);
+		await InsertNodeChild(org1, org3);
+		await InsertNodeChild(org2, org4);
+		await InsertNodeChild(org3, org5);
+
+		await ClearCache();
+
+		var root = await Storage.GetByIdAsync<long, TestNode>(org1.Id, CancellationToken);
+
+		// Recursive HasAccess-like check
+		var found = await HasAccessRecursive(root, org4.Id, 0, CancellationToken);
+		found.AssertTrue("Should find Org4 in the tree");
+
+		var found5 = await HasAccessRecursive(root, org5.Id, 0, CancellationToken);
+		found5.AssertTrue("Should find Org5 in the tree");
+
+		var notFound = await HasAccessRecursive(root, 99999, 0, CancellationToken);
+		notFound.AssertFalse("Should not find non-existent node");
+	}
+
+	private static async Task<bool> HasAccessRecursive(TestNode node, long targetId, int depth, CancellationToken cancellationToken)
+	{
+		if (node.Id == targetId)
+			return true;
+
+		if (depth > 10)
+			return false;
+
+		await foreach (var link in node.Children.WithCancellation(cancellationToken))
+		{
+			link.Child.AssertNotNull($"Child FK is null at depth {depth}, node {node.Name}");
+
+			if (await HasAccessRecursive(link.Child, targetId, depth + 1, cancellationToken))
+				return true;
+		}
+
+		return false;
 	}
 
 	#endregion
