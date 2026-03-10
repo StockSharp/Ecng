@@ -26,11 +26,12 @@ public static class LikeComparesExtensions
 
 		return likeCompare switch
 		{
-			ComparisonOperator.In or null => value.ContainsIgnoreCase(like),
+			ComparisonOperator.Like or ComparisonOperator.In or null => value.ContainsIgnoreCase(like),
 			ComparisonOperator.Greater or ComparisonOperator.GreaterOrEqual => value.StartsWithIgnoreCase(like),
 			ComparisonOperator.Less or ComparisonOperator.LessOrEqual => value.EndsWithIgnoreCase(like),
 			ComparisonOperator.Equal => value.EqualsIgnoreCase(like),
 			ComparisonOperator.NotEqual => !value.ContainsIgnoreCase(like),
+			ComparisonOperator.Any => true,
 			_ => throw new ArgumentOutOfRangeException(nameof(likeCompare)),
 		};
 	}
@@ -54,11 +55,12 @@ public static class LikeComparesExtensions
 
 		return likeCompare switch
 		{
-			ComparisonOperator.In or null => $"%{like}%",
+			ComparisonOperator.Like or ComparisonOperator.In or null => $"%{like}%",
 			ComparisonOperator.Greater or ComparisonOperator.GreaterOrEqual => $"{like}%",
 			ComparisonOperator.Less or ComparisonOperator.LessOrEqual => $"%{like}",
 			ComparisonOperator.Equal => like,
 			ComparisonOperator.NotEqual => throw new NotSupportedException(),
+			ComparisonOperator.Any => "%",
 			_ => throw new ArgumentOutOfRangeException(nameof(likeCompare)),
 		};
 	}

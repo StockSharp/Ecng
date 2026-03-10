@@ -963,6 +963,12 @@ public class Query
 	{
 		return new Query().AddAction((dialect, sb) =>
 		{
+			if (op == ComparisonOperator.Any)
+			{
+				sb.Append("1 = 1");
+				return;
+			}
+
 			var quotedCol = dialect.QuoteIdentifier(column);
 
 			if (paramName is null)
@@ -987,6 +993,7 @@ public class Query
 				ComparisonOperator.Less => $"{quotedCol} < {param}",
 				ComparisonOperator.LessOrEqual => $"{quotedCol} <= {param}",
 				ComparisonOperator.Like => $"{quotedCol} LIKE {param}",
+				ComparisonOperator.In => $"{quotedCol} IN ({param})",
 				_ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported operator"),
 			});
 		});
