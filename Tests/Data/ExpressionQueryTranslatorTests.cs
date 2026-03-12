@@ -135,8 +135,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		sql.Contains("JoinedCategoryName").AssertTrue(
 			$"SQL must include computed column 'JoinedCategoryName' from Join result selector, got: {sql}");
-		sql.Contains("[TestCategory]").AssertTrue(
-			$"SQL must include INNER JOIN to TestCategory, got: {sql}");
+		sql.Contains("[Ecng_TestCategory]").AssertTrue(
+			$"SQL must include INNER JOIN to Ecng_TestCategory, got: {sql}");
 	}
 
 	/// <summary>
@@ -166,8 +166,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		sql.Contains("LeftJoinedDescription").AssertTrue(
 			$"SQL must include computed column 'LeftJoinedDescription' from SelectMany result selector, got: {sql}");
-		sql.Contains("[TestCategory]").AssertTrue(
-			$"SQL must include LEFT JOIN to TestCategory, got: {sql}");
+		sql.Contains("[Ecng_TestCategory]").AssertTrue(
+			$"SQL must include LEFT JOIN to Ecng_TestCategory, got: {sql}");
 	}
 
 	/// <summary>
@@ -196,10 +196,10 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		sql.Contains("JoinedCategoryName").AssertTrue(
 			$"SQL must include 'JoinedCategoryName' from multi-join MemberInit, got: {sql}");
-		sql.Contains("[TestCategory]").AssertTrue(
-			$"SQL must include JOIN to TestCategory, got: {sql}");
-		sql.Contains("[TestPerson]").AssertTrue(
-			$"SQL must include JOIN to TestPerson, got: {sql}");
+		sql.Contains("[Ecng_TestCategory]").AssertTrue(
+			$"SQL must include JOIN to Ecng_TestCategory, got: {sql}");
+		sql.Contains("[Ecng_TestPerson]").AssertTrue(
+			$"SQL must include JOIN to Ecng_TestPerson, got: {sql}");
 	}
 }
 

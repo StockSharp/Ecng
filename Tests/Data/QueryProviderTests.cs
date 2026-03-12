@@ -426,7 +426,7 @@ public class QueryProviderTests : BaseTestClass
 
 		sql.Contains("select").AssertTrue($"Expected 'select', got: {sql}");
 		sql.Contains("[e].*").AssertTrue($"Expected '[e].*', got: {sql}");
-		sql.Contains("[TestItem]").AssertTrue($"Expected '[TestItem]', got: {sql}");
+		sql.Contains("[Ecng_TestItem]").AssertTrue($"Expected '[Ecng_TestItem]', got: {sql}");
 		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
 		sql.Contains("e.[Id] = @Id").AssertTrue($"Expected 'e.[Id] = @Id', got: {sql}");
 	}
@@ -439,7 +439,7 @@ public class QueryProviderTests : BaseTestClass
 		var sql = Norm(query.Render(_dialect));
 
 		sql.Contains("select count(*)").AssertTrue($"Expected 'select count(*)', got: {sql}");
-		sql.Contains("[TestItem]").AssertTrue($"Expected '[TestItem]', got: {sql}");
+		sql.Contains("[Ecng_TestItem]").AssertTrue($"Expected '[Ecng_TestItem]', got: {sql}");
 	}
 
 	#endregion
