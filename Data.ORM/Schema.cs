@@ -56,15 +56,29 @@ public class Schema
 	/// </summary>
 	public bool NoCache { get; init; }
 
-	/// <summary>
-	/// Gets the identity (primary key) column, or null if none.
-	/// </summary>
-	public required SchemaColumn Identity { get; init; }
+	private SchemaColumn _identity;
 
 	/// <summary>
-	/// Gets the non-identity columns of the schema.
+	/// Gets or sets the identity (primary key) column, or null if none.
 	/// </summary>
-	public required IReadOnlyList<SchemaColumn> Columns { get; init; }
+	public SchemaColumn Identity
+	{
+		get => _identity;
+		init => _identity = value;
+		// internal setter used by SchemaRegistry for two-phase init
+	}
+
+	private IReadOnlyList<SchemaColumn> _columns = [];
+
+	/// <summary>
+	/// Gets or sets the non-identity columns of the schema.
+	/// </summary>
+	public IReadOnlyList<SchemaColumn> Columns
+	{
+		get => _columns;
+		init => _columns = value;
+		// internal setter used by SchemaRegistry for two-phase init
+	}
 
 	/// <summary>
 	/// Gets the factory delegate used to create new entity instances.
@@ -73,7 +87,6 @@ public class Schema
 
 	/// <summary>
 	/// Fallback load for non-IDbPersistable types (projection DTOs).
-	/// Set by SchemaRegistry.CreateFromReflection.
 	/// </summary>
 	public Action<object, SerializationItemCollection> Load { get; set; }
 
@@ -86,6 +99,22 @@ public class Schema
 	/// Gets whether the schema is effectively read-only (no writable columns).
 	/// </summary>
 	public bool ReadOnly => NonReadOnlyColumns.Count == 0;
+
+	/// <summary>
+	/// Sets identity and columns in a single call, resetting derived caches.
+	/// Used by SchemaRegistry for two-phase initialization.
+	/// </summary>
+	internal void SetColumnsAndIdentity(SchemaColumn identity, IReadOnlyList<SchemaColumn> columns)
+	{
+		_identity = identity;
+		_columns = columns;
+		_allColumns = null;
+		_nonReadOnlyColumns = null;
+		_readOnlyColumns = null;
+		_uniqueColumns = null;
+		_indexColumns = null;
+		_columnsByName = null;
+	}
 
 	private Lazy<IReadOnlyList<SchemaColumn>> _allColumns;
 

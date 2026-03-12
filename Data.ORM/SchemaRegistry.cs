@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 
 using Ecng.Common;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// Global registry for entity <see cref="Schema"/> metadata.
@@ -31,16 +32,109 @@ public static class SchemaRegistry
 	/// Gets the schema for the specified entity type, creating one via reflection if not registered.
 	/// </summary>
 	public static Schema Get(Type entityType)
-		=> _cache.GetOrAdd(entityType, CreateFromReflection);
-
-	private static Schema CreateFromReflection(Type entityType)
 	{
-		var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
-		var columns = new List<SchemaColumn>();
-		SchemaColumn identity = null;
-		var loadProps = new List<(PropertyInfo prop, bool isClass)>();
+		if (!_cache.TryGetValue(entityType, out var schema))
+		{
+			schema = CreateFromReflection(entityType);
+			// CreateFromReflection already puts schema into _cache (phase 1),
+			// but return whatever is in the cache in case source generator registered first
+			schema = _cache[entityType];
+		}
 
-		foreach (var prop in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+		return schema;
+	}
+
+	private static bool IsSimpleType(Type type)
+	{
+		type = Nullable.GetUnderlyingType(type) ?? type;
+
+		if (type == typeof(string) || type == typeof(byte[]))
+			return true;
+
+		if (type.IsEnum)
+			return true;
+
+		if (type.IsPrimitive || type == typeof(decimal) || type == typeof(DateTime)
+			|| type == typeof(DateTimeOffset) || type == typeof(TimeSpan)
+			|| type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly))
+			return true;
+
+		return false;
+	}
+
+	private static bool IsInnerSchemaType(Type type, HashSet<Type> visiting)
+	{
+		type = Nullable.GetUnderlyingType(type) ?? type;
+
+		if (IsSimpleType(type))
+			return false;
+
+		if (!type.IsClass && !type.IsValueType)
+			return false;
+
+		// prevent circular references within InnerSchema nesting
+		if (!visiting.Add(type))
+			return false;
+
+		try
+		{
+			var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+			var hasProps = false;
+
+			foreach (var prop in props)
+			{
+				if (prop.GetMethod is null || prop.SetMethod is null)
+					continue;
+
+				hasProps = true;
+
+				if (IsSimpleType(prop.PropertyType))
+					continue;
+
+				if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
+					continue;
+
+				var innerType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+				if (innerType.IsClass && IsInnerSchemaType(innerType, visiting))
+					continue;
+
+				return false;
+			}
+
+			return hasProps;
+		}
+		finally
+		{
+			visiting.Remove(type);
+		}
+	}
+
+	private static Dictionary<string, string> GetNameOverrides(PropertyInfo prop)
+	{
+		var result = new Dictionary<string, string>();
+
+		foreach (var attr in prop.GetCustomAttributes<NameOverrideAttribute>())
+			result[attr.OldName] = attr.NewName;
+
+		return result;
+	}
+
+	private static string GetColumnName(string outerPropName, string innerPropName, Dictionary<string, string> nameOverrides)
+	{
+		if (nameOverrides.TryGetValue(innerPropName, out var colName))
+			return colName;
+
+		return outerPropName + innerPropName;
+	}
+
+	private static void FlattenInnerSchema(
+		Type innerType,
+		string prefix,
+		Dictionary<string, string> nameOverrides,
+		List<SchemaColumn> columns,
+		HashSet<Type> visiting)
+	{
+		foreach (var prop in innerType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 		{
 			if (prop.GetMethod is null || prop.SetMethod is null)
 				continue;
@@ -48,60 +142,134 @@ public static class SchemaRegistry
 			if (prop.GetCustomAttribute<IgnoreAttribute>() is not null)
 				continue;
 
-			if (prop.GetCustomAttribute<RelationManyAttribute>() is not null)
-				continue;
+			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
 
-			if (prop.Name == "Id" || prop.GetCustomAttribute<IdentityAttribute>() is not null)
+			if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
 			{
-				identity = new() { Name = prop.Name, ClrType = prop.PropertyType, IsReadOnly = true };
-				loadProps.Add((prop, false));
+				columns.Add(new()
+				{
+					Name = colName,
+					ClrType = typeof(long),
+				});
 				continue;
 			}
 
-			var clrType = prop.PropertyType;
-			var isRelationSingle = prop.GetCustomAttribute<RelationSingleAttribute>() is not null;
+			var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
 
-			if (isRelationSingle)
-				clrType = typeof(long);
-
-			var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-			var isClass = targetType.IsClass && targetType != typeof(string) && targetType != typeof(byte[]);
-
-			columns.Add(new()
+			if (IsSimpleType(prop.PropertyType))
 			{
-				Name = prop.Name,
-				ClrType = clrType,
-			});
+				var clrType = propType.IsEnum
+					? Enum.GetUnderlyingType(propType)
+					: prop.PropertyType;
 
-			loadProps.Add((prop, isClass));
+				columns.Add(new()
+				{
+					Name = colName,
+					ClrType = clrType,
+				});
+			}
+			else if (propType.IsClass && IsInnerSchemaType(propType, visiting))
+			{
+				var innerOverrides = GetNameOverrides(prop);
+				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting);
+			}
 		}
+	}
 
-		// build Load delegate (captures PropertyInfo[] once, no per-call reflection lookup)
-		var propsSnapshot = loadProps.ToArray();
+	private static Schema CreateFromReflection(Type entityType)
+	{
+		var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
 
-		return new()
+		// phase 1: create schema with known metadata, put into cache immediately
+		// so circular dependencies just get the partially initialized schema
+		var schema = new Schema
 		{
 			TableName = entityAttr?.Name.IsEmpty() == false ? entityAttr.Name : entityType.Name,
 			NoCache = entityAttr?.NoCache ?? false,
 			EntityType = entityType,
-			Identity = identity,
-			Columns = columns,
 			Factory = () => Activator.CreateInstance(entityType),
-			Load = (entity, input) =>
-			{
-				foreach (var (prop, isClass) in propsSnapshot)
-				{
-					if (!input.TryGetItem(prop.Name, out var item) || item.Value is null or DBNull)
-						continue;
-
-					// skip FK/entity reference types (stored as long in DB)
-					if (isClass)
-						continue;
-
-					var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-					prop.SetValue(entity, item.Value.To(targetType));
-				}
-			},
 		};
+
+		_cache[entityType] = schema;
+
+		// phase 2: discover columns via reflection
+		var columns = new List<SchemaColumn>();
+		SchemaColumn identity = null;
+		var visiting = new HashSet<Type> { entityType };
+
+			foreach (var prop in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+			{
+				if (prop.GetMethod is null || prop.SetMethod is null)
+					continue;
+
+				if (prop.GetCustomAttribute<IgnoreAttribute>() is not null)
+					continue;
+
+				if (prop.GetCustomAttribute<RelationManyAttribute>() is not null)
+					continue;
+
+				if (prop.GetCustomAttribute<AllColumnsFieldAttribute>() is not null)
+					continue;
+
+				if (prop.Name == "Id" || prop.GetCustomAttribute<IdentityAttribute>() is not null)
+				{
+					identity = new()
+					{
+						Name = prop.Name,
+						ClrType = prop.PropertyType,
+						IsReadOnly = true,
+						IsUnique = true,
+						IsIndex = true,
+					};
+					continue;
+				}
+
+				var isRelationSingle = prop.GetCustomAttribute<RelationSingleAttribute>() is not null;
+
+				if (isRelationSingle)
+				{
+					var uniqueAttr = prop.GetCustomAttribute<UniqueAttribute>();
+					var indexAttr = prop.GetCustomAttribute<IndexAttribute>();
+
+					columns.Add(new()
+					{
+						Name = prop.Name,
+						ClrType = typeof(long),
+						IsUnique = uniqueAttr is not null,
+						IsIndex = indexAttr is not null || uniqueAttr is not null,
+					});
+					continue;
+				}
+
+				var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+				// InnerSchema detection: class property without relation attributes
+				if (propType.IsClass && propType != typeof(string) && propType != typeof(byte[])
+					&& IsInnerSchemaType(propType, visiting))
+				{
+					var nameOverrides = GetNameOverrides(prop);
+					FlattenInnerSchema(propType, prop.Name, nameOverrides, columns, visiting);
+					continue;
+				}
+
+				// simple property
+				var clrType = propType.IsEnum
+					? Enum.GetUnderlyingType(propType)
+					: prop.PropertyType;
+
+				var unique = prop.GetCustomAttribute<UniqueAttribute>();
+				var index = prop.GetCustomAttribute<IndexAttribute>();
+
+				columns.Add(new()
+				{
+					Name = prop.Name,
+					ClrType = clrType,
+					IsUnique = unique is not null,
+					IsIndex = index is not null || unique is not null,
+				});
+			}
+
+			schema.SetColumnsAndIdentity(identity, columns);
+		return schema;
 	}
 }
