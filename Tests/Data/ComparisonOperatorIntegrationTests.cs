@@ -16,7 +16,7 @@ using Microsoft.Data.Sqlite;
 public class ComparisonOperatorIntegrationTests : BaseTestClass
 {
 	private const string ProviderName = DatabaseProviderRegistry.SQLite;
-	private const string TableName = "comp_op_test";
+	private const string TableName = "Ecng_CompOpTest";
 
 	private static SqliteConnection _keepAlive;
 	private static IDatabaseConnection _connection;
@@ -28,13 +28,13 @@ public class ComparisonOperatorIntegrationTests : BaseTestClass
 		SQLiteDialect.Register(SqliteFactory.Instance);
 
 		// Keep-alive connection to prevent in-memory DB from being destroyed
-		_keepAlive = new SqliteConnection("Data Source=comp_op_test;Mode=Memory;Cache=Shared");
+		_keepAlive = new SqliteConnection("Data Source=Ecng_CompOpTest;Mode=Memory;Cache=Shared");
 		_keepAlive.Open();
 
 		var pair = new DatabaseConnectionPair
 		{
 			Provider = ProviderName,
-			ConnectionString = "Data Source=comp_op_test;Mode=Memory;Cache=Shared",
+			ConnectionString = "Data Source=Ecng_CompOpTest;Mode=Memory;Cache=Shared",
 		};
 
 		_connection = AdoDatabaseProvider.Instance.CreateConnection(pair);

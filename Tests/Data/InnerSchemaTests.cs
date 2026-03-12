@@ -190,7 +190,7 @@ public class InnerSchemaTests : BaseTestClass
 
 		SchemaRegistry.Register(new Schema
 		{
-			TableName = "TestOrderWithAddress",
+			TableName = "Ecng_OrderWithAddress",
 			EntityType = typeof(TestOrderWithAddress),
 			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
 			Columns =
@@ -206,7 +206,7 @@ public class InnerSchemaTests : BaseTestClass
 		conn.Open();
 		using var cmd = conn.CreateCommand();
 		cmd.CommandText = """
-			CREATE TABLE "TestOrderWithAddress" (
+			CREATE TABLE "Ecng_OrderWithAddress" (
 				"Id" INTEGER PRIMARY KEY,
 				"OrderName" TEXT,
 				"ShippingAddressStreet" TEXT,
@@ -361,7 +361,7 @@ public class InnerSchemaNestedTests : BaseTestClass
 		// Register TestCountry — standalone entity
 		SchemaRegistry.Register(new Schema
 		{
-			TableName = "TestCountry",
+			TableName = "Ecng_Country",
 			EntityType = typeof(TestCountry),
 			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
 			Columns =
@@ -374,7 +374,7 @@ public class InnerSchemaNestedTests : BaseTestClass
 		// Register TestOrderWithAddressEx — entity with multi-level inner schema + RelationSingle
 		SchemaRegistry.Register(new Schema
 		{
-			TableName = "TestOrderWithAddressEx",
+			TableName = "Ecng_OrderWithAddressEx",
 			EntityType = typeof(TestOrderWithAddressEx),
 			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
 			Columns =
@@ -393,11 +393,11 @@ public class InnerSchemaNestedTests : BaseTestClass
 		conn.Open();
 		using var cmd = conn.CreateCommand();
 		cmd.CommandText = """
-			CREATE TABLE "TestCountry" (
+			CREATE TABLE "Ecng_Country" (
 				"Id" INTEGER PRIMARY KEY,
 				"Name" TEXT
 			);
-			CREATE TABLE "TestOrderWithAddressEx" (
+			CREATE TABLE "Ecng_OrderWithAddressEx" (
 				"Id" INTEGER PRIMARY KEY,
 				"OrderName" TEXT,
 				"ShippingAddressStreet" TEXT,

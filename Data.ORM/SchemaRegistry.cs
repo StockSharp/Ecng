@@ -35,6 +35,7 @@ public static class SchemaRegistry
 
 	private static Schema CreateFromReflection(Type entityType)
 	{
+		var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
 		var columns = new List<SchemaColumn>();
 		SchemaColumn identity = null;
 		var loadProps = new List<(PropertyInfo prop, bool isClass)>();
@@ -80,7 +81,8 @@ public static class SchemaRegistry
 
 		return new()
 		{
-			TableName = entityType.Name,
+			TableName = entityAttr?.Name.IsEmpty() == false ? entityAttr.Name : entityType.Name,
+			NoCache = entityAttr?.NoCache ?? false,
 			EntityType = entityType,
 			Identity = identity,
 			Columns = columns,

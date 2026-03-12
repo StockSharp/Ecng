@@ -19,7 +19,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 	protected abstract DbProviderFactory Factory { get; }
 	protected abstract string GetConnectionString();
 
-	private const string TableName = "AdoTestItems";
+	private const string TableName = "Ecng_AdoTestItems";
 
 	private static readonly Dictionary<string, Type> _columns = new()
 	{

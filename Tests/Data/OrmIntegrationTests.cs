@@ -78,13 +78,13 @@ public class OrmIntegrationTests : BaseTestClass
 		using var conn = new SqlConnection(_connectionString);
 		conn.Open();
 
-		Execute(conn, "DELETE FROM [TestItemCategory]");
-		Execute(conn, "DELETE FROM [TestItem]");
-		Execute(conn, "DELETE FROM [TestCategory]");
-		Execute(conn, "DELETE FROM [TestTask]");
-		Execute(conn, "DELETE FROM [TestPerson]");
-		Execute(conn, "DELETE FROM [TestNodeChild]");
-		Execute(conn, "DELETE FROM [TestNode]");
+		Execute(conn, "DELETE FROM [Ecng_TestItemCategory]");
+		Execute(conn, "DELETE FROM [Ecng_TestItem]");
+		Execute(conn, "DELETE FROM [Ecng_TestCategory]");
+		Execute(conn, "DELETE FROM [Ecng_TestTask]");
+		Execute(conn, "DELETE FROM [Ecng_TestPerson]");
+		Execute(conn, "DELETE FROM [Ecng_TestNodeChild]");
+		Execute(conn, "DELETE FROM [Ecng_TestNode]");
 
 		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
 	}
@@ -1800,9 +1800,9 @@ public class OrmIntegrationTests : BaseTestClass
 		using (var conn = new SqlConnection(_connectionString))
 		{
 			conn.Open();
-			Execute(conn, "SET IDENTITY_INSERT [TestPerson] ON");
-			Execute(conn, "INSERT INTO [TestPerson] (Id, Name) VALUES (0, 'ZeroRoot')");
-			Execute(conn, "SET IDENTITY_INSERT [TestPerson] OFF");
+			Execute(conn, "SET IDENTITY_INSERT [Ecng_TestPerson] ON");
+			Execute(conn, "INSERT INTO [Ecng_TestPerson] (Id, Name) VALUES (0, 'ZeroRoot')");
+			Execute(conn, "SET IDENTITY_INSERT [Ecng_TestPerson] OFF");
 		}
 
 		// Insert a task referencing Person Id=0

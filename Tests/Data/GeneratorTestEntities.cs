@@ -19,14 +19,14 @@ public abstract partial class GenTestBaseEntity : IDbPersistable
 	public virtual void InitLists(IStorage db) { }
 }
 
-[Entity(Name = "Orders", NoCache = true)]
+[Entity(Name = "Ecng_Orders", NoCache = true)]
 public partial class GenTestOrderEntity : GenTestBaseEntity
 {
 	public string Symbol { get; set; }
 	public decimal Price { get; set; }
 }
 
-[Entity(Name = "Products")]
+[Entity(Name = "Ecng_Products")]
 public partial class GenTestProductEntity : GenTestBaseEntity
 {
 	public string Title { get; set; }

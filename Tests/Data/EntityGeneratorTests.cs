@@ -12,7 +12,7 @@ public class EntityGeneratorTests : BaseTestClass
 	{
 		var schema = SchemaRegistry.Get(typeof(GenTestOrderEntity));
 
-		schema.TableName.AssertEqual("Orders");
+		schema.TableName.AssertEqual("Ecng_Orders");
 	}
 
 	[TestMethod]

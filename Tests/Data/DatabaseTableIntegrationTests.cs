@@ -17,7 +17,7 @@ using Microsoft.Data.Sqlite;
 [DoNotParallelize]
 public class DatabaseTableIntegrationTests : BaseTestClass
 {
-	private const string _testTableName = "ecng_table_test";
+	private const string _testTableName = "Ecng_TableTest";
 	private static string _sqliteDbPath;
 
 	[ClassInitialize]
@@ -576,7 +576,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	{
 		SkipIfSqlServerOnNet6(providerName);
 
-		var upsertTableName = "upsert_test";
+		var upsertTableName = "Ecng_UpsertTest";
 		var provider = AdoDatabaseProvider.Instance;
 		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
 		var table = provider.GetTable(connection, upsertTableName);

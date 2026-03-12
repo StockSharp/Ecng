@@ -5,6 +5,7 @@ using System.ComponentModel;
 using Ecng.Data.Sql;
 using Ecng.Serialization;
 
+[Entity(Name = "Ecng_TestItem")]
 public class TestItem : IDbPersistable
 {
 	public long Id { get; set; }
@@ -41,6 +42,7 @@ public class TestItem : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestCategory")]
 public class TestCategory : IDbPersistable
 {
 	public long Id { get; set; }
@@ -65,6 +67,7 @@ public class TestCategory : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestItemCategory")]
 public class TestItemCategory : IDbPersistable
 {
 	public long Id { get; set; }
@@ -92,6 +95,7 @@ public class TestItemCategory : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestPerson")]
 public class TestPerson : IDbPersistable
 {
 	public long Id { get; set; }
@@ -123,6 +127,7 @@ public class TestPerson : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestTask")]
 public class TestTask : IDbPersistable
 {
 	public long Id { get; set; }
@@ -239,6 +244,7 @@ public class VTestItemWithOptionalCategory : IDbPersistable
 /// Self-referencing tree node for testing multi-level RelationMany nesting.
 /// Mirrors the Client → ClientGroup → Client pattern in the web app.
 /// </summary>
+[Entity(Name = "Ecng_TestNode")]
 public class TestNode : IDbPersistable
 {
 	public long Id { get; set; }
@@ -271,6 +277,7 @@ public class TestNode : IDbPersistable
 /// Junction entity linking a parent TestNode to a child TestNode.
 /// Mirrors ClientGroup (Client FK + Group FK).
 /// </summary>
+[Entity(Name = "Ecng_TestNodeChild")]
 public class TestNodeChild : IDbPersistable
 {
 	public long Id { get; set; }
