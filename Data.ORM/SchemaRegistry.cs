@@ -1,8 +1,8 @@
 namespace Ecng.Serialization;
 
-using System.Collections.Concurrent;
 using System.Reflection;
 
+using Ecng.Collections;
 using Ecng.Common;
 using Ecng.Data.Sql;
 
@@ -11,7 +11,7 @@ using Ecng.Data.Sql;
 /// </summary>
 public static class SchemaRegistry
 {
-	private static readonly ConcurrentDictionary<Type, Schema> _cache = [];
+	private static readonly SynchronizedDictionary<Type, Schema> _cache = [];
 
 	/// <summary>
 	/// Registers a schema for the given entity type.
@@ -33,15 +33,13 @@ public static class SchemaRegistry
 	/// </summary>
 	public static Schema Get(Type entityType)
 	{
-		if (!_cache.TryGetValue(entityType, out var schema))
+		using (_cache.EnterScope())
 		{
-			schema = CreateFromReflection(entityType);
-			// CreateFromReflection already puts schema into _cache (phase 1),
-			// but return whatever is in the cache in case source generator registered first
-			schema = _cache[entityType];
-		}
+			if (_cache.TryGetValue(entityType, out var schema))
+				return schema;
 
-		return schema;
+			return CreateFromReflection(entityType);
+		}
 	}
 
 	private static bool IsSimpleType(Type type)
