@@ -46,7 +46,7 @@ public static class SchemaRegistry
 
 	private static bool IsSimpleType(Type type)
 	{
-		type = Nullable.GetUnderlyingType(type) ?? type;
+		type = type.GetUnderlyingType() ?? type;
 
 		if (type == typeof(string) || type == typeof(byte[]))
 			return true;
@@ -64,7 +64,7 @@ public static class SchemaRegistry
 
 	private static bool IsInnerSchemaType(Type type, HashSet<Type> visiting)
 	{
-		type = Nullable.GetUnderlyingType(type) ?? type;
+		type = type.GetUnderlyingType() ?? type;
 
 		if (IsSimpleType(type))
 			return false;
@@ -94,7 +94,7 @@ public static class SchemaRegistry
 				if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
 					continue;
 
-				var innerType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+				var innerType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
 				if (innerType.IsClass && IsInnerSchemaType(innerType, visiting))
 					continue;
 
@@ -154,7 +154,7 @@ public static class SchemaRegistry
 				continue;
 			}
 
-			var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+			var propType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
 
 			if (IsSimpleType(prop.PropertyType))
 			{
@@ -187,7 +187,7 @@ public static class SchemaRegistry
 			TableName = entityAttr?.Name.IsEmpty() == false ? entityAttr.Name : entityType.Name,
 			NoCache = entityAttr?.NoCache ?? false,
 			EntityType = entityType,
-			Factory = () => Activator.CreateInstance(entityType),
+			Factory = () => entityType.CreateInstance(),
 		};
 
 		_cache[entityType] = schema;
@@ -241,7 +241,7 @@ public static class SchemaRegistry
 					continue;
 				}
 
-				var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+				var propType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
 
 				// InnerSchema detection: class property without relation attributes
 				if (propType.IsClass && propType != typeof(string) && propType != typeof(byte[])

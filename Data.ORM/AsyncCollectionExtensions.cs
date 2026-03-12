@@ -15,10 +15,10 @@ public static class AsyncCollectionExtensions
 		Func<T, CancellationToken, ValueTask<bool>> predicate,
 		[EnumeratorCancellation] CancellationToken cancellationToken)
 	{
-		if (source is null) throw new ArgumentNullException(nameof(source));
-		if (predicate is null) throw new ArgumentNullException(nameof(predicate));
+		ArgumentNullException.ThrowIfNull(source);
+		ArgumentNullException.ThrowIfNull(predicate);
 
-		await foreach (var item in source.WithEnforcedCancellation(cancellationToken).ConfigureAwait(false))
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken).NoWait())
 		{
 			if (await predicate(item, cancellationToken).NoWait())
 				yield return item;

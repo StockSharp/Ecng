@@ -1,5 +1,7 @@
 namespace Ecng.Data.Sql;
 
+using Ecng.Common;
+
 /// <summary>
 /// Builds and caches SQL <see cref="Query"/> objects for standard CRUD operations.
 /// </summary>
@@ -16,7 +18,7 @@ public class QueryProvider
 		ArgumentNullException.ThrowIfNull(keyColumns);
 		ArgumentNullException.ThrowIfNull(valueColumns);
 
-		var cacheKey = (meta, type, string.Join(",", keyColumns.Select(c => c.Name)) + "|" + string.Join(",", valueColumns.Select(c => c.Name)));
+		var cacheKey = (meta, type, keyColumns.Select(c => c.Name).JoinComma() + "|" + valueColumns.Select(c => c.Name).JoinComma());
 
 		return _queries.SafeAdd(cacheKey, key =>
 		{
