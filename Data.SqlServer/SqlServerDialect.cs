@@ -65,6 +65,23 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	{
+		var underlying = Nullable.GetUnderlyingType(clrType) ?? clrType;
+
+		string typeName;
+
+		if (underlying == typeof(string))
+			typeName = maxLength > 0 ? $"NVARCHAR({maxLength})" : "NVARCHAR(MAX)";
+		else if (underlying == typeof(byte[]))
+			typeName = maxLength > 0 ? $"VARBINARY({maxLength})" : "VARBINARY(MAX)";
+		else
+			typeName = GetSqlTypeName(clrType);
+
+		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+	}
+
+	/// <inheritdoc />
 	public override string GetIdentitySelect(string idCol) => "scope_identity() as " + idCol;
 
 	/// <inheritdoc />

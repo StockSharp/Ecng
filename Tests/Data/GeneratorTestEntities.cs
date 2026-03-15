@@ -37,4 +37,23 @@ public partial class GenTestPlainEntity : GenTestBaseEntity
 	public string Value { get; set; }
 }
 
+[Entity(Name = "Ecng_ColGen")]
+public partial class GenTestColumnAttrEntity : GenTestBaseEntity
+{
+	[Column(MaxLength = 128)]
+	public string Name { get; set; }
+
+	[Column(IsNullable = true)]
+	public string Description { get; set; }
+
+	[Column(IsNullable = true, MaxLength = 64)]
+	public string Tag { get; set; }
+
+	public string Plain { get; set; }
+
+	public int? NullableInt { get; set; }
+
+	public int RequiredInt { get; set; }
+}
+
 #endif

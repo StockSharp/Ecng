@@ -141,6 +141,7 @@ public static class SchemaRegistry
 				continue;
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
+			var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
 
 			if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
 			{
@@ -148,6 +149,7 @@ public static class SchemaRegistry
 				{
 					Name = colName,
 					ClrType = typeof(long),
+					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
 				});
 				continue;
 			}
@@ -164,6 +166,8 @@ public static class SchemaRegistry
 				{
 					Name = colName,
 					ClrType = clrType,
+					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					MaxLength = colAttr?.MaxLength ?? 0,
 				});
 			}
 			else if (propType.IsClass && IsInnerSchemaType(propType, visiting))
@@ -223,6 +227,7 @@ public static class SchemaRegistry
 				}
 
 				var isRelationSingle = prop.GetCustomAttribute<RelationSingleAttribute>() is not null;
+				var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
 
 				if (isRelationSingle)
 				{
@@ -235,6 +240,7 @@ public static class SchemaRegistry
 						ClrType = typeof(long),
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
+						IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
 					});
 					continue;
 				}
@@ -264,6 +270,8 @@ public static class SchemaRegistry
 					ClrType = clrType,
 					IsUnique = unique is not null,
 					IsIndex = index is not null || unique is not null,
+					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					MaxLength = colAttr?.MaxLength ?? 0,
 				});
 			}
 

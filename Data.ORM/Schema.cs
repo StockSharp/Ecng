@@ -29,6 +29,16 @@ public record SchemaColumn
 	/// Gets whether the column is indexed.
 	/// </summary>
 	public bool IsIndex { get; init; }
+
+	/// <summary>
+	/// Gets whether the column allows NULL values.
+	/// </summary>
+	public bool IsNullable { get; init; }
+
+	/// <summary>
+	/// Gets the maximum length for string columns (0 = unlimited/MAX).
+	/// </summary>
+	public int MaxLength { get; init; }
 }
 
 /// <summary>

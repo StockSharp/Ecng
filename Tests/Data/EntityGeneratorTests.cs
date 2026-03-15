@@ -51,6 +51,66 @@ public class EntityGeneratorTests : BaseTestClass
 		colNames.AssertContains("Symbol");
 		colNames.AssertContains("Price");
 	}
+
+	#region ColumnAttribute in generated schema
+
+	[TestMethod]
+	public void Generated_ColumnAttr_MaxLength()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "Name");
+
+		col.MaxLength.AssertEqual(128);
+	}
+
+	[TestMethod]
+	public void Generated_ColumnAttr_IsNullable()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "Description");
+
+		col.IsNullable.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Generated_ColumnAttr_Both()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "Tag");
+
+		col.IsNullable.AssertTrue();
+		col.MaxLength.AssertEqual(64);
+	}
+
+	[TestMethod]
+	public void Generated_NoAttr_String_NotNullable()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "Plain");
+
+		col.IsNullable.AssertFalse();
+		col.MaxLength.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Generated_NullableValueType_IsNullable()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "NullableInt");
+
+		col.IsNullable.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Generated_ValueType_NotNullable()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnAttrEntity));
+		var col = schema.Columns.First(c => c.Name == "RequiredInt");
+
+		col.IsNullable.AssertFalse();
+	}
+
+	#endregion
 }
 
 #endif

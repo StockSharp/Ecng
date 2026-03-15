@@ -117,6 +117,30 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	{
+		var underlying = Nullable.GetUnderlyingType(clrType) ?? clrType;
+
+		string typeName;
+
+		if (underlying == typeof(string))
+			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
+		else if (underlying == typeof(byte[]))
+			typeName = "BYTEA";
+		else
+			typeName = GetSqlTypeName(clrType);
+
+		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+	}
+
+	/// <inheritdoc />
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	{
+		// PostgreSQL uses SET DATA TYPE and SET/DROP NOT NULL separately
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} SET DATA TYPE {columnDef}");
+	}
+
+	/// <inheritdoc />
 	public override void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns)
 	{
 		var nonKeys = allColumns.Except(keyColumns).ToArray();

@@ -126,4 +126,41 @@ public interface ISqlDialect
 	/// Gets the SQL suffix for an identity (auto-increment primary key) column definition.
 	/// </summary>
 	string GetIdentityColumnSuffix();
+
+	/// <summary>
+	/// Gets the full column definition (SQL type + NULL/NOT NULL).
+	/// </summary>
+	/// <param name="clrType">CLR type of the column.</param>
+	/// <param name="isNullable">Whether the column allows NULLs.</param>
+	/// <param name="maxLength">Max length for string columns (0 = MAX/unlimited).</param>
+	/// <returns>Column definition string (e.g. "NVARCHAR(128) NOT NULL").</returns>
+	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	{
+		var typeName = GetSqlTypeName(clrType);
+		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+	}
+
+	/// <summary>
+	/// Appends ALTER TABLE ADD COLUMN statement.
+	/// </summary>
+	void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ADD {QuoteIdentifier(columnName)} {columnDef}");
+	}
+
+	/// <summary>
+	/// Appends ALTER TABLE ALTER COLUMN statement.
+	/// </summary>
+	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {columnDef}");
+	}
+
+	/// <summary>
+	/// Appends ALTER TABLE DROP COLUMN statement.
+	/// </summary>
+	void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
+	}
 }

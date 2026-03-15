@@ -81,4 +81,29 @@ public abstract class SqlDialectBase : ISqlDialect
 
 	/// <inheritdoc />
 	public virtual string NewId() => throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	{
+		var typeName = GetSqlTypeName(clrType);
+		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ADD {QuoteIdentifier(columnName)} {columnDef}");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {columnDef}");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
+	}
 }

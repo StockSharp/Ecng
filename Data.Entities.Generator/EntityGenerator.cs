@@ -406,6 +406,13 @@ public class EntityGenerator : IIncrementalGenerator
 				else
 					parts.Add($"ClrType = typeof({FullType(inner.Type)})");
 
+				var (colNullable, colMaxLen) = GetColumnAttribute(inner);
+				var nullable = colNullable ?? InferIsNullable(inner);
+				if (nullable)
+					parts.Add("IsNullable = true");
+				if (colMaxLen > 0)
+					parts.Add($"MaxLength = {colMaxLen}");
+
 				sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
 			}
 		}
@@ -426,6 +433,13 @@ public class EntityGenerator : IIncrementalGenerator
 				parts.Add("IsUnique = true");
 			if (IsIndex(prop))
 				parts.Add("IsIndex = true");
+
+			var (colNullable, colMaxLen) = GetColumnAttribute(prop);
+			var nullable = colNullable ?? InferIsNullable(prop);
+			if (nullable)
+				parts.Add("IsNullable = true");
+			if (colMaxLen > 0)
+				parts.Add($"MaxLength = {colMaxLen}");
 
 			sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
 		}
@@ -731,6 +745,34 @@ public class EntityGenerator : IIncrementalGenerator
 
 	private static bool HasAttribute(ISymbol symbol, string attrName)
 		=> symbol.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
+
+	private static (bool? isNullable, int maxLength) GetColumnAttribute(IPropertySymbol prop)
+	{
+		var attr = prop.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "ColumnAttribute");
+		if (attr is null)
+			return (null, 0);
+
+		bool? isNullable = null;
+		var maxLength = 0;
+
+		foreach (var arg in attr.NamedArguments)
+		{
+			switch (arg.Key)
+			{
+				case "IsNullable":
+					isNullable = arg.Value.Value is true;
+					break;
+				case "MaxLength":
+					maxLength = arg.Value.Value is int v ? v : 0;
+					break;
+			}
+		}
+
+		return (isNullable, maxLength);
+	}
+
+	private static bool InferIsNullable(IPropertySymbol prop)
+		=> IsNullableType(prop.Type);
 
 	private static (string name, bool noCache) GetEntityAttribute(INamedTypeSymbol type)
 	{
