@@ -29,4 +29,9 @@ public interface IDbPersistable
 	/// Initializes relation-many lists for the entity.
 	/// </summary>
 	void InitLists(IStorage db) { }
+
+	/// <summary>
+	/// Gets the database schema for this entity type.
+	/// </summary>
+	Schema Schema => SchemaRegistry.Get(GetType());
 }

@@ -381,6 +381,8 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine("\t\tSchemaRegistry.Register(meta);");
 		sb.AppendLine("\t\treturn meta;");
 		sb.AppendLine("\t}");
+		sb.AppendLine();
+		sb.AppendLine("\tSchema IDbPersistable.Schema => _schema;");
 		return sb;
 	}
 
@@ -462,7 +464,10 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine();
 		sb.AppendLine("using Ecng.Serialization;");
 		sb.AppendLine();
-		sb.AppendLine($"partial class {entityName}");
+		if (sbMeta is not null)
+			sb.AppendLine($"partial class {entityName} : IDbPersistable");
+		else
+			sb.AppendLine($"partial class {entityName}");
 		sb.AppendLine("{");
 
 		if (sbSave is not null)

@@ -649,7 +649,7 @@ public class Database : Disposable, IStorage
 	{
 		ArgumentNullException.ThrowIfNull(entity);
 
-		var meta = SchemaRegistry.Get(typeof(TEntity));
+		var meta = entity.Schema;
 
 		if (meta.ReadOnly)
 			throw new InvalidOperationException();
@@ -707,7 +707,7 @@ public class Database : Disposable, IStorage
 	public virtual ValueTask<int> DeleteAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
 		where TEntity : IDbPersistable
 	{
-		var meta = SchemaRegistry.Get(typeof(TEntity));
+		var meta = entity.Schema;
 
 		var by = new SerializationItemCollection();
 		IReadOnlyList<SchemaColumn> keyColumns;
@@ -769,7 +769,7 @@ public class Database : Disposable, IStorage
 
 	async ValueTask IStorage.AddCacheAsync<TId, TEntity>(TId id, TEntity entity, CancellationToken cancellationToken)
 	{
-		var meta = SchemaRegistry.Get(typeof(TEntity));
+		var meta = entity.Schema;
 
 		if (meta.Identity is null || meta.NoCache)
 			return;
@@ -1067,7 +1067,7 @@ public class Database : Disposable, IStorage
 	#endregion
 
 	async ValueTask<TEntity> IStorage.AddAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
-		=> (TEntity)await CreateAsync(SchemaRegistry.Get(typeof(TEntity)), entity, cancellationToken);
+		=> (TEntity)await CreateAsync(entity.Schema, entity, cancellationToken);
 
 	async ValueTask<TEntity> IStorage.GetByAsync<TEntity>(IQueryable<TEntity> source, CancellationToken cancellationToken)
 	{

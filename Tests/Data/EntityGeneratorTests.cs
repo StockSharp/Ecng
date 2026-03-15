@@ -52,6 +52,27 @@ public class EntityGeneratorTests : BaseTestClass
 		colNames.AssertContains("Price");
 	}
 
+	[TestMethod]
+	public void EntitySchema_ViaInterface()
+	{
+		IDbPersistable entity = new GenTestOrderEntity();
+		var schema = entity.Schema;
+
+		schema.AssertNotNull();
+		schema.TableName.AssertEqual("Ecng_Orders");
+		schema.AssertSame(SchemaRegistry.Get(typeof(GenTestOrderEntity)));
+	}
+
+	[TestMethod]
+	public void EntitySchema_ViaInterface_Plain()
+	{
+		IDbPersistable entity = new GenTestPlainEntity();
+		var schema = entity.Schema;
+
+		schema.AssertNotNull();
+		schema.TableName.AssertEqual("GenTestPlainEntity");
+	}
+
 	#region ColumnAttribute in generated schema
 
 	[TestMethod]

@@ -363,6 +363,44 @@ public class SchemaRegistryTests : BaseTestClass
 
 	#endregion
 
+	#region IDbPersistable.Schema default implementation
+
+	[TestMethod]
+	public void Schema_ViaInterface_ReturnsRegisteredSchema()
+	{
+		IDbPersistable entity = new ReflTestOrder();
+		var schema = entity.Schema;
+
+		schema.AssertNotNull();
+		schema.AssertSame(SchemaRegistry.Get(typeof(ReflTestOrder)));
+		schema.TableName.AssertEqual("Ecng_ReflOrder");
+	}
+
+	[TestMethod]
+	public void Schema_ViaInterface_HasCorrectColumns()
+	{
+		IDbPersistable entity = new ReflTestOrder();
+		var schema = entity.Schema;
+
+		schema.Identity.AssertNotNull();
+		schema.Identity.Name.AssertEqual("Id");
+		schema.Columns.Any(c => c.Name == "OrderName").AssertTrue();
+		schema.Columns.Any(c => c.Name == "ShippingAddressStreet").AssertTrue();
+	}
+
+	[TestMethod]
+	public void Schema_ViaInterface_DifferentEntities_DifferentSchemas()
+	{
+		IDbPersistable order = new ReflTestOrder();
+		IDbPersistable indexed = new ReflTestIndexed();
+
+		order.Schema.AssertNotSame(indexed.Schema);
+		order.Schema.TableName.AssertEqual("Ecng_ReflOrder");
+		indexed.Schema.TableName.AssertEqual("Ecng_ReflIndexed");
+	}
+
+	#endregion
+
 	#region SQL generation uses correct table name
 
 	[TestMethod]
