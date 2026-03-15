@@ -167,10 +167,10 @@ public class EntityGenerator : IIncrementalGenerator
 		{
 			sb.AppendLine($"\t\t\t.Set(nameof({prop.Name}), ({GetEnumUnderlyingType(prop.Type)}){prop.Name})");
 		}
-		else if (IsPriceType(prop.Type))
+		else if (GetMappedDbType(prop.Type) is { } mappedSaveType)
 		{
 			var q = IsNullableType(prop.Type) ? "?" : "";
-			sb.AppendLine($"\t\t\t.Set(nameof({prop.Name}), {prop.Name}{q}.ToString())");
+			sb.AppendLine($"\t\t\t.Set(nameof({prop.Name}), {prop.Name}{q}.To<{mappedSaveType}>())");
 		}
 		else if (IsInnerSchema(prop))
 		{
@@ -201,9 +201,9 @@ public class EntityGenerator : IIncrementalGenerator
 				var underlying = GetEnumUnderlyingType(inner.Type);
 				sb.AppendLine($"\t\t\t.Set(\"{colName}\", ({underlying}?)({prop.Name}?.{inner.Name}))");
 			}
-			else if (IsPriceType(inner.Type))
+			else if (GetMappedDbType(inner.Type) is { } mappedInnerSaveType)
 			{
-				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {prop.Name}?.{inner.Name}?.ToString())");
+				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {prop.Name}?.{inner.Name}?.To<{mappedInnerSaveType}>())");
 			}
 			else
 			{
@@ -255,12 +255,13 @@ public class EntityGenerator : IIncrementalGenerator
 		{
 			sb.AppendLine($"\t\t{prop.Name} = await storage.LoadFkAsync<{FullType(prop.Type)}>(nameof({prop.Name}), db, ct);");
 		}
-		else if (IsPriceType(prop.Type))
+		else if (GetMappedDbType(prop.Type) is { } mappedLoadType)
 		{
+			var originalType = FullType(UnwrapNullable(prop.Type));
 			if (IsNullableType(prop.Type))
-				sb.AppendLine($"\t\t{prop.Name} = storage.GetValue<string>(nameof({prop.Name}))?.ToPriceType();");
+				sb.AppendLine($"\t\t{prop.Name} = storage.GetValue<{mappedLoadType}>(nameof({prop.Name}))?.To<{originalType}>();");
 			else
-				sb.AppendLine($"\t\t{prop.Name} = storage.GetValue<string>(nameof({prop.Name})).ToPriceType();");
+				sb.AppendLine($"\t\t{prop.Name} = storage.GetValue<{mappedLoadType}>(nameof({prop.Name})).To<{originalType}>();");
 		}
 		else if (IsInnerSchema(prop))
 		{
@@ -294,12 +295,13 @@ public class EntityGenerator : IIncrementalGenerator
 			{
 				sb.AppendLine($"\t\t\t{inner.Name} = ({FullType(inner.Type)})storage.GetValue<{GetEnumUnderlyingType(inner.Type)}>(\"{colName}\"),");
 			}
-			else if (IsPriceType(inner.Type))
+			else if (GetMappedDbType(inner.Type) is { } mappedInnerLoadType)
 			{
+				var originalType = FullType(UnwrapNullable(inner.Type));
 				if (IsNullableType(inner.Type))
-					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<string>(\"{colName}\")?.ToPriceType(),");
+					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\")?.To<{originalType}>(),");
 				else
-					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<string>(\"{colName}\").ToPriceType(),");
+					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\").To<{originalType}>(),");
 			}
 			else
 			{
@@ -403,8 +405,8 @@ public class EntityGenerator : IIncrementalGenerator
 					parts.Add("ClrType = typeof(long)");
 				else if (inner.Type.TypeKind == TypeKind.Enum)
 					parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
-				else if (IsPriceType(inner.Type))
-					parts.Add("ClrType = typeof(string)");
+				else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)
+					parts.Add($"ClrType = typeof({mappedInnerMetaType})");
 				else
 					parts.Add($"ClrType = typeof({FullType(inner.Type)})");
 
@@ -426,8 +428,8 @@ public class EntityGenerator : IIncrementalGenerator
 				parts.Add("ClrType = typeof(long)");
 			else if (prop.Type.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(prop.Type)})");
-			else if (IsPriceType(prop.Type))
-				parts.Add("ClrType = typeof(string)");
+			else if (GetMappedDbType(prop.Type) is { } mappedMetaType)
+				parts.Add($"ClrType = typeof({mappedMetaType})");
 			else
 				parts.Add($"ClrType = typeof({FullType(prop.Type)})");
 
@@ -462,6 +464,7 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine("using System.Threading;");
 		sb.AppendLine("using System.Threading.Tasks;");
 		sb.AppendLine();
+		sb.AppendLine("using Ecng.Common;");
 		sb.AppendLine("using Ecng.Serialization;");
 		sb.AppendLine();
 		if (sbMeta is not null)
@@ -609,7 +612,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 	/// <summary>
 	/// Returns true if the property type is "complex" — not a primitive, enum, DateTime, byte[], or similar simple type.
-	/// Complex types are either Price (handled specially), InnerSchema (flattened), or unknown (entity skipped).
+	/// Complex types are either mapped types (handled via type mapping), InnerSchema (flattened), or unknown (entity skipped).
 	/// </summary>
 	private static bool IsComplexType(IPropertySymbol prop)
 	{
@@ -644,10 +647,19 @@ public class EntityGenerator : IIncrementalGenerator
 		};
 	}
 
-	private static bool IsPriceType(ITypeSymbol type)
+	/// <summary>
+	/// Returns the mapped DB column type name for types with registered type mappings.
+	/// Mirrors runtime SchemaRegistry.RegisterTypeMapping registrations.
+	/// </summary>
+	private static string GetMappedDbType(ITypeSymbol type)
 	{
 		type = UnwrapNullable(type);
-		return type.Name == "Price" && type.ContainingNamespace?.ToDisplayString() == "Ecng.ComponentModel";
+		var fullName = type.ContainingNamespace?.ToDisplayString() + "." + type.Name;
+		return fullName switch
+		{
+			"Ecng.ComponentModel.Price" => "string",
+			_ => null,
+		};
 	}
 
 	private static bool IsNullableType(ITypeSymbol type)
@@ -671,7 +683,7 @@ public class EntityGenerator : IIncrementalGenerator
 			return false;
 		if (!IsComplexType(prop))
 			return false;
-		if (IsPriceType(prop.Type))
+		if (GetMappedDbType(prop.Type) is not null)
 			return false;
 		return CanFlattenInnerType(UnwrapNullable(prop.Type));
 	}
@@ -688,7 +700,7 @@ public class EntityGenerator : IIncrementalGenerator
 		foreach (var inner in innerProps)
 		{
 			if (IsRelationSingle(inner)) continue;
-			if (IsPriceType(inner.Type)) continue;
+			if (GetMappedDbType(inner.Type) is not null) continue;
 
 			var t = UnwrapNullable(inner.Type);
 
@@ -722,7 +734,7 @@ public class EntityGenerator : IIncrementalGenerator
 		foreach (var prop in props)
 		{
 			if (!IsComplexType(prop)) continue;
-			if (IsPriceType(prop.Type)) continue;
+			if (GetMappedDbType(prop.Type) is not null) continue;
 			if (IsInnerSchema(prop)) continue;
 			return false;
 		}
