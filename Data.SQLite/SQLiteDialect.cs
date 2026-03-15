@@ -42,7 +42,7 @@ public class SQLiteDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override string GetSqlTypeName(Type clrType)
 	{
-		var underlying = Nullable.GetUnderlyingType(clrType) ?? clrType;
+		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
 		// SQLite has dynamic typing, but we use affinity types
 		return underlying switch

@@ -93,8 +93,8 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION";
 				DataType: reader.GetString(2),
 				IsNullable: reader.GetString(3).EqualsIgnoreCase("YES"),
 				MaxLength: reader.IsDBNull(4) ? null : reader.GetInt32(4),
-				NumericPrecision: reader.IsDBNull(5) ? null : Convert.ToInt32(reader.GetValue(5)),
-				NumericScale: reader.IsDBNull(6) ? null : Convert.ToInt32(reader.GetValue(6))
+				NumericPrecision: reader.IsDBNull(5) ? null : reader.GetValue(5).To<int?>(),
+				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>()
 			));
 		}
 

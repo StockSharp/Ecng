@@ -42,7 +42,7 @@ public class PostgreSqlDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override string GetSqlTypeName(Type clrType)
 	{
-		var underlying = Nullable.GetUnderlyingType(clrType) ?? clrType;
+		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
 		return underlying switch
 		{
@@ -119,7 +119,7 @@ public class PostgreSqlDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
 	{
-		var underlying = Nullable.GetUnderlyingType(clrType) ?? clrType;
+		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
 		string typeName;
 

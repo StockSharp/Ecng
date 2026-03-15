@@ -89,7 +89,7 @@ public static class SchemaRegistry
 				if (IsSimpleType(prop.PropertyType))
 					continue;
 
-				if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
+				if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 					continue;
 
 				var innerType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
@@ -111,7 +111,7 @@ public static class SchemaRegistry
 	{
 		var result = new Dictionary<string, string>();
 
-		foreach (var attr in prop.GetCustomAttributes<NameOverrideAttribute>())
+		foreach (var attr in prop.GetAttributes<NameOverrideAttribute>())
 			result[attr.OldName] = attr.NewName;
 
 		return result;
@@ -137,13 +137,13 @@ public static class SchemaRegistry
 			if (prop.GetMethod is null || prop.SetMethod is null)
 				continue;
 
-			if (prop.GetCustomAttribute<IgnoreAttribute>() is not null)
+			if (prop.GetAttribute<IgnoreAttribute>() is not null)
 				continue;
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
-			var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
+			var colAttr = prop.GetAttribute<ColumnAttribute>();
 
-			if (prop.GetCustomAttribute<RelationSingleAttribute>() is not null)
+			if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 			{
 				columns.Add(new()
 				{
@@ -180,7 +180,7 @@ public static class SchemaRegistry
 
 	private static Schema CreateFromReflection(Type entityType)
 	{
-		var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
+		var entityAttr = entityType.GetAttribute<EntityAttribute>();
 
 		// phase 1: create schema with known metadata, put into cache immediately
 		// so circular dependencies just get the partially initialized schema
@@ -204,16 +204,16 @@ public static class SchemaRegistry
 				if (prop.GetMethod is null || prop.SetMethod is null)
 					continue;
 
-				if (prop.GetCustomAttribute<IgnoreAttribute>() is not null)
+				if (prop.GetAttribute<IgnoreAttribute>() is not null)
 					continue;
 
-				if (prop.GetCustomAttribute<RelationManyAttribute>() is not null)
+				if (prop.GetAttribute<RelationManyAttribute>() is not null)
 					continue;
 
-				if (prop.GetCustomAttribute<AllColumnsFieldAttribute>() is not null)
+				if (prop.GetAttribute<AllColumnsFieldAttribute>() is not null)
 					continue;
 
-				if (prop.Name == "Id" || prop.GetCustomAttribute<IdentityAttribute>() is not null)
+				if (prop.Name == "Id" || prop.GetAttribute<IdentityAttribute>() is not null)
 				{
 					identity = new()
 					{
@@ -226,13 +226,13 @@ public static class SchemaRegistry
 					continue;
 				}
 
-				var isRelationSingle = prop.GetCustomAttribute<RelationSingleAttribute>() is not null;
-				var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
+				var isRelationSingle = prop.GetAttribute<RelationSingleAttribute>() is not null;
+				var colAttr = prop.GetAttribute<ColumnAttribute>();
 
 				if (isRelationSingle)
 				{
-					var uniqueAttr = prop.GetCustomAttribute<UniqueAttribute>();
-					var indexAttr = prop.GetCustomAttribute<IndexAttribute>();
+					var uniqueAttr = prop.GetAttribute<UniqueAttribute>();
+					var indexAttr = prop.GetAttribute<IndexAttribute>();
 
 					columns.Add(new()
 					{
@@ -261,8 +261,8 @@ public static class SchemaRegistry
 					? Enum.GetUnderlyingType(propType)
 					: prop.PropertyType;
 
-				var unique = prop.GetCustomAttribute<UniqueAttribute>();
-				var index = prop.GetCustomAttribute<IndexAttribute>();
+				var unique = prop.GetAttribute<UniqueAttribute>();
+				var index = prop.GetAttribute<IndexAttribute>();
 
 				columns.Add(new()
 				{
