@@ -60,7 +60,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 	private static bool HasIdentityInHierarchy(INamedTypeSymbol type)
 	{
-		var current = type.BaseType;
+		var current = type;
 		while (current is not null)
 		{
 			if (HasIdentityMember(current))
@@ -188,28 +188,60 @@ public class EntityGenerator : IIncrementalGenerator
 		var innerProps = GetInnerTypeProperties(innerType);
 		var nameOverrides = GetNameOverrides(prop);
 
+		EmitSaveInnerSchemaRecursive(sb, innerProps, prop.Name, prop.Name, nameOverrides);
+	}
+
+	private static void EmitSaveInnerSchemaRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string accessPath, string colPrefix, Dictionary<string, string> nameOverrides)
+	{
 		foreach (var inner in innerProps)
 		{
-			var colName = GetColumnName(prop.Name, inner.Name, nameOverrides);
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
 
 			if (IsRelationSingle(inner))
 			{
-				sb.AppendLine($"\t\t\t.SetFk(\"{colName}\", {prop.Name}?.{inner.Name}?.Id)");
+				sb.AppendLine($"\t\t\t.SetFk(\"{colName}\", {accessPath}?.{inner.Name}?.Id)");
 			}
 			else if (inner.Type.TypeKind == TypeKind.Enum)
 			{
 				var underlying = GetEnumUnderlyingType(inner.Type);
-				sb.AppendLine($"\t\t\t.Set(\"{colName}\", ({underlying}?)({prop.Name}?.{inner.Name}))");
+				sb.AppendLine($"\t\t\t.Set(\"{colName}\", ({underlying}?)({accessPath}?.{inner.Name}))");
 			}
 			else if (GetMappedDbType(inner.Type) is { } mappedInnerSaveType)
 			{
-				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {prop.Name}?.{inner.Name}?.To<{mappedInnerSaveType}>())");
+				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {accessPath}?.{inner.Name}?.To<{mappedInnerSaveType}>())");
+			}
+			else if (IsInnerSchemaProperty(inner))
+			{
+				var nestedProps = GetInnerTypeProperties(UnwrapNullable(inner.Type));
+				var nestedOverrides = GetNameOverrides(inner);
+				EmitSaveInnerSchemaRecursive(sb, nestedProps, $"{accessPath}?.{inner.Name}", colName, nestedOverrides);
 			}
 			else
 			{
-				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {prop.Name}?.{inner.Name})");
+				sb.AppendLine($"\t\t\t.Set(\"{colName}\", {accessPath}?.{inner.Name})");
 			}
 		}
+	}
+
+	private static bool IsInnerSchemaProperty(IPropertySymbol prop)
+	{
+		if (IsRelationSingle(prop) || IsRelationMany(prop))
+			return false;
+		if (GetMappedDbType(prop.Type) is not null)
+			return false;
+
+		var t = UnwrapNullable(prop.Type);
+		if (t is IArrayTypeSymbol) return false;
+		if (t.TypeKind == TypeKind.Enum) return false;
+		if (t.SpecialType != SpecialType.None) return false;
+
+		var fullName = FullType(t);
+		if (fullName is "global::System.DateTime" or "global::System.DateTimeOffset"
+			or "global::System.TimeSpan" or "global::System.Guid"
+			or "global::System.DateOnly" or "global::System.TimeOnly")
+			return false;
+
+		return CanFlattenInnerType(t);
 	}
 
 	#endregion
@@ -283,33 +315,50 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine($"\t\t{prop.Name} = new {typeName}");
 		sb.AppendLine("\t\t{");
 
+		EmitLoadInnerSchemaRecursive(sb, innerProps, prop.Name, nameOverrides, "\t\t\t");
+
+		sb.AppendLine("\t\t};");
+	}
+
+	private static void EmitLoadInnerSchemaRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, string indent)
+	{
 		foreach (var inner in innerProps)
 		{
-			var colName = GetColumnName(prop.Name, inner.Name, nameOverrides);
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
 
 			if (IsRelationSingle(inner))
 			{
-				sb.AppendLine($"\t\t\t{inner.Name} = await storage.LoadFkAsync<{FullType(inner.Type)}>(\"{colName}\", db, ct),");
+				sb.AppendLine($"{indent}{inner.Name} = await storage.LoadFkAsync<{FullType(inner.Type)}>(\"{colName}\", db, ct),");
 			}
 			else if (inner.Type.TypeKind == TypeKind.Enum)
 			{
-				sb.AppendLine($"\t\t\t{inner.Name} = ({FullType(inner.Type)})storage.GetValue<{GetEnumUnderlyingType(inner.Type)}>(\"{colName}\"),");
+				sb.AppendLine($"{indent}{inner.Name} = ({FullType(inner.Type)})storage.GetValue<{GetEnumUnderlyingType(inner.Type)}>(\"{colName}\"),");
 			}
 			else if (GetMappedDbType(inner.Type) is { } mappedInnerLoadType)
 			{
 				var originalType = FullType(UnwrapNullable(inner.Type));
 				if (IsNullableType(inner.Type))
-					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\")?.To<{originalType}>(),");
+					sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\")?.To<{originalType}>(),");
 				else
-					sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\").To<{originalType}>(),");
+					sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\").To<{originalType}>(),");
+			}
+			else if (IsInnerSchemaProperty(inner))
+			{
+				var nestedType = UnwrapNullable(inner.Type);
+				var nestedProps = GetInnerTypeProperties(nestedType);
+				var nestedOverrides = GetNameOverrides(inner);
+				var nestedTypeName = FullType(nestedType);
+
+				sb.AppendLine($"{indent}{inner.Name} = new {nestedTypeName}");
+				sb.AppendLine($"{indent}{{");
+				EmitLoadInnerSchemaRecursive(sb, nestedProps, colName, nestedOverrides, indent + "\t");
+				sb.AppendLine($"{indent}}},");
 			}
 			else
 			{
-				sb.AppendLine($"\t\t\t{inner.Name} = storage.GetValue<{FullType(inner.Type)}>(\"{colName}\"),");
+				sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{FullType(inner.Type)}>(\"{colName}\"),");
 			}
 		}
-
-		sb.AppendLine("\t\t};");
 	}
 
 	private static void EmitLoadRelationMany(StringBuilder sb, IPropertySymbol prop)
@@ -396,29 +445,7 @@ public class EntityGenerator : IIncrementalGenerator
 			var innerProps = GetInnerTypeProperties(innerType);
 			var nameOverrides = GetNameOverrides(prop);
 
-			foreach (var inner in innerProps)
-			{
-				var colName = GetColumnName(prop.Name, inner.Name, nameOverrides);
-				var parts = new List<string> { $"Name = \"{colName}\"" };
-
-				if (IsRelationSingle(inner))
-					parts.Add("ClrType = typeof(long)");
-				else if (inner.Type.TypeKind == TypeKind.Enum)
-					parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
-				else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)
-					parts.Add($"ClrType = typeof({mappedInnerMetaType})");
-				else
-					parts.Add($"ClrType = typeof({FullType(inner.Type)})");
-
-				var (colNullable, colMaxLen) = GetColumnAttribute(inner);
-				var nullable = colNullable ?? InferIsNullable(inner);
-				if (nullable)
-					parts.Add("IsNullable = true");
-				if (colMaxLen > 0)
-					parts.Add($"MaxLength = {colMaxLen}");
-
-				sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
-			}
+			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides);
 		}
 		else
 		{
@@ -440,6 +467,43 @@ public class EntityGenerator : IIncrementalGenerator
 
 			var (colNullable, colMaxLen) = GetColumnAttribute(prop);
 			var nullable = colNullable ?? InferIsNullable(prop);
+			if (nullable)
+				parts.Add("IsNullable = true");
+			if (colMaxLen > 0)
+				parts.Add($"MaxLength = {colMaxLen}");
+
+			sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
+		}
+	}
+
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides)
+	{
+		foreach (var inner in innerProps)
+		{
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
+
+			if (IsInnerSchemaProperty(inner))
+			{
+				var nestedType = UnwrapNullable(inner.Type);
+				var nestedProps = GetInnerTypeProperties(nestedType);
+				var nestedOverrides = GetNameOverrides(inner);
+				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides);
+				continue;
+			}
+
+			var parts = new List<string> { $"Name = \"{colName}\"" };
+
+			if (IsRelationSingle(inner))
+				parts.Add("ClrType = typeof(long)");
+			else if (inner.Type.TypeKind == TypeKind.Enum)
+				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
+			else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)
+				parts.Add($"ClrType = typeof({mappedInnerMetaType})");
+			else
+				parts.Add($"ClrType = typeof({FullType(inner.Type)})");
+
+			var (colNullable, colMaxLen) = GetColumnAttribute(inner);
+			var nullable = colNullable ?? InferIsNullable(inner);
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
@@ -551,9 +615,13 @@ public class EntityGenerator : IIncrementalGenerator
 		var identityType = FindIdentityDeclaringType(type);
 		var props = new List<IPropertySymbol>();
 		var current = type;
-		while (current is not null && !SymbolEqualityComparer.Default.Equals(current, identityType))
+		while (current is not null)
 		{
 			props.InsertRange(0, GetOwnProperties(current));
+
+			if (SymbolEqualityComparer.Default.Equals(current, identityType))
+				break;
+
 			current = current.BaseType;
 		}
 		return props.ToArray();
@@ -690,6 +758,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 	/// <summary>
 	/// Check if all inner properties of a type are simple enough to flatten into columns.
+	/// Recursively checks nested inner types.
 	/// </summary>
 	private static bool CanFlattenInnerType(ITypeSymbol type)
 	{
@@ -719,6 +788,10 @@ public class EntityGenerator : IIncrementalGenerator
 			if (fullName is "global::System.DateTime" or "global::System.DateTimeOffset"
 				or "global::System.TimeSpan" or "global::System.Guid"
 				or "global::System.DateOnly" or "global::System.TimeOnly")
+				continue;
+
+			// recursively check nested inner types
+			if (CanFlattenInnerType(t))
 				continue;
 
 			return false; // unknown complex inner type
