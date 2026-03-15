@@ -4,6 +4,7 @@ using System.Reflection;
 
 using Ecng.Collections;
 using Ecng.Common;
+using Ecng.ComponentModel;
 using Ecng.Data.Sql;
 
 /// <summary>
@@ -12,6 +13,22 @@ using Ecng.Data.Sql;
 public static class SchemaRegistry
 {
 	private static readonly SynchronizedDictionary<Type, Schema> _cache = [];
+	private static readonly SynchronizedDictionary<Type, Type> _typeMappings = [];
+
+	static SchemaRegistry()
+	{
+		RegisterTypeMapping(typeof(Price), typeof(string));
+	}
+
+	/// <summary>
+	/// Registers a CLR type mapping for DB column storage.
+	/// </summary>
+	public static void RegisterTypeMapping(Type sourceType, Type dbColumnType)
+	{
+		ArgumentNullException.ThrowIfNull(sourceType);
+		ArgumentNullException.ThrowIfNull(dbColumnType);
+		_typeMappings[sourceType] = dbColumnType;
+	}
 
 	/// <summary>
 	/// Registers a schema for the given entity type.
@@ -42,6 +59,12 @@ public static class SchemaRegistry
 		}
 	}
 
+	private static Type GetMappedType(Type type)
+	{
+		type = type.GetUnderlyingType() ?? type;
+		return _typeMappings.TryGetValue(type, out var mapped) ? mapped : null;
+	}
+
 	private static bool IsSimpleType(Type type)
 	{
 		type = type.GetUnderlyingType() ?? type;
@@ -55,6 +78,9 @@ public static class SchemaRegistry
 		if (type.IsPrimitive || type == typeof(decimal) || type == typeof(DateTime)
 			|| type == typeof(DateTimeOffset) || type == typeof(TimeSpan)
 			|| type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly))
+			return true;
+
+		if (_typeMappings.ContainsKey(type))
 			return true;
 
 		return false;
@@ -130,7 +156,8 @@ public static class SchemaRegistry
 		string prefix,
 		Dictionary<string, string> nameOverrides,
 		List<SchemaColumn> columns,
-		HashSet<Type> visiting)
+		HashSet<Type> visiting,
+		bool outerNullable = false)
 	{
 		foreach (var prop in innerType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 		{
@@ -142,6 +169,7 @@ public static class SchemaRegistry
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
 			var colAttr = prop.GetAttribute<ColumnAttribute>();
+			var isNullable = outerNullable || (colAttr?.IsNullable ?? prop.PropertyType.IsNullable());
 
 			if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 			{
@@ -149,14 +177,24 @@ public static class SchemaRegistry
 				{
 					Name = colName,
 					ClrType = typeof(long),
-					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					IsNullable = isNullable,
 				});
 				continue;
 			}
 
 			var propType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
 
-			if (IsSimpleType(prop.PropertyType))
+			var mappedType = GetMappedType(prop.PropertyType);
+			if (mappedType is not null)
+			{
+				columns.Add(new()
+				{
+					Name = colName,
+					ClrType = mappedType,
+					IsNullable = isNullable,
+				});
+			}
+			else if (IsSimpleType(prop.PropertyType))
 			{
 				var clrType = propType.IsEnum
 					? Enum.GetUnderlyingType(propType)
@@ -166,14 +204,14 @@ public static class SchemaRegistry
 				{
 					Name = colName,
 					ClrType = clrType,
-					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					IsNullable = isNullable,
 					MaxLength = colAttr?.MaxLength ?? 0,
 				});
 			}
-			else if (propType.IsClass && IsInnerSchemaType(propType, visiting))
+			else if ((propType.IsClass || propType.IsValueType) && IsInnerSchemaType(propType, visiting))
 			{
 				var innerOverrides = GetNameOverrides(prop);
-				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting);
+				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting, outerNullable);
 			}
 		}
 	}
@@ -247,12 +285,32 @@ public static class SchemaRegistry
 
 				var propType = prop.PropertyType.GetUnderlyingType() ?? prop.PropertyType;
 
-				// InnerSchema detection: class property without relation attributes
-				if (propType.IsClass && propType != typeof(string) && propType != typeof(byte[])
+				// type with registered DB column mapping
+				var mappedType = GetMappedType(prop.PropertyType);
+				if (mappedType is not null)
+				{
+					var uniqueAttr = prop.GetAttribute<UniqueAttribute>();
+					var indexAttr = prop.GetAttribute<IndexAttribute>();
+
+					columns.Add(new()
+					{
+						Name = prop.Name,
+						ClrType = mappedType,
+						IsUnique = uniqueAttr is not null,
+						IsIndex = indexAttr is not null || uniqueAttr is not null,
+						IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					});
+					continue;
+				}
+
+				// InnerSchema detection: class or value type without relation attributes
+				if (propType != typeof(string) && propType != typeof(byte[])
+					&& (propType.IsClass || propType.IsValueType)
 					&& IsInnerSchemaType(propType, visiting))
 				{
 					var nameOverrides = GetNameOverrides(prop);
-					FlattenInnerSchema(propType, prop.Name, nameOverrides, columns, visiting);
+					var outerNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable();
+					FlattenInnerSchema(propType, prop.Name, nameOverrides, columns, visiting, outerNullable);
 					continue;
 				}
 
