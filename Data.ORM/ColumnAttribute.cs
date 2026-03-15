@@ -7,11 +7,23 @@ namespace Ecng.Serialization;
 [AttributeUsage(ReflectionHelper.Members)]
 public class ColumnAttribute : Attribute
 {
+	private bool _isNullableValue;
+	private bool _isNullableSet;
+
 	/// <summary>
 	/// Gets or sets whether the column allows NULL values.
-	/// When not set, nullability is inferred from the CLR type.
+	/// When not explicitly set, nullability is inferred from the CLR type.
 	/// </summary>
-	public bool IsNullable { get; set; }
+	public bool IsNullable
+	{
+		get => _isNullableValue;
+		set { _isNullableValue = value; _isNullableSet = true; }
+	}
+
+	/// <summary>
+	/// Gets whether <see cref="IsNullable"/> was explicitly set.
+	/// </summary>
+	public bool IsNullableSet => _isNullableSet;
 
 	/// <summary>
 	/// Gets or sets the maximum length for string/binary columns.

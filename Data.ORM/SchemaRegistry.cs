@@ -169,7 +169,7 @@ public static class SchemaRegistry
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
 			var colAttr = prop.GetAttribute<ColumnAttribute>();
-			var isNullable = outerNullable || (colAttr?.IsNullable ?? prop.PropertyType.IsNullable());
+			var isNullable = outerNullable || ResolveNullable(colAttr, prop.PropertyType);
 
 			if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 			{
@@ -215,6 +215,9 @@ public static class SchemaRegistry
 			}
 		}
 	}
+
+	private static bool ResolveNullable(ColumnAttribute colAttr, Type propType)
+		=> colAttr is { IsNullableSet: true } ? colAttr.IsNullable : propType.IsNullable();
 
 	private static Schema CreateFromReflection(Type entityType)
 	{
@@ -278,7 +281,7 @@ public static class SchemaRegistry
 						ClrType = typeof(long),
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
-						IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					});
 					continue;
 				}
@@ -298,7 +301,7 @@ public static class SchemaRegistry
 						ClrType = mappedType,
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
-						IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					});
 					continue;
 				}
@@ -309,7 +312,7 @@ public static class SchemaRegistry
 					&& IsInnerSchemaType(propType, visiting))
 				{
 					var nameOverrides = GetNameOverrides(prop);
-					var outerNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable();
+					var outerNullable = ResolveNullable(colAttr, prop.PropertyType);
 					FlattenInnerSchema(propType, prop.Name, nameOverrides, columns, visiting, outerNullable);
 					continue;
 				}
@@ -328,7 +331,7 @@ public static class SchemaRegistry
 					ClrType = clrType,
 					IsUnique = unique is not null,
 					IsIndex = index is not null || unique is not null,
-					IsNullable = colAttr?.IsNullable ?? prop.PropertyType.IsNullable(),
+					IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					MaxLength = colAttr?.MaxLength ?? 0,
 				});
 			}
