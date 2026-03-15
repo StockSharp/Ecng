@@ -171,11 +171,11 @@ public static class IOHelper
 		}
 		else
 		{
-			var tempBuffer = new byte[Math.Min(8192, buffer.Length)];
+			var tempBuffer = new byte[8192.Min(buffer.Length)];
 
             while (totalRead < buffer.Length)
             {
-                var bytesToRead = Math.Min(tempBuffer.Length, buffer.Length - totalRead);
+                var bytesToRead = tempBuffer.Length.Min(buffer.Length - totalRead);
 
                 var read = stream.Read(tempBuffer, 0, bytesToRead);
 

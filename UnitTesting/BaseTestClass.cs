@@ -803,7 +803,7 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNullOrWhiteSpace(string value, string message = "")
 	{
-		if (!string.IsNullOrWhiteSpace(value))
+		if (!value.IsEmptyOrWhiteSpace())
 			Assert.Fail(message.IsEmpty() ? $"Expected null or whitespace string but was \"{value}\"." : message);
 	}
 
@@ -814,7 +814,7 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNotNullOrWhiteSpace(string value, string message = "")
 	{
-		if (string.IsNullOrWhiteSpace(value))
+		if (value.IsEmptyOrWhiteSpace())
 			Assert.Fail(message.IsEmpty() ? "Expected non-null and non-whitespace string." : message);
 	}
 

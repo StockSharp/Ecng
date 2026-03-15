@@ -273,7 +273,7 @@ public class ItemsSourceBase<T> : IItemsSource<T>
 			return _getName(value);
 
 		var f = Format;
-		return f.IsEmptyOrWhiteSpace() ? value.GetDisplayName() : string.Format($"{{0:{f}}}", value);
+		return f.IsEmptyOrWhiteSpace() ? value.GetDisplayName() : $"{{0:{f}}}".Put(value);
 	}
 
 	/// <summary>

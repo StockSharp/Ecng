@@ -154,7 +154,7 @@ internal class AdoTable : IDatabaseTable
 		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
 		// Calculate batch size based on number of columns to stay within parameter limit
-		var batchSize = Math.Max(1, Dialect.MaxParameters / columns.Count);
+		var batchSize = 1.Max(Dialect.MaxParameters / columns.Count);
 
 		using var transaction = _connection.Connection.BeginTransaction();
 

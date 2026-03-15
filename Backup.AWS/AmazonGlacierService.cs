@@ -351,7 +351,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 		using var ms = new MemoryStream();
 		await body.CopyToAsync(ms, cancellationToken).NoWait();
 
-		var text = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+		var text = ms.ToArray().UTF8();
 		var inv = JsonSerializer.Deserialize<InventoryResponse>(text);
 
 		var dict = new Dictionary<string, ArchiveInfo>(StringComparer.Ordinal);

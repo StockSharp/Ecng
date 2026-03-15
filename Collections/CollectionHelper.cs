@@ -1944,7 +1944,7 @@ public static class CollectionHelper
 		var length2 = target.Length;
 
 		// Return trivial case - difference in string lengths exceeds threshold
-		if (Math.Abs(length1 - length2) > threshold)
+		if ((length1 - length2).Abs() > threshold)
 			return int.MaxValue;
 
 		// Ensure arrays [i] / length1 use shorter length
@@ -1992,7 +1992,7 @@ public static class CollectionHelper
 				var min = (del > ins) ? (ins > sub ? sub : ins) : (del > sub ? sub : del);
 
 				if (i > 1 && j > 1 && source[im2].Equals(target[jm1]) && source[im1].Equals(target[j - 2]))
-					min = Math.Min(min, dMinus2[im2] + cost);
+					min = min.Min(dMinus2[im2] + cost);
 
 				dCurrent[i] = min;
 

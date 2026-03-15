@@ -144,7 +144,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 
 		using (EnterScope())
 		{
-			var actualCount = Math.Min(count, Count - index);
+			var actualCount = count.Min(Count - index);
 			if (actualCount <= 0)
 				return 0;
 

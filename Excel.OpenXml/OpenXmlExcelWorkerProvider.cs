@@ -1679,7 +1679,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			// Keep IDs as text if you want to avoid any double precision issues in Excel itself.
 			// (Excel also shows only ~15 significant digits for numbers.)
-			if (value is long l && (Math.Abs(l) >= 9_000_000_000_000_00L))
+			if (value is long l && (l.Abs() >= 9_000_000_000_000_00L))
 			{
 				WriteInlineString(cell, l.ToString(CultureInfo.InvariantCulture));
 				return;

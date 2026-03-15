@@ -112,7 +112,7 @@ public class AzureBlobService : Disposable, IBackupService
 
 		while (read < total)
 		{
-			var expected = (int)Math.Min(total - read, _bufferSize);
+			var expected = (int)(total - read).Min(_bufferSize);
 			var actual = await source.ReadAsync(buffer.AsMemory(0, expected), cancellationToken);
 
 			if (actual == 0)
@@ -152,7 +152,7 @@ public class AzureBlobService : Disposable, IBackupService
 
 		while (uploaded < stream.Length)
 		{
-			var expected = (int)Math.Min(stream.Length - uploaded, _bufferSize);
+			var expected = (int)(stream.Length - uploaded).Min(_bufferSize);
 			var actual = await stream.ReadAsync(buffer.AsMemory(0, expected), cancellationToken);
 			if (actual == 0)
 				break;

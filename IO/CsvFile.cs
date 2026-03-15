@@ -379,8 +379,8 @@ public class CsvFileWriter : CsvFileCommon, IDisposable, IAsyncCommitable
 		if (_oneQuote is null || _oneQuote[0] != Quote)
 		{
 			_oneQuote = $"{Quote}";
-			_twoQuotes = string.Format("{0}{0}", Quote);
-			_quotedFormat = string.Format("{0}{{0}}{0}", Quote);
+			_twoQuotes = $"{Quote}{Quote}";
+			_quotedFormat = $"{Quote}{{0}}{Quote}";
 		}
 
 		// Write this column

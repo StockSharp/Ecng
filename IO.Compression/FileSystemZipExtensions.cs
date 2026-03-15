@@ -443,7 +443,7 @@ public static class FileSystemZipExtensions
 
 		var baseUri = new Uri(basePath);
 		var fullUri = new Uri(fullPath);
-		return Uri.UnescapeDataString(baseUri.MakeRelativeUri(fullUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+		return baseUri.MakeRelativeUri(fullUri).ToString().Replace('/', Path.DirectorySeparatorChar).DataUnEscape();
 #else
 		return Path.GetRelativePath(basePath, fullPath);
 #endif

@@ -151,11 +151,11 @@ public class CircularBuffer<T> : ICircularBuffer<T>
 		{
 			if (this.IsEmpty())
 			{
-				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer is empty", index));
+				throw new IndexOutOfRangeException($"Cannot access index {index}. Buffer is empty");
 			}
 			if (index < 0 || index >= _count)
 			{
-				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer size is {1}", index, _count));
+				throw new IndexOutOfRangeException($"Cannot access index {index}. Buffer size is {_count}");
 			}
 			int actualIndex = InternalIndex(index);
 			return _buffer[actualIndex];
@@ -164,11 +164,11 @@ public class CircularBuffer<T> : ICircularBuffer<T>
 		{
 			if (this.IsEmpty())
 			{
-				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer is empty", index));
+				throw new IndexOutOfRangeException($"Cannot access index {index}. Buffer is empty");
 			}
 			if (index < 0 || index >= _count)
 			{
-				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer size is {1}", index, _count));
+				throw new IndexOutOfRangeException($"Cannot access index {index}. Buffer size is {_count}");
 			}
 			int actualIndex = InternalIndex(index);
 			_buffer[actualIndex] = value;
