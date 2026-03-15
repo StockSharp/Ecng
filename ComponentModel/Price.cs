@@ -14,6 +14,8 @@ public struct Price : IComparable<Price>, IEquatable<Price>, IPersistable, IOper
 	{
 		Converter.AddTypedConverter<Price, decimal>(input => (decimal)input);
 		Converter.AddTypedConverter<decimal, Price>(input => input);
+		Converter.AddTypedConverter<Price, string>(input => input.ToString());
+		Converter.AddTypedConverter<string, Price>(input => input.ToPriceType());
 	}
 
 	/// <summary>
