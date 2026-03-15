@@ -1704,7 +1704,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Act
@@ -1722,7 +1722,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Act
@@ -1741,7 +1741,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Act & Assert
@@ -1756,7 +1756,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Act
@@ -1774,7 +1774,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Assert
@@ -1788,7 +1788,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Assert
@@ -1802,7 +1802,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 
 		// Act
@@ -1822,7 +1822,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int> { 1, 2, 3 };
 		var strings = numbers.AsDuckTypedCollection(
 			n => n.ToString(),
-			s => int.Parse(s)
+			s => s.To<int>()
 		);
 		var array = new string[5];
 
@@ -1853,7 +1853,7 @@ public class CollectionHelperTests : BaseTestClass
 			s =>
 			{
 				var parts = s.Split(':');
-				return (parts[0], int.Parse(parts[1]));
+				return (parts[0], parts[1].To<int>());
 			}
 		);
 
@@ -1877,7 +1877,7 @@ public class CollectionHelperTests : BaseTestClass
 			CollectionHelper.AsDuckTypedCollection<int, string>(
 				null,
 				n => n.ToString(),
-				s => int.Parse(s)
+				s => s.To<int>()
 			);
 		});
 	}
@@ -1893,7 +1893,7 @@ public class CollectionHelperTests : BaseTestClass
 		{
 			numbers.AsDuckTypedCollection<int, string>(
 				null,
-				s => int.Parse(s)
+				s => s.To<int>()
 			);
 		});
 	}

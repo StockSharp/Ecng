@@ -100,7 +100,7 @@ public class NtpClientTests : BaseTestClass
 
 		var client = new NtpClient($"127.0.0.1:{ep.Port}");
 		var actual = await client.GetUtcTimeAsync(cancellationToken: token);
-		(Math.Abs((actual - expected).TotalSeconds) < 1).AssertTrue();
+		((actual - expected).TotalSeconds.Abs() < 1).AssertTrue();
 		server.Dispose();
 		await task;
 	}

@@ -971,8 +971,8 @@ public class ExcelWorkerTests : BaseTestClass
 		if (errors.Length == 0)
 			return;
 
-		var msg = string.Join("\n", errors.Take(20).Select(e =>
-			$"- {e.Description}; Part={e.Part?.Uri}; Path={e.Path?.XPath}"));
+		var msg = errors.Take(20).Select(e =>
+			$"- {e.Description}; Part={e.Part?.Uri}; Path={e.Path?.XPath}").JoinN();
 
 		Fail($"OpenXmlValidator found {errors.Length} error(s):\n{msg}");
 	}
@@ -985,7 +985,7 @@ public class ExcelWorkerTests : BaseTestClass
 		var wsPart = doc.WorkbookPart!.WorksheetParts.First();
 		var sheetData = wsPart.Worksheet.GetFirstChild<SheetData>()!;
 
-		var rowIndex = uint.Parse(new string(cellRef.Where(char.IsDigit).ToArray()));
+		var rowIndex = new string(cellRef.Where(char.IsDigit).ToArray()).To<uint>();
 		var row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == rowIndex);
 		var cell = row?.Elements<Cell>().FirstOrDefault(c => c.CellReference?.Value == cellRef);
 
@@ -999,7 +999,7 @@ public class ExcelWorkerTests : BaseTestClass
 		// Handle shared string
 		if (cell.DataType?.Value == CellValues.SharedString)
 		{
-			var idx = int.Parse(cell.CellValue!.Text);
+			var idx = cell.CellValue!.Text.To<int>();
 			return doc.WorkbookPart.SharedStringTablePart?.SharedStringTable
 				.Elements<SharedStringItem>().ElementAt(idx).Text?.Text;
 		}

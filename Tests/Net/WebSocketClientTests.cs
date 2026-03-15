@@ -19,7 +19,7 @@ using Microsoft.Extensions.Logging;
 public class WebSocketClientTests : BaseTestClass
 {
 	private static Action<string, object> Log(string tag)
-		=> (fmt, arg) => Debug.WriteLine($"[{tag}] " + string.Format(fmt ?? string.Empty, arg));
+		=> (fmt, arg) => Debug.WriteLine($"[{tag}] " + (fmt ?? string.Empty).Put(arg));
 
 	private sealed class LocalWebSocketEchoServer(IHost host, string url) : AsyncDisposable
 	{

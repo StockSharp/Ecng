@@ -24,11 +24,11 @@ public class LoggableStreamTests : BaseTestClass
 			Messages.Add(message);
 		}
 
-		public void LogVerbose(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, string.Format(format, args)));
-		public void LogDebug(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, string.Format(format, args)));
-		public void LogInfo(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Info, string.Format(format, args)));
-		public void LogWarning(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Warning, string.Format(format, args)));
-		public void LogError(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Error, string.Format(format, args)));
+		public void LogVerbose(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, format.Put(args)));
+		public void LogDebug(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, format.Put(args)));
+		public void LogInfo(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Info, format.Put(args)));
+		public void LogWarning(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Warning, format.Put(args)));
+		public void LogError(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Error, format.Put(args)));
 
 		public void Dispose() { }
 	}

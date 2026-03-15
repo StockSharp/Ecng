@@ -91,9 +91,9 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		rows.Count.AssertEqual(1);
 
 		var row = rows[0];
-		Convert.ToInt32(row["Id"]).AssertEqual(1);
+		row["Id"].To<int>().AssertEqual(1);
 		row["Name"].To<string>().AssertEqual("Test Item");
-		Convert.ToDecimal(row["Value"]).AssertEqual(42.5m);
+		row["Value"].To<decimal>().AssertEqual(42.5m);
 	}
 
 	protected async Task SelectWithFilter_Test()
@@ -136,8 +136,8 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		var orderBy = new[] { new OrderByCondition("Value") }; // ASC
 		var rows = (await _table.SelectAsync(null, orderBy, null, null, CancellationToken.None)).ToList();
 		rows.Count.AssertEqual(3);
-		Convert.ToDecimal(rows[0]["Value"]).AssertEqual(10m);
-		Convert.ToDecimal(rows[2]["Value"]).AssertEqual(30m);
+		rows[0]["Value"].To<decimal>().AssertEqual(10m);
+		rows[2]["Value"].To<decimal>().AssertEqual(30m);
 	}
 
 	protected async Task Update_Test()
@@ -165,7 +165,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
 		rows.Count.AssertEqual(1);
 		rows[0]["Name"].To<string>().AssertEqual("Updated");
-		Convert.ToDecimal(rows[0]["Value"]).AssertEqual(99m);
+		rows[0]["Value"].To<decimal>().AssertEqual(99m);
 	}
 
 	protected async Task Delete_Test()
@@ -221,7 +221,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
 		rows.Count.AssertEqual(1);
 		rows[0]["Name"].To<string>().AssertEqual("Upserted");
-		Convert.ToDecimal(rows[0]["Value"]).AssertEqual(99m);
+		rows[0]["Value"].To<decimal>().AssertEqual(99m);
 	}
 
 	protected async Task BulkInsert_Test()
@@ -262,7 +262,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		var orderBy = new[] { new OrderByCondition("Id") };
 		var rows = (await _table.SelectAsync(null, orderBy, 2, 3, CancellationToken.None)).ToList();
 		rows.Count.AssertEqual(3);
-		Convert.ToInt32(rows[0]["Id"]).AssertEqual(3); // skip 2, take 3 → items 3,4,5
+		rows[0]["Id"].To<int>().AssertEqual(3); // skip 2, take 3 → items 3,4,5
 	}
 
 	private async Task CreateTableWithPrimaryKey()

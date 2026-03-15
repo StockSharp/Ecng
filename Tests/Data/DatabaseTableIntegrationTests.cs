@@ -170,7 +170,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(1);
-		Convert.ToInt32(list[0]["Id"]).AssertEqual(1);
+		list[0]["Id"].To<int>().AssertEqual(1);
 		list[0]["Name"].ToString().AssertEqual("Test");
 
 		// Cleanup
@@ -281,7 +281,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(5);
-		list.All(row => Convert.ToInt32(row["Id"]) > 5).AssertEqual(true);
+		list.All(row => row["Id"].To<int>() > 5).AssertEqual(true);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -317,8 +317,8 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var results = await table.SelectAsync(null, orderBy, null, null, CancellationToken);
 		var list = results.ToList();
 
-		Convert.ToInt32(list[0]["Id"]).AssertEqual(5);
-		Convert.ToInt32(list[4]["Id"]).AssertEqual(1);
+		list[0]["Id"].To<int>().AssertEqual(5);
+		list[4]["Id"].To<int>().AssertEqual(1);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -355,8 +355,8 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(10);
-		Convert.ToInt32(list[0]["Id"]).AssertEqual(6);
-		Convert.ToInt32(list[9]["Id"]).AssertEqual(15);
+		list[0]["Id"].To<int>().AssertEqual(6);
+		list[9]["Id"].To<int>().AssertEqual(15);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -435,7 +435,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(5);
-		list.All(row => Convert.ToInt32(row["Id"]) <= 5).AssertEqual(true);
+		list.All(row => row["Id"].To<int>() <= 5).AssertEqual(true);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -472,7 +472,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(4);
-		list.Select(row => Convert.ToInt32(row["Id"])).OrderBy(x => x).ToArray().AssertEqual([2, 4, 6, 8]);
+		list.Select(row => row["Id"].To<int>()).OrderBy(x => x).ToArray().AssertEqual([2, 4, 6, 8]);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -700,7 +700,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 		// Verify data integrity
 		var resultsList = results.ToList();
-		Convert.ToInt32(resultsList[0]["Id"]).AssertEqual(1);
+		resultsList[0]["Id"].To<int>().AssertEqual(1);
 		resultsList[0]["Col1"].AssertEqual("V1_1");
 		resultsList[0]["Col99"].AssertEqual("V1_99");
 
@@ -932,7 +932,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		list.Count.AssertEqual(2);
 
 		// Check if Extra column data was preserved in second row
-		var secondRow = list.FirstOrDefault(r => Convert.ToInt32(r["Id"]) == 2);
+		var secondRow = list.FirstOrDefault(r => r["Id"].To<int>() == 2);
 		secondRow.AssertNotNull();
 
 		// If bug exists, Extra will be null/missing even though we provided it
@@ -982,7 +982,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(1, "Filter with NULL should find the row with NULL value");
-		Convert.ToInt32(list[0]["Id"]).AssertEqual(1);
+		list[0]["Id"].To<int>().AssertEqual(1);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
@@ -1020,7 +1020,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var list = results.ToList();
 
 		list.Count.AssertEqual(1, "Filter with NotEqual NULL should find rows with non-NULL values");
-		Convert.ToInt32(list[0]["Id"]).AssertEqual(2);
+		list[0]["Id"].To<int>().AssertEqual(2);
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);

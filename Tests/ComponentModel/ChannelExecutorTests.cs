@@ -1144,11 +1144,11 @@ public class ChannelExecutorTests : BaseTestClass
 		foreach (var op in operationLog)
 		{
 			if (op.StartsWith("Add:"))
-				expectedList.Add(int.Parse(op[4..]));
+				expectedList.Add(op[4..].To<int>());
 			else if (op.StartsWith("RemoveLast:") && expectedList.Count > 0)
 				expectedList.RemoveAt(expectedList.Count - 1);
 			else if (op.StartsWith("Insert0:"))
-				expectedList.Insert(0, int.Parse(op[8..]));
+				expectedList.Insert(0, op[8..].To<int>());
 			else if (op == "Clear")
 				expectedList.Clear();
 		}

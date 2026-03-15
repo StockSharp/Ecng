@@ -115,7 +115,7 @@ public class TimeHelperTests : BaseTestClass
 
 		// UtcKind changes only DateTime.Kind, it does not convert the clock.
 		// If applied to local time, the resulting value differs from the true UTC time by approximately the local offset.
-		(Math.Abs((diff - offset).TotalSeconds) < 2).AssertTrue(
+		((diff - offset).TotalSeconds.Abs() < 2).AssertTrue(
 			$"fakeUtc-realUtc={diff} should be approximately offset={offset} (local={local}, fakeUtc={fakeUtc}, realUtc={realUtc})");
 	}
 
@@ -1026,7 +1026,7 @@ public class TimeHelperTests : BaseTestClass
 
 				// Now should be approximately UTC + 5 hours
 				var expected = utcNow.AddHours(5);
-				var diff = Math.Abs((now - expected).TotalSeconds);
+				var diff = (now - expected).TotalSeconds.Abs();
 				(diff < 2).AssertTrue(); // Within 2 seconds tolerance
 			}
 			finally

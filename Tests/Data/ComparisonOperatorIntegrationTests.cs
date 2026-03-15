@@ -123,7 +123,7 @@ public class ComparisonOperatorIntegrationTests : BaseTestClass
 	private static FilterCondition F(string col, ComparisonOperator op, object val) => new(col, op, val);
 
 	private static List<int> Ids(List<IDictionary<string, object>> rows)
-		=> rows.Select(r => Convert.ToInt32(r["Id"])).OrderBy(x => x).ToList();
+		=> rows.Select(r => r["Id"].To<int>()).OrderBy(x => x).ToList();
 
 	private static List<string> Names(List<IDictionary<string, object>> rows)
 		=> rows.Select(r => r["Name"].ToString()).OrderBy(x => x).ToList();
