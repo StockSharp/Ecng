@@ -1,9 +1,12 @@
 namespace Ecng.Data;
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 
@@ -131,6 +134,46 @@ public class PostgreSqlDialect : SqlDialectBase
 			typeName = GetSqlTypeName(clrType);
 
 		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+	}
+
+	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "public";
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = @"
+SELECT table_name, column_name, data_type, is_nullable, character_maximum_length, numeric_precision, numeric_scale
+FROM information_schema.columns
+WHERE table_schema = @schema
+ORDER BY table_name, ordinal_position";
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbColumnInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbColumnInfo(
+				TableName: reader.GetString(0),
+				ColumnName: reader.GetString(1),
+				DataType: reader.GetString(2),
+				IsNullable: reader.GetString(3).EqualsIgnoreCase("YES"),
+				MaxLength: reader.IsDBNull(4) ? null : reader.GetInt32(4),
+				NumericPrecision: reader.IsDBNull(5) ? null : reader.GetValue(5).To<int?>(),
+				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>()
+			));
+		}
+
+		return result;
 	}
 
 	/// <inheritdoc />

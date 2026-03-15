@@ -1,5 +1,8 @@
 namespace Ecng.Data;
 
+using System.Data.Common;
+using System.Threading.Tasks;
+
 /// <summary>
 /// Interface for database-specific SQL dialect.
 /// Provides SQL syntax variations for different database providers.
@@ -163,4 +166,17 @@ public interface ISqlDialect
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
 	}
+
+	/// <summary>
+	/// Reads column metadata from a live database.
+	/// </summary>
+	/// <param name="connection">Open database connection.</param>
+	/// <param name="tableSchema">Schema filter (e.g. "dbo" for SQL Server, "public" for PostgreSQL). Null uses dialect default.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>List of column metadata from the database.</returns>
+	Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+		=> throw new NotSupportedException();
 }

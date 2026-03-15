@@ -1,9 +1,12 @@
 namespace Ecng.Data;
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 
@@ -133,6 +136,46 @@ public class SqlServerDialect : SqlDialectBase
 
 		if (take.HasValue)
 			sb.Append($" FETCH NEXT {take.Value} ROWS ONLY");
+	}
+
+	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "dbo";
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = @"
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = @schema
+ORDER BY TABLE_NAME, ORDINAL_POSITION";
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbColumnInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbColumnInfo(
+				TableName: reader.GetString(0),
+				ColumnName: reader.GetString(1),
+				DataType: reader.GetString(2),
+				IsNullable: reader.GetString(3).EqualsIgnoreCase("YES"),
+				MaxLength: reader.IsDBNull(4) ? null : reader.GetInt32(4),
+				NumericPrecision: reader.IsDBNull(5) ? null : reader.GetValue(5).To<int?>(),
+				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>()
+			));
+		}
+
+		return result;
 	}
 
 	/// <inheritdoc />

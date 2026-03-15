@@ -1,5 +1,8 @@
 namespace Ecng.Data;
 
+using System.Data.Common;
+using System.Threading.Tasks;
+
 /// <summary>
 /// Base class for SQL dialect implementations.
 /// </summary>
@@ -106,4 +109,11 @@ public abstract class SqlDialectBase : ISqlDialect
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
 	}
+
+	/// <inheritdoc />
+	public virtual Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+		=> throw new NotSupportedException();
 }

@@ -1,9 +1,12 @@
 namespace Ecng.Data;
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 
@@ -117,6 +120,53 @@ public class SQLiteDialect : SqlDialectBase
 
 		if (skip.HasValue)
 			sb.Append($" OFFSET {skip.Value}");
+	}
+
+	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		var result = new List<DbColumnInfo>();
+
+		// get all table names
+		var tables = new List<string>();
+
+		using (var cmd = connection.CreateCommand())
+		{
+			cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name";
+
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+			while (await reader.ReadAsync(cancellationToken))
+				tables.Add(reader.GetString(0));
+		}
+
+		// read columns per table via pragma
+		foreach (var table in tables)
+		{
+			using var cmd = connection.CreateCommand();
+			cmd.CommandText = $"PRAGMA table_info({QuoteIdentifier(table)})";
+
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				// pragma_table_info columns: cid, name, type, notnull, dflt_value, pk
+				result.Add(new DbColumnInfo(
+					TableName: table,
+					ColumnName: reader.GetString(1),
+					DataType: reader.GetString(2),
+					IsNullable: reader.GetInt32(3) == 0,
+					MaxLength: null,
+					NumericPrecision: null,
+					NumericScale: null
+				));
+			}
+		}
+
+		return result;
 	}
 
 	/// <inheritdoc />
