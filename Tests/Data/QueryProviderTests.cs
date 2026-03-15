@@ -413,6 +413,59 @@ public class QueryProviderTests : BaseTestClass
 		query1.AssertSame(query2);
 	}
 
+	[TestMethod]
+	public void DeleteBy_PostgreSql_UsesStandardSyntax()
+	{
+		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
+		var columns = new SchemaColumn[]
+		{
+			new() { Name = "Name", ClrType = typeof(string) },
+		};
+
+		var schema = CreateTestSchema("Logs", identity, columns);
+
+		var provider = new QueryProvider();
+		var query = provider.Create(schema, SqlCommandTypes.DeleteBy, [identity], schema.AllColumns);
+		var sql = Norm(query.Render(PostgreSqlDialect.Instance));
+
+		sql.Contains("delete").AssertTrue($"Expected 'delete', got: {sql}");
+		sql.Contains("from").AssertTrue($"Expected 'from', got: {sql}");
+		sql.Contains("\"Logs\"").AssertTrue($"Expected '\"Logs\"', got: {sql}");
+		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
+		sql.Contains("\"Id\" = @Id").AssertTrue($"Expected '\"Id\" = @Id', got: {sql}");
+
+		// PostgreSQL should NOT have aliased delete syntax
+		sql.Contains("delete e").AssertFalse($"PostgreSQL should not use aliased delete, got: {sql}");
+	}
+
+	[TestMethod]
+	public void UpdateBy_PostgreSql_UsesStandardSyntax()
+	{
+		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
+		var columns = new SchemaColumn[]
+		{
+			new() { Name = "Name", ClrType = typeof(string) },
+			new() { Name = "Price", ClrType = typeof(decimal) },
+		};
+
+		var schema = CreateTestSchema("Products", identity, columns);
+
+		var provider = new QueryProvider();
+		var query = provider.Create(schema, SqlCommandTypes.UpdateBy, [identity], schema.AllColumns);
+		var sql = Norm(query.Render(PostgreSqlDialect.Instance));
+
+		sql.Contains("update").AssertTrue($"Expected 'update', got: {sql}");
+		sql.Contains("\"Products\"").AssertTrue($"Expected '\"Products\"', got: {sql}");
+		sql.Contains("set").AssertTrue($"Expected 'set', got: {sql}");
+		sql.Contains("\"Name\" = @Name").AssertTrue($"Expected '\"Name\" = @Name', got: {sql}");
+		sql.Contains("\"Price\" = @Price").AssertTrue($"Expected '\"Price\" = @Price', got: {sql}");
+		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
+		sql.Contains("\"Id\" = @Id").AssertTrue($"Expected '\"Id\" = @Id', got: {sql}");
+
+		// PostgreSQL should NOT use FROM with alias
+		sql.Contains("from").AssertFalse($"PostgreSQL UPDATE should not have FROM clause, got: {sql}");
+	}
+
 	#endregion
 
 	#region SchemaRegistry Integration

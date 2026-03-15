@@ -250,19 +250,34 @@ public class ColumnAttributeTests : BaseTestClass
 	{
 		var sb = new StringBuilder();
 
-		SqlServerDialect.Instance.AppendAlterColumn(sb, "Users", "Email", "NVARCHAR(512) NULL");
+		SqlServerDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512);
 
 		sb.ToString().AssertEqual("ALTER TABLE [Users] ALTER COLUMN [Email] NVARCHAR(512) NULL");
 	}
 
 	[TestMethod]
-	public void AppendAlterColumn_PostgreSql_UsesSetDataType()
+	public void AppendAlterColumn_PostgreSql_SeparatesTypeAndNullability()
 	{
 		var sb = new StringBuilder();
 
-		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", "VARCHAR(512) NULL");
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512);
 
-		sb.ToString().AssertEqual("ALTER TABLE \"Users\" ALTER COLUMN \"Email\" SET DATA TYPE VARCHAR(512) NULL");
+		var sql = sb.ToString();
+		sql.Contains("SET DATA TYPE VARCHAR(512)").AssertTrue($"Expected SET DATA TYPE, got: {sql}");
+		sql.Contains("DROP NOT NULL").AssertTrue($"Expected DROP NOT NULL, got: {sql}");
+		sql.Contains("NULL").AssertTrue($"Expected nullability clause, got: {sql}");
+	}
+
+	[TestMethod]
+	public void AppendAlterColumn_PostgreSql_NotNull()
+	{
+		var sb = new StringBuilder();
+
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), false, 256);
+
+		var sql = sb.ToString();
+		sql.Contains("SET DATA TYPE VARCHAR(256)").AssertTrue($"Expected SET DATA TYPE, got: {sql}");
+		sql.Contains("SET NOT NULL").AssertTrue($"Expected SET NOT NULL, got: {sql}");
 	}
 
 	[TestMethod]
@@ -538,6 +553,171 @@ public class ColumnAttributeTests : BaseTestClass
 		var sql = SchemaMigrator.GenerateMigrationSql(PostgreSqlDialect.Instance, diffs, [schema]);
 
 		sql.Contains("VARCHAR(256) NOT NULL").AssertTrue($"Expected VARCHAR(256) in SQL: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingTable_GeneratesCreateTable()
+	{
+		var schema = new Schema
+		{
+			TableName = "NewTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 128 },
+				new SchemaColumn { Name = "Value", ClrType = typeof(int) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("NewTable", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("CREATE TABLE").AssertTrue($"Expected CREATE TABLE in SQL: {sql}");
+		sql.Contains("[NewTable]").AssertTrue($"Expected table name in SQL: {sql}");
+		sql.Contains("[Id]").AssertTrue($"Expected identity column in SQL: {sql}");
+		sql.Contains("[Name]").AssertTrue($"Expected Name column in SQL: {sql}");
+		sql.Contains("[Value]").AssertTrue($"Expected Value column in SQL: {sql}");
+	}
+
+	[TestMethod]
+	public void Compare_MissingTable_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "MissingTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// empty DB columns — table doesn't exist
+		var diffs = SchemaMigrator.Compare([schema], [], SqlServerDialect.Instance);
+
+		diffs.Count.AssertEqual(1);
+		diffs[0].Kind.AssertEqual(SchemaDiffKind.MissingTable);
+		diffs[0].TableName.AssertEqual("MissingTable");
+	}
+
+	[TestMethod]
+	public void Compare_PostgreSql_NoDifferencesForNativeTypes()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+				new SchemaColumn { Name = "Active", ClrType = typeof(bool) },
+				new SchemaColumn { Name = "ExternalId", ClrType = typeof(Guid) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// PostgreSQL returns these native type names
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Name", "text", false, null, null, null),
+			new DbColumnInfo("TestTable", "Active", "boolean", false, null, null, null),
+			new DbColumnInfo("TestTable", "ExternalId", "uuid", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, PostgreSqlDialect.Instance);
+
+		diffs.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_SQLite_NoDifferencesForNativeTypes()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+				new SchemaColumn { Name = "Count", ClrType = typeof(int) },
+				new SchemaColumn { Name = "Data", ClrType = typeof(byte[]) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Name", "TEXT", false, null, null, null),
+			new DbColumnInfo("TestTable", "Count", "INTEGER", false, null, null, null),
+			new DbColumnInfo("TestTable", "Data", "BLOB", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SQLiteDialect.Instance);
+
+		diffs.Count.AssertEqual(0);
+	}
+
+	#endregion
+
+	#region ColumnAttribute IsNullable inference
+
+	[TestMethod]
+	public void ColumnAttr_MaxLengthOnly_DoesNotForceNotNull()
+	{
+		// [Column(MaxLength = 128)] on string (non-nullable reference type)
+		// should infer IsNullable from the CLR type, not default to false
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var col = schema.Columns.First(c => c.Name == "Name");
+
+		// string without ? in source ⇒ not nullable (correct)
+		col.IsNullable.AssertFalse();
+	}
+
+	#endregion
+
+	#region DateOnly / TimeOnly support
+
+	[TestMethod]
+	public void GetSqlTypeName_DateOnly_SqlServer()
+	{
+		SqlServerDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("DATE");
+	}
+
+	[TestMethod]
+	public void GetSqlTypeName_TimeOnly_SqlServer()
+	{
+		SqlServerDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TIME");
+	}
+
+	[TestMethod]
+	public void GetSqlTypeName_DateOnly_PostgreSql()
+	{
+		PostgreSqlDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("DATE");
+	}
+
+	[TestMethod]
+	public void GetSqlTypeName_TimeOnly_PostgreSql()
+	{
+		PostgreSqlDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TIME");
+	}
+
+	[TestMethod]
+	public void GetSqlTypeName_DateOnly_SQLite()
+	{
+		SQLiteDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("TEXT");
+	}
+
+	[TestMethod]
+	public void GetSqlTypeName_TimeOnly_SQLite()
+	{
+		SQLiteDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TEXT");
 	}
 
 	#endregion
