@@ -740,6 +740,62 @@ class StringIsNullOrWhiteSpaceVisitor : MethodVisitor<string>
 	}
 }
 
+class StringHelperIsEmptyVisitor : MethodVisitor
+{
+	public StringHelperIsEmptyVisitor()
+		: base(typeof(StringHelper).GetMember(nameof(StringHelper.IsEmpty))
+			.OfType<MethodInfo>()
+			.Where(m => m.GetParameters().Length == 1))
+	{
+	}
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+	{
+		var q = translator.Context.Curr;
+
+		q.OpenBracket();
+
+		var mce = (MethodCallExpression)expression;
+
+		translator.Visit(mce.Arguments[0]);
+		q.Is().Null();
+
+		q.Or();
+		translator.Visit(mce.Arguments[0]);
+		q.Like().Raw("N''");
+
+		q.CloseBracket();
+	}
+}
+
+class StringHelperIsEmptyOrWhiteSpaceVisitor : MethodVisitor
+{
+	public StringHelperIsEmptyOrWhiteSpaceVisitor()
+		: base(typeof(StringHelper).GetMember(nameof(StringHelper.IsEmptyOrWhiteSpace))
+			.OfType<MethodInfo>()
+			.Where(m => m.GetParameters().Length == 1))
+	{
+	}
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+	{
+		var q = translator.Context.Curr;
+
+		q.OpenBracket();
+
+		var mce = (MethodCallExpression)expression;
+
+		translator.Visit(mce.Arguments[0]);
+		q.Is().Null();
+
+		q.Or();
+		translator.Visit(mce.Arguments[0]);
+		q.Equal().Raw("N''");
+
+		q.CloseBracket();
+	}
+}
+
 class StringIndexOfVisitor : MethodVisitor<string>
 {
 	public StringIndexOfVisitor()

@@ -894,6 +894,36 @@ public class OrmIntegrationTests : BaseTestClass
 		results[0].Name.AssertEqual("NonEmpty");
 	}
 
+	[TestMethod]
+	public async Task String_IsEmpty()
+	{
+		EnsureDb();
+		await InsertItem("NonEmpty");
+		await InsertItem("");
+
+		var results = await Query<TestItem>()
+			.Where(x => !x.Name.IsEmpty())
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("NonEmpty");
+	}
+
+	[TestMethod]
+	public async Task String_IsEmptyOrWhiteSpace()
+	{
+		EnsureDb();
+		await InsertItem("NonEmpty");
+		await InsertItem("");
+
+		var results = await Query<TestItem>()
+			.Where(x => !x.Name.IsEmptyOrWhiteSpace())
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("NonEmpty");
+	}
+
 	#endregion
 
 	#region Coalesce and Conditional Tests

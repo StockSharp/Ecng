@@ -69,6 +69,8 @@ static class MethodVisitorRegistry
 		AddVisitor(new StringConcatVisitor());
 		AddVisitor(new StringIsNullOrEmptyVisitor());
 		AddVisitor(new StringIsNullOrWhiteSpaceVisitor());
+		AddVisitor(new StringHelperIsEmptyVisitor());
+		AddVisitor(new StringHelperIsEmptyOrWhiteSpaceVisitor());
 		AddVisitor(new StringFirstVisitor());
 		AddVisitor(new StringFirstOrDefaultVisitor());
 		AddVisitor(new StringLastVisitor());

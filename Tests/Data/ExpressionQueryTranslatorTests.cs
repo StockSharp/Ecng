@@ -109,6 +109,32 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.Contains("[]").AssertFalse($"SQL should not contain empty alias '[]', got: {sql}");
 	}
 
+	[TestMethod]
+	public void StringHelper_IsEmpty_TranslatesToSql()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Where(x => !x.Name.IsEmpty());
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("is null").AssertTrue($"Expected 'is null' in SQL, got: {sql}");
+		sql.Contains("like N''").AssertTrue($"Expected 'like N''' in SQL, got: {sql}");
+	}
+
+	[TestMethod]
+	public void StringHelper_IsEmptyOrWhiteSpace_TranslatesToSql()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Where(x => !x.Name.IsEmptyOrWhiteSpace());
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("is null").AssertTrue($"Expected 'is null' in SQL, got: {sql}");
+		sql.Contains("= N''").AssertTrue($"Expected '= N''' in SQL, got: {sql}");
+	}
+
 	/// <summary>
 	/// When C# compiler folds "select new VEntity { Prop = joined.Col }" into the
 	/// last Join's result selector (inner join without "into"), the translator must
