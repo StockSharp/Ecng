@@ -64,6 +64,8 @@ public class SQLiteDialect : SqlDialectBase
 			_ when underlying == typeof(TimeSpan) => "INTEGER", // stored as ticks
 			_ when underlying == typeof(Guid) => "TEXT",
 			_ when underlying == typeof(byte[]) => "BLOB",
+			_ when underlying == typeof(DateOnly) => "TEXT", // ISO8601 date format
+			_ when underlying == typeof(TimeOnly) => "TEXT", // ISO8601 time format
 			_ => throw new NotSupportedException($"Type {clrType.Name} is not supported"),
 		};
 	}
@@ -167,6 +169,19 @@ public class SQLiteDialect : SqlDialectBase
 		}
 
 		return result;
+	}
+
+	/// <inheritdoc />
+	public override string NormalizeDbType(string dbTypeName)
+	{
+		return dbTypeName.Trim().ToUpperInvariant() switch
+		{
+			"INTEGER" or "INT" or "BIGINT" or "SMALLINT" or "TINYINT" => "INTEGER",
+			"REAL" or "FLOAT" or "DOUBLE" or "DOUBLE PRECISION" or "NUMERIC" or "DECIMAL" => "REAL",
+			"TEXT" or "VARCHAR" or "NVARCHAR" or "CHAR" or "NCHAR" or "CLOB" => "TEXT",
+			"BLOB" or "VARBINARY" or "BINARY" or "BYTEA" => "BLOB",
+			var other => other,
+		};
 	}
 
 	/// <inheritdoc />

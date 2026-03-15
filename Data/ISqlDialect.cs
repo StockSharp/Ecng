@@ -154,9 +154,16 @@ public interface ISqlDialect
 	/// <summary>
 	/// Appends ALTER TABLE ALTER COLUMN statement.
 	/// </summary>
-	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="columnName">Column name (unquoted).</param>
+	/// <param name="clrType">CLR type of the column.</param>
+	/// <param name="isNullable">Whether the column allows NULLs.</param>
+	/// <param name="maxLength">Max length for string/binary columns.</param>
+	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0)
 	{
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {columnDef}");
+		var colDef = GetColumnDefinition(clrType, isNullable, maxLength);
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {colDef}");
 	}
 
 	/// <summary>
@@ -165,6 +172,61 @@ public interface ISqlDialect
 	void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
+	}
+
+	/// <summary>
+	/// Normalizes a raw database type name to the canonical form used by this dialect.
+	/// Used by schema comparison to match DB-reported types against <see cref="GetSqlTypeName"/> output.
+	/// </summary>
+	/// <param name="dbTypeName">Raw type name from database metadata.</param>
+	/// <returns>Normalized type name.</returns>
+	string NormalizeDbType(string dbTypeName) => dbTypeName.Trim().ToUpperInvariant();
+
+	/// <summary>
+	/// Appends a dialect-specific UPDATE ... SET ... WHERE statement.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="setColumns">Column names for the SET clause.</param>
+	/// <param name="whereColumns">Column names for the WHERE clause.</param>
+	void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
+	{
+		sb.AppendLine($"update {QuoteIdentifier(tableName)}");
+		sb.AppendLine("set");
+
+		for (var i = 0; i < setColumns.Length; i++)
+		{
+			var comma = i < setColumns.Length - 1 ? "," : "";
+			sb.AppendLine($"\t{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
+		}
+
+		sb.AppendLine("where");
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
+	}
+
+	/// <summary>
+	/// Appends a dialect-specific DELETE ... WHERE statement.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="whereColumns">Column names for the WHERE clause.</param>
+	void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
+	{
+		sb.AppendLine("delete");
+		sb.Append($"from {QuoteIdentifier(tableName)}");
+		sb.AppendLine();
+		sb.AppendLine("where");
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
 	}
 
 	/// <summary>

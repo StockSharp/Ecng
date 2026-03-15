@@ -99,15 +99,55 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
-	public virtual void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	public virtual void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0)
 	{
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {columnDef}");
+		var colDef = GetColumnDefinition(clrType, isNullable, maxLength);
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {colDef}");
 	}
 
 	/// <inheritdoc />
 	public virtual void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
+	}
+
+	/// <inheritdoc />
+	public virtual string NormalizeDbType(string dbTypeName) => dbTypeName.Trim().ToUpperInvariant();
+
+	/// <inheritdoc />
+	public virtual void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
+	{
+		sb.AppendLine($"update {QuoteIdentifier(tableName)}");
+		sb.AppendLine("set");
+
+		for (var i = 0; i < setColumns.Length; i++)
+		{
+			var comma = i < setColumns.Length - 1 ? "," : "";
+			sb.AppendLine($"\t{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
+		}
+
+		sb.AppendLine("where");
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
+	{
+		sb.AppendLine("delete");
+		sb.Append($"from {QuoteIdentifier(tableName)}");
+		sb.AppendLine();
+		sb.AppendLine("where");
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
 	}
 
 	/// <inheritdoc />

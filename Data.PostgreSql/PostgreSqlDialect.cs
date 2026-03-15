@@ -63,6 +63,8 @@ public class PostgreSqlDialect : SqlDialectBase
 			_ when underlying == typeof(TimeSpan) => "BIGINT", // stored as ticks
 			_ when underlying == typeof(Guid) => "UUID",
 			_ when underlying == typeof(byte[]) => "BYTEA",
+			_ when underlying == typeof(DateOnly) => "DATE",
+			_ when underlying == typeof(TimeOnly) => "TIME",
 			_ => throw new NotSupportedException($"Type {clrType.Name} is not supported"),
 		};
 	}
@@ -177,10 +179,49 @@ ORDER BY table_name, ordinal_position";
 	}
 
 	/// <inheritdoc />
-	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0)
 	{
-		// PostgreSQL uses SET DATA TYPE and SET/DROP NOT NULL separately
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} SET DATA TYPE {columnDef}");
+		var underlying = clrType.GetUnderlyingType() ?? clrType;
+
+		string typeName;
+
+		if (underlying == typeof(string))
+			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
+		else if (underlying == typeof(byte[]))
+			typeName = "BYTEA";
+		else
+			typeName = GetSqlTypeName(clrType);
+
+		var qt = QuoteIdentifier(tableName);
+		var qc = QuoteIdentifier(columnName);
+
+		// PostgreSQL requires separate statements for type and nullability changes
+		sb.Append($"ALTER TABLE {qt} ALTER COLUMN {qc} SET DATA TYPE {typeName}; ");
+		sb.Append($"ALTER TABLE {qt} ALTER COLUMN {qc} {(isNullable ? "DROP NOT NULL" : "SET NOT NULL")}");
+	}
+
+	/// <inheritdoc />
+	public override string NormalizeDbType(string dbTypeName)
+	{
+		return dbTypeName.Trim().ToUpperInvariant() switch
+		{
+			"CHARACTER VARYING" or "VARCHAR" => "TEXT",
+			"TEXT" => "TEXT",
+			"INTEGER" or "INT" => "INTEGER",
+			"BIGINT" => "BIGINT",
+			"SMALLINT" => "SMALLINT",
+			"BOOLEAN" or "BIT" => "BOOLEAN",
+			"NUMERIC" or "DECIMAL" => "NUMERIC",
+			"DOUBLE PRECISION" or "FLOAT" => "DOUBLE PRECISION",
+			"REAL" => "REAL",
+			"DATE" => "DATE",
+			"TIME" or "TIME WITHOUT TIME ZONE" => "TIME",
+			"TIMESTAMP" or "TIMESTAMP WITHOUT TIME ZONE" => "TIMESTAMP",
+			"TIMESTAMPTZ" or "TIMESTAMP WITH TIME ZONE" => "TIMESTAMPTZ",
+			"UUID" or "UNIQUEIDENTIFIER" => "UUID",
+			"BYTEA" or "VARBINARY" => "BYTEA",
+			var other => other,
+		};
 	}
 
 	/// <inheritdoc />

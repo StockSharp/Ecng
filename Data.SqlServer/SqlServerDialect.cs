@@ -63,6 +63,8 @@ public class SqlServerDialect : SqlDialectBase
 			_ when underlying == typeof(TimeSpan) => "BIGINT", // stored as ticks
 			_ when underlying == typeof(Guid) => "UNIQUEIDENTIFIER",
 			_ when underlying == typeof(byte[]) => "VARBINARY(MAX)",
+			_ when underlying == typeof(DateOnly) => "DATE",
+			_ when underlying == typeof(TimeOnly) => "TIME",
 			_ => throw new NotSupportedException($"Type {clrType.Name} is not supported"),
 		};
 	}
@@ -176,6 +178,74 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION";
 		}
 
 		return result;
+	}
+
+	/// <inheritdoc />
+	public override string NormalizeDbType(string dbTypeName)
+	{
+		return dbTypeName.Trim().ToUpperInvariant() switch
+		{
+			"NVARCHAR" or "VARCHAR" or "NCHAR" or "CHAR" or "NTEXT" or "TEXT" => "NVARCHAR",
+			"INT" or "INTEGER" => "INT",
+			"BIGINT" => "BIGINT",
+			"SMALLINT" => "SMALLINT",
+			"TINYINT" => "TINYINT",
+			"BIT" or "BOOLEAN" => "BIT",
+			"DECIMAL" or "NUMERIC" => "DECIMAL",
+			"FLOAT" or "DOUBLE PRECISION" => "FLOAT",
+			"REAL" => "REAL",
+			"DATE" => "DATE",
+			"TIME" => "TIME",
+			"DATETIME" or "DATETIME2" => "DATETIME2",
+			"DATETIMEOFFSET" => "DATETIMEOFFSET",
+			"UNIQUEIDENTIFIER" or "UUID" => "UNIQUEIDENTIFIER",
+			"VARBINARY" or "BINARY" or "IMAGE" or "BYTEA" => "VARBINARY",
+			var other => other,
+		};
+	}
+
+	/// <inheritdoc />
+	public override void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
+	{
+		const string alias = "e";
+
+		sb.AppendLine($"update {QuoteIdentifier(alias)}");
+		sb.AppendLine("set");
+
+		for (var i = 0; i < setColumns.Length; i++)
+		{
+			var comma = i < setColumns.Length - 1 ? "," : "";
+			sb.AppendLine($"\t{alias}.{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
+		}
+
+		sb.AppendLine($"from {QuoteIdentifier(tableName)} {alias}");
+		sb.AppendLine("where");
+
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{alias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
+	}
+
+	/// <inheritdoc />
+	public override void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
+	{
+		const string alias = "e";
+
+		sb.Append($"delete {alias}");
+		sb.AppendLine();
+		sb.Append($"from {QuoteIdentifier(tableName)} {alias}");
+		sb.AppendLine();
+		sb.AppendLine("where");
+
+		for (var i = 0; i < whereColumns.Length; i++)
+		{
+			if (i > 0)
+				sb.Append(" and ");
+			sb.Append($"{alias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+		}
 	}
 
 	/// <inheritdoc />

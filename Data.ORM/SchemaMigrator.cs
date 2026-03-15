@@ -9,6 +9,9 @@ using Ecng.Data;
 /// </summary>
 public enum SchemaDiffKind
 {
+	/// <summary>Table exists in entity schema but not in database.</summary>
+	MissingTable,
+
 	/// <summary>Column exists in entity but not in database.</summary>
 	MissingColumn,
 
@@ -63,7 +66,10 @@ public static class SchemaMigrator
 				continue;
 
 			if (!dbTables.TryGetValue(schema.TableName, out var dbCols))
-				continue; // table doesn't exist in DB — handled separately
+			{
+				diffs.Add(new(schema.TableName, string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"));
+				continue;
+			}
 
 			foreach (var col in schema.AllColumns)
 			{
@@ -84,7 +90,7 @@ public static class SchemaMigrator
 
 				// compare type
 				var expectedType = NormalizeSqlType(dialect.GetSqlTypeName(col.ClrType));
-				var actualType = NormalizeDbType(dbCol);
+				var actualType = dialect.NormalizeDbType(dbCol.DataType);
 
 				if (!expectedType.EqualsIgnoreCase(actualType))
 				{
@@ -129,6 +135,27 @@ public static class SchemaMigrator
 		{
 			switch (diff.Kind)
 			{
+				case SchemaDiffKind.MissingTable:
+				{
+					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
+						break;
+
+					var colDefs = new List<string>();
+
+					if (schema.Identity is not null)
+						colDefs.Add($"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} {dialect.GetIdentityColumnSuffix()}");
+
+					foreach (var col in schema.Columns)
+					{
+						var cd = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength);
+						colDefs.Add($"{dialect.QuoteIdentifier(col.Name)} {cd}");
+					}
+
+					dialect.AppendCreateTable(sb, diff.TableName, colDefs.JoinCommaSpace());
+					sb.AppendLine(";");
+					break;
+				}
+
 				case SchemaDiffKind.MissingColumn:
 				{
 					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
@@ -154,8 +181,7 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength);
-					dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, colDef);
+					dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength);
 					sb.AppendLine(";");
 					break;
 				}
@@ -193,24 +219,4 @@ public static class SchemaMigrator
 		return paren > 0 ? sqlType[..paren].Trim() : sqlType.Trim();
 	}
 
-	private static string NormalizeDbType(DbColumnInfo col)
-	{
-		return col.DataType.Trim().ToUpperInvariant() switch
-		{
-			"NVARCHAR" or "VARCHAR" or "NCHAR" or "CHAR" or "NTEXT" or "TEXT" => "NVARCHAR",
-			"INT" or "INTEGER" => "INT",
-			"BIGINT" => "BIGINT",
-			"SMALLINT" => "SMALLINT",
-			"TINYINT" => "TINYINT",
-			"BIT" or "BOOLEAN" => "BIT",
-			"DECIMAL" or "NUMERIC" => "DECIMAL",
-			"FLOAT" or "DOUBLE PRECISION" => "FLOAT",
-			"REAL" => "REAL",
-			"DATETIME" or "DATETIME2" => "DATETIME2",
-			"DATETIMEOFFSET" => "DATETIMEOFFSET",
-			"UNIQUEIDENTIFIER" or "UUID" => "UNIQUEIDENTIFIER",
-			"VARBINARY" or "BINARY" or "IMAGE" or "BYTEA" => "VARBINARY",
-			var other => other,
-		};
-	}
 }
