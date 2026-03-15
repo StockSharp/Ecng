@@ -18,6 +18,7 @@ public static class DbPersistableHelper
 	/// Asynchronously loads a foreign key entity from the database.
 	/// </summary>
 	public static async ValueTask<T> LoadFkAsync<T>(this SettingsStorage storage, string name, IStorage db, CancellationToken ct)
+		where T : IDbPersistable
 	{
 		var id = storage.GetValue<long?>(name);
 

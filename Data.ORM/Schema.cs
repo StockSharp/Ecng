@@ -96,11 +96,6 @@ public class Schema
 	public Func<object> Factory { get; init; }
 
 	/// <summary>
-	/// Fallback load for non-IDbPersistable types (projection DTOs).
-	/// </summary>
-	public Action<object, SerializationItemCollection> Load { get; set; }
-
-	/// <summary>
 	/// Gets the schema name (alias for <see cref="TableName"/>).
 	/// </summary>
 	public string Name => TableName;

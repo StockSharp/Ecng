@@ -411,6 +411,7 @@ public class Database : Disposable, IStorage
 	/// Gets the total number of entities of type <typeparamref name="TEntity"/> in the database.
 	/// </summary>
 	public virtual async ValueTask<long> GetCountAsync<TEntity>(CancellationToken cancellationToken)
+		where TEntity : IDbPersistable
 	{
 		var meta = SchemaRegistry.Get(typeof(TEntity));
 
@@ -430,10 +431,9 @@ public class Database : Disposable, IStorage
 	/// <summary>
 	/// Creates (inserts) a new entity in the database asynchronously.
 	/// </summary>
-	public virtual ValueTask<object> CreateAsync(Schema meta, object entity, CancellationToken cancellationToken)
+	public virtual ValueTask<object> CreateAsync(Schema meta, IDbPersistable entity, CancellationToken cancellationToken)
 	{
-		if (entity.IsNull(true))
-			throw new ArgumentNullException(nameof(entity));
+		ArgumentNullException.ThrowIfNull(entity);
 
 		if (meta.ReadOnly)
 			throw new InvalidOperationException();
@@ -445,9 +445,8 @@ public class Database : Disposable, IStorage
 
 			var command = await GetCommand(meta, SqlCommandTypes.Create, [], meta.AllColumns, cancellationToken);
 
-			var persistable = (IDbPersistable)entity;
 			var storage = new SettingsStorage();
-			persistable.Save(storage);
+			entity.Save(storage);
 			var input = storage.ToItems(nonReadOnlyColumns);
 
 			var output = await Execute(command, input, readOnlyColumns.Count > 0, cancellationToken);
@@ -457,16 +456,16 @@ public class Database : Disposable, IStorage
 				foreach (var col in readOnlyColumns)
 				{
 					if (output.TryGetItem(col.Name, out var item))
-						persistable.SetIdentity(item.Value);
+						entity.SetIdentity(item.Value);
 				}
 			}
 
-			persistable.InitLists(this);
+			entity.InitLists(this);
 
 			if (meta.NoCache || meta.Identity is null)
-				return entity;
+				return (object)entity;
 
-			var id = persistable.GetIdentity();
+			var id = entity.GetIdentity();
 			var key = (meta.EntityType, meta.Identity.Name, id);
 
 			using (await _cacheLock.LockAsync(cancellationToken))
@@ -478,7 +477,7 @@ public class Database : Disposable, IStorage
 				dict.Add(id, entity);
 			}
 
-			return entity;
+			return (object)entity;
 		});
 	}
 
@@ -646,9 +645,9 @@ public class Database : Disposable, IStorage
 	/// Updates an existing entity in the database asynchronously.
 	/// </summary>
 	public virtual ValueTask<TEntity> UpdateAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
+		where TEntity : IDbPersistable
 	{
-		if (entity.IsNull(true))
-			throw new ArgumentNullException(nameof(entity));
+		ArgumentNullException.ThrowIfNull(entity);
 
 		var meta = SchemaRegistry.Get(typeof(TEntity));
 
@@ -673,9 +672,8 @@ public class Database : Disposable, IStorage
 		{
 			var command = await GetCommand(meta, SqlCommandTypes.UpdateBy, keyColumns, valueColumns, cancellationToken);
 
-			var persistable = (IDbPersistable)entity;
 			var storage = new SettingsStorage();
-			persistable.Save(storage);
+			entity.Save(storage);
 
 			var input = new SerializationItemCollection();
 			foreach (var col in keyColumns)
@@ -683,7 +681,7 @@ public class Database : Disposable, IStorage
 				if (storage.TryGetValue(col.Name, out var v))
 					input.Add(new(col.Name, col.ClrType, v));
 				else if (col.Name == "Id")
-					input.Add(new(col.Name, col.ClrType, persistable.GetIdentity()));
+					input.Add(new(col.Name, col.ClrType, entity.GetIdentity()));
 			}
 			foreach (var col in valueColumns)
 			{
@@ -707,17 +705,17 @@ public class Database : Disposable, IStorage
 	/// Deletes an entity from the database asynchronously and returns the number of affected rows.
 	/// </summary>
 	public virtual ValueTask<int> DeleteAsync<TEntity>(TEntity entity, CancellationToken cancellationToken)
+		where TEntity : IDbPersistable
 	{
 		var meta = SchemaRegistry.Get(typeof(TEntity));
 
-		var persistable = (IDbPersistable)entity;
 		var by = new SerializationItemCollection();
 		IReadOnlyList<SchemaColumn> keyColumns;
 
 		if (meta.Identity is null)
 		{
 			var storage = new SettingsStorage();
-			persistable.Save(storage);
+			entity.Save(storage);
 
 			var keys = new List<SchemaColumn>();
 			foreach (var col in meta.IndexColumns)
@@ -730,7 +728,7 @@ public class Database : Disposable, IStorage
 		}
 		else
 		{
-			by.Add(new(meta.Identity.Name, meta.Identity.ClrType, persistable.GetIdentity()));
+			by.Add(new(meta.Identity.Name, meta.Identity.ClrType, entity.GetIdentity()));
 			keyColumns = [meta.Identity];
 		}
 
@@ -754,6 +752,7 @@ public class Database : Disposable, IStorage
 	/// Deletes all entities of type <typeparamref name="TEntity"/> from the database.
 	/// </summary>
 	public virtual async ValueTask DeleteAllAsync<TEntity>(CancellationToken cancellationToken)
+		where TEntity : IDbPersistable
 	{
 		if (!AllowDeleteAll)
 			throw new NotSupportedException();
@@ -868,17 +867,12 @@ public class Database : Disposable, IStorage
 		return await GetOrAddCacheTableInternal(_);
 	}
 
-	private static object CreateEntity(Schema meta, object id)
+	private static IDbPersistable CreateEntity(Schema meta, object id)
 	{
-		var entity = meta.CreateEntity();
+		var entity = (IDbPersistable)meta.CreateEntity();
 
 		if (id is not null)
-		{
-			if (entity is IDbPersistable persistable)
-				persistable.SetIdentity(id);
-			else
-				meta.Load?.Invoke(entity, new([new(meta.Identity.Name, meta.Identity.ClrType, id)]));
-		}
+			entity.SetIdentity(id);
 
 		return entity;
 	}
@@ -895,19 +889,12 @@ public class Database : Disposable, IStorage
 		{
 			var noCache = CreateEntity(meta, null);
 
-			if (noCache is IDbPersistable noCachePersistable)
-			{
-				if (meta.Identity is not null)
-					noCachePersistable.SetIdentity(input[meta.Identity.Name].Value);
+			if (meta.Identity is not null)
+				noCache.SetIdentity(input[meta.Identity.Name].Value);
 
-				var storage = input.ToStorage();
-				await noCachePersistable.LoadAsync(storage, this, cancellationToken);
-				noCachePersistable.InitLists(this);
-			}
-			else
-			{
-				meta.Load?.Invoke(noCache, input);
-			}
+			var noCacheStorage = input.ToStorage();
+			await noCache.LoadAsync(noCacheStorage, this, cancellationToken);
+			noCache.InitLists(this);
 
 			return noCache;
 		}
@@ -915,7 +902,7 @@ public class Database : Disposable, IStorage
 		var id = input[meta.Identity.Name].Value;
 		var key = (meta.EntityType, meta.Identity.Name, id);
 
-		object entity = default;
+		IDbPersistable entity = default;
 
 		using (await _cacheLock.LockAsync(cancellationToken))
 		{
@@ -931,7 +918,7 @@ public class Database : Disposable, IStorage
 							return t.entity;
 						else
 						{
-							entity = t.entity;
+							entity = (IDbPersistable)t.entity;
 
 							if (entity is null)
 								throw new InvalidOperationException(key.To<string>());
@@ -941,7 +928,7 @@ public class Database : Disposable, IStorage
 					}
 					else
 					{
-						entity = t.entity;
+						entity = (IDbPersistable)t.entity;
 						scope.SetDep(key, entity);
 					}
 				}
@@ -955,15 +942,10 @@ public class Database : Disposable, IStorage
 			}
 		}
 
-		if (entity is IDbPersistable persistable2)
 		{
 			var storage = input.ToStorage();
-			await persistable2.LoadAsync(storage, this, cancellationToken);
-			persistable2.InitLists(this);
-		}
-		else
-		{
-			meta.Load?.Invoke(entity, input);
+			await entity.LoadAsync(storage, this, cancellationToken);
+			entity.InitLists(this);
 		}
 
 		return entity;
@@ -985,26 +967,25 @@ public class Database : Disposable, IStorage
 			_cache.Add(key, (entity, true));
 	}
 
-	private async ValueTask UpdateCache(Schema meta, object entity, CancellationToken cancellationToken)
+	private async ValueTask UpdateCache(Schema meta, IDbPersistable entity, CancellationToken cancellationToken)
 	{
 		var uniqueColumns = meta.UniqueColumns;
 
 		if (uniqueColumns.Count == 0)
 			return;
 
-		var persistable = (IDbPersistable)entity;
 		SettingsStorage storage = null;
 
 		var keys = uniqueColumns.Select(c =>
 		{
 			object v;
 			if (c == meta.Identity)
-				v = persistable.GetIdentity();
+				v = entity.GetIdentity();
 			else
 			{
 				storage ??= new SettingsStorage();
 				if (storage.Count == 0)
-					persistable.Save(storage);
+					entity.Save(storage);
 
 				storage.TryGetValue(c.Name, out v);
 			}

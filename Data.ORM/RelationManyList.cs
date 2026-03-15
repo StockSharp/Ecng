@@ -11,6 +11,7 @@ using Nito.AsyncEx;
 /// <typeparam name="TId">Entity identifier type.</typeparam>
 /// <param name="storage">The underlying storage provider.</param>
 public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelationManyList<TEntity>
+	where TEntity : IDbPersistable
 {
 	#region private class RelationManyListEnumerator
 
@@ -436,10 +437,10 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 					object KeySelector(TEntity entity)
 					{
 						if (orderByColumn == Meta.Identity?.Name)
-							return ((IDbPersistable)entity).GetIdentity();
+							return entity.GetIdentity();
 
 						var s = new SettingsStorage();
-						((IDbPersistable)entity).Save(s);
+						entity.Save(s);
 						s.TryGetValue(orderByColumn, out var v);
 						return v;
 					}
@@ -571,7 +572,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (Meta.Identity is null)
 			return entity.To<TId>();
 
-		return ((IDbPersistable)entity).GetIdentity().To<TId>();
+		return entity.GetIdentity().To<TId>();
 	}
 
 	/// <summary>
