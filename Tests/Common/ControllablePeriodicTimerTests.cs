@@ -485,8 +485,6 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter}");
 		timer.IsRunning.AssertTrue("Timer should be running");
 
-		var counterBeforeCancel = counter;
-
 		// Cancel external token
 		externalCts.Cancel();
 
@@ -495,9 +493,12 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		timer.IsRunning.AssertFalse("Timer should stop after external token is cancelled");
 
+		// Capture counter AFTER timer has stopped to avoid race with in-flight tick
+		var counterAfterStop = counter;
+
 		// Verify no more ticks after cancellation
 		await Task.Delay(150, CancellationToken);
-		counter.AssertEqual(counterBeforeCancel, $"Expected counter to stay at {counterBeforeCancel} after cancellation, but was {counter}");
+		counter.AssertEqual(counterAfterStop, $"Expected counter to stay at {counterAfterStop} after cancellation, but was {counter}");
 	}
 
 	[TestMethod]
