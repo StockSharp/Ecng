@@ -468,6 +468,113 @@ public class QueryProviderTests : BaseTestClass
 
 	#endregion
 
+	#region Finding #1: Create with empty keyColumns and read-only non-identity
+
+	[TestMethod]
+	public void Create_WithIdentityKey_ReadOnlyNonIdentity_SelectHasWhereCondition()
+	{
+		// After fix: Database.CreateAsync passes [identity] as keyColumns
+		// so the post-insert SELECT has WHERE e.[Id] = @Id
+		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
+		var columns = new SchemaColumn[]
+		{
+			new() { Name = "Name", ClrType = typeof(string) },
+			new() { Name = "Computed", ClrType = typeof(string), IsReadOnly = true },
+		};
+
+		var schema = CreateTestSchema("Items", identity, columns);
+
+		// Fixed: pass [identity] as keyColumns (not empty [])
+		var query = _provider.Create(schema, SqlCommandTypes.Create, [identity], schema.AllColumns);
+		var sql = Norm(query.Render(_dialect));
+
+		var selectIdx = sql.LastIndexOf("select", StringComparison.OrdinalIgnoreCase);
+		selectIdx.AssertNotEqual(-1, $"Expected a SELECT query in batch, got: {sql}");
+
+		var selectPart = sql[selectIdx..];
+		selectPart.Contains("e.[Id] = @Id").AssertTrue(
+			$"Post-insert SELECT must have WHERE e.[Id] = @Id, got: {selectPart}");
+	}
+
+	[TestMethod]
+	public void Create_EmptyKeyColumns_ReadOnlyNonIdentity_ProducesInvalidSql()
+	{
+		// Demonstrates the old bug: empty keyColumns → SELECT with no WHERE condition
+		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
+		var columns = new SchemaColumn[]
+		{
+			new() { Name = "Name", ClrType = typeof(string) },
+			new() { Name = "Computed", ClrType = typeof(string), IsReadOnly = true },
+		};
+
+		var schema = CreateTestSchema("ItemsBug", identity, columns);
+
+		// Old code: empty keyColumns
+		var provider = new QueryProvider();
+		var query = provider.Create(schema, SqlCommandTypes.Create, [], schema.AllColumns);
+		var sql = Norm(query.Render(_dialect));
+
+		var selectIdx = sql.LastIndexOf("select", StringComparison.OrdinalIgnoreCase);
+		var selectPart = sql[selectIdx..];
+
+		// With empty keyColumns, no equality condition exists — this proves the old bug
+		selectPart.Contains("= @").AssertFalse(
+			$"Empty keyColumns should produce SELECT without equality condition, got: {selectPart}");
+	}
+
+	#endregion
+
+	#region Finding #2: Update/Delete with non-unique IndexColumns
+
+	[TestMethod]
+	public void UpdateBy_NoIdentity_UsesUniqueColumnsNotIndex()
+	{
+		// Verifies that Database.UpdateAsync uses UniqueColumns, not IndexColumns
+		var uniqueCol = new SchemaColumn { Name = "Code", ClrType = typeof(string), IsUnique = true, IsIndex = true };
+		var indexCol = new SchemaColumn { Name = "Status", ClrType = typeof(int), IsIndex = true };
+		var valueCol = new SchemaColumn { Name = "Name", ClrType = typeof(string) };
+
+		var schema = CreateTestSchema("NoIdTable", null, [uniqueCol, indexCol, valueCol]);
+
+		// UniqueColumns should contain only Code, not Status
+		schema.UniqueColumns.Count.AssertEqual(1);
+		schema.UniqueColumns[0].Name.AssertEqual("Code");
+
+		// IndexColumns includes both — this is what old code used (wrong)
+		schema.IndexColumns.Count.AssertEqual(2);
+
+		// Correct: use UniqueColumns as keyColumns
+		var query = _provider.Create(schema, SqlCommandTypes.UpdateBy, schema.UniqueColumns,
+			schema.Columns.Where(c => !c.IsReadOnly && !c.IsUnique).ToList());
+		var sql = Norm(query.Render(_dialect));
+
+		sql.Contains("[Code] = @Code").AssertTrue($"Expected Code in WHERE, got: {sql}");
+		// Status should be in SET, not WHERE
+		sql.Contains("[Status] = @Status").AssertTrue($"Expected Status in SET, got: {sql}");
+	}
+
+	[TestMethod]
+	public void DeleteBy_NoIdentity_UsesUniqueColumnsNotIndex()
+	{
+		var uniqueCol = new SchemaColumn { Name = "Code", ClrType = typeof(string), IsUnique = true, IsIndex = true };
+		var indexCol = new SchemaColumn { Name = "Category", ClrType = typeof(int), IsIndex = true };
+		var valueCol = new SchemaColumn { Name = "Data", ClrType = typeof(string) };
+
+		var schema = CreateTestSchema("NoIdTable2", null, [uniqueCol, indexCol, valueCol]);
+
+		schema.UniqueColumns.Count.AssertEqual(1);
+		schema.UniqueColumns[0].Name.AssertEqual("Code");
+
+		var query = _provider.Create(schema, SqlCommandTypes.DeleteBy, schema.UniqueColumns, []);
+		var sql = Norm(query.Render(_dialect));
+
+		sql.Contains("[Code] = @Code").AssertTrue($"Expected Code in WHERE, got: {sql}");
+		// Category should NOT appear in DELETE WHERE
+		sql.Contains("[Category]").AssertFalse($"Non-unique index should not be in WHERE, got: {sql}");
+	}
+
+	#endregion
+
 	#region SchemaRegistry Integration
 
 	[TestMethod]

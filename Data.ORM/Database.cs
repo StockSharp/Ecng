@@ -443,7 +443,8 @@ public class Database : Disposable, IStorage
 			var readOnlyColumns = meta.ReadOnlyColumns;
 			var nonReadOnlyColumns = meta.NonReadOnlyColumns;
 
-			var command = await GetCommand(meta, SqlCommandTypes.Create, [], meta.AllColumns, cancellationToken);
+			var keyColumns = meta.Identity is not null ? new[] { meta.Identity } : Array.Empty<SchemaColumn>();
+			var command = await GetCommand(meta, SqlCommandTypes.Create, keyColumns, meta.AllColumns, cancellationToken);
 
 			var storage = new SettingsStorage();
 			entity.Save(storage);
@@ -451,13 +452,10 @@ public class Database : Disposable, IStorage
 
 			var output = await Execute(command, input, readOnlyColumns.Count > 0, cancellationToken);
 
-			if (readOnlyColumns.Count > 0)
+			if (readOnlyColumns.Count > 0 && meta.Identity is not null)
 			{
-				foreach (var col in readOnlyColumns)
-				{
-					if (output.TryGetItem(col.Name, out var item))
-						entity.SetIdentity(item.Value);
-				}
+				if (output.TryGetItem(meta.Identity.Name, out var identityItem))
+					entity.SetIdentity(identityItem.Value);
 			}
 
 			entity.InitLists(this);
@@ -664,8 +662,8 @@ public class Database : Disposable, IStorage
 		}
 		else
 		{
-			keyColumns = meta.IndexColumns;
-			valueColumns = meta.Columns.Where(c => !c.IsReadOnly && !c.IsIndex).ToList();
+			keyColumns = meta.UniqueColumns;
+			valueColumns = meta.Columns.Where(c => !c.IsReadOnly && !c.IsUnique).ToList();
 		}
 
 		return Do(async () =>
@@ -718,7 +716,7 @@ public class Database : Disposable, IStorage
 			entity.Save(storage);
 
 			var keys = new List<SchemaColumn>();
-			foreach (var col in meta.IndexColumns)
+			foreach (var col in meta.UniqueColumns)
 			{
 				storage.TryGetValue(col.Name, out var v);
 				by.Add(new(col.Name, col.ClrType, v));
