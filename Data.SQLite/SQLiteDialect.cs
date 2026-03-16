@@ -149,13 +149,14 @@ public class SQLiteDialect : SqlDialectBase
 		foreach (var table in tables)
 		{
 			using var cmd = connection.CreateCommand();
-			cmd.CommandText = $"PRAGMA table_info({QuoteIdentifier(table)})";
+			cmd.CommandText = $"PRAGMA table_xinfo({QuoteIdentifier(table)})";
 
 			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
 			while (await reader.ReadAsync(cancellationToken))
 			{
-				// pragma_table_info columns: cid, name, type, notnull, dflt_value, pk
+				// table_xinfo columns: cid, name, type, notnull, dflt_value, pk, hidden
+				var hidden = reader.GetInt32(6);
 				result.Add(new DbColumnInfo(
 					TableName: table,
 					ColumnName: reader.GetString(1),
@@ -163,7 +164,8 @@ public class SQLiteDialect : SqlDialectBase
 					IsNullable: reader.GetInt32(3) == 0,
 					MaxLength: null,
 					NumericPrecision: null,
-					NumericScale: null
+					NumericScale: null,
+					IsComputed: hidden is 2 or 3
 				));
 			}
 		}

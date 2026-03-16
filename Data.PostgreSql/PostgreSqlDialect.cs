@@ -148,7 +148,8 @@ public class PostgreSqlDialect : SqlDialectBase
 
 		using var cmd = connection.CreateCommand();
 		cmd.CommandText = @"
-SELECT table_name, column_name, data_type, is_nullable, character_maximum_length, numeric_precision, numeric_scale
+SELECT table_name, column_name, data_type, is_nullable, character_maximum_length, numeric_precision, numeric_scale,
+       is_generated <> 'NEVER' AS is_computed
 FROM information_schema.columns
 WHERE table_schema = @schema
 ORDER BY table_name, ordinal_position";
@@ -171,7 +172,8 @@ ORDER BY table_name, ordinal_position";
 				IsNullable: reader.GetString(3).EqualsIgnoreCase("YES"),
 				MaxLength: reader.IsDBNull(4) ? null : reader.GetInt32(4),
 				NumericPrecision: reader.IsDBNull(5) ? null : reader.GetValue(5).To<int?>(),
-				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>()
+				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>(),
+				IsComputed: !reader.IsDBNull(7) && reader.GetBoolean(7)
 			));
 		}
 

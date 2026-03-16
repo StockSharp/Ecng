@@ -53,16 +53,19 @@ public static class SchemaMigrator
 	/// <param name="entities">Entity schemas to compare.</param>
 	/// <param name="dbColumns">Database columns read via <see cref="ReadDbSchemaAsync"/>.</param>
 	/// <param name="dialect">SQL dialect for type name resolution.</param>
+	/// <param name="skipComputed">Skip computed (calculated) database columns.</param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
 		IReadOnlyList<DbColumnInfo> dbColumns,
-		ISqlDialect dialect)
+		ISqlDialect dialect,
+		bool skipComputed = false)
 	{
 		var diffs = new List<SchemaDiff>();
 
 		// group DB columns by table
-		var dbTables = dbColumns
+		var filtered = skipComputed ? dbColumns.Where(c => !c.IsComputed) : dbColumns;
+		var dbTables = filtered
 			.GroupBy(c => c.TableName, StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(g => g.Key, g => g.ToDictionary(c => c.ColumnName, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
 

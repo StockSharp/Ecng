@@ -10,6 +10,7 @@ namespace Ecng.Data;
 /// <param name="MaxLength">Max character length for string columns, or null.</param>
 /// <param name="NumericPrecision">Numeric precision, or null.</param>
 /// <param name="NumericScale">Numeric scale, or null.</param>
+/// <param name="IsComputed">Whether the column is computed (calculated).</param>
 public record DbColumnInfo(
 	string TableName,
 	string ColumnName,
@@ -17,4 +18,5 @@ public record DbColumnInfo(
 	bool IsNullable,
 	int? MaxLength,
 	int? NumericPrecision,
-	int? NumericScale);
+	int? NumericScale,
+	bool IsComputed = false);

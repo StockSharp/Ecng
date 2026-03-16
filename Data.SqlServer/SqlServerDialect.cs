@@ -150,10 +150,11 @@ public class SqlServerDialect : SqlDialectBase
 
 		using var cmd = connection.CreateCommand();
 		cmd.CommandText = @"
-SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = @schema
-ORDER BY TABLE_NAME, ORDINAL_POSITION";
+SELECT c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, c.NUMERIC_SCALE,
+       COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed') AS IsComputed
+FROM INFORMATION_SCHEMA.COLUMNS c
+WHERE c.TABLE_SCHEMA = @schema
+ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 
 		var param = cmd.CreateParameter();
 		param.ParameterName = "@schema";
@@ -173,7 +174,8 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION";
 				IsNullable: reader.GetString(3).EqualsIgnoreCase("YES"),
 				MaxLength: reader.IsDBNull(4) ? null : reader.GetInt32(4),
 				NumericPrecision: reader.IsDBNull(5) ? null : reader.GetValue(5).To<int?>(),
-				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>()
+				NumericScale: reader.IsDBNull(6) ? null : reader.GetValue(6).To<int?>(),
+				IsComputed: !reader.IsDBNull(7) && reader.GetValue(7).To<int>() == 1
 			));
 		}
 
