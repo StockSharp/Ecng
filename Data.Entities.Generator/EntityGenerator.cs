@@ -73,7 +73,7 @@ public class EntityGenerator : IIncrementalGenerator
 	private static bool HasIdentityMember(INamedTypeSymbol type)
 	{
 		return type.GetMembers().OfType<IPropertySymbol>()
-			.Any(p => HasAttribute(p, "IdentityAttribute"));
+			.Any(p => HasAttribute(p, "IdentityAttribute") || p.Name == "Id");
 	}
 
 	/// <summary>
@@ -86,6 +86,24 @@ public class EntityGenerator : IIncrementalGenerator
 		{
 			if (HasIdentityMember(current))
 				return current;
+			current = current.BaseType;
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// Finds the actual identity property (by [Identity] attribute or name "Id").
+	/// </summary>
+	private static IPropertySymbol FindIdentityProperty(INamedTypeSymbol type)
+	{
+		var current = type;
+		while (current is not null)
+		{
+			foreach (var prop in current.GetMembers().OfType<IPropertySymbol>())
+			{
+				if (HasAttribute(prop, "IdentityAttribute") || prop.Name == "Id")
+					return prop;
+			}
 			current = current.BaseType;
 		}
 		return null;
@@ -414,11 +432,14 @@ public class EntityGenerator : IIncrementalGenerator
 		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
 		var tableName = entityAttrName ?? entityName;
 		var isView = IsViewEntity(entityType);
+		var identityProp = FindIdentityProperty(entityType);
+		var idName = identityProp?.Name ?? "Id";
+		var idType = identityProp is not null ? FullType(identityProp.Type) : "long";
 
 		sb.AppendLine($"\t\t\tTableName = \"{tableName}\",");
 		sb.AppendLine($"\t\t\tEntityType = typeof({entityName}),");
 		sb.AppendLine($"\t\t\tFactory = () => new {entityName}(),");
-		sb.AppendLine($"\t\t\tIdentity = new() {{ Name = nameof(Id), ClrType = typeof(long), IsReadOnly = true }},");
+		sb.AppendLine($"\t\t\tIdentity = new() {{ Name = nameof({idName}), ClrType = typeof({idType}), IsReadOnly = true }},");
 		sb.AppendLine("\t\t\tColumns = columns,");
 
 		if (noCache)
@@ -444,8 +465,10 @@ public class EntityGenerator : IIncrementalGenerator
 			var innerType = UnwrapNullable(prop.Type);
 			var innerProps = GetInnerTypeProperties(innerType);
 			var nameOverrides = GetNameOverrides(prop);
+			var (colNullable, _) = GetColumnAttribute(prop);
+			var outerNullable = colNullable ?? InferIsNullable(prop);
 
-			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides);
+			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, outerNullable);
 		}
 		else
 		{
@@ -476,18 +499,20 @@ public class EntityGenerator : IIncrementalGenerator
 		}
 	}
 
-	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides)
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, bool outerNullable)
 	{
 		foreach (var inner in innerProps)
 		{
 			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
+			var (colNullable, colMaxLen) = GetColumnAttribute(inner);
+			var nullable = outerNullable || (colNullable ?? InferIsNullable(inner));
 
 			if (IsInnerSchemaProperty(inner))
 			{
 				var nestedType = UnwrapNullable(inner.Type);
 				var nestedProps = GetInnerTypeProperties(nestedType);
 				var nestedOverrides = GetNameOverrides(inner);
-				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides);
+				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides, nullable);
 				continue;
 			}
 
@@ -502,8 +527,6 @@ public class EntityGenerator : IIncrementalGenerator
 			else
 				parts.Add($"ClrType = typeof({FullType(inner.Type)})");
 
-			var (colNullable, colMaxLen) = GetColumnAttribute(inner);
-			var nullable = colNullable ?? InferIsNullable(inner);
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
@@ -598,6 +621,7 @@ public class EntityGenerator : IIncrementalGenerator
 				&& p.ExplicitInterfaceImplementations.Length == 0
 				&& !HasAttribute(p, "IgnoreAttribute")
 				&& !HasAttribute(p, "IdentityAttribute")
+				&& p.Name != "Id"
 				&& !IsRelationMany(p));
 	}
 

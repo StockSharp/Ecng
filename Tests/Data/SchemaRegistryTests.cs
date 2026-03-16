@@ -121,6 +121,57 @@ public class ReflTestCyclicEntity : IDbPersistable
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken) => default;
 }
 
+// ===== Reflection entities for deep nullable propagation tests =====
+
+/// <summary>
+/// Outer NOT NULL → nullable introduced at L2.NullBranch, SolidBranch stays NOT NULL.
+/// </summary>
+[Entity(Name = "Ecng_ReflNullMid")]
+public class ReflNullMidEntity : IDbPersistable
+{
+	public long Id { get; set; }
+	public NullPropL2 Data { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Outer nullable, inner tries [Column(IsNullable = false)] — outer must win.
+/// </summary>
+[Entity(Name = "Ecng_ReflNullCantCancel")]
+public class ReflNullCantCancelEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Column(IsNullable = true)]
+	public NullPropL2Strict Data { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Outer nullable at root, entire 4-level tree must be nullable.
+/// </summary>
+[Entity(Name = "Ecng_ReflNullRoot")]
+public class ReflNullRootEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Column(IsNullable = true)]
+	public NullPropL2 Data { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 #endregion
 
 /// <summary>
@@ -445,6 +496,56 @@ public class SchemaRegistryTests : BaseTestClass
 
 		sql.Contains("[Ecng_TestPerson]").AssertTrue(
 			$"Expected '[Ecng_TestPerson]' in SQL, got: {sql}");
+	}
+
+	#endregion
+
+	#region Deep nullable propagation (reflection)
+
+	[TestMethod]
+	public void Reflection_NullMid_NullBranchPropagates4Levels()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflNullMidEntity));
+
+		// L2.Top — outer is NOT NULL → NOT NULL
+		schema.Columns.First(c => c.Name == "DataTop").IsNullable.AssertFalse();
+
+		// NullBranch subtree — [Column(IsNullable = true)] at L2.NullBranch → all NULL
+		schema.Columns.First(c => c.Name == "DataNullBranchMid").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataNullBranchL4Deep").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataNullBranchL4Count").IsNullable.AssertTrue();
+
+		// SolidBranch subtree — no nullable marker → all NOT NULL
+		schema.Columns.First(c => c.Name == "DataSolidBranchMid").IsNullable.AssertFalse();
+		schema.Columns.First(c => c.Name == "DataSolidBranchL4Deep").IsNullable.AssertFalse();
+		schema.Columns.First(c => c.Name == "DataSolidBranchL4Count").IsNullable.AssertFalse();
+	}
+
+	[TestMethod]
+	public void Reflection_NullCantCancel_OuterWins()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflNullCantCancelEntity));
+
+		// Outer [Column(IsNullable = true)], inner [Column(IsNullable = false)] — outer wins
+		schema.Columns.First(c => c.Name == "DataForced").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataNormal").IsNullable.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Reflection_NullRoot_Entire4LevelTreeNullable()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflNullRootEntity));
+
+		// Root is nullable → everything is nullable, including SolidBranch
+		schema.Columns.First(c => c.Name == "DataTop").IsNullable.AssertTrue();
+
+		schema.Columns.First(c => c.Name == "DataNullBranchMid").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataNullBranchL4Deep").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataNullBranchL4Count").IsNullable.AssertTrue();
+
+		schema.Columns.First(c => c.Name == "DataSolidBranchMid").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataSolidBranchL4Deep").IsNullable.AssertTrue();
+		schema.Columns.First(c => c.Name == "DataSolidBranchL4Count").IsNullable.AssertTrue();
 	}
 
 	#endregion
