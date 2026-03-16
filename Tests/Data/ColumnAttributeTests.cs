@@ -504,6 +504,138 @@ public class ColumnAttributeTests : BaseTestClass
 
 	#endregion
 
+	#region Precision/Scale support
+
+	[TestMethod]
+	public void Compare_DecimalPrecisionMismatch_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Price", ClrType = typeof(decimal), Precision = 18, Scale = 8 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Price", "decimal", false, null, 10, 2),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Price").AssertTrue(
+			"Decimal precision/scale mismatch (18,8 vs 10,2) should be detected");
+	}
+
+	[TestMethod]
+	public void Compare_DecimalScaleOnlyMismatch_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Rate", ClrType = typeof(decimal), Precision = 18, Scale = 8 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// same precision, different scale
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Rate", "decimal", false, null, 18, 2),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Rate").AssertTrue(
+			"Scale mismatch (8 vs 2) should be detected even when precision matches");
+	}
+
+	[TestMethod]
+	public void Compare_DecimalPrecisionMatch_NoDiff()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Price", ClrType = typeof(decimal), Precision = 10, Scale = 2 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Price", "decimal", false, null, 10, 2),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Price").AssertFalse(
+			"Matching precision/scale should not produce a diff");
+	}
+
+	[TestMethod]
+	public void Compare_DateTimePrecisionMismatch_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Created", ClrType = typeof(DateTime), Precision = 7 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// DB has DATETIME2(3) — entity expects precision 7
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Created", "datetime2", false, null, 3, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Created").AssertTrue(
+			"DateTime precision mismatch (7 vs 3) should be detected");
+	}
+
+	[TestMethod]
+	public void Compare_DateTimeOffsetPrecisionMismatch_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Modified", ClrType = typeof(DateTimeOffset), Precision = 7 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// DB has DATETIMEOFFSET(3)
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Modified", "datetimeoffset", false, null, 3, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Modified").AssertTrue(
+			"DateTimeOffset precision mismatch (7 vs 3) should be detected");
+	}
+
+	#endregion
+
 	#region SchemaMigrator.GenerateMigrationSql
 
 	[TestMethod]

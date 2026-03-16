@@ -26,6 +26,9 @@ public enum SchemaDiffKind
 
 	/// <summary>Column max length differs between entity and database.</summary>
 	MaxLengthMismatch,
+
+	/// <summary>Column precision or scale differs between entity and database.</summary>
+	PrecisionMismatch,
 }
 
 /// <summary>
@@ -108,6 +111,18 @@ public static class SchemaMigrator
 						col.MaxLength.ToString(), dbCol.MaxLength.Value.ToString()));
 				}
 
+				// compare precision/scale
+				if (col.Precision > 0 && dbCol.NumericPrecision is not null && col.Precision != dbCol.NumericPrecision)
+				{
+					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.PrecisionMismatch,
+						$"({col.Precision},{col.Scale})", $"({dbCol.NumericPrecision},{dbCol.NumericScale ?? 0})"));
+				}
+				else if (col.Scale > 0 && dbCol.NumericScale is not null && col.Scale != dbCol.NumericScale)
+				{
+					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.PrecisionMismatch,
+						$"({col.Precision},{col.Scale})", $"({dbCol.NumericPrecision ?? 0},{dbCol.NumericScale})"));
+				}
+
 				dbCols.Remove(col.Name);
 			}
 
@@ -186,6 +201,7 @@ public static class SchemaMigrator
 				case SchemaDiffKind.TypeMismatch:
 				case SchemaDiffKind.NullabilityMismatch:
 				case SchemaDiffKind.MaxLengthMismatch:
+				case SchemaDiffKind.PrecisionMismatch:
 				{
 					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
 						break;

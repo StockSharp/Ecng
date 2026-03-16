@@ -30,4 +30,16 @@ public class ColumnAttribute : Attribute
 	/// 0 means unlimited (MAX/TEXT). Applies only to string and byte[] columns.
 	/// </summary>
 	public int MaxLength { get; set; }
+
+	/// <summary>
+	/// Gets or sets the numeric precision for decimal/numeric columns.
+	/// 0 means use the dialect default.
+	/// </summary>
+	public int Precision { get; set; }
+
+	/// <summary>
+	/// Gets or sets the numeric scale for decimal/numeric columns.
+	/// 0 means use the dialect default.
+	/// </summary>
+	public int Scale { get; set; }
 }

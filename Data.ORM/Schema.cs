@@ -39,6 +39,16 @@ public record SchemaColumn
 	/// Gets the maximum length for string columns (0 = unlimited/MAX).
 	/// </summary>
 	public int MaxLength { get; init; }
+
+	/// <summary>
+	/// Gets the numeric precision for decimal/numeric columns (0 = dialect default).
+	/// </summary>
+	public int Precision { get; init; }
+
+	/// <summary>
+	/// Gets the numeric scale for decimal/numeric columns (0 = dialect default).
+	/// </summary>
+	public int Scale { get; init; }
 }
 
 /// <summary>
