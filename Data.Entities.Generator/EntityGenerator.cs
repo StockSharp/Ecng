@@ -303,7 +303,11 @@ public class EntityGenerator : IIncrementalGenerator
 	{
 		if (IsRelationSingle(prop))
 		{
-			sb.AppendLine($"\t\t{prop.Name} = await storage.LoadFkAsync<{FullType(prop.Type)}>(nameof({prop.Name}), db, ct);");
+			var idType = GetRelationIdentityType(prop);
+			if (idType == "long")
+				sb.AppendLine($"\t\t{prop.Name} = await storage.LoadFkAsync<{FullType(prop.Type)}>(nameof({prop.Name}), db, ct);");
+			else
+				sb.AppendLine($"\t\t{prop.Name} = await storage.LoadFkAsync<{idType}, {FullType(prop.Type)}>(nameof({prop.Name}), db, ct);");
 		}
 		else if (GetMappedDbType(prop.Type) is { } mappedLoadType)
 		{
@@ -346,7 +350,11 @@ public class EntityGenerator : IIncrementalGenerator
 
 			if (IsRelationSingle(inner))
 			{
-				sb.AppendLine($"{indent}{inner.Name} = await storage.LoadFkAsync<{FullType(inner.Type)}>(\"{colName}\", db, ct),");
+				var innerIdType = GetRelationIdentityType(inner);
+				if (innerIdType == "long")
+					sb.AppendLine($"{indent}{inner.Name} = await storage.LoadFkAsync<{FullType(inner.Type)}>(\"{colName}\", db, ct),");
+				else
+					sb.AppendLine($"{indent}{inner.Name} = await storage.LoadFkAsync<{innerIdType}, {FullType(inner.Type)}>(\"{colName}\", db, ct),");
 			}
 			else if (inner.Type.TypeKind == TypeKind.Enum)
 			{
@@ -477,7 +485,7 @@ public class EntityGenerator : IIncrementalGenerator
 			var unwrapped = UnwrapNullable(prop.Type);
 
 			if (IsRelationSingle(prop))
-				parts.Add("ClrType = typeof(long)");
+				parts.Add($"ClrType = typeof({GetRelationIdentityType(prop)})");
 			else if (unwrapped.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(prop.Type)})");
 			else if (GetMappedDbType(prop.Type) is { } mappedMetaType)
@@ -522,7 +530,7 @@ public class EntityGenerator : IIncrementalGenerator
 			var unwrappedInner = UnwrapNullable(inner.Type);
 
 			if (IsRelationSingle(inner))
-				parts.Add("ClrType = typeof(long)");
+				parts.Add($"ClrType = typeof({GetRelationIdentityType(inner)})");
 			else if (unwrappedInner.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
 			else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)
@@ -847,6 +855,20 @@ public class EntityGenerator : IIncrementalGenerator
 
 	private static bool IsRelationSingle(IPropertySymbol prop)
 		=> HasAttribute(prop, "RelationSingleAttribute");
+
+	/// <summary>
+	/// For a [RelationSingle] property, finds the identity type of the referenced entity.
+	/// Returns "long" if not found.
+	/// </summary>
+	private static string GetRelationIdentityType(IPropertySymbol prop)
+	{
+		var refType = prop.Type as INamedTypeSymbol;
+		if (refType is null)
+			return "long";
+
+		var idProp = FindIdentityProperty(refType);
+		return idProp is not null ? FullType(idProp.Type) : "long";
+	}
 
 	private static bool IsRelationMany(IPropertySymbol prop)
 		=> HasAttribute(prop, "RelationManyAttribute");

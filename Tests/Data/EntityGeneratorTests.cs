@@ -169,6 +169,36 @@ public class EntityGeneratorTests : BaseTestClass
 		schema.Identity.ClrType.AssertEqual(typeof(int));
 	}
 
+	[TestMethod]
+	public void Generated_Identity_GuidType()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestGuidIdEntity));
+
+		schema.Identity.AssertNotNull();
+		schema.Identity.Name.AssertEqual("Id");
+		schema.Identity.ClrType.AssertEqual(typeof(Guid));
+	}
+
+	[TestMethod]
+	public void Generated_RelationSingle_GuidRef_ClrTypeIsGuid()
+	{
+		// Long-identity entity referencing a Guid-identity entity
+		var schema = SchemaRegistry.Get(typeof(GenTestLongRefGuidEntity));
+		var col = schema.Columns.First(c => c.Name == "GuidRef");
+
+		col.ClrType.AssertEqual(typeof(Guid));
+	}
+
+	[TestMethod]
+	public void Generated_RelationSingle_LongRef_ClrTypeIsLong()
+	{
+		// Guid-identity entity referencing a long-identity entity
+		var schema = SchemaRegistry.Get(typeof(GenTestGuidIdEntity));
+		var col = schema.Columns.First(c => c.Name == "Order");
+
+		col.ClrType.AssertEqual(typeof(long));
+	}
+
 	#endregion
 
 	#region Nullable inner schema propagation

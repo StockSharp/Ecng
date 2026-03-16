@@ -121,6 +121,63 @@ public class ReflTestCyclicEntity : IDbPersistable
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken) => default;
 }
 
+/// <summary>
+/// Reflection entity with Guid identity.
+/// </summary>
+[Entity(Name = "Ecng_ReflGuidId")]
+public class ReflTestGuidIdEntity : IDbPersistable
+{
+	[Identity]
+	public Guid Id { get; set; }
+	public string Title { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<Guid>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Long-identity entity referencing a Guid-identity entity.
+/// FK column must be Guid, not long.
+/// </summary>
+[Entity(Name = "Ecng_ReflLongRefGuid")]
+public class ReflTestLongRefGuidEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[RelationSingle]
+	public ReflTestGuidIdEntity GuidRef { get; set; }
+
+	public string Note { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Guid-identity entity referencing a long-identity entity.
+/// FK column must be long.
+/// </summary>
+[Entity(Name = "Ecng_ReflGuidRefLong")]
+public class ReflTestGuidRefLongEntity : IDbPersistable
+{
+	[Identity]
+	public Guid Id { get; set; }
+
+	[RelationSingle]
+	public ReflTestOrder LongRef { get; set; }
+
+	public string Label { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<Guid>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 // ===== Reflection entities for deep nullable propagation tests =====
 
 /// <summary>
@@ -233,6 +290,17 @@ public class SchemaRegistryTests : BaseTestClass
 		schema.Columns.Any(c => c.Name == "Id").AssertFalse();
 	}
 
+	[TestMethod]
+	public void Reflection_Identity_GuidType()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestGuidIdEntity));
+
+		schema.Identity.AssertNotNull();
+		schema.Identity.Name.AssertEqual("Id");
+		schema.Identity.ClrType.AssertEqual(typeof(Guid));
+		schema.Columns.Any(c => c.Name == "Id").AssertFalse();
+	}
+
 	#endregion
 
 	#region [Ignore] attribute
@@ -260,6 +328,24 @@ public class SchemaRegistryTests : BaseTestClass
 
 		var catCol = schema.Columns.First(c => c.Name == "Category");
 		catCol.ClrType.AssertEqual(typeof(long));
+	}
+
+	[TestMethod]
+	public void Reflection_RelationSingle_GuidRef_ClrTypeIsGuid()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestLongRefGuidEntity));
+		var col = schema.Columns.First(c => c.Name == "GuidRef");
+
+		col.ClrType.AssertEqual(typeof(Guid));
+	}
+
+	[TestMethod]
+	public void Reflection_RelationSingle_LongRef_ClrTypeIsLong()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestGuidRefLongEntity));
+		var col = schema.Columns.First(c => c.Name == "LongRef");
+
+		col.ClrType.AssertEqual(typeof(long));
 	}
 
 	#endregion

@@ -1021,4 +1021,45 @@ public class QueryTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region CreateCreateTable
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void CreateCreateTable_LongIdentity_HasAutoIncrement(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var columns = new Dictionary<string, Type>
+		{
+			{ "Id", typeof(long) },
+			{ "Name", typeof(string) },
+		};
+
+		var sql = Query.CreateCreateTable("Test", columns, identityColumn: "Id").Render(dialect);
+
+		sql.Contains(dialect.GetIdentityColumnSuffix()).AssertTrue($"Expected auto-increment suffix: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void CreateCreateTable_GuidIdentity_NoPAutoIncrement(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var columns = new Dictionary<string, Type>
+		{
+			{ "Id", typeof(Guid) },
+			{ "Name", typeof(string) },
+		};
+
+		var sql = Query.CreateCreateTable("Test", columns, identityColumn: "Id").Render(dialect);
+
+		sql.Contains(dialect.GetIdentityColumnSuffix()).AssertFalse($"GUID identity should not have auto-increment: {sql}");
+		sql.Contains("PRIMARY KEY").AssertTrue($"GUID identity should still be PRIMARY KEY: {sql}");
+	}
+
+	#endregion
 }

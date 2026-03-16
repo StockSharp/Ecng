@@ -79,6 +79,47 @@ public partial class GenTestIntIdEntity : GenTestIntIdBase
 }
 
 /// <summary>
+/// Base entity with Guid identity.
+/// </summary>
+public abstract partial class GenTestGuidIdBase : IDbPersistable
+{
+	[Identity]
+	[ReadOnly(true)]
+	public Guid Id { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<Guid>();
+	public virtual void Save(SettingsStorage storage) { }
+	public virtual ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+	public virtual void InitLists(IStorage db) { }
+}
+
+[Entity(Name = "Ecng_GuidId")]
+public partial class GenTestGuidIdEntity : GenTestGuidIdBase
+{
+	public string Title { get; set; }
+
+	/// <summary>
+	/// Reference to a long-id entity — FK column type must be long.
+	/// </summary>
+	[RelationSingle]
+	public GenTestOrderEntity Order { get; set; }
+}
+
+/// <summary>
+/// Entity with long identity referencing a Guid-identity entity.
+/// FK column type must be Guid, not long.
+/// </summary>
+[Entity(Name = "Ecng_LongRefGuid")]
+public partial class GenTestLongRefGuidEntity : GenTestBaseEntity
+{
+	[RelationSingle]
+	public GenTestGuidIdEntity GuidRef { get; set; }
+
+	public string Note { get; set; }
+}
+
+/// <summary>
 /// Simple inner schema type for flattening tests.
 /// </summary>
 public class GenTestAddress

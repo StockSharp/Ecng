@@ -176,7 +176,7 @@ public static class SchemaRegistry
 				columns.Add(new()
 				{
 					Name = colName,
-					ClrType = typeof(long),
+					ClrType = GetRelationIdentityType(prop.PropertyType),
 					IsNullable = isNullable,
 				});
 				continue;
@@ -278,7 +278,7 @@ public static class SchemaRegistry
 					columns.Add(new()
 					{
 						Name = prop.Name,
-						ClrType = typeof(long),
+						ClrType = GetRelationIdentityType(prop.PropertyType),
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
@@ -341,5 +341,32 @@ public static class SchemaRegistry
 
 			schema.SetColumnsAndIdentity(identity, columns);
 		return schema;
+	}
+
+	/// <summary>
+	/// Gets the identity CLR type of the referenced entity type.
+	/// Falls back to typeof(long) if no identity property is found.
+	/// </summary>
+	private static Type GetRelationIdentityType(Type referencedType)
+	{
+		foreach (var prop in referencedType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+		{
+			if (prop.GetAttribute<IdentityAttribute>() is not null || prop.Name == "Id")
+				return prop.PropertyType;
+		}
+
+		// check base types
+		var baseType = referencedType.BaseType;
+		while (baseType is not null && baseType != typeof(object))
+		{
+			foreach (var prop in baseType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+			{
+				if (prop.GetAttribute<IdentityAttribute>() is not null || prop.Name == "Id")
+					return prop.PropertyType;
+			}
+			baseType = baseType.BaseType;
+		}
+
+		return typeof(long);
 	}
 }

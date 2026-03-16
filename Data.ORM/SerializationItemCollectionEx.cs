@@ -15,6 +15,16 @@ public static class DbPersistableHelper
 	}
 
 	/// <summary>
+	/// Sets a foreign key value in the settings storage (generic version for non-long identity types).
+	/// </summary>
+	public static SettingsStorage SetFk<TId>(this SettingsStorage storage, string name, TId? id)
+		where TId : struct
+	{
+		storage.Set(name, id);
+		return storage;
+	}
+
+	/// <summary>
 	/// Asynchronously loads a foreign key entity from the database.
 	/// </summary>
 	public static async ValueTask<T> LoadFkAsync<T>(this SettingsStorage storage, string name, IStorage db, CancellationToken ct)
@@ -26,6 +36,21 @@ public static class DbPersistableHelper
 			return default;
 
 		return await db.GetByIdAsync<long, T>(id.Value, ct);
+	}
+
+	/// <summary>
+	/// Asynchronously loads a foreign key entity from the database (generic version for non-long identity types).
+	/// </summary>
+	public static async ValueTask<T> LoadFkAsync<TId, T>(this SettingsStorage storage, string name, IStorage db, CancellationToken ct)
+		where TId : struct
+		where T : IDbPersistable
+	{
+		var id = storage.GetValue<TId?>(name);
+
+		if (id is null)
+			return default;
+
+		return await db.GetByIdAsync<TId, T>(id.Value, ct);
 	}
 
 	/// <summary>
