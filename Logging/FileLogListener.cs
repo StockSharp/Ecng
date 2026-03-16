@@ -214,13 +214,14 @@ public class FileLogListener : LogListener
 	/// </summary>
 	public bool Append { get; set; }
 
-	private string _logDirectory = Directory.GetCurrentDirectory();
+	private string _logDirectory = ".";
 
 	/// <summary>
 	/// The directory where the log file will be created. By default, it is the directory where the executable file is located.
 	/// </summary>
 	/// <remarks>
 	/// If the directory does not exist, it will be created.
+	/// Absolute paths under the current working directory are automatically converted to relative paths for portability.
 	/// </remarks>
 	public string LogDirectory
 	{
@@ -232,7 +233,15 @@ public class FileLogListener : LogListener
 
 			FileSystem.CreateDirectory(value);
 
-			_logDirectory = value;
+			if (Path.IsPathRooted(value))
+			{
+				var relative = Path.GetRelativePath(Directory.GetCurrentDirectory(), value);
+
+				// only use relative if the path is actually under CWD (no leading "..")
+				_logDirectory = !relative.StartsWith("..") ? relative : value;
+			}
+			else
+				_logDirectory = value;
 		}
 	}
 

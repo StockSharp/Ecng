@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 
 using Ecng.Logging;
 using Ecng.IO;
+using Ecng.Serialization;
 
 [TestClass]
 public class FileLogListenerTests : BaseTestClass
@@ -1431,6 +1432,106 @@ public class FileLogListenerTests : BaseTestClass
 
 		ReadAllText(fs, file1).AssertContains("from source 1");
 		ReadAllText(fs, file2).AssertContains("from source 2");
+	}
+
+	#endregion
+
+	#region Relative Path Tests
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void LogDirectory_Default_IsRelative(string fsType)
+	{
+		var (fs, _) = Config.CreateFs(fsType, "logs");
+
+		using var listener = new FileLogListener(fs);
+
+		listener.LogDirectory.AssertEqual(".");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void LogDirectory_RelativeInput_StaysRelative(string fsType)
+	{
+		var (fs, _) = Config.CreateFs(fsType, "logs");
+
+		using var listener = new FileLogListener(fs) { LogDirectory = "sub_logs" };
+
+		Path.IsPathRooted(listener.LogDirectory).AssertFalse(
+			$"Expected relative path, got: {listener.LogDirectory}");
+		listener.LogDirectory.AssertEqual("sub_logs");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void LogDirectory_AbsoluteUnderCwd_ConvertedToRelative(string fsType)
+	{
+		var (fs, _) = Config.CreateFs(fsType, "logs");
+		var absPath = Path.Combine(Directory.GetCurrentDirectory(), "TestLogs");
+
+		using var listener = new FileLogListener(fs) { LogDirectory = absPath };
+
+		Path.IsPathRooted(listener.LogDirectory).AssertFalse(
+			$"Expected relative path, got: {listener.LogDirectory}");
+		listener.LogDirectory.AssertEqual("TestLogs");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public async Task LogDirectory_Relative_CreatesLogFiles(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType, "logs");
+
+		// for LocalFS: convert temp path to relative; for MemoryFS: use root as-is
+		var logDir = fsType == nameof(LocalFileSystem)
+			? Path.GetRelativePath(Directory.GetCurrentDirectory(), root)
+			: root;
+
+		var src = new DummySource("RelTest") { IsRoot = true };
+
+		using (var listener = new FileLogListener(fs)
+		{
+			LogDirectory = logDir,
+			FileName = "reltest",
+		})
+		{
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "relative path works")], CancellationToken);
+		}
+
+		var logFile = Path.Combine(root, "reltest.txt");
+		fs.FileExists(logFile).AssertTrue($"Log file not found at {logFile}");
+		ReadAllText(fs, logFile).AssertContains("relative path works");
+	}
+
+	[TestMethod]
+	[DataRow(nameof(LocalFileSystem))]
+	[DataRow(nameof(MemoryFileSystem))]
+	public void SaveLoad_LogDirectory_RoundtripsRelative(string fsType)
+	{
+		var (fs, root) = Config.CreateFs(fsType, "logs");
+
+		// for LocalFS: convert temp path to relative; for MemoryFS: use root as-is
+		var logDir = fsType == nameof(LocalFileSystem)
+			? Path.GetRelativePath(Directory.GetCurrentDirectory(), root)
+			: root;
+
+		var storage = new SettingsStorage();
+
+		using (var listener = new FileLogListener(fs) { LogDirectory = logDir })
+		{
+			listener.Save(storage);
+		}
+
+		var saved = storage.GetValue<string>(nameof(FileLogListener.LogDirectory));
+		saved.AssertEqual(logDir);
+
+		using var loaded = new FileLogListener(fs);
+		loaded.Load(storage);
+		loaded.LogDirectory.AssertEqual(logDir);
 	}
 
 	#endregion
