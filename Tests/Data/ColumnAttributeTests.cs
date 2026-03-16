@@ -766,6 +766,88 @@ public class ColumnAttributeTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void GenerateSql_PrecisionMismatch_UsesEntityPrecisionNotDefault()
+	{
+		// Finding #1: GenerateMigrationSql ignores Precision/Scale from schema —
+		// always emits hardcoded DECIMAL(18,8) instead of the entity-specified precision.
+		var schema = new Schema
+		{
+			TableName = "Prices",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 10, Scale = 2 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Prices", "Amount", SchemaDiffKind.PrecisionMismatch, "(10,2)", "(18,8)"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		// The ALTER should use DECIMAL(10,2), not the hardcoded DECIMAL(18,8)
+		sql.ContainsIgnoreCase("DECIMAL(10,2)").AssertTrue(
+			$"Expected DECIMAL(10,2) in migration SQL, got: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingTable_DecimalWithCustomPrecision()
+	{
+		// Finding #1: CREATE TABLE also uses hardcoded decimal type instead of entity precision.
+		var schema = new Schema
+		{
+			TableName = "Accounts",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Balance", ClrType = typeof(decimal), Precision = 12, Scale = 4 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Accounts", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		// CREATE TABLE should use DECIMAL(12,4), not DECIMAL(18,8)
+		sql.ContainsIgnoreCase("DECIMAL(12,4)").AssertTrue(
+			$"Expected DECIMAL(12,4) in CREATE TABLE SQL, got: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingColumn_DecimalWithCustomPrecision()
+	{
+		// Finding #1: ADD COLUMN also uses hardcoded decimal type.
+		var schema = new Schema
+		{
+			TableName = "Products",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Weight", ClrType = typeof(decimal), Precision = 8, Scale = 3 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Products", "Weight", SchemaDiffKind.MissingColumn, "DECIMAL(8,3) NOT NULL", string.Empty),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.ContainsIgnoreCase("DECIMAL(8,3)").AssertTrue(
+			$"Expected DECIMAL(8,3) in ADD COLUMN SQL, got: {sql}");
+	}
+
+	[TestMethod]
 	public void GenerateSql_MissingTable_GuidIdentity_NoAutoIncrement()
 	{
 		var schema = new Schema
@@ -790,6 +872,66 @@ public class ColumnAttributeTests : BaseTestClass
 		sql.Contains("IDENTITY(1,1)").AssertFalse($"GUID identity should not have IDENTITY(1,1): {sql}");
 		sql.Contains("PRIMARY KEY").AssertTrue($"GUID identity should still be PRIMARY KEY: {sql}");
 		sql.Contains("UNIQUEIDENTIFIER").AssertTrue($"Expected UNIQUEIDENTIFIER type: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingTable_WithIndexColumns_GeneratesCreateIndex()
+	{
+		// Finding #4: GenerateMigrationSql does not create INDEX constraints
+		// even though schema metadata marks columns as IsIndex.
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "CustomerId", ClrType = typeof(long), IsIndex = true },
+				new SchemaColumn { Name = "Status", ClrType = typeof(int) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Orders", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.ContainsIgnoreCase("CREATE INDEX").AssertTrue(
+			$"Expected CREATE INDEX for indexed column in SQL, got: {sql}");
+		sql.ContainsIgnoreCase("CustomerId").AssertTrue(
+			$"Expected CustomerId in index SQL, got: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingTable_WithUniqueColumns_GeneratesUniqueConstraint()
+	{
+		// Finding #4: GenerateMigrationSql does not create UNIQUE constraints
+		// even though schema metadata marks columns as IsUnique.
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Email", ClrType = typeof(string), MaxLength = 256, IsUnique = true, IsIndex = true },
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Users", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.ContainsIgnoreCase("UNIQUE").AssertTrue(
+			$"Expected UNIQUE constraint for unique column in SQL, got: {sql}");
 	}
 
 	[TestMethod]

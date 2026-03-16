@@ -177,12 +177,28 @@ public static class SchemaMigrator
 
 					foreach (var col in schema.Columns)
 					{
-						var cd = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength);
+						var cd = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
 						colDefs.Add($"{dialect.QuoteIdentifier(col.Name)} {cd}");
 					}
 
 					dialect.AppendCreateTable(sb, diff.TableName, colDefs.JoinCommaSpace());
 					sb.AppendLine(";");
+
+					// generate CREATE INDEX for indexed columns
+					foreach (var col in schema.Columns)
+					{
+						if (col.IsUnique)
+						{
+							sb.Append($"CREATE UNIQUE INDEX {dialect.QuoteIdentifier($"IX_{diff.TableName}_{col.Name}")} ON {dialect.QuoteIdentifier(diff.TableName)} ({dialect.QuoteIdentifier(col.Name)})");
+							sb.AppendLine(";");
+						}
+						else if (col.IsIndex)
+						{
+							sb.Append($"CREATE INDEX {dialect.QuoteIdentifier($"IX_{diff.TableName}_{col.Name}")} ON {dialect.QuoteIdentifier(diff.TableName)} ({dialect.QuoteIdentifier(col.Name)})");
+							sb.AppendLine(";");
+						}
+					}
+
 					break;
 				}
 
@@ -195,7 +211,7 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength);
+					var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
 					dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
 					sb.AppendLine(";");
 					break;
@@ -213,7 +229,7 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength);
+					dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
 					sb.AppendLine(";");
 					break;
 				}

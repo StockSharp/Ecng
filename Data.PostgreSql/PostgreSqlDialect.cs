@@ -122,7 +122,7 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
@@ -132,6 +132,8 @@ public class PostgreSqlDialect : SqlDialectBase
 			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
 		else if (underlying == typeof(byte[]))
 			typeName = "BYTEA";
+		else if (underlying == typeof(decimal) && precision > 0)
+			typeName = $"NUMERIC({precision},{scale})";
 		else
 			typeName = GetSqlTypeName(clrType);
 
@@ -181,7 +183,7 @@ ORDER BY table_name, ordinal_position";
 	}
 
 	/// <inheritdoc />
-	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0)
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
@@ -191,6 +193,8 @@ ORDER BY table_name, ordinal_position";
 			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
 		else if (underlying == typeof(byte[]))
 			typeName = "BYTEA";
+		else if (underlying == typeof(decimal) && precision > 0)
+			typeName = $"NUMERIC({precision},{scale})";
 		else
 			typeName = GetSqlTypeName(clrType);
 

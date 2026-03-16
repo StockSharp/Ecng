@@ -70,7 +70,7 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;
 
@@ -80,6 +80,8 @@ public class SqlServerDialect : SqlDialectBase
 			typeName = maxLength > 0 ? $"NVARCHAR({maxLength})" : "NVARCHAR(MAX)";
 		else if (underlying == typeof(byte[]))
 			typeName = maxLength > 0 ? $"VARBINARY({maxLength})" : "VARBINARY(MAX)";
+		else if (underlying == typeof(decimal) && precision > 0)
+			typeName = $"DECIMAL({precision},{scale})";
 		else
 			typeName = GetSqlTypeName(clrType);
 
@@ -209,6 +211,9 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 	/// <inheritdoc />
 	public override void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
 	{
+		if (whereColumns.Length == 0)
+			throw new InvalidOperationException($"Cannot generate UPDATE for '{tableName}': no key columns specified for WHERE clause.");
+
 		const string alias = "e";
 
 		sb.AppendLine($"update {QuoteIdentifier(alias)}");
@@ -234,6 +239,9 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 	/// <inheritdoc />
 	public override void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
 	{
+		if (whereColumns.Length == 0)
+			throw new InvalidOperationException($"Cannot generate DELETE for '{tableName}': no key columns specified for WHERE clause.");
+
 		const string alias = "e";
 
 		sb.Append($"delete {alias}");

@@ -136,8 +136,10 @@ public interface ISqlDialect
 	/// <param name="clrType">CLR type of the column.</param>
 	/// <param name="isNullable">Whether the column allows NULLs.</param>
 	/// <param name="maxLength">Max length for string columns (0 = MAX/unlimited).</param>
+	/// <param name="precision">Numeric precision (0 = use default).</param>
+	/// <param name="scale">Numeric scale (0 = use default).</param>
 	/// <returns>Column definition string (e.g. "NVARCHAR(128) NOT NULL").</returns>
-	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0)
+	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var typeName = GetSqlTypeName(clrType);
 		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
@@ -160,9 +162,11 @@ public interface ISqlDialect
 	/// <param name="clrType">CLR type of the column.</param>
 	/// <param name="isNullable">Whether the column allows NULLs.</param>
 	/// <param name="maxLength">Max length for string/binary columns.</param>
-	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0)
+	/// <param name="precision">Numeric precision (0 = use default).</param>
+	/// <param name="scale">Numeric scale (0 = use default).</param>
+	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
-		var colDef = GetColumnDefinition(clrType, isNullable, maxLength);
+		var colDef = GetColumnDefinition(clrType, isNullable, maxLength, precision, scale);
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {colDef}");
 	}
 
@@ -191,6 +195,9 @@ public interface ISqlDialect
 	/// <param name="whereColumns">Column names for the WHERE clause.</param>
 	void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
 	{
+		if (whereColumns.Length == 0)
+			throw new InvalidOperationException($"Cannot generate UPDATE for '{tableName}': no key columns specified for WHERE clause.");
+
 		sb.AppendLine($"update {QuoteIdentifier(tableName)}");
 		sb.AppendLine("set");
 
@@ -217,6 +224,9 @@ public interface ISqlDialect
 	/// <param name="whereColumns">Column names for the WHERE clause.</param>
 	void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
 	{
+		if (whereColumns.Length == 0)
+			throw new InvalidOperationException($"Cannot generate DELETE for '{tableName}': no key columns specified for WHERE clause.");
+
 		sb.AppendLine("delete");
 		sb.Append($"from {QuoteIdentifier(tableName)}");
 		sb.AppendLine();

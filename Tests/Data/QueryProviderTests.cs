@@ -573,6 +573,23 @@ public class QueryProviderTests : BaseTestClass
 		sql.Contains("[Category]").AssertFalse($"Non-unique index should not be in WHERE, got: {sql}");
 	}
 
+	[TestMethod]
+	public void UpdateBy_EmptyKeyColumns_Throws()
+	{
+		// Finding #2 (current review): when entity has no identity and no unique columns,
+		// AppendUpdateBy must throw instead of generating SQL with dangling WHERE.
+		Assert.ThrowsExactly<InvalidOperationException>(
+			() => _dialect.AppendUpdateBy(new System.Text.StringBuilder(), "NoKeyTable", ["Name", "Value"], []));
+	}
+
+	[TestMethod]
+	public void DeleteBy_EmptyKeyColumns_Throws()
+	{
+		// Same issue for DELETE — empty whereColumns must throw.
+		Assert.ThrowsExactly<InvalidOperationException>(
+			() => _dialect.AppendDeleteBy(new System.Text.StringBuilder(), "NoKeyTable", []));
+	}
+
 	#endregion
 
 	#region SchemaRegistry Integration
