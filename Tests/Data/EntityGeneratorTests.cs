@@ -297,6 +297,37 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Finding #1: Identity IsUnique/IsIndex
+
+	[TestMethod]
+	public void Generated_Identity_HasIsUnique()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestOrderEntity));
+
+		schema.Identity.AssertNotNull();
+		schema.Identity.IsUnique.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Generated_Identity_HasIsIndex()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestOrderEntity));
+
+		schema.Identity.AssertNotNull();
+		schema.Identity.IsIndex.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Generated_Identity_AppearsInUniqueColumns()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestOrderEntity));
+
+		schema.UniqueColumns.Any(c => c.Name == schema.Identity.Name).AssertTrue(
+			"Identity must appear in UniqueColumns for cache invalidation to work");
+	}
+
+	#endregion
 }
 
 #endif

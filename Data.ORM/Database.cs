@@ -1111,10 +1111,20 @@ public class Database : Disposable, IStorage
 	}
 
 	async ValueTask<TEntity> IStorage.GetByIdAsync<TId, TEntity>(TId id, CancellationToken cancellationToken)
-		=> (TEntity)await ReadAsync(SchemaRegistry.Get(typeof(TEntity)), id,
+	{
+		var meta = SchemaRegistry.Get(typeof(TEntity));
+
+		if (meta.IsView)
+		{
+			var processor = ViewProcessorRegistry.GetProcessor<TEntity, TId>();
+			return await processor.ReadById(id, cancellationToken);
+		}
+
+		return (TEntity)await ReadAsync(meta, id,
 			meta => GetCommand(meta, SqlCommandTypes.ReadBy, [meta.Identity], [], cancellationToken),
 			meta => new(new SerializationItem(meta.Identity.Name, meta.Identity.ClrType, id)),
 			cancellationToken);
+	}
 
 	async ValueTask<TEntity[]> IStorage.GetByIdsAsync<TId, TEntity>(IEnumerable<TId> ids, CancellationToken cancellationToken)
 	{
@@ -1178,32 +1188,39 @@ public class Database : Disposable, IStorage
 
 			foreach (var batch in uncachedIds.Chunk(chunkSize))
 			{
-				var valueColumns = new List<SchemaColumn>();
-				var input = new SerializationItemCollection();
+				IEnumerable<TEntity> entities;
 
-				var idx = 0;
-				foreach (var id in batch)
+				if (meta.IsView)
 				{
-					var colName = $"Id{idx++}";
-					valueColumns.Add(new() { Name = colName, ClrType = identity.ClrType });
-					input.Add(new(colName, identity.ClrType, id));
+					var processor = ViewProcessorRegistry.GetProcessor<TEntity, TId>();
+					entities = await processor.ReadRange([.. batch], cancellationToken);
 				}
+				else
+				{
+					var valueColumns = new List<SchemaColumn>();
+					var input = new SerializationItemCollection();
 
-				var cmd = await GetCommand(meta, SqlCommandTypes.ReadRange, [identity], valueColumns, cancellationToken);
-				var entities = await ReadAllAsync(cmd, meta, input, cancellationToken);
+					var idx = 0;
+					foreach (var id in batch)
+					{
+						var colName = $"Id{idx++}";
+						valueColumns.Add(new() { Name = colName, ClrType = identity.ClrType });
+						input.Add(new(colName, identity.ClrType, id));
+					}
+
+					var cmd = await GetCommand(meta, SqlCommandTypes.ReadRange, [identity], valueColumns, cancellationToken);
+					entities = (await ReadAllAsync(cmd, meta, input, cancellationToken)).Cast<TEntity>();
+				}
 
 				var foundIds = new HashSet<object>();
 
-				foreach (var entity in entities)
+				foreach (var typedEntity in entities)
 				{
-					if (entity is TEntity typedEntity)
-					{
-						var entityId = ((IDbPersistable)typedEntity).GetIdentity();
-						resolved[entityId] = typedEntity;
-						foundIds.Add(entityId);
+					var entityId = ((IDbPersistable)typedEntity).GetIdentity();
+					resolved[entityId] = typedEntity;
+					foundIds.Add(entityId);
 
-						bulkDict?[entityId] = typedEntity;
-					}
+					bulkDict?[entityId] = typedEntity;
 				}
 
 				// cache misses in bulk dict so subsequent lookups return null fast

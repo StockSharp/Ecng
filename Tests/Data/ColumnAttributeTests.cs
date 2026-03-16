@@ -1089,6 +1089,34 @@ public class ColumnAttributeTests : BaseTestClass
 	};
 
 	#endregion
+
+	#region Finding #5: DateTime precision in DDL
+
+	[TestMethod]
+	[DataRow("SqlServer", "DATETIME2(3) NOT NULL")]
+	[DataRow("PostgreSql", "TIMESTAMP(3) NOT NULL")]
+	public void GetColumnDefinition_DateTime_WithPrecision(string dialectName, string expected)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var result = dialect.GetColumnDefinition(typeof(DateTime), false, precision: 3);
+
+		result.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer", "DATETIMEOFFSET(3) NOT NULL")]
+	[DataRow("PostgreSql", "TIMESTAMPTZ(3) NOT NULL")]
+	public void GetColumnDefinition_DateTimeOffset_WithPrecision(string dialectName, string expected)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var result = dialect.GetColumnDefinition(typeof(DateTimeOffset), false, precision: 3);
+
+		result.AssertEqual(expected);
+	}
+
+	#endregion
 }
 
 #endif

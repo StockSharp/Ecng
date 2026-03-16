@@ -267,6 +267,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		values.AssertContains("XXX");
 		values.AssertContains("YYY");
 	}
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable

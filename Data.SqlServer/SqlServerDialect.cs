@@ -82,6 +82,8 @@ public class SqlServerDialect : SqlDialectBase
 			typeName = maxLength > 0 ? $"VARBINARY({maxLength})" : "VARBINARY(MAX)";
 		else if (underlying == typeof(decimal) && precision > 0)
 			typeName = $"DECIMAL({precision},{scale})";
+		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) && precision > 0)
+			typeName = $"{GetSqlTypeName(clrType)}({precision})";
 		else
 			typeName = GetSqlTypeName(clrType);
 

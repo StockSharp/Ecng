@@ -252,6 +252,7 @@ public static class SchemaRegistry
 			NoCache = entityAttr?.NoCache ?? false,
 			EntityType = entityType,
 			Factory = () => entityType.CreateInstance(),
+			IsView = entityType.GetAttribute<ViewProcessorAttribute>() is not null,
 		};
 
 		_cache[entityType] = schema;

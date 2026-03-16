@@ -447,7 +447,7 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine($"\t\t\tTableName = \"{tableName}\",");
 		sb.AppendLine($"\t\t\tEntityType = typeof({entityName}),");
 		sb.AppendLine($"\t\t\tFactory = () => new {entityName}(),");
-		sb.AppendLine($"\t\t\tIdentity = new() {{ Name = nameof({idName}), ClrType = typeof({idType}), IsReadOnly = true }},");
+		sb.AppendLine($"\t\t\tIdentity = new() {{ Name = nameof({idName}), ClrType = typeof({idType}), IsReadOnly = true, IsUnique = true, IsIndex = true }},");
 		sb.AppendLine("\t\t\tColumns = columns,");
 
 		if (noCache)

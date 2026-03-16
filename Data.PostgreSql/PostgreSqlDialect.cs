@@ -134,6 +134,8 @@ public class PostgreSqlDialect : SqlDialectBase
 			typeName = "BYTEA";
 		else if (underlying == typeof(decimal) && precision > 0)
 			typeName = $"NUMERIC({precision},{scale})";
+		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) && precision > 0)
+			typeName = $"{GetSqlTypeName(clrType)}({precision})";
 		else
 			typeName = GetSqlTypeName(clrType);
 

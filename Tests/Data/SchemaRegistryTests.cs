@@ -2,6 +2,8 @@
 
 namespace Ecng.Tests.Data;
 
+using System.Collections;
+
 using Ecng.Data;
 using Ecng.Data.Sql;
 using Ecng.Serialization;
@@ -259,6 +261,38 @@ public class ReflNullRootEntity : IDbPersistable
 
 	[Column(IsNullable = true)]
 	public NullPropL2 Data { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Dummy ViewProcessor for testing.
+/// </summary>
+public class ReflTestViewProcessor : IViewProcessor<ReflTestViewEntity, long>
+{
+	public Type TableType => typeof(TestItem);
+	public Type ViewType => typeof(ReflTestViewEntity);
+	public IQueryable<ReflTestViewEntity> Select => throw new NotSupportedException();
+	public ValueTask<IEnumerable> ReadRange(object[] ids, CancellationToken cancellationToken) => throw new NotSupportedException();
+	public ValueTask<ReflTestViewEntity[]> ReadRange(long[] ids, CancellationToken cancellationToken) => throw new NotSupportedException();
+	public ValueTask<ReflTestViewEntity> Create(ReflTestViewEntity view, CancellationToken cancellationToken) => throw new NotSupportedException();
+	public ValueTask<ReflTestViewEntity> ReadById(long id, CancellationToken cancellationToken) => throw new NotSupportedException();
+	public ValueTask<ReflTestViewEntity> Update(ReflTestViewEntity view, CancellationToken cancellationToken) => throw new NotSupportedException();
+	public ValueTask<bool> Delete(ReflTestViewEntity view, CancellationToken cancellationToken) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// View entity with ViewProcessorAttribute for reflection tests.
+/// </summary>
+[Entity(Name = "V_ReflTestView")]
+[ViewProcessor(typeof(ReflTestViewProcessor))]
+public class ReflTestViewEntity : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Name { get; set; }
 
 	object IDbPersistable.GetIdentity() => Id;
 	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
@@ -735,6 +769,19 @@ public class SchemaRegistryTests : BaseTestClass
 		// With skipComputed — Computed is excluded
 		var diffsSkipped = SchemaMigrator.Compare([schema], dbColumns, _dialect, skipComputed: true);
 		diffsSkipped.Any(d => d.ColumnName == "Computed").AssertFalse();
+	}
+
+	#endregion
+
+	#region Finding #3: ViewProcessorAttribute → IsView
+
+	[TestMethod]
+	public void Reflection_ViewProcessorAttribute_SetsIsView()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestViewEntity));
+
+		schema.IsView.AssertTrue(
+			"Entity with [ViewProcessor] attribute should have IsView = true");
 	}
 
 	#endregion
