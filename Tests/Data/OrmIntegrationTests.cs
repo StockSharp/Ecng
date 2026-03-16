@@ -1848,6 +1848,39 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Finding #3: BulkLoad count cap
+
+	[TestMethod]
+	public async Task BulkLoad_GetCount_ReturnsActualCount_NotCappedByMaxBulkLoadRows()
+	{
+		// Finding #3: When MaxBulkLoadRows is smaller than the actual row count,
+		// GetCountAsync returns cache size instead of real DB count.
+		EnsureDb();
+
+		// Set small cap to reproduce without 100K rows
+		_db.MaxBulkLoadRows = 3;
+
+		try
+		{
+			// Insert more rows than the cap
+			for (var i = 0; i < 7; i++)
+				await InsertItem($"BulkItem{i}");
+
+			// Enable bulk load
+			Storage.AddBulkLoad<TestItem>();
+
+			// GetCountAsync should return 7 (actual DB count), not 3 (cache cap)
+			var count = await Storage.GetCountAsync<TestItem>(CancellationToken);
+			count.AssertEqual(7);
+		}
+		finally
+		{
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	#endregion
 }
 
 #endif

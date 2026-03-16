@@ -23,8 +23,6 @@ public class Database : Disposable, IStorage
 		private readonly Database _database;
 		private CachedSynchronizedDictionary<object, object> _cachedEntities;
 
-		private const int _maxBulk = 100000;
-
 		public BulkLoadInfo(Database database, Schema meta)
 		{
 			_database = database ?? throw new ArgumentNullException(nameof(database));
@@ -43,7 +41,7 @@ public class Database : Disposable, IStorage
 				object[] cachedEntities;
 
 				using (new Scope<BulkLoadInfo>(this))
-					cachedEntities = await _database.ReadAllAsync(Meta, 0, _maxBulk, default, Meta.Identity.Name, ListSortDirection.Ascending, cancellationToken);
+					cachedEntities = await _database.ReadAllAsync(Meta, 0, _database.MaxBulkLoadRows, default, Meta.Identity.Name, ListSortDirection.Ascending, cancellationToken);
 
 				var dict = new CachedSynchronizedDictionary<object, object>();
 
@@ -284,6 +282,11 @@ public class Database : Disposable, IStorage
 	/// </summary>
 	public bool AllowDeleteAll { get; set; }
 
+	/// <summary>
+	/// Gets or sets the maximum number of rows to preload in bulk-load mode.
+	/// </summary>
+	public int MaxBulkLoadRows { get; set; } = 100000;
+
 	void IStorage.AddBulkLoad<TEntity>() => _bulkLoad.Add(typeof(TEntity), new(this, SchemaRegistry.Get(typeof(TEntity))));
 
 	/// <summary>
@@ -414,9 +417,6 @@ public class Database : Disposable, IStorage
 		where TEntity : IDbPersistable
 	{
 		var meta = SchemaRegistry.Get(typeof(TEntity));
-
-		if (_bulkLoad.TryGetValue(meta.EntityType, out var info))
-			return (await info.EnsureInit(cancellationToken)).Count;
 
 		var command = await GetCommand(meta, SqlCommandTypes.Count, [], [], cancellationToken);
 		var source = new SerializationItemCollection();
