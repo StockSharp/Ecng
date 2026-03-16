@@ -231,6 +231,25 @@ public class ReflColumnOverrideEntity : IDbPersistable
 }
 
 /// <summary>
+/// ColumnOverride + NameOverride on same inner schema property.
+/// </summary>
+[Entity(Name = "Ecng_ReflColOverrideName")]
+public class ReflColumnOverrideWithNameEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Column(IsNullable = true)]
+	[NameOverride("Secret", "ApiToken")]
+	[ColumnOverride(nameof(TestKeySecret.Secret), IsNullable = false)]
+	public TestKeySecret Auth { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
 /// Outer nullable at root, entire 4-level tree must be nullable.
 /// </summary>
 [Entity(Name = "Ecng_ReflNullRoot")]
@@ -668,6 +687,22 @@ public class SchemaRegistryTests : BaseTestClass
 		schema.Columns.First(c => c.Name == "AuthSecret").IsNullable.AssertFalse();
 	}
 
+	[TestMethod]
+	public void Reflection_ColumnOverride_WithNameOverride()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflColumnOverrideWithNameEntity));
+
+		// Key — no NameOverride → default name "AuthKey", outer nullable → NULL
+		schema.Columns.First(c => c.Name == "AuthKey").IsNullable.AssertTrue();
+
+		// Secret → renamed to "ApiToken" via NameOverride, forced NOT NULL via ColumnOverride
+		schema.Columns.Any(c => c.Name == "AuthSecret").AssertFalse(
+			"Secret should be renamed to ApiToken");
+
+		var apiToken = schema.Columns.First(c => c.Name == "ApiToken");
+		apiToken.IsNullable.AssertFalse();
+	}
+
 	#endregion
 
 	#region SchemaMigrator.Compare — skipComputed
@@ -694,7 +729,7 @@ public class SchemaRegistryTests : BaseTestClass
 		};
 
 		// Without skipComputed — Computed shows as ExtraColumn
-		var diffs = SchemaMigrator.Compare([schema], dbColumns, _dialect);
+		var diffs = SchemaMigrator.Compare([schema], dbColumns, _dialect, false);
 		diffs.Any(d => d.ColumnName == "Computed" && d.Kind == SchemaDiffKind.ExtraColumn).AssertTrue();
 
 		// With skipComputed — Computed is excluded

@@ -280,6 +280,22 @@ public class EntityGeneratorTests : BaseTestClass
 		schema.Columns.First(c => c.Name == "AuthSecret").IsNullable.AssertFalse();
 	}
 
+	[TestMethod]
+	public void Generated_ColumnOverride_WithNameOverride()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverrideWithNameEntity));
+
+		// Auth.Key — outer nullable, no override → NULL
+		schema.Columns.First(c => c.Name == "AuthKey").IsNullable.AssertTrue();
+
+		// Auth.Secret → renamed to "ApiToken" via NameOverride, forced NOT NULL via ColumnOverride
+		schema.Columns.Any(c => c.Name == "AuthSecret").AssertFalse(
+			"Secret should be renamed to ApiToken");
+
+		var apiToken = schema.Columns.First(c => c.Name == "ApiToken");
+		apiToken.IsNullable.AssertFalse();
+	}
+
 	#endregion
 }
 

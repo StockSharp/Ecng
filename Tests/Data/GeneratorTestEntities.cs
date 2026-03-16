@@ -253,4 +253,17 @@ public partial class GenTestColumnOverrideEntity : GenTestBaseEntity
 	public TestKeySecret Auth { get; set; }
 }
 
+/// <summary>
+/// ColumnOverride + NameOverride on same inner schema property.
+/// Secret renamed to ApiToken and forced NOT NULL.
+/// </summary>
+[Entity(Name = "Ecng_GenColOverrideName")]
+public partial class GenTestColumnOverrideWithNameEntity : GenTestBaseEntity
+{
+	[Column(IsNullable = true)]
+	[NameOverride("Secret", "ApiToken")]
+	[ColumnOverride(nameof(TestKeySecret.Secret), IsNullable = false)]
+	public TestKeySecret Auth { get; set; }
+}
+
 #endif
