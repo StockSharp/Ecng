@@ -263,6 +263,24 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region [ColumnOverride] — generated schema
+
+	[TestMethod]
+	public void Generated_ColumnOverride_OverridesInnerNullability()
+	{
+		// Outer [Column(IsNullable = true)] makes all inner nullable,
+		// but [ColumnOverride("Secret", IsNullable = false)] overrides Secret to NOT NULL.
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverrideEntity));
+
+		// Auth.Key — outer nullable, no override → NULL
+		schema.Columns.First(c => c.Name == "AuthKey").IsNullable.AssertTrue();
+
+		// Auth.Secret — [ColumnOverride] forces NOT NULL
+		schema.Columns.First(c => c.Name == "AuthSecret").IsNullable.AssertFalse();
+	}
+
+	#endregion
 }
 
 #endif

@@ -473,10 +473,11 @@ public class EntityGenerator : IIncrementalGenerator
 			var innerType = UnwrapNullable(prop.Type);
 			var innerProps = GetInnerTypeProperties(innerType);
 			var nameOverrides = GetNameOverrides(prop);
+			var columnOverrides = GetColumnOverrides(prop);
 			var (colNullable, _) = GetColumnAttribute(prop);
 			var outerNullable = colNullable ?? InferIsNullable(prop);
 
-			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, outerNullable);
+			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, columnOverrides, outerNullable);
 		}
 		else
 		{
@@ -509,20 +510,27 @@ public class EntityGenerator : IIncrementalGenerator
 		}
 	}
 
-	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, bool outerNullable)
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable)
 	{
 		foreach (var inner in innerProps)
 		{
 			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
 			var (colNullable, colMaxLen) = GetColumnAttribute(inner);
-			var nullable = outerNullable || (colNullable ?? InferIsNullable(inner));
+
+			bool nullable;
+
+			if (columnOverrides.TryGetValue(inner.Name, out var overrideNullable))
+				nullable = overrideNullable;
+			else
+				nullable = outerNullable || (colNullable ?? InferIsNullable(inner));
 
 			if (IsInnerSchemaProperty(inner))
 			{
 				var nestedType = UnwrapNullable(inner.Type);
 				var nestedProps = GetInnerTypeProperties(nestedType);
 				var nestedOverrides = GetNameOverrides(inner);
-				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides, nullable);
+				var nestedColumnOverrides = GetColumnOverrides(inner);
+				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides, nestedColumnOverrides, nullable);
 				continue;
 			}
 
@@ -698,6 +706,32 @@ public class EntityGenerator : IIncrementalGenerator
 			var colName = attr.ConstructorArguments[1].Value as string;
 			if (innerProp is not null && colName is not null)
 				result[innerProp] = colName;
+		}
+		return result;
+	}
+
+	/// <summary>
+	/// Reads [ColumnOverride] attributes from a property.
+	/// Returns Dictionary mapping innerPropName → isNullable.
+	/// </summary>
+	private static Dictionary<string, bool> GetColumnOverrides(IPropertySymbol prop)
+	{
+		var result = new Dictionary<string, bool>();
+		foreach (var attr in prop.GetAttributes())
+		{
+			if (attr.AttributeClass?.Name != "ColumnOverrideAttribute")
+				continue;
+			if (attr.ConstructorArguments.Length < 1)
+				continue;
+			var innerProp = attr.ConstructorArguments[0].Value as string;
+			if (innerProp is null)
+				continue;
+
+			foreach (var named in attr.NamedArguments)
+			{
+				if (named.Key == "IsNullable")
+					result[innerProp] = (bool)named.Value.Value;
+			}
 		}
 		return result;
 	}

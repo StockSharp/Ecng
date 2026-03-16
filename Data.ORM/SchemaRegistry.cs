@@ -143,6 +143,19 @@ public static class SchemaRegistry
 		return result;
 	}
 
+	private static Dictionary<string, bool> GetColumnOverrides(PropertyInfo prop)
+	{
+		var result = new Dictionary<string, bool>();
+
+		foreach (var attr in prop.GetAttributes<ColumnOverrideAttribute>())
+		{
+			if (attr.IsNullableSet)
+				result[attr.PropertyName] = attr.IsNullable;
+		}
+
+		return result;
+	}
+
 	private static string GetColumnName(string outerPropName, string innerPropName, Dictionary<string, string> nameOverrides)
 	{
 		if (nameOverrides.TryGetValue(innerPropName, out var colName))
@@ -155,6 +168,7 @@ public static class SchemaRegistry
 		Type innerType,
 		string prefix,
 		Dictionary<string, string> nameOverrides,
+		Dictionary<string, bool> columnOverrides,
 		List<SchemaColumn> columns,
 		HashSet<Type> visiting,
 		bool outerNullable = false)
@@ -169,7 +183,13 @@ public static class SchemaRegistry
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
 			var colAttr = prop.GetAttribute<ColumnAttribute>();
-			var isNullable = outerNullable || ResolveNullable(colAttr, prop.PropertyType);
+
+			bool isNullable;
+
+			if (columnOverrides.TryGetValue(prop.Name, out var overrideNullable))
+				isNullable = overrideNullable;
+			else
+				isNullable = outerNullable || ResolveNullable(colAttr, prop.PropertyType);
 
 			if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 			{
@@ -211,7 +231,8 @@ public static class SchemaRegistry
 			else if ((propType.IsClass || propType.IsValueType) && IsInnerSchemaType(propType, visiting))
 			{
 				var innerOverrides = GetNameOverrides(prop);
-				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting, isNullable);
+				var innerColumnOverrides = GetColumnOverrides(prop);
+				FlattenInnerSchema(propType, colName, innerOverrides, innerColumnOverrides, columns, visiting, isNullable);
 			}
 		}
 	}
@@ -312,8 +333,9 @@ public static class SchemaRegistry
 					&& IsInnerSchemaType(propType, visiting))
 				{
 					var nameOverrides = GetNameOverrides(prop);
+					var columnOverrides = GetColumnOverrides(prop);
 					var outerNullable = ResolveNullable(colAttr, prop.PropertyType);
-					FlattenInnerSchema(propType, prop.Name, nameOverrides, columns, visiting, outerNullable);
+					FlattenInnerSchema(propType, prop.Name, nameOverrides, columnOverrides, columns, visiting, outerNullable);
 					continue;
 				}
 

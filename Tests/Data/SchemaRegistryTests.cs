@@ -213,6 +213,24 @@ public class ReflNullCantCancelEntity : IDbPersistable
 }
 
 /// <summary>
+/// Outer nullable with [ColumnOverride] forcing Secret to NOT NULL.
+/// </summary>
+[Entity(Name = "Ecng_ReflColOverride")]
+public class ReflColumnOverrideEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Column(IsNullable = true)]
+	[ColumnOverride(nameof(TestKeySecret.Secret), IsNullable = false)]
+	public TestKeySecret Auth { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
 /// Outer nullable at root, entire 4-level tree must be nullable.
 /// </summary>
 [Entity(Name = "Ecng_ReflNullRoot")]
@@ -632,6 +650,56 @@ public class SchemaRegistryTests : BaseTestClass
 		schema.Columns.First(c => c.Name == "DataSolidBranchMid").IsNullable.AssertTrue();
 		schema.Columns.First(c => c.Name == "DataSolidBranchL4Deep").IsNullable.AssertTrue();
 		schema.Columns.First(c => c.Name == "DataSolidBranchL4Count").IsNullable.AssertTrue();
+	}
+
+	#endregion
+
+	#region [ColumnOverride] attribute
+
+	[TestMethod]
+	public void Reflection_ColumnOverride_OverridesNullability()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflColumnOverrideEntity));
+
+		// Auth.Key — outer nullable, no override → NULL
+		schema.Columns.First(c => c.Name == "AuthKey").IsNullable.AssertTrue();
+
+		// Auth.Secret — outer nullable, but [ColumnOverride] forces NOT NULL
+		schema.Columns.First(c => c.Name == "AuthSecret").IsNullable.AssertFalse();
+	}
+
+	#endregion
+
+	#region SchemaMigrator.Compare — skipComputed
+
+	[TestMethod]
+	public void Compare_SkipComputed_ExcludesComputedColumns()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ReflTestOrder),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+			],
+		};
+
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("TestTable", "Id", "BIGINT", false, null, null, null),
+			new("TestTable", "Name", "NVARCHAR", false, null, null, null),
+			new("TestTable", "Computed", "NVARCHAR", true, null, null, null, IsComputed: true),
+		};
+
+		// Without skipComputed — Computed shows as ExtraColumn
+		var diffs = SchemaMigrator.Compare([schema], dbColumns, _dialect);
+		diffs.Any(d => d.ColumnName == "Computed" && d.Kind == SchemaDiffKind.ExtraColumn).AssertTrue();
+
+		// With skipComputed — Computed is excluded
+		var diffsSkipped = SchemaMigrator.Compare([schema], dbColumns, _dialect, skipComputed: true);
+		diffsSkipped.Any(d => d.ColumnName == "Computed").AssertFalse();
 	}
 
 	#endregion

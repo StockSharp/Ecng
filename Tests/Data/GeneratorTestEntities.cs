@@ -231,4 +231,26 @@ public partial class GenTestNullRootEntity : GenTestBaseEntity
 	public NullPropL2 Data { get; set; }
 }
 
+/// <summary>
+/// Inner value object for ColumnOverride tests.
+/// Key and Secret are both non-nullable string properties.
+/// </summary>
+public class TestKeySecret
+{
+	public string Key { get; set; }
+	public string Secret { get; set; }
+}
+
+/// <summary>
+/// Outer nullable, but [ColumnOverride] forces Secret to NOT NULL.
+/// Key remains nullable (inherits outer).
+/// </summary>
+[Entity(Name = "Ecng_GenColOverride")]
+public partial class GenTestColumnOverrideEntity : GenTestBaseEntity
+{
+	[Column(IsNullable = true)]
+	[ColumnOverride(nameof(TestKeySecret.Secret), IsNullable = false)]
+	public TestKeySecret Auth { get; set; }
+}
+
 #endif
