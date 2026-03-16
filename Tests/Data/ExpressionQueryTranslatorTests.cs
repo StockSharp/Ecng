@@ -235,6 +235,10 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	private static IQueryable<TestItem> FilterByName(IQueryable<TestItem> q, string value)
 		=> q.Where(x => x.Name == value);
 
+	// Helper that produces same closure field name "value" for subquery tests
+	private static IQueryable<TestTask> FilterTasksByName(IQueryable<TestTask> q, string value)
+		=> q.Where(x => x.Title == value);
+
 	[TestMethod]
 	public void Concat_DifferentConstants_ParametersPreserved()
 	{
@@ -266,6 +270,30 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var values = parameters.Values.Select(v => v.Item2).ToArray();
 		values.AssertContains("XXX");
 		values.AssertContains("YYY");
+	}
+
+	[TestMethod]
+	public void MultipleSubqueries_SameClosureFieldName_ParametersPreserved()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var left = FilterTasksByName(tasks, "AAA");
+		var right = FilterTasksByName(tasks, "BBB");
+
+		var query = from p in persons
+					select new VTestPersonWithTasks
+					{
+						AllColumns = p.AllColumns,
+						HasTasks = (from t in left where t.Person.Id == p.Id select t).Any(),
+						TaskCount = (from t in right where t.Person.Id == p.Id select t).Count(),
+					};
+
+		var (_, parameters) = TranslateSql<TestPerson>(query);
+
+		var values = parameters.Values.Select(v => v.Item2).ToArray();
+		values.AssertContains("AAA");
+		values.AssertContains("BBB");
 	}
 
 }

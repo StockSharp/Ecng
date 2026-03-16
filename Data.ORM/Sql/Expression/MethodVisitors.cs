@@ -1643,7 +1643,7 @@ class ContainsVisitor<T> : MethodVisitor
 		var isSubQuery = firstArg.NodeType == ExpressionType.Call;
 
 		if (isSubQuery)
-			translator.Context = new() { Curr = new() };
+			translator.Context = new() { Curr = new(), ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
 
 		translator.Visit(firstArg);
 

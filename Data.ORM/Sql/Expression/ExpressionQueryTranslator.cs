@@ -638,7 +638,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			Curr.OpenBracket();
 			Curr.NewLine();
 
-			Context = new();
+			Context = new() { ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
 
 			if (visitor?.GetType().GetGenericType(typeof(CountVisitor<>)) != null)
 				Context.Count = true;
@@ -1052,7 +1052,14 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 			if (m.Expression is ConstantExpression ce)
 			{
-				Context.TryAddParam(m.Member, ce.Value);
+				var memberValue = m.Member.GetMemberValue(ce.Value);
+
+				// pre-filtered IQueryable (e.g. tasks.Where(x => ...)) has a non-constant Expression
+				// that must be visited to capture inner filters and parameters
+				if (memberValue is IQueryable q && q.Expression is not ConstantExpression)
+					Visit(q.Expression);
+				else
+					Context.TryAddParam(m.Member, ce.Value);
 			}
 			else if (m.Expression.NodeType == ExpressionType.MemberAccess)
 			{
