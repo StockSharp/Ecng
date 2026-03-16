@@ -1976,6 +1976,187 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region GetByIdsAsync
+
+	[TestMethod]
+	public async Task GetByIdsAsync_ReturnsAllMatchingEntities()
+	{
+		EnsureDb();
+
+		var item1 = await InsertItem("Alpha", priority: 1);
+		var item2 = await InsertItem("Beta", priority: 2);
+		var item3 = await InsertItem("Gamma", priority: 3);
+
+		await ClearCache();
+
+		var result = await Storage.GetByIdsAsync<long, TestItem>([item1.Id, item2.Id, item3.Id], CancellationToken);
+
+		result.Length.AssertEqual(3);
+		result.Select(r => r.Name).OrderBy(n => n).ToArray()
+			.AssertEqual(new[] { "Alpha", "Beta", "Gamma" });
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_EmptyIds_ReturnsEmpty()
+	{
+		EnsureDb();
+
+		var result = await Storage.GetByIdsAsync<long, TestItem>([], CancellationToken);
+
+		result.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_NonExistentIds_ReturnsOnlyFound()
+	{
+		EnsureDb();
+
+		var item = await InsertItem("Existing");
+
+		await ClearCache();
+
+		var result = await Storage.GetByIdsAsync<long, TestItem>([item.Id, 999999, 888888], CancellationToken);
+
+		result.Length.AssertEqual(1);
+		result[0].Name.AssertEqual("Existing");
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_UsesBulkCache_WhenAvailable()
+	{
+		EnsureDb();
+
+		_db.MaxBulkLoadRows = 100;
+
+		try
+		{
+			var item1 = await InsertItem("Cached1", priority: 1);
+			var item2 = await InsertItem("Cached2", priority: 2);
+
+			Storage.AddBulkLoad<TestItem>();
+
+			// first call populates bulk cache, second should hit it
+			var result1 = await Storage.GetByIdsAsync<long, TestItem>([item1.Id, item2.Id], CancellationToken);
+			result1.Length.AssertEqual(2);
+
+			var result2 = await Storage.GetByIdsAsync<long, TestItem>([item1.Id, item2.Id], CancellationToken);
+			result2.Length.AssertEqual(2);
+		}
+		finally
+		{
+			_db.ClearBulkLoad();
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_CachesMisses_InBulkDict()
+	{
+		EnsureDb();
+
+		_db.MaxBulkLoadRows = 3;
+
+		try
+		{
+			await InsertItem("Only");
+
+			Storage.AddBulkLoad<TestItem>();
+
+			// query with non-existent ids — should cache the miss
+			var result = await Storage.GetByIdsAsync<long, TestItem>([999999, 888888], CancellationToken);
+			result.Length.AssertEqual(0);
+
+			// second call should return immediately from cached misses
+			var result2 = await Storage.GetByIdsAsync<long, TestItem>([999999, 888888], CancellationToken);
+			result2.Length.AssertEqual(0);
+		}
+		finally
+		{
+			_db.ClearBulkLoad();
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_SingleQuery_InClause()
+	{
+		EnsureDb();
+
+		var items = new List<TestItem>();
+		for (var i = 0; i < 10; i++)
+			items.Add(await InsertItem($"Item{i}", priority: i));
+
+		await ClearCache();
+
+		// request 5 of them in one call
+		var requestIds = items.Where((_, idx) => idx % 2 == 0).Select(i => i.Id).ToArray();
+
+		var result = await Storage.GetByIdsAsync<long, TestItem>(requestIds, CancellationToken);
+
+		result.Length.AssertEqual(5);
+		result.Select(r => r.Name).OrderBy(n => n).ToArray()
+			.AssertEqual(new[] { "Item0", "Item2", "Item4", "Item6", "Item8" });
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_PreservesInputOrder()
+	{
+		EnsureDb();
+
+		var item1 = await InsertItem("First", priority: 1);
+		var item2 = await InsertItem("Second", priority: 2);
+		var item3 = await InsertItem("Third", priority: 3);
+
+		await ClearCache();
+
+		// request in reverse order
+		var result = await Storage.GetByIdsAsync<long, TestItem>([item3.Id, item1.Id, item2.Id], CancellationToken);
+
+		result.Length.AssertEqual(3);
+		result[0].Name.AssertEqual("Third");
+		result[1].Name.AssertEqual("First");
+		result[2].Name.AssertEqual("Second");
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_DuplicateIds_ReturnsDuplicateEntries()
+	{
+		EnsureDb();
+
+		var item = await InsertItem("OnlyOne");
+
+		await ClearCache();
+
+		var result = await Storage.GetByIdsAsync<long, TestItem>([item.Id, item.Id, item.Id], CancellationToken);
+
+		result.Length.AssertEqual(3);
+		result[0].Name.AssertEqual("OnlyOne");
+		result[1].Name.AssertEqual("OnlyOne");
+		result[2].Name.AssertEqual("OnlyOne");
+	}
+
+	[TestMethod]
+	public async Task GetByIdsAsync_DuplicateIds_MixedWithNonExistent()
+	{
+		EnsureDb();
+
+		var item1 = await InsertItem("A");
+		var item2 = await InsertItem("B");
+
+		await ClearCache();
+
+		// duplicates + non-existent
+		var result = await Storage.GetByIdsAsync<long, TestItem>([item2.Id, 999999, item1.Id, item2.Id, 888888], CancellationToken);
+
+		// non-existent skipped, duplicates preserved in order
+		result.Length.AssertEqual(3);
+		result[0].Name.AssertEqual("B");
+		result[1].Name.AssertEqual("A");
+		result[2].Name.AssertEqual("B");
+	}
+
+	#endregion
 }
 
 #endif

@@ -1116,6 +1116,120 @@ public class Database : Disposable, IStorage
 			meta => new(new SerializationItem(meta.Identity.Name, meta.Identity.ClrType, id)),
 			cancellationToken);
 
+	async ValueTask<TEntity[]> IStorage.GetByIdsAsync<TId, TEntity>(IEnumerable<TId> ids, CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(ids);
+
+		var meta = SchemaRegistry.Get(typeof(TEntity));
+		var identity = meta.Identity ?? throw new ArgumentException($"Entity {meta.EntityType.Name} has no identity column.");
+
+		var allIds = ids.ToList();
+		if (allIds.Count == 0)
+			return [];
+
+		// deduplicate for DB queries, but preserve original order with duplicates for output
+		var uniqueIds = allIds.Distinct().ToList();
+		var resolved = new Dictionary<object, TEntity>();
+
+		CachedSynchronizedDictionary<object, object> bulkDict = null;
+
+		if (!meta.NoCache && _bulkLoad.TryGetValue(meta.EntityType, out var info))
+			bulkDict = await info.EnsureInit(cancellationToken);
+
+		var uncachedIds = new List<TId>();
+
+		foreach (var id in uniqueIds)
+		{
+			var found = false;
+
+			if (bulkDict is not null && bulkDict.TryGetValue(id, out var cached))
+			{
+				if (cached is TEntity entity)
+					resolved[(object)id] = entity;
+
+				// null cached = known DB miss
+				found = true;
+			}
+
+			if (!found && !meta.NoCache)
+			{
+				var key = (meta.EntityType, identity.Name, (object)id);
+
+				using (await _cacheLock.LockAsync(cancellationToken))
+				{
+					if (_cache.TryGetValue(key, out var t) && t.complete)
+					{
+						if (t.entity is TEntity entity)
+							resolved[(object)id] = entity;
+
+						found = true;
+					}
+				}
+			}
+
+			if (!found)
+				uncachedIds.Add(id);
+		}
+
+		if (uncachedIds.Count > 0)
+		{
+			// query DB in batches using IN clause
+			var chunkSize = 500.Min(Dialect.MaxParameters);
+
+			foreach (var batch in uncachedIds.Chunk(chunkSize))
+			{
+				var valueColumns = new List<SchemaColumn>();
+				var input = new SerializationItemCollection();
+
+				var idx = 0;
+				foreach (var id in batch)
+				{
+					var colName = $"Id{idx++}";
+					valueColumns.Add(new() { Name = colName, ClrType = identity.ClrType });
+					input.Add(new(colName, identity.ClrType, id));
+				}
+
+				var cmd = await GetCommand(meta, SqlCommandTypes.ReadRange, [identity], valueColumns, cancellationToken);
+				var entities = await ReadAllAsync(cmd, meta, input, cancellationToken);
+
+				var foundIds = new HashSet<object>();
+
+				foreach (var entity in entities)
+				{
+					if (entity is TEntity typedEntity)
+					{
+						var entityId = ((IDbPersistable)typedEntity).GetIdentity();
+						resolved[entityId] = typedEntity;
+						foundIds.Add(entityId);
+
+						bulkDict?[entityId] = typedEntity;
+					}
+				}
+
+				// cache misses in bulk dict so subsequent lookups return null fast
+				if (bulkDict is not null)
+				{
+					foreach (var id in batch)
+					{
+						if (!foundIds.Contains(id))
+							bulkDict[(object)id] = null;
+					}
+				}
+			}
+		}
+
+		// return in input order, preserving duplicates, skipping not-found
+		var result = new List<TEntity>(allIds.Count);
+
+		foreach (var id in allIds)
+		{
+			if (resolved.TryGetValue((object)id, out var entity))
+				result.Add(entity);
+		}
+
+		return [.. result];
+	}
+
 	async ValueTask<TEntity[]> IStorage.GetGroupAsync<TEntity>(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		=> [.. (await ReadAllAsync(SchemaRegistry.Get(typeof(TEntity)), startIndex, count, deleted, orderBy, direction, cancellationToken)).Cast<TEntity>()];
 

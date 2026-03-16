@@ -71,6 +71,7 @@ public class NullStorage : IStorage
 	public ValueTask<TEntity> AddAsync<TEntity>(TEntity entity, CancellationToken ct) where TEntity : IDbPersistable => new(entity);
 	public ValueTask<TEntity> GetByAsync<TEntity>(IQueryable<TEntity> expression, CancellationToken ct) where TEntity : IDbPersistable => default;
 	public ValueTask<TEntity> GetByIdAsync<TId, TEntity>(TId id, CancellationToken ct) where TEntity : IDbPersistable => default;
+	public ValueTask<TEntity[]> GetByIdsAsync<TId, TEntity>(IEnumerable<TId> ids, CancellationToken ct) where TEntity : IDbPersistable => new(Array.Empty<TEntity>());
 	public ValueTask<TEntity[]> GetGroupAsync<TEntity>(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken ct) where TEntity : IDbPersistable => new(Array.Empty<TEntity>());
 	public ValueTask<TEntity> UpdateAsync<TEntity>(TEntity entity, CancellationToken ct) where TEntity : IDbPersistable => new(entity);
 	public ValueTask<bool> RemoveAsync<TEntity>(TEntity entity, CancellationToken ct) where TEntity : IDbPersistable => new(true);

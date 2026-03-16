@@ -51,7 +51,7 @@ public static class SchemaMigrator
 	/// Compares entity schemas with database column metadata and returns differences.
 	/// </summary>
 	/// <param name="entities">Entity schemas to compare.</param>
-	/// <param name="dbColumns">Database columns read via <see cref="ReadDbSchemaAsync"/>.</param>
+	/// <param name="dbColumns">Database columns read via <see cref="ISqlDialect.ReadDbSchemaAsync"/>.</param>
 	/// <param name="dialect">SQL dialect for type name resolution.</param>
 	/// <param name="skipComputed">Skip computed (calculated) database columns.</param>
 	/// <returns>List of differences found.</returns>

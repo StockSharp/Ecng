@@ -53,6 +53,14 @@ public interface IStorage : IQueryContext
 	ValueTask<TEntity> GetByIdAsync<TId, TEntity>(TId id, CancellationToken cancellationToken) where TEntity : IDbPersistable;
 
 	/// <summary>
+	/// Asynchronously retrieves multiple entities by their primary key identifiers using a single IN query.
+	/// Results are returned in the same order as input <paramref name="ids"/>.
+	/// Duplicate input ids produce duplicate entries in the result.
+	/// IDs not found in the database are silently skipped.
+	/// </summary>
+	ValueTask<TEntity[]> GetByIdsAsync<TId, TEntity>(IEnumerable<TId> ids, CancellationToken cancellationToken) where TEntity : IDbPersistable;
+
+	/// <summary>
 	/// Asynchronously retrieves a paged group of entities with sorting.
 	/// </summary>
 	ValueTask<TEntity[]> GetGroupAsync<TEntity>(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken) where TEntity : IDbPersistable;
