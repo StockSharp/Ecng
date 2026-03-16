@@ -223,6 +223,8 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (IsReadOnly)
 			throw new ReadOnlyException();
 
+		entity = await OnUpdate(entity, cancellationToken);
+
 		if (BulkLoad && BulkInitialized())
 		{
 			var id = GetCacheId(entity);
@@ -243,7 +245,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 				await IncrementCount(cancellationToken);
 		}
 
-		return await OnUpdate(entity, cancellationToken);
+		return entity;
 	}
 
 	private async ValueTask IncrementCount(CancellationToken cancellationToken)
