@@ -39,7 +39,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	private static IQueryable<T> CreateQueryable<T>()
 		=> new DefaultQueryable<T>(new DefaultQueryProvider<T>(new DummyQueryContext()), null);
 
-	private static string GenerateSql<TSource>(IQueryable queryable)
+	private static (string sql, IDictionary<string, (Type, object)> parameters) TranslateSql<TSource>(IQueryable queryable)
 	{
 		var expression = queryable.Expression;
 		var meta = SchemaRegistry.Get(typeof(TSource));
@@ -49,9 +49,13 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
 		var translator = Activator.CreateInstance(translatorType, [meta]);
 		var query = (Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [expression]);
+		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
 
-		return query.Render(_dialect);
+		return (query.Render(_dialect), parameters);
 	}
+
+	private static string GenerateSql<TSource>(IQueryable queryable)
+		=> TranslateSql<TSource>(queryable).sql;
 
 	[TestMethod]
 	public void SubqueryAny_ShouldNotProduceEmptyAlias()
@@ -226,6 +230,42 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 			$"SQL must include JOIN to Ecng_TestCategory, got: {sql}");
 		sql.Contains("[Ecng_TestPerson]").AssertTrue(
 			$"SQL must include JOIN to Ecng_TestPerson, got: {sql}");
+	}
+	// Helper that produces same closure field name "value" for both calls
+	private static IQueryable<TestItem> FilterByName(IQueryable<TestItem> q, string value)
+		=> q.Where(x => x.Name == value);
+
+	[TestMethod]
+	public void Concat_DifferentConstants_ParametersPreserved()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// Same closure field name "value" → same parameter base name → collision without fix
+		var left = FilterByName(items, "AAA");
+		var right = FilterByName(items, "BBB");
+		var query = left.Concat(right);
+
+		var (sql, parameters) = TranslateSql<TestItem>(query);
+
+		var values = parameters.Values.Select(v => v.Item2).ToArray();
+		values.AssertContains("AAA");
+		values.AssertContains("BBB");
+	}
+
+	[TestMethod]
+	public void Union_DifferentConstants_ParametersPreserved()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var left = FilterByName(items, "XXX");
+		var right = FilterByName(items, "YYY");
+		var query = left.Union(right);
+
+		var (sql, parameters) = TranslateSql<TestItem>(query);
+
+		var values = parameters.Values.Select(v => v.Item2).ToArray();
+		values.AssertContains("XXX");
+		values.AssertContains("YYY");
 	}
 }
 

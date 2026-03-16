@@ -23,6 +23,9 @@ public enum SchemaDiffKind
 
 	/// <summary>Column nullability differs between entity and database.</summary>
 	NullabilityMismatch,
+
+	/// <summary>Column max length differs between entity and database.</summary>
+	MaxLengthMismatch,
 }
 
 /// <summary>
@@ -98,6 +101,13 @@ public static class SchemaMigrator
 						expectedType, actualType));
 				}
 
+				// compare max length
+				if (col.MaxLength > 0 && dbCol.MaxLength is not null && col.MaxLength != dbCol.MaxLength)
+				{
+					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MaxLengthMismatch,
+						col.MaxLength.ToString(), dbCol.MaxLength.Value.ToString()));
+				}
+
 				dbCols.Remove(col.Name);
 			}
 
@@ -143,7 +153,9 @@ public static class SchemaMigrator
 					var colDefs = new List<string>();
 
 					if (schema.Identity is not null)
-						colDefs.Add($"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} {dialect.GetIdentityColumnSuffix()}");
+					colDefs.Add(schema.Identity.ClrType.IsNumeric()
+						? $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} {dialect.GetIdentityColumnSuffix()}"
+						: $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} PRIMARY KEY");
 
 					foreach (var col in schema.Columns)
 					{
@@ -173,6 +185,7 @@ public static class SchemaMigrator
 
 				case SchemaDiffKind.TypeMismatch:
 				case SchemaDiffKind.NullabilityMismatch:
+				case SchemaDiffKind.MaxLengthMismatch:
 				{
 					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
 						break;

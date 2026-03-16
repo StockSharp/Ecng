@@ -454,6 +454,54 @@ public class ColumnAttributeTests : BaseTestClass
 		diffs.Count.AssertEqual(0);
 	}
 
+	[TestMethod]
+	public void Compare_MaxLengthMismatch_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 64 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Name", "nvarchar", false, 256, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Any(d => d.ColumnName == "Name").AssertTrue("MaxLength mismatch should be detected");
+	}
+
+	[TestMethod]
+	public void Compare_MaxLengthMatch_NoDiff()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 128 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Name", "nvarchar", false, 128, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+
+		diffs.Count.AssertEqual(0);
+	}
+
 	#endregion
 
 	#region SchemaMigrator.GenerateMigrationSql
@@ -583,6 +631,33 @@ public class ColumnAttributeTests : BaseTestClass
 		sql.Contains("[Id]").AssertTrue($"Expected identity column in SQL: {sql}");
 		sql.Contains("[Name]").AssertTrue($"Expected Name column in SQL: {sql}");
 		sql.Contains("[Value]").AssertTrue($"Expected Value column in SQL: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_MissingTable_GuidIdentity_NoAutoIncrement()
+	{
+		var schema = new Schema
+		{
+			TableName = "GuidTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(Guid), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("GuidTable", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("IDENTITY(1,1)").AssertFalse($"GUID identity should not have IDENTITY(1,1): {sql}");
+		sql.Contains("PRIMARY KEY").AssertTrue($"GUID identity should still be PRIMARY KEY: {sql}");
+		sql.Contains("UNIQUEIDENTIFIER").AssertTrue($"Expected UNIQUEIDENTIFIER type: {sql}");
 	}
 
 	[TestMethod]

@@ -439,11 +439,12 @@ class Context
 		}
 	}
 
+	public int ParamCountOffset;
+
 	public string TryAddParam(string name, Type type, object value)
 	{
-		name += Parameters.Count;
+		name += Parameters.Count + ParamCountOffset;
 
-		//if (!Parameters.ContainsKey(name))
 		Parameters.Add(name, (type, value));
 
 		return name;

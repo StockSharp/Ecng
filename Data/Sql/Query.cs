@@ -920,7 +920,7 @@ public class Query
 			{
 				var def = $"{dialect.QuoteIdentifier(kv.Key)} {dialect.GetSqlTypeName(kv.Value)}";
 				if (identityColumn is not null && kv.Key.EqualsIgnoreCase(identityColumn))
-					def += " " + dialect.GetIdentityColumnSuffix();
+					def += " " + (kv.Value.IsNumeric() ? dialect.GetIdentityColumnSuffix() : "PRIMARY KEY");
 				return def;
 			}).JoinCommaSpace();
 

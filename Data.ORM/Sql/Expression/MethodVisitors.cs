@@ -1689,7 +1689,7 @@ class ConcatVisitor<T> : EnumerableAndQueryableVisitor<T>
 
 		foreach (var arg in mce.Arguments)
 		{
-			translator.Context = new();
+			translator.Context = new() { ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
 			translator.Visit(arg);
 
 			translator.Context.Build(schema).CopyTo(ctx.Curr);
@@ -1724,7 +1724,7 @@ class UnionVisitor<T> : EnumerableAndQueryableVisitor<T>
 
 		foreach (var arg in mce.Arguments)
 		{
-			translator.Context = new();
+			translator.Context = new() { ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
 			translator.Visit(arg);
 
 			translator.Context.Build(schema).CopyTo(ctx.Curr);
