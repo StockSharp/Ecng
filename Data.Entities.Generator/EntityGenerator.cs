@@ -474,9 +474,11 @@ public class EntityGenerator : IIncrementalGenerator
 		{
 			var parts = new List<string> { $"Name = nameof({prop.Name})" };
 
+			var unwrapped = UnwrapNullable(prop.Type);
+
 			if (IsRelationSingle(prop))
 				parts.Add("ClrType = typeof(long)");
-			else if (prop.Type.TypeKind == TypeKind.Enum)
+			else if (unwrapped.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(prop.Type)})");
 			else if (GetMappedDbType(prop.Type) is { } mappedMetaType)
 				parts.Add($"ClrType = typeof({mappedMetaType})");
@@ -517,10 +519,11 @@ public class EntityGenerator : IIncrementalGenerator
 			}
 
 			var parts = new List<string> { $"Name = \"{colName}\"" };
+			var unwrappedInner = UnwrapNullable(inner.Type);
 
 			if (IsRelationSingle(inner))
 				parts.Add("ClrType = typeof(long)");
-			else if (inner.Type.TypeKind == TypeKind.Enum)
+			else if (unwrappedInner.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
 			else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)
 				parts.Add($"ClrType = typeof({mappedInnerMetaType})");

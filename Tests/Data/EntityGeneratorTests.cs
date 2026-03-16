@@ -133,6 +133,30 @@ public class EntityGeneratorTests : BaseTestClass
 
 	#endregion
 
+	#region Enum properties
+
+	[TestMethod]
+	public void Generated_Enum_ClrTypeIsUnderlyingInt()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestEnumEntity));
+		var col = schema.Columns.First(c => c.Name == "Status");
+
+		col.ClrType.AssertEqual(typeof(int));
+		col.IsNullable.AssertFalse();
+	}
+
+	[TestMethod]
+	public void Generated_NullableEnum_ClrTypeIsUnderlyingInt()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestEnumEntity));
+		var col = schema.Columns.First(c => c.Name == "NullableStatus");
+
+		col.ClrType.AssertEqual(typeof(int));
+		col.IsNullable.AssertTrue();
+	}
+
+	#endregion
+
 	#region Identity type
 
 	[TestMethod]

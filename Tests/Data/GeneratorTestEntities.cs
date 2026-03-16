@@ -99,6 +99,23 @@ public partial class GenTestNullableInnerEntity : GenTestBaseEntity
 	public string Code { get; set; }
 }
 
+// ===== Enum tests =====
+
+public enum GenTestStatus
+{
+	Active,
+	Inactive,
+	Deleted,
+}
+
+[Entity(Name = "Ecng_EnumTest")]
+public partial class GenTestEnumEntity : GenTestBaseEntity
+{
+	public GenTestStatus Status { get; set; }
+	public GenTestStatus? NullableStatus { get; set; }
+	public string Label { get; set; }
+}
+
 // ===== Shared inner schema types for deep nullable propagation tests =====
 
 /// <summary>Level 4 (deepest leaf).</summary>
