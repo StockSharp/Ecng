@@ -59,7 +59,7 @@ public static class SchemaMigrator
 		IEnumerable<Schema> entities,
 		IReadOnlyList<DbColumnInfo> dbColumns,
 		ISqlDialect dialect,
-		bool skipComputed = false)
+		bool skipComputed)
 	{
 		var diffs = new List<SchemaDiff>();
 

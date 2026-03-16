@@ -319,7 +319,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Name", "nvarchar", false, 128, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(1);
 		diffs[0].Kind.AssertEqual(SchemaDiffKind.MissingColumn);
@@ -346,7 +346,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Obsolete", "int", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.Kind == SchemaDiffKind.ExtraColumn && d.ColumnName == "Obsolete").AssertTrue();
 	}
@@ -370,7 +370,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Phone", "nvarchar", false, -1, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(1);
 		diffs[0].Kind.AssertEqual(SchemaDiffKind.NullabilityMismatch);
@@ -397,7 +397,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Status", "int", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.Kind == SchemaDiffKind.TypeMismatch && d.ColumnName == "Status").AssertTrue();
 	}
@@ -423,7 +423,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Value", "int", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
 	}
@@ -449,7 +449,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestView", "Extra", "int", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
 	}
@@ -473,7 +473,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Name", "nvarchar", false, 256, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Name").AssertTrue("MaxLength mismatch should be detected");
 	}
@@ -497,7 +497,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Name", "nvarchar", false, 128, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
 	}
@@ -525,7 +525,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Price", "decimal", false, null, 10, 2),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Price").AssertTrue(
 			"Decimal precision/scale mismatch (18,8 vs 10,2) should be detected");
@@ -551,7 +551,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Rate", "decimal", false, null, 18, 2),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Rate").AssertTrue(
 			"Scale mismatch (8 vs 2) should be detected even when precision matches");
@@ -576,7 +576,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Price", "decimal", false, null, 10, 2),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Price").AssertFalse(
 			"Matching precision/scale should not produce a diff");
@@ -602,7 +602,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Created", "datetime2", false, null, 3, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Created").AssertTrue(
 			"DateTime precision mismatch (7 vs 3) should be detected");
@@ -628,7 +628,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Modified", "datetimeoffset", false, null, 3, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Any(d => d.ColumnName == "Modified").AssertTrue(
 			"DateTimeOffset precision mismatch (7 vs 3) should be detected");
@@ -807,7 +807,7 @@ public class ColumnAttributeTests : BaseTestClass
 		};
 
 		// empty DB columns — table doesn't exist
-		var diffs = SchemaMigrator.Compare([schema], [], SqlServerDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], [], SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(1);
 		diffs[0].Kind.AssertEqual(SchemaDiffKind.MissingTable);
@@ -838,7 +838,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "ExternalId", "uuid", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, PostgreSqlDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, PostgreSqlDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
 	}
@@ -866,7 +866,7 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbColumnInfo("TestTable", "Data", "BLOB", false, null, null, null),
 		};
 
-		var diffs = SchemaMigrator.Compare([schema], dbCols, SQLiteDialect.Instance);
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SQLiteDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
 	}
