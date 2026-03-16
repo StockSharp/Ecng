@@ -151,6 +151,9 @@ internal class AdoTable : IDatabaseTable
 		if (columns.Count == 0)
 			return;
 
+		if (columns.Count > Dialect.MaxParameters)
+			throw new ArgumentException($"Row has {columns.Count} columns but dialect allows at most {Dialect.MaxParameters} parameters per statement.");
+
 		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
 		// Calculate batch size based on number of columns to stay within parameter limit

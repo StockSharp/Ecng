@@ -1069,15 +1069,9 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		// This should be validated BEFORE hitting the database
 		(columnCount > maxParams).AssertTrue("Test setup: columns should exceed MaxParameters");
 
-		// Currently no validation - insert may succeed if actual DB limit is higher,
-		// or fail with cryptic database error if limit is enforced
-		// Proper behavior: throw ArgumentException before touching the database
-		await table.BulkInsertAsync(rows, CancellationToken);
-
-		// If we got here, database accepted it (actual limit > configured limit)
-		// But code should still validate against configured MaxParameters
-		Console.WriteLine($"WARNING: BulkInsert succeeded with {columnCount} columns but MaxParameters={maxParams}");
-		Console.WriteLine("Code should validate columns.Count <= MaxParameters before executing SQL");
+		// BulkInsertAsync should throw ArgumentException when columns exceed MaxParameters
+		await Assert.ThrowsExactlyAsync<ArgumentException>(
+			() => table.BulkInsertAsync(rows, CancellationToken));
 
 		// Cleanup
 		await table.DropAsync(CancellationToken);
