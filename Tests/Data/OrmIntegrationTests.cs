@@ -1876,6 +1876,101 @@ public class OrmIntegrationTests : BaseTestClass
 		}
 		finally
 		{
+			_db.ClearBulkLoad();
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	[TestMethod]
+	public async Task BulkLoad_GetById_FallsBackToDb_WhenNotInCache()
+	{
+		// ReadAsync returns null for ids beyond bulk cache cap instead of querying DB.
+		EnsureDb();
+
+		_db.MaxBulkLoadRows = 3;
+
+		try
+		{
+			// Insert 7 rows — bulk cache will hold only 3 (lowest ids)
+			var items = new List<TestItem>();
+			for (var i = 0; i < 7; i++)
+				items.Add(await InsertItem($"BulkById{i}"));
+
+			Storage.AddBulkLoad<TestItem>();
+
+			// Trigger bulk cache init
+			await Storage.GetCountAsync<TestItem>(CancellationToken);
+
+			// Last item has highest id — NOT in bulk cache
+			var lastItem = items[^1];
+			var loaded = await Storage.GetByIdAsync<long, TestItem>(lastItem.Id, CancellationToken);
+
+			loaded.AssertNotNull($"GetById should fall back to DB when id {lastItem.Id} is not in bulk cache");
+			loaded.Name.AssertEqual(lastItem.Name);
+		}
+		finally
+		{
+			_db.ClearBulkLoad();
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	[TestMethod]
+	public async Task BulkLoad_GetById_CachesDbMiss_ReturnsNullFast()
+	{
+		// After DB confirms id doesn't exist, subsequent calls should return null
+		// without hitting DB again.
+		EnsureDb();
+
+		_db.MaxBulkLoadRows = 3;
+
+		try
+		{
+			await InsertItem("OnlyOne");
+			Storage.AddBulkLoad<TestItem>();
+
+			// Non-existent id — should return null
+			var missing = await Storage.GetByIdAsync<long, TestItem>(999999, CancellationToken);
+			missing.AssertNull("Non-existent id should return null");
+
+			// Second call — should also return null (cached miss)
+			var missing2 = await Storage.GetByIdAsync<long, TestItem>(999999, CancellationToken);
+			missing2.AssertNull("Repeated call for non-existent id should still return null");
+		}
+		finally
+		{
+			_db.ClearBulkLoad();
+			_db.MaxBulkLoadRows = 100000;
+		}
+	}
+
+	[TestMethod]
+	public async Task BulkLoad_LinqWhere_QueriesFullDb_NotTruncatedCache()
+	{
+		// LINQ queries over bulk-loaded entities execute against truncated in-memory set
+		// instead of querying the full database.
+		EnsureDb();
+
+		_db.MaxBulkLoadRows = 3;
+
+		try
+		{
+			for (var i = 0; i < 7; i++)
+				await InsertItem($"LinqItem{i}", priority: i + 1);
+
+			Storage.AddBulkLoad<TestItem>();
+
+			// LINQ Where — should find all 7, not just the 3 in cache
+			var results = await Query<TestItem>()
+				.Where(x => x.Priority > 0)
+				.ToArrayAsyncEx(CancellationToken);
+
+			results.Length.AssertEqual(7,
+				$"LINQ query should return all 7 rows from DB, not {results.Length} from truncated cache");
+		}
+		finally
+		{
+			_db.ClearBulkLoad();
 			_db.MaxBulkLoadRows = 100000;
 		}
 	}

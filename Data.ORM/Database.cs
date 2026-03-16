@@ -290,6 +290,11 @@ public class Database : Disposable, IStorage
 	void IStorage.AddBulkLoad<TEntity>() => _bulkLoad.Add(typeof(TEntity), new(this, SchemaRegistry.Get(typeof(TEntity))));
 
 	/// <summary>
+	/// Removes all bulk-load registrations and their cached data.
+	/// </summary>
+	public void ClearBulkLoad() => _bulkLoad.Clear();
+
+	/// <summary>
 	/// Creates and opens a new database connection asynchronously.
 	/// </summary>
 	public async ValueTask<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken)
@@ -497,15 +502,21 @@ public class Database : Disposable, IStorage
 		var by = meta.Identity ?? throw new ArgumentException(meta.EntityType.AssemblyQualifiedName);
 		var key = (meta.EntityType, by.Name, id);
 
+		BulkLoadInfo bulkInfo = null;
+
 		if (!meta.NoCache)
 		{
 			if (_bulkLoad.TryGetValue(meta.EntityType, out var info))
 			{
 				if (!Scope<BulkLoadInfo>.All.Any(i => i.Value.Meta == meta))
 				{
+					bulkInfo = info;
 					var dict = await info.EnsureInit(cancellationToken);
-					var entity = dict.TryGetValue(id);
-					return entity;
+
+					if (dict.TryGetValue(id, out var cached))
+						return cached;
+
+					// cache miss — fall through to DB query below
 				}
 			}
 
@@ -544,6 +555,13 @@ public class Database : Disposable, IStorage
 			var input = UngroupSource(meta, new[] { idItem });
 
 			var entity = await Read(command, meta, input, cancellationToken);
+
+			// cache result (or null) back into bulk dict so subsequent lookups are fast
+			if (bulkInfo is not null)
+			{
+				var dict = await bulkInfo.EnsureInit(cancellationToken);
+				dict[id] = entity;
+			}
 
 			if (!meta.NoCache && entity is null)
 			{
@@ -1134,30 +1152,17 @@ public class Database : Disposable, IStorage
 					var db = _parent._database;
 					var exp = _parent._expression;
 
-					if (db._bulkLoad.TryGetValue(typeof(TResult), out var info))
-					{
-						var dict = await info.EnsureInit(_cancellationToken);
+					var (translator, query, _) = GetQuery<TSource>(exp);
+					var (command, input) = db.CreateCommand(query, translator);
 
-						var source = dict.CachedValues.Cast<TResult>().AsQueryable();
+					var table = await db.ExecuteTable(command, input, _cancellationToken);
 
-						exp.ReplaceSource(source.Provider);
+					var buffer = _meta is null
+						? [.. ((IEnumerable<object>)table.First().Value).Select(e => e.To<TResult>())]
+						: await db.GetOrAddCacheTable<TResult>(_meta, table, _cancellationToken)
+					;
 
-						_underlying = new EnumerableQuery<TResult>(exp).ToAsyncEnumerable().GetAsyncEnumerator(_cancellationToken);
-					}
-					else
-					{
-						var (translator, query, _) = GetQuery<TSource>(exp);
-						var (command, input) = db.CreateCommand(query, translator);
-
-						var table = await db.ExecuteTable(command, input, _cancellationToken);
-
-						var buffer = _meta is null
-							? [.. ((IEnumerable<object>)table.First().Value).Select(e => e.To<TResult>())]
-							: await db.GetOrAddCacheTable<TResult>(_meta, table, _cancellationToken)
-						;
-
-						_underlying = buffer.ToAsyncEnumerable().GetAsyncEnumerator(_cancellationToken);
-					}
+					_underlying = buffer.ToAsyncEnumerable().GetAsyncEnumerator(_cancellationToken);
 				}
 
 				return await _underlying.MoveNextAsync();
@@ -1230,29 +1235,6 @@ public class Database : Disposable, IStorage
 	/// </summary>
 	public async ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression)
 	{
-		if (_bulkLoad.TryGetValue(typeof(TSource), out var info))
-		{
-			var mce = (MethodCallExpression)expression;
-
-			var dict = await info.EnsureInit(mce.Arguments.Count == 2 ? mce.Arguments[1].GetConstant<CancellationToken>() : default);
-
-			var queryable = dict.CachedValues.Cast<TSource>().AsQueryable();
-
-			expression.ReplaceSource(queryable.Provider);
-
-			if (mce.Method.Name == nameof(QueryableExtensions.CountAsync))
-			{
-				expression = Expression.Call(null, QueryableExtensions.GetMethodInfo<IQueryable<TSource>, int>(Queryable.Count, default), [mce.Arguments[0]]);
-			}
-			else if (mce.Method.Name == nameof(QueryableExtensions.FirstOrDefaultAsync))
-			{
-				expression = Expression.Call(null, QueryableExtensions.GetMethodInfo<IQueryable<TSource>, TSource>(Queryable.FirstOrDefault, default), [mce.Arguments[0]]);
-			}
-
-			var res = expression.Evaluate();
-			return res.To<TResult>();
-		}
-
 		var (translator, query, token) = GetQuery<TSource>(expression);
 		var (command, input) = CreateCommand(query, translator);
 
