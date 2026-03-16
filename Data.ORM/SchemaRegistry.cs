@@ -211,7 +211,7 @@ public static class SchemaRegistry
 			else if ((propType.IsClass || propType.IsValueType) && IsInnerSchemaType(propType, visiting))
 			{
 				var innerOverrides = GetNameOverrides(prop);
-				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting, outerNullable);
+				FlattenInnerSchema(propType, colName, innerOverrides, columns, visiting, isNullable);
 			}
 		}
 	}
@@ -317,7 +317,10 @@ public static class SchemaRegistry
 					continue;
 				}
 
-				// simple property
+				// simple property — skip unsupported complex types (e.g. circular references)
+				if (!IsSimpleType(prop.PropertyType))
+					continue;
+
 				var clrType = propType.IsEnum
 					? Enum.GetUnderlyingType(propType)
 					: prop.PropertyType;
