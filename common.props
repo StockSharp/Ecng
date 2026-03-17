@@ -45,7 +45,6 @@
 
   <PropertyGroup Condition="
         '$(MSBuildProjectName)' == 'Net.HPSocket' or
-        '$(MSBuildProjectName)' == 'SmartFormat' or
         '$(MSBuildProjectName)' == 'StringSearch' or
         '$(MSBuildProjectName)' == 'Tests'
       ">

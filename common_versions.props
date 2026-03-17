@@ -44,5 +44,6 @@
     <OpenXmlVer>3.*</OpenXmlVer>
     <SharpCompressVer>0.38.*</SharpCompressVer>
     <NpgsqlVer>10.*</NpgsqlVer>
+    <SmartFormatVer>3.*</SmartFormatVer>
   </PropertyGroup>
 </Project>

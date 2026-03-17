@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 using SmartFormat;
 using SmartFormat.Core.Extensions;
+using SmartFormat.Utilities;
 
 /// <summary>
 /// Provides helper methods for string operations.
@@ -106,6 +107,10 @@ public static class StringHelper
 	{
 		Smart.Default.AddExtensions(new DictionarySourceEx());
 
+		// register Uzbek and Kyrgyz plural rules (not yet in SmartFormat.NET upstream)
+		PluralRules.IsoLangToDelegate.TryAdd("uz", PluralRules.GetPluralRule("kk"));
+		PluralRules.IsoLangToDelegate.TryAdd("ky", PluralRules.GetPluralRule("kk"));
+
 		// https://stackoverflow.com/a/47017180
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 	}
@@ -189,22 +194,6 @@ public static class StringHelper
 			throw new ArgumentNullException(nameof(args));
 
 		return args.Length == 0 ? str : Smart.Format(str, args);
-	}
-
-	/// <summary>
-	/// Asynchronously formats the string using Smart.Format with the provided arguments.
-	/// </summary>
-	/// <param name="str">The format string.</param>
-	/// <param name="args">The arguments to format the string with.</param>
-	/// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
-	/// <returns>A ValueTask containing the formatted string.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when args is null.</exception>
-	public static ValueTask<string> PutExAsync(this string str, object[] args, CancellationToken cancellationToken)
-	{
-		if (args is null)
-			throw new ArgumentNullException(nameof(args));
-
-		return args.Length == 0 ? new(str) : Smart.FormatAsync(str, args, cancellationToken);
 	}
 
 	private static Type GetGenericType(this Type targetType, Type genericType)

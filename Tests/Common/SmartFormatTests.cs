@@ -2,9 +2,14 @@
 
 using SmartFormat;
 
+using Ecng.Common;
+
 [TestClass]
 public class SmartFormatTests
 {
+	// force StringHelper static ctor to register uz/ky plural rules
+	private static readonly bool _initialized = "".IsEmpty();
+
 	private static readonly Dictionary<string, string> CultureCodes = new()
 	{
 		{ "en", "en-US" },
@@ -53,7 +58,7 @@ public class SmartFormatTests
 		{ "ar", "{0} {0:يوم|يومان|أيام قليلة|أيام كثيرة|أيام|أيام}" },
 		{ "bn", "{0} {0:দিন|দিন}" },
 		{ "ca", "{0} {0:dia|dies}" },
-		{ "cs", "{0} {0:den|dny|dnů}" },
+		{ "cs", "{0} {0:dní|den|dny|dní|dne}" },
 		{ "da", "{0} {0:dag|dage}" },
 		{ "de", "{0} {0:Tag|Tage}" },
 		{ "el", "{0} {0:ημέρα|ημέρες}" },
@@ -72,7 +77,7 @@ public class SmartFormatTests
 		{ "nl", "{0} {0:dag|dagen}" },
 		{ "no", "{0} {0:dag|dager}" },
 		{ "pa", "{0} {0:ਦਿਨ|ਦਿਨ}" },
-		{ "pl", "{0} {0:dzień|dni|dni}" },
+		{ "pl", "{0} {0:dzień|dni|dni|dnia}" },
 		{ "pt", "{0} {0:dia|dias}" },
 		{ "ro", "{0} {0:zi|zile|zile}" },
 		{ "ru", "{0} {0:день|дня|дней}" },

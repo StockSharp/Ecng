@@ -64,46 +64,6 @@ public class StringTests : BaseTestClass
 		}
 	}
 
-	private class SmartFormatSubObj
-	{
-		public int PropSync { get; } = 1;
-		public ValueTask<int> PropAsync(CancellationToken token) => new(2);
-		public Task<int> PropAsync2(CancellationToken token) => 3.FromResult();
-	}
-
-	private class SmartFormatObj
-	{
-		public int PropSync { get; } = 1;
-		public ValueTask<int> PropAsync(CancellationToken token) => new(2);
-		public Task<int> PropAsync2(CancellationToken token) => 3.FromResult();
-		public SmartFormatSubObj ComplexProp => new();
-		public ValueTask<SmartFormatSubObj> ComplexPropAsync(CancellationToken token) => new(ComplexProp);
-	}
-
-	[TestMethod]
-	public async Task SmartFormatAsync()
-	{
-		var template = @"{PropSync} <> {PropAsync} <> {PropAsync2}";
-		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
-		res.AssertEqual("1 <> 2 <> 3");
-	}
-
-	[TestMethod]
-	public async Task SmartFormatComplexAsync()
-	{
-		var template = @"{ComplexProp.PropAsync} == {ComplexPropAsync.PropAsync}";
-		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
-		res.AssertEqual("2 == 2");
-	}
-
-	[TestMethod]
-	public async Task SmartFormatComplex2Async()
-	{
-		var template = @"{ComplexProp.PropAsync2} == {ComplexPropAsync.PropAsync2}";
-		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
-		res.AssertEqual("3 == 3");
-	}
-
 	[TestMethod]
 	public void Truncate()
 	{
