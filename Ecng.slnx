@@ -47,7 +47,6 @@
   <Project Path="Security/Security.csproj" />
   <Project Path="Serialization/Serialization.csproj" />
   <Project Path="Server.Utils/Server.Utils.csproj" />
-  <Project Path="SmartFormat/SmartFormat.csproj" />
   <Project Path="StringSearch/StringSearch.csproj" />
   <Project Path="Tests/Tests.csproj" />
   <Project Path="UnitTesting/UnitTesting.csproj" />
