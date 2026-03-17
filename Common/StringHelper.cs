@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 using SmartFormat;
 using SmartFormat.Core.Extensions;
+using SmartFormat.Extensions;
 using SmartFormat.Utilities;
 
 /// <summary>
@@ -105,7 +106,7 @@ public static class StringHelper
 
 	static StringHelper()
 	{
-		Smart.Default.AddExtensions(new DictionarySourceEx());
+		Smart.Default.AddDictionarySourceEx();
 
 		// register Uzbek and Kyrgyz plural rules (not yet in SmartFormat.NET upstream)
 		PluralRules.IsoLangToDelegate.TryAdd("uz", PluralRules.GetPluralRule("kk"));
@@ -113,6 +114,32 @@ public static class StringHelper
 
 		// https://stackoverflow.com/a/47017180
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+	}
+
+	/// <summary>
+	/// Adds <see cref="DictionarySourceEx"/> to the formatter.
+	/// Handles <see cref="IDictionary"/> with any key type (enum, int, etc.)
+	/// and returns null for missing keys instead of throwing.
+	/// </summary>
+	public static SmartFormatter AddDictionarySourceEx(this SmartFormatter formatter)
+	{
+		if (formatter is null)
+			throw new ArgumentNullException(nameof(formatter));
+
+		formatter.AddExtensions(new DictionarySourceEx());
+		return formatter;
+	}
+
+	/// <summary>
+	/// Creates a pre-configured <see cref="SmartFormatter"/> with
+	/// <see cref="DictionarySourceEx"/> and <c>DefaultFormatter.Name = "default"</c>.
+	/// </summary>
+	public static SmartFormatter CreateSmartFormatterEx()
+	{
+		var formatter = Smart.CreateDefaultSmartFormat();
+		formatter.AddDictionarySourceEx();
+		formatter.GetFormatterExtension<DefaultFormatter>()!.Name = "default";
+		return formatter;
 	}
 
 	/// <summary>

@@ -1,4 +1,13 @@
-﻿namespace Ecng.Tests.Common;
+﻿using SmartFormat;
+
+namespace Ecng.Tests.Common;
+
+public enum TestDictKey
+{
+	Alpha,
+	Beta,
+	Gamma,
+}
 
 [TestClass]
 public class StringTests : BaseTestClass
@@ -690,5 +699,320 @@ public class StringTests : BaseTestClass
 		// Should return "string-value", not fail or return "int-value"
 		result2.AssertEqual("string-value",
 			"Same selector with different key types should work independently");
+	}
+
+	/// <summary>
+	/// Default SmartFormat resolves enum-keyed dictionaries via IDictionary ToString() fallback,
+	/// but DictionarySourceEx uses precise type conversion via To&lt;T&gt;() which is more reliable.
+	/// This test documents that both approaches work for simple enum keys.
+	/// </summary>
+	[TestMethod]
+	public void DefaultSmartFormat_EnumDictViaToString()
+	{
+		var formatter = Smart.CreateDefaultSmartFormat();
+		var dict = new Dictionary<TestDictKey, object>
+		{
+			{ TestDictKey.Alpha, 100 },
+			{ TestDictKey.Beta, 200 },
+		};
+
+		// default SmartFormat handles enum keys via IDictionary + ToString() comparison
+		formatter.Format("{Alpha};{Beta}", dict).AssertEqual("100;200");
+	}
+
+	/// <summary>
+	/// Verifies that PutEx (Smart.Default with DictionarySourceEx) resolves int-keyed dictionaries.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_IntKeys()
+	{
+		var dict = new Dictionary<int, object>
+		{
+			{ 1, "one" },
+			{ 2, "two" },
+			{ 42, 3.14 },
+		};
+
+		"{1}".PutEx(dict).AssertEqual("one");
+		"{2}".PutEx(dict).AssertEqual("two");
+		"{42}".PutEx(dict).AssertEqual("3.14");
+		"{1};{2}".PutEx(dict).AssertEqual("one;two");
+	}
+
+	/// <summary>
+	/// Verifies that PutEx resolves string-keyed dictionaries.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_StringKeys()
+	{
+		var dict = new Dictionary<string, object>
+		{
+			{ "Name", "Alice" },
+			{ "Age", 30 },
+		};
+
+		"{Name}".PutEx(dict).AssertEqual("Alice");
+		"{Age}".PutEx(dict).AssertEqual("30");
+		"{Name} is {Age}".PutEx(dict).AssertEqual("Alice is 30");
+	}
+
+	/// <summary>
+	/// Verifies that PutEx resolves enum-keyed dictionaries via DictionarySourceEx.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_EnumKeys()
+	{
+		var dict = new Dictionary<TestDictKey, object>
+		{
+			{ TestDictKey.Alpha, 100 },
+			{ TestDictKey.Beta, "hello" },
+			{ TestDictKey.Gamma, 9.99m },
+		};
+
+		"{Alpha}".PutEx(dict).AssertEqual("100");
+		"{Beta}".PutEx(dict).AssertEqual("hello");
+		"{Gamma}".PutEx(dict).AssertEqual("9.99");
+		"{Alpha};{Beta};{Gamma}".PutEx(dict).AssertEqual("100;hello;9.99");
+	}
+
+	/// <summary>
+	/// Verifies that PutEx resolves nested format with enum-keyed dictionary
+	/// (the pattern used in StockSharp TextExporter templates).
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_EnumKeys_NestedFormat()
+	{
+		var wrapper = new
+		{
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				{ TestDictKey.Beta, "hello" },
+			}
+		};
+
+		"{Changes:{Alpha};{Beta}}".PutEx(wrapper).AssertEqual("100;hello");
+	}
+
+	/// <summary>
+	/// Verifies that PutEx resolves long-keyed dictionaries.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_LongKeys()
+	{
+		var dict = new Dictionary<long, object>
+		{
+			{ 1000000000L, "billion" },
+			{ 42L, "answer" },
+		};
+
+		"{1000000000}".PutEx(dict).AssertEqual("billion");
+		"{42}".PutEx(dict).AssertEqual("answer");
+	}
+
+	/// <summary>
+	/// Both Smart.Default and CreateDefaultSmartFormat handle nested ; correctly
+	/// when all keys are present in the dictionary.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_NestedSemicolonAllKeysPresent()
+	{
+		var obj = new
+		{
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				{ TestDictKey.Beta, 200 },
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		// Smart.Default works
+		"{Changes:{Alpha};{Beta};{Gamma}}".PutEx(obj)
+			.AssertEqual("100;200;300");
+
+		// CreateDefaultSmartFormat also works when all keys are present
+		var formatter = Smart.CreateDefaultSmartFormat();
+		formatter.Format("{Changes:{Alpha};{Beta};{Gamma}}", obj)
+			.AssertEqual("100;200;300");
+	}
+
+	/// <summary>
+	/// Default SmartFormat throws when a key is missing from the dictionary.
+	/// This reproduces the real Level1 export error: template references BestAskVolume
+	/// but the dictionary might not contain it.
+	/// </summary>
+	[TestMethod]
+	public void DefaultSmartFormat_MissingKeyThrows()
+	{
+		var obj = new
+		{
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				// Beta is missing!
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		var formatter = Smart.CreateDefaultSmartFormat();
+
+		// missing key Beta → error
+		Throws<SmartFormat.Core.Formatting.FormattingException>(
+			() => formatter.Format("{Changes:{Alpha};{Beta};{Gamma}}", obj));
+	}
+
+	/// <summary>
+	/// DictionarySourceEx (Smart.Default) handles missing keys gracefully — returns null/empty.
+	/// </summary>
+	[TestMethod]
+	public void DictionarySourceEx_MissingKeyReturnsEmpty()
+	{
+		var obj = new
+		{
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				// Beta is missing!
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		// DictionarySourceEx returns null for missing keys → empty string in output
+		"{Changes:{Alpha};{Beta};{Gamma}}".PutEx(obj)
+			.AssertEqual("100;;300");
+	}
+
+	/// <summary>
+	/// AddDictionarySourceEx extension method fixes CreateDefaultSmartFormat for missing keys.
+	/// </summary>
+	[TestMethod]
+	public void AddDictionarySourceEx_FixesMissingKeys()
+	{
+		var obj = new
+		{
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				// Beta is missing!
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		var formatter = Smart.CreateDefaultSmartFormat().AddDictionarySourceEx();
+
+		// after adding DictionarySourceEx — missing keys produce empty output
+		formatter.Format("{Changes:{Alpha};{Beta};{Gamma}}", obj)
+			.AssertEqual("100;;300");
+	}
+
+	/// <summary>
+	/// Colon in format string (like HH:mm:ss) requires :d: prefix,
+	/// otherwise SmartFormat parses colons as selector separators.
+	/// </summary>
+	[TestMethod]
+	public void TimeFormat_ColonRequiresFormatterPrefix()
+	{
+		var dt = new DateTime(2025, 3, 15, 10, 30, 45);
+
+		// simple format without colons — works without prefix
+		"{0:yyyyMMdd}".PutEx(dt).AssertEqual("20250315");
+
+		// with :d: prefix (SmartFormat 3.x DefaultFormatter name)
+		"{0:d:HH\\:mm\\:ss}".PutEx(dt).AssertEqual("10:30:45");
+	}
+
+	/// <summary>
+	/// CreateSmartFormatterEx returns a fully configured formatter:
+	/// DictionarySourceEx + DefaultFormatter.Name = "default".
+	/// </summary>
+	[TestMethod]
+	public void CreateSmartFormatterEx_FullConfig()
+	{
+		var obj = new
+		{
+			ServerTime = new DateTime(2025, 3, 15, 10, 30, 45),
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				// Beta is missing
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		var formatter = StringHelper.CreateSmartFormatterEx();
+
+		// :default: prefix works (DefaultFormatter.Name = "default")
+		formatter.Format("{ServerTime:default:yyyyMMdd}", obj)
+			.AssertEqual("20250315");
+
+		// missing dict keys produce empty output (DictionarySourceEx)
+		formatter.Format("{Changes:{Alpha};{Beta};{Gamma}}", obj)
+			.AssertEqual("100;;300");
+
+		// time format with colons — :default: prefix makes colons safe
+		formatter.Format("{ServerTime:default:HH:mm:ss}", obj)
+			.AssertEqual("10:30:45");
+
+		// full Level1-like template
+		formatter.Format("{ServerTime:default:yyyyMMdd};{ServerTime:default:HH:mm:ss};{Changes:{Alpha};{Gamma}}", obj)
+			.AssertEqual("20250315;10:30:45;100;300");
+	}
+
+	/// <summary>
+	/// Without :default: prefix, colons in time format are parsed as selector separators.
+	/// </summary>
+	[TestMethod]
+	public void CreateSmartFormatterEx_TimeColonsWithoutPrefix()
+	{
+		var obj = new { ServerTime = new DateTime(2025, 3, 15, 10, 30, 45) };
+		var formatter = StringHelper.CreateSmartFormatterEx();
+
+		// {ServerTime:HH:mm:ss} — colons parsed as selector chain ServerTime.HH.mm.ss → error
+		Throws<SmartFormat.Core.Formatting.FormattingException>(
+			() => formatter.Format("{ServerTime:HH:mm:ss}", obj));
+
+		// {ServerTime:default:HH:mm:ss} — works, :default: is the formatter name
+		formatter.Format("{ServerTime:default:HH:mm:ss}", obj)
+			.AssertEqual("10:30:45");
+	}
+
+	/// <summary>
+	/// Contrast: standard formatter fails on missing dict key,
+	/// CreateSmartFormatterEx handles it gracefully.
+	/// </summary>
+	[TestMethod]
+	public void StandardVsEx_MissingDictKey()
+	{
+		var obj = new
+		{
+			ServerTime = new DateTime(2025, 3, 15, 10, 30, 45),
+			Changes = (IDictionary<TestDictKey, object>)new Dictionary<TestDictKey, object>
+			{
+				{ TestDictKey.Alpha, 100 },
+				// Beta is missing
+				{ TestDictKey.Gamma, 300 },
+			}
+		};
+
+		const string template = "{Changes:{Alpha};{Beta};{Gamma}}";
+
+		// standard formatter — throws on missing key
+		var std = Smart.CreateDefaultSmartFormat();
+		Throws<SmartFormat.Core.Formatting.FormattingException>(
+			() => std.Format(template, obj));
+
+		// CreateSmartFormatterEx — missing key → empty string
+		var ex = StringHelper.CreateSmartFormatterEx();
+		ex.Format(template, obj).AssertEqual("100;;300");
+	}
+
+	/// <summary>
+	/// AddDictionarySourceEx validates null argument.
+	/// </summary>
+	[TestMethod]
+	public void AddDictionarySourceEx_NullThrows()
+	{
+		Throws<ArgumentNullException>(() => ((SmartFormatter)null).AddDictionarySourceEx());
 	}
 }
