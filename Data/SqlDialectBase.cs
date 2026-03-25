@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 public abstract class SqlDialectBase : ISqlDialect
 {
 	/// <inheritdoc />
+	public virtual string BatchSeparator => string.Empty;
+
+	/// <inheritdoc />
 	public abstract int MaxParameters { get; }
 
 	/// <inheritdoc />
@@ -109,6 +112,12 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendUpdateWhereNull(StringBuilder sb, string tableName, string columnName, string defaultLiteral)
+	{
+		sb.Append($"UPDATE {QuoteIdentifier(tableName)} SET {QuoteIdentifier(columnName)} = {defaultLiteral} WHERE {QuoteIdentifier(columnName)} IS NULL;");
 	}
 
 	/// <inheritdoc />

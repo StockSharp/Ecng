@@ -3,6 +3,8 @@ namespace Ecng.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 /// <summary>
 /// Interface for database-specific SQL dialect.
 /// Provides SQL syntax variations for different database providers.
@@ -237,6 +239,51 @@ public interface ISqlDialect
 				sb.Append(" and ");
 			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
 		}
+	}
+
+	/// <summary>
+	/// Gets the batch separator for this dialect (e.g. "GO" for SQL Server).
+	/// Empty string means no batch separation is needed.
+	/// </summary>
+	string BatchSeparator => string.Empty;
+
+	/// <summary>
+	/// Appends UPDATE ... SET column = value WHERE column IS NULL statement.
+	/// Used during migration to fill default values before altering nullability.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">Table name (unquoted).</param>
+	/// <param name="columnName">Column name (unquoted).</param>
+	/// <param name="defaultLiteral">SQL literal for the default value.</param>
+	void AppendUpdateWhereNull(StringBuilder sb, string tableName, string columnName, string defaultLiteral)
+	{
+		sb.Append($"UPDATE {QuoteIdentifier(tableName)} SET {QuoteIdentifier(columnName)} = {defaultLiteral} WHERE {QuoteIdentifier(columnName)} IS NULL;");
+	}
+
+	/// <summary>
+	/// Gets a SQL literal representing the default value for the given CLR type.
+	/// Used during migration to fill NOT NULL columns before altering nullability.
+	/// </summary>
+	/// <param name="clrType">CLR type.</param>
+	/// <returns>SQL literal string (e.g. "N''" for string, "0" for int).</returns>
+	string GetDefaultLiteral(Type clrType)
+	{
+		clrType = clrType.IsNullable() ? clrType.GetUnderlyingType() : clrType;
+
+		if (clrType == typeof(string))
+			return "N''";
+		if (clrType == typeof(bool))
+			return "0";
+		if (clrType == typeof(DateTime) || clrType == typeof(DateTimeOffset))
+			return "'0001-01-01T00:00:00'";
+		if (clrType == typeof(Guid))
+			return "'00000000-0000-0000-0000-000000000000'";
+		if (clrType == typeof(byte[]))
+			return "0x";
+		if (clrType.IsNumeric())
+			return "0";
+
+		return "N''";
 	}
 
 	/// <summary>

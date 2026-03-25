@@ -660,8 +660,10 @@ public class ColumnAttributeTests : BaseTestClass
 		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
 
 		sql.Contains("[Email]").AssertTrue($"Expected column name in SQL: {sql}");
-		sql.Contains("NVARCHAR(256) NOT NULL").AssertTrue($"Expected column def in SQL: {sql}");
 		sql.Contains("ADD").AssertTrue($"Expected ADD in SQL: {sql}");
+		// NOT NULL column → 3-step: ADD NULL, UPDATE default, ALTER NOT NULL
+		sql.Contains("NVARCHAR(256) NULL").AssertTrue($"Expected ADD as NULL first: {sql}");
+		sql.Contains("NVARCHAR(256) NOT NULL").AssertTrue($"Expected NOT NULL in ALTER: {sql}");
 	}
 
 	[TestMethod]
@@ -732,7 +734,10 @@ public class ColumnAttributeTests : BaseTestClass
 
 		var sql = SchemaMigrator.GenerateMigrationSql(PostgreSqlDialect.Instance, diffs, [schema]);
 
-		sql.Contains("VARCHAR(256) NOT NULL").AssertTrue($"Expected VARCHAR(256) in SQL: {sql}");
+		// NOT NULL column → 3-step migration: ADD NULL, UPDATE, ALTER NOT NULL
+		sql.Contains("VARCHAR(256) NULL").AssertTrue($"Expected ADD as NULL first: {sql}");
+		sql.Contains("UPDATE").AssertTrue($"Expected UPDATE step: {sql}");
+		sql.Contains("NOT NULL").AssertTrue($"Expected NOT NULL in final ALTER: {sql}");
 	}
 
 	[TestMethod]
@@ -1087,6 +1092,253 @@ public class ColumnAttributeTests : BaseTestClass
 		"SQLite" or "PostgreSql" => id => $"\"{id}\"",
 		_ => id => id
 	};
+
+	#endregion
+
+	#region SchemaMigrator end-to-end: DB has more/fewer columns than entity
+
+	[TestMethod]
+	public void Migration_DbHasExtraColumns_DetectsAndGeneratesComments()
+	{
+		// C# class has 2 columns, DB has 4 (2 extra)
+		var schema = new Schema
+		{
+			TableName = "Products",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 128 },
+				new SchemaColumn { Name = "Price", ClrType = typeof(decimal), Precision = 10, Scale = 2 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Products", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Products", "Name", "NVARCHAR", false, 128, null, null),
+			new DbColumnInfo("Products", "Price", "DECIMAL", false, null, 10, 2),
+			new DbColumnInfo("Products", "OldDescription", "NVARCHAR", true, -1, null, null),
+			new DbColumnInfo("Products", "LegacyCode", "INT", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(2);
+		diffs.All(d => d.Kind == SchemaDiffKind.ExtraColumn).AssertTrue();
+		diffs.Any(d => d.ColumnName == "OldDescription").AssertTrue();
+		diffs.Any(d => d.ColumnName == "LegacyCode").AssertTrue();
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("-- Extra column").AssertTrue($"Expected comment for extra columns: {sql}");
+		sql.Contains("[OldDescription]").AssertTrue($"Expected OldDescription in SQL: {sql}");
+		sql.Contains("[LegacyCode]").AssertTrue($"Expected LegacyCode in SQL: {sql}");
+		sql.Contains("ALTER TABLE").AssertFalse($"Extra columns should not produce ALTER: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_DbHasMissingNullableColumns_GeneratesSimpleAdd()
+	{
+		// C# class has 3 columns, DB has only 1 (2 missing, both nullable)
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 128 },
+				new SchemaColumn { Name = "Bio", ClrType = typeof(string), IsNullable = true },
+				new SchemaColumn { Name = "AvatarUrl", ClrType = typeof(string), IsNullable = true, MaxLength = 512 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Name", "NVARCHAR", false, 128, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(2);
+		diffs.All(d => d.Kind == SchemaDiffKind.MissingColumn).AssertTrue();
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		// nullable columns → simple ADD, no UPDATE/ALTER
+		sql.Contains("ALTER TABLE [Users] ADD [Bio]").AssertTrue($"Expected ADD Bio: {sql}");
+		sql.Contains("ALTER TABLE [Users] ADD [AvatarUrl]").AssertTrue($"Expected ADD AvatarUrl: {sql}");
+		sql.Contains("NULL").AssertTrue($"Expected NULL in column def: {sql}");
+		sql.Contains("UPDATE").AssertFalse($"Nullable columns should not need UPDATE: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_DbHasMissingNotNullColumns_Generates3StepMigration()
+	{
+		// C# class has NOT NULL columns missing from DB → 3-step migration
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Status", ClrType = typeof(int) },
+				new SchemaColumn { Name = "CustomerName", ClrType = typeof(string), MaxLength = 256 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Orders", "Id", "BIGINT", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(2);
+		diffs.All(d => d.Kind == SchemaDiffKind.MissingColumn).AssertTrue();
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		// Step 1: ADD as NULL
+		sql.Contains("ADD [Status] INT NULL").AssertTrue($"Expected ADD as NULL first: {sql}");
+		sql.Contains("ADD [CustomerName] NVARCHAR(256) NULL").AssertTrue($"Expected ADD as NULL first: {sql}");
+
+		// Step 2: UPDATE with default
+		sql.Contains("UPDATE [Orders] SET [Status] = 0 WHERE [Status] IS NULL").AssertTrue($"Expected UPDATE with default: {sql}");
+		sql.Contains("UPDATE [Orders] SET [CustomerName] = N'' WHERE [CustomerName] IS NULL").AssertTrue($"Expected UPDATE with default: {sql}");
+
+		// Step 3: ALTER to NOT NULL
+		sql.Contains("ALTER COLUMN [Status] INT NOT NULL").AssertTrue($"Expected ALTER to NOT NULL: {sql}");
+		sql.Contains("ALTER COLUMN [CustomerName] NVARCHAR(256) NOT NULL").AssertTrue($"Expected ALTER to NOT NULL: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_DbHasMissingNotNullColumns_SqlServer_HasBatchSeparator()
+	{
+		var schema = new Schema
+		{
+			TableName = "Items",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Value", ClrType = typeof(int) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Items", "Value", SchemaDiffKind.MissingColumn, "INT NOT NULL", string.Empty),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		// SQL Server uses GO batch separator between steps
+		sql.Contains("GO").AssertTrue($"Expected GO batch separator for SQL Server: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_DbHasMissingNotNullColumns_PostgreSql_NoBatchSeparator()
+	{
+		var schema = new Schema
+		{
+			TableName = "Items",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Value", ClrType = typeof(int) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Items", "Value", SchemaDiffKind.MissingColumn, "INTEGER NOT NULL", string.Empty),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(PostgreSqlDialect.Instance, diffs, [schema]);
+
+		sql.Contains("GO").AssertFalse($"PostgreSql should not have GO separator: {sql}");
+		sql.Contains("UPDATE").AssertTrue($"Expected UPDATE step: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_MixedExtraAndMissing_BothDetected()
+	{
+		// C# has columns A, B; DB has columns A, C → B missing, C extra
+		var schema = new Schema
+		{
+			TableName = "Mixed",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Active", ClrType = typeof(bool) },
+				new SchemaColumn { Name = "NewField", ClrType = typeof(string), IsNullable = true },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Mixed", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Mixed", "Active", "BIT", false, null, null, null),
+			new DbColumnInfo("Mixed", "Removed", "NVARCHAR", true, -1, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(2);
+		diffs.Any(d => d.Kind == SchemaDiffKind.MissingColumn && d.ColumnName == "NewField").AssertTrue();
+		diffs.Any(d => d.Kind == SchemaDiffKind.ExtraColumn && d.ColumnName == "Removed").AssertTrue();
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("ADD [NewField]").AssertTrue($"Expected ADD for missing column: {sql}");
+		sql.Contains("-- Extra column").AssertTrue($"Expected comment for extra column: {sql}");
+	}
+
+	[TestMethod]
+	public void Migration_NotNullColumnTypes_CorrectDefaults()
+	{
+		// Verify correct default literals for different NOT NULL types
+		var schema = new Schema
+		{
+			TableName = "Defaults",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "IntCol", ClrType = typeof(int) },
+				new SchemaColumn { Name = "BoolCol", ClrType = typeof(bool) },
+				new SchemaColumn { Name = "StringCol", ClrType = typeof(string) },
+				new SchemaColumn { Name = "DateCol", ClrType = typeof(DateTime) },
+				new SchemaColumn { Name = "GuidCol", ClrType = typeof(Guid) },
+				new SchemaColumn { Name = "DecimalCol", ClrType = typeof(decimal), Precision = 18, Scale = 8 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = schema.Columns.Select(c =>
+			new SchemaDiff("Defaults", c.Name, SchemaDiffKind.MissingColumn, "expected", string.Empty)
+		).ToArray();
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("SET [IntCol] = 0 WHERE [IntCol] IS NULL").AssertTrue($"Int default: {sql}");
+		sql.Contains("SET [BoolCol] = 0 WHERE [BoolCol] IS NULL").AssertTrue($"Bool default: {sql}");
+		sql.Contains("SET [StringCol] = N'' WHERE [StringCol] IS NULL").AssertTrue($"String default: {sql}");
+		sql.Contains("SET [DateCol] = '0001-01-01T00:00:00' WHERE [DateCol] IS NULL").AssertTrue($"DateTime default: {sql}");
+		sql.Contains("SET [GuidCol] = '00000000-0000-0000-0000-000000000000' WHERE [GuidCol] IS NULL").AssertTrue($"Guid default: {sql}");
+		sql.Contains("SET [DecimalCol] = 0 WHERE [DecimalCol] IS NULL").AssertTrue($"Decimal default: {sql}");
+	}
 
 	#endregion
 

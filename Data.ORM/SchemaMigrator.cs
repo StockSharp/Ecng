@@ -2,6 +2,7 @@ namespace Ecng.Serialization;
 
 using System.Text;
 
+using Ecng.Common;
 using Ecng.Data;
 
 /// <summary>
@@ -211,9 +212,35 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
-					dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
-					sb.AppendLine(";");
+					if (!col.IsNullable)
+					{
+						var batch = dialect.BatchSeparator;
+
+						// 3-step: add as NULL → fill default → alter to NOT NULL
+						var nullableDef = dialect.GetColumnDefinition(col.ClrType, isNullable: true, col.MaxLength, col.Precision, col.Scale);
+						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, nullableDef);
+						sb.AppendLine(";");
+
+						if (!batch.IsEmpty())
+							sb.AppendLine(batch);
+
+						var defaultVal = dialect.GetDefaultLiteral(col.ClrType);
+						dialect.AppendUpdateWhereNull(sb, diff.TableName, diff.ColumnName, defaultVal);
+						sb.AppendLine();
+
+						if (!batch.IsEmpty())
+							sb.AppendLine(batch);
+
+						dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
+						sb.AppendLine(";");
+					}
+					else
+					{
+						var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
+						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
+						sb.AppendLine(";");
+					}
+
 					break;
 				}
 

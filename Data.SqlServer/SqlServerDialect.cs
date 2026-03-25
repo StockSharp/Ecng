@@ -33,6 +33,9 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override string BatchSeparator => "GO";
+
+	/// <inheritdoc />
 	public override int MaxParameters => 2000; // SQL Server limit is 2100, use 2000 for safety
 
 	/// <inheritdoc />
