@@ -9,6 +9,33 @@ using System.Threading.Tasks;
 public abstract class SqlDialectBase : ISqlDialect
 {
 	/// <inheritdoc />
+	public virtual string ConcatOperator => "+";
+
+	/// <inheritdoc />
+	public virtual string TrueLiteral => "1";
+
+	/// <inheritdoc />
+	public virtual string FalseLiteral => "0";
+
+	/// <inheritdoc />
+	public virtual string UnicodePrefix => "N";
+
+	/// <inheritdoc />
+	public virtual string LenFunction => "len";
+
+	/// <inheritdoc />
+	public virtual void AppendTrimOpen(StringBuilder sb)
+	{
+		sb.Append("LTrim(RTrim(");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendTrimClose(StringBuilder sb)
+	{
+		sb.Append("))");
+	}
+
+	/// <inheritdoc />
 	public virtual string BatchSeparator => string.Empty;
 
 	/// <inheritdoc />

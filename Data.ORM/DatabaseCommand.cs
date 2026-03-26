@@ -115,24 +115,28 @@ public sealed class DatabaseCommand : Disposable
 			// async version disable for a while
 			// https://github.com/dotnet/SqlClient/issues/593
 			//if (await reader.ReadAsync(cancellationToken))
-			if (reader.Read())
+			// For batch queries (INSERT/UPDATE + SELECT), the first result set
+			// may be empty (INSERT doesn't produce rows in SQLite/PostgreSQL).
+			// Skip to the next result set containing actual data.
+			if (!reader.Read())
 			{
-				var row = new SerializationItemCollection();
-
-				for (var i = 0; i < reader.FieldCount; i++)
-				{
-					row.Add(new
-					(
-						reader.GetName(i),
-						reader.GetFieldType(i),
-						reader.GetValueEx(i)
-					));
-				}
-
-				return row;
+				if (!reader.NextResult() || !reader.Read())
+					return null;
 			}
-			else
-				return null;
+
+			var row = new SerializationItemCollection();
+
+			for (var i = 0; i < reader.FieldCount; i++)
+			{
+				row.Add(new
+				(
+					reader.GetName(i),
+					reader.GetFieldType(i),
+					reader.GetValueEx(i)
+				));
+			}
+
+			return row;
 		}, cancellationToken);
 
 	/// <summary>

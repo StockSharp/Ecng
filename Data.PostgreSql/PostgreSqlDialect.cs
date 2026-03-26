@@ -70,7 +70,34 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetIdentitySelect(string idCol) => idCol;
+	public override string GetIdentitySelect(string idCol) => "lastval() as " + idCol;
+
+	/// <inheritdoc />
+	public override string ConcatOperator => "||";
+
+	/// <inheritdoc />
+	public override string TrueLiteral => "TRUE";
+
+	/// <inheritdoc />
+	public override string FalseLiteral => "FALSE";
+
+	/// <inheritdoc />
+	public override string UnicodePrefix => "";
+
+	/// <inheritdoc />
+	public override string LenFunction => "LENGTH";
+
+	/// <inheritdoc />
+	public override void AppendTrimOpen(StringBuilder sb)
+	{
+		sb.Append("TRIM(");
+	}
+
+	/// <inheritdoc />
+	public override void AppendTrimClose(StringBuilder sb)
+	{
+		sb.Append(")");
+	}
 
 	/// <inheritdoc />
 	public override string FormatSkip(string skip) => $"OFFSET {skip}";

@@ -350,10 +350,10 @@ public class Query
 		=> AddAction((dialect, builder) => builder.Append(dialect.QuoteIdentifier(column)));
 
 	/// <summary>
-	/// Appends LEN function name.
+	/// Appends dialect-specific length function (LEN for SQL Server, LENGTH for PostgreSQL/SQLite).
 	/// </summary>
 	public Query Len()
-		=> Raw("len");
+		=> AddAction((dialect, builder) => builder.Append(dialect.LenFunction));
 
 	/// <summary>
 	/// Appends DATALENGTH function name.
@@ -374,22 +374,28 @@ public class Query
 		=> Raw(", ");
 
 	/// <summary>
-	/// Appends + operator.
+	/// Appends + arithmetic operator.
 	/// </summary>
 	public Query Plus()
 		=> Raw(" + ");
 
 	/// <summary>
-	/// Appends = 1 (true) comparison.
+	/// Appends dialect-specific string concatenation operator (+ for SQL Server, || for PostgreSQL/SQLite).
 	/// </summary>
-	public Query IsTrue()
-		=> Raw(" = 1");
+	public Query Concat()
+		=> AddAction((dialect, builder) => builder.Append($" {dialect.ConcatOperator} "));
 
 	/// <summary>
-	/// Appends = 0 (false) comparison.
+	/// Appends dialect-specific boolean true comparison (= 1 for SQL Server/SQLite, = TRUE for PostgreSQL).
+	/// </summary>
+	public Query IsTrue()
+		=> AddAction((dialect, builder) => builder.Append($" = {dialect.TrueLiteral}"));
+
+	/// <summary>
+	/// Appends dialect-specific boolean false comparison (= 0 for SQL Server/SQLite, = FALSE for PostgreSQL).
 	/// </summary>
 	public Query IsFalse()
-		=> Raw(" = 0");
+		=> AddAction((dialect, builder) => builder.Append($" = {dialect.FalseLiteral}"));
 
 	/// <summary>
 	/// Appends CAST function name.
@@ -1064,7 +1070,7 @@ public class BatchQuery : Query
 		var retVal = new StringBuilder();
 
 		foreach (var query in Queries)
-			retVal.AppendLine(query.Render(dialect)).AppendLine();
+			retVal.Append(query.Render(dialect)).AppendLine(";").AppendLine();
 
 		return retVal.ToString();
 	}

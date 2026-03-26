@@ -418,7 +418,7 @@ class StringEmptyVisitor : MethodVisitor<string>
 	}
 
 	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
-		=> translator.Context.Curr.Raw("N''");
+		=> translator.Context.Curr.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}''"));
 }
 
 class StringLengthVisitor : MethodVisitor<string>
@@ -495,15 +495,12 @@ class StringTrimVisitor : MethodVisitor<string>
 	{
 		var q = translator.Context.Curr;
 
-		q.LTrim()
-			.OpenBracket()
-				.RTrim()
-					.OpenBracket();
+		q.AddAction((d, sb) => d.AppendTrimOpen(sb));
 
 		var mce = (MethodCallExpression)expression;
 		translator.Visit(mce.Object);
 
-		q.CloseBracket().CloseBracket();
+		q.AddAction((d, sb) => d.AppendTrimClose(sb));
 	}
 }
 
@@ -681,7 +678,7 @@ class StringConcatVisitor : MethodVisitor<string>
 			idx++;
 
 			if (idx < mce.Arguments.Count)
-				q.Plus();
+				q.Concat();
 		}
 
 		q.CloseBracket();
@@ -708,7 +705,7 @@ class StringIsNullOrEmptyVisitor : MethodVisitor<string>
 
 		q.Or();
 		translator.Visit(mce.Arguments[0]);
-		q.Like().Raw("N''");
+		q.Like().AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}''"));
 
 		q.CloseBracket();
 	}
@@ -734,7 +731,7 @@ class StringIsNullOrWhiteSpaceVisitor : MethodVisitor<string>
 
 		q.Or();
 		translator.Visit(mce.Arguments[0]);
-		q.Equal().Raw("N''");
+		q.Equal().AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}''"));
 
 		q.CloseBracket();
 	}
@@ -762,7 +759,7 @@ class StringHelperIsEmptyVisitor : MethodVisitor
 
 		q.Or();
 		translator.Visit(mce.Arguments[0]);
-		q.Like().Raw("N''");
+		q.Like().AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}''"));
 
 		q.CloseBracket();
 	}
@@ -790,7 +787,7 @@ class StringHelperIsEmptyOrWhiteSpaceVisitor : MethodVisitor
 
 		q.Or();
 		translator.Visit(mce.Arguments[0]);
-		q.Equal().Raw("N''");
+		q.Equal().AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}''"));
 
 		q.CloseBracket();
 	}
@@ -955,9 +952,11 @@ class StringContainsVisitor : MethodVisitor<string>
 
 		q.Like();
 
-		q.Raw("N'%' + ");
+		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
+		q.Concat();
 		translator.Visit(mce.Arguments[0]);
-		q.Raw(" + N'%'");
+		q.Concat();
+		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
 
 		q.CloseBracket();
 	}
@@ -982,7 +981,8 @@ class StringStartsWithVisitor : MethodVisitor<string>
 		q.Like();
 
 		translator.Visit(mce.Arguments[0]);
-		q.Raw(" + N'%'");
+		q.Concat();
+		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
 
 		q.CloseBracket();
 	}
@@ -1006,7 +1006,8 @@ class StringEndsWithVisitor : MethodVisitor<string>
 
 		q.Like();
 
-		q.Raw("N'%' + ");
+		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
+		q.Concat();
 		translator.Visit(mce.Arguments[0]);
 
 		q.CloseBracket();

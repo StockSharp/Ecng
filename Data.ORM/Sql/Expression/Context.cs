@@ -151,10 +151,7 @@ class Context
 
 			if (Skip == 0)
 			{
-				query.Top(Take.Value);
-
 				Skip = null;
-				Take = null;
 			}
 
 			if (SelectColumns.Count > 0 && SelectColumns[0].Count > 0)
@@ -384,9 +381,9 @@ class Context
 		{
 			query
 				.CloseBracket()
-				.Then().Raw("1")
+				.Then().AddAction((d, sb) => sb.Append(d.TrueLiteral))
 				.NewLine()
-				.Else().Raw("0")
+				.Else().AddAction((d, sb) => sb.Append(d.FalseLiteral))
 				.NewLine().End().As().Raw("bit").CloseBracket();
 		}
 

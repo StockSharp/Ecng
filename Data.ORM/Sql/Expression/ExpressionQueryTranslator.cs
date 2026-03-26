@@ -975,7 +975,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				break;
 
 			case ExpressionType.Add:
-				Curr.Plus();
+				if (b.Type == typeof(string))
+					Curr.Concat();
+				else
+					Curr.Plus();
 				break;
 
 			default:
@@ -1009,13 +1012,17 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			{
 				Curr.Null();
 			}
+			else if (value is bool bVal)
+			{
+				Curr.AddAction((d, sb) => sb.Append(bVal ? d.TrueLiteral : d.FalseLiteral));
+			}
+			else if (value is string str)
+			{
+				Curr.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'{str}'"));
+			}
 			else
 			{
-				if (value is bool b)
-					value = b ? 1 : 0;
-				else if (value is string str)
-					value = $"N'{str}'";
-				else if (value is Enum)
+				if (value is Enum)
 					value = value.To<long>();
 
 				Curr.Raw(value.To<string>());

@@ -74,6 +74,27 @@ public class SQLiteDialect : SqlDialectBase
 	public override string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + idCol;
 
 	/// <inheritdoc />
+	public override string ConcatOperator => "||";
+
+	/// <inheritdoc />
+	public override string UnicodePrefix => "";
+
+	/// <inheritdoc />
+	public override string LenFunction => "LENGTH";
+
+	/// <inheritdoc />
+	public override void AppendTrimOpen(StringBuilder sb)
+	{
+		sb.Append("TRIM(");
+	}
+
+	/// <inheritdoc />
+	public override void AppendTrimClose(StringBuilder sb)
+	{
+		sb.Append(")");
+	}
+
+	/// <inheritdoc />
 	public override string FormatSkip(string skip) => $"OFFSET {skip}";
 
 	/// <inheritdoc />

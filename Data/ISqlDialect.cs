@@ -242,6 +242,49 @@ public interface ISqlDialect
 	}
 
 	/// <summary>
+	/// Gets the SQL string concatenation operator (+ for SQL Server, || for PostgreSQL/SQLite).
+	/// </summary>
+	string ConcatOperator => "+";
+
+	/// <summary>
+	/// Gets the SQL literal for boolean true (1 for SQL Server/SQLite, TRUE for PostgreSQL).
+	/// </summary>
+	string TrueLiteral => "1";
+
+	/// <summary>
+	/// Gets the SQL literal for boolean false (0 for SQL Server/SQLite, FALSE for PostgreSQL).
+	/// </summary>
+	string FalseLiteral => "0";
+
+	/// <summary>
+	/// Gets the Unicode string literal prefix (N for SQL Server, empty for PostgreSQL/SQLite).
+	/// </summary>
+	string UnicodePrefix => "N";
+
+	/// <summary>
+	/// Gets the SQL function name for string length (LEN for SQL Server, LENGTH for PostgreSQL/SQLite).
+	/// </summary>
+	string LenFunction => "len";
+
+	/// <summary>
+	/// Appends the opening part of a dialect-specific TRIM expression.
+	/// SQL Server: LTRIM(RTRIM(..., PostgreSQL/SQLite: TRIM(....
+	/// </summary>
+	void AppendTrimOpen(StringBuilder sb)
+	{
+		sb.Append("LTrim(RTrim(");
+	}
+
+	/// <summary>
+	/// Appends the closing part of a dialect-specific TRIM expression.
+	/// SQL Server: )), PostgreSQL/SQLite: ).
+	/// </summary>
+	void AppendTrimClose(StringBuilder sb)
+	{
+		sb.Append("))");
+	}
+
+	/// <summary>
 	/// Gets the batch separator for this dialect (e.g. "GO" for SQL Server).
 	/// Empty string means no batch separation is needed.
 	/// </summary>
