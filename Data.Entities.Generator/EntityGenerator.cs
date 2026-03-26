@@ -17,13 +17,15 @@ public class EntityGenerator : IIncrementalGenerator
 		{
 			var globalNs = compilation.SourceModule.ContainingAssembly.GlobalNamespace;
 
-			var entityTypes = GetAllTypes(globalNs)
+			var allPartialClasses = GetAllTypes(globalNs)
 				.Where(m => m.TypeKind == TypeKind.Class && !m.IsStatic)
-				.Where(m => HasIdentityInHierarchy(m))
 				.Where(m => m.DeclaringSyntaxReferences.Any(r =>
 					r.GetSyntax() is ClassDeclarationSyntax cls
 					&& cls.Modifiers.Any(mod => mod.Text == "partial")))
 				.ToArray();
+
+			var entityTypes = allPartialClasses.Where(m => HasIdentityInHierarchy(m)).ToArray();
+			var joinTypes = allPartialClasses.Where(m => !HasIdentityInHierarchy(m) && IsJoinEntity(m)).ToArray();
 
 			// Group by namespace for SchemaInitializer
 			var byNamespace = new Dictionary<string, List<string>>();
@@ -40,6 +42,9 @@ public class EntityGenerator : IIncrementalGenerator
 					list.Add(entityType.Name);
 				}
 			}
+
+			foreach (var joinType in joinTypes)
+				GenerateJoinEntity(spc, joinType);
 
 			foreach (var kvp in byNamespace)
 				EmitSchemaInitializer(spc, kvp.Key, kvp.Value);
@@ -74,6 +79,45 @@ public class EntityGenerator : IIncrementalGenerator
 	{
 		return type.GetMembers().OfType<IPropertySymbol>()
 			.Any(p => HasAttribute(p, "IdentityAttribute") || p.Name == "Id");
+	}
+
+	/// <summary>
+	/// Returns true if the type implements IDbPersistable (directly or via base)
+	/// and has serializable properties but no Identity — i.e. a join/link entity.
+	/// </summary>
+	private static bool IsJoinEntity(INamedTypeSymbol type)
+	{
+		if (type.IsAbstract)
+			return false;
+
+		if (!ImplementsIDbPersistable(type))
+			return false;
+
+		var props = GetOwnProperties(type).ToArray();
+		return props.Length > 0;
+	}
+
+	private static bool ImplementsIDbPersistable(INamedTypeSymbol type)
+	{
+		return type.AllInterfaces.Any(i => i.Name == "IDbPersistable");
+	}
+
+	/// <summary>
+	/// Generates Save/Load for join entities (no Identity, no Schema registration).
+	/// </summary>
+	private static void GenerateJoinEntity(SourceProductionContext spc, INamedTypeSymbol entityType)
+	{
+		var entityName = entityType.Name;
+		var entityNs = entityType.ContainingNamespace.ToDisplayString();
+		var ownProps = GetOwnProperties(entityType).ToArray();
+
+		if (ownProps.Length == 0 || !CanHandleAllProps(ownProps))
+			return;
+
+		var sbSave = BuildSave(ownProps);
+		var sbLoad = BuildLoad(ownProps, []);
+
+		EmitSource(spc, entityNs, entityName, sbSave, sbLoad, null, null);
 	}
 
 	/// <summary>

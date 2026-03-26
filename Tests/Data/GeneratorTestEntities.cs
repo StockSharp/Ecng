@@ -266,4 +266,73 @@ public partial class GenTestColumnOverrideWithNameEntity : GenTestBaseEntity
 	public TestKeySecret Auth { get; set; }
 }
 
+// ===== Join entity tests (no Identity) =====
+
+/// <summary>
+/// Abstract base for join entities — implements IDbPersistable, NO Identity.
+/// Generator must NOT produce code for this (it's abstract).
+/// </summary>
+public abstract partial class GenTestBaseJoinEntity : IDbPersistable
+{
+	object IDbPersistable.GetIdentity() => throw new NotSupportedException();
+	void IDbPersistable.SetIdentity(object id) => throw new NotSupportedException();
+	public virtual void Save(SettingsStorage storage) { }
+	public virtual ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+/// <summary>
+/// Join entity with two FK properties — classic many-to-many link table.
+/// </summary>
+public partial class GenTestTwoFkJoin : GenTestBaseJoinEntity
+{
+	[RelationSingle]
+	public GenTestOrderEntity Order { get; set; }
+
+	[RelationSingle]
+	public GenTestProductEntity Product { get; set; }
+}
+
+/// <summary>
+/// Join entity with simple (non-FK) properties only.
+/// </summary>
+public partial class GenTestSimplePropJoin : GenTestBaseJoinEntity
+{
+	public string Name { get; set; }
+	public int Score { get; set; }
+}
+
+/// <summary>
+/// Join entity with enum property.
+/// </summary>
+public partial class GenTestEnumJoin : GenTestBaseJoinEntity
+{
+	public GenTestStatus Status { get; set; }
+	public GenTestStatus? NullableStatus { get; set; }
+}
+
+/// <summary>
+/// Join entity with mixed FK + simple + enum properties.
+/// </summary>
+public partial class GenTestMixedJoin : GenTestBaseJoinEntity
+{
+	[RelationSingle]
+	public GenTestOrderEntity Order { get; set; }
+
+	public string Label { get; set; }
+
+	public GenTestStatus Status { get; set; }
+}
+
+/// <summary>
+/// Join entity with FK to Guid-identity entity.
+/// </summary>
+public partial class GenTestGuidFkJoin : GenTestBaseJoinEntity
+{
+	[RelationSingle]
+	public GenTestGuidIdEntity GuidRef { get; set; }
+
+	[RelationSingle]
+	public GenTestOrderEntity LongRef { get; set; }
+}
+
 #endif

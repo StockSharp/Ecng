@@ -328,6 +328,151 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Join entities (no Identity, Save/Load only)
+
+	[TestMethod]
+	public void JoinEntity_TwoFk_Save_StoresFkIds()
+	{
+		var entity = new GenTestTwoFkJoin
+		{
+			Order = new GenTestOrderEntity { Id = 42 },
+			Product = new GenTestProductEntity { Id = 7 },
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<long?>("Order").AssertEqual(42L);
+		storage.GetValue<long?>("Product").AssertEqual(7L);
+	}
+
+	[TestMethod]
+	public void JoinEntity_TwoFk_Save_NullRef_StoresNull()
+	{
+		var entity = new GenTestTwoFkJoin
+		{
+			Order = null,
+			Product = null,
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<long?>("Order").AssertEqual(null);
+		storage.GetValue<long?>("Product").AssertEqual(null);
+	}
+
+	[TestMethod]
+	public void JoinEntity_SimpleProps_Save()
+	{
+		var entity = new GenTestSimplePropJoin
+		{
+			Name = "test-tag",
+			Score = 99,
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<string>("Name").AssertEqual("test-tag");
+		storage.GetValue<int>("Score").AssertEqual(99);
+	}
+
+	[TestMethod]
+	public void JoinEntity_Enum_Save_StoresAsUnderlying()
+	{
+		var entity = new GenTestEnumJoin
+		{
+			Status = GenTestStatus.Deleted,
+			NullableStatus = GenTestStatus.Active,
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<int>("Status").AssertEqual((int)GenTestStatus.Deleted);
+		storage.GetValue<int?>("NullableStatus").AssertEqual((int)GenTestStatus.Active);
+	}
+
+	[TestMethod]
+	public void JoinEntity_Enum_Save_NullableNull()
+	{
+		var entity = new GenTestEnumJoin
+		{
+			Status = GenTestStatus.Active,
+			NullableStatus = null,
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<int>("Status").AssertEqual((int)GenTestStatus.Active);
+		storage.GetValue<int?>("NullableStatus").AssertEqual(null);
+	}
+
+	[TestMethod]
+	public void JoinEntity_Mixed_Save()
+	{
+		var entity = new GenTestMixedJoin
+		{
+			Order = new GenTestOrderEntity { Id = 100 },
+			Label = "important",
+			Status = GenTestStatus.Inactive,
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<long?>("Order").AssertEqual(100L);
+		storage.GetValue<string>("Label").AssertEqual("important");
+		storage.GetValue<int>("Status").AssertEqual((int)GenTestStatus.Inactive);
+	}
+
+	[TestMethod]
+	public void JoinEntity_GuidFk_Save()
+	{
+		var guid = Guid.NewGuid();
+		var entity = new GenTestGuidFkJoin
+		{
+			GuidRef = new GenTestGuidIdEntity { Id = guid },
+			LongRef = new GenTestOrderEntity { Id = 55 },
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		storage.GetValue<Guid?>("GuidRef").AssertEqual(guid);
+		storage.GetValue<long?>("LongRef").AssertEqual(55L);
+	}
+
+	[TestMethod]
+	public void JoinEntity_NotRegisteredInSchemaRegistry()
+	{
+		// Join entities should NOT be pre-registered by the generator's SchemaInitializer.
+		// TryGet checks only pre-registered schemas, not the reflection fallback.
+		SchemaRegistry.TryGet(typeof(GenTestTwoFkJoin), out _).AssertFalse();
+		SchemaRegistry.TryGet(typeof(GenTestSimplePropJoin), out _).AssertFalse();
+		SchemaRegistry.TryGet(typeof(GenTestEnumJoin), out _).AssertFalse();
+		SchemaRegistry.TryGet(typeof(GenTestMixedJoin), out _).AssertFalse();
+		SchemaRegistry.TryGet(typeof(GenTestGuidFkJoin), out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void JoinEntity_AbstractBase_NotGenerated()
+	{
+		// The abstract base should not get generated Save/Load.
+		// Calling Save on abstract base (via concrete subclass with no own props cast) should be a no-op.
+		var storage = new SettingsStorage();
+		((GenTestBaseJoinEntity)new GenTestTwoFkJoin()).Save(storage);
+
+		// If the generated Save works correctly, it calls base.Save first (no-op) then stores FK values.
+		// The storage should contain FK keys from the concrete class, proving
+		// base.Save was a no-op and didn't throw.
+		storage.ContainsKey("Order").AssertTrue();
+	}
+
+	#endregion
 }
 
 #endif
