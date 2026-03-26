@@ -5,9 +5,8 @@ namespace Ecng.Tests.Data;
 using System.ComponentModel;
 
 using Ecng.Data;
+using Ecng.Data.Sql;
 using Ecng.Serialization;
-
-using Microsoft.Data.SqlClient;
 
 [TestClass]
 [TestCategory("Integration")]
@@ -15,82 +14,68 @@ using Microsoft.Data.SqlClient;
 [DoNotParallelize]
 public class OrmIntegrationTests : BaseTestClass
 {
-	private static Database _db;
-	private static string _connectionString;
+	private Database _db;
 
+	private static readonly Lock _initLock = new();
+	private static readonly HashSet<string> _initializedProviders = [];
+	private static readonly List<Database> _databases = [];
 
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
-		_connectionString = TryGetSecret("SQLSERVER_CONNECTION_STRING");
-
-		if (_connectionString.IsEmpty())
-			return;
-
-		_db = new Database("ORM Test Database", _connectionString, SqlClientFactory.Instance, SqlServerDialect.Instance);
-		_db.AllowDeleteAll = true;
-
-		using var conn = new SqlConnection(_connectionString);
-		conn.Open();
-
-		EnsureTable<TestItem>(conn);
-		EnsureTable<TestCategory>(conn);
-		EnsureTable<TestItemCategory>(conn);
-		EnsureTable<TestPerson>(conn);
-		EnsureTable<TestTask>(conn);
-		EnsureTable<TestNode>(conn);
-		EnsureTable<TestNodeChild>(conn);
-	}
-
-	private static void EnsureTable<T>(SqlConnection conn)
-	{
-		var meta = SchemaRegistry.Get(typeof(T));
-		var columns = new Dictionary<string, Type>();
-
-		if (meta.Identity is not null)
-			columns[meta.Identity.Name] = meta.Identity.ClrType;
-
-		foreach (var col in meta.Columns)
-			columns[col.Name] = col.ClrType;
-
-		var sql = Ecng.Data.Sql.Query.CreateCreateTable(meta.TableName, columns, meta.Identity?.Name).Render(SqlServerDialect.Instance);
-		Execute(conn, sql);
-	}
-
-	private static void Execute(SqlConnection conn, string sql)
-	{
-		using var cmd = new SqlCommand(sql, conn);
-		cmd.ExecuteNonQuery();
-	}
-
-	private void EnsureDb()
-	{
-		if (_db is null)
-			Inconclusive("SQLSERVER_CONNECTION_STRING secret not configured.");
-	}
-
-	[TestInitialize]
-	public void TestInit()
-	{
-		if (_db is null)
-			return;
-
-		using var conn = new SqlConnection(_connectionString);
-		conn.Open();
-
-		Execute(conn, "DELETE FROM [Ecng_TestItemCategory]");
-		Execute(conn, "DELETE FROM [Ecng_TestItem]");
-		Execute(conn, "DELETE FROM [Ecng_TestCategory]");
-		Execute(conn, "DELETE FROM [Ecng_TestTask]");
-		Execute(conn, "DELETE FROM [Ecng_TestPerson]");
-		Execute(conn, "DELETE FROM [Ecng_TestNodeChild]");
-		Execute(conn, "DELETE FROM [Ecng_TestNode]");
-
-		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
+		DbTestHelper.RegisterAll();
 	}
 
 	[ClassCleanup]
 	public static void ClassCleanup()
+	{
+		lock (_initLock)
+		{
+			foreach (var db in _databases)
+				db.Dispose();
+
+			_databases.Clear();
+		}
+
+		DbTestHelper.ClearSQLitePools();
+	}
+
+	private void SetUp(string provider)
+	{
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		lock (_initLock)
+		{
+			if (_initializedProviders.Add(provider))
+			{
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItem)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestCategory)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItemCategory)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestPerson)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestTask)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNode)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNodeChild)), autoIncrement: true);
+			}
+		}
+
+		_db = DbTestHelper.CreateDatabase(provider);
+
+		lock (_initLock)
+			_databases.Add(_db);
+
+		DbTestHelper.DeleteAll(provider, "Ecng_TestItemCategory");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestNodeChild");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestTask");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestItem");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestCategory");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestPerson");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestNode");
+
+		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
+	}
+
+	[TestCleanup]
+	public void TestCleanup()
 	{
 		_db?.Dispose();
 	}
@@ -99,7 +84,7 @@ public class OrmIntegrationTests : BaseTestClass
 
 	private IStorage Storage => _db;
 
-	private static IQueryable<T> Query<T>()
+	private IQueryable<T> Query<T>()
 		=> new DefaultQueryable<T>(new DefaultQueryProvider<T>(_db), null);
 
 	private async Task ClearCache()
@@ -173,9 +158,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region CRUD Tests
 
 	[TestMethod]
-	public async Task Crud_InsertAndReadById()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_InsertAndReadById(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Alpha", 5, 12.50m, true, 42);
 		item.Id.AssertGreater(0);
 
@@ -189,9 +177,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Crud_Update()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_Update(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Original");
 		item.Name = "Updated";
 		item.Priority = 99;
@@ -205,9 +196,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Crud_Delete()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_Delete(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("ToDelete");
 		var result = await Storage.RemoveAsync(item, CancellationToken);
 		result.AssertTrue();
@@ -219,9 +213,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Crud_GetCount()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_GetCount(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("A");
 		await InsertItem("B");
 		await InsertItem("C");
@@ -231,9 +228,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Crud_GetGroup_Paging()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_GetGroup_Paging(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		for (var i = 0; i < 10; i++)
 			await InsertItem($"Item{i}", priority: i);
 
@@ -246,9 +246,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Where Tests
 
 	[TestMethod]
-	public async Task Where_Equality()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Equality(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Alpha");
 		await InsertItem("Beta");
 
@@ -258,9 +261,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_GreaterThan()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_GreaterThan(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Low", priority: 1);
 		await InsertItem("Mid", priority: 5);
 		await InsertItem("High", priority: 10);
@@ -270,9 +276,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Boolean()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Boolean(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Active", isActive: true);
 		await InsertItem("Inactive", isActive: false);
 
@@ -282,9 +291,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Nullable()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Nullable(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("WithValue", nullableValue: 42);
 		await InsertItem("NullValue");
 
@@ -294,9 +306,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Contains_IN()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Contains_IN(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var a = await InsertItem("A");
 		var b = await InsertItem("B");
 		await InsertItem("C");
@@ -307,9 +322,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Like()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Like(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Apple");
 		await InsertItem("Banana");
 		await InsertItem("Avocado");
@@ -323,9 +341,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region OrderBy Tests
 
 	[TestMethod]
-	public async Task OrderBy_Asc()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_Asc(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("C", priority: 3);
 		await InsertItem("A", priority: 1);
 		await InsertItem("B", priority: 2);
@@ -337,9 +358,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task OrderBy_Desc()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_Desc(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("C", priority: 3);
 		await InsertItem("A", priority: 1);
 		await InsertItem("B", priority: 2);
@@ -351,9 +375,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task OrderBy_ThenBy()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_ThenBy(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("B2", priority: 1, price: 20);
 		await InsertItem("B1", priority: 1, price: 10);
 		await InsertItem("A1", priority: 0, price: 5);
@@ -365,9 +392,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task OrderBy_ByName()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_ByName(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Charlie", priority: 3);
 		await InsertItem("Alice", priority: 1);
 		await InsertItem("Bob", priority: 2);
@@ -379,9 +409,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task OrderBy_SkipTake()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_SkipTake(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		for (var i = 0; i < 10; i++)
 			await InsertItem($"Item{i}", priority: i);
 
@@ -396,9 +429,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region String Tests
 
 	[TestMethod]
-	public async Task String_Contains()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Contains(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Hello World");
 		await InsertItem("Goodbye");
 
@@ -408,9 +444,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_StartsWith()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_StartsWith(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Apple");
 		await InsertItem("Banana");
 
@@ -419,9 +458,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_EndsWith()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_EndsWith(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Apple");
 		await InsertItem("Pineapple");
 		await InsertItem("Banana");
@@ -435,9 +477,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Aggregation Tests
 
 	[TestMethod]
-	public async Task Agg_Count()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_Count(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("A");
 		await InsertItem("B");
 
@@ -446,9 +491,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Agg_Any()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_Any(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var any = await Query<TestItem>().AnyAsyncEx(CancellationToken);
 		any.AssertFalse();
 
@@ -460,9 +508,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Agg_FirstOrDefault()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_FirstOrDefault(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var result = await Query<TestItem>().FirstOrDefaultAsyncEx(CancellationToken);
 		result.AssertNull();
 
@@ -479,9 +530,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Join Tests
 
 	[TestMethod]
-	public async Task Join_RelationSingle()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_RelationSingle(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Item1");
 		var cat = await InsertCategory("Cat1");
 		var ic = await InsertItemCategory(item, cat);
@@ -497,9 +551,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_LinqSyntax()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_LinqSyntax(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item1 = await InsertItem("Joined1", priority: 10);
 		var item2 = await InsertItem("Orphan", priority: 20);
 		var cat = await InsertCategory("CatA");
@@ -518,9 +575,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_SelectFromTable()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_SelectFromTable(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item1 = await InsertItem("Joined1", priority: 10);
 		var item2 = await InsertItem("Orphan", priority: 20);
 		var cat = await InsertCategory("CatA");
@@ -541,9 +601,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_WithWhere()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_WithWhere(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item1 = await InsertItem("Active1", isActive: true);
 		var item2 = await InsertItem("Inactive1", isActive: false);
 		var cat = await InsertCategory("CatX");
@@ -564,9 +627,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_WithMultipleMatches()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_WithMultipleMatches(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item1 = await InsertItem("Multi1");
 		var item2 = await InsertItem("Multi2");
 		var cat1 = await InsertCategory("CatM1");
@@ -588,9 +654,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_TwoJoins()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_TwoJoins(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("ItemForDoubleJoin");
 		var cat = await InsertCategory("CatForDoubleJoin");
 		await InsertItemCategory(item, cat);
@@ -610,9 +679,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_LeftJoin_GroupJoin()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_LeftJoin_GroupJoin(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item1 = await InsertItem("WithCat");
 		var item2 = await InsertItem("NoCat");
 		var cat = await InsertCategory("Cat1");
@@ -631,9 +703,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Join_InnerJoin_ChainedJoins()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Join_InnerJoin_ChainedJoins(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("ItemForDoubleJoin");
 		var cat = await InsertCategory("CatForDoubleJoin");
 		await InsertItemCategory(item, cat);
@@ -656,9 +731,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Compound Where Tests
 
 	[TestMethod]
-	public async Task Where_And()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_And(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Match", priority: 5, isActive: true);
 		await InsertItem("NoMatch1", priority: 5, isActive: false);
 		await InsertItem("NoMatch2", priority: 1, isActive: true);
@@ -672,9 +750,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Or()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Or(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("High", priority: 10, isActive: false);
 		await InsertItem("Active", priority: 1, isActive: true);
 		await InsertItem("Neither", priority: 1, isActive: false);
@@ -687,9 +768,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_ComplexAndOr()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_ComplexAndOr(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("A", priority: 10, price: 100, isActive: true);
 		await InsertItem("B", priority: 1, price: 200, isActive: false);
 		await InsertItem("C", priority: 10, price: 50, isActive: false);
@@ -704,9 +788,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Chained()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Chained(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("A", priority: 5, isActive: true);
 		await InsertItem("B", priority: 3, isActive: true);
 		await InsertItem("C", priority: 5, isActive: false);
@@ -721,9 +808,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_NullableEqualsNull()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_NullableEqualsNull(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("HasNull");
 		await InsertItem("HasValue", nullableValue: 7);
 
@@ -736,9 +826,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_NegatedBoolean()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_NegatedBoolean(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Active", isActive: true);
 		await InsertItem("Inactive", isActive: false);
 
@@ -751,9 +844,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Where_Arithmetic_Add()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Arithmetic_Add(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Low", priority: 3);
 		await InsertItem("High", priority: 8);
 
@@ -770,9 +866,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region DateTime Tests
 
 	[TestMethod]
-	public async Task DateTime_FilterByRange()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task DateTime_FilterByRange(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Recent");
 
 		var results = await Query<TestItem>()
@@ -784,9 +883,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task DateTime_OrderByCreatedAt()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task DateTime_OrderByCreatedAt(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var baseTime = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc);
 		await InsertItem("First", createdAt: baseTime);
 		await InsertItem("Second", createdAt: baseTime.AddHours(1));
@@ -806,9 +908,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Advanced String Tests
 
 	[TestMethod]
-	public async Task String_ToUpper()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_ToUpper(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("hello");
 		await InsertItem("WORLD");
 
@@ -821,9 +926,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_ToLower()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_ToLower(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("HELLO");
 		await InsertItem("world");
 
@@ -836,9 +944,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_Trim()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Trim(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("  padded  ");
 		await InsertItem("clean");
 
@@ -850,9 +961,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_Substring()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Substring(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Hello World");
 		await InsertItem("Goodbye");
 
@@ -865,9 +979,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_Replace()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Replace(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("foo-bar");
 		await InsertItem("baz-qux");
 
@@ -880,9 +997,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_IsNullOrEmpty()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_IsNullOrEmpty(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("NonEmpty");
 		await InsertItem("");
 
@@ -895,9 +1015,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_IsEmpty()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_IsEmpty(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("NonEmpty");
 		await InsertItem("");
 
@@ -910,9 +1033,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task String_IsEmptyOrWhiteSpace()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_IsEmptyOrWhiteSpace(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("NonEmpty");
 		await InsertItem("");
 
@@ -929,9 +1055,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Coalesce and Conditional Tests
 
 	[TestMethod]
-	public async Task Coalesce_NullableValue()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Coalesce_NullableValue(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("WithNull");
 		await InsertItem("WithValue", nullableValue: 42);
 
@@ -948,9 +1077,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Distinct Tests
 
 	[TestMethod]
-	public async Task Distinct_Values()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Distinct_Values(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("A", priority: 1);
 		await InsertItem("B", priority: 1);
 		await InsertItem("C", priority: 2);
@@ -967,9 +1099,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Aggregation with Filter Tests
 
 	[TestMethod]
-	public async Task Agg_CountWithFilter()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_CountWithFilter(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Active1", isActive: true);
 		await InsertItem("Active2", isActive: true);
 		await InsertItem("Inactive", isActive: false);
@@ -982,9 +1117,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Agg_AnyWithFilter()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_AnyWithFilter(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Low", priority: 1);
 
 		var anyHigh = await Query<TestItem>()
@@ -999,9 +1137,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Agg_FirstOrDefault_WithOrderAndFilter()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Agg_FirstOrDefault_WithOrderAndFilter(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("C", priority: 3);
 		await InsertItem("A", priority: 1);
 		await InsertItem("B", priority: 2);
@@ -1020,9 +1161,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Complex Query Tests
 
 	[TestMethod]
-	public async Task Complex_WhereOrderBySkipTake()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_WhereOrderBySkipTake(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		for (var i = 0; i < 20; i++)
 			await InsertItem($"Item{i:D2}", priority: i, isActive: i % 2 == 0);
 
@@ -1040,9 +1184,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_JoinWithOrderByAndTake()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_JoinWithOrderByAndTake(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var cat = await InsertCategory("Electronics");
 		for (var i = 0; i < 5; i++)
 		{
@@ -1066,9 +1213,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_JoinWithTake()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_JoinWithTake(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var cat = await InsertCategory("Electronics");
 		for (var i = 0; i < 5; i++)
 		{
@@ -1089,9 +1239,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_MultipleStringFilters()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_MultipleStringFilters(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Alpha Beta");
 		await InsertItem("Alpha Gamma");
 		await InsertItem("Delta Beta");
@@ -1106,9 +1259,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_ContainsIN_WithOtherFilters()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_ContainsIN_WithOtherFilters(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var a = await InsertItem("A", priority: 10, isActive: true);
 		var b = await InsertItem("B", priority: 20, isActive: false);
 		var c = await InsertItem("C", priority: 30, isActive: true);
@@ -1126,9 +1282,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_JoinFilterOnBothTables()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_JoinFilterOnBothTables(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var cat1 = await InsertCategory("Active Cat", "Description1");
 		var cat2 = await InsertCategory("Old Cat", "Description2");
 		var item1 = await InsertItem("Item1", isActive: true);
@@ -1151,9 +1310,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_JoinDoubleWithCounting()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_JoinDoubleWithCounting(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var cat1 = await InsertCategory("Cat A");
 		var cat2 = await InsertCategory("Cat B");
 		var item1 = await InsertItem("Item1");
@@ -1174,9 +1336,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Complex_DecimalComparison()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Complex_DecimalComparison(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		await InsertItem("Cheap", price: 9.99m);
 		await InsertItem("Mid", price: 49.99m);
 		await InsertItem("Expensive", price: 199.99m);
@@ -1194,9 +1359,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Transaction Tests
 
 	[TestMethod]
-	public async Task Transaction_Commit()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Transaction_Commit(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		using (var tx = Storage.CreateTransaction())
 		{
 			await InsertItem("InTransaction");
@@ -1210,9 +1378,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Transaction_Rollback()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Transaction_Rollback(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		using (Storage.CreateTransaction())
 		{
 			await InsertItem("WillRollback");
@@ -1276,9 +1447,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region RelationMany Tests
 
 	[TestMethod]
-	public async Task RelationMany_TasksFilteredByPerson()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_TasksFilteredByPerson(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 		var bob = await InsertPerson("Bob");
 
@@ -1309,9 +1483,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_CountFiltered()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_CountFiltered(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 		var bob = await InsertPerson("Bob");
 
@@ -1332,9 +1509,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_EmptyCollection()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_EmptyCollection(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var charlie = await InsertPerson("Charlie");
 
 		await ClearCache();
@@ -1348,9 +1528,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_QueryableWithFilter()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_QueryableWithFilter(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 
 		await InsertTask("Low", alice, priority: 1);
@@ -1369,9 +1552,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_QueryableWithOrderBy()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_QueryableWithOrderBy(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 
 		await InsertTask("C", alice, priority: 30);
@@ -1392,9 +1578,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_AddViaList()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_AddViaList(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 		await InsertTask("Existing", alice);
 
@@ -1413,9 +1602,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_RemoveViaList()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_RemoveViaList(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 		var t1 = await InsertTask("Keep", alice);
 		var t2 = await InsertTask("Remove", alice);
@@ -1437,9 +1629,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_AsyncEnumeration()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_AsyncEnumeration(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 
 		for (var i = 0; i < 5; i++)
@@ -1457,9 +1652,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_IsolationBetweenPersons()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_IsolationBetweenPersons(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var persons = new List<TestPerson>();
 
 		for (var i = 0; i < 5; i++)
@@ -1489,9 +1687,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Identity Map Tests
 
 	[TestMethod]
-	public async Task IdentityMap_SameIdSameReference()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_SameIdSameReference(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Singleton");
 
 		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
@@ -1501,9 +1702,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_FkReturnsSameReference()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_FkReturnsSameReference(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var person = await InsertPerson("Alice");
 		var task = await InsertTask("Task1", person);
 
@@ -1516,9 +1720,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_MultipleFksSameObject()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_MultipleFksSameObject(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var person = await InsertPerson("Shared");
 		await InsertTask("T1", person);
 		await InsertTask("T2", person);
@@ -1536,9 +1743,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_RelationManyReturnsCachedPerson()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_RelationManyReturnsCachedPerson(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var alice = await InsertPerson("Alice");
 		await InsertTask("T1", alice);
 
@@ -1552,9 +1762,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_JoinSharesReferences()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_JoinSharesReferences(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Shared Item");
 		var cat = await InsertCategory("Shared Cat");
 		await InsertItemCategory(item, cat);
@@ -1574,9 +1787,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_ClearCacheCreatesNewInstance()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_ClearCacheCreatesNewInstance(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Before");
 
 		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
@@ -1594,9 +1810,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task IdentityMap_MutationVisibleWithoutReload()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task IdentityMap_MutationVisibleWithoutReload(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 		var item = await InsertItem("Original");
 
 		var load1 = await Storage.GetByIdAsync<long, TestItem>(item.Id, CancellationToken);
@@ -1613,13 +1832,15 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Nested RelationMany Tests
 
 	[TestMethod]
-	public async Task RelationMany_NestedTreeTraversal()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_NestedTreeTraversal(string provider)
 	{
-		// Reproduces the Client → ClientGroup → Client.Group null FK bug
-		// Creates a 5-level deep tree: Node1 → Node2 → Node3 → Node4 → Node5
+		// Creates a 5-level deep tree: Node1 -> Node2 -> Node3 -> Node4 -> Node5
 		// Then traverses it level by level via RelationMany Children + Child FK
 
-		EnsureDb();
+		SetUp(provider);
 
 		var node1 = await InsertNode("Level1");
 		var node2 = await InsertNode("Level2");
@@ -1666,10 +1887,13 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_NestedTreeWithMultipleChildren()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_NestedTreeWithMultipleChildren(string provider)
 	{
 		// Tests wider tree: Node1 has 3 children, each has 2 children
-		EnsureDb();
+		SetUp(provider);
 
 		var root = await InsertNode("Root");
 		var a = await InsertNode("A");
@@ -1720,10 +1944,13 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationMany_NestedAsyncForeach()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_NestedAsyncForeach(string provider)
 	{
 		// Uses await foreach (like web code's HasAccess pattern) instead of ToQueryable
-		EnsureDb();
+		SetUp(provider);
 
 		var node1 = await InsertNode("N1");
 		var node2 = await InsertNode("N2");
@@ -1762,17 +1989,20 @@ public class OrmIntegrationTests : BaseTestClass
 			depth++;
 		}
 
-		depth.AssertEqual(3); // N1→N2→N3→N4 (3 hops)
+		depth.AssertEqual(3); // N1->N2->N3->N4 (3 hops)
 		currentNode.Name.AssertEqual("N4");
 	}
 
 	[TestMethod]
-	public async Task RelationMany_NestedRecursiveHasAccess()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationMany_NestedRecursiveHasAccess(string provider)
 	{
 		// Recursive traversal mimicking HasAccess pattern from web code
 		// Node1 is "root org", Node2-4 are "child orgs"
 		// Check if Node1 "has access" to Node4 via nested groups
-		EnsureDb();
+		SetUp(provider);
 
 		var org1 = await InsertNode("Org1");
 		var org2 = await InsertNode("Org2");
@@ -1820,19 +2050,27 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task RelationSingle_FkWithZeroId()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task RelationSingle_FkWithZeroId(string provider)
 	{
-		// Reproduces bug: LoadFkAsync treated id=0 as "no FK" and returned null.
-		// In production, Client Id=0 (Root) exists but was skipped.
-		EnsureDb();
+		// Verifies that LoadFkAsync does not treat id=0 as "no FK".
+		SetUp(provider);
 
-		// Insert a person with Id=0 via raw SQL (IDENTITY_INSERT ON)
-		using (var conn = new SqlConnection(_connectionString))
+		// Insert a person with Id=0 via raw SQL
+		var dialect = DbTestHelper.GetDialect(provider);
+		var tableName = dialect.QuoteIdentifier("Ecng_TestPerson");
+
+		if (provider == DatabaseProviderRegistry.SqlServer)
 		{
-			conn.Open();
-			Execute(conn, "SET IDENTITY_INSERT [Ecng_TestPerson] ON");
-			Execute(conn, "INSERT INTO [Ecng_TestPerson] (Id, Name) VALUES (0, 'ZeroRoot')");
-			Execute(conn, "SET IDENTITY_INSERT [Ecng_TestPerson] OFF");
+			DbTestHelper.ExecuteRaw(provider, $"SET IDENTITY_INSERT {tableName} ON");
+			DbTestHelper.ExecuteRaw(provider, $"INSERT INTO {tableName} (Id, Name) VALUES (0, 'ZeroRoot')");
+			DbTestHelper.ExecuteRaw(provider, $"SET IDENTITY_INSERT {tableName} OFF");
+		}
+		else
+		{
+			DbTestHelper.ExecuteRaw(provider, $"INSERT INTO {tableName} ({dialect.QuoteIdentifier("Id")}, {dialect.QuoteIdentifier("Name")}) VALUES (0, 'ZeroRoot')");
 		}
 
 		// Insert a task referencing Person Id=0
@@ -1852,11 +2090,14 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Finding #3: BulkLoad count cap
 
 	[TestMethod]
-	public async Task BulkLoad_GetCount_ReturnsActualCount_NotCappedByMaxBulkLoadRows()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task BulkLoad_GetCount_ReturnsActualCount_NotCappedByMaxBulkLoadRows(string provider)
 	{
 		// Finding #3: When MaxBulkLoadRows is smaller than the actual row count,
 		// GetCountAsync returns cache size instead of real DB count.
-		EnsureDb();
+		SetUp(provider);
 
 		// Set small cap to reproduce without 100K rows
 		_db.MaxBulkLoadRows = 3;
@@ -1882,10 +2123,13 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task BulkLoad_GetById_FallsBackToDb_WhenNotInCache()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task BulkLoad_GetById_FallsBackToDb_WhenNotInCache(string provider)
 	{
 		// ReadAsync returns null for ids beyond bulk cache cap instead of querying DB.
-		EnsureDb();
+		SetUp(provider);
 
 		_db.MaxBulkLoadRows = 3;
 
@@ -1916,11 +2160,14 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task BulkLoad_GetById_CachesDbMiss_ReturnsNullFast()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task BulkLoad_GetById_CachesDbMiss_ReturnsNullFast(string provider)
 	{
 		// After DB confirms id doesn't exist, subsequent calls should return null
 		// without hitting DB again.
-		EnsureDb();
+		SetUp(provider);
 
 		_db.MaxBulkLoadRows = 3;
 
@@ -1945,11 +2192,14 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task BulkLoad_LinqWhere_QueriesFullDb_NotTruncatedCache()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task BulkLoad_LinqWhere_QueriesFullDb_NotTruncatedCache(string provider)
 	{
 		// LINQ queries over bulk-loaded entities execute against truncated in-memory set
 		// instead of querying the full database.
-		EnsureDb();
+		SetUp(provider);
 
 		_db.MaxBulkLoadRows = 3;
 
@@ -1980,9 +2230,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region GetByIdsAsync
 
 	[TestMethod]
-	public async Task GetByIdsAsync_ReturnsAllMatchingEntities()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_ReturnsAllMatchingEntities(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var item1 = await InsertItem("Alpha", priority: 1);
 		var item2 = await InsertItem("Beta", priority: 2);
@@ -1998,9 +2251,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_EmptyIds_ReturnsEmpty()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_EmptyIds_ReturnsEmpty(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var result = await Storage.GetByIdsAsync<long, TestItem>([], CancellationToken);
 
@@ -2008,9 +2264,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_NonExistentIds_ReturnsOnlyFound()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_NonExistentIds_ReturnsOnlyFound(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var item = await InsertItem("Existing");
 
@@ -2023,9 +2282,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_UsesBulkCache_WhenAvailable()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_UsesBulkCache_WhenAvailable(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		_db.MaxBulkLoadRows = 100;
 
@@ -2051,9 +2313,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_CachesMisses_InBulkDict()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_CachesMisses_InBulkDict(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		_db.MaxBulkLoadRows = 3;
 
@@ -2079,9 +2344,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_SingleQuery_InClause()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_SingleQuery_InClause(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var items = new List<TestItem>();
 		for (var i = 0; i < 10; i++)
@@ -2100,9 +2368,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_PreservesInputOrder()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_PreservesInputOrder(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var item1 = await InsertItem("First", priority: 1);
 		var item2 = await InsertItem("Second", priority: 2);
@@ -2120,9 +2391,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_DuplicateIds_ReturnsDuplicateEntries()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_DuplicateIds_ReturnsDuplicateEntries(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var item = await InsertItem("OnlyOne");
 
@@ -2137,9 +2411,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetByIdsAsync_DuplicateIds_MixedWithNonExistent()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetByIdsAsync_DuplicateIds_MixedWithNonExistent(string provider)
 	{
-		EnsureDb();
+		SetUp(provider);
 
 		var item1 = await InsertItem("A");
 		var item2 = await InsertItem("B");

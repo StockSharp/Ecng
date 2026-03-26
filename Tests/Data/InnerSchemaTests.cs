@@ -7,8 +7,6 @@ using System.ComponentModel;
 using Ecng.Data;
 using Ecng.Serialization;
 
-using Microsoft.Data.Sqlite;
-
 #region Single-level InnerSchema entities
 
 /// <summary>
@@ -178,70 +176,60 @@ public class TestOrderWithAddressEx : IDbPersistable
 [DoNotParallelize]
 public class InnerSchemaTests : BaseTestClass
 {
-	private static string _sqliteDbPath;
-	private static IStorage _db;
+	private static readonly Schema _orderSchema = new()
+	{
+		TableName = "Ecng_OrderWithAddress",
+		EntityType = typeof(TestOrderWithAddress),
+		Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+		Columns =
+		[
+			new SchemaColumn { Name = "OrderName", ClrType = typeof(string) },
+			new SchemaColumn { Name = "ShippingAddressStreet", ClrType = typeof(string) },
+			new SchemaColumn { Name = "ShippingAddressCity", ClrType = typeof(string) },
+		],
+		Factory = () => new TestOrderWithAddress(),
+	};
+
+	private static bool _schemaRegistered;
+	private IStorage _db;
 
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
-		SQLiteDialect.Register(SqliteFactory.Instance);
+		DbTestHelper.RegisterAll();
 
-		_sqliteDbPath = Path.Combine(Path.GetTempPath(), $"inner_schema_test_{Guid.NewGuid():N}.db");
-
-		SchemaRegistry.Register(new Schema
+		if (!_schemaRegistered)
 		{
-			TableName = "Ecng_OrderWithAddress",
-			EntityType = typeof(TestOrderWithAddress),
-			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
-			Columns =
-			[
-				new SchemaColumn { Name = "OrderName", ClrType = typeof(string) },
-				new SchemaColumn { Name = "ShippingAddressStreet", ClrType = typeof(string) },
-				new SchemaColumn { Name = "ShippingAddressCity", ClrType = typeof(string) },
-			],
-			Factory = () => new TestOrderWithAddress(),
-		});
-
-		using var conn = new SqliteConnection($"Data Source={_sqliteDbPath}");
-		conn.Open();
-		using var cmd = conn.CreateCommand();
-		cmd.CommandText = """
-			CREATE TABLE "Ecng_OrderWithAddress" (
-				"Id" INTEGER PRIMARY KEY,
-				"OrderName" TEXT,
-				"ShippingAddressStreet" TEXT,
-				"ShippingAddressCity" TEXT
-			)
-			""";
-		cmd.ExecuteNonQuery();
-
-		var db = new Database(
-			"InnerSchema Test",
-			$"Data Source={_sqliteDbPath}",
-			SqliteFactory.Instance,
-			SQLiteDialect.Instance);
-		db.AllowDeleteAll = true;
-
-		_db = db;
+			SchemaRegistry.Register(_orderSchema);
+			_schemaRegistered = true;
+		}
 	}
 
 	[ClassCleanup]
 	public static void ClassCleanup()
 	{
-		(_db as IDisposable)?.Dispose();
+		DbTestHelper.ClearSQLitePools();
+	}
 
-		SqliteConnection.ClearAllPools();
+	private void Init(string provider)
+	{
+		DbTestHelper.SkipIfUnavailable(provider);
 
-		try { File.Delete(_sqliteDbPath); }
-		catch { /* ignore */ }
+		// Drop table if exists, then create
+		var dialect = DbTestHelper.GetDialect(provider);
+		var quoted = dialect.QuoteIdentifier(_orderSchema.TableName);
+		try { DbTestHelper.ExecuteRaw(provider, $"DROP TABLE IF EXISTS {quoted}"); } catch { }
+		DbTestHelper.EnsureTable(provider, _orderSchema, autoIncrement: false);
+
+		_db = DbTestHelper.CreateDatabase(provider);
 	}
 
 	private static long _nextId;
 
 	[TestCleanup]
-	public async Task TestCleanup()
+	public void Cleanup()
 	{
-		await _db.ClearAsync<TestOrderWithAddress>(CancellationToken.None);
+		(_db as IDisposable)?.Dispose();
 	}
 
 	private static TestOrderWithAddress NewOrder(string name, string street, string city)
@@ -255,23 +243,31 @@ public class InnerSchemaTests : BaseTestClass
 	#region CRUD
 
 	[TestMethod]
-	public async Task Create_InnerSchema_SavesFlattenedColumns()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Create_InnerSchema_SavesFlattenedColumns(string provider)
 	{
+		Init(provider);
 		var order = NewOrder("Order1", "123 Main St", "NYC");
 
-		var saved = await _db.AddAsync(order, CancellationToken.None);
+		var saved = await _db.AddAsync(order, CancellationToken);
 
 		saved.Id.AssertEqual(order.Id);
 		saved.OrderName.AssertEqual("Order1");
 	}
 
 	[TestMethod]
-	public async Task Read_InnerSchema_LoadsFlattenedColumns()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Read_InnerSchema_LoadsFlattenedColumns(string provider)
 	{
+		Init(provider);
 		var order = NewOrder("Order2", "456 Oak Ave", "LA");
 
-		var saved = await _db.AddAsync(order, CancellationToken.None);
-		var loaded = await _db.GetByIdAsync<long, TestOrderWithAddress>(saved.Id, CancellationToken.None);
+		var saved = await _db.AddAsync(order, CancellationToken);
+		var loaded = await _db.GetByIdAsync<long, TestOrderWithAddress>(saved.Id, CancellationToken);
 
 		loaded.AssertNotNull();
 		loaded.OrderName.AssertEqual("Order2");
@@ -281,28 +277,36 @@ public class InnerSchemaTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetCount_InnerSchema_ReturnsCorrectCount()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetCount_InnerSchema_ReturnsCorrectCount(string provider)
 	{
-		await _db.AddAsync(NewOrder("CountOrder1", "1st St", "NYC"), CancellationToken.None);
-		await _db.AddAsync(NewOrder("CountOrder2", "2nd St", "LA"), CancellationToken.None);
+		Init(provider);
+		await _db.AddAsync(NewOrder("CountOrder1", "1st St", "NYC"), CancellationToken);
+		await _db.AddAsync(NewOrder("CountOrder2", "2nd St", "LA"), CancellationToken);
 
-		var count = await _db.GetCountAsync<TestOrderWithAddress>(CancellationToken.None);
+		var count = await _db.GetCountAsync<TestOrderWithAddress>(CancellationToken);
 
 		count.AssertEqual(2L);
 	}
 
 	#endregion
 
-	#region LINQ (InnerSchema bug)
+	#region LINQ (InnerSchema)
 
 	/// <summary>
-	/// BUG: LINQ Where on a complex inline type property generates wrong SQL.
-	/// Produces "ShippingAddress"."City" instead of "e"."ShippingAddressCity".
+	/// LINQ Where on a complex inline type property generates correct SQL.
+	/// Should produce "e"."ShippingAddressCity", not "ShippingAddress"."City".
 	/// </summary>
 	[TestMethod]
-	public async Task Where_ComplexTypeProperty_ShouldUseFlattenedColumnName()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_ComplexTypeProperty_ShouldUseFlattenedColumnName(string provider)
 	{
-		await _db.AddAsync(NewOrder("TargetOrder", "123 Main St", "NYC"), CancellationToken.None);
+		Init(provider);
+		await _db.AddAsync(NewOrder("TargetOrder", "123 Main St", "NYC"), CancellationToken);
 
 		var queryable = new DefaultQueryable<TestOrderWithAddress>(
 			new DefaultQueryProvider<TestOrderWithAddress>(_db), null);
@@ -310,9 +314,7 @@ public class InnerSchemaTests : BaseTestClass
 		var city = "NYC";
 		var filtered = Queryable.Where(queryable, o => o.ShippingAddress.City == city);
 
-		// BUG: the LINQ translator generates "ShippingAddress"."City"
-		// instead of "e"."ShippingAddressCity", causing a SQL error
-		var results = await filtered.ToArrayAsyncEx(CancellationToken.None);
+		var results = await filtered.ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(1);
 		results[0].ShippingAddress.City.AssertEqual("NYC");
@@ -348,96 +350,84 @@ public class InnerSchemaTests : BaseTestClass
 [DoNotParallelize]
 public class InnerSchemaNestedTests : BaseTestClass
 {
-	private static string _sqliteDbPath;
-	private static IStorage _db;
+	private static readonly Schema _countrySchema = new()
+	{
+		TableName = "Ecng_Country",
+		EntityType = typeof(TestCountry),
+		Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+		Columns =
+		[
+			new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+		],
+		Factory = () => new TestCountry(),
+	};
+
+	private static readonly Schema _orderExSchema = new()
+	{
+		TableName = "Ecng_OrderWithAddressEx",
+		EntityType = typeof(TestOrderWithAddressEx),
+		Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+		Columns =
+		[
+			new SchemaColumn { Name = "OrderName", ClrType = typeof(string) },
+			new SchemaColumn { Name = "ShippingAddressStreet", ClrType = typeof(string) },
+			new SchemaColumn { Name = "ShippingAddressCity", ClrType = typeof(string) },
+			new SchemaColumn { Name = "ShippingAddressGeoCoordLat", ClrType = typeof(double) },
+			new SchemaColumn { Name = "ShippingAddressGeoCoordLon", ClrType = typeof(double) },
+			new SchemaColumn { Name = "ShippingAddressCountry", ClrType = typeof(long) },
+		],
+		Factory = () => new TestOrderWithAddressEx(),
+	};
+
+	private static bool _schemaRegistered;
+	private IStorage _db;
 
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
-		SQLiteDialect.Register(SqliteFactory.Instance);
+		DbTestHelper.RegisterAll();
 
-		_sqliteDbPath = Path.Combine(Path.GetTempPath(), $"inner_schema_nested_test_{Guid.NewGuid():N}.db");
-
-		// Register TestCountry — standalone entity
-		SchemaRegistry.Register(new Schema
+		if (!_schemaRegistered)
 		{
-			TableName = "Ecng_Country",
-			EntityType = typeof(TestCountry),
-			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
-			Columns =
-			[
-				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
-			],
-			Factory = () => new TestCountry(),
-		});
-
-		// Register TestOrderWithAddressEx — entity with multi-level inner schema + RelationSingle
-		SchemaRegistry.Register(new Schema
-		{
-			TableName = "Ecng_OrderWithAddressEx",
-			EntityType = typeof(TestOrderWithAddressEx),
-			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
-			Columns =
-			[
-				new SchemaColumn { Name = "OrderName", ClrType = typeof(string) },
-				new SchemaColumn { Name = "ShippingAddressStreet", ClrType = typeof(string) },
-				new SchemaColumn { Name = "ShippingAddressCity", ClrType = typeof(string) },
-				new SchemaColumn { Name = "ShippingAddressGeoCoordLat", ClrType = typeof(double) },
-				new SchemaColumn { Name = "ShippingAddressGeoCoordLon", ClrType = typeof(double) },
-				new SchemaColumn { Name = "ShippingAddressCountry", ClrType = typeof(long) },
-			],
-			Factory = () => new TestOrderWithAddressEx(),
-		});
-
-		using var conn = new SqliteConnection($"Data Source={_sqliteDbPath}");
-		conn.Open();
-		using var cmd = conn.CreateCommand();
-		cmd.CommandText = """
-			CREATE TABLE "Ecng_Country" (
-				"Id" INTEGER PRIMARY KEY,
-				"Name" TEXT
-			);
-			CREATE TABLE "Ecng_OrderWithAddressEx" (
-				"Id" INTEGER PRIMARY KEY,
-				"OrderName" TEXT,
-				"ShippingAddressStreet" TEXT,
-				"ShippingAddressCity" TEXT,
-				"ShippingAddressGeoCoordLat" REAL,
-				"ShippingAddressGeoCoordLon" REAL,
-				"ShippingAddressCountry" INTEGER
-			);
-			""";
-		cmd.ExecuteNonQuery();
-
-		var db = new Database(
-			"InnerSchema Nested Test",
-			$"Data Source={_sqliteDbPath}",
-			SqliteFactory.Instance,
-			SQLiteDialect.Instance);
-		db.AllowDeleteAll = true;
-
-		_db = db;
+			SchemaRegistry.Register(_countrySchema);
+			SchemaRegistry.Register(_orderExSchema);
+			_schemaRegistered = true;
+		}
 	}
 
 	[ClassCleanup]
 	public static void ClassCleanup()
 	{
-		(_db as IDisposable)?.Dispose();
+		DbTestHelper.ClearSQLitePools();
+	}
 
-		SqliteConnection.ClearAllPools();
+	private void Init(string provider)
+	{
+		DbTestHelper.SkipIfUnavailable(provider);
 
-		try { File.Delete(_sqliteDbPath); }
-		catch { /* ignore */ }
+		var dialect = DbTestHelper.GetDialect(provider);
+
+		// Drop tables (order matters for FK constraints)
+		foreach (var tbl in new[] { _orderExSchema.TableName, _countrySchema.TableName })
+		{
+			var quoted = dialect.QuoteIdentifier(tbl);
+			try { DbTestHelper.ExecuteRaw(provider, $"DROP TABLE IF EXISTS {quoted}"); } catch { }
+		}
+
+		// Create tables
+		DbTestHelper.EnsureTable(provider, _countrySchema, autoIncrement: false);
+		DbTestHelper.EnsureTable(provider, _orderExSchema, autoIncrement: false);
+
+		_db = DbTestHelper.CreateDatabase(provider);
 	}
 
 	private static long _nextId = 10000;
 	private static long _nextCountryId = 20000;
 
 	[TestCleanup]
-	public async Task TestCleanup()
+	public void Cleanup()
 	{
-		await _db.ClearAsync<TestOrderWithAddressEx>(CancellationToken.None);
-		await _db.ClearAsync<TestCountry>(CancellationToken.None);
+		(_db as IDisposable)?.Dispose();
 	}
 
 	private static TestCountry NewCountry(string name)
@@ -465,25 +455,33 @@ public class InnerSchemaNestedTests : BaseTestClass
 	#region CRUD
 
 	[TestMethod]
-	public async Task Create_NestedInnerSchema_SavesFlattenedColumns()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Create_NestedInnerSchema_SavesFlattenedColumns(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
 		var order = NewOrderEx("OrderNested1", "123 Main St", "NYC", 40.7128, -74.006, country);
 
-		var saved = await _db.AddAsync(order, CancellationToken.None);
+		var saved = await _db.AddAsync(order, CancellationToken);
 
 		saved.Id.AssertEqual(order.Id);
 		saved.OrderName.AssertEqual("OrderNested1");
 	}
 
 	[TestMethod]
-	public async Task Read_NestedInnerSchema_LoadsFlattenedColumns()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Read_NestedInnerSchema_LoadsFlattenedColumns(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
 		var order = NewOrderEx("OrderNested2", "456 Oak Ave", "LA", 34.0522, -118.2437, country);
 
-		var saved = await _db.AddAsync(order, CancellationToken.None);
-		var loaded = await _db.GetByIdAsync<long, TestOrderWithAddressEx>(saved.Id, CancellationToken.None);
+		var saved = await _db.AddAsync(order, CancellationToken);
+		var loaded = await _db.GetByIdAsync<long, TestOrderWithAddressEx>(saved.Id, CancellationToken);
 
 		loaded.AssertNotNull();
 		loaded.OrderName.AssertEqual("OrderNested2");
@@ -498,13 +496,17 @@ public class InnerSchemaNestedTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task GetCount_NestedInnerSchema_ReturnsCorrectCount()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GetCount_NestedInnerSchema_ReturnsCorrectCount(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
-		await _db.AddAsync(NewOrderEx("N1", "1st St", "NYC", 40.0, -74.0, country), CancellationToken.None);
-		await _db.AddAsync(NewOrderEx("N2", "2nd St", "LA", 34.0, -118.0, country), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
+		await _db.AddAsync(NewOrderEx("N1", "1st St", "NYC", 40.0, -74.0, country), CancellationToken);
+		await _db.AddAsync(NewOrderEx("N2", "2nd St", "LA", 34.0, -118.0, country), CancellationToken);
 
-		var count = await _db.GetCountAsync<TestOrderWithAddressEx>(CancellationToken.None);
+		var count = await _db.GetCountAsync<TestOrderWithAddressEx>(CancellationToken);
 
 		count.AssertEqual(2L);
 	}
@@ -518,10 +520,14 @@ public class InnerSchemaNestedTests : BaseTestClass
 	/// Should generate "e"."ShippingAddressGeoCoordLat", not "GeoCoord"."Lat".
 	/// </summary>
 	[TestMethod]
-	public async Task Where_NestedInnerSchema_2Levels_ShouldUseFlattenedColumnName()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_NestedInnerSchema_2Levels_ShouldUseFlattenedColumnName(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
-		await _db.AddAsync(NewOrderEx("GeoOrder", "Main St", "NYC", 40.7128, -74.006, country), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
+		await _db.AddAsync(NewOrderEx("GeoOrder", "Main St", "NYC", 40.7128, -74.006, country), CancellationToken);
 
 		var queryable = new DefaultQueryable<TestOrderWithAddressEx>(
 			new DefaultQueryProvider<TestOrderWithAddressEx>(_db), null);
@@ -529,7 +535,7 @@ public class InnerSchemaNestedTests : BaseTestClass
 		var lat = 40.7128;
 		var filtered = Queryable.Where(queryable, o => o.ShippingAddress.GeoCoord.Lat == lat);
 
-		var results = await filtered.ToArrayAsyncEx(CancellationToken.None);
+		var results = await filtered.ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(1);
 		results[0].ShippingAddress.GeoCoord.Lat.AssertEqual(40.7128);
@@ -540,10 +546,14 @@ public class InnerSchemaNestedTests : BaseTestClass
 	/// Should still work with the extended entity.
 	/// </summary>
 	[TestMethod]
-	public async Task Where_NestedInnerSchema_1Level_StillWorks()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_NestedInnerSchema_1Level_StillWorks(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
-		await _db.AddAsync(NewOrderEx("CityOrder", "Main St", "NYC", 40.0, -74.0, country), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
+		await _db.AddAsync(NewOrderEx("CityOrder", "Main St", "NYC", 40.0, -74.0, country), CancellationToken);
 
 		var queryable = new DefaultQueryable<TestOrderWithAddressEx>(
 			new DefaultQueryProvider<TestOrderWithAddressEx>(_db), null);
@@ -551,7 +561,7 @@ public class InnerSchemaNestedTests : BaseTestClass
 		var city = "NYC";
 		var filtered = Queryable.Where(queryable, o => o.ShippingAddress.City == city);
 
-		var results = await filtered.ToArrayAsyncEx(CancellationToken.None);
+		var results = await filtered.ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(1);
 		results[0].ShippingAddress.City.AssertEqual("NYC");
@@ -566,10 +576,14 @@ public class InnerSchemaNestedTests : BaseTestClass
 	/// Should generate "e"."ShippingAddressCountry", not "Country"."Id".
 	/// </summary>
 	[TestMethod]
-	public async Task Where_RelationSingleInsideInnerSchema_ShouldUseFlattenedFkColumn()
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_RelationSingleInsideInnerSchema_ShouldUseFlattenedFkColumn(string provider)
 	{
-		var country = await _db.AddAsync(NewCountry("US"), CancellationToken.None);
-		await _db.AddAsync(NewOrderEx("FkOrder", "Main St", "NYC", 40.0, -74.0, country), CancellationToken.None);
+		Init(provider);
+		var country = await _db.AddAsync(NewCountry("US"), CancellationToken);
+		await _db.AddAsync(NewOrderEx("FkOrder", "Main St", "NYC", 40.0, -74.0, country), CancellationToken);
 
 		var queryable = new DefaultQueryable<TestOrderWithAddressEx>(
 			new DefaultQueryProvider<TestOrderWithAddressEx>(_db), null);
@@ -577,7 +591,7 @@ public class InnerSchemaNestedTests : BaseTestClass
 		var countryId = country.Id;
 		var filtered = Queryable.Where(queryable, o => o.ShippingAddress.Country.Id == countryId);
 
-		var results = await filtered.ToArrayAsyncEx(CancellationToken.None);
+		var results = await filtered.ToArrayAsyncEx(CancellationToken);
 
 		results.Length.AssertEqual(1);
 		results[0].ShippingAddress.Country.AssertNotNull();

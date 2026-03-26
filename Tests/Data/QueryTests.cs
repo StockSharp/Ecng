@@ -952,7 +952,7 @@ public class QueryTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "scope_identity() as Id")]
 	[DataRow("SQLite", "last_insert_rowid() as Id")]
-	[DataRow("PostgreSql", "Id")]
+	[DataRow("PostgreSql", "lastval() as Id")]
 	public void Identity_AllDialects(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);

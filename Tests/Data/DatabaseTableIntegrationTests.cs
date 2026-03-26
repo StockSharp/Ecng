@@ -1,15 +1,11 @@
 namespace Ecng.Tests.Data;
 
 using Ecng.Data;
-using Ecng.IO;
-
-using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// Integration tests for database table operations.
-/// Tests run with both SQL Server and SQLite providers via DataRow parameterization.
-/// SQL Server tests only run on .NET 10+, SQLite tests run on all frameworks.
+/// Tests run with SQL Server, PostgreSQL, and SQLite providers via DataRow parameterization.
 /// </summary>
 [TestClass]
 [TestCategory("Integration")]
@@ -18,56 +14,17 @@ using Microsoft.Data.Sqlite;
 public class DatabaseTableIntegrationTests : BaseTestClass
 {
 	private const string _testTableName = "Ecng_TableTest";
-	private static string _sqliteDbPath;
 
 	[ClassInitialize]
 	public static void ClassInit(TestContext context)
 	{
-#if NET10_0_OR_GREATER
-		SqlServerDialect.Register(SqlClientFactory.Instance);
-#endif
-		SQLiteDialect.Register(SqliteFactory.Instance);
-
-		// Use Config temp folder (unique per test run, auto-cleaned)
-		var tempDir = LocalFileSystem.Instance.GetTempPath();
-		_sqliteDbPath = Path.Combine(tempDir, "integration_test.db");
+		DbTestHelper.RegisterAll();
 	}
 
 	[ClassCleanup]
 	public static void ClassCleanup()
 	{
-		// Release pooled connections so temp folder can be deleted
-		SqliteConnection.ClearAllPools();
-	}
-
-	private static DatabaseConnectionPair GetConnectionPair(string provider)
-	{
-		return provider switch
-		{
-			DatabaseProviderRegistry.SqlServer => new()
-			{
-				Provider = DatabaseProviderRegistry.SqlServer,
-				ConnectionString = GetSecret("SQLSERVER_CONNECTION_STRING"),
-			},
-			DatabaseProviderRegistry.SQLite => new()
-			{
-				Provider = DatabaseProviderRegistry.SQLite,
-				ConnectionString = $"Data Source={_sqliteDbPath}",
-			},
-			_ => throw new ArgumentException($"Unknown provider: {provider}"),
-		};
-	}
-
-	/// <summary>
-	/// Skips test if provider is SQL Server and running on .NET 6.
-	/// SQL Server tests only run on .NET 10+.
-	/// </summary>
-	private static void SkipIfSqlServerOnNet6(string provider)
-	{
-#if !NET10_0_OR_GREATER
-		if (provider == DatabaseProviderRegistry.SqlServer)
-			Assert.Inconclusive("SQL Server tests only run on .NET 10+");
-#endif
+		DbTestHelper.ClearSQLitePools();
 	}
 
 	private static IDictionary<string, object> ToDict(int id, string name)
@@ -77,41 +34,37 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		=> new Dictionary<string, object> { ["Id"] = id, ["Name"] = name, ["Value"] = value };
 
 	/// <summary>
-	/// Creates a table with PRIMARY KEY on Id column.
-	/// Required for SQLite UPSERT (ON CONFLICT) to work.
+	/// Creates a table with PRIMARY KEY via raw SQL (needed for upsert).
 	/// </summary>
-	private static async Task CreateTableWithPrimaryKeyAsync(string tableName)
+	private static void CreateTableWithPrimaryKey(string provider, string tableName, Dictionary<string, Type> columns)
 	{
-		using var conn = new SqliteConnection($"Data Source={_sqliteDbPath}");
-		await conn.OpenAsync();
-		using var cmd = conn.CreateCommand();
-		cmd.CommandText = $"CREATE TABLE IF NOT EXISTS \"{tableName}\" (\"Id\" INTEGER PRIMARY KEY, \"Name\" TEXT)";
-		await cmd.ExecuteNonQueryAsync();
+		var dialect = DbTestHelper.GetDialect(provider);
+		var sql = Query.CreateCreateTable(tableName, columns, primaryKeyColumns: ["Id"]).Render(dialect);
+		DbTestHelper.ExecuteRaw(provider, sql);
 	}
 
 	/// <summary>
 	/// Drops a table by name using raw SQL.
 	/// </summary>
-	private static async Task DropTableRawAsync(string tableName)
+	private static void DropTableRaw(string provider, string tableName)
 	{
-		using var conn = new SqliteConnection($"Data Source={_sqliteDbPath}");
-		await conn.OpenAsync();
-		using var cmd = conn.CreateCommand();
-		cmd.CommandText = $"DROP TABLE IF EXISTS \"{tableName}\"";
-		await cmd.ExecuteNonQueryAsync();
+		var dialect = DbTestHelper.GetDialect(provider);
+		var quoted = dialect.QuoteIdentifier(tableName);
+		DbTestHelper.ExecuteRaw(provider, $"DROP TABLE IF EXISTS {quoted}");
 	}
 
 	#region DDL Tests
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_CreateAndDrop_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Drop if exists
@@ -145,13 +98,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_InsertAndSelect_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -179,13 +133,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -213,13 +168,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer, 10000)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql, 5000)]
 	[DataRow(DatabaseProviderRegistry.SQLite, 5000)]
 	public async Task Table_BulkInsert_LargeDataset_Success(string providerName, int rowCount)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -252,13 +208,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithFilter_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -289,13 +246,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithOrderBy_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -326,13 +284,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithPagination_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -364,13 +323,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_Update_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -401,13 +361,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_Delete_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -443,13 +404,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithInOperator_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -480,13 +442,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithLikeOperator_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -526,13 +489,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_Delete_ReturnsDeletedCount(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -571,31 +535,24 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_Upsert_InsertAndUpdate_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var upsertTableName = "Ecng_UpsertTest";
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, upsertTableName);
 
-		// Setup - for SQLite need PRIMARY KEY for ON CONFLICT
-		if (providerName == DatabaseProviderRegistry.SQLite)
+		// Create table with PRIMARY KEY (required for upsert ON CONFLICT / MERGE)
+		DropTableRaw(providerName, upsertTableName);
+		CreateTableWithPrimaryKey(providerName, upsertTableName, new Dictionary<string, Type>
 		{
-			await DropTableRawAsync(upsertTableName);
-			await CreateTableWithPrimaryKeyAsync(upsertTableName);
-		}
-		else
-		{
-			await table.DropAsync(CancellationToken);
-			await table.CreateAsync(new Dictionary<string, Type>
-			{
-				["Id"] = typeof(int),
-				["Name"] = typeof(string),
-			}, CancellationToken);
-		}
+			["Id"] = typeof(int),
+			["Name"] = typeof(string),
+		});
 
 		// Upsert - should insert
 		await table.UpsertAsync(ToDict(1, "First"), ["Id"], CancellationToken);
@@ -637,13 +594,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public void Table_GetTable_EmptyTableName_Throws(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		Throws<ArgumentNullException>(() => provider.GetTable(connection, ""));
 	}
 
@@ -658,13 +616,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_ManyColumns_Success(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName + "_manycols");
 
 		// Setup - create table with 100 columns
@@ -718,13 +677,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithEmptyIn_ReturnsEmpty(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -755,13 +715,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_TimeSpanStorage_Consistent(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -810,13 +771,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_EmptyList_DoesNotThrow(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -845,13 +807,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_EmptyFirstRow_ShouldHandleGracefully(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -897,13 +860,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_InconsistentColumns_ShouldNotLoseData(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup - create table with all columns that will be used
@@ -953,13 +917,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithNullFilter_ShouldUseIsNull(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -975,8 +940,6 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.InsertAsync(new Dictionary<string, object> { ["Id"] = 2, ["Name"] = "HasValue" }, CancellationToken);
 
 		// Select where Name = NULL
-		// If bug exists: generates "Name = @p0" with @p0 = null, which never matches (NULL != NULL in SQL)
-		// Correct: should generate "Name IS NULL"
 		var filters = new[] { new FilterCondition("Name", ComparisonOperator.Equal, null) };
 		var results = await table.SelectAsync(filters, null, null, null, CancellationToken);
 		var list = results.ToList();
@@ -993,13 +956,14 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_SelectWithNotNullFilter_ShouldUseIsNotNull(string providerName)
 	{
-		SkipIfSqlServerOnNet6(providerName);
+		DbTestHelper.SkipIfUnavailable(providerName);
 
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName);
 
 		// Setup
@@ -1033,18 +997,19 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 	/// <summary>
 	/// Verifies behavior when columns exceed configured MaxParameters.
 	/// SQLite MaxParameters is set to 900 in code, but actual SQLite limit may be higher.
-	/// The code should validate columns.Count vs MaxParameters BEFORE sending to database.
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Table_BulkInsert_ColumnsExceedMaxParameters_ShouldValidateUpfront(string providerName)
 	{
+		DbTestHelper.SkipIfUnavailable(providerName);
+
 		var provider = AdoDatabaseProvider.Instance;
-		using var connection = provider.CreateConnection(GetConnectionPair(providerName));
+		using var connection = provider.CreateConnection(DbTestHelper.TryGetConnectionPair(providerName));
 		var table = provider.GetTable(connection, _testTableName + "_toomany");
 
 		// Get the dialect's MaxParameters setting
-		var dialect = DatabaseProviderRegistry.GetDialect(DatabaseProviderRegistry.SQLite);
+		var dialect = DbTestHelper.GetDialect(providerName);
 		var maxParams = dialect.MaxParameters; // 900
 
 		// Create table with columns > MaxParameters
@@ -1064,9 +1029,6 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		var rows = new List<IDictionary<string, object>> { row };
 
 		// Verify: batchSize calculation allows this even though it exceeds MaxParameters
-		// batchSize = Math.Max(1, 900/1000) = Math.Max(1, 0) = 1
-		// But 1 row * 1000 columns = 1000 parameters > 900
-		// This should be validated BEFORE hitting the database
 		(columnCount > maxParams).AssertTrue("Test setup: columns should exceed MaxParameters");
 
 		// BulkInsertAsync should throw ArgumentException when columns exceed MaxParameters

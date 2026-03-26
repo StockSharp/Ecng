@@ -6,18 +6,18 @@ using Ecng.Data;
 using Ecng.Data.Sql;
 
 /// <summary>
-/// Base class for ADO-level integration tests.
-/// Tests CRUD operations through <see cref="AdoDatabaseProvider"/> and <see cref="IDatabaseTable"/>.
+/// ADO-level integration tests for CRUD operations through <see cref="AdoDatabaseProvider"/> and <see cref="IDatabaseTable"/>.
+/// Parameterized to run against all supported database providers.
 /// </summary>
-public abstract class AdoIntegrationTestsBase : BaseTestClass
+[TestClass]
+[TestCategory("Integration")]
+[TestCategory("Database")]
+[DoNotParallelize]
+public class AdoIntegrationTests : BaseTestClass
 {
 	private IDatabaseConnection _connection;
 	private IDatabaseTable _table;
-
-	protected abstract string ProviderName { get; }
-	protected abstract ISqlDialect Dialect { get; }
-	protected abstract DbProviderFactory Factory { get; }
-	protected abstract string GetConnectionString();
+	private string _provider;
 
 	private const string TableName = "Ecng_AdoTestItems";
 
@@ -29,21 +29,23 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		["Created"] = typeof(DateTime),
 	};
 
-	protected void SetUp()
+	private void SetUp(string provider)
 	{
-		var connStr = GetConnectionString();
-		if (connStr.IsEmpty())
-		{
-			Inconclusive($"Connection string not configured for {ProviderName}.");
-			return;
-		}
+		_provider = provider;
 
-		DatabaseProviderRegistry.Register(ProviderName, Factory);
-		DatabaseProviderRegistry.RegisterDialect(ProviderName, Dialect);
+		DbTestHelper.RegisterAll();
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		var connStr = DbTestHelper.TryGetConnectionString(provider);
+		var factory = DbTestHelper.GetFactory(provider);
+		var dialect = DbTestHelper.GetDialect(provider);
+
+		DatabaseProviderRegistry.Register(provider, factory);
+		DatabaseProviderRegistry.RegisterDialect(provider, dialect);
 
 		var pair = new DatabaseConnectionPair
 		{
-			Provider = ProviderName,
+			Provider = provider,
 			ConnectionString = connStr,
 		};
 
@@ -51,31 +53,39 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		_table = AdoDatabaseProvider.Instance.GetTable(_connection, TableName);
 	}
 
-	protected async Task TearDown()
+	[TestCleanup]
+	public async Task Cleanup()
 	{
 		if (_table is not null)
 		{
-			try { await _table.DropAsync(CancellationToken.None); }
+			try { await _table.DropAsync(CancellationToken); }
 			catch { /* ignore if table doesn't exist */ }
 		}
 
 		(_connection as IDisposable)?.Dispose();
 	}
 
-	protected async Task CreateTable_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CreateTable(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
-		// Verify table exists by selecting (should return empty)
-		var rows = await _table.SelectAsync(null, null, null, null, CancellationToken.None);
+		var rows = await _table.SelectAsync(null, null, null, null, CancellationToken);
 		rows.Any().AssertFalse("Table should be empty after creation");
 	}
 
-	protected async Task InsertAndSelect_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task InsertAndSelect(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		var values = new Dictionary<string, object>
 		{
@@ -85,9 +95,9 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 			["Created"] = new DateTime(2025, 1, 15, 10, 30, 0, DateTimeKind.Unspecified),
 		};
 
-		await _table.InsertAsync(values, CancellationToken.None);
+		await _table.InsertAsync(values, CancellationToken);
 
-		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(1);
 
 		var row = rows[0];
@@ -96,10 +106,14 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		row["Value"].To<decimal>().AssertEqual(42.5m);
 	}
 
-	protected async Task SelectWithFilter_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SelectWithFilter(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		for (var i = 1; i <= 5; i++)
 		{
@@ -109,18 +123,22 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 				["Name"] = $"Item {i}",
 				["Value"] = i * 10m,
 				["Created"] = new DateTime(2025, 1, i, 0, 0, 0, DateTimeKind.Unspecified),
-			}, CancellationToken.None);
+			}, CancellationToken);
 		}
 
 		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Greater, 3) };
-		var rows = (await _table.SelectAsync(filters, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(filters, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(2);
 	}
 
-	protected async Task SelectWithOrderBy_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SelectWithOrderBy(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		for (var i = 1; i <= 3; i++)
 		{
@@ -130,20 +148,24 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 				["Name"] = $"Item {i}",
 				["Value"] = (4 - i) * 10m,
 				["Created"] = new DateTime(2025, 1, i, 0, 0, 0, DateTimeKind.Unspecified),
-			}, CancellationToken.None);
+			}, CancellationToken);
 		}
 
 		var orderBy = new[] { new OrderByCondition("Value") }; // ASC
-		var rows = (await _table.SelectAsync(null, orderBy, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, orderBy, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(3);
 		rows[0]["Value"].To<decimal>().AssertEqual(10m);
 		rows[2]["Value"].To<decimal>().AssertEqual(30m);
 	}
 
-	protected async Task Update_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Update(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		await _table.InsertAsync(new Dictionary<string, object>
 		{
@@ -151,7 +173,7 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 			["Name"] = "Original",
 			["Value"] = 10m,
 			["Created"] = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Unspecified),
-		}, CancellationToken.None);
+		}, CancellationToken);
 
 		var updateValues = new Dictionary<string, object>
 		{
@@ -160,18 +182,22 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		};
 		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Equal, 1) };
 
-		await _table.UpdateAsync(updateValues, filters, CancellationToken.None);
+		await _table.UpdateAsync(updateValues, filters, CancellationToken);
 
-		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(1);
 		rows[0]["Name"].To<string>().AssertEqual("Updated");
 		rows[0]["Value"].To<decimal>().AssertEqual(99m);
 	}
 
-	protected async Task Delete_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Delete(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		for (var i = 1; i <= 3; i++)
 		{
@@ -181,22 +207,27 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 				["Name"] = $"Item {i}",
 				["Value"] = i * 10m,
 				["Created"] = new DateTime(2025, 1, i, 0, 0, 0, DateTimeKind.Unspecified),
-			}, CancellationToken.None);
+			}, CancellationToken);
 		}
 
 		var filters = new[] { new FilterCondition("Id", ComparisonOperator.Equal, 2) };
-		var deleted = await _table.DeleteAsync(filters, CancellationToken.None);
+		var deleted = await _table.DeleteAsync(filters, CancellationToken);
 		deleted.AssertEqual(1);
 
-		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(2);
 	}
 
-	protected async Task Upsert_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Upsert(string provider)
 	{
-		EnsureSetUp();
+		SetUp(provider);
+
 		// Upsert requires PRIMARY KEY constraint on the key column
-		await CreateTableWithPrimaryKey();
+		await CreateTableWithPrimaryKey(provider);
 
 		var values = new Dictionary<string, object>
 		{
@@ -207,27 +238,31 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 		};
 
 		// Insert via upsert
-		await _table.UpsertAsync(values, ["Id"], CancellationToken.None);
+		await _table.UpsertAsync(values, ["Id"], CancellationToken);
 
-		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(1);
 		rows[0]["Name"].To<string>().AssertEqual("Original");
 
 		// Update via upsert (same key)
 		values["Name"] = "Upserted";
 		values["Value"] = 99m;
-		await _table.UpsertAsync(values, ["Id"], CancellationToken.None);
+		await _table.UpsertAsync(values, ["Id"], CancellationToken);
 
-		rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(1);
 		rows[0]["Name"].To<string>().AssertEqual("Upserted");
 		rows[0]["Value"].To<decimal>().AssertEqual(99m);
 	}
 
-	protected async Task BulkInsert_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task BulkInsert(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		var batch = Enumerable.Range(1, 50).Select(i => (IDictionary<string, object>)new Dictionary<string, object>
 		{
@@ -237,16 +272,20 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 			["Created"] = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Unspecified),
 		}).ToList();
 
-		await _table.BulkInsertAsync(batch, CancellationToken.None);
+		await _table.BulkInsertAsync(batch, CancellationToken);
 
-		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, null, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(50);
 	}
 
-	protected async Task SelectWithPagination_Test()
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SelectWithPagination(string provider)
 	{
-		EnsureSetUp();
-		await _table.CreateAsync(_columns, CancellationToken.None);
+		SetUp(provider);
+		await _table.CreateAsync(_columns, CancellationToken);
 
 		for (var i = 1; i <= 10; i++)
 		{
@@ -256,147 +295,32 @@ public abstract class AdoIntegrationTestsBase : BaseTestClass
 				["Name"] = $"Item {i}",
 				["Value"] = i * 10m,
 				["Created"] = new DateTime(2025, 1, i, 0, 0, 0, DateTimeKind.Unspecified),
-			}, CancellationToken.None);
+			}, CancellationToken);
 		}
 
 		var orderBy = new[] { new OrderByCondition("Id") };
-		var rows = (await _table.SelectAsync(null, orderBy, 2, 3, CancellationToken.None)).ToList();
+		var rows = (await _table.SelectAsync(null, orderBy, 2, 3, CancellationToken)).ToList();
 		rows.Count.AssertEqual(3);
 		rows[0]["Id"].To<int>().AssertEqual(3); // skip 2, take 3 → items 3,4,5
 	}
 
-	private async Task CreateTableWithPrimaryKey()
+	private async Task CreateTableWithPrimaryKey(string provider)
 	{
 		// Drop first in case it exists from a prior run
-		try { await _table.DropAsync(CancellationToken.None); } catch { }
+		try { await _table.DropAsync(CancellationToken); } catch { }
 
 		// Create table with PRIMARY KEY via raw SQL (needed for upsert)
-		var sql = Query.CreateCreateTable(TableName, _columns, primaryKeyColumns: ["Id"]).Render(Dialect);
+		var dialect = DbTestHelper.GetDialect(provider);
+		var sql = Query.CreateCreateTable(TableName, _columns, primaryKeyColumns: ["Id"]).Render(dialect);
 
-		using var conn = Factory.CreateConnection();
-		conn.ConnectionString = GetConnectionString();
+		var factory = DbTestHelper.GetFactory(provider);
+		var connStr = DbTestHelper.TryGetConnectionString(provider);
+
+		using var conn = factory.CreateConnection();
+		conn.ConnectionString = connStr;
 		await conn.OpenAsync();
 		using var cmd = conn.CreateCommand();
 		cmd.CommandText = sql;
 		await cmd.ExecuteNonQueryAsync();
 	}
-
-	private void EnsureSetUp()
-	{
-		if (_table is null)
-			Inconclusive($"Connection string not configured for {ProviderName}.");
-	}
 }
-
-#region SQL Server
-
-#if !NET6_0
-
-[TestClass]
-[TestCategory("Integration")]
-[TestCategory("Database")]
-[TestCategory("SqlServer")]
-[DoNotParallelize]
-public class AdoSqlServerIntegrationTests : AdoIntegrationTestsBase
-{
-	protected override string ProviderName => DatabaseProviderRegistry.SqlServer;
-	protected override ISqlDialect Dialect => SqlServerDialect.Instance;
-	protected override DbProviderFactory Factory => Microsoft.Data.SqlClient.SqlClientFactory.Instance;
-
-	protected override string GetConnectionString()
-		=> TryGetSecret("SQLSERVER_CONNECTION_STRING");
-
-	[TestInitialize]
-	public void Init() => SetUp();
-
-	[TestCleanup]
-	public async Task Cleanup() => await TearDown();
-
-	[TestMethod] public async Task CreateTable() => await CreateTable_Test();
-	[TestMethod] public async Task InsertAndSelect() => await InsertAndSelect_Test();
-	[TestMethod] public async Task SelectWithFilter() => await SelectWithFilter_Test();
-	[TestMethod] public async Task SelectWithOrderBy() => await SelectWithOrderBy_Test();
-	[TestMethod] public async Task Update() => await Update_Test();
-	[TestMethod] public async Task Delete() => await Delete_Test();
-	[TestMethod] public async Task Upsert() => await Upsert_Test();
-	[TestMethod] public async Task BulkInsert() => await BulkInsert_Test();
-	[TestMethod] public async Task SelectWithPagination() => await SelectWithPagination_Test();
-}
-
-#endif
-
-#endregion
-
-#region PostgreSQL
-
-#if !NET6_0
-
-[TestClass]
-[TestCategory("Integration")]
-[TestCategory("Database")]
-[TestCategory("PostgreSql")]
-[DoNotParallelize]
-public class AdoPostgreSqlIntegrationTests : AdoIntegrationTestsBase
-{
-	protected override string ProviderName => DatabaseProviderRegistry.PostgreSql;
-	protected override ISqlDialect Dialect => PostgreSqlDialect.Instance;
-	protected override DbProviderFactory Factory => Npgsql.NpgsqlFactory.Instance;
-
-	protected override string GetConnectionString()
-		=> TryGetSecret("PG_CONNECTION_STRING");
-
-	[TestInitialize]
-	public void Init() => SetUp();
-
-	[TestCleanup]
-	public async Task Cleanup() => await TearDown();
-
-	[TestMethod] public async Task CreateTable() => await CreateTable_Test();
-	[TestMethod] public async Task InsertAndSelect() => await InsertAndSelect_Test();
-	[TestMethod] public async Task SelectWithFilter() => await SelectWithFilter_Test();
-	[TestMethod] public async Task SelectWithOrderBy() => await SelectWithOrderBy_Test();
-	[TestMethod] public async Task Update() => await Update_Test();
-	[TestMethod] public async Task Delete() => await Delete_Test();
-	[TestMethod] public async Task Upsert() => await Upsert_Test();
-	[TestMethod] public async Task BulkInsert() => await BulkInsert_Test();
-	[TestMethod] public async Task SelectWithPagination() => await SelectWithPagination_Test();
-}
-
-#endif
-
-#endregion
-
-#region SQLite
-
-[TestClass]
-[TestCategory("Integration")]
-[TestCategory("Database")]
-[TestCategory("SQLite")]
-[DoNotParallelize]
-public class AdoSQLiteIntegrationTests : AdoIntegrationTestsBase
-{
-	protected override string ProviderName => DatabaseProviderRegistry.SQLite;
-	protected override ISqlDialect Dialect => SQLiteDialect.Instance;
-	protected override DbProviderFactory Factory => Microsoft.Data.Sqlite.SqliteFactory.Instance;
-
-	protected override string GetConnectionString()
-		=> "Data Source=AdoTest;Mode=Memory;Cache=Shared";
-
-	[TestInitialize]
-	public void Init() => SetUp();
-
-	[TestCleanup]
-	public async Task Cleanup() => await TearDown();
-
-	[TestMethod] public async Task CreateTable() => await CreateTable_Test();
-	[TestMethod] public async Task InsertAndSelect() => await InsertAndSelect_Test();
-	[TestMethod] public async Task SelectWithFilter() => await SelectWithFilter_Test();
-	[TestMethod] public async Task SelectWithOrderBy() => await SelectWithOrderBy_Test();
-	[TestMethod] public async Task Update() => await Update_Test();
-	[TestMethod] public async Task Delete() => await Delete_Test();
-	[TestMethod] public async Task Upsert() => await Upsert_Test();
-	[TestMethod] public async Task BulkInsert() => await BulkInsert_Test();
-	[TestMethod] public async Task SelectWithPagination() => await SelectWithPagination_Test();
-}
-
-#endregion
