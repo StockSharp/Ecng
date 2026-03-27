@@ -18,22 +18,21 @@ abstract class DateAddVisitor<T>(string name, string firstArg) : MethodVisitor<T
 	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
 	{
 		var q = translator.Context.Curr;
-
-		q.DateAdd()
-			.OpenBracket()
-				.Raw(_firstArg).Comma();
-
 		var mce = (MethodCallExpression)expression;
 
-		foreach (var arg in mce.Arguments)
-		{
-			translator.Visit(arg);
-			translator.Context.Curr.Comma();
-		}
+		// Capture amount sub-expression into a temporary query
+		var amountQuery = new Query();
+		translator.Context.Curr = amountQuery;
+		translator.Visit(mce.Arguments[0]);
 
+		// Capture source sub-expression into a temporary query
+		var sourceQuery = new Query();
+		translator.Context.Curr = sourceQuery;
 		translator.Visit(mce.Object);
 
-		q.CloseBracket();
+		// Restore and emit dialect-aware DATEADD
+		translator.Context.Curr = q;
+		q.AddAction((d, sb) => d.AppendDateAdd(sb, _firstArg, amountQuery.Render(d), sourceQuery.Render(d)));
 	}
 }
 
@@ -270,15 +269,12 @@ abstract class DatePartVisitor<T>(string name, string firstArg) : MethodVisitor<
 	{
 		var q = translator.Context.Curr;
 
-		q.DatePart()
-			.OpenBracket()
-			.Raw(_firstArg)
-			.Comma();
+		q.AddAction((d, sb) => d.AppendDatePartOpen(sb, _firstArg));
 
 		var me = (MemberExpression)expression;
 		translator.Visit(me.Expression);
 
-		q.CloseBracket();
+		q.AddAction((d, sb) => d.AppendDatePartClose(sb));
 	}
 }
 

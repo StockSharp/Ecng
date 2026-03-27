@@ -811,9 +811,9 @@ public class Query
 	public Query NullIf() => AddAction((dialect, builder) => builder.Append("nullif"));
 
 	/// <summary>
-	/// Appends ISNULL function name.
+	/// Appends dialect-aware null-coalescing function name (ISNULL for SQL Server, COALESCE for PG/SQLite).
 	/// </summary>
-	public Query IsNull() => AddAction((dialect, builder) => builder.Append("isnull"));
+	public Query IsNull() => AddAction((dialect, builder) => builder.Append(dialect.IsNullFunction));
 
 	/// <summary>
 	/// Appends LIKE keyword.

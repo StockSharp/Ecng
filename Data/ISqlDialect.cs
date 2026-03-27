@@ -267,6 +267,43 @@ public interface ISqlDialect
 	string LenFunction => "len";
 
 	/// <summary>
+	/// Gets the SQL function name for null-coalescing (ISNULL for SQL Server, COALESCE for PostgreSQL/SQLite).
+	/// </summary>
+	string IsNullFunction => "isnull";
+
+	/// <summary>
+	/// Appends dialect-specific date part extraction opening.
+	/// SQL Server: DATEPART(part, ...); PostgreSQL/SQLite: EXTRACT(part FROM ...).
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="part">Date part name (year, month, day, etc.).</param>
+	void AppendDatePartOpen(StringBuilder sb, string part)
+	{
+		sb.Append($"datePart({part},");
+	}
+
+	/// <summary>
+	/// Appends the closing part of a dialect-specific date part extraction.
+	/// </summary>
+	void AppendDatePartClose(StringBuilder sb)
+	{
+		sb.Append(')');
+	}
+
+	/// <summary>
+	/// Appends dialect-specific DATEADD expression.
+	/// SQL Server: dateAdd(part, amount, source); PostgreSQL: (source + make_interval(part => amount)); SQLite: datetime(source, amount || ' part').
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="part">Date part name (year, month, day, etc.).</param>
+	/// <param name="amountSql">Rendered SQL for the amount to add.</param>
+	/// <param name="sourceSql">Rendered SQL for the source date expression.</param>
+	void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql)
+	{
+		sb.Append($"dateAdd({part},{amountSql},{sourceSql})");
+	}
+
+	/// <summary>
 	/// Appends the opening part of a dialect-specific TRIM expression.
 	/// SQL Server: LTRIM(RTRIM(..., PostgreSQL/SQLite: TRIM(....
 	/// </summary>
@@ -282,6 +319,22 @@ public interface ISqlDialect
 	void AppendTrimClose(StringBuilder sb)
 	{
 		sb.Append("))");
+	}
+
+	/// <summary>
+	/// Appends dialect-specific parameterized pagination clause.
+	/// SQL Server outputs OFFSET then FETCH; PostgreSQL/SQLite output LIMIT then OFFSET.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="skipParamExpr">Full parameter expression for skip (e.g. "@skip"), or null.</param>
+	/// <param name="takeParamExpr">Full parameter expression for take (e.g. "@take"), or null.</param>
+	void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
+	{
+		// Default: SqlServer order (OFFSET first, then FETCH)
+		if (skipParamExpr is not null)
+			sb.AppendLine(FormatSkip(skipParamExpr));
+		if (takeParamExpr is not null)
+			sb.AppendLine(FormatTake(takeParamExpr));
 	}
 
 	/// <summary>

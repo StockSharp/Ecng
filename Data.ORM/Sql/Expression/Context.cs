@@ -370,11 +370,18 @@ class Context
 
 			query.NewLine();
 
-			if (Skip is not null)
-				query.Skip(TryAddParam("skip", typeof(long), Skip.Value));
+			{
+				var skipParamName = Skip is not null ? TryAddParam("skip", typeof(long), Skip.Value) : null;
+				var takeParamName = Take is not null ? TryAddParam("take", typeof(long), Take.Value) : null;
 
-			if (Take is not null)
-				query.Take(TryAddParam("take", typeof(long), Take.Value));
+				if (skipParamName is not null || takeParamName is not null)
+					query.AddAction((dialect, builder) =>
+					{
+						var skipExpr = skipParamName is not null ? dialect.ParameterPrefix + skipParamName : null;
+						var takeExpr = takeParamName is not null ? dialect.ParameterPrefix + takeParamName : null;
+						dialect.AppendPaginationParams(builder, skipExpr, takeExpr);
+					});
+			}
 		}
 
 		if (Exists)

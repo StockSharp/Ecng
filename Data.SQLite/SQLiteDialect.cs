@@ -83,6 +83,50 @@ public class SQLiteDialect : SqlDialectBase
 	public override string LenFunction => "LENGTH";
 
 	/// <inheritdoc />
+	public override string IsNullFunction => "coalesce";
+
+	/// <inheritdoc />
+	public override void AppendDatePartOpen(StringBuilder sb, string part)
+	{
+		// SQLite doesn't have EXTRACT or DATEPART natively.
+		// Use strftime format specifiers mapped from standard part names.
+		var fmt = part switch
+		{
+			"year" => "%Y",
+			"month" => "%m",
+			"day" => "%d",
+			"hour" => "%H",
+			"minute" => "%M",
+			"second" => "%S",
+			"dayofyear" => "%j",
+			_ => throw new NotSupportedException($"Date part '{part}' is not supported in SQLite"),
+		};
+		sb.Append($"CAST(strftime('{fmt}',");
+	}
+
+	/// <inheritdoc />
+	public override void AppendDatePartClose(StringBuilder sb)
+	{
+		sb.Append(") AS INTEGER)");
+	}
+
+	/// <inheritdoc />
+	public override void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql)
+	{
+		var sqlitePart = part switch
+		{
+			"year" => "years",
+			"month" => "months",
+			"day" => "days",
+			"hour" => "hours",
+			"minute" => "minutes",
+			"second" => "seconds",
+			_ => throw new NotSupportedException($"Date part '{part}' is not supported for DATEADD in SQLite"),
+		};
+		sb.Append($"datetime({sourceSql}, ({amountSql}) || ' {sqlitePart}')");
+	}
+
+	/// <inheritdoc />
 	public override void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("TRIM(");
@@ -99,6 +143,18 @@ public class SQLiteDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string FormatTake(string take) => $"LIMIT {take}";
+
+	/// <inheritdoc />
+	public override void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
+	{
+		// SQLite: LIMIT first (required for OFFSET), then OFFSET
+		if (takeParamExpr is not null)
+			sb.AppendLine(FormatTake(takeParamExpr));
+		else if (skipParamExpr is not null)
+			sb.AppendLine("LIMIT -1"); // SQLite requires LIMIT when using OFFSET
+		if (skipParamExpr is not null)
+			sb.AppendLine(FormatSkip(skipParamExpr));
+	}
 
 	/// <inheritdoc />
 	public override string Now() => "datetime('now', 'localtime')";

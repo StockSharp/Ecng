@@ -88,6 +88,31 @@ public class PostgreSqlDialect : SqlDialectBase
 	public override string LenFunction => "LENGTH";
 
 	/// <inheritdoc />
+	public override string IsNullFunction => "coalesce";
+
+	/// <inheritdoc />
+	public override void AppendDatePartOpen(StringBuilder sb, string part)
+	{
+		sb.Append($"EXTRACT({part} FROM ");
+	}
+
+	/// <inheritdoc />
+	public override void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql)
+	{
+		var pgPart = part switch
+		{
+			"year" => "years",
+			"month" => "months",
+			"day" => "days",
+			"hour" => "hours",
+			"minute" => "mins",
+			"second" => "secs",
+			_ => throw new NotSupportedException($"Date part '{part}' is not supported for DATEADD in PostgreSQL"),
+		};
+		sb.Append($"({sourceSql} + make_interval({pgPart} => {amountSql}))");
+	}
+
+	/// <inheritdoc />
 	public override void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("TRIM(");
@@ -104,6 +129,16 @@ public class PostgreSqlDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string FormatTake(string take) => $"LIMIT {take}";
+
+	/// <inheritdoc />
+	public override void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
+	{
+		// PostgreSQL: LIMIT first, then OFFSET
+		if (takeParamExpr is not null)
+			sb.AppendLine(FormatTake(takeParamExpr));
+		if (skipParamExpr is not null)
+			sb.AppendLine(FormatSkip(skipParamExpr));
+	}
 
 	/// <inheritdoc />
 	public override string Now() => "now()";

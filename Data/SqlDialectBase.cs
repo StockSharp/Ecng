@@ -24,6 +24,27 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual string LenFunction => "len";
 
 	/// <inheritdoc />
+	public virtual string IsNullFunction => "isnull";
+
+	/// <inheritdoc />
+	public virtual void AppendDatePartOpen(StringBuilder sb, string part)
+	{
+		sb.Append($"datePart({part},");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendDatePartClose(StringBuilder sb)
+	{
+		sb.Append(')');
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql)
+	{
+		sb.Append($"dateAdd({part},{amountSql},{sourceSql})");
+	}
+
+	/// <inheritdoc />
 	public virtual void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("LTrim(RTrim(");
@@ -33,6 +54,16 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual void AppendTrimClose(StringBuilder sb)
 	{
 		sb.Append("))");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
+	{
+		// Default: SqlServer order (OFFSET first, then FETCH)
+		if (skipParamExpr is not null)
+			sb.AppendLine(FormatSkip(skipParamExpr));
+		if (takeParamExpr is not null)
+			sb.AppendLine(FormatTake(takeParamExpr));
 	}
 
 	/// <inheritdoc />

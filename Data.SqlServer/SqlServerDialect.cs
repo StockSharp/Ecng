@@ -103,6 +103,19 @@ public class SqlServerDialect : SqlDialectBase
 	public override string FormatTake(string take) => $"fetch next {take} rows only";
 
 	/// <inheritdoc />
+	public override void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
+	{
+		if (skipParamExpr is null && takeParamExpr is null)
+			return;
+
+		// SQL Server requires OFFSET before FETCH NEXT
+		sb.AppendLine(skipParamExpr is not null ? FormatSkip(skipParamExpr) : "offset 0 rows");
+
+		if (takeParamExpr is not null)
+			sb.AppendLine(FormatTake(takeParamExpr));
+	}
+
+	/// <inheritdoc />
 	public override string Now() => "getDate()";
 
 	/// <inheritdoc />
