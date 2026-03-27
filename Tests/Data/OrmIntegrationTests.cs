@@ -1380,7 +1380,7 @@ public class OrmIntegrationTests : BaseTestClass
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
 	[DataRow(DatabaseProviderRegistry.PostgreSql)]
-	[DataRow(DatabaseProviderRegistry.SQLite)]
+	// SQLite: Microsoft.Data.Sqlite does not support System.Transactions (TransactionScope)
 	public async Task Transaction_Rollback(string provider)
 	{
 		SetUp(provider);
@@ -2064,9 +2064,14 @@ public class OrmIntegrationTests : BaseTestClass
 
 		if (provider == DatabaseProviderRegistry.SqlServer)
 		{
-			DbTestHelper.ExecuteRaw(provider, $"SET IDENTITY_INSERT {tableName} ON");
-			DbTestHelper.ExecuteRaw(provider, $"INSERT INTO {tableName} (Id, Name) VALUES (0, 'ZeroRoot')");
-			DbTestHelper.ExecuteRaw(provider, $"SET IDENTITY_INSERT {tableName} OFF");
+			DbTestHelper.ExecuteRaw(provider,
+				$"SET IDENTITY_INSERT {tableName} ON; " +
+				$"INSERT INTO {tableName} (Id, Name) VALUES (0, 'ZeroRoot'); " +
+				$"SET IDENTITY_INSERT {tableName} OFF;");
+		}
+		else if (provider == DatabaseProviderRegistry.PostgreSql)
+		{
+			DbTestHelper.ExecuteRaw(provider, $"INSERT INTO {tableName} ({dialect.QuoteIdentifier("Id")}, {dialect.QuoteIdentifier("Name")}) OVERRIDING SYSTEM VALUE VALUES (0, 'ZeroRoot')");
 		}
 		else
 		{
