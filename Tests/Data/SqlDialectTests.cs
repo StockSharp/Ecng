@@ -525,7 +525,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "scope_identity() as Id")]
 	[DataRow("SQLite", "last_insert_rowid() as Id")]
-	[DataRow("PostgreSql", "Id")]
+	[DataRow("PostgreSql", "lastval() as Id")]
 	public void GetIdentitySelect(string dialectName, string expected)
 	{
 		GetDialect(dialectName).GetIdentitySelect("Id").AssertEqual(expected);
