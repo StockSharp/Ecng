@@ -18,7 +18,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 		_createUri = typeof(Uri).GetMethod("CreateUri", ReflectionHelper.AllInstanceMembers);
 	}
 
-	private Dictionary<string, string> _queryString;
+	private List<KeyValuePair<string, string>> _queryString;
 	private string _compiledString;
 
 	internal QueryString(Url url)
@@ -29,10 +29,10 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	internal QueryString(Url url, NameValueCollection queryString)
 	{
 		Url = url;
-		_queryString = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+		_queryString = [];
 
 		foreach (var key in queryString.Cast<string>().Where(k => !k.IsEmpty()))
-			_queryString.Add(key, queryString[key]);
+			_queryString.Add(new(key, queryString[key]));
 
 		_compiledString = url.Query;
 	}
@@ -54,13 +54,16 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>True if the query field exists; otherwise, false.</returns>
 	public bool Contains(string queryField)
 	{
-		return _queryString.ContainsKey(queryField);
+		return _queryString.Any(p => p.Key.EqualsIgnoreCase(queryField));
 	}
 
 	/// <summary>
 	/// Gets the number of query parameters.
 	/// </summary>
 	public int Count => _queryString.Count;
+
+	private int FindIndex(string queryField)
+		=> _queryString.FindIndex(p => p.Key.EqualsIgnoreCase(queryField));
 
 	/// <summary>
 	/// Gets or sets the value of the specified query field.
@@ -75,7 +78,8 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 			if (queryField.IsEmpty())
 				throw new ArgumentNullException(nameof(queryField));
 
-			return _queryString.TryGetValue(queryField);
+			var idx = FindIndex(queryField);
+			return idx >= 0 ? _queryString[idx].Value : null;
 		}
 		set
 		{
@@ -85,9 +89,10 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 			if (value is null)
 				throw new ArgumentNullException(nameof(value), $"Value for key '{queryField}' is null.");
 
-			if (Contains(queryField))
+			var idx = FindIndex(queryField);
+			if (idx >= 0)
 			{
-				_queryString[queryField] = value.To<string>();
+				_queryString[idx] = new(queryField, value.To<string>());
 				RefreshUri();
 			}
 			else
@@ -103,7 +108,12 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>The converted value of the query parameter.</returns>
 	public T GetValue<T>(string queryField)
 	{
-		return _queryString[queryField].To<T>();
+		var idx = FindIndex(queryField);
+
+		if (idx < 0)
+			throw new KeyNotFoundException(queryField);
+
+		return _queryString[idx].Value.To<T>();
 	}
 
 	/// <summary>
@@ -140,9 +150,11 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>True if the query parameter exists and conversion was successful; otherwise, false.</returns>
 	public bool TryGetValue<T>(string queryField, out T value)
 	{
-		if (_queryString.TryGetValue(queryField, out var str))
+		var idx = FindIndex(queryField);
+
+		if (idx >= 0)
 		{
-			value = str.To<T>();
+			value = _queryString[idx].Value.To<T>();
 			return true;
 		}
 
@@ -152,7 +164,8 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 
 	/// <summary>
 	/// Appends a new query parameter to the query string.
-	/// If a parameter with the same name already exists, the value is aggregated with a comma separator.
+	/// If the same key is appended multiple times, each value becomes a separate query parameter
+	/// (e.g., <c>ids=1&amp;ids=2&amp;ids=3</c>).
 	/// </summary>
 	/// <param name="name">The name of the query parameter.</param>
 	/// <param name="value">The value of the query parameter.</param>
@@ -168,10 +181,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 
 		var strValue = value.To<string>();
 
-		if (_queryString.TryGetValue(name, out var existing))
-			_queryString[name] = existing + "," + strValue;
-		else
-			_queryString.Add(name, strValue);
+		_queryString.Add(new(name, strValue));
 
 		RefreshUri();
 		return this;
@@ -184,7 +194,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>The current instance with the parameter removed if it existed.</returns>
 	public QueryString Remove(string name)
 	{
-		if (_queryString.Remove(name))
+		if (_queryString.RemoveAll(p => p.Key.EqualsIgnoreCase(name)) > 0)
 			RefreshUri();
 
 		return this;
