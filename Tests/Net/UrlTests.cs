@@ -172,4 +172,81 @@ public class UrlTests
 		var url = new Url("https://example.com?foo=1&foo=2");
 		url.ToString().AssertEqual("https://example.com/?foo=1&foo=2");
 	}
+
+	/// <summary>
+	/// Verifies that Append aggregates duplicate keys with comma separator.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_Append_DuplicateKeys_ShouldAggregate()
+	{
+		var url = new Url("https://example.com/api/test") { Encode = UrlEncodes.None };
+		url.QueryString.Append("ids", "1");
+		url.QueryString.Append("ids", "2");
+		url.QueryString.Append("ids", "3");
+
+		// single key with aggregated value
+		1.AssertEqual(url.QueryString.Count);
+		"1,2,3".AssertEqual(url.QueryString["ids"]);
+	}
+
+	/// <summary>
+	/// Verifies that Append with duplicate keys and other unique keys works together.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_Append_MixedDuplicateAndUnique()
+	{
+		var url = new Url("https://example.com/api/test") { Encode = UrlEncodes.None };
+		url.QueryString.Append("ids", "10");
+		url.QueryString.Append("name", "test");
+		url.QueryString.Append("ids", "20");
+
+		2.AssertEqual(url.QueryString.Count);
+		"10,20".AssertEqual(url.QueryString["ids"]);
+		"test".AssertEqual(url.QueryString["name"]);
+	}
+
+	/// <summary>
+	/// Verifies that Remove works for aggregated keys.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_Remove_AggregatedKey()
+	{
+		var url = new Url("https://example.com/api/test");
+		url.QueryString.Append("ids", "1");
+		url.QueryString.Append("ids", "2");
+		url.QueryString.Append("other", "x");
+
+		url.QueryString.Remove("ids");
+
+		1.AssertEqual(url.QueryString.Count);
+		url.QueryString.Contains("ids").AssertFalse();
+		url.QueryString.Contains("other").AssertTrue();
+	}
+
+	/// <summary>
+	/// Verifies that Contains works with aggregated keys.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_Contains_WithAggregatedKey()
+	{
+		var url = new Url("https://example.com/api/test");
+		url.QueryString.Append("ids", "1");
+		url.QueryString.Append("ids", "2");
+
+		url.QueryString.Contains("ids").AssertTrue();
+		url.QueryString.Contains("missing").AssertFalse();
+	}
+
+	/// <summary>
+	/// Verifies that indexer returns aggregated value.
+	/// </summary>
+	[TestMethod]
+	public void QueryString_Indexer_AggregatedKey_ReturnsCombined()
+	{
+		var url = new Url("https://example.com/api/test");
+		url.QueryString.Append("ids", "first");
+		url.QueryString.Append("ids", "second");
+
+		"first,second".AssertEqual(url.QueryString["ids"]);
+	}
 }

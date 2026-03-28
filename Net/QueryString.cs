@@ -1,4 +1,4 @@
-﻿namespace Ecng.Net;
+namespace Ecng.Net;
 
 using System.Collections;
 using System.Collections.Specialized;
@@ -152,6 +152,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 
 	/// <summary>
 	/// Appends a new query parameter to the query string.
+	/// If a parameter with the same name already exists, the value is aggregated with a comma separator.
 	/// </summary>
 	/// <param name="name">The name of the query parameter.</param>
 	/// <param name="value">The value of the query parameter.</param>
@@ -165,7 +166,13 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 		if (value is null)
 			throw new ArgumentNullException(nameof(value), $"Value for key '{name}' is null.");
 
-		_queryString.Add(name, value.To<string>());
+		var strValue = value.To<string>();
+
+		if (_queryString.TryGetValue(name, out var existing))
+			_queryString[name] = existing + "," + strValue;
+		else
+			_queryString.Add(name, strValue);
+
 		RefreshUri();
 		return this;
 	}
