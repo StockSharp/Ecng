@@ -415,6 +415,32 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// Verifies that multi-element Contains on navigation property generates
+	/// IN clause with all parameters (not just the first one).
+	/// </summary>
+	[TestMethod]
+	public void Contains_NavigationPropertyId_MultiElement_AllParamsInSql()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		var personIds = new long[] { 10, 20, 30 };
+
+		var query = tasks.Where(t => personIds.Contains(t.Person.Id));
+
+		var (sql, parameters) = TranslateSql<TestTask>(query);
+
+		// must have all 3 parameters in SQL
+		3.AssertEqual(parameters.Count, $"Expected 3 parameters, got {parameters.Count}. SQL: {sql}");
+
+		// all parameter placeholders must appear in the IN clause
+		foreach (var paramName in parameters.Keys)
+			sql.Contains(paramName).AssertTrue($"Parameter {paramName} not found in SQL: {sql}");
+
+		sql.ContainsIgnoreCase("[Person] in").AssertTrue(
+			$"Expected [Person] IN clause, got: {sql}");
+	}
+
+	/// <summary>
 	/// Baseline: Contains on primary key generates correct IN clause.
 	/// </summary>
 	[TestMethod]
