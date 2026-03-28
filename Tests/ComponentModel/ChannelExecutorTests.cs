@@ -698,17 +698,17 @@ public class ChannelExecutorTests : BaseTestClass
 
 		// Use interval to batch operations (500ms to ensure all ops are added before flush)
 		await using var executor = new ChannelExecutor(ex => { }, TimeSpan.FromMilliseconds(500));
-		_ = executor.RunAsync(token);
 
 		var group = executor.CreateGroup(
 			_ => { Interlocked.Increment(ref beginCount); return default; },
 			_ => { Interlocked.Increment(ref endCount); return default; });
 
-		// Add multiple operations quickly - should batch
+		// Add all operations before starting execution to avoid race condition
 		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 		group.Add(_ => { Interlocked.Increment(ref operationCount); return default; });
 
+		_ = executor.RunAsync(token);
 		await executor.WaitFlushAsync(token);
 
 		operationCount.AssertEqual(3);
