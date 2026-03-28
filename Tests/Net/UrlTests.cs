@@ -174,19 +174,24 @@ public class UrlTests
 	}
 
 	/// <summary>
-	/// Verifies that Append aggregates duplicate keys with comma separator.
+	/// Verifies that Append keeps duplicate keys as separate entries.
 	/// </summary>
 	[TestMethod]
-	public void QueryString_Append_DuplicateKeys_ShouldAggregate()
+	public void QueryString_Append_DuplicateKeys_ShouldKeepSeparate()
 	{
 		var url = new Url("https://example.com/api/test") { Encode = UrlEncodes.None };
 		url.QueryString.Append("ids", "1");
 		url.QueryString.Append("ids", "2");
 		url.QueryString.Append("ids", "3");
 
-		// single key with aggregated value
-		1.AssertEqual(url.QueryString.Count);
-		"1,2,3".AssertEqual(url.QueryString["ids"]);
+		3.AssertEqual(url.QueryString.Count);
+		// indexer returns first match
+		"1".AssertEqual(url.QueryString["ids"]);
+
+		var qs = url.QueryString.ToString();
+		qs.Contains("ids=1").AssertTrue();
+		qs.Contains("ids=2").AssertTrue();
+		qs.Contains("ids=3").AssertTrue();
 	}
 
 	/// <summary>
@@ -200,8 +205,8 @@ public class UrlTests
 		url.QueryString.Append("name", "test");
 		url.QueryString.Append("ids", "20");
 
-		2.AssertEqual(url.QueryString.Count);
-		"10,20".AssertEqual(url.QueryString["ids"]);
+		3.AssertEqual(url.QueryString.Count);
+		"10".AssertEqual(url.QueryString["ids"]);
 		"test".AssertEqual(url.QueryString["name"]);
 	}
 
@@ -238,15 +243,15 @@ public class UrlTests
 	}
 
 	/// <summary>
-	/// Verifies that indexer returns aggregated value.
+	/// Verifies that indexer returns first value for duplicate keys.
 	/// </summary>
 	[TestMethod]
-	public void QueryString_Indexer_AggregatedKey_ReturnsCombined()
+	public void QueryString_Indexer_DuplicateKey_ReturnsFirst()
 	{
 		var url = new Url("https://example.com/api/test");
 		url.QueryString.Append("ids", "first");
 		url.QueryString.Append("ids", "second");
 
-		"first,second".AssertEqual(url.QueryString["ids"]);
+		"first".AssertEqual(url.QueryString["ids"]);
 	}
 }
