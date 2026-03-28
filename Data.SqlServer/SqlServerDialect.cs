@@ -103,6 +103,12 @@ public class SqlServerDialect : SqlDialectBase
 	public override string FormatTake(string take) => $"fetch next {take} rows only";
 
 	/// <inheritdoc />
+	public override void AppendFallbackOrderBy(StringBuilder sb)
+	{
+		sb.AppendLine("ORDER BY (SELECT NULL)");
+	}
+
+	/// <inheritdoc />
 	public override void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
 	{
 		if (skipParamExpr is null && takeParamExpr is null)

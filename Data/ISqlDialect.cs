@@ -322,6 +322,12 @@ public interface ISqlDialect
 	}
 
 	/// <summary>
+	/// Appends a fallback ORDER BY clause when no explicit ordering or identity column exists.
+	/// SQL Server requires ORDER BY for OFFSET/FETCH; PostgreSQL/SQLite do not.
+	/// </summary>
+	void AppendFallbackOrderBy(StringBuilder sb) { }
+
+	/// <summary>
 	/// Appends dialect-specific parameterized pagination clause.
 	/// SQL Server outputs OFFSET then FETCH; PostgreSQL/SQLite output LIMIT then OFFSET.
 	/// </summary>

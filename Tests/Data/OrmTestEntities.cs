@@ -305,6 +305,34 @@ public class TestNodeChild : IDbPersistable
 	}
 }
 
+/// <summary>
+/// Join entity without identity column — simulates BaseJoinEntity pattern.
+/// </summary>
+[Entity(Name = "Ecng_TestItemTag")]
+public class TestItemTag : IDbPersistable
+{
+	[RelationSingle]
+	public TestItem Item { get; set; }
+
+	public string Tag { get; set; }
+
+	object IDbPersistable.GetIdentity() => null;
+	void IDbPersistable.SetIdentity(object id) { }
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.SetFk(nameof(Item), Item?.Id)
+			.Set(nameof(Tag), Tag);
+	}
+
+	public async ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Item = await storage.LoadFkAsync<TestItem>(nameof(Item), db, cancellationToken);
+		Tag = storage.GetValue<string>(nameof(Tag));
+	}
+}
+
 public class TestNodeChildList(IStorage storage, TestNode parent) : RelationManyList<TestNodeChild, long>(storage)
 {
 	private readonly TestNode _parent = parent ?? throw new ArgumentNullException(nameof(parent));

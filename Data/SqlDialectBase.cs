@@ -57,6 +57,9 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void AppendFallbackOrderBy(StringBuilder sb) { }
+
+	/// <inheritdoc />
 	public virtual void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
 	{
 		// Default: SqlServer order (OFFSET first, then FETCH)

@@ -55,6 +55,7 @@ public class OrmIntegrationTests : BaseTestClass
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestTask)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNode)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNodeChild)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItemTag)), autoIncrement: false);
 			}
 		}
 
@@ -1394,6 +1395,56 @@ public class OrmIntegrationTests : BaseTestClass
 
 		var count = await Storage.GetCountAsync<TestItem>(CancellationToken);
 		count.AssertEqual(0);
+	}
+
+	#endregion
+
+	#region No-Identity Entity Tests
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task NoIdentity_FirstOrDefault(string provider)
+	{
+		SetUp(provider);
+
+		var item = await InsertItem("TagTarget");
+
+		var tag = new TestItemTag { Item = item, Tag = "important" };
+		await Storage.AddAsync(tag, CancellationToken);
+
+		await ClearCache();
+
+		// FirstOrDefaultAsyncEx sets Take(1) which triggers ORDER BY — must not use non-existent Id column
+		var result = await Query<TestItemTag>()
+			.Where(t => t.Tag == "important")
+			.FirstOrDefaultAsyncEx(CancellationToken);
+
+		result.AssertNotNull();
+		result.Tag.AssertEqual("important");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task NoIdentity_WhereQuery(string provider)
+	{
+		SetUp(provider);
+
+		var item = await InsertItem("TagOwner");
+
+		await Storage.AddAsync(new TestItemTag { Item = item, Tag = "alpha" }, CancellationToken);
+		await Storage.AddAsync(new TestItemTag { Item = item, Tag = "beta" }, CancellationToken);
+
+		await ClearCache();
+
+		var results = await Query<TestItemTag>()
+			.Where(t => t.Item.Id == item.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
 	}
 
 	#endregion

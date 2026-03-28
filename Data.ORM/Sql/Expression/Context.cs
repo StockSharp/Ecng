@@ -343,7 +343,12 @@ class Context
 			if (OrderBy.Count == 0)
 			{
 				if (Skip is not null || Take is not null)
-					query.OrderBy().Column(TableAlias, Extensions.IdColName);
+				{
+					if (schema.Identity is not null)
+						query.OrderBy().Column(TableAlias, schema.Identity.Name);
+					else
+						query.AddAction((d, sb) => d.AppendFallbackOrderBy(sb));
+				}
 			}
 			else
 			{
