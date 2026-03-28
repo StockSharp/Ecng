@@ -312,7 +312,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 				foreach (var (name, value) in parameters)
 				{
 					if (value is not null)
-						url.QueryString.Append(name, value.ToString().EncodeToHtml());
+						AppendQueryParam(url, name, value);
 				}
 			}
 
@@ -338,7 +338,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 				foreach (var (name, value) in parameters)
 				{
 					if (value is not null)
-						url.QueryString.Append(name, value.ToString().EncodeToHtml());
+						AppendQueryParam(url, name, value);
 				}
 			}
 
@@ -528,4 +528,37 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 	/// <returns>The formatted argument.</returns>
 	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
+
+	/// <summary>
+	/// Formats a value for use in a query string parameter.
+	/// </summary>
+	/// <param name="value">The value to format.</param>
+	/// <returns>The formatted string representation.</returns>
+	protected virtual string FormatQueryValue(object value)
+		=> value?.ToString().EncodeToHtml();
+
+	private void AppendQueryParam(Url url, string name, object value)
+	{
+		if (value is byte[] bytes)
+		{
+			url.QueryString.Append(name, bytes.Base64());
+		}
+		else if (value is System.Collections.IEnumerable enumerable and not string)
+		{
+			foreach (var item in enumerable)
+			{
+				var formatted = FormatQueryValue(item);
+
+				if (formatted is not null)
+					url.QueryString.Append(name, formatted);
+			}
+		}
+		else
+		{
+			var formatted = FormatQueryValue(value);
+
+			if (formatted is not null)
+				url.QueryString.Append(name, formatted);
+		}
+	}
 }
