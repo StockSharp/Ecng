@@ -1447,6 +1447,225 @@ public class OrmIntegrationTests : BaseTestClass
 		results.Length.AssertEqual(2);
 	}
 
+	/// <summary>
+	/// Verifies that Contains with a navigation property's Id works end-to-end.
+	/// Filters TestTask by an array of Person Ids using Contains.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Contains_NavigationPropertyId(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+		var charlie = await InsertPerson("Charlie");
+
+		await InsertTask("A1", alice);
+		await InsertTask("A2", alice);
+		await InsertTask("B1", bob);
+		await InsertTask("C1", charlie);
+
+		await ClearCache();
+
+		var personIds = new[] { alice.Id, bob.Id };
+		var results = await Query<TestTask>()
+			.Where(t => personIds.Contains(t.Person.Id))
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(3);
+	}
+
+	/// <summary>
+	/// Verifies that Contains with navigation property Id works on entities
+	/// without an identity column (BaseJoinEntity pattern like TestItemTag).
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Contains_NavigationPropertyId_NoIdentity(string provider)
+	{
+		SetUp(provider);
+
+		var item1 = await InsertItem("Owner1");
+		var item2 = await InsertItem("Owner2");
+		var item3 = await InsertItem("Owner3");
+
+		await Storage.AddAsync(new TestItemTag { Item = item1, Tag = "alpha" }, CancellationToken);
+		await Storage.AddAsync(new TestItemTag { Item = item1, Tag = "beta" }, CancellationToken);
+		await Storage.AddAsync(new TestItemTag { Item = item2, Tag = "gamma" }, CancellationToken);
+		await Storage.AddAsync(new TestItemTag { Item = item3, Tag = "delta" }, CancellationToken);
+
+		await ClearCache();
+
+		var itemIds = new[] { item1.Id, item2.Id };
+		var results = await Query<TestItemTag>()
+			.Where(t => itemIds.Contains(t.Item.Id))
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(3);
+	}
+
+	/// <summary>
+	/// Verifies that Contains works with multiple different FK navigation properties
+	/// in the same Where clause.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Contains_MultipleNavigationPropertyIds(string provider)
+	{
+		SetUp(provider);
+
+		var item1 = await InsertItem("Item1");
+		var item2 = await InsertItem("Item2");
+		var cat1 = await InsertCategory("Cat1");
+		var cat2 = await InsertCategory("Cat2");
+
+		await InsertItemCategory(item1, cat1);
+		await InsertItemCategory(item1, cat2);
+		await InsertItemCategory(item2, cat1);
+		await InsertItemCategory(item2, cat2);
+
+		await ClearCache();
+
+		var itemIds = new[] { item1.Id };
+		var catIds = new[] { cat1.Id };
+		var results = await Query<TestItemCategory>()
+			.Where(ic => itemIds.Contains(ic.Item.Id) && catIds.Contains(ic.Category.Id))
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Item.Id.AssertEqual(item1.Id);
+		results[0].Category.Id.AssertEqual(cat1.Id);
+	}
+
+	/// <summary>
+	/// Verifies that Contains with navigation property Id works combined with
+	/// other filter conditions.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_Contains_NavigationPropertyId_WithOtherFilters(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		await InsertTask("Low", alice, priority: 1);
+		await InsertTask("High", alice, priority: 10);
+		await InsertTask("BobHigh", bob, priority: 20);
+
+		await ClearCache();
+
+		var personIds = new[] { alice.Id, bob.Id };
+		var results = await Query<TestTask>()
+			.Where(t => personIds.Contains(t.Person.Id) && t.Priority > 5)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+	}
+
+	/// <summary>
+	/// Verifies that OrderBy with navigation property Id works end-to-end.
+	/// Tasks should be ordered by the FK column (Person Id), not the entity's own Id.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_NavigationPropertyId(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		// Insert in reverse order: Bob's task first, Alice's task second
+		await InsertTask("BobTask", bob, priority: 1);
+		await InsertTask("AliceTask", alice, priority: 1);
+
+		await ClearCache();
+
+		var results = await Query<TestTask>()
+			.OrderBy(t => t.Person.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+		// Alice was created first → has lower Person Id → should come first
+		results[0].Person.Id.AssertEqual(alice.Id);
+		results[1].Person.Id.AssertEqual(bob.Id);
+	}
+
+	/// <summary>
+	/// Verifies that ThenBy with navigation property Id works end-to-end.
+	/// Tasks with same priority should be sub-sorted by Person Id (FK column).
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task ThenBy_NavigationPropertyId(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		// Both tasks have same priority, but Bob's task is inserted first
+		await InsertTask("BobTask", bob, priority: 5);
+		await InsertTask("AliceTask", alice, priority: 5);
+
+		await ClearCache();
+
+		var results = await Query<TestTask>()
+			.OrderBy(t => t.Priority)
+			.ThenBy(t => t.Person.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+		// Same priority → ThenBy Person.Id → Alice (lower Id) first
+		results[0].Person.Id.AssertEqual(alice.Id);
+		results[1].Person.Id.AssertEqual(bob.Id);
+	}
+
+	/// <summary>
+	/// Verifies that OrderByDescending with navigation property Id works end-to-end.
+	/// Tasks should be sorted by Person Id descending.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderByDescending_NavigationPropertyId(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		await InsertTask("AliceTask", alice, priority: 1);
+		await InsertTask("BobTask", bob, priority: 1);
+
+		await ClearCache();
+
+		var results = await Query<TestTask>()
+			.OrderByDescending(t => t.Person.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+		// Bob has higher Person Id → should come first in DESC
+		results[0].Person.Id.AssertEqual(bob.Id);
+		results[1].Person.Id.AssertEqual(alice.Id);
+	}
+
 	#endregion
 
 	#region Schema Tests

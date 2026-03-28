@@ -296,6 +296,274 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		values.AssertContains("BBB");
 	}
 
+	#region Contains + Navigation Property Tests
+
+	/// <summary>
+	/// Ensures FK target entities are registered in SchemaRegistry
+	/// before running tests that reference them in expressions.
+	/// Without this, TryFlattenInnerSchema incorrectly treats unregistered
+	/// FK targets as InnerSchema and doubles column names (e.g., PersonPerson).
+	/// </summary>
+	private static void EnsureFkEntitiesRegistered()
+	{
+		// Force registration of all FK target entity types.
+		// In production, this happens during startup, but in unit tests
+		// SchemaRegistry may not have seen these types yet.
+		SchemaRegistry.Get(typeof(TestPerson));
+		SchemaRegistry.Get(typeof(TestItem));
+		SchemaRegistry.Get(typeof(TestCategory));
+	}
+
+	/// <summary>
+	/// Verifies that Contains with a navigation property's Id
+	/// generates SQL using the FK column, not the entity's own Id column.
+	/// </summary>
+	[TestMethod]
+	public void Contains_NavigationPropertyId_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		var personIds = new long[] { 1, 2, 3 };
+
+		var query = tasks.Where(t => personIds.Contains(t.Person.Id));
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("[Person] in").AssertTrue(
+			$"Expected FK column [Person] IN clause, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that Contains works on entities without identity columns (BaseJoinEntity pattern).
+	/// </summary>
+	[TestMethod]
+	public void Contains_NavigationPropertyId_NoIdentity_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tags = CreateQueryable<TestItemTag>();
+		var itemIds = new long[] { 10, 20 };
+
+		var query = tags.Where(t => itemIds.Contains(t.Item.Id));
+
+		var sql = GenerateSql<TestItemTag>(query);
+
+		sql.ContainsIgnoreCase("[Item] in").AssertTrue(
+			$"Expected FK column [Item] IN clause, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that multiple Contains on different FK navigation properties
+	/// produce correct SQL with both FK columns.
+	/// </summary>
+	[TestMethod]
+	public void Contains_MultipleNavigationPropertyIds_ShouldUseFkColumns()
+	{
+		EnsureFkEntitiesRegistered();
+		var ics = CreateQueryable<TestItemCategory>();
+		var itemIds = new long[] { 1, 2 };
+		var catIds = new long[] { 10, 20, 30 };
+
+		var query = ics.Where(ic => itemIds.Contains(ic.Item.Id) && catIds.Contains(ic.Category.Id));
+
+		var sql = GenerateSql<TestItemCategory>(query);
+
+		sql.ContainsIgnoreCase("[Item] in").AssertTrue(
+			$"Expected [Item] IN clause, got: {sql}");
+		sql.ContainsIgnoreCase("[Category] in").AssertTrue(
+			$"Expected [Category] IN clause, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that Contains with FK navigation property works correctly
+	/// when combined with other filter conditions on the same entity.
+	/// </summary>
+	[TestMethod]
+	public void Contains_NavigationPropertyId_WithOtherFilter_ShouldCombine()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		var personIds = new long[] { 1, 2 };
+
+		var query = tasks.Where(t => personIds.Contains(t.Person.Id) && t.Priority > 5);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("[Person] in").AssertTrue(
+			$"Expected [Person] IN clause, got: {sql}");
+		sql.Contains("[Priority]").AssertTrue(
+			$"Expected [Priority] filter, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that Contains parameters are correctly captured
+	/// when filtering by navigation property Id.
+	/// </summary>
+	[TestMethod]
+	public void Contains_NavigationPropertyId_ParametersCaptured()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		var personIds = new long[] { 100, 200 };
+
+		var query = tasks.Where(t => personIds.Contains(t.Person.Id));
+
+		var (sql, parameters) = TranslateSql<TestTask>(query);
+
+		var values = parameters.Values.Select(v => v.Item2).ToArray();
+		values.AssertContains(100L);
+		values.AssertContains(200L);
+	}
+
+	/// <summary>
+	/// Baseline: Contains on primary key generates correct IN clause.
+	/// </summary>
+	[TestMethod]
+	public void Contains_PrimaryKey_Baseline_ShouldGenerateInClause()
+	{
+		var items = CreateQueryable<TestItem>();
+		var ids = new long[] { 1, 2, 3 };
+
+		var query = items.Where(x => ids.Contains(x.Id));
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("in").AssertTrue(
+			$"Expected IN clause for Contains, got: {sql}");
+		sql.ContainsIgnoreCase("[Id] in").AssertTrue(
+			$"Expected [Id] IN clause, got: {sql}");
+	}
+
+	#endregion
+
+	#region OrderBy + Navigation Property Tests
+
+	/// <summary>
+	/// Verifies that OrderBy with navigation property's Id
+	/// generates ORDER BY using the FK column name.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_NavigationPropertyId_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.OrderBy(t => t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue(
+			$"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that OrderByDescending with navigation property's Id
+	/// generates correct ORDER BY DESC using the FK column.
+	/// </summary>
+	[TestMethod]
+	public void OrderByDescending_NavigationPropertyId_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.OrderByDescending(t => t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue(
+			$"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in ORDER BY DESC, got: {sql}");
+		sql.ContainsIgnoreCase("DESC").AssertTrue(
+			$"Expected DESC in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that OrderBy with FK navigation property works combined with Where.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_NavigationPropertyId_WithWhere_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.Where(t => t.Priority > 5).OrderBy(t => t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.Contains("[Priority]").AssertTrue(
+			$"Expected [Priority] in WHERE, got: {sql}");
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue(
+			$"Expected ORDER BY clause, got: {sql}");
+		// ORDER BY should reference FK column, not entity's own Id
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that ThenBy with navigation property's Id
+	/// uses the FK column, not the entity's own Id column.
+	/// Same underlying code path as OrderBy (ParseOrderByExpression).
+	/// </summary>
+	[TestMethod]
+	public void ThenBy_NavigationPropertyId_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.OrderBy(t => t.Priority).ThenBy(t => t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.Contains("[Priority]").AssertTrue(
+			$"Expected [Priority] in ORDER BY, got: {sql}");
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in ThenBy, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that ThenByDescending with navigation property's Id
+	/// uses the FK column with DESC.
+	/// </summary>
+	[TestMethod]
+	public void ThenByDescending_NavigationPropertyId_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.OrderBy(t => t.Priority).ThenByDescending(t => t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.Contains("[Priority]").AssertTrue(
+			$"Expected [Priority] in ORDER BY, got: {sql}");
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in ThenByDescending, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that OrderBy with navigation property Id on a no-identity entity
+	/// uses the FK column name correctly.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_NavigationPropertyId_NoIdentity_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tags = CreateQueryable<TestItemTag>();
+
+		var query = tags.OrderBy(t => t.Item.Id);
+
+		var sql = GenerateSql<TestItemTag>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue(
+			$"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Item]").AssertTrue(
+			$"Expected FK column [Item] in ORDER BY, got: {sql}");
+	}
+
+	#endregion
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable
