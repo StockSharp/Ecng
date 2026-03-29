@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Net;
 
+using System.Net;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Reflection;
@@ -164,9 +165,12 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 	/// <returns>A task representing the asynchronous operation.</returns>
 	protected virtual Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 	{
-		return typeof(TResult) == typeof(VoidType)
-			? default(TResult).FromResult()
-			: ResponseFormatter.DeserializeAsync<TResult>(response.Content, cancellationToken);
+		if (typeof(TResult) == typeof(VoidType) ||
+			response.StatusCode == HttpStatusCode.NoContent ||
+			response.Content.Headers.ContentLength is 0)
+			return default(TResult).FromResult();
+
+		return ResponseFormatter.DeserializeAsync<TResult>(response.Content, cancellationToken);
 	}
 
 	/// <summary>

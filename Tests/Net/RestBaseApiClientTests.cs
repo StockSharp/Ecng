@@ -11,14 +11,21 @@ public class RestBaseApiClientTests : BaseTestClass
 	private class UrlCapturingHandler : HttpMessageHandler
 	{
 		public Uri LastRequestUri { get; private set; }
+		public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
+		public string ResponseBody { get; set; } = "null";
 
 		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 		{
 			LastRequestUri = request.RequestUri;
-			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-			{
-				Content = new StringContent("null", Encoding.UTF8, "application/json")
-			});
+
+			var response = new HttpResponseMessage(StatusCode);
+
+			if (StatusCode == HttpStatusCode.NoContent)
+				response.Content = new StringContent("", Encoding.UTF8, "application/json");
+			else
+				response.Content = new StringContent(ResponseBody, Encoding.UTF8, "application/json");
+
+			return Task.FromResult(response);
 		}
 	}
 
@@ -47,6 +54,12 @@ public class RestBaseApiClientTests : BaseTestClass
 
 		public Task<string> GetWithStringsAsync(string[] tags, CancellationToken cancellationToken)
 			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, (object)tags);
+
+		public Task<string> TryGetByNameAsync(string name, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, name);
+
+		public Task<int> GetCountAsync(string name, CancellationToken cancellationToken)
+			=> GetAsync<int>(GetCurrentMethod(), cancellationToken, name);
 	}
 
 	/// <summary>
@@ -158,5 +171,47 @@ public class RestBaseApiClientTests : BaseTestClass
 		query.Contains("100").AssertTrue();
 		query.Contains("200").AssertTrue();
 		query.Contains("Int32").AssertFalse();
+	}
+
+	/// <summary>
+	/// Verifies that 204 No Content returns default instead of deserialization error.
+	/// </summary>
+	[TestMethod]
+	public async Task GetAsync_NoContent_ReturnsDefault_ReferenceType()
+	{
+		var handler = new UrlCapturingHandler { StatusCode = HttpStatusCode.NoContent };
+		var client = new TestRestClient(handler);
+
+		var result = await client.TryGetByNameAsync("missing", CancellationToken);
+
+		result.AssertNull();
+	}
+
+	/// <summary>
+	/// Verifies that 204 No Content returns default for value types.
+	/// </summary>
+	[TestMethod]
+	public async Task GetAsync_NoContent_ReturnsDefault_ValueType()
+	{
+		var handler = new UrlCapturingHandler { StatusCode = HttpStatusCode.NoContent };
+		var client = new TestRestClient(handler);
+
+		var result = await client.GetCountAsync("missing", CancellationToken);
+
+		0.AssertEqual(result);
+	}
+
+	/// <summary>
+	/// Verifies that empty content body returns default instead of deserialization error.
+	/// </summary>
+	[TestMethod]
+	public async Task GetAsync_EmptyBody_ReturnsDefault()
+	{
+		var handler = new UrlCapturingHandler { ResponseBody = "" };
+		var client = new TestRestClient(handler);
+
+		var result = await client.TryGetByNameAsync("empty", CancellationToken);
+
+		result.AssertNull();
 	}
 }
