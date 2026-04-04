@@ -167,6 +167,29 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
+	/// Loads an X.509 certificate from a PFX/PKCS#12 file.
+	/// </summary>
+	/// <param name="path">Path to the certificate file.</param>
+	/// <param name="password">Certificate password (may be <see langword="null"/> or empty).</param>
+	/// <returns>Loaded certificate.</returns>
+	public static X509Certificate2 LoadCertificate(string path, string password)
+	{
+		if (path.IsEmpty())
+			throw new ArgumentNullException(nameof(path));
+
+		if (!File.Exists(path))
+			throw new FileNotFoundException($"Certificate file not found: {path}", path);
+
+#if NET8_0_OR_GREATER
+		return X509CertificateLoader.LoadPkcs12FromFile(path, password);
+#else
+		return password.IsEmpty()
+			? new X509Certificate2(path)
+			: new X509Certificate2(path, password);
+#endif
+	}
+
+	/// <summary>
 	/// Converts the provided stream into an SSL stream with the specified options.
 	/// </summary>
 	/// <param name="stream">The underlying stream.</param>
@@ -193,11 +216,7 @@ public static class NetworkHelper
 			ssl.AuthenticateAsClient(targetHost);
 		else
 		{
-#if NET8_0_OR_GREATER
-			var cert = X509CertificateLoader.LoadPkcs12FromFile(sslCertificate, sslCertificatePassword.UnSecure());
-#else
-			var cert = new X509Certificate2(sslCertificate, sslCertificatePassword);
-#endif
+			var cert = LoadCertificate(sslCertificate, sslCertificatePassword?.UnSecure());
 			ssl.AuthenticateAsClient(targetHost, [cert], sslProtocol, checkCertificateRevocation);
 		}
 
