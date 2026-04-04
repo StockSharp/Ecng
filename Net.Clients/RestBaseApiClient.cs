@@ -68,6 +68,14 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 	}
 
 	/// <summary>
+	/// Gets or sets a value indicating whether POST/PUT requests with a null body
+	/// should serialize JSON null to set Content-Type header.
+	/// This prevents 415 Unsupported Media Type when the server expects [FromBody].
+	/// Default is <see langword="false"/>.
+	/// </summary>
+	public bool SerializeNullBody { get; set; }
+
+	/// <summary>
 	/// Gets a value indicating whether a single argument should be sent as a plain value.
 	/// </summary>
 	protected virtual bool PlainSingleArg => true;
@@ -208,6 +216,8 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 
 		if (body is not null)
 			request.Content = RequestFormatter.Serialize(body);
+		else if (SerializeNullBody && (method == HttpMethod.Post || method == HttpMethod.Put))
+			request.Content = RequestFormatter.Serialize(null);
 
 		return request;
 	}
