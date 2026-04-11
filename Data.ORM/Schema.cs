@@ -49,6 +49,12 @@ public record SchemaColumn
 	/// Gets the numeric scale for decimal/numeric columns (0 = dialect default).
 	/// </summary>
 	public int Scale { get; init; }
+
+	/// <summary>
+	/// Gets the referenced entity CLR type if this column is a foreign key, or null.
+	/// The target table name and PK column are resolved from the referenced entity's schema.
+	/// </summary>
+	public Type ReferencedEntityType { get; init; }
 }
 
 /// <summary>

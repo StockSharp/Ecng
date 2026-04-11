@@ -133,6 +133,28 @@ public interface ISqlDialect
 	string GetIdentityColumnSuffix();
 
 	/// <summary>
+	/// Gets an inline FOREIGN KEY constraint clause for use inside a CREATE TABLE column list.
+	/// </summary>
+	/// <param name="tableName">The table being created (used to build constraint name).</param>
+	/// <param name="columnName">The referencing column.</param>
+	/// <param name="refTableName">The referenced table.</param>
+	/// <param name="refColumnName">The referenced column (typically the referenced table's primary key).</param>
+	/// <returns>A constraint clause like <c>CONSTRAINT FK_X_Y FOREIGN KEY (Y) REFERENCES X (Id)</c>.</returns>
+	string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName)
+		=> throw new NotSupportedException();
+
+	/// <summary>
+	/// Appends an ALTER TABLE ADD CONSTRAINT statement for a new foreign key.
+	/// </summary>
+	/// <param name="sb">String builder.</param>
+	/// <param name="tableName">The table on which to add the constraint.</param>
+	/// <param name="columnName">The referencing column.</param>
+	/// <param name="refTableName">The referenced table.</param>
+	/// <param name="refColumnName">The referenced column.</param>
+	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
+		=> throw new NotSupportedException();
+
+	/// <summary>
 	/// Gets the full column definition (SQL type + NULL/NOT NULL).
 	/// </summary>
 	/// <param name="clrType">CLR type of the column.</param>

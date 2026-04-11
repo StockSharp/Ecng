@@ -198,6 +198,7 @@ public static class SchemaRegistry
 					Name = colName,
 					ClrType = GetRelationIdentityType(prop.PropertyType),
 					IsNullable = isNullable,
+					ReferencedEntityType = prop.PropertyType,
 				});
 				continue;
 			}
@@ -304,6 +305,7 @@ public static class SchemaRegistry
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+						ReferencedEntityType = prop.PropertyType,
 					});
 					continue;
 				}

@@ -773,6 +773,139 @@ public class SchemaRegistryTests : BaseTestClass
 
 	#endregion
 
+	#region Foreign key metadata (reflection)
+
+	[TestMethod]
+	public void Reflection_RelationSingle_LongRef_CapturesForeignKey()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestGuidRefLongEntity));
+		var col = schema.Columns.First(c => c.Name == "LongRef");
+
+		col.ReferencedEntityType.AssertEqual(typeof(ReflTestOrder));
+	}
+
+	[TestMethod]
+	public void Reflection_RelationSingle_GuidRef_CapturesForeignKey()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestLongRefGuidEntity));
+		var col = schema.Columns.First(c => c.Name == "GuidRef");
+
+		col.ReferencedEntityType.AssertEqual(typeof(ReflTestGuidIdEntity));
+	}
+
+	[TestMethod]
+	public void Reflection_SimpleColumn_NoForeignKey()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestIndexed));
+		var col = schema.Columns.First(c => c.Name == "Description");
+
+		col.ReferencedEntityType.AssertNull();
+	}
+
+	[TestMethod]
+	public void Reflection_InnerSchema_RelationSingle_CapturesForeignKey()
+	{
+		var schema = SchemaRegistry.Get(typeof(ReflTestOrder));
+		var col = schema.Columns.First(c => c.Name == "ShippingAddressCountry");
+
+		col.ReferencedEntityType.AssertEqual(typeof(TestCountry));
+	}
+
+	#endregion
+
+	#region SchemaMigrator — foreign key DDL
+
+	[TestMethod]
+	public void Migrator_MissingTable_WithForeignKey_GeneratesConstraint()
+	{
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ReflTestOrder),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "CustomerId",
+					ClrType = typeof(long),
+					ReferencedEntityType = typeof(TestItem),
+				},
+			],
+		};
+
+		var diffs = new List<SchemaDiff>
+		{
+			new("Orders", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
+
+		sql.Contains("FOREIGN KEY").AssertTrue($"Expected FOREIGN KEY in SQL, got: {sql}");
+		sql.Contains("([CustomerId])").AssertTrue($"Expected ([CustomerId]) in SQL, got: {sql}");
+		sql.Contains("REFERENCES [Ecng_TestItem]").AssertTrue($"Expected REFERENCES [Ecng_TestItem], got: {sql}");
+		sql.Contains("CONSTRAINT").AssertTrue($"Expected CONSTRAINT clause, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Migrator_MissingTable_NoForeignKey_DoesNotEmitConstraint()
+	{
+		var schema = new Schema
+		{
+			TableName = "Items",
+			EntityType = typeof(TestItem),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string) },
+			],
+		};
+
+		var diffs = new List<SchemaDiff>
+		{
+			new("Items", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
+
+		sql.Contains("FOREIGN KEY").AssertFalse($"Should not emit FOREIGN KEY for non-FK columns, got: {sql}");
+		sql.Contains("CONSTRAINT").AssertFalse($"Should not emit CONSTRAINT for non-FK columns, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Migrator_MissingColumn_WithForeignKey_EmitsAddConstraint()
+	{
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ReflTestOrder),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "CustomerId",
+					ClrType = typeof(long),
+					IsNullable = true,
+					ReferencedEntityType = typeof(TestItem),
+				},
+			],
+		};
+
+		var diffs = new List<SchemaDiff>
+		{
+			new("Orders", "CustomerId", SchemaDiffKind.MissingColumn, "expected", string.Empty),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
+
+		sql.Contains("ADD [CustomerId]").AssertTrue($"Expected ADD [CustomerId], got: {sql}");
+		sql.Contains("FOREIGN KEY").AssertTrue($"Expected FOREIGN KEY, got: {sql}");
+		sql.Contains("REFERENCES [Ecng_TestItem]").AssertTrue($"Expected REFERENCES [Ecng_TestItem], got: {sql}");
+	}
+
+	#endregion
+
 	#region Finding #3: ViewProcessorAttribute → IsView
 
 	[TestMethod]

@@ -264,6 +264,15 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
+	{
+		// SQLite does not support ALTER TABLE ADD CONSTRAINT for foreign keys —
+		// an FK can only be declared at CREATE TABLE time. Emit a comment so the
+		// migration script stays valid.
+		sb.Append($"-- SQLite: FK {QuoteIdentifier($"FK_{tableName}_{columnName}")} on {QuoteIdentifier(tableName)}.{QuoteIdentifier(columnName)} -> {QuoteIdentifier(refTableName)}.{QuoteIdentifier(refColumnName)} must be declared at CREATE TABLE time");
+	}
+
+	/// <inheritdoc />
 	public override void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns)
 	{
 		var nonKeys = allColumns.Except(keyColumns).ToArray();

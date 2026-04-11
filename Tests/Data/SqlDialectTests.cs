@@ -892,6 +892,43 @@ public class SqlDialectTests : BaseTestClass
 
 	#endregion
 
+	#region Foreign key constraint
+
+	[TestMethod]
+	[DataRow("SqlServer", "[", "]")]
+	[DataRow("SQLite", "\"", "\"")]
+	[DataRow("PostgreSql", "\"", "\"")]
+	public void GetForeignKeyConstraint_ContainsClause(string dialectName, string qOpen, string qClose)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var fk = dialect.GetForeignKeyConstraint("Orders", "CustomerId", "Customers", "Id");
+
+		fk.Contains("CONSTRAINT").AssertTrue($"Expected CONSTRAINT, got: {fk}");
+		fk.Contains($"{qOpen}FK_Orders_CustomerId{qClose}").AssertTrue($"Expected constraint name, got: {fk}");
+		fk.Contains($"FOREIGN KEY ({qOpen}CustomerId{qClose})").AssertTrue($"Expected FOREIGN KEY (col), got: {fk}");
+		fk.Contains($"REFERENCES {qOpen}Customers{qClose} ({qOpen}Id{qClose})").AssertTrue($"Expected REFERENCES clause, got: {fk}");
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	public void AppendAddForeignKey_EmitsAlterTable(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var sb = new System.Text.StringBuilder();
+
+		dialect.AppendAddForeignKey(sb, "Orders", "CustomerId", "Customers", "Id");
+
+		var sql = sb.ToString();
+
+		sql.Contains("ALTER TABLE").AssertTrue($"Expected ALTER TABLE, got: {sql}");
+		sql.Contains("FOREIGN KEY").AssertTrue($"Expected FOREIGN KEY, got: {sql}");
+		sql.Contains("REFERENCES").AssertTrue($"Expected REFERENCES, got: {sql}");
+	}
+
+	#endregion
+
 	#region Missing ComparisonOperator Tests
 
 	[TestMethod]

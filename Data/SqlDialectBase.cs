@@ -114,6 +114,16 @@ public abstract class SqlDialectBase : ISqlDialect
 	public abstract string GetIdentityColumnSuffix();
 
 	/// <inheritdoc />
+	public virtual string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName)
+		=> $"CONSTRAINT {QuoteIdentifier($"FK_{tableName}_{columnName}")} FOREIGN KEY ({QuoteIdentifier(columnName)}) REFERENCES {QuoteIdentifier(refTableName)} ({QuoteIdentifier(refColumnName)})";
+
+	/// <inheritdoc />
+	public virtual void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ADD {GetForeignKeyConstraint(tableName, columnName, refTableName, refColumnName)}");
+	}
+
+	/// <inheritdoc />
 	public abstract void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
 
 	/// <inheritdoc />

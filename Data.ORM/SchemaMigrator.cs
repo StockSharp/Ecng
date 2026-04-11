@@ -182,6 +182,17 @@ public static class SchemaMigrator
 						colDefs.Add($"{dialect.QuoteIdentifier(col.Name)} {cd}");
 					}
 
+					// inline FOREIGN KEY constraints for columns marked as FK
+					foreach (var col in schema.Columns)
+					{
+						if (col.ReferencedEntityType is null)
+							continue;
+
+						var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+						var refCol = refSchema.Identity?.Name ?? "Id";
+						colDefs.Add(dialect.GetForeignKeyConstraint(diff.TableName, col.Name, refSchema.TableName, refCol));
+					}
+
 					dialect.AppendCreateTable(sb, diff.TableName, colDefs.JoinCommaSpace());
 					sb.AppendLine(";");
 
@@ -238,6 +249,15 @@ public static class SchemaMigrator
 					{
 						var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
 						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
+						sb.AppendLine(";");
+					}
+
+					// if the new column is a foreign key, append ALTER TABLE ADD CONSTRAINT
+					if (col.ReferencedEntityType is not null)
+					{
+						var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+						var refCol = refSchema.Identity?.Name ?? "Id";
+						dialect.AppendAddForeignKey(sb, diff.TableName, col.Name, refSchema.TableName, refCol);
 						sb.AppendLine(";");
 					}
 
