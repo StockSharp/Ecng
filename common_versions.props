@@ -42,7 +42,7 @@
     <MsSqlClientVer>6.*</MsSqlClientVer>
     <MsDataSqliteVer>9.*</MsDataSqliteVer>
     <OpenXmlVer>3.*</OpenXmlVer>
-    <SharpCompressVer>0.38.*</SharpCompressVer>
+    <SharpCompressVer>0.47.*</SharpCompressVer>
     <NpgsqlVer>10.*</NpgsqlVer>
     <SmartFormatVer>3.*</SmartFormatVer>
   </PropertyGroup>
