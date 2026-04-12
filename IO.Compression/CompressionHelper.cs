@@ -292,7 +292,7 @@ public static class CompressionHelper
 		var props = new LzmaEncoderProperties(eos: true, dictionary: 1 << 20, numFastBytes: 32);
 		byte[] properties;
 
-		using (var lzma = new LzmaStream(props, false, compressedStream))
+		using (var lzma = LzmaStream.Create(props, false, compressedStream))
 		{
 			properties = lzma.Properties;
 			lzma.Write(input, 0, input.Length);
@@ -330,7 +330,7 @@ public static class CompressionHelper
 		using var inputStream = new MemoryStream(input, 13, input.Length - 13);
 		using var outputStream = new MemoryStream();
 
-		using (var lzma = new LzmaStream(properties, inputStream, input.Length - 13, uncompressedSize, null, false))
+		using (var lzma = LzmaStream.Create(properties, inputStream, input.Length - 13, uncompressedSize, null, false))
 		{
 			lzma.CopyTo(outputStream);
 		}

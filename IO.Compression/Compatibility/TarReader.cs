@@ -79,7 +79,7 @@ public sealed class TarReader : IDisposable
 	{
 		_stream = archiveStream ?? throw new ArgumentNullException(nameof(archiveStream));
 		_leaveOpen = leaveOpen;
-		_reader = SharpTarReader.Open(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
+		_reader = SharpTarReader.OpenReader(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
 	}
 
 	/// <summary>
