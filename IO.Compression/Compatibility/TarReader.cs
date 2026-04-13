@@ -77,7 +77,26 @@ public sealed class TarReader : IDisposable
 	/// <param name="leaveOpen">Whether to leave the stream open after disposing.</param>
 	public TarReader(Stream archiveStream, bool leaveOpen = false)
 	{
-		_stream = archiveStream ?? throw new ArgumentNullException(nameof(archiveStream));
+		if (archiveStream is null)
+			throw new ArgumentNullException(nameof(archiveStream));
+
+		// SharpCompress 0.47 OpenReader wraps the stream in SharpCompressStream
+		// and calls Rewind/Position which fails on non-seekable streams (e.g. GZipStream).
+		// Buffer into a seekable MemoryStream when necessary.
+		if (!archiveStream.CanSeek)
+		{
+			var ms = new MemoryStream();
+			archiveStream.CopyTo(ms);
+			ms.Position = 0;
+
+			if (!leaveOpen)
+				archiveStream.Dispose();
+
+			archiveStream = ms;
+			leaveOpen = false; // we own the MemoryStream
+		}
+
+		_stream = archiveStream;
 		_leaveOpen = leaveOpen;
 		_reader = SharpTarReader.OpenReader(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
 	}
