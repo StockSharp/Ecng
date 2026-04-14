@@ -590,6 +590,51 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region String Parameterization Tests
+
+	/// <summary>
+	/// Verifies that string constants with single quotes are passed as parameters,
+	/// not inlined into SQL.
+	/// </summary>
+	[TestMethod]
+	public void StringConstant_WithSingleQuote_ShouldBeParameterized()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Where(x => x.Name == "O'Reilly");
+
+		var (sql, parameters) = TranslateSql<TestItem>(query);
+
+		sql.Contains("O'Reilly").AssertFalse(
+			$"Literal string should not appear in SQL, got: {sql}");
+		sql.Contains("@p").AssertTrue(
+			$"Expected parameter placeholder in SQL, got: {sql}");
+
+		var paramValue = parameters.Values.First(p => p.Item2 is string).Item2;
+		paramValue.AssertEqual("O'Reilly", "parameter value mismatch");
+	}
+
+	/// <summary>
+	/// Verifies that string constants with multiple single quotes are parameterized.
+	/// </summary>
+	[TestMethod]
+	public void StringConstant_WithMultipleSingleQuotes_ShouldBeParameterized()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Where(x => x.Name == "it's a 'test'");
+
+		var (sql, parameters) = TranslateSql<TestItem>(query);
+
+		sql.Contains("it's").AssertFalse(
+			$"Literal string should not appear in SQL, got: {sql}");
+
+		var paramValue = parameters.Values.First(p => p.Item2 is string).Item2;
+		paramValue.AssertEqual("it's a 'test'", "parameter value mismatch");
+	}
+
+	#endregion
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable

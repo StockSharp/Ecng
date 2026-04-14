@@ -1018,7 +1018,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			}
 			else if (value is string str)
 			{
-				Curr.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'{str}'"));
+				Curr.Param(Context.TryAddParam("p", typeof(string), str));
 			}
 			else
 			{
