@@ -1535,4 +1535,88 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Thread Safety Tests
+
+	/// <summary>
+	/// Verifies that concurrent WriteMessagesAsync calls to the same listener
+	/// do not throw due to duplicate key in the internal writers dictionary.
+	/// </summary>
+	[TestMethod]
+	public async Task ConcurrentWrites_SameFile_ShouldNotThrow()
+	{
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		var src = new DummySource("ConcSrc");
+
+		using (var listener = new FileLogListener(fs)
+		{
+			LogDirectory = root,
+			FileName = "concurrent",
+			SeparateByDates = SeparateByDateModes.None,
+		})
+		{
+			var tasks = new Task[10];
+
+			for (var i = 0; i < tasks.Length; i++)
+			{
+				var idx = i;
+				tasks[i] = Task.Run(async () =>
+				{
+					var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message {idx}");
+					await listener.WriteMessagesAsync([msg], CancellationToken);
+				});
+			}
+
+			await Task.WhenAll(tasks);
+		}
+
+		var content = ReadAllText(fs, Path.Combine(root, "concurrent.txt"));
+		content.IsEmpty().AssertFalse("log file should contain messages");
+	}
+
+	/// <summary>
+	/// Verifies that concurrent writes from multiple sources do not corrupt
+	/// the internal writers dictionary.
+	/// </summary>
+	[TestMethod]
+	public async Task ConcurrentWrites_MultipleSources_ShouldNotThrow()
+	{
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		using (var listener = new FileLogListener(fs)
+		{
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.None,
+		})
+		{
+			var tasks = new Task[10];
+
+			for (var i = 0; i < tasks.Length; i++)
+			{
+				var idx = i;
+				tasks[i] = Task.Run(async () =>
+				{
+					var src = new DummySource($"Src{idx}");
+					var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message from source {idx}");
+					await listener.WriteMessagesAsync([msg], CancellationToken);
+				});
+			}
+
+			await Task.WhenAll(tasks);
+		}
+
+		// each source should have its own file
+		for (var i = 0; i < 10; i++)
+		{
+			var path = Path.Combine(root, $"Src{i}.txt");
+			fs.FileExists(path).AssertTrue($"File for Src{i} should exist");
+		}
+	}
+
+	#endregion
 }

@@ -370,7 +370,7 @@ public class FileLogListener : LogListener
 	private StreamWriterEx OnCreateWriter(string fileName)
 		=> new(FileSystem.OpenWrite(fileName, Append), Encoding, fileName);
 
-	private bool _triedHistoryPolicy;
+	private int _triedHistoryPolicy;
 
 	private void TryDoHistoryPolicy()
 	{
@@ -541,10 +541,9 @@ public class FileLogListener : LogListener
 
 		await Task.Yield();
 
-		if (!_triedHistoryPolicy)
+		if (Interlocked.CompareExchange(ref _triedHistoryPolicy, 1, 0) == 0)
 		{
 			TryDoHistoryPolicy();
-			_triedHistoryPolicy = true;
 		}
 
 		var date = SeparateByDates != SeparateByDateModes.None
@@ -571,28 +570,31 @@ public class FileLogListener : LogListener
 
 			var key = (fileName, date);
 
-			if (!_writers.TryGetValue(key, out var writer))
+			using (_writers.EnterScope())
 			{
-				if (_writers.Count > 0 && date != default)
+				if (!_writers.TryGetValue(key, out var writer))
 				{
-					var outOfDate = _writers.Where(p => p.Key.date < date).ToArray();
-
-					if (outOfDate.Length > 0)
+					if (_writers.Count > 0 && date != default)
 					{
-						foreach (var pair in outOfDate)
-							_writers.GetAndRemove(pair.Key).Dispose();
+						var outOfDate = _writers.Where(p => p.Key.date < date).ToArray();
 
-						TryDoHistoryPolicy();
+						if (outOfDate.Length > 0)
+						{
+							foreach (var pair in outOfDate)
+								_writers.GetAndRemove(pair.Key).Dispose();
+
+							TryDoHistoryPolicy();
+						}
 					}
+
+					writer = OnCreateWriter(GetFileName(fileName, date));
+					_writers.Add(key, writer);
 				}
 
-				writer = OnCreateWriter(GetFileName(fileName, date));
-				_writers.Add(key, writer);
+				prevFileName = fileName;
+				prevWriter = writer;
+				return writer;
 			}
-
-			prevFileName = fileName;
-			prevWriter = writer;
-			return writer;
 		})
 		.Where(g => g.Key != null)
 		.Select(async g =>
@@ -632,35 +634,38 @@ public class FileLogListener : LogListener
 
 					var fileName = writer.Path;
 
-					var key = _writers[writer];
-					writer.Dispose();
-
-					var maxIndex = 0;
-
-					while (FileSystem.FileExists(GetRollingFileName(fileName, maxIndex + 1)))
+					using (_writers.EnterScope())
 					{
-						maxIndex++;
-					}
+						var key = _writers[writer];
+						writer.Dispose();
 
-					for (var i = maxIndex; i > 0; i--)
-					{
-						FileSystem.MoveFile(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
-					}
+						var maxIndex = 0;
 
-					FileSystem.MoveFile(fileName, GetRollingFileName(fileName, 1));
-
-					if (MaxCount > 0)
-					{
-						maxIndex++;
-
-						for (var i = MaxCount; i <= maxIndex; i++)
+						while (FileSystem.FileExists(GetRollingFileName(fileName, maxIndex + 1)))
 						{
-							FileSystem.DeleteFile(GetRollingFileName(fileName, i));
+							maxIndex++;
 						}
-					}
 
-					writer = OnCreateWriter(fileName);
-					_writers[key] = writer;
+						for (var i = maxIndex; i > 0; i--)
+						{
+							FileSystem.MoveFile(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
+						}
+
+						FileSystem.MoveFile(fileName, GetRollingFileName(fileName, 1));
+
+						if (MaxCount > 0)
+						{
+							maxIndex++;
+
+							for (var i = MaxCount; i <= maxIndex; i++)
+							{
+								FileSystem.DeleteFile(GetRollingFileName(fileName, i));
+							}
+						}
+
+						writer = OnCreateWriter(fileName);
+						_writers[key] = writer;
+					}
 				}
 			}
 			finally
