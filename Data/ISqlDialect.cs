@@ -395,9 +395,9 @@ public interface ISqlDialect
 		clrType = clrType.IsNullable() ? clrType.GetUnderlyingType() : clrType;
 
 		if (clrType == typeof(string))
-			return "N''";
+			return UnicodePrefix + "''";
 		if (clrType == typeof(bool))
-			return "0";
+			return FalseLiteral;
 		if (clrType == typeof(DateTime) || clrType == typeof(DateTimeOffset))
 			return "'0001-01-01T00:00:00'";
 		if (clrType == typeof(Guid))
