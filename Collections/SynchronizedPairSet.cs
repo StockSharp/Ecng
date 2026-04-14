@@ -99,18 +99,16 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	#endregion
 
 	/// <summary>
-	/// Removes the old pair for the specified key and adds the new key/value pair. Raises an event when setting.
+	/// Sets a new key for an existing value, replacing any previous association.
 	/// </summary>
-	/// <param name="key">The key to set.</param>
-	/// <param name="value">The value to associate with the key.</param>
-	public void SetKey(TKey key, TValue value)
+	/// <param name="value">The value to associate with the new key.</param>
+	/// <param name="key">The new key to associate with the value.</param>
+	public void SetKey(TValue value, TKey key)
 	{
 		using (EnterScope())
 		{
-			Remove(key);
-
+			RemoveByValue(value);
 			Add(key, value);
-			OnSetting(key, value);
 		}
 	}
 

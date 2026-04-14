@@ -196,4 +196,44 @@ public class PairSetTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region SynchronizedPairSet.SetKey Tests
+
+	/// <summary>
+	/// Verifies that SynchronizedPairSet.SetKey moves a value to a new key,
+	/// removing the old key association.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedPairSet_SetKey_ShouldMoveValueToNewKey()
+	{
+		var set = new SynchronizedPairSet<int, string>();
+		set.Add(1, "a");
+		set.Add(2, "b");
+
+		// Move value "a" from key 1 to key 3
+		set.SetKey("a", 3);
+
+		set[3].AssertEqual("a", "New key 3 should map to value 'a'");
+		set["a"].AssertEqual(3, "Value 'a' should reverse-map to key 3");
+		set.ContainsKey(1).AssertFalse("Old key 1 should be removed");
+		set[2].AssertEqual("b", "Other mappings should be unaffected");
+	}
+
+	/// <summary>
+	/// Verifies that SetKey does not throw when the value is already mapped to another key.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedPairSet_SetKey_ShouldNotThrowWhenValueExists()
+	{
+		var set = new SynchronizedPairSet<int, string>();
+		set.Add(1, "a");
+
+		// Moving value "a" to a new key should not throw
+		set.SetKey("a", 2);
+
+		set[2].AssertEqual("a");
+		set["a"].AssertEqual(2);
+	}
+
+	#endregion
 }
