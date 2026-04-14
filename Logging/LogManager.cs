@@ -5,7 +5,7 @@ using Nito.AsyncEx;
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
 /// </summary>
-public class LogManager : Disposable, IPersistable
+public class LogManager : AsyncDisposable, IPersistable
 {
 	private sealed class ApplicationReceiver : BaseLogReceiver
 	{
@@ -43,8 +43,7 @@ public class LogManager : Disposable, IPersistable
 
 	private sealed class DisposeLogMessage : LogMessage
 	{
-		private readonly object _syncRoot = new();
-		private bool _processed;
+		private readonly TaskCompletionSource _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		public DisposeLogMessage()
 			: base(new ApplicationReceiver(), DateTime.MinValue, LogLevels.Off, string.Empty)
@@ -52,25 +51,9 @@ public class LogManager : Disposable, IPersistable
 			IsDispose = true;
 		}
 
-		public void Wait()
-		{
-			lock (_syncRoot)
-			{
-				if (!_processed)
-					Monitor.Wait(_syncRoot);
+		public Task Task => _tcs.Task;
 
-				_processed = false;
-			}
-		}
-
-		public void Pulse()
-		{
-			lock (_syncRoot)
-			{
-				_processed = true;
-				Monitor.Pulse(_syncRoot);
-			}
-		}
+		public void Pulse() => _tcs.TrySetResult();
 	}
 
 	private readonly DisposeLogMessage _disposeMessage = new();
@@ -298,7 +281,7 @@ public class LogManager : Disposable, IPersistable
 	/// <summary>
 	/// Release resources.
 	/// </summary>
-	protected override void DisposeManaged()
+	protected override async ValueTask DisposeManaged()
 	{
 		Sources.Clear();
 
@@ -316,11 +299,11 @@ public class LogManager : Disposable, IPersistable
 
 			ImmediateFlush();
 
-			_disposeMessage.Wait();
+			await _disposeMessage.Task.NoWait();
 			_flushTimer.Dispose();
 		}
 
-		base.DisposeManaged();
+		await base.DisposeManaged().NoWait();
 	}
 
 	/// <summary>

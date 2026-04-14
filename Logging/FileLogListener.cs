@@ -915,11 +915,11 @@ public class FileLogListener : LogListener
 	/// <summary>
 	/// Release resources.
 	/// </summary>
-	protected override void DisposeManaged()
+	protected override ValueTask DisposeManaged()
 	{
 		_writers.Values.ForEach(w => w.Dispose());
 		_writers.Clear();
 
-		base.DisposeManaged();
+		return base.DisposeManaged();
 	}
 }

@@ -3,7 +3,7 @@ namespace Ecng.Logging;
 /// <summary>
 /// The base class that monitors the event <see cref="ILogSource.Log"/> and saves to some storage.
 /// </summary>
-public abstract class LogListener : Disposable, ILogListener, IAsyncLogListener
+public abstract class LogListener : AsyncDisposable, ILogListener, IAsyncLogListener
 {
 	/// <summary>
 	/// Initialize <see cref="LogListener"/>.
