@@ -9,14 +9,13 @@ using Ecng.Backup.Mega.Native;
 using Ecng.Common;
 using Ecng.Collections;
 
-using Nito.AsyncEx;
 
 /// <summary>
 /// The data storage service based on Mega https://mega.nz/ .
 /// </summary>
 /// <param name="email">Email.</param>
 /// <param name="password">Password.</param>
-public class MegaService(string email, SecureString password) : Disposable, IBackupService
+public class MegaService(string email, SecureString password) : AsyncDisposable, IBackupService
 {
 	private class ProgressHandler(Action<int> progress) : IProgress<double>
 	{
@@ -31,12 +30,13 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 	private readonly CachedSynchronizedList<Node> _nodes = [];
 
 	/// <inheritdoc />
-	protected override void DisposeManaged()
+	protected override async ValueTask DisposeManaged()
 	{
 		if (_client.IsLoggedIn)
-			AsyncContext.Run(() => _client.LogoutAsync());
+			await _client.LogoutAsync().NoWait();
 
-		base.DisposeManaged();
+		_client.Dispose();
+		await base.DisposeManaged().NoWait();
 	}
 
 	private async Task<Client> EnsureLogin(CancellationToken cancellationToken)
