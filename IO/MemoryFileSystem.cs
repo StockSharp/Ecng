@@ -640,7 +640,9 @@ public class MemoryFileSystem : IFileSystem
 				Data = sourceNode.Data,
 				Attributes = sourceNode.Attributes,
 				CreatedUtc = sourceNode.CreatedUtc,
-				UpdatedUtc = DateTime.UtcNow
+				UpdatedUtc = DateTime.UtcNow,
+				FullPath = Normalize(destFileName),
+				LastClosedUtc = sourceNode.LastClosedUtc,
 			};
 
 			// Remove source

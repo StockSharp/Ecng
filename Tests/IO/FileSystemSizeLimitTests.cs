@@ -299,5 +299,26 @@ public class FileSystemSizeLimitTests : BaseTestClass
 		fs.TotalSize.AssertEqual(5L);
 	}
 
+	[TestMethod]
+	public void MemoryFs_MoveFile_ShouldBeEvictable()
+	{
+		var fs = new MemoryFileSystem
+		{
+			MaxSize = 20,
+			OverflowBehavior = FileSystemOverflowBehavior.EvictOldest
+		};
+
+		// Create and close a file, then move it
+		WriteBytes(fs, "original.txt", 8);
+		fs.MoveFile("original.txt", "moved.txt");
+
+		// Moved file should be evictable when space is needed
+		WriteBytes(fs, "big.txt", 18);
+
+		// moved.txt should have been evicted to make room
+		fs.FileExists("moved.txt").AssertFalse();
+		fs.FileExists("big.txt").AssertTrue();
+	}
+
 	#endregion
 }
