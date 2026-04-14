@@ -47,8 +47,7 @@ public sealed class DatabaseCommand : Disposable
 
 		//Debug.WriteLine(_dbCommand.CommandText);
 
-		using var connection = await _createConnection(cancellationToken);
-
+		using var connection = await _createConnection(cancellationToken).NoWait();
 		using var cmd = CreateCommand(connection, input);
 #if DEBUG
 		var dbgStr = cmd.CommandText;
@@ -89,29 +88,25 @@ public sealed class DatabaseCommand : Disposable
 
 		Debug.WriteLine(dbgStr);
 #endif
-		return await handler(cmd);
-	}
+		return await handler(cmd).NoWait();	}
 
 	/// <summary>
 	/// Executes the command and returns the number of rows affected.
 	/// </summary>
 	public ValueTask<int> ExecuteNonQuery(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
-		=> Execute(input, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken), cancellationToken);
-
+		=> Execute(input, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait(), cancellationToken);
 	/// <summary>
 	/// Executes the command and returns the first column of the first row as the specified type.
 	/// </summary>
 	public ValueTask<TScalar> ExecuteScalar<TScalar>(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
-		=> Execute(input, async cmd => (await cmd.ExecuteScalarAsync(cancellationToken)).To<TScalar>(), cancellationToken);
-
+		=> Execute(input, async cmd => (await cmd.ExecuteScalarAsync(cancellationToken).NoWait()).To<TScalar>(), cancellationToken);
 	/// <summary>
 	/// Executes the command and returns the first result row as a serialization item collection.
 	/// </summary>
 	public ValueTask<SerializationItemCollection> ExecuteRow(IEnumerable<SerializationItem> input, CancellationToken cancellationToken)
 		=> Execute(input, async cmd =>
 		{
-			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken).NoWait();
 			// async version disable for a while
 			// https://github.com/dotnet/SqlClient/issues/593
 			//if (await reader.ReadAsync(cancellationToken))
@@ -146,8 +141,7 @@ public sealed class DatabaseCommand : Disposable
 	{
 		return Execute(input, async cmd =>
 		{
-			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken).NoWait();
 			List<object>[] values = null;
 			var table = new SerializationItemCollection();
 

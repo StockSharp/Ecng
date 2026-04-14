@@ -125,7 +125,7 @@ public static class PersistableHelper
 			return default;
 
 		var clone = obj.GetType().CreateInstance<T>();
-		await clone.LoadAsync(await obj.SaveAsync(cancellationToken), cancellationToken);
+		await clone.LoadAsync(await obj.SaveAsync(cancellationToken), cancellationToken).NoWait();
 		return clone;
 	}
 
@@ -152,7 +152,7 @@ public static class PersistableHelper
 	public static async ValueTask ApplyAsync<T>(this T obj, T clone, CancellationToken cancellationToken = default)
 		where T : IAsyncPersistable
 	{
-		await obj.LoadAsync(await clone.SaveAsync(cancellationToken), cancellationToken);
+		await obj.LoadAsync(await clone.SaveAsync(cancellationToken), cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -167,7 +167,7 @@ public static class PersistableHelper
 			throw new ArgumentNullException(nameof(persistable));
 
 		var storage = new SettingsStorage();
-		await persistable.SaveAsync(storage, cancellationToken);
+		await persistable.SaveAsync(storage, cancellationToken).NoWait();
 		return storage;
 	}
 
@@ -184,7 +184,7 @@ public static class PersistableHelper
 			throw new ArgumentNullException(nameof(storage));
 
 		var obj = type.CreateInstance<IAsyncPersistable>();
-		await obj.LoadAsync(storage, cancellationToken);
+		await obj.LoadAsync(storage, cancellationToken).NoWait();
 		return obj;
 	}
 
@@ -197,7 +197,7 @@ public static class PersistableHelper
 	/// <returns>A ValueTask with the loaded object of type T.</returns>
 	public static async ValueTask<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
 		where T : IAsyncPersistable, new()
-		=> (T)await storage.LoadAsync(typeof(T), cancellationToken);
+		=> (T)await storage.LoadAsync(typeof(T), cancellationToken).NoWait();
 
 	/// <summary>
 	/// Saves the state of the persistable object to a settings storage.

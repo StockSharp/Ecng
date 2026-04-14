@@ -78,14 +78,12 @@ public class UdpServer : Disposable
 						{
 							var delayMs = (int)accumulatedDelay;
 							accumulatedDelay -= delayMs;
-							await Task.Delay(delayMs, cancellationToken);
-						}
+							await Task.Delay(delayMs, cancellationToken).NoWait();						}
 					}
 				}
 
 				lastPacketTime = packetTime;
-				await t.client.SendAsync(payload, targetDest, cancellationToken);
-			}
+				await t.client.SendAsync(payload, targetDest, cancellationToken).NoWait();			}
 		}
 		catch
 		{
@@ -121,8 +119,7 @@ public class UdpServer : Disposable
 			throw new ArgumentNullException(nameof(endpoint));
 
 		var client = GetOrCreateClient(endpoint, null);
-		await client.SendAsync(data, endpoint, cancellationToken);
-	}
+		await client.SendAsync(data, endpoint, cancellationToken).NoWait();	}
 
 	private UdpClient GetOrCreateClient(IPEndPoint endpoint, List<IPEndPoint> trackNewEndpoints)
 	{
@@ -130,8 +127,16 @@ public class UdpServer : Disposable
 		{
 			var client = new UdpClient(ep.AddressFamily);
 
-			if (ep.Address.IsMulticastAddress())
-				client.JoinMulticastGroup(ep.Address);
+			try
+			{
+				if (ep.Address.IsMulticastAddress())
+					client.JoinMulticastGroup(ep.Address);
+			}
+			catch
+			{
+				client.Dispose();
+				throw;
+			}
 
 			trackNewEndpoints?.Add(ep);
 			return client;

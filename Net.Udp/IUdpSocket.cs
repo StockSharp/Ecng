@@ -130,8 +130,7 @@ public class RealUdpSocket : Disposable, IUdpSocket
 	public async ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
 	{
 		ThrowIfDisposed();
-		var result = await _socket.ReceiveFromAsync(buffer, socketFlags, remoteEndPoint, cancellationToken);
-
+		var result = await _socket.ReceiveFromAsync(buffer, socketFlags, remoteEndPoint, cancellationToken).NoWait();
 		return new()
 		{
 			ReceivedBytes = result.ReceivedBytes,

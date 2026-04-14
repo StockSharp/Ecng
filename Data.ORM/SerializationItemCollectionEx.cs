@@ -35,8 +35,7 @@ public static class DbPersistableHelper
 		if (id is null)
 			return default;
 
-		return await db.GetByIdAsync<long, T>(id.Value, ct);
-	}
+		return await db.GetByIdAsync<long, T>(id.Value, ct).NoWait();	}
 
 	/// <summary>
 	/// Asynchronously loads a foreign key entity from the database (generic version for non-long identity types).
@@ -50,8 +49,7 @@ public static class DbPersistableHelper
 		if (id is null)
 			return default;
 
-		return await db.GetByIdAsync<TId, T>(id.Value, ct);
-	}
+		return await db.GetByIdAsync<TId, T>(id.Value, ct).NoWait();	}
 
 	/// <summary>
 	/// Converts a settings storage to a serialization item collection using the specified schema columns.

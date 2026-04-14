@@ -225,8 +225,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>A <see cref="ValueTask{T}"/> representing the asynchronous operation producing the value converted to type <typeparamref name="T"/>.</returns>
 	public async ValueTask<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
-		=> (T)await GetValueAsync(typeof(T), name, defaultValue, cancellationToken);
-
+		=> (T)await GetValueAsync(typeof(T), name, defaultValue, cancellationToken).NoWait();
 	/// <summary>
 	/// Asynchronously gets the value of a setting with the specified name and converts it to the given type.
 	/// </summary>
@@ -240,8 +239,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 		if (_reader is null)
 			return GetValue(type, name, defaultValue);
 		else
-			return await GetValueFromReaderAsync(type, name, cancellationToken) ?? defaultValue;
-	}
+			return await GetValueFromReaderAsync(type, name, cancellationToken).NoWait() ?? defaultValue;	}
 
 	/// <summary>
 	/// Asynchronously gets the value from the JSON reader using the provided delegate.
@@ -251,5 +249,4 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>A <see cref="ValueTask"/> representing the asynchronous operation producing the value converted to the specified type.</returns>
 	private async ValueTask<object> GetValueFromReaderAsync(Type type, string name, CancellationToken cancellationToken)
-		=> await _readJson(_reader, this, name, type, cancellationToken);
-}
+		=> await _readJson(_reader, this, name, type, cancellationToken).NoWait();}

@@ -35,7 +35,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			async ValueTask<bool> InitRange()
 			{
-				_range = (await _list.GetRangeAsync(_startIndex, _list.BufferSize, false, Meta.Identity?.Name, ListSortDirection.Ascending, _cancellationToken)).GetEnumerator();
+				_range = (await _list.GetRangeAsync(_startIndex, _list.BufferSize, false, Meta.Identity?.Name, ListSortDirection.Ascending, _cancellationToken).NoWait()).GetEnumerator();
 				_startIndex += _list.BufferSize;
 
 				return _range.MoveNext();
@@ -109,6 +109,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		int IEqualityComparer<object>.GetHashCode(object obj) => _underlying.GetHashCode(obj);
 	}
 
+	private readonly Lock _cachedEntitiesInitLock = new();
 	private AsyncReaderWriterLock _cachedEntitiesLock;
 	private Dictionary<TId, TEntity> _cachedEntities;
 
@@ -118,12 +119,18 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			if (_cachedEntities is null)
 			{
-				_cachedEntitiesLock = new();
+				using (_cachedEntitiesInitLock.EnterScope())
+				{
+					if (_cachedEntities is null)
+					{
+						_cachedEntitiesLock = new();
 
-				if (Meta.Identity != null && typeof(TId) == typeof(string))
-					_cachedEntities = new(new StringIdComparer().To<IEqualityComparer<TId>>());
-				else
-					_cachedEntities = [];
+						if (Meta.Identity != null && typeof(TId) == typeof(string))
+							_cachedEntities = new(new StringIdComparer().To<IEqualityComparer<TId>>());
+						else
+							_cachedEntities = [];
+					}
+				}
 			}
 
 			return (_cachedEntitiesLock, _cachedEntities);
@@ -177,7 +184,8 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		_bulkInitialized = false;
 		_cacheExpire = null;
 
-		_count = null;
+		using (_cachedEntitiesInitLock.EnterScope())
+			_count = null;
 	}
 
 	/// <summary>
@@ -206,9 +214,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (Meta.Identity is null)
 			throw new InvalidOperationException($"Meta {Meta.Name} doesn't have identity.");
 
-		return await IsSaved(item, cancellationToken)
-			? await UpdateAsync(item, cancellationToken)
-			: await AddAsync(item, cancellationToken);
+		return await IsSaved(item, cancellationToken).NoWait()
+			? await UpdateAsync(item, cancellationToken).NoWait()
+			: await AddAsync(item, cancellationToken).NoWait();
 	}
 
 	#endregion
@@ -223,7 +231,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (IsReadOnly)
 			throw new ReadOnlyException();
 
-		entity = await OnUpdate(entity, cancellationToken);
+		entity = await OnUpdate(entity, cancellationToken).NoWait();
 
 		if (BulkLoad && BulkInitialized())
 		{
@@ -233,7 +241,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 			var (sync, dict) = CachedEntities;
 
-			using (await sync.WriterLockAsync(cancellationToken))
+			using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
 			{
 				if (dict.TryAdd(id, entity))
 				{
@@ -242,7 +250,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			}
 
 			if (isNew)
-				await IncrementCount(cancellationToken);
+				await IncrementCount(cancellationToken).NoWait();
 		}
 
 		return entity;
@@ -251,9 +259,16 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	private async ValueTask IncrementCount(CancellationToken cancellationToken)
 	{
 		if (_count is null)
-			_count = (int)(await OnGetCount(default, cancellationToken));
+		{
+			var c = (int)(await OnGetCount(default, cancellationToken).NoWait());
+			using (_cachedEntitiesInitLock.EnterScope())
+				_count ??= c;
+		}
 		else
-			_count++;
+		{
+			using (_cachedEntitiesInitLock.EnterScope())
+				_count++;
+		}
 	}
 
 	#endregion
@@ -279,23 +294,28 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (BulkLoad)
 		{
 			if (!BulkInitialized())
-				await GetRangeAsync(0, long.MaxValue, deleted, default, default, cancellationToken);
+				await GetRangeAsync(0, long.MaxValue, deleted, default, default, cancellationToken).NoWait();
 
 			var (sync, dict) = CachedEntities;
 
-			using var _ = await sync.ReaderLockAsync(cancellationToken);
+			using var _ = await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false);
 			return dict.Count;
 		}
 		else
 		{
 			if (CacheCount)
 			{
-				_count ??= (int)await OnGetCount(deleted, cancellationToken);
+				if (_count is null)
+				{
+					var c = (int)await OnGetCount(deleted, cancellationToken).NoWait();
+					using (_cachedEntitiesInitLock.EnterScope())
+						_count ??= c;
+				}
 
 				return _count.Value;
 			}
 			else
-				return (int)await OnGetCount(deleted, cancellationToken);
+				return (int)await OnGetCount(deleted, cancellationToken).NoWait();
 		}
 	}
 
@@ -310,7 +330,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (item is null)
 			throw new ArgumentNullException(nameof(item));
 
-		item = await OnAdd(item, cancellationToken);
+		item = await OnAdd(item, cancellationToken).NoWait();
 
 		if (BulkLoad)
 		{
@@ -318,14 +338,14 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				var (sync, dict) = CachedEntities;
 
-				using var _ = await sync.WriterLockAsync(cancellationToken);
+				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 				dict.Add(GetCacheId(item), item);
 			}
 			else
-				await GetRangeAsync(cancellationToken);
+				await GetRangeAsync(cancellationToken).NoWait();
 		}
 
-		await IncrementCount(cancellationToken);
+		await IncrementCount(cancellationToken).NoWait();
 
 		return item;
 	}
@@ -338,19 +358,20 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (IsReadOnly)
 			throw new ReadOnlyException();
 
-		await OnClear(cancellationToken);
+		await OnClear(cancellationToken).NoWait();
 
 		if (BulkLoad)
 		{
-			await GetRangeAsync(cancellationToken);
+			await GetRangeAsync(cancellationToken).NoWait();
 
 			var (sync, dict) = CachedEntities;
 
-			using var _ = await sync.WriterLockAsync(cancellationToken);
+			using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 			dict.Clear();
 		}
 
-		_count = 0;
+		using (_cachedEntitiesInitLock.EnterScope())
+			_count = 0;
 	}
 
 	/// <summary>
@@ -362,7 +383,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// Copies entities to the specified array starting at the given index.
 	/// </summary>
 	public async ValueTask CopyToAsync(TEntity[] array, int index, CancellationToken cancellationToken)
-		=> ((ICollection<TEntity>)await GetRangeAsync(index, long.MaxValue, false, default, default, cancellationToken)).CopyTo(array, index);
+		=> ((ICollection<TEntity>)await GetRangeAsync(index, long.MaxValue, false, default, default, cancellationToken).NoWait()).CopyTo(array, index);
 
 	/// <summary>
 	/// Removes the specified entity from the list and storage.
@@ -372,7 +393,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (IsReadOnly)
 			throw new ReadOnlyException();
 
-		var retVal = await OnRemove(item, cancellationToken);
+		var retVal = await OnRemove(item, cancellationToken).NoWait();
 
 		if (BulkLoad)
 		{
@@ -380,13 +401,16 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				var (sync, dict) = CachedEntities;
 
-				using var _ = await sync.WriterLockAsync(cancellationToken);
+				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 				dict.Remove(GetCacheId(item));
 			}
 		}
 
-		if (_count != null)
-			_count--;
+		using (_cachedEntitiesInitLock.EnterScope())
+		{
+			if (_count != null)
+				_count--;
+		}
 
 		return retVal;
 	}
@@ -465,7 +489,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			var pageSize = count.Min(BufferSize);
 
-			var buffer = await OnGetGroup(startIndex, pageSize, deleted, orderByColumn, direction, cancellationToken);
+			var buffer = await OnGetGroup(startIndex, pageSize, deleted, orderByColumn, direction, cancellationToken).NoWait();
 
 			entities.AddRange(buffer);
 
@@ -482,7 +506,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				var (sync, dict) = CachedEntities;
 
-				using var _ = await sync.WriterLockAsync(cancellationToken);
+				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 
 				dict.Clear();
 
@@ -567,7 +591,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// Removes an entity by its identifier.
 	/// </summary>
 	public async ValueTask<bool> RemoveById(TId id, CancellationToken cancellationToken)
-		=> await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
+		=> await RemoveAsync(await ReadById(id, cancellationToken).NoWait(), cancellationToken).NoWait();
 
 	private static TId GetCacheId(TEntity entity)
 	{
@@ -582,10 +606,10 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// </summary>
 	public async ValueTask<bool> TryAddAsync(TEntity entity, CancellationToken cancellationToken)
 	{
-		if (await ContainsAsync(entity, cancellationToken))
+		if (await ContainsAsync(entity, cancellationToken).NoWait())
 			return false;
 
-		await AddAsync(entity, cancellationToken);
+		await AddAsync(entity, cancellationToken).NoWait();
 		return true;
 	}
 
@@ -594,6 +618,6 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		if (!BulkLoad || BulkInitialized())
 			return default;
 
-		return (await GetRangeAsync(cancellationToken)).AsQueryable();
+		return (await GetRangeAsync(cancellationToken).NoWait()).AsQueryable();
 	}
 }

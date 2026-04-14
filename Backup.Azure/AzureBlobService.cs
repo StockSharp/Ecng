@@ -84,7 +84,7 @@ public class AzureBlobService : Disposable, IBackupService
 		await EnsureContainerAsync(cancellationToken).NoWait();
 
 		var blob = _container.GetBlobClient(entry.GetFullPath());
-		var props = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
+		var props = await blob.GetPropertiesAsync(cancellationToken: cancellationToken).NoWait();
 
 		entry.LastModified = props.Value.LastModified.UtcDateTime;
 		entry.Size = props.Value.ContentLength;
@@ -102,7 +102,7 @@ public class AzureBlobService : Disposable, IBackupService
 		await EnsureContainerAsync(cancellationToken).NoWait();
 
         var blob = _container.GetBlobClient(entry.GetFullPath());
-		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken);
+		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken).NoWait();
 		await using var source = response.Value.Content;
 		var total = response.Value.ContentLength;
 
@@ -113,12 +113,12 @@ public class AzureBlobService : Disposable, IBackupService
 		while (read < total)
 		{
 			var expected = (int)(total - read).Min(_bufferSize);
-			var actual = await source.ReadAsync(buffer.AsMemory(0, expected), cancellationToken);
+			var actual = await source.ReadAsync(buffer.AsMemory(0, expected), cancellationToken).NoWait();
 
 			if (actual == 0)
 				break;
 
-			await stream.WriteAsync(buffer.AsMemory(0, actual), cancellationToken);
+			await stream.WriteAsync(buffer.AsMemory(0, actual), cancellationToken).NoWait();
 			read += actual;
 
 			var curr = (int)(read * 100L / total);
@@ -153,12 +153,12 @@ public class AzureBlobService : Disposable, IBackupService
 		while (uploaded < stream.Length)
 		{
 			var expected = (int)(stream.Length - uploaded).Min(_bufferSize);
-			var actual = await stream.ReadAsync(buffer.AsMemory(0, expected), cancellationToken);
+			var actual = await stream.ReadAsync(buffer.AsMemory(0, expected), cancellationToken).NoWait();
 			if (actual == 0)
 				break;
 
 			var id = Convert.ToBase64String(BitConverter.GetBytes(blockNum));
-			await blob.StageBlockAsync(id, new MemoryStream(buffer, 0, actual, writable: false), cancellationToken: cancellationToken);
+			await blob.StageBlockAsync(id, new MemoryStream(buffer, 0, actual, writable: false), cancellationToken: cancellationToken).NoWait();
 			blockIds.Add(id);
 			uploaded += actual;
 			blockNum++;
@@ -171,7 +171,7 @@ public class AzureBlobService : Disposable, IBackupService
 			}
 		}
 
-		await blob.CommitBlockListAsync(blockIds, cancellationToken: cancellationToken);
+		await blob.CommitBlockListAsync(blockIds, cancellationToken: cancellationToken).NoWait();
 
 		if (prevProgress < 100)
 			progress(100);

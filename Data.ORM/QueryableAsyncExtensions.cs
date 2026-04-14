@@ -18,10 +18,10 @@ public static class QueryableAsyncExtensions
 
 		if (source.Provider is IDefaultQueryProvider defProvider)
 		{
-			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken);
+			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
 
 			if (bulkSource is null)
-				return await source.CountAsync(cancellationToken);
+				return await source.CountAsync(cancellationToken).NoWait();
 
 			((DefaultQueryable<T>)source).ReplaceProvider(bulkSource.Provider);
 		}
@@ -37,7 +37,7 @@ public static class QueryableAsyncExtensions
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns><see langword="true"/> if the sequence contains any elements; otherwise, <see langword="false"/>.</returns>
 	public static async ValueTask<bool> AnyAsyncEx<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> await source.FirstOrDefaultAsyncEx(cancellationToken) is not null;
+		=> await source.FirstOrDefaultAsyncEx(cancellationToken).NoWait() is not null;
 
 	/// <summary>
 	/// Asynchronously returns the first element of a sequence, or a default value, using bulk-load when available.
@@ -52,10 +52,10 @@ public static class QueryableAsyncExtensions
 
 		if (source.Provider is IDefaultQueryProvider defProvider)
 		{
-			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken);
+			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
 
 			if (bulkSource is null)
-				return await source.FirstOrDefaultAsync(cancellationToken);
+				return await source.FirstOrDefaultAsync(cancellationToken).NoWait();
 
 			((DefaultQueryable<T>)source).ReplaceProvider(bulkSource.Provider);
 		}

@@ -45,5 +45,4 @@ public abstract class Serializer<T> : ISerializer<T>
 	/// <param name="cancellationToken">A token that can be used to cancel the deserialization operation.</param>
 	/// <returns>A task that represents the asynchronous deserialize operation. The task result contains the deserialized object graph.</returns>
 	async ValueTask<object> ISerializer.DeserializeAsync(Stream stream, CancellationToken cancellationToken)
-		=> await DeserializeAsync(stream, cancellationToken);
-}
+		=> await DeserializeAsync(stream, cancellationToken).NoWait();}

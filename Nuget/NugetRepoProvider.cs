@@ -51,12 +51,12 @@ public class NugetRepoProvider : CachingSourceProvider
 				_tcs ??= tcs;
 
 			if (tcs != _tcs)
-				await _tcs.Task;
+				await _tcs.Task.NoWait();
 			else
 			{
 				try
 				{
-					_tcs.SetResult(await GetImplAsync(privateUrl, token));
+					_tcs.SetResult(await GetImplAsync(privateUrl, token).NoWait());
 				}
 				catch (Exception ex)
 				{
@@ -98,12 +98,12 @@ public class NugetRepoProvider : CachingSourceProvider
 		if (!packagesFolder.IsEmpty())
 			Directory.CreateDirectory(packagesFolder);
 
-		using (await _instanceLock.LockAsync(token))
+		using (await _instanceLock.LockAsync(token).ConfigureAwait(false))
 		{
 			if (_instance is null)
 			{
-				_instance = new(authToken, await GetPackageSources(packagesFolder), retryPolicy);
-				await _instance.InitBaseUrls(token);
+				_instance = new(authToken, await GetPackageSources(packagesFolder).NoWait(), retryPolicy);
+				await _instance.InitBaseUrls(token).NoWait();
 			}
 		}
 
@@ -158,8 +158,8 @@ public class NugetRepoProvider : CachingSourceProvider
 		async Task initBaseUrl(SourceRepository repo)
 			=> _repoUrls.Add((repo, await repo.GetBaseUrl(cancellationToken).NoWait()));
 
-		await initBaseUrl(_nugetRepo);
-		await initBaseUrl(_privateRepo);
+		await initBaseUrl(_nugetRepo).NoWait();
+		await initBaseUrl(_privateRepo).NoWait();
 	}
 
 	/// <summary>
@@ -186,7 +186,7 @@ public class NugetRepoProvider : CachingSourceProvider
 					cache,
 					logger,
 					t),
-				RetryPolicy.ReadMaxCount, cancellationToken);
+				RetryPolicy.ReadMaxCount, cancellationToken).NoWait();
 
 			var foundVer = versionRange.FindBestMatch(versions);
 
@@ -228,7 +228,7 @@ public class NugetRepoProvider : CachingSourceProvider
 					return [];
 			}
 
-			var (foundVersion, repo, baseUrl) = await TryFindVersion(packageId, versionRange, cache, logger, cancellationToken);
+			var (foundVersion, repo, baseUrl) = await TryFindVersion(packageId, versionRange, cache, logger, cancellationToken).NoWait();
 
 			if (processedPackageIds.TryGetValue(packageId, out var existVer))
 			{
@@ -255,7 +255,7 @@ public class NugetRepoProvider : CachingSourceProvider
 			}
 
 			var http = repo == _privateRepo ? _privateHttp : _publicHttp;
-			using var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken);
+			using var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken).NoWait();
 			var reader = new NuspecReader(nuspec);
 			var groups = reader.GetDependencyGroups().ToDictionary(g => g.TargetFramework);
 
@@ -277,7 +277,7 @@ public class NugetRepoProvider : CachingSourceProvider
 					var group = groups[compatibleFwk];
 
 					foreach (var dep in group.Packages)
-						dependencies.AddRange(await get(dep.Id, dep.VersionRange));
+						dependencies.AddRange(await get(dep.Id, dep.VersionRange).NoWait());
 				}
 			}
 
@@ -291,7 +291,7 @@ public class NugetRepoProvider : CachingSourceProvider
 		var retVal = new Dictionary<PackageIdentity, IEnumerable<(PackageIdentity identity, SourceRepository repo)>>();
 
 		foreach (var identity in identities)
-			retVal.Add(identity, await get(identity.Id, new(identity.Version)));
+			retVal.Add(identity, await get(identity.Id, new(identity.Version)).NoWait());
 
 		var allDependencies = retVal.Values
 			.SelectMany(x => x)
@@ -318,7 +318,7 @@ public class NugetRepoProvider : CachingSourceProvider
 			sources.Add(new FeedTypePackageSource(packagesFolder, FeedType.FileSystemV2));
 
 		sources.Add(new PackageSource(NuGetConstants.V3FeedUrl, NugetFeedRepoKey));
-		sources.Add(await PrivatePackageSource.GetInstance());
+		sources.Add(await PrivatePackageSource.GetInstance().NoWait());
 
 		return sources;
 	}

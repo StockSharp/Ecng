@@ -304,8 +304,7 @@ public static class SchemaMigrator
 
 		using var cmd = connection.CreateCommand();
 		cmd.CommandText = migrationSql;
-		await cmd.ExecuteNonQueryAsync(cancellationToken);
-	}
+		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();	}
 
 	private static string NormalizeSqlType(string sqlType)
 	{

@@ -159,6 +159,5 @@ public class ConnectionStateTracker : Disposable, IConnection
 		}
 
 		if (StateChanged is { } handler)
-			await handler(newState, cancellationToken);
-	}
+			await handler(newState, cancellationToken).NoWait();	}
 }

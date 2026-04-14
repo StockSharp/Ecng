@@ -76,5 +76,4 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 	}
 
 	async ValueTask<IQueryable> IDefaultQueryProvider.TryInitBulkLoad(CancellationToken cancellationToken)
-		=> _list is null ? default : await _list.TryInitBulkLoad(cancellationToken);
-}
+		=> _list is null ? default : await _list.TryInitBulkLoad(cancellationToken).NoWait();}

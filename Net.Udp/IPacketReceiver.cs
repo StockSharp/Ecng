@@ -101,8 +101,7 @@ public class RealPacketReceiver(
 		try
 		{
 			_logs.LogInfo("Thread {0} started.", name);
-			await action(token);
-		}
+			await action(token).NoWait();		}
 		catch (Exception ex)
 		{
 			if (!token.IsCancellationRequested)
@@ -201,8 +200,7 @@ public class RealPacketReceiver(
 				try
 				{
 					packet = _processor.AllocatePacket(packetSize);
-					var len = await socket.ReceiveAsync(packet.Memory, SocketFlags.None, token);
-
+					var len = await socket.ReceiveAsync(packet.Memory, SocketFlags.None, token).NoWait();
 					if (len <= 0)
 					{
 						_logs.LogError($"{_address} returned 0 bytes.");
@@ -220,8 +218,7 @@ public class RealPacketReceiver(
 
 					if (_fullMode == PacketQueueFullModes.Wait)
 					{
-						await writer.WriteAsync((packet, len), token);
-					}
+						await writer.WriteAsync((packet, len), token).NoWait();					}
 					else if (!writer.TryWrite((packet, len)))
 					{
 						_dropped++;

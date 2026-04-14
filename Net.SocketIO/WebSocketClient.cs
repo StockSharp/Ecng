@@ -185,7 +185,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <returns>A task that represents the asynchronous connect operation.</returns>
 	public async ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
-		await RaiseStateChangedAsync(ConnectionStates.Connecting, cancellationToken);
+		await RaiseStateChangedAsync(ConnectionStates.Connecting, cancellationToken).NoWait();
 
 		_reConnectCommands.Clear();
 
@@ -195,8 +195,18 @@ public class WebSocketClient : Disposable, IConnection
 
 		_disconnectionStates[source] = false;
 
-		using var linked = CancellationTokenSource.CreateLinkedTokenSource(source.Token, cancellationToken);
-		await ConnectImpl(source, false, 0, linked.Token);
+		try
+		{
+			using var linked = CancellationTokenSource.CreateLinkedTokenSource(source.Token, cancellationToken);
+			await ConnectImpl(source, false, 0, linked.Token).NoWait();
+		}
+		catch
+		{
+			_source = null;
+			_disconnectionStates.Remove(source);
+			source.Dispose();
+			throw;
+		}
 	}
 
 	private async ValueTask RaiseStateChangedAsync(ConnectionStates state, CancellationToken cancellationToken)
@@ -209,7 +219,7 @@ public class WebSocketClient : Disposable, IConnection
 		State = state;
 
 		if (_stateChanged is { } handler)
-			await handler(state, cancellationToken);
+			await handler(state, cancellationToken).NoWait();
 	}
 
 	private ValueTask RaiseErrorAsync(Exception ex, CancellationToken cancellationToken)
@@ -257,7 +267,7 @@ public class WebSocketClient : Disposable, IConnection
 			}
 		}
 
-		await RaiseStateChangedAsync(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected, token);
+		await RaiseStateChangedAsync(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected, token).NoWait();
 
 		_ = Task.Run(() => OnReceive(source));
 
@@ -308,7 +318,7 @@ public class WebSocketClient : Disposable, IConnection
 		if (source is null)
 			throw new InvalidOperationException("Not connected.");
 
-		await RaiseStateChangedAsync(ConnectionStates.Disconnecting, cancellationToken);
+		await RaiseStateChangedAsync(ConnectionStates.Disconnecting, cancellationToken).NoWait();
 
 		_disconnectionStates[source] = true;
 		source.Cancel();
@@ -398,7 +408,7 @@ public class WebSocketClient : Disposable, IConnection
 					{
 						if (!token.IsCancellationRequested)
 						{
-							await RaiseErrorAsync(ex, token);
+							await RaiseErrorAsync(ex, token).NoWait();
 							needClose = false;
 						}
 
@@ -448,7 +458,7 @@ public class WebSocketClient : Disposable, IConnection
 						if (token.IsCancellationRequested)
 							break;
 
-						await RaiseErrorAsync(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex), token);
+						await RaiseErrorAsync(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex), token).NoWait();
 
 						if (++errorCount < maxParsingErrors)
 							continue;
@@ -463,7 +473,7 @@ public class WebSocketClient : Disposable, IConnection
 				catch (AggregateException ex)
 				{
 					if (!token.IsCancellationRequested)
-						await RaiseErrorAsync(ex, token);
+						await RaiseErrorAsync(ex, token).NoWait();
 
 					if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
 						break;
@@ -482,7 +492,7 @@ public class WebSocketClient : Disposable, IConnection
 				catch (Exception ex)
 				{
 					if (!token.IsCancellationRequested)
-						await RaiseErrorAsync(ex, token);
+						await RaiseErrorAsync(ex, token).NoWait();
 				}
 			}
 
@@ -491,13 +501,13 @@ public class WebSocketClient : Disposable, IConnection
 				if (needClose && _ws is ClientWebSocket ws)
 				{
 					using var cts = DisconnectTimeout.CreateTimeout();
-					await ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, cts.Token);
+					await ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, cts.Token).NoWait();
 				}
 			}
 			catch (Exception ex)
 			{
 				if (!token.IsCancellationRequested)
-					await RaiseErrorAsync(ex, token);
+					await RaiseErrorAsync(ex, token).NoWait();
 			}
 
 			try
@@ -513,7 +523,7 @@ public class WebSocketClient : Disposable, IConnection
 
 			if (expected == true)
 			{
-				await RaiseStateChangedAsync(ConnectionStates.Disconnected, token);
+				await RaiseStateChangedAsync(ConnectionStates.Disconnected, token).NoWait();
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -528,23 +538,23 @@ public class WebSocketClient : Disposable, IConnection
 				}
 				else if (attempts > 0 || attempts == -1)
 				{
-					await RaiseStateChangedAsync(ConnectionStates.Reconnecting, token);
+					await RaiseStateChangedAsync(ConnectionStates.Reconnecting, token).NoWait();
 
 					_infoLog("Socket re-connecting '{0}'.", _url);
 
 					try
 					{
-						await ConnectImpl(source, true, attempts, token);
+						await ConnectImpl(source, true, attempts, token).NoWait();
 						return;
 					}
 					catch (Exception ex)
 					{
 						if (!token.IsCancellationRequested)
-							await RaiseErrorAsync(ex, token);
+							await RaiseErrorAsync(ex, token).NoWait();
 					}
 				}
 
-				await RaiseStateChangedAsync(ConnectionStates.Failed, token);
+				await RaiseStateChangedAsync(ConnectionStates.Failed, token).NoWait();
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -554,7 +564,7 @@ public class WebSocketClient : Disposable, IConnection
 		}
 		catch (Exception ex)
 		{
-			await RaiseErrorAsync(ex, default);
+			await RaiseErrorAsync(ex, default).NoWait();
 		}
 	}
 
@@ -681,7 +691,7 @@ public class WebSocketClient : Disposable, IConnection
 			catch (Exception ex)
 			{
 				if (!cancellationToken.IsCancellationRequested)
-					await RaiseErrorAsync(ex, cancellationToken);
+					await RaiseErrorAsync(ex, cancellationToken).NoWait();
 			}
 		}
 	}

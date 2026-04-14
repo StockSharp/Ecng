@@ -137,12 +137,12 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		};
 
 		if (isPrimitive)
-			await writer.WriteStartArrayAsync(cancellationToken);
+			await writer.WriteStartArrayAsync(cancellationToken).NoWait();
 
-		await WriteAsync(writer, graph, cancellationToken);
+		await WriteAsync(writer, graph, cancellationToken).NoWait();
 
 		if (isPrimitive)
-			await writer.WriteEndArrayAsync(cancellationToken);
+			await writer.WriteEndArrayAsync(cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -162,14 +162,14 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		if (isPrimitive)
 		{
-			if (!await reader.ReadAsync(cancellationToken))
+			if (!await reader.ReadAsync(cancellationToken).NoWait())
 				return default;
 		}
 
-		var retVal = (T)await ReadAsync(reader, typeof(T), cancellationToken);
+		var retVal = (T)await ReadAsync(reader, typeof(T), cancellationToken).NoWait();
 
 		if (isPrimitive)
-			await reader.ReadAsync(cancellationToken);
+			await reader.ReadAsync(cancellationToken).NoWait();
 
 		return retVal;
 	}
@@ -180,7 +180,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		{
 			if (FillMode)
 			{
-				var storage = (SettingsStorage)await ReadAsync(reader, typeof(SettingsStorage), cancellationToken);
+				var storage = (SettingsStorage)await ReadAsync(reader, typeof(SettingsStorage), cancellationToken).NoWait();
 
 				if (storage is null)
 					return null;
@@ -188,7 +188,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				var per = type.CreateInstance();
 
 				if (per is IAsyncPersistable asyncPer)
-					await asyncPer.LoadAsync(storage, cancellationToken);
+					await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
 				else
 					((IPersistable)per).Load(storage);
 
@@ -196,7 +196,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			}
 			else
 			{
-				await reader.ReadWithCheckAsync(cancellationToken);
+				await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 					return null;
@@ -208,13 +208,13 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 
 				if (per is IAsyncPersistable asyncPer)
-					await asyncPer.LoadAsync(storage, cancellationToken);
+					await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
 				else
 					((IPersistable)per).Load(storage);
 
-				await TryClearDeepLevel(reader, storage, cancellationToken);
+				await TryClearDeepLevel(reader, storage, cancellationToken).NoWait();
 
-				await reader.ReadWithCheckAsync(cancellationToken);
+				await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 				reader.CheckExpectedToken(JsonToken.EndObject);
 
@@ -223,7 +223,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		}
 		else if (type == typeof(SettingsStorage))
 		{
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 			if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 				return null;
@@ -231,9 +231,9 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			reader.CheckExpectedToken(JsonToken.StartObject);
 
 			var storage = new SettingsStorage();
-			await FillAsync(storage, reader, cancellationToken);
+			await FillAsync(storage, reader, cancellationToken).NoWait();
 
-			//await reader.ReadWithCheckAsync(cancellationToken);
+			//await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 			reader.CheckExpectedToken(JsonToken.EndObject);
 
@@ -241,7 +241,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		}
 		else if (type.Is<IEnumerable>() && type != typeof(string))
 		{
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 			if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 				return null;
@@ -254,7 +254,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			while (true)
 			{
-				var item = await ReadAsync(reader, itemType, cancellationToken);
+				var item = await ReadAsync(reader, itemType, cancellationToken).NoWait();
 
 				if (item is null && reader.TokenType == JsonToken.EndArray)
 					break;
@@ -282,28 +282,28 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			object value;
 
 			if (type == typeof(DateTime))
-				value = await reader.ReadAsDateTimeAsync(cancellationToken);
+				value = await reader.ReadAsDateTimeAsync(cancellationToken).NoWait();
 			else if (type == typeof(DateTimeOffset))
-				value = await reader.ReadAsDateTimeOffsetAsync(cancellationToken);
+				value = await reader.ReadAsDateTimeOffsetAsync(cancellationToken).NoWait();
 			else if (type == typeof(byte[]))
-				value = await reader.ReadAsBytesAsync(cancellationToken);
+				value = await reader.ReadAsBytesAsync(cancellationToken).NoWait();
 			else if (type == typeof(SecureString))
 			{
 				var bytes = EncryptedAsByteArray
-					? await reader.ReadAsBytesAsync(cancellationToken)
-					: (await reader.ReadAsStringAsync(cancellationToken))?.Base64();
+					? await reader.ReadAsBytesAsync(cancellationToken).NoWait()
+					: (await reader.ReadAsStringAsync(cancellationToken).NoWait())?.Base64();
 
 				value = bytes is null ? null : SecureStringEncryptor.Instance.Decrypt(bytes);
 			}
 			else if (type.TryGetAdapterType(out var adapterType))
 			{
-				value = await ReadAsync(reader, adapterType, cancellationToken);
+				value = await ReadAsync(reader, adapterType, cancellationToken).NoWait();
 
 				if (value is IPersistableAdapter adapter)
 					value = adapter.UnderlyingValue;
 			}
 			else
-				value = await reader.ReadAsStringAsync(cancellationToken);
+				value = await reader.ReadAsStringAsync(cancellationToken).NoWait();
 
 			return value?.To(type);
 		}
@@ -313,45 +313,45 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	{
 		async Task WriteSettingsStorageAsync(SettingsStorage storage)
 		{
-			await writer.WriteStartObjectAsync(cancellationToken);
+			await writer.WriteStartObjectAsync(cancellationToken).NoWait();
 
 			foreach (var pair in storage)
 			{
 				if (pair.Value is null && NullValueHandling == NullValueHandling.Ignore)
 					continue;
 
-				await writer.WritePropertyNameAsync(pair.Key, cancellationToken);
-				await WriteAsync(writer, pair.Value, cancellationToken);
+				await writer.WritePropertyNameAsync(pair.Key, cancellationToken).NoWait();
+				await WriteAsync(writer, pair.Value, cancellationToken).NoWait();
 			}
 
-			await writer.WriteEndObjectAsync(cancellationToken);
+			await writer.WriteEndObjectAsync(cancellationToken).NoWait();
 		}
 
 		if (value is IPersistable per)
 		{
-			await WriteSettingsStorageAsync(per.Save());
+			await WriteSettingsStorageAsync(per.Save()).NoWait();
 		}
 		else if (value is IAsyncPersistable asyncPer)
 		{
-			await WriteSettingsStorageAsync(await asyncPer.SaveAsync(cancellationToken));
+			await WriteSettingsStorageAsync(await asyncPer.SaveAsync(cancellationToken)).NoWait();
 		}
 		else if (value is SettingsStorage storage)
 		{
-			await WriteSettingsStorageAsync(storage);
+			await WriteSettingsStorageAsync(storage).NoWait();
 		}
 		else if (value is IEnumerable primCol && value is not string)
 		{
-			await writer.WriteStartArrayAsync(cancellationToken);
+			await writer.WriteStartArrayAsync(cancellationToken).NoWait();
 
 			foreach (var item in primCol)
-				await WriteAsync(writer, item, cancellationToken);
+				await WriteAsync(writer, item, cancellationToken).NoWait();
 
-			await writer.WriteEndArrayAsync(cancellationToken);
+			await writer.WriteEndArrayAsync(cancellationToken).NoWait();
 		}
 		else if (value is SecureString secStr)
 		{
 			var encrypted = SecureStringEncryptor.Instance.Encrypt(secStr);
-			await WriteAsync(writer, EncryptedAsByteArray ? encrypted : encrypted?.Base64(), cancellationToken);
+			await WriteAsync(writer, EncryptedAsByteArray ? encrypted : encrypted?.Base64(), cancellationToken).NoWait();
 		}
 		else
 		{
@@ -365,11 +365,11 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			{
 				var adapter = adapterType.CreateInstance<IPersistableAdapter>();
 				adapter.UnderlyingValue = value;
-				await WriteAsync(writer, adapter, cancellationToken);
+				await WriteAsync(writer, adapter, cancellationToken).NoWait();
 				return;
 			}
 
-			await writer.WriteValueAsync(value, cancellationToken);
+			await writer.WriteValueAsync(value, cancellationToken).NoWait();
 		}
 	}
 
@@ -383,7 +383,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		while (true)
 		{
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 			if (reader.TokenType == JsonToken.EndObject)
 				break;
@@ -392,7 +392,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			var propName = (string)reader.Value;
 
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 			object value;
 
@@ -401,13 +401,13 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				case JsonToken.StartObject:
 				{
 					var inner = new SettingsStorage();
-					await FillAsync(inner, reader, cancellationToken);
+					await FillAsync(inner, reader, cancellationToken).NoWait();
 					value = inner;
 					break;
 				}
 				case JsonToken.StartArray:
 				{
-					value = await ReadArrayAsync(reader, cancellationToken);
+					value = await ReadArrayAsync(reader, cancellationToken).NoWait();
 					break;
 				}
 				default:
@@ -421,7 +421,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 	private async ValueTask<object[]> ReadArrayAsync(JsonReader reader, CancellationToken cancellationToken)
 	{
-		await reader.ReadWithCheckAsync(cancellationToken);
+		await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 		var list = new List<object>();
 
@@ -432,13 +432,13 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				case JsonToken.StartObject:
 				{
 					var inner = new SettingsStorage();
-					await FillAsync(inner, reader, cancellationToken);
+					await FillAsync(inner, reader, cancellationToken).NoWait();
 					list.Add(inner);
 					break;
 				}
 				case JsonToken.StartArray:
 				{
-					list.Add(await ReadArrayAsync(reader, cancellationToken));
+					list.Add(await ReadArrayAsync(reader, cancellationToken).NoWait());
 					break;
 				}
 				default:
@@ -446,7 +446,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 					break;
 			}
 
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 		}
 
 		return list.ToArray();
@@ -460,22 +460,22 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			return;
 
 		for (var i = 1; i <= lvl; i++)
-			await reader.ReadWithCheckAsync(cancellationToken);
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 		storage.DeepLevel = 0;
 	}
 
 	private async ValueTask<object> GetValueFromReaderAsync(JsonReader reader, SettingsStorage storage, string name, Type type, CancellationToken cancellationToken)
 	{
-		await TryClearDeepLevel(reader, storage, cancellationToken);
+		await TryClearDeepLevel(reader, storage, cancellationToken).NoWait();
 
-		await reader.ReadWithCheckAsync(cancellationToken);
+		await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 		reader.CheckExpectedToken(JsonToken.PropertyName);
 
 		if (!((string)reader.Value).EqualsIgnoreCase(name))
 			throw new InvalidOperationException($"{reader.Value} != {name}");
 
-		return await ReadAsync(reader, type, cancellationToken);
+		return await ReadAsync(reader, type, cancellationToken).NoWait();
 	}
 }
