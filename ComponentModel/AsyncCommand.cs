@@ -97,7 +97,14 @@ public class AsyncCommand<T> : NotifiableObject, IRevalidatableCommand, IDisposa
 	/// <inheritdoc />
 	public async void Execute(object parameter)
 	{
-		await ExecuteAsync((T)parameter);
+		try
+		{
+			await ExecuteAsync((T)parameter);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Trace.WriteLine(ex);
+		}
 	}
 
 	/// <summary>
