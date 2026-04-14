@@ -100,10 +100,19 @@ public class TransactionFileStream : Stream, ICommitable, IAsyncCommitable
 
 		if (preload)
 		{
-            // write original data into temp, position stays at end for appending
-            using var rs = _fs.OpenRead(_name);
-            rs.CopyTo(_temp);
-        }
+			try
+			{
+				// write original data into temp, position stays at end for appending
+				using var rs = _fs.OpenRead(_name);
+				rs.CopyTo(_temp);
+			}
+			catch
+			{
+				_temp.Dispose();
+				_temp = null;
+				throw;
+			}
+		}
 	}
 
 	private void TryDeleteTempFile()

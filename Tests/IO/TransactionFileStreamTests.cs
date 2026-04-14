@@ -605,10 +605,16 @@ public class TransactionFileStreamTests : BaseTestClass
 	private class FaultyFileSystem(IFileSystem inner) : IFileSystem
 	{
 		public Func<string, Exception> OnMoveFile { get; set; }
+		public Func<string, FileMode, FileAccess, Exception> OnOpen { get; set; }
 
 		public bool FileExists(string path) => inner.FileExists(path);
 		public bool DirectoryExists(string path) => inner.DirectoryExists(path);
-		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None) => inner.Open(path, mode, access, share);
+		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None)
+		{
+			var ex = OnOpen?.Invoke(path, mode, access);
+			if (ex != null) throw ex;
+			return inner.Open(path, mode, access, share);
+		}
 		public void CreateDirectory(string path) => inner.CreateDirectory(path);
 		public void DeleteDirectory(string path, bool recursive = false) => inner.DeleteDirectory(path, recursive);
 		public void DeleteFile(string path) => inner.DeleteFile(path);
@@ -761,6 +767,35 @@ public class TransactionFileStreamTests : BaseTestClass
 
 		// Multiple Dispose should not throw
 		tfs.Dispose();
+	}
+
+	/// <summary>
+	/// When OpenRead fails during preload in constructor, the already-opened temp stream should be disposed.
+	/// </summary>
+	[TestMethod]
+	public void Constructor_PreloadFailure_ShouldDisposeTempStream()
+	{
+		var fs = new MemoryFileSystem();
+		var faultyFs = new FaultyFileSystem(fs);
+		var target = "/preload_fail.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "existing-data");
+
+		// Fault on OpenRead (preload) but not on OpenWrite (temp creation)
+		faultyFs.OnOpen = (path, mode, access) =>
+		{
+			if (access == FileAccess.Read)
+				return new IOException("Simulated read failure");
+			return null;
+		};
+
+		Throws<IOException>(() => new TransactionFileStream(faultyFs, target, FileMode.Open));
+
+		// Temp file should not remain locked (stream should be disposed)
+		// Verify by trying to delete it or write to it
+		if (fs.FileExists(tmp))
+			fs.DeleteFile(tmp); // should not throw if stream was disposed
 	}
 
 	#endregion
