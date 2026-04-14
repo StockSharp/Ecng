@@ -31,7 +31,10 @@ public class JArrayToObjectConverter : JsonConverter
 		var array = JArray.Load(reader);
 
 		var fields = objectType.GetJsonFields();
-		
+
+		if (array.Count < fields.Length)
+			throw new JsonSerializationException($"JSON array has {array.Count} elements but type '{objectType.Name}' requires {fields.Length}.");
+
 		for (var i = 0; i < fields.Length; i++)
 		{
 			var field = fields[i];
@@ -145,6 +148,9 @@ public class JArrayToObjectConverter<T> : JsonConverter
 		var typed = (T)existingValue;
 
 		var array = JArray.Load(reader);
+
+		if (array.Count < _fields.Length)
+			throw new JsonSerializationException($"JSON array has {array.Count} elements but type '{typeof(T).Name}' requires {_fields.Length}.");
 
 		for (var i = 0; i < _fields.Length; i++)
 		{

@@ -188,6 +188,32 @@ public class JsonConvertersTests : BaseTestClass
 		}
 	}
 
+	[TestMethod]
+	public void JArrayConverter_ShortArray_ThrowsDescriptiveError()
+	{
+		var json = "[42]"; // JArrayConvTest has 2 fields (X, Y), but array has only 1 element
+		var converter = new JArrayToObjectConverter();
+		var serializer = JsonSerializer.CreateDefault();
+
+		var reader = new JsonTextReader(new StringReader(json));
+		reader.Read();
+		ThrowsExactly<JsonSerializationException>(() =>
+			converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer));
+	}
+
+	[TestMethod]
+	public void JArrayConverter_Generic_ShortArray_ThrowsDescriptiveError()
+	{
+		var json = "[42]";
+		var converter = new JArrayToObjectConverter<JArrayConvTest>();
+		var serializer = JsonSerializer.CreateDefault();
+
+		var reader = new JsonTextReader(new StringReader(json));
+		reader.Read();
+		ThrowsExactly<JsonSerializationException>(() =>
+			converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer));
+	}
+
 	private class JArrayConvTest
 	{
 		public int X { get; set; }
