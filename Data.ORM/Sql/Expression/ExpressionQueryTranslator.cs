@@ -1025,7 +1025,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				if (value is Enum)
 					value = value.To<long>();
 
-				Curr.Raw(value.To<string>());
+				Curr.Raw(string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}", value));
 			}
 		}
 
