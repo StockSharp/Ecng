@@ -126,7 +126,7 @@ public class YandexDiskService : Disposable, IBackupService
 		if (offset is not null || length is not null)
 			throw new NotSupportedException();
 
-		var file = await _client.Files.DownloadFileAsync(entry.GetFullPath(), cancellationToken).NoWait();
+		await using var file = await _client.Files.DownloadFileAsync(entry.GetFullPath(), cancellationToken).NoWait();
 
 		if (progress is null || !file.CanSeek)
 		{

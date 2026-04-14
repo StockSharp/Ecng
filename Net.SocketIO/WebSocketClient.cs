@@ -717,6 +717,12 @@ public class WebSocketClient : Disposable, IConnection
 	{
 		_source?.Cancel();
 
+		try { _ws?.Dispose(); } catch { }
+		_ws = null;
+
+		try { _source?.Dispose(); } catch { }
+		_source = null;
+
 		base.DisposeManaged();
 	}
 

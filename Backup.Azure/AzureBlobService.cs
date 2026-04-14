@@ -103,7 +103,7 @@ public class AzureBlobService : Disposable, IBackupService
 
         var blob = _container.GetBlobClient(entry.GetFullPath());
 		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken);
-		var source = response.Value.Content;
+		await using var source = response.Value.Content;
 		var total = response.Value.ContentLength;
 
 		var buffer = new byte[_bufferSize];
