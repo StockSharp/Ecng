@@ -154,6 +154,7 @@ public class FastCsvReader : Disposable
 		_columnCurr = -1;
 
 		var inQuote = false;
+		var prevCharWasQuote = false;
 		var columnStart = 0;
 
 		while (true)
@@ -228,16 +229,23 @@ public class FastCsvReader : Disposable
 			{
 				inQuote = !inQuote;
 
-				if (inQuote && _bufferPos > 1 && _buffer[_bufferPos - 2] == '\"')
+				if (inQuote && prevCharWasQuote)
 				{
 					if (_lineLen >= _line.Length)
 						Array.Resize(ref _line, _line.Length + _buffSize);
 
 					_line[_lineLen++] = c;
+					prevCharWasQuote = false;
+				}
+				else
+				{
+					prevCharWasQuote = !inQuote;
 				}
 
 				continue;
 			}
+
+			prevCharWasQuote = false;
 
 			if (_lineLen >= _line.Length)
 				Array.Resize(ref _line, _line.Length + _buffSize);

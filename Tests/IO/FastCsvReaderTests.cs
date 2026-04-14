@@ -418,6 +418,93 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 		}
 	}
 
+	#region Buffer Boundary Quote Tests
+
+	/// <summary>
+	/// Verifies that escaped quotes ("") spanning a buffer boundary are correctly
+	/// decoded as a single literal quote character.
+	/// </summary>
+	[TestMethod]
+	public async Task DoubleQuotes_AtBufferBoundary_ShouldBePreserved()
+	{
+		// CSV: "hello""world"\n
+		// Split at position 7: buffer 1 gets "hello" (with quotes), buffer 2 gets "world"\n
+		// The "" escape spans the boundary: first " at end of buffer 1, second " at start of buffer 2
+		var csv = "\"hello\"\"world\"" + StringHelper.N;
+		var tr = new BufferSplitReader(csv, splitAt: 7);
+
+		using var reader = new FastCsvReader(tr, StringHelper.N);
+
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		var value = reader.ReadString();
+
+		value.AssertEqual("hello\"world",
+			"Escaped quote spanning buffer boundary should produce a literal quote character");
+	}
+
+	/// <summary>
+	/// Verifies that multiple escaped quotes across buffer boundaries are all preserved.
+	/// </summary>
+	[TestMethod]
+	public async Task DoubleQuotes_MultipleAtBoundary_ShouldBePreserved()
+	{
+		// CSV: "a""b";c\n — split so "" spans boundary
+		var csv = "\"a\"\"b\";c" + StringHelper.N;
+		// Positions: 0:" 1:a 2:first" 3:second" 4:b 5:" 6:; 7:c 8:\n...
+		var tr = new BufferSplitReader(csv, splitAt: 3);
+
+		using var reader = new FastCsvReader(tr, StringHelper.N);
+
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		var first = reader.ReadString();
+		var second = reader.ReadString();
+
+		first.AssertEqual("a\"b", "First column should have literal quote");
+		second.AssertEqual("c", "Second column should be unaffected");
+	}
+
+	/// <summary>
+	/// TextReader that forces a buffer boundary at the specified position.
+	/// Returns 0 from ReadBlock after delivering the first chunk, causing
+	/// FastCsvReader to refill its buffer at that exact point.
+	/// </summary>
+	private sealed class BufferSplitReader(string content, int splitAt) : TextReader
+	{
+		private int _pos;
+		private bool _hitSplit;
+
+		public override int ReadBlock(char[] buffer, int index, int count)
+		{
+			if (_pos >= content.Length)
+				return 0;
+
+			if (!_hitSplit && _pos >= splitAt)
+			{
+				_hitSplit = true;
+				return 0;
+			}
+
+			var end = _hitSplit ? content.Length : splitAt;
+			var available = end - _pos;
+			var toCopy = Math.Min(available, count);
+
+			if (toCopy <= 0)
+			{
+				if (!_hitSplit) { _hitSplit = true; return 0; }
+				return 0;
+			}
+
+			content.CopyTo(_pos, buffer, index, toCopy);
+			_pos += toCopy;
+			return toCopy;
+		}
+
+		public override Task<int> ReadBlockAsync(char[] buffer, int index, int count)
+			=> Task.FromResult(ReadBlock(buffer, index, count));
+	}
+
+	#endregion
+
 	#region Scientific Notation Tests
 
 	[TestMethod]
