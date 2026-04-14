@@ -96,7 +96,7 @@ public class WatchTests : BaseTestClass
 		var executed = false;
 		async Task action()
 		{
-			await Task.Delay(10, CancellationToken);
+			await Task.Delay(50, CancellationToken);
 			executed = true;
 		}
 
@@ -107,7 +107,7 @@ public class WatchTests : BaseTestClass
 		executed.AssertTrue("action was not executed");
 
 		var totalMls = elapsed.TotalMilliseconds;
-		(totalMls >= 10).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=10");
+		(totalMls >= 40).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=40");
 		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
