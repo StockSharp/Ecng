@@ -1097,6 +1097,61 @@ public class OrmIntegrationTests : BaseTestClass
 
 	#endregion
 
+	#region Select Projection Tests
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_Primitive_Empty(string provider)
+	{
+		SetUp(provider);
+
+		var ids = await Query<TestItem>()
+			.Where(x => x.Priority > 1000)
+			.Select(x => x.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		ids.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_Primitive_NonEmpty(string provider)
+	{
+		SetUp(provider);
+		var a = await InsertItem("Alpha", priority: 1);
+		var b = await InsertItem("Beta", priority: 2);
+
+		var ids = await Query<TestItem>()
+			.Select(x => x.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		ids.Length.AssertEqual(2);
+		ids.OrderBy(i => i).ToArray().SequenceEqual([a.Id, b.Id]).AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_String_NonEmpty(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Alpha");
+		await InsertItem("Beta");
+
+		var names = await Query<TestItem>()
+			.Select(x => x.Name)
+			.ToArrayAsyncEx(CancellationToken);
+
+		names.OrderBy(n => n).ToArray().SequenceEqual(["Alpha", "Beta"]).AssertTrue();
+	}
+
+	#endregion
+
 	#region Aggregation with Filter Tests
 
 	[TestMethod]

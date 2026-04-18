@@ -1249,10 +1249,17 @@ public class Database : Disposable, IStorage
 					var (command, input) = db.CreateCommand(query, translator);
 
 					var table = await db.ExecuteTable(command, input, _cancellationToken).NoWait();
-					var buffer = _meta is null
-						? [.. ((IEnumerable<object>)table.First().Value).Select(e => e.To<TResult>())]
-						: await db.GetOrAddCacheTable<TResult>(_meta, table, _cancellationToken).NoWait()
-					;
+					TResult[] buffer;
+					if (_meta is null)
+					{
+						buffer = table.Count == 0
+							? []
+							: [.. ((IEnumerable<object>)table[0].Value).Select(e => e.To<TResult>())];
+					}
+					else
+					{
+						buffer = await db.GetOrAddCacheTable<TResult>(_meta, table, _cancellationToken).NoWait();
+					}
 
 					_underlying = buffer.ToAsyncEnumerable().GetAsyncEnumerator(_cancellationToken);
 				}
