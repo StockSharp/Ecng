@@ -7,6 +7,8 @@ using System.Text;
 using Ecng.Data;
 using Ecng.Serialization;
 
+using Microsoft.Data.Sqlite;
+
 #region Test entities for ColumnAttribute
 
 public class ColAttrInner
@@ -1366,6 +1368,138 @@ public class ColumnAttributeTests : BaseTestClass
 		var result = dialect.GetColumnDefinition(typeof(DateTimeOffset), false, precision: 3);
 
 		result.AssertEqual(expected);
+	}
+
+	#endregion
+
+	#region SchemaMigrator.ApplyAsync batch splitting
+
+	private static async Task<SqliteConnection> OpenMemorySqlite(CancellationToken token)
+	{
+		var conn = new SqliteConnection("Data Source=:memory:");
+		await conn.OpenAsync(token);
+		return conn;
+	}
+
+	private static bool TableExists(SqliteConnection conn, string name)
+	{
+		using var cmd = conn.CreateCommand();
+		cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $name";
+		var p = cmd.CreateParameter();
+		p.ParameterName = "$name";
+		p.Value = name;
+		cmd.Parameters.Add(p);
+		return (long)cmd.ExecuteScalar() == 1;
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_EmptySql_Noop()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		await SchemaMigrator.ApplyAsync(conn, "", SqlServerDialect.Instance, CancellationToken);
+		await SchemaMigrator.ApplyAsync(conn, null, SqlServerDialect.Instance, CancellationToken);
+		await SchemaMigrator.ApplyAsync(conn, "", PostgreSqlDialect.Instance, CancellationToken);
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_NullDialect_Throws()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		await ThrowsExactlyAsync<ArgumentNullException>(
+			() => SchemaMigrator.ApplyAsync(conn, "CREATE TABLE X (id INTEGER)", null, CancellationToken));
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_NullConnection_Throws()
+	{
+		await ThrowsExactlyAsync<ArgumentNullException>(
+			() => SchemaMigrator.ApplyAsync(null, "CREATE TABLE X (id INTEGER)", SqlServerDialect.Instance, CancellationToken));
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_PostgreSqlDialect_NoSeparator_SingleBatch()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		await SchemaMigrator.ApplyAsync(conn, "CREATE TABLE T_pg (id INTEGER)", PostgreSqlDialect.Instance, CancellationToken);
+
+		TableExists(conn, "T_pg").AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_SqlServerDialect_SplitsByGo()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		var sql = string.Join("\n",
+		[
+			"CREATE TABLE T_a (id INTEGER);",
+			"GO",
+			"CREATE TABLE T_b (id INTEGER);",
+			"GO",
+			"CREATE TABLE T_c (id INTEGER);",
+		]);
+
+		await SchemaMigrator.ApplyAsync(conn, sql, SqlServerDialect.Instance, CancellationToken);
+
+		TableExists(conn, "T_a").AssertTrue();
+		TableExists(conn, "T_b").AssertTrue();
+		TableExists(conn, "T_c").AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_SqlServerDialect_GoCaseInsensitiveAndPadded()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		var sql = string.Join("\n",
+		[
+			"CREATE TABLE T_case_a (id INTEGER);",
+			"  go  ",
+			"CREATE TABLE T_case_b (id INTEGER);",
+			"\tGo\t",
+			"CREATE TABLE T_case_c (id INTEGER);",
+		]);
+
+		await SchemaMigrator.ApplyAsync(conn, sql, SqlServerDialect.Instance, CancellationToken);
+
+		TableExists(conn, "T_case_a").AssertTrue();
+		TableExists(conn, "T_case_b").AssertTrue();
+		TableExists(conn, "T_case_c").AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_SqlServerDialect_EmptyAndTrailingBatchesSkipped()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		var sql = string.Join("\n",
+		[
+			"GO",
+			"CREATE TABLE T_skip1 (id INTEGER);",
+			"GO",
+			"GO",
+			"CREATE TABLE T_skip2 (id INTEGER);",
+			"GO",
+			"",
+		]);
+
+		await SchemaMigrator.ApplyAsync(conn, sql, SqlServerDialect.Instance, CancellationToken);
+
+		TableExists(conn, "T_skip1").AssertTrue();
+		TableExists(conn, "T_skip2").AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ApplyAsync_SqlServerDialect_GoInsideIdentifier_NotSplit()
+	{
+		using var conn = await OpenMemorySqlite(CancellationToken);
+
+		await SchemaMigrator.ApplyAsync(conn, "CREATE TABLE T_GOAL (id INTEGER)", SqlServerDialect.Instance, CancellationToken);
+
+		TableExists(conn, "T_GOAL").AssertTrue();
 	}
 
 	#endregion

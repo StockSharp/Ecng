@@ -296,15 +296,60 @@ public static class SchemaMigrator
 	/// </summary>
 	/// <param name="connection">Open database connection.</param>
 	/// <param name="migrationSql">SQL to execute.</param>
+	/// <param name="dialect">Dialect whose <see cref="ISqlDialect.BatchSeparator"/> is used to split the SQL into batches before execution. If the separator is empty, the SQL is sent as a single command.</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
-	public static async Task ApplyAsync(DbConnection connection, string migrationSql, CancellationToken cancellationToken = default)
+	public static async Task ApplyAsync(DbConnection connection, string migrationSql, ISqlDialect dialect, CancellationToken cancellationToken = default)
 	{
+		if (connection is null)
+			throw new ArgumentNullException(nameof(connection));
+
+		if (dialect is null)
+			throw new ArgumentNullException(nameof(dialect));
+
 		if (migrationSql.IsEmpty())
 			return;
 
-		using var cmd = connection.CreateCommand();
-		cmd.CommandText = migrationSql;
-		await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();	}
+		var separator = dialect.BatchSeparator;
+
+		if (separator.IsEmpty())
+		{
+			using var cmd = connection.CreateCommand();
+			cmd.CommandText = migrationSql;
+			await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
+			return;
+		}
+
+		foreach (var batch in SplitByBatchSeparator(migrationSql, separator))
+		{
+			using var cmd = connection.CreateCommand();
+			cmd.CommandText = batch;
+			await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
+		}
+	}
+
+	private static IEnumerable<string> SplitByBatchSeparator(string sql, string separator)
+	{
+		var current = new StringBuilder();
+
+		foreach (var line in sql.Split('\n'))
+		{
+			if (line.Trim().EqualsIgnoreCase(separator))
+			{
+				var batch = current.ToString().Trim();
+				if (!batch.IsEmpty())
+					yield return batch;
+				current.Clear();
+			}
+			else
+			{
+				current.AppendLine(line.TrimEnd('\r'));
+			}
+		}
+
+		var tail = current.ToString().Trim();
+		if (!tail.IsEmpty())
+			yield return tail;
+	}
 
 	private static string NormalizeSqlType(string sqlType)
 	{
