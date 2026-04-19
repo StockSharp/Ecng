@@ -1372,6 +1372,125 @@ public class ColumnAttributeTests : BaseTestClass
 
 	#endregion
 
+	#region SchemaMigrator.GenerateMigrationSql validation
+
+	[TestMethod]
+	public void GenerateMigrationSql_UniqueStringWithoutMaxLength_Throws()
+	{
+		var schema = new Schema
+		{
+			TableName = "Bad",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), IsUnique = true },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[] { new SchemaDiff("Bad", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing") };
+
+		var ex = Throws<InvalidOperationException>(
+			() => SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]));
+
+		ex.Message.Contains("Bad.Name").AssertTrue(ex.Message);
+		ex.Message.Contains("MaxLength").AssertTrue(ex.Message);
+	}
+
+	[TestMethod]
+	public void GenerateMigrationSql_IndexStringWithoutMaxLength_Throws()
+	{
+		var schema = new Schema
+		{
+			TableName = "Bad2",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Slug", ClrType = typeof(string), IsIndex = true },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[] { new SchemaDiff("Bad2", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing") };
+
+		var ex = Throws<InvalidOperationException>(
+			() => SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]));
+
+		ex.Message.Contains("Bad2.Slug").AssertTrue(ex.Message);
+		ex.Message.Contains("MaxLength").AssertTrue(ex.Message);
+	}
+
+	[TestMethod]
+	public void GenerateMigrationSql_UniqueStringWithMaxLength_Ok()
+	{
+		var schema = new Schema
+		{
+			TableName = "Good",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), IsUnique = true, MaxLength = 128 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[] { new SchemaDiff("Good", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing") };
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("NVARCHAR(128)").AssertTrue(sql);
+		sql.Contains("CREATE UNIQUE INDEX").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateMigrationSql_NonIndexedStringWithoutMaxLength_Ok()
+	{
+		var schema = new Schema
+		{
+			TableName = "Plain",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Description", ClrType = typeof(string) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[] { new SchemaDiff("Plain", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing") };
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.Contains("NVARCHAR(MAX)").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateMigrationSql_UniqueStringWithoutMaxLength_ThrowsOnPostgreSql()
+	{
+		// universal rule: indexed string without MaxLength is invalid regardless of dialect.
+		var schema = new Schema
+		{
+			TableName = "Bad",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), IsUnique = true },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[] { new SchemaDiff("Bad", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing") };
+
+		Throws<InvalidOperationException>(
+			() => SchemaMigrator.GenerateMigrationSql(PostgreSqlDialect.Instance, diffs, [schema]));
+	}
+
+	#endregion
+
 	#region SchemaMigrator.ApplyAsync batch splitting
 
 	private static async Task<SqliteConnection> OpenMemorySqlite(CancellationToken token)

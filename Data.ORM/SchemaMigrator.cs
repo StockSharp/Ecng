@@ -158,6 +158,16 @@ public static class SchemaMigrator
 		IEnumerable<Schema> schemas)
 	{
 		var schemaMap = schemas.ToDictionary(s => s.TableName, StringComparer.OrdinalIgnoreCase);
+
+		foreach (var schema in schemaMap.Values)
+		{
+			foreach (var col in schema.Columns)
+			{
+				if (col.ClrType == typeof(string) && (col.IsUnique || col.IsIndex) && col.MaxLength <= 0)
+					throw new InvalidOperationException($"Indexed string column '{schema.TableName}.{col.Name}' requires [MaxLength].");
+			}
+		}
+
 		var sb = new StringBuilder();
 
 		foreach (var diff in diffs)
