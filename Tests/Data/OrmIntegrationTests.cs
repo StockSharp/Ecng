@@ -1150,6 +1150,83 @@ public class OrmIntegrationTests : BaseTestClass
 		names.OrderBy(n => n).ToArray().SequenceEqual(["Alpha", "Beta"]).AssertTrue();
 	}
 
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_AnonymousType_TwoMembers(string provider)
+	{
+		SetUp(provider);
+		var a = await InsertItem("Alpha", priority: 1);
+		var b = await InsertItem("Beta", priority: 2);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new { x.Id, x.Name })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+		rows.OrderBy(r => r.Id).Select(r => (r.Id, r.Name)).ToArray()
+			.SequenceEqual([(a.Id, "Alpha"), (b.Id, "Beta")]).AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_AnonymousType_WithAlias(string provider)
+	{
+		SetUp(provider);
+		var a = await InsertItem("Alpha", priority: 7);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new { ItemId = x.Id, Label = x.Name, Prio = x.Priority })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].ItemId.AssertEqual(a.Id);
+		rows[0].Label.AssertEqual("Alpha");
+		rows[0].Prio.AssertEqual(7);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_AnonymousType_WithNavigationId(string provider)
+	{
+		SetUp(provider);
+		var person = await InsertPerson("Alice");
+		await InsertTask("T1", person, priority: 3);
+		await InsertTask("T2", person, priority: 7);
+
+		var rows = await Query<TestTask>()
+			.Select(t => new { t.Id, PersonId = t.Person.Id })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+		rows.All(r => r.PersonId == person.Id).AssertTrue();
+	}
+
+	public record SelectItemDto(long Id, string Name);
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_PositionalRecord(string provider)
+	{
+		SetUp(provider);
+		var a = await InsertItem("Alpha", priority: 1);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new SelectItemDto(x.Id, x.Name))
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].Id.AssertEqual(a.Id);
+		rows[0].Name.AssertEqual("Alpha");
+	}
+
 	#endregion
 
 	#region Aggregation with Filter Tests

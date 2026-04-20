@@ -1224,7 +1224,12 @@ public class Database : Disposable, IStorage
 		{
 			private readonly SelectAsyncEnumerable<TSource, TResult> _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			private readonly CancellationToken _cancellationToken = cancellationToken;
-			private readonly Schema _meta = typeof(TResult).IsSerializablePrimitive() ? null : SchemaRegistry.Get(typeof(TResult));
+			private static bool UsesCtorProjection(Type t)
+				=> !t.IsSerializablePrimitive() && !typeof(IDbPersistable).IsAssignableFrom(t);
+
+			private readonly Schema _meta = typeof(TResult).IsSerializablePrimitive() || UsesCtorProjection(typeof(TResult))
+				? null
+				: SchemaRegistry.Get(typeof(TResult));
 			private IAsyncEnumerator<TResult> _underlying;
 
 			TResult IAsyncEnumerator<TResult>.Current => _underlying.Current;
@@ -1252,9 +1257,16 @@ public class Database : Disposable, IStorage
 					TResult[] buffer;
 					if (_meta is null)
 					{
-						buffer = table.Count == 0
-							? []
-							: [.. ((IEnumerable<object>)table[0].Value).Select(e => e.To<TResult>())];
+						if (typeof(TResult).IsSerializablePrimitive())
+						{
+							buffer = table.Count == 0
+								? []
+								: [.. ((IEnumerable<object>)table[0].Value).Select(e => e.To<TResult>())];
+						}
+						else
+						{
+							buffer = MaterializeByCtor(table);
+						}
 					}
 					else
 					{
@@ -1265,6 +1277,64 @@ public class Database : Disposable, IStorage
 				}
 
 				return await _underlying.MoveNextAsync().NoWait();			}
+
+			private static TResult[] MaterializeByCtor(SerializationItemCollection table)
+			{
+				if (table.IsEmpty())
+					return [];
+
+				var rowCount = ((ICollection)table[0].Value).Count;
+
+				if (rowCount == 0)
+					return [];
+
+				var ctors = typeof(TResult).GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+
+				if (ctors.Length == 0)
+					throw new NotSupportedException($"Type {typeof(TResult)} has no public constructor for ctor-based materialization.");
+
+				var ctor = ctors
+					.OrderByDescending(c => c.GetParameters().Length)
+					.FirstOrDefault(c => c.GetParameters().All(p => table.Any(col => col.Name.EqualsIgnoreCase(p.Name))))
+					?? throw new NotSupportedException($"No constructor of {typeof(TResult)} matches the projected columns.");
+
+				var parameters = ctor.GetParameters();
+				var colIndices = new int[parameters.Length];
+
+				for (var j = 0; j < parameters.Length; j++)
+				{
+					var paramName = parameters[j].Name;
+					var idx = -1;
+
+					for (var k = 0; k < table.Count; k++)
+					{
+						if (table[k].Name.EqualsIgnoreCase(paramName))
+						{
+							idx = k;
+							break;
+						}
+					}
+
+					colIndices[j] = idx;
+				}
+
+				var result = new TResult[rowCount];
+
+				for (var r = 0; r < rowCount; r++)
+				{
+					var args = new object[parameters.Length];
+
+					for (var j = 0; j < parameters.Length; j++)
+					{
+						var raw = ((IList)table[colIndices[j]].Value)[r];
+						args[j] = raw.To(parameters[j].ParameterType);
+					}
+
+					result[r] = (TResult)ctor.Invoke(args);
+				}
+
+				return result;
+			}
 		}
 
 		private readonly Database _database = database ?? throw new ArgumentNullException(nameof(database));

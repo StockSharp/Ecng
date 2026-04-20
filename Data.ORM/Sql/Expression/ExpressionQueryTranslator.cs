@@ -760,10 +760,26 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		var selCols = new ContextSelectColumns();
 
-		var i = 0;
+		var argCount = n.Arguments.Count;
 
-		foreach (var member in n.Members)
+		for (var i = 0; i < argCount; i++)
 		{
+			MemberInfo member;
+
+			if (n.Members is not null)
+			{
+				member = n.Members[i];
+			}
+			else
+			{
+				// Positional constructor (e.g. record Dto(long Id, string Name)) — the
+				// compiler does not populate NewExpression.Members. Derive the member
+				// from the ctor parameter name by matching a property on the result type.
+				var paramName = n.Constructor.GetParameters()[i].Name;
+				member = n.Type.GetProperty(paramName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
+					?? throw new NotSupportedException($"Cannot map ctor parameter '{paramName}' to a property of {n.Type}.");
+			}
+
 			if (!isSelect && i > 0)
 				Curr.Comma();
 
@@ -828,8 +844,6 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 					Context.Curr = curr;
 				}
 			}
-
-			i++;
 		}
 
 		Context.SelectColumns.Add(selCols);
