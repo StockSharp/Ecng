@@ -588,6 +588,62 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 			$"Expected FK column [Item] in ORDER BY, got: {sql}");
 	}
 
+	/// <summary>
+	/// Verifies that OrderBy with Expression&lt;Func&lt;T, object&gt;&gt; over a value-type
+	/// member (compiler emits Convert(member, object)) still resolves to the column.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_ValueTypeConvertToObject_ShouldUseColumn()
+	{
+		var items = CreateQueryable<TestItem>();
+		Expression<Func<TestItem, object>> key = x => x.Priority;
+
+		var query = items.OrderBy(key);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue($"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Priority]").AssertTrue($"Expected [Priority] in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that OrderByDescending with Expression&lt;Func&lt;T, object&gt;&gt; over a
+	/// reference-type member works (no Convert emitted, must not regress).
+	/// </summary>
+	[TestMethod]
+	public void OrderByDescending_ReferenceTypeAsObject_ShouldUseColumn()
+	{
+		var items = CreateQueryable<TestItem>();
+		Expression<Func<TestItem, object>> key = x => x.Name;
+
+		var query = items.OrderByDescending(key);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue($"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Name]").AssertTrue($"Expected [Name] in ORDER BY, got: {sql}");
+		sql.ContainsIgnoreCase("DESC").AssertTrue($"Expected DESC in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that OrderBy with Expression&lt;Func&lt;T, object&gt;&gt; over a navigation
+	/// property's Id (Convert wraps the nav.Id access) still emits the FK column.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_NavigationPropertyIdConvertToObject_ShouldUseFkColumn()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		Expression<Func<TestTask, object>> key = t => t.Person.Id;
+
+		var query = tasks.OrderBy(key);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue($"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[Person]").AssertTrue($"Expected FK column [Person] in ORDER BY, got: {sql}");
+	}
+
 	#endregion
 
 	#region String Parameterization Tests

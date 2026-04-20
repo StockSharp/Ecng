@@ -1239,8 +1239,13 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		try
 		{
 			var lambdaExpression = expression.Arguments[1].GetOperand();
+			var lambdaBody = lambdaExpression.Body;
 
-			if (lambdaExpression.Body is MemberExpression body)
+			// Expression<Func<T, object>> over a value-type member emits Convert(member, object).
+			if (lambdaBody is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } conv)
+				lambdaBody = conv.Operand;
+
+			if (lambdaBody is MemberExpression body)
 			{
 				// When ordering by navigation property's Id (e.g., t.Person.Id),
 				// use the FK property (Person) instead of the leaf member (Id).
@@ -1255,7 +1260,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 					Context.OrderBy.Insert(0, (body.Member, asc));
 				}
 			}
-			else if (lambdaExpression.Body is MethodCallExpression call)
+			else if (lambdaBody is MethodCallExpression call)
 			{
 				if (!call.Method.TryGetVisitor(out var visitor))
 					throw new NotSupportedException();
