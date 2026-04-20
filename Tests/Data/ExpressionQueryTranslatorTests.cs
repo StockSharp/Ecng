@@ -691,6 +691,82 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region Anonymous-type Select Projection Tests
+
+	/// <summary>
+	/// Verifies that .Select(x =&gt; new { x.A, x.B }) over a table emits both columns
+	/// in SELECT list.
+	/// </summary>
+	[TestMethod]
+	public void SelectAnonymous_TwoMembers_ShouldEmitBothColumns()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { x.Id, x.Name });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[Id]").AssertTrue($"Expected [Id] in SELECT, got: {sql}");
+		sql.Contains("[Name]").AssertTrue($"Expected [Name] in SELECT, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that .Select(x =&gt; new { Alias = x.Member }) emits the member
+	/// with AS alias matching the anonymous property name.
+	/// </summary>
+	[TestMethod]
+	public void SelectAnonymous_WithAlias_ShouldEmitAsAlias()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { ItemId = x.Id, Label = x.Name });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[Id]").AssertTrue($"Expected underlying [Id] in SELECT, got: {sql}");
+		sql.Contains("[Name]").AssertTrue($"Expected underlying [Name] in SELECT, got: {sql}");
+		sql.ContainsIgnoreCase("AS [ItemId]").AssertTrue($"Expected 'AS [ItemId]' alias, got: {sql}");
+		sql.ContainsIgnoreCase("AS [Label]").AssertTrue($"Expected 'AS [Label]' alias, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that anonymous-type Select composes with Where.
+	/// </summary>
+	[TestMethod]
+	public void SelectAnonymous_AfterWhere_ShouldEmitProjectionAndPredicate()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items
+			.Where(x => x.Priority > 5)
+			.Select(x => new { x.Id, x.Priority });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[Id]").AssertTrue($"Expected [Id] in SELECT, got: {sql}");
+		sql.Contains("[Priority]").AssertTrue($"Expected [Priority] in SELECT, got: {sql}");
+		sql.ContainsIgnoreCase("WHERE").AssertTrue($"Expected WHERE clause, got: {sql}");
+	}
+
+	/// <summary>
+	/// Verifies that anonymous projection mixing value-type and reference-type members works.
+	/// </summary>
+	[TestMethod]
+	public void SelectAnonymous_MixedValueAndReferenceTypes_ShouldEmitBothColumns()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { x.IsActive, x.Name, x.Price });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[IsActive]").AssertTrue($"Expected [IsActive] in SELECT, got: {sql}");
+		sql.Contains("[Name]").AssertTrue($"Expected [Name] in SELECT, got: {sql}");
+		sql.Contains("[Price]").AssertTrue($"Expected [Price] in SELECT, got: {sql}");
+	}
+
+	#endregion
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable

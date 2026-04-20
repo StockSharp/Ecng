@@ -807,10 +807,22 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				{
 					if (arg is MemberExpression me2)
 					{
-						var prev = Context.SelectColumns.Last();
-						prev.Map.Add(member, me2.Member);
+						if (Context.SelectColumns.Count > 0)
+						{
+							var prev = Context.SelectColumns.Last();
+							prev.Map.Add(member, me2.Member);
 
-						selCols.Add(me2.Member, (Context.Curr, arg));
+							selCols.Add(me2.Member, (Context.Curr, arg));
+						}
+						else
+						{
+							// Top-level anonymous projection over a table: no previous select
+							// layer to attach Map to. Keep the rename map on the current
+							// selCols and use the anonymous member as the key so rendering
+							// emits the AS alias correctly.
+							selCols.Map.Add(member, me2.Member);
+							selCols.Add(member, (Context.Curr, arg));
+						}
 					}
 
 					Context.Curr = curr;
