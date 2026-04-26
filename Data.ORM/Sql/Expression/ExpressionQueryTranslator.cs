@@ -1163,7 +1163,12 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 							if (flat is not null)
 								Curr.Column(flat.Value.alias, flat.Value.column);
 							else
-								Curr.Column(me.Member.Name, m.Member.Name);
+							{
+								// RelationSingle navigation traversal to a non-Id column (e.g., x.Person.Name).
+								// Register an implicit INNER JOIN so the alias used here resolves at SQL level.
+								var navAlias = TryEnsureImplicitJoin(me) ?? me.Member.Name;
+								Curr.Column(navAlias, m.Member.Name);
+							}
 						}
 					}
 				}
@@ -1254,6 +1259,51 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	/// Registers an implicit INNER JOIN for a RelationSingle navigation member
+	/// (e.g., x.Person → join target table on PK = parent FK). Idempotent: a join
+	/// for the same alias is registered only once. Returns the alias of the joined
+	/// table, or null if the member is not a RelationSingle to a registered entity.
+	/// </summary>
+	private string TryEnsureImplicitJoin(MemberExpression nav)
+	{
+		if (nav?.Member.GetAttribute<RelationSingleAttribute>() is null)
+			return null;
+
+		var navType = nav.Member.GetMemberType();
+		if (!SchemaRegistry.TryGet(navType, out var navSchema) || navSchema.Identity is null)
+			return null;
+
+		var alias = nav.Member.Name;
+
+		if (Context.JoinParts.Any(j => j.tableAlias.EqualsIgnoreCase(alias)))
+			return alias;
+
+		// Resolve the alias of the table that owns the FK column. For chained
+		// navigations (a.B.C.X), recursively register the upstream join first.
+		string parentAlias;
+		if (nav.Expression is ParameterExpression)
+			parentAlias = Context.TableAlias;
+		else if (nav.Expression is MemberExpression parentMe)
+			parentAlias = TryEnsureImplicitJoin(parentMe) ?? Context.TableAlias;
+		else
+			parentAlias = Context.TableAlias;
+
+		var joinPart = new Query();
+		joinPart
+			.InnerJoin()
+			.Table(navSchema.Name, alias)
+			.On()
+			.Column(alias, navSchema.Identity.Name)
+			.Equal()
+			.Column(parentAlias, nav.Member.Name)
+			.NewLine();
+
+		Context.JoinParts.Add((alias, joinPart));
+
+		return alias;
 	}
 
 	private void ParseOrderByExpression(MethodCallExpression expression, bool asc)

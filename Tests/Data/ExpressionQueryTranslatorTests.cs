@@ -767,6 +767,58 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region Where + Navigation Property Traversal Tests
+
+	/// <summary>
+	/// Verifies that a Where predicate accessing a non-Id column on a RelationSingle
+	/// navigation property (t.Person.Name) emits an INNER JOIN to the related table
+	/// so the multi-part identifier resolves at SQL execution time.
+	/// </summary>
+	[TestMethod]
+	public void Where_NavigationProperty_NonIdColumn_EmitsJoin()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.Where(t => t.Person.Name.Like("%Alice%"));
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("join").AssertTrue(
+			$"Expected JOIN to {nameof(TestPerson)} for navigation predicate, got: {sql}");
+		sql.Contains("[Ecng_TestPerson]").AssertTrue(
+			$"Expected join target [Ecng_TestPerson], got: {sql}");
+		sql.ContainsIgnoreCase("like").AssertTrue(
+			$"Expected LIKE in WHERE, got: {sql}");
+	}
+
+	/// <summary>
+	/// Reproduction of bug from Data.ORM_OR_Join_Bug.md: a navigation predicate
+	/// combined via OR with Contains over an FK column must still emit the JOIN.
+	/// </summary>
+	[TestMethod]
+	public void Where_NavigationProperty_OrContainsFk_EmitsJoin()
+	{
+		EnsureFkEntitiesRegistered();
+		var tasks = CreateQueryable<TestTask>();
+		var personIds = new long[] { 1, 2, 3 };
+
+		var query = tasks.Where(t => t.Person.Name.Like("%Alice%") || personIds.Contains(t.Person.Id));
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("join").AssertTrue(
+			$"Expected JOIN to {nameof(TestPerson)} for OR'ed navigation predicate, got: {sql}");
+		sql.Contains("[Ecng_TestPerson]").AssertTrue(
+			$"Expected join target [Ecng_TestPerson], got: {sql}");
+		sql.ContainsIgnoreCase("like").AssertTrue(
+			$"Expected LIKE in WHERE, got: {sql}");
+		sql.ContainsIgnoreCase(" or ").AssertTrue(
+			$"Expected OR in WHERE, got: {sql}");
+	}
+
+	#endregion
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable
