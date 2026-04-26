@@ -158,8 +158,9 @@ public class Query
 	{
 		return AddAction((dialect, builder) =>
 		{
+			var quotedAlias = dialect.QuoteIdentifier(tableAlias);
 			foreach (var column in columns)
-				builder.AppendFormat("{0}.{1}, ", tableAlias, dialect.QuoteIdentifier(column));
+				builder.AppendFormat("{0}.{1}, ", quotedAlias, dialect.QuoteIdentifier(column));
 
 			if (columns.Length > 0)
 				builder.RemoveLast(2);
@@ -188,7 +189,7 @@ public class Query
 		{
 			builder.Append(dialect.QuoteIdentifier(tableName));
 			if (!alias.IsEmpty())
-				builder.Append(' ').Append(alias);
+				builder.Append(' ').Append(dialect.QuoteIdentifier(alias));
 		});
 
 	/// <summary>
@@ -764,10 +765,12 @@ public class Query
 
 		builder.AppendLine("set");
 
+		var quotedAlias = dialect.QuoteIdentifier(tableAlias);
+
 		foreach (var part in parts)
 		{
 			builder
-					.AppendFormat("\t{0}.{1} = {2},", tableAlias, dialect.QuoteIdentifier(part.Column), part.ValueName)
+					.AppendFormat("\t{0}.{1} = {2},", quotedAlias, dialect.QuoteIdentifier(part.Column), part.ValueName)
 					.AppendLine();
 		}
 
@@ -788,9 +791,11 @@ public class Query
 	{
 		return AddAction((dialect, builder) =>
 		{
+			var quotedAlias = dialect.QuoteIdentifier(tableAlias);
+
 			for (var i = 0; i < columns.Length; i++)
 			{
-				Equals($"{tableAlias}.{dialect.QuoteIdentifier(columns[i])}", dialect.ParameterPrefix + columns[i], builder);
+				Equals($"{quotedAlias}.{dialect.QuoteIdentifier(columns[i])}", dialect.ParameterPrefix + columns[i], builder);
 
 				if (i < columns.Length - 1)
 					builder.AppendFormat(" and ");

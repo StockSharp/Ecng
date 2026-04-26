@@ -238,25 +238,25 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 		if (whereColumns.Length == 0)
 			throw new InvalidOperationException($"Cannot generate UPDATE for '{tableName}': no key columns specified for WHERE clause.");
 
-		const string alias = "e";
+		var quotedAlias = QuoteIdentifier("e");
 
-		sb.AppendLine($"update {QuoteIdentifier(alias)}");
+		sb.AppendLine($"update {quotedAlias}");
 		sb.AppendLine("set");
 
 		for (var i = 0; i < setColumns.Length; i++)
 		{
 			var comma = i < setColumns.Length - 1 ? "," : "";
-			sb.AppendLine($"\t{alias}.{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
+			sb.AppendLine($"\t{quotedAlias}.{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
 		}
 
-		sb.AppendLine($"from {QuoteIdentifier(tableName)} {alias}");
+		sb.AppendLine($"from {QuoteIdentifier(tableName)} {quotedAlias}");
 		sb.AppendLine("where");
 
 		for (var i = 0; i < whereColumns.Length; i++)
 		{
 			if (i > 0)
 				sb.Append(" and ");
-			sb.Append($"{alias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+			sb.Append($"{quotedAlias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
 		}
 	}
 
@@ -266,11 +266,11 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 		if (whereColumns.Length == 0)
 			throw new InvalidOperationException($"Cannot generate DELETE for '{tableName}': no key columns specified for WHERE clause.");
 
-		const string alias = "e";
+		var quotedAlias = QuoteIdentifier("e");
 
-		sb.Append($"delete {alias}");
+		sb.Append($"delete {quotedAlias}");
 		sb.AppendLine();
-		sb.Append($"from {QuoteIdentifier(tableName)} {alias}");
+		sb.Append($"from {QuoteIdentifier(tableName)} {quotedAlias}");
 		sb.AppendLine();
 		sb.AppendLine("where");
 
@@ -278,7 +278,7 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 		{
 			if (i > 0)
 				sb.Append(" and ");
-			sb.Append($"{alias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
+			sb.Append($"{quotedAlias}.{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
 		}
 	}
 

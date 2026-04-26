@@ -145,7 +145,7 @@ public class QueryProviderTests : BaseTestClass
 		sql.Contains("from").AssertTrue($"Expected 'from', got: {sql}");
 		sql.Contains("[Settings]").AssertTrue($"Expected '[Settings]', got: {sql}");
 		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
-		sql.Contains("e.[Id] = @Id").AssertTrue($"Expected 'e.[Id] = @Id', got: {sql}");
+		sql.Contains("[e].[Id] = @Id").AssertTrue($"Expected '[e].[Id] = @Id', got: {sql}");
 	}
 
 	[TestMethod]
@@ -163,8 +163,8 @@ public class QueryProviderTests : BaseTestClass
 		var query = _provider.Create(schema, SqlCommandTypes.ReadBy, [col1, col2], schema.AllColumns);
 		var sql = Norm(query.Render(_dialect));
 
-		sql.Contains("e.[TenantId] = @TenantId").AssertTrue($"Expected TenantId equality, got: {sql}");
-		sql.Contains("e.[UserId] = @UserId").AssertTrue($"Expected UserId equality, got: {sql}");
+		sql.Contains("[e].[TenantId] = @TenantId").AssertTrue($"Expected TenantId equality, got: {sql}");
+		sql.Contains("[e].[UserId] = @UserId").AssertTrue($"Expected UserId equality, got: {sql}");
 		sql.Contains(" and ").AssertTrue($"Expected ' and ' join, got: {sql}");
 	}
 
@@ -257,7 +257,7 @@ public class QueryProviderTests : BaseTestClass
 		sql.Contains("from").AssertTrue($"Expected 'from', got: {sql}");
 		sql.Contains("[Products]").AssertTrue($"Expected '[Products]', got: {sql}");
 		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
-		sql.Contains("e.[Id] = @Id").AssertTrue($"Expected 'e.[Id] = @Id', got: {sql}");
+		sql.Contains("[e].[Id] = @Id").AssertTrue($"Expected '[e].[Id] = @Id', got: {sql}");
 
 		// SET clause should contain column assignments
 		sql.Contains("[Name] = @Name").AssertTrue($"Expected '[Name] = @Name', got: {sql}");
@@ -341,7 +341,7 @@ public class QueryProviderTests : BaseTestClass
 		sql.Contains("from").AssertTrue($"Expected 'from', got: {sql}");
 		sql.Contains("[Logs]").AssertTrue($"Expected '[Logs]', got: {sql}");
 		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
-		sql.Contains("e.[Id] = @Id").AssertTrue($"Expected 'e.[Id] = @Id', got: {sql}");
+		sql.Contains("[e].[Id] = @Id").AssertTrue($"Expected '[e].[Id] = @Id', got: {sql}");
 	}
 
 	[TestMethod]
@@ -360,8 +360,8 @@ public class QueryProviderTests : BaseTestClass
 		var sql = Norm(query.Render(_dialect));
 
 		sql.Contains("delete").AssertTrue($"Expected 'delete', got: {sql}");
-		sql.Contains("e.[OrderId] = @OrderId").AssertTrue($"Expected OrderId equality, got: {sql}");
-		sql.Contains("e.[ProductId] = @ProductId").AssertTrue($"Expected ProductId equality, got: {sql}");
+		sql.Contains("[e].[OrderId] = @OrderId").AssertTrue($"Expected OrderId equality, got: {sql}");
+		sql.Contains("[e].[ProductId] = @ProductId").AssertTrue($"Expected ProductId equality, got: {sql}");
 		sql.Contains(" and ").AssertTrue($"Expected ' and ' join, got: {sql}");
 	}
 
@@ -474,7 +474,7 @@ public class QueryProviderTests : BaseTestClass
 	public void Create_WithIdentityKey_ReadOnlyNonIdentity_SelectHasWhereCondition()
 	{
 		// After fix: Database.CreateAsync passes [identity] as keyColumns
-		// so the post-insert SELECT has WHERE e.[Id] = @Id
+		// so the post-insert SELECT has WHERE [e].[Id] = @Id
 		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
 		var columns = new SchemaColumn[]
 		{
@@ -492,8 +492,8 @@ public class QueryProviderTests : BaseTestClass
 		selectIdx.AssertNotEqual(-1, $"Expected a SELECT query in batch, got: {sql}");
 
 		var selectPart = sql[selectIdx..];
-		selectPart.Contains("e.[Id] = @Id").AssertTrue(
-			$"Post-insert SELECT must have WHERE e.[Id] = @Id, got: {selectPart}");
+		selectPart.Contains("[e].[Id] = @Id").AssertTrue(
+			$"Post-insert SELECT must have WHERE [e].[Id] = @Id, got: {selectPart}");
 	}
 
 	[TestMethod]
@@ -605,7 +605,7 @@ public class QueryProviderTests : BaseTestClass
 		sql.Contains("[e].*").AssertTrue($"Expected '[e].*', got: {sql}");
 		sql.Contains("[Ecng_TestItem]").AssertTrue($"Expected '[Ecng_TestItem]', got: {sql}");
 		sql.Contains("where").AssertTrue($"Expected 'where', got: {sql}");
-		sql.Contains("e.[Id] = @Id").AssertTrue($"Expected 'e.[Id] = @Id', got: {sql}");
+		sql.Contains("[e].[Id] = @Id").AssertTrue($"Expected '[e].[Id] = @Id', got: {sql}");
 	}
 
 	[TestMethod]

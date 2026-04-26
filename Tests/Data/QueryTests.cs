@@ -35,7 +35,7 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("select [t].*");
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("from [Users] [t]");
 	}
 
 	[TestMethod]
@@ -52,7 +52,7 @@ public class QueryTests : BaseTestClass
 			.Render(dialect);
 
 		sql.AssertContains($"select {Q(dialectName, "t")}.*");
-		sql.AssertContains($"from {Q(dialectName, "Users")} t");
+		sql.AssertContains($"from {Q(dialectName, "Users")} {Q(dialectName, "t")}");
 	}
 
 	[TestMethod]
@@ -64,8 +64,8 @@ public class QueryTests : BaseTestClass
 			.From().Table("Users", "t")
 			.Render(_ss);
 
-		sql.AssertContains("select t.[Id], t.[Name], t.[Email]");
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("select [t].[Id], [t].[Name], [t].[Email]");
+		sql.AssertContains("from [Users] [t]");
 	}
 
 	[TestMethod]
@@ -92,6 +92,33 @@ public class QueryTests : BaseTestClass
 		sql.AssertContains("select top 10 [t].*");
 	}
 
+	/// <summary>
+	/// Repro for downstream Broker bug: when an entity has [RelationSingle] User,
+	/// ExpressionQueryTranslator emits an INNER JOIN with alias = nav member name
+	/// ("User"). Query.Table(name, alias) currently appends the alias *unquoted*,
+	/// so PostgreSQL receives <c>"User" User</c> and fails with
+	/// <c>42601: syntax error at or near "User"</c>. Aliases must be quoted just
+	/// like table names so reserved words don't break the parser.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void From_Table_AliasMatchingReservedWord_QuotesAlias(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var sql = new Query()
+			.Select().All("User")
+			.NewLine()
+			.From().Table("User", "User")
+			.Render(dialect);
+
+		var quotedTable = Q(dialectName, "User");
+		var quotedAlias = Q(dialectName, "User");
+
+		sql.AssertContains($"from {quotedTable} {quotedAlias}");
+	}
+
 	#endregion
 
 	#region SELECT with WHERE
@@ -107,7 +134,7 @@ public class QueryTests : BaseTestClass
 			.Where().Raw(" ").Equals("t", "Id")
 			.Render(_ss);
 
-		sql.AssertContains("where t.[Id] = @Id");
+		sql.AssertContains("where [t].[Id] = @Id");
 	}
 
 	[TestMethod]
@@ -121,7 +148,7 @@ public class QueryTests : BaseTestClass
 			.Where().Raw(" ").Equals("t", "Id", "Status")
 			.Render(_ss);
 
-		sql.AssertContains("where t.[Id] = @Id and t.[Status] = @Status");
+		sql.AssertContains("where [t].[Id] = @Id and [t].[Status] = @Status");
 	}
 
 	[TestMethod]
@@ -225,9 +252,9 @@ public class QueryTests : BaseTestClass
 
 		sql.AssertContains("update [t]");
 		sql.AssertContains("set");
-		sql.AssertContains("t.[Name] = @Name");
-		sql.AssertContains("t.[Value] = @Value");
-		sql.AssertContains("where t.[Id] = @Id");
+		sql.AssertContains("[t].[Name] = @Name");
+		sql.AssertContains("[t].[Value] = @Value");
+		sql.AssertContains("where [t].[Id] = @Id");
 	}
 
 	/// <summary>
@@ -249,10 +276,10 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		// Verify each column parameter is fully present, not truncated
-		sql.AssertContains("t.[NullableValue] = @NullableValue", "NullableValue parameter must not be truncated");
-		sql.AssertContains("t.[LongColumnNameHere] = @LongColumnNameHere", "LongColumnNameHere parameter must not be truncated");
-		sql.AssertContains("t.[X] = @X", "Short column X must not be truncated");
-		sql.AssertContains("t.[Id] = @Id", "Id column must not be truncated");
+		sql.AssertContains("[t].[NullableValue] = @NullableValue", "NullableValue parameter must not be truncated");
+		sql.AssertContains("[t].[LongColumnNameHere] = @LongColumnNameHere", "LongColumnNameHere parameter must not be truncated");
+		sql.AssertContains("[t].[X] = @X", "Short column X must not be truncated");
+		sql.AssertContains("[t].[Id] = @Id", "Id column must not be truncated");
 	}
 
 	/// <summary>
@@ -272,7 +299,7 @@ public class QueryTests : BaseTestClass
 		// After the last SET assignment there should be no comma before the next keyword
 		// The rendered output should transition from "@Beta" to newline and "from"
 		sql.AssertContains("@Beta");
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("from [Users] [t]");
 
 		// Verify no ",from" or ", from" which would indicate trailing comma not removed
 		sql.Contains(",from").AssertFalse("Should not have trailing comma before FROM");
@@ -291,8 +318,8 @@ public class QueryTests : BaseTestClass
 			.From().Table("Users", "t")
 			.Render(_ss);
 
-		sql.AssertContains("t.[Name] = @Name");
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("[t].[Name] = @Name");
+		sql.AssertContains("from [Users] [t]");
 	}
 
 	/// <summary>
@@ -310,7 +337,7 @@ public class QueryTests : BaseTestClass
 
 		foreach (var col in columns)
 		{
-			sql.AssertContains($"t.[{col}] = @{col}", $"Column '{col}' must appear fully in SET clause");
+			sql.AssertContains($"[t].[{col}] = @{col}", $"Column '{col}' must appear fully in SET clause");
 		}
 	}
 
@@ -330,8 +357,8 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("delete t");
-		sql.AssertContains("from [Users] t");
-		sql.AssertContains("where t.[Id] = @Id");
+		sql.AssertContains("from [Users] [t]");
+		sql.AssertContains("where [t].[Id] = @Id");
 	}
 
 	[TestMethod]
@@ -350,8 +377,8 @@ public class QueryTests : BaseTestClass
 			.Render(dialect);
 
 		sql.AssertContains("delete t");
-		sql.AssertContains($"from {Q(dialectName, "Users")} t");
-		sql.AssertContains($"where t.{Q(dialectName, "Id")} = @Id");
+		sql.AssertContains($"from {Q(dialectName, "Users")} {Q(dialectName, "t")}");
+		sql.AssertContains($"where {Q(dialectName, "t")}.{Q(dialectName, "Id")} = @Id");
 	}
 
 	#endregion
@@ -371,8 +398,8 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("select [t].*");
-		sql.AssertContains("from [Orders] t");
-		sql.AssertContains("inner join [Users] u on [t].[UserId] = [u].[Id]");
+		sql.AssertContains("from [Orders] [t]");
+		sql.AssertContains("inner join [Users] [u] on [t].[UserId] = [u].[Id]");
 	}
 
 	[TestMethod]
@@ -387,7 +414,7 @@ public class QueryTests : BaseTestClass
 			.On().Column("o", "UserId").Equal().Column("u", "Id")
 			.Render(_ss);
 
-		sql.AssertContains("left join [Users] u on [o].[UserId] = [u].[Id]");
+		sql.AssertContains("left join [Users] [u] on [o].[UserId] = [u].[Id]");
 	}
 
 	#endregion
@@ -404,7 +431,7 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("select count(*)");
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("from [Users] [t]");
 	}
 
 	[TestMethod]
@@ -609,9 +636,9 @@ public class QueryTests : BaseTestClass
 			.From().Table("Admins", "t")
 			.Render(_ss);
 
-		sql.AssertContains("from [Users] t");
+		sql.AssertContains("from [Users] [t]");
 		sql.AssertContains("union");
-		sql.AssertContains("from [Admins] t");
+		sql.AssertContains("from [Admins] [t]");
 	}
 
 	[TestMethod]
@@ -630,8 +657,8 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("union all");
-		sql.AssertContains("from [Users] t");
-		sql.AssertContains("from [Admins] t");
+		sql.AssertContains("from [Users] [t]");
+		sql.AssertContains("from [Admins] [t]");
 	}
 
 	#endregion
@@ -775,8 +802,8 @@ public class QueryTests : BaseTestClass
 
 		var sql = batch.Render(_ss);
 
-		sql.AssertContains("from [Users] t");
-		sql.AssertContains("from [Orders] t");
+		sql.AssertContains("from [Users] [t]");
+		sql.AssertContains("from [Orders] [t]");
 
 		// Both queries should be present and separated
 		var usersIdx = sql.IndexOf("[Users]", StringComparison.Ordinal);
@@ -805,7 +832,7 @@ public class QueryTests : BaseTestClass
 
 		var sql = batch.Render(_ss);
 
-		sql.AssertContains("delete from [TempData] t");
+		sql.AssertContains("delete from [TempData] [t]");
 	}
 
 	#endregion
@@ -924,7 +951,7 @@ public class QueryTests : BaseTestClass
 			.Render(_ss);
 
 		sql.AssertContains("exists(select *");
-		sql.AssertContains("from [Orders] o");
+		sql.AssertContains("from [Orders] [o]");
 		sql.AssertContains("where [o].[UserId] = [t].[Id])");
 	}
 

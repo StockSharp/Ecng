@@ -228,7 +228,7 @@ class Context
 		else
 		{
 			FromPart.CopyTo(query);
-			query.As().Raw(TableAlias);
+			query.As().Column(TableAlias);
 		}
 
 		query.NewLine();
