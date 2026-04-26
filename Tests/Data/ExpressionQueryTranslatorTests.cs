@@ -17,6 +17,7 @@ using Ecng.Serialization;
 public class ExpressionQueryTranslatorTests : BaseTestClass
 {
 	private static readonly ISqlDialect _dialect = SqlServerDialect.Instance;
+	private static readonly ISqlDialect _pgDialect = PostgreSqlDialect.Instance;
 
 	private class DummyQueryContext : IQueryContext
 	{
@@ -39,7 +40,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	private static IQueryable<T> CreateQueryable<T>()
 		=> new DefaultQueryable<T>(new DefaultQueryProvider<T>(new DummyQueryContext()), null);
 
-	private static (string sql, IDictionary<string, (Type, object)> parameters) TranslateSql<TSource>(IQueryable queryable)
+	private static (string sql, IDictionary<string, (Type, object)> parameters) TranslateSql<TSource>(IQueryable queryable, ISqlDialect dialect = null)
 	{
 		var expression = queryable.Expression;
 		var meta = SchemaRegistry.Get(typeof(TSource));
@@ -51,11 +52,11 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var query = (Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [expression]);
 		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
 
-		return (query.Render(_dialect), parameters);
+		return (query.Render(dialect ?? _dialect), parameters);
 	}
 
-	private static string GenerateSql<TSource>(IQueryable queryable)
-		=> TranslateSql<TSource>(queryable).sql;
+	private static string GenerateSql<TSource>(IQueryable queryable, ISqlDialect dialect = null)
+		=> TranslateSql<TSource>(queryable, dialect).sql;
 
 	[TestMethod]
 	public void SubqueryAny_ShouldNotProduceEmptyAlias()
@@ -815,6 +816,111 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 			$"Expected LIKE in WHERE, got: {sql}");
 		sql.ContainsIgnoreCase(" or ").AssertTrue(
 			$"Expected OR in WHERE, got: {sql}");
+	}
+
+	/// <summary>
+	/// Reproduction of the downstream Broker failure: an entity with
+	/// inheritance (TestBrokerBase) carrying [RelationSingle] audit FKs
+	/// (CreatedBy/ModifiedBy → TestBrokerUser) plus another [RelationSingle]
+	/// User on the derived entity. Where-predicate on User.Email must emit
+	/// the INNER JOIN to TestBrokerUser, otherwise SQL Server reports
+	/// "multi-part identifier 'User.Email' could not be bound".
+	/// </summary>
+	[TestMethod]
+	public void Where_BrokerPortfolio_NavigationToUserEmail_EmitsJoin()
+	{
+		EnsureFkEntitiesRegistered();
+		_ = SchemaRegistry.Get(typeof(TestBrokerPortfolio));
+		_ = SchemaRegistry.Get(typeof(TestBrokerUser));
+
+		var portfolios = CreateQueryable<TestBrokerPortfolio>();
+		var query = portfolios.Where(p => p.User.Email.Like("%test%"));
+
+		var sql = GenerateSql<TestBrokerPortfolio>(query);
+
+		sql.ContainsIgnoreCase("join").AssertTrue(
+			$"Expected JOIN to {nameof(TestBrokerUser)} for p.User.Email predicate, got: {sql}");
+		sql.Contains("[Ecng_TestBrokerUser]").AssertTrue(
+			$"Expected join target [Ecng_TestBrokerUser], got: {sql}");
+		sql.Contains("[User].[Email]").AssertTrue(
+			$"Expected qualified column [User].[Email], got: {sql}");
+	}
+
+	/// <summary>
+	/// Reproduction of the original Broker bug: SearchAsync built a single
+	/// Where with three OR'ed Like predicates over p.User.Email / FirstName /
+	/// LastName. ORM 1.0.29 translated this without the implicit JOIN, so
+	/// SQL Server failed with "multi-part identifier 'User.Email' could not
+	/// be bound". A single INNER JOIN must be emitted, and all three OR
+	/// branches must reference the joined alias.
+	/// </summary>
+	[TestMethod]
+	public void Where_BrokerPortfolio_OrAcrossUserColumns_EmitsSingleJoin()
+	{
+		EnsureFkEntitiesRegistered();
+		_ = SchemaRegistry.Get(typeof(TestBrokerPortfolio));
+		_ = SchemaRegistry.Get(typeof(TestBrokerUser));
+
+		var portfolios = CreateQueryable<TestBrokerPortfolio>();
+		var query = portfolios.Where(p =>
+			p.User.Email.Like("%test%") ||
+			p.User.FirstName.Like("%test%") ||
+			p.User.LastName.Like("%test%"));
+
+		var sql = GenerateSql<TestBrokerPortfolio>(query);
+
+		sql.ContainsIgnoreCase("join").AssertTrue(
+			$"Expected JOIN to {nameof(TestBrokerUser)} for OR'ed User columns, got: {sql}");
+		sql.Contains("[Ecng_TestBrokerUser]").AssertTrue(
+			$"Expected join target [Ecng_TestBrokerUser], got: {sql}");
+
+		// All three branches must qualify columns with the joined alias —
+		// the buggy translator emitted bare [Email]/[FirstName]/[LastName].
+		sql.Contains("[User].[Email]").AssertTrue(
+			$"Expected qualified [User].[Email], got: {sql}");
+		sql.Contains("[User].[FirstName]").AssertTrue(
+			$"Expected qualified [User].[FirstName], got: {sql}");
+		sql.Contains("[User].[LastName]").AssertTrue(
+			$"Expected qualified [User].[LastName], got: {sql}");
+
+		// Defensive: do not duplicate the JOIN even though three branches
+		// reference the same nav.
+		var joinCount = sql.Split("inner join", StringSplitOptions.None).Length - 1;
+		joinCount.AssertEqual(1,
+			$"Expected exactly 1 INNER JOIN to TestBrokerUser, got {joinCount}: {sql}");
+	}
+
+	/// <summary>
+	/// Same as <see cref="Where_BrokerPortfolio_NavigationToUserEmail_EmitsJoin"/>
+	/// but rendered with the PostgreSQL dialect. The JOIN alias is
+	/// <c>nav.Member.Name = "User"</c>, which is a PostgreSQL reserved word.
+	/// Without alias quoting the rendered SQL is <c>"User" User</c> and PG
+	/// fails at runtime with <c>42601: syntax error at or near "User"</c>.
+	/// The qualified column reference <c>"User"."Email"</c> already works,
+	/// so this test pins specifically the alias-declaration site in the
+	/// FROM/JOIN clauses.
+	/// </summary>
+	[TestMethod]
+	public void Where_BrokerPortfolio_NavigationToUserEmail_PostgreSql_QuotesAlias()
+	{
+		EnsureFkEntitiesRegistered();
+		_ = SchemaRegistry.Get(typeof(TestBrokerPortfolio));
+		_ = SchemaRegistry.Get(typeof(TestBrokerUser));
+
+		var portfolios = CreateQueryable<TestBrokerPortfolio>();
+		var query = portfolios.Where(p => p.User.Email.Like("%test%"));
+
+		var sql = GenerateSql<TestBrokerPortfolio>(query, _pgDialect);
+
+		sql.ContainsIgnoreCase("join").AssertTrue(
+			$"Expected JOIN to TestBrokerUser, got: {sql}");
+		sql.Contains("\"Ecng_TestBrokerUser\"").AssertTrue(
+			$"Expected join target \"Ecng_TestBrokerUser\", got: {sql}");
+		sql.Contains("\"User\".\"Email\"").AssertTrue(
+			$"Expected qualified column \"User\".\"Email\", got: {sql}");
+		sql.Contains("\"Ecng_TestBrokerUser\" \"User\"").AssertTrue(
+			$"Expected JOIN alias to be quoted (\"User\"), got: {sql}. "
+			+ "Bare 'User' alias triggers PostgreSQL syntax error 42601 because User is a reserved word.");
 	}
 
 	#endregion

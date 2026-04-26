@@ -333,6 +333,54 @@ public class TestItemTag : IDbPersistable
 	}
 }
 
+/// <summary>
+/// Mirrors BaseBrokerEntity from the Broker project: abstract base with
+/// audit FKs as RelationSingle navigation properties.
+/// </summary>
+public abstract class TestBrokerBase : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[RelationSingle]
+	public TestBrokerUser CreatedBy { get; set; }
+
+	[RelationSingle]
+	public TestBrokerUser ModifiedBy { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public virtual void Save(SettingsStorage storage)
+	{
+		storage
+			.SetFk(nameof(CreatedBy), CreatedBy?.Id)
+			.SetFk(nameof(ModifiedBy), ModifiedBy?.Id);
+	}
+
+	public virtual async ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct)
+	{
+		CreatedBy = await storage.LoadFkAsync<TestBrokerUser>(nameof(CreatedBy), db, ct);
+		ModifiedBy = await storage.LoadFkAsync<TestBrokerUser>(nameof(ModifiedBy), db, ct);
+	}
+}
+
+[Entity(Name = "Ecng_TestBrokerUser")]
+public partial class TestBrokerUser : TestBrokerBase
+{
+	public string Email { get; set; } = string.Empty;
+	public string FirstName { get; set; } = string.Empty;
+	public string LastName { get; set; } = string.Empty;
+}
+
+[Entity(Name = "Ecng_TestBrokerPortfolio")]
+public partial class TestBrokerPortfolio : TestBrokerBase
+{
+	[RelationSingle]
+	public TestBrokerUser User { get; set; }
+
+	public string Name { get; set; } = string.Empty;
+}
+
 public class TestNodeChildList(IStorage storage, TestNode parent) : RelationManyList<TestNodeChild, long>(storage)
 {
 	private readonly TestNode _parent = parent ?? throw new ArgumentNullException(nameof(parent));
