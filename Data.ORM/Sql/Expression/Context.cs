@@ -29,7 +29,7 @@ class Context
 
 	public long? Skip;
 	public long? Take;
-	public readonly List<(string joinAlias, MemberInfo member, bool asc)> OrderBy = [];
+	public readonly List<(string alias, string columnName, bool asc)> OrderBy = [];
 	public string SelectAlias;
 	public bool Count;
 	public bool Distinct;
@@ -356,19 +356,17 @@ class Context
 
 				var isFirstColumn = true;
 
-				foreach (var (joinAlias, member, asc) in OrderBy)
+				foreach (var (alias, columnName, asc) in OrderBy)
 				{
 					if (isFirstColumn)
 						isFirstColumn = false;
 					else
 						query.Comma();
 
-					if (joinAlias is not null)
-						query.Column(joinAlias, member.Name);
-					else if (schema.EntityType == member.DeclaringType)
-						query.Column(TableAlias, member.Name);
+					if (alias is not null)
+						query.Column(alias, columnName);
 					else
-						query.Column(member.Name);
+						query.Column(columnName);
 
 					if (!asc)
 						query.Desc();

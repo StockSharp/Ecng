@@ -115,17 +115,17 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Two-level navigation in a Where clause (e.g. <c>s.Task.Person.Id == X</c>)
-	/// must register an implicit chain of INNER JOINs so the resulting SQL
-	/// references the outermost relation through its alias. Without the chain
-	/// the translator emits a bare <c>[Person].[Id]</c> with no setup → SQL
-	/// fails at runtime with "Invalid column name 'Person'".
+	/// Two-level navigation in a Where clause (<c>s.Task.Person.Id == X</c>)
+	/// must register an INNER JOIN to the intermediate <c>Task</c> table so
+	/// the FK column <c>[Task].[Person]</c> becomes reachable, and then use
+	/// that FK column directly instead of joining the leaf <c>Person</c>
+	/// table just to read its primary key.
 	/// </summary>
 	[TestMethod]
 	public void WhereTwoLevelNavigation_ShouldChainImplicitJoins()
 	{
-		// Pre-register related entity schemas so TryEnsureImplicitJoin can
-		// discover Task/Person tables when recursing through the navigation.
+		// Pre-register related entity schemas so the resolver can discover
+		// the intermediate Task table when recursing through the navigation.
 		SchemaRegistry.Get(typeof(TestPerson));
 		SchemaRegistry.Get(typeof(TestTask));
 
@@ -136,13 +136,13 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		var sql = GenerateSql<TestSubTask>(query);
 
-		// Inner JOIN to TestTask: needed so [Task].[Person] FK column is reachable.
+		// Intermediate JOIN to TestTask is required so the FK column on Task is reachable.
 		sql.ContainsIgnoreCase("inner join").AssertTrue($"Expected at least one INNER JOIN, got: {sql}");
 		sql.ContainsIgnoreCase("[Ecng_TestTask]").AssertTrue($"Expected JOIN to Ecng_TestTask, got: {sql}");
-		// Outer JOIN to TestPerson: needed so [Person].[Id] resolves.
-		sql.ContainsIgnoreCase("[Ecng_TestPerson]").AssertTrue($"Expected JOIN to Ecng_TestPerson, got: {sql}");
-		// Final predicate must qualify Id through the Person alias, not bare.
-		sql.Contains("[Person].[Id]").AssertTrue($"Expected qualified [Person].[Id], got: {sql}");
+		// Leaf .Id resolves through the FK column on Task — no need to join Person.
+		sql.ContainsIgnoreCase("[Ecng_TestPerson]").AssertFalse($"Should not join Ecng_TestPerson when only its Id is needed, got: {sql}");
+		// Predicate must reference the FK column on the Task alias.
+		sql.Contains("[Task].[Person]").AssertTrue($"Expected FK column [Task].[Person] in predicate, got: {sql}");
 	}
 
 	[TestMethod]
@@ -333,8 +333,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	/// <summary>
 	/// Ensures FK target entities are registered in SchemaRegistry
 	/// before running tests that reference them in expressions.
-	/// Without this, TryFlattenInnerSchema incorrectly treats unregistered
-	/// FK targets as InnerSchema and doubles column names (e.g., PersonPerson).
+	/// Without this, the resolver classifies unregistered FK targets as
+	/// inner-schema and doubles column names (e.g., PersonPerson).
 	/// </summary>
 	private static void EnsureFkEntitiesRegistered()
 	{
