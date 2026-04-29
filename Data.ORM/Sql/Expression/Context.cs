@@ -32,6 +32,14 @@ class Context
 	public Expression GroupKeySelector;
 	public readonly Dictionary<(Type, MemberInfo), MemberExpression> Members = [];
 
+	/// <summary>
+	/// Symbol table mapping each LINQ-lambda parameter to the SQL alias
+	/// it refers to. Filled in lazily by the translator as it descends
+	/// into Where/Select/Join/OrderBy lambdas; consulted by alias
+	/// resolution in place of the string-name heuristic when present.
+	/// </summary>
+	public readonly Dictionary<ParameterExpression, string> Aliases = [];
+
 	public readonly Queue<Action<bool, Query>> WrapColumn = new();
 
 	public long? Skip;
@@ -95,43 +103,70 @@ class Context
 		if (TableAlias.IsEmpty())
 			TableAlias = Extensions.DefaultAlias;
 
-		var query = new Query();
-
+		// Pre-canonical query shapes that bypass the SELECT pipeline and
+		// short-circuit straight to the caller.
 		if (UnionPart.Actions.Count > 0)
 		{
-			UnionPart.CopyTo(query);
-			return query;
+			var unionQuery = new Query();
+			UnionPart.CopyTo(unionQuery);
+			return unionQuery;
 		}
 
 		if (SwitchPart.Actions.Count > 0)
 		{
-			SwitchPart.CopyTo(query);
-			return query;
+			var switchQuery = new Query();
+			SwitchPart.CopyTo(switchQuery);
+			return switchQuery;
 		}
 
-		if (Exists)
-		{
-			query
-				.Cast()
-				.OpenBracket()
+		var query = new Query();
+
+		EmitExistsPrologue(query);
+		EmitSelectClause(query);
+		EmitFromAndJoins(query, schema);
+		EmitWhereClause(query);
+		query = EmitGroupAndHaving(query);
+		EmitOrderByAndPagination(query, schema);
+		EmitExistsEpilogue(query);
+
+		return query;
+	}
+
+	private void EmitExistsPrologue(Query query)
+	{
+		if (!Exists)
+			return;
+
+		query
+			.Cast()
+			.OpenBracket()
+			.NewLine()
+				.Case()
 				.NewLine()
-					.Case()
-					.NewLine()
-					.When()
-					.Exists()
-						.OpenBracket();
-		}
+				.When()
+				.Exists()
+					.OpenBracket();
+	}
 
+	private void EmitExistsEpilogue(Query query)
+	{
+		if (!Exists)
+			return;
+
+		query
+			.CloseBracket()
+			.Then().AddAction((d, sb) => sb.Append(d.TrueLiteral))
+			.NewLine()
+			.Else().AddAction((d, sb) => sb.Append(d.FalseLiteral))
+			.NewLine().End().As().Raw("bit").CloseBracket();
+	}
+
+	private void EmitSelectClause(Query query)
+	{
 		query.Select();
 
-		if (Distinct)
-		{
-			if (Count)
-			{
-			}
-			else
-				query.Distinct();
-		}
+		if (Distinct && !Count)
+			query.Distinct();
 
 		if (Count)
 		{
@@ -143,91 +178,97 @@ class Context
 				query.Star();
 
 			query.CloseBracket();
+			return;
 		}
+
+		NormaliseSkipTake();
+
+		if (SelectColumns.Count > 0 && SelectColumns[0].Count > 0)
+			EmitProjectedColumns(query);
 		else
+			EmitDefaultProjection(query);
+	}
+
+	private void NormaliseSkipTake()
+	{
+		if (Take is not null)
+			Skip ??= 0;
+		else if (Skip is not null)
+			Take = int.MaxValue;
+
+		if (Skip == 0)
+			Skip = null;
+	}
+
+	private void EmitProjectedColumns(Query query)
+	{
+		var idx = 0;
+		var top = SelectColumns[0];
+
+		foreach (var pair in top)
 		{
-			if (Take is not null)
-			{
-				Skip ??= 0;
-			}
-			else
-			{
-				if (Skip is not null)
-					Take = int.MaxValue;
-			}
+			var columns = GetColumns(pair.Key, default, default, default)
+				?? throw new InvalidOperationException();
 
-			if (Skip == 0)
+			foreach (var (q, mi) in columns)
 			{
-				Skip = null;
-			}
+				if (idx++ > 0)
+					query.Comma();
 
-			if (SelectColumns.Count > 0 && SelectColumns[0].Count > 0)
-			{
-				var idx = 0;
-				var top = SelectColumns[0];
+				var isAll = mi.GetAttribute<AllColumnsFieldAttribute>() is not null;
 
-				foreach (var pair in top)
+				if (isAll)
 				{
-					var columns = GetColumns(pair.Key, default, default, default)
-						?? throw new InvalidOperationException();
-
-					foreach (var (q, mi) in columns)
-					{
-						if (idx++ > 0)
-							query.Comma();
-
-						var isAll = mi.GetAttribute<AllColumnsFieldAttribute>() is not null;
-
-						if (isAll)
-						{
-							query.All(TableAlias);
-						}
-						else
-						{
-							q.CopyTo(query);
-
-							if (pair.Value.Item2 is not MemberExpression || q.Actions.Count > 1 || (top.Map.TryGetValue(mi, out var mi3) && mi.Name != mi3.Name))
-								query.As().Column(mi.Name);
-						}
-					}
+					query.All(TableAlias);
 				}
-			}
-			else
-			{
-				var selectFrom = TableAlias;
-				if (SelectAlias is not null && JoinParts.Any(j => j.tableAlias.EqualsIgnoreCase(SelectAlias)))
-					selectFrom = SelectAlias;
-				query.All(selectFrom);
-
-				// include computed columns from deeper MemberInit layers
-				// (when outermost Select is anonymous access like e => e.Tag)
-				foreach (var layer in SelectColumns)
+				else
 				{
-					foreach (var pair in layer)
-					{
-						var mi = pair.Key;
+					q.CopyTo(query);
 
-						if (mi.GetAttribute<AllColumnsFieldAttribute>() is not null)
-							continue;
-
-						var memberType = mi.GetMemberType();
-
-						if (!memberType.IsSerializablePrimitive() && SchemaRegistry.TryGet(memberType, out _))
-							continue;
-
-						var q = pair.Value.Item1;
-
-						if (q?.Actions.Count > 1)
-						{
-							query.Comma();
-							q.CopyTo(query);
-							query.As().Column(mi.Name);
-						}
-					}
+					if (pair.Value.Item2 is not MemberExpression || q.Actions.Count > 1 || (top.Map.TryGetValue(mi, out var mi3) && mi.Name != mi3.Name))
+						query.As().Column(mi.Name);
 				}
 			}
 		}
+	}
 
+	private void EmitDefaultProjection(Query query)
+	{
+		var selectFrom = TableAlias;
+		if (SelectAlias is not null && JoinParts.Any(j => j.tableAlias.EqualsIgnoreCase(SelectAlias)))
+			selectFrom = SelectAlias;
+		query.All(selectFrom);
+
+		// include computed columns from deeper MemberInit layers
+		// (when outermost Select is anonymous access like e => e.Tag)
+		foreach (var layer in SelectColumns)
+		{
+			foreach (var pair in layer)
+			{
+				var mi = pair.Key;
+
+				if (mi.GetAttribute<AllColumnsFieldAttribute>() is not null)
+					continue;
+
+				var memberType = mi.GetMemberType();
+
+				if (!memberType.IsSerializablePrimitive() && SchemaRegistry.TryGet(memberType, out _))
+					continue;
+
+				var q = pair.Value.Item1;
+
+				if (q?.Actions.Count > 1)
+				{
+					query.Comma();
+					q.CopyTo(query);
+					query.As().Column(mi.Name);
+				}
+			}
+		}
+	}
+
+	private void EmitFromAndJoins(Query query, Schema schema)
+	{
 		query.NewLine().From();
 
 		if (FromPart.Actions.Count == 0)
@@ -245,168 +286,169 @@ class Context
 			if (joinPart.Actions.Count > 0)
 				joinPart.CopyTo(query);
 		}
+	}
 
-		if (WhereParts.Count > 0)
+	private void EmitWhereClause(Query query)
+	{
+		if (WhereParts.Count == 0)
+			return;
+
+		query.Where().NewLine();
+
+		var idx = 0;
+
+		foreach (var part in WhereParts)
 		{
-			query.Where().NewLine();
+			part.CopyTo(query);
+
+			if (++idx < WhereParts.Count)
+				query.And();
+		}
+
+		query.NewLine();
+	}
+
+	private Query EmitGroupAndHaving(Query query)
+	{
+		if (GroupByPart.Actions.Count == 0)
+			return query;
+
+		GroupByPart.CopyTo(query);
+		query.NewLine();
+
+		// COUNT(*) on a grouped result and Skip/Take on a grouped result
+		// both wrap the grouped query in a CTE so the outer pagination /
+		// counting consumes a flat row set instead of fighting the GROUP BY.
+		if (Count)
+			query = WrapInCteCount(query);
+		else if (Skip is not null || Take is not null)
+			query = WrapInCtePassthrough(query);
+
+		if (HavingParts.Count > 0)
+		{
+			query.Having().NewLine();
 
 			var idx = 0;
 
-			foreach (var part in WhereParts)
+			foreach (var part in HavingParts)
 			{
 				part.CopyTo(query);
 
-				if (++idx < WhereParts.Count)
+				if (++idx < HavingParts.Count)
 					query.And();
 			}
 
 			query.NewLine();
 		}
 
-		if (GroupByPart.Actions.Count > 0)
+		return query;
+	}
+
+	private Query WrapInCteCount(Query inner)
+	{
+		var cte = new Query();
+		const string tableRes = "cteresults";
+
+		cte.With().Raw(tableRes).OpenBracket().Raw("cnt").CloseBracket().As().NewLine()
+			.OpenBracket().NewLine();
+
+		inner.CopyTo(cte);
+
+		cte.NewLine().CloseBracket().NewLine();
+
+		cte
+			.Select()
+			.Count().OpenBracket().Star().CloseBracket()
+			.NewLine()
+			.From()
+			.Table(tableRes, TableAlias = "p")
+			.NewLine();
+
+		return cte;
+	}
+
+	private Query WrapInCtePassthrough(Query inner)
+	{
+		var cte = new Query();
+		const string tableRes = "cteresults";
+
+		cte.With().Raw(tableRes).As().NewLine()
+			.OpenBracket().NewLine();
+
+		inner.CopyTo(cte);
+
+		cte.NewLine().CloseBracket().NewLine();
+
+		cte
+			.Select()
+			.All("p")
+			.NewLine()
+			.From()
+			.Table(tableRes, TableAlias = "p")
+			.NewLine();
+
+		return cte;
+	}
+
+	private void EmitOrderByAndPagination(Query query, Schema schema)
+	{
+		if (Count)
+			return;
+
+		if (OrderByPart.Actions.Count > 0)
 		{
-			GroupByPart.CopyTo(query);
-
+			query.OrderBy();
+			OrderByPart.CopyTo(query);
 			query.NewLine();
-
-			if (Count)
-			{
-				var cte = new Query();
-
-				const string tableRes = "cteresults";
-
-				cte.With().Raw(tableRes).OpenBracket().Raw("cnt").CloseBracket().As().NewLine()
-					.OpenBracket().NewLine();
-
-				query.CopyTo(cte);
-
-				cte.NewLine().CloseBracket().NewLine();
-
-				cte
-					.Select()
-					.Count().OpenBracket().Star().CloseBracket()
-					.NewLine()
-					.From()
-					.Table(tableRes, TableAlias = "p")
-					.NewLine();
-
-				query = cte;
-			}
-			else if (Skip is not null || Take is not null)
-			{
-				var cte = new Query();
-
-				const string tableRes = "cteresults";
-
-				cte.With().Raw(tableRes).As().NewLine()
-					.OpenBracket().NewLine();
-
-				query.CopyTo(cte);
-
-				cte.NewLine().CloseBracket().NewLine();
-
-				cte
-					.Select()
-					.All("p")
-					.NewLine()
-					.From()
-					.Table(tableRes, TableAlias = "p")
-					.NewLine();
-
-				query = cte;
-			}
-
-			if (HavingParts.Count > 0)
-			{
-				query.Having().NewLine();
-
-				var idx = 0;
-
-				foreach (var part in HavingParts)
-				{
-					part.CopyTo(query);
-
-					if (++idx < HavingParts.Count)
-						query.And();
-				}
-
-				query.NewLine();
-			}
 		}
 
-		if (Count)
+		if (OrderBy.Count == 0)
 		{
-
+			if (Skip is not null || Take is not null)
+			{
+				if (schema.Identity is not null)
+					query.OrderBy().Column(TableAlias, schema.Identity.Name);
+				else
+					query.AddAction((d, sb) => d.AppendFallbackOrderBy(sb));
+			}
 		}
 		else
 		{
-			if (OrderByPart.Actions.Count > 0)
+			query.OrderBy();
+
+			var isFirstColumn = true;
+
+			foreach (var (alias, columnName, asc) in OrderBy)
 			{
-				query.OrderBy();
-				OrderByPart.CopyTo(query);
-				query.NewLine();
-			}
+				if (isFirstColumn)
+					isFirstColumn = false;
+				else
+					query.Comma();
 
-			if (OrderBy.Count == 0)
-			{
-				if (Skip is not null || Take is not null)
-				{
-					if (schema.Identity is not null)
-						query.OrderBy().Column(TableAlias, schema.Identity.Name);
-					else
-						query.AddAction((d, sb) => d.AppendFallbackOrderBy(sb));
-				}
-			}
-			else
-			{
-				query.OrderBy();
+				if (alias is not null)
+					query.Column(alias, columnName);
+				else
+					query.Column(columnName);
 
-				var isFirstColumn = true;
-
-				foreach (var (alias, columnName, asc) in OrderBy)
-				{
-					if (isFirstColumn)
-						isFirstColumn = false;
-					else
-						query.Comma();
-
-					if (alias is not null)
-						query.Column(alias, columnName);
-					else
-						query.Column(columnName);
-
-					if (!asc)
-						query.Desc();
-				}
-			}
-
-			query.NewLine();
-
-			{
-				var skipParamName = Skip is not null ? TryAddParam("skip", typeof(long), Skip.Value) : null;
-				var takeParamName = Take is not null ? TryAddParam("take", typeof(long), Take.Value) : null;
-
-				if (skipParamName is not null || takeParamName is not null)
-					query.AddAction((dialect, builder) =>
-					{
-						var skipExpr = skipParamName is not null ? dialect.ParameterPrefix + skipParamName : null;
-						var takeExpr = takeParamName is not null ? dialect.ParameterPrefix + takeParamName : null;
-						dialect.AppendPaginationParams(builder, skipExpr, takeExpr);
-					});
+				if (!asc)
+					query.Desc();
 			}
 		}
 
-		if (Exists)
+		query.NewLine();
+
+		var skipParamName = Skip is not null ? TryAddParam("skip", typeof(long), Skip.Value) : null;
+		var takeParamName = Take is not null ? TryAddParam("take", typeof(long), Take.Value) : null;
+
+		if (skipParamName is not null || takeParamName is not null)
 		{
-			query
-				.CloseBracket()
-				.Then().AddAction((d, sb) => sb.Append(d.TrueLiteral))
-				.NewLine()
-				.Else().AddAction((d, sb) => sb.Append(d.FalseLiteral))
-				.NewLine().End().As().Raw("bit").CloseBracket();
+			query.AddAction((dialect, builder) =>
+			{
+				var skipExpr = skipParamName is not null ? dialect.ParameterPrefix + skipParamName : null;
+				var takeExpr = takeParamName is not null ? dialect.ParameterPrefix + takeParamName : null;
+				dialect.AppendPaginationParams(builder, skipExpr, takeExpr);
+			});
 		}
-
-		return query;
 	}
 
 	private int _subCount;
