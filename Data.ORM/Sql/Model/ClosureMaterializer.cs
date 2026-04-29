@@ -9,11 +9,11 @@ namespace Ecng.Data.Sql.Model;
 /// Replaces three independent inline branches that previously lived in the
 /// translator's <c>VisitMember</c> — one for direct DisplayClass fields,
 /// one for two-level captures, and one for nested DisplayClass chains —
-/// with a single unified path. Callers feed the result into
-/// <see cref="EmitMaterialisedValue"/>-style emission so the captured
-/// value becomes a SQL parameter (or, for <see cref="IQueryable"/>
-/// captures, a re-visited subquery) instead of leaking the local-variable
-/// name as a raw column reference.
+/// with a single unified path. Callers feed the result into the
+/// translator's emission helper so the captured value becomes a SQL
+/// parameter (or, for <see cref="IQueryable"/> captures, a re-visited
+/// subquery) instead of leaking the local-variable name as a raw column
+/// reference.
 /// </summary>
 public static class ClosureMaterializer
 {

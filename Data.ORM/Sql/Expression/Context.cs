@@ -23,6 +23,13 @@ class Context
 	public bool IsGroup;
 	public bool IsSelect;
 	public bool IsWhere;
+
+	/// <summary>
+	/// Body of the most recent GroupBy key selector lambda. Used by
+	/// <c>VisitNew</c> to project <c>g.Key</c> back into the resolved
+	/// grouping column when rendering the Select that follows GroupBy.
+	/// </summary>
+	public Expression GroupKeySelector;
 	public readonly Dictionary<(Type, MemberInfo), MemberExpression> Members = [];
 
 	public readonly Queue<Action<bool, Query>> WrapColumn = new();

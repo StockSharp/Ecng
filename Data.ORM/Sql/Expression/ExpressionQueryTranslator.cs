@@ -348,6 +348,20 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 						// (e.g., select new VError { Text = ec.Value, ... })
 						Visit(resultSelector.Body);
 					}
+					else if (resultSelector.Body is NewExpression newExp &&
+						!newExp.Arguments.All(a => a is ParameterExpression))
+					{
+						// Anonymous projection from both join sides (e.g.
+						// `(t, p) => new { t.Title, p.Name }`). When every
+						// argument is a bare ParameterExpression the new-expr
+						// is a transparent identifier produced by the C#
+						// compiler for chained joins — that case is handled
+						// by the downstream Select/Join, so leave it alone.
+						var isSelect = Context.IsSelect;
+						Context.IsSelect = true;
+						Visit(resultSelector.Body);
+						Context.IsSelect = isSelect;
+					}
 
 					return m;
 				}
@@ -545,8 +559,11 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 				var isGroup = Context.IsGroup;
 
+				var keyLambda = (LambdaExpression)m.Arguments[1].StripQuotes();
+				Context.GroupKeySelector = keyLambda.Body;
+
 				Context.IsGroup = true;
-				var retVal = Visit(m.Arguments[1].StripQuotes());
+				var retVal = Visit(keyLambda);
 				Context.IsGroup = isGroup;
 
 				Curr = curr;
@@ -792,6 +809,17 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				pi.Name == nameof(IGrouping<int, int>.Key) &&
 				pi.ReflectedType.GetGenericType(typeof(IGrouping<,>)) is not null)
 			{
+				// `g.Key` in a Select-after-GroupBy projection refers back to
+				// the column the source was grouped on. Re-visit the saved
+				// GroupBy key-selector body so the SELECT list emits, e.g.,
+				// [e].[Priority] AS [Key] alongside the resolved columns.
+				if (isSelect && Context.GroupKeySelector is { } keyBody)
+				{
+					Context.Curr = new();
+					Visit(keyBody);
+					selCols.Add(member, (Context.Curr, keyBody));
+					Context.Curr = curr;
+				}
 			}
 			else
 			{
@@ -841,6 +869,14 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 							selCols.Map.Add(member, me2.Member);
 							selCols.Add(member, (Context.Curr, arg));
 						}
+					}
+					else if (Context.Curr.Actions.Count > 0)
+					{
+						// Computed projection (e.g. aggregate g.Count() / g.Sum(x.P) /
+						// g.Max(x.P) / g.Min(x.P)) — Visit already rendered the SQL
+						// fragment into Context.Curr; capture it under the result-DTO
+						// member so Build emits "<sql> AS [Member]".
+						selCols.Add(member, (Context.Curr, arg));
 					}
 
 					Context.Curr = curr;
