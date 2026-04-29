@@ -114,6 +114,37 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.Contains("[]").AssertFalse($"SQL should not contain empty alias '[]', got: {sql}");
 	}
 
+	/// <summary>
+	/// Two-level navigation in a Where clause (e.g. <c>s.Task.Person.Id == X</c>)
+	/// must register an implicit chain of INNER JOINs so the resulting SQL
+	/// references the outermost relation through its alias. Without the chain
+	/// the translator emits a bare <c>[Person].[Id]</c> with no setup → SQL
+	/// fails at runtime with "Invalid column name 'Person'".
+	/// </summary>
+	[TestMethod]
+	public void WhereTwoLevelNavigation_ShouldChainImplicitJoins()
+	{
+		// Pre-register related entity schemas so TryEnsureImplicitJoin can
+		// discover Task/Person tables when recursing through the navigation.
+		SchemaRegistry.Get(typeof(TestPerson));
+		SchemaRegistry.Get(typeof(TestTask));
+
+		var subTasks = CreateQueryable<TestSubTask>();
+
+		var personId = 42L;
+		var query = subTasks.Where(s => s.Task.Person.Id == personId);
+
+		var sql = GenerateSql<TestSubTask>(query);
+
+		// Inner JOIN to TestTask: needed so [Task].[Person] FK column is reachable.
+		sql.ContainsIgnoreCase("inner join").AssertTrue($"Expected at least one INNER JOIN, got: {sql}");
+		sql.ContainsIgnoreCase("[Ecng_TestTask]").AssertTrue($"Expected JOIN to Ecng_TestTask, got: {sql}");
+		// Outer JOIN to TestPerson: needed so [Person].[Id] resolves.
+		sql.ContainsIgnoreCase("[Ecng_TestPerson]").AssertTrue($"Expected JOIN to Ecng_TestPerson, got: {sql}");
+		// Final predicate must qualify Id through the Person alias, not bare.
+		sql.Contains("[Person].[Id]").AssertTrue($"Expected qualified [Person].[Id], got: {sql}");
+	}
+
 	[TestMethod]
 	public void StringHelper_IsEmpty_TranslatesToSql()
 	{

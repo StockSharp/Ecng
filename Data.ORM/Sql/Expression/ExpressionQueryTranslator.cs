@@ -1139,6 +1139,15 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 							var flat = TryFlattenInnerSchema(me, me.Member.Name);
 							if (flat is not null)
 								Curr.Column(flat.Value.alias, flat.Value.column);
+							else if (me.Expression is MemberExpression && TryEnsureImplicitJoin(me) is { } chainAlias)
+							{
+								// Chained navigation like s.Task.Person.Id: register the
+								// implicit JOIN chain (parent-first, recursively) so the
+								// outermost relation has its own table alias, then qualify
+								// Id on that alias instead of emitting a bare [Person].[Id]
+								// that has no FROM-side setup.
+								Curr.Column(chainAlias, m.Member.Name);
+							}
 							else
 							{
 								var owner = GetAlias(me.GetMemberName());

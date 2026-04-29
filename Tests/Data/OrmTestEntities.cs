@@ -156,6 +156,36 @@ public class TestTask : IDbPersistable
 	}
 }
 
+/// <summary>
+/// Sub-task of a <see cref="TestTask"/>. Used to exercise two-level navigation
+/// in LINQ expressions, e.g. <c>subTasks.Where(s =&gt; s.Task.Person.Id == X)</c>.
+/// </summary>
+[Entity(Name = "Ecng_TestSubTask")]
+public class TestSubTask : IDbPersistable
+{
+	public long Id { get; set; }
+	public string Description { get; set; }
+
+	[RelationSingle]
+	public TestTask Task { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.Set(nameof(Description), Description)
+			.SetFk(nameof(Task), Task?.Id);
+	}
+
+	public async ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Description = storage.GetValue<string>(nameof(Description));
+		Task = await storage.LoadFkAsync<TestTask>(nameof(Task), db, cancellationToken);
+	}
+}
+
 public class TestPersonTaskList(IStorage storage, TestPerson person) : RelationManyList<TestTask, long>(storage)
 {
 	private readonly TestPerson _person = person ?? throw new ArgumentNullException(nameof(person));
