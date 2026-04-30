@@ -144,7 +144,7 @@ internal class AdoTable : IDatabaseTable
 		if (rowsList.Count == 0)
 			return;
 
-		_connection.EnsureOpen();
+		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
 
 		// Collect ALL unique column names from ALL rows to handle inconsistent data
 		var columns = rowsList.SelectMany(r => r.Keys).Distinct().ToList();
@@ -264,7 +264,7 @@ internal class AdoTable : IDatabaseTable
 
 	private async Task<int> ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
-		_connection.EnsureOpen();
+		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
 
 		using var cmd = _connection.Connection.CreateCommand();
 		cmd.CommandText = sql;
@@ -275,7 +275,7 @@ internal class AdoTable : IDatabaseTable
 
 	private async Task<IEnumerable<IDictionary<string, object>>> QueryAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
-		_connection.EnsureOpen();
+		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
 
 		using var cmd = _connection.Connection.CreateCommand();
 		cmd.CommandText = sql;
@@ -405,20 +405,20 @@ internal class AdoConnection : Disposable, IDatabaseConnection
 	}
 
 	/// <summary>
-	/// Ensures the connection is open.
+	/// Ensures the connection is open, awaiting the driver's async open if
+	/// it is not. Replaces the previous synchronous <c>EnsureOpen</c>
+	/// which blocked async pipelines while waiting on the underlying
+	/// network/driver.
 	/// </summary>
-	public void EnsureOpen()
-	{
-		if (Connection.State != ConnectionState.Open)
-			Connection.Open();
-	}
-
-	/// <inheritdoc />
-	public async Task VerifyAsync(CancellationToken cancellationToken)
+	public async ValueTask EnsureOpenAsync(CancellationToken cancellationToken)
 	{
 		if (Connection.State != ConnectionState.Open)
 			await Connection.OpenAsync(cancellationToken).NoWait();
 	}
+
+	/// <inheritdoc />
+	public Task VerifyAsync(CancellationToken cancellationToken)
+		=> EnsureOpenAsync(cancellationToken).AsTask();
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()

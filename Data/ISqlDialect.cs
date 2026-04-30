@@ -3,423 +3,255 @@ namespace Ecng.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 
-using Ecng.Common;
-
 /// <summary>
-/// Interface for database-specific SQL dialect.
-/// Provides SQL syntax variations for different database providers.
+/// Contract for a database-specific SQL dialect. Implementations are usually
+/// derived from <see cref="SqlDialectBase"/>, which already provides
+/// reasonable defaults for everything that is not strictly dialect-specific —
+/// concrete dialects only override what differs (quoting, type mapping,
+/// pagination shape, identity bookkeeping). This interface intentionally
+/// holds <em>signatures only</em>; default bodies live in
+/// <see cref="SqlDialectBase"/> so we never have to keep two copies of the
+/// same implementation in sync.
 /// </summary>
 public interface ISqlDialect
 {
 	/// <summary>
-	/// Gets the maximum number of parameters allowed in a single query.
-	/// </summary>
-	/// <remarks>
+	/// Maximum number of parameters allowed in a single statement.
 	/// SQL Server: 2100, SQLite: 999, PostgreSQL: 65535, MySQL: 65535.
-	/// </remarks>
+	/// </summary>
 	int MaxParameters { get; }
 
 	/// <summary>
-	/// Gets the parameter prefix (e.g., "@" for SQL Server, "$" for PostgreSQL).
+	/// Parameter prefix (e.g. <c>@</c> for SQL Server, <c>$</c> for PostgreSQL).
 	/// </summary>
 	string ParameterPrefix { get; }
 
 	/// <summary>
+	/// SQL string concatenation operator.
+	/// </summary>
+	string ConcatOperator { get; }
+
+	/// <summary>
+	/// SQL literal for boolean <c>true</c>.
+	/// </summary>
+	string TrueLiteral { get; }
+
+	/// <summary>
+	/// SQL literal for boolean <c>false</c>.
+	/// </summary>
+	string FalseLiteral { get; }
+
+	/// <summary>
+	/// Unicode string-literal prefix (e.g. <c>N</c> for SQL Server).
+	/// </summary>
+	string UnicodePrefix { get; }
+
+	/// <summary>
+	/// Function name for string length.
+	/// </summary>
+	string LenFunction { get; }
+
+	/// <summary>
+	/// Function name for null-coalescing.
+	/// </summary>
+	string IsNullFunction { get; }
+
+	/// <summary>
+	/// Batch separator (e.g. <c>GO</c> for SQL Server). Empty when no
+	/// separation is needed.
+	/// </summary>
+	string BatchSeparator { get; }
+
+	/// <summary>
 	/// Quotes an identifier (table name, column name).
 	/// </summary>
-	/// <param name="identifier">The identifier to quote.</param>
-	/// <returns>Quoted identifier.</returns>
 	string QuoteIdentifier(string identifier);
 
 	/// <summary>
-	/// Gets the SQL type name for a CLR type.
+	/// Returns the SQL type name for a CLR type.
 	/// </summary>
-	/// <param name="clrType">CLR type.</param>
-	/// <returns>SQL type name.</returns>
 	string GetSqlTypeName(Type clrType);
 
 	/// <summary>
-	/// Converts a value to database format if needed.
+	/// Converts a CLR value to the form a database driver expects.
 	/// </summary>
-	/// <param name="value">Original value.</param>
-	/// <param name="clrType">CLR type of the value.</param>
-	/// <returns>Converted value.</returns>
 	object ConvertToDbValue(object value, Type clrType);
 
 	/// <summary>
-	/// Converts a value from database format if needed.
+	/// Converts a database value to the requested CLR target type.
 	/// </summary>
-	/// <param name="value">Database value.</param>
-	/// <param name="targetType">Target CLR type.</param>
-	/// <returns>Converted value.</returns>
 	object ConvertFromDbValue(object value, Type targetType);
 
 	/// <summary>
-	/// Gets the SQL expression for retrieving the last inserted identity value.
+	/// SQL expression that returns the identity value of the last insert.
 	/// </summary>
-	string GetIdentitySelect(string idCol) => throw new NotSupportedException();
+	string GetIdentitySelect(string idCol);
 
 	/// <summary>
-	/// Formats a SKIP/OFFSET clause.
+	/// Renders a SKIP/OFFSET clause from a parameter expression.
 	/// </summary>
-	string FormatSkip(string skip) => throw new NotSupportedException();
+	string FormatSkip(string skip);
 
 	/// <summary>
-	/// Formats a TAKE/FETCH clause.
+	/// Renders a TAKE/FETCH clause from a parameter expression.
 	/// </summary>
-	string FormatTake(string take) => throw new NotSupportedException();
+	string FormatTake(string take);
 
 	/// <summary>
-	/// Gets the SQL expression for the current local date/time.
+	/// Current local date/time.
 	/// </summary>
-	string Now() => throw new NotSupportedException();
+	string Now();
 
 	/// <summary>
-	/// Gets the SQL expression for the current UTC date/time.
+	/// Current UTC date/time.
 	/// </summary>
-	string UtcNow() => throw new NotSupportedException();
+	string UtcNow();
 
 	/// <summary>
-	/// Gets the SQL expression for the current system local date/time with offset.
+	/// System local date/time with offset.
 	/// </summary>
-	string SysNow() => throw new NotSupportedException();
+	string SysNow();
 
 	/// <summary>
-	/// Gets the SQL expression for the current system UTC date/time.
+	/// System UTC date/time with offset.
 	/// </summary>
-	string SysUtcNow() => throw new NotSupportedException();
+	string SysUtcNow();
 
 	/// <summary>
-	/// Gets the SQL expression for generating a new unique identifier.
+	/// Generates a new unique identifier.
 	/// </summary>
-	string NewId() => throw new NotSupportedException();
+	string NewId();
 
 	/// <summary>
-	/// Appends CREATE TABLE IF NOT EXISTS statement to a <see cref="StringBuilder"/>.
-	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="columnDefs">Pre-built column definitions string.</param>
-	void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
-
-	/// <summary>
-	/// Appends DROP TABLE IF EXISTS statement to a <see cref="StringBuilder"/>.
-	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	void AppendDropTable(StringBuilder sb, string tableName);
-
-	/// <summary>
-	/// Appends pagination (OFFSET/FETCH or LIMIT/OFFSET) to a <see cref="StringBuilder"/>.
-	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="skip">Rows to skip, or null.</param>
-	/// <param name="take">Rows to take, or null.</param>
-	/// <param name="hasOrderBy">Whether the query already has an ORDER BY clause.</param>
-	void AppendPagination(StringBuilder sb, long? skip, long? take, bool hasOrderBy);
-
-	/// <summary>
-	/// Appends UPSERT (MERGE / INSERT ON CONFLICT) statement to a <see cref="StringBuilder"/>.
-	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="allColumns">All column names.</param>
-	/// <param name="keyColumns">Key column names for matching.</param>
-	void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns);
-
-	/// <summary>
-	/// Gets the SQL suffix for an identity (auto-increment primary key) column definition.
+	/// Suffix for an identity (auto-increment primary key) column definition.
 	/// </summary>
 	string GetIdentityColumnSuffix();
 
 	/// <summary>
-	/// Gets an inline FOREIGN KEY constraint clause for use inside a CREATE TABLE column list.
+	/// Inline FOREIGN KEY constraint clause for use inside CREATE TABLE.
 	/// </summary>
-	/// <param name="tableName">The table being created (used to build constraint name).</param>
-	/// <param name="columnName">The referencing column.</param>
-	/// <param name="refTableName">The referenced table.</param>
-	/// <param name="refColumnName">The referenced column (typically the referenced table's primary key).</param>
-	/// <returns>A constraint clause like <c>CONSTRAINT FK_X_Y FOREIGN KEY (Y) REFERENCES X (Id)</c>.</returns>
-	string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName)
-		=> throw new NotSupportedException();
+	string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName);
 
 	/// <summary>
-	/// Appends an ALTER TABLE ADD CONSTRAINT statement for a new foreign key.
+	/// Full column definition: SQL type + NULL/NOT NULL.
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">The table on which to add the constraint.</param>
-	/// <param name="columnName">The referencing column.</param>
-	/// <param name="refTableName">The referenced table.</param>
-	/// <param name="refColumnName">The referenced column.</param>
-	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
-		=> throw new NotSupportedException();
+	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0);
 
 	/// <summary>
-	/// Gets the full column definition (SQL type + NULL/NOT NULL).
+	/// Normalises a raw database type name to the canonical form used by
+	/// this dialect.
 	/// </summary>
-	/// <param name="clrType">CLR type of the column.</param>
-	/// <param name="isNullable">Whether the column allows NULLs.</param>
-	/// <param name="maxLength">Max length for string columns (0 = MAX/unlimited).</param>
-	/// <param name="precision">Numeric precision (0 = use default).</param>
-	/// <param name="scale">Numeric scale (0 = use default).</param>
-	/// <returns>Column definition string (e.g. "NVARCHAR(128) NOT NULL").</returns>
-	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
-	{
-		var typeName = GetSqlTypeName(clrType);
-		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
-	}
+	string NormalizeDbType(string dbTypeName);
 
 	/// <summary>
-	/// Appends ALTER TABLE ADD COLUMN statement.
+	/// Returns a SQL literal representing the default value for the given
+	/// CLR type. Used during migrations to backfill NOT NULL columns.
 	/// </summary>
-	void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
-	{
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ADD {QuoteIdentifier(columnName)} {columnDef}");
-	}
+	string GetDefaultLiteral(Type clrType);
 
 	/// <summary>
-	/// Appends ALTER TABLE ALTER COLUMN statement.
+	/// Appends CREATE TABLE [IF NOT EXISTS] statement.
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="columnName">Column name (unquoted).</param>
-	/// <param name="clrType">CLR type of the column.</param>
-	/// <param name="isNullable">Whether the column allows NULLs.</param>
-	/// <param name="maxLength">Max length for string/binary columns.</param>
-	/// <param name="precision">Numeric precision (0 = use default).</param>
-	/// <param name="scale">Numeric scale (0 = use default).</param>
-	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
-	{
-		var colDef = GetColumnDefinition(clrType, isNullable, maxLength, precision, scale);
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {colDef}");
-	}
+	void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
 
 	/// <summary>
-	/// Appends ALTER TABLE DROP COLUMN statement.
+	/// Appends DROP TABLE [IF EXISTS] statement.
 	/// </summary>
-	void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
-	{
-		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP COLUMN {QuoteIdentifier(columnName)}");
-	}
+	void AppendDropTable(StringBuilder sb, string tableName);
 
 	/// <summary>
-	/// Normalizes a raw database type name to the canonical form used by this dialect.
-	/// Used by schema comparison to match DB-reported types against <see cref="GetSqlTypeName"/> output.
+	/// Appends literal pagination (LIMIT/OFFSET or OFFSET/FETCH) with values.
 	/// </summary>
-	/// <param name="dbTypeName">Raw type name from database metadata.</param>
-	/// <returns>Normalized type name.</returns>
-	string NormalizeDbType(string dbTypeName) => dbTypeName.Trim().ToUpperInvariant();
+	void AppendPagination(StringBuilder sb, long? skip, long? take, bool hasOrderBy);
 
 	/// <summary>
-	/// Appends a dialect-specific UPDATE ... SET ... WHERE statement.
+	/// Appends parameterised pagination with already-prefixed parameter
+	/// expressions (e.g. <c>@skip</c>, <c>@take</c>).
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="setColumns">Column names for the SET clause.</param>
-	/// <param name="whereColumns">Column names for the WHERE clause.</param>
-	void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns)
-	{
-		if (whereColumns.Length == 0)
-			throw new InvalidOperationException($"Cannot generate UPDATE for '{tableName}': no key columns specified for WHERE clause.");
-
-		sb.AppendLine($"update {QuoteIdentifier(tableName)}");
-		sb.AppendLine("set");
-
-		for (var i = 0; i < setColumns.Length; i++)
-		{
-			var comma = i < setColumns.Length - 1 ? "," : "";
-			sb.AppendLine($"\t{QuoteIdentifier(setColumns[i])} = {ParameterPrefix}{setColumns[i]}{comma}");
-		}
-
-		sb.AppendLine("where");
-		for (var i = 0; i < whereColumns.Length; i++)
-		{
-			if (i > 0)
-				sb.Append(" and ");
-			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
-		}
-	}
+	void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr);
 
 	/// <summary>
-	/// Appends a dialect-specific DELETE ... WHERE statement.
+	/// Appends a fallback ORDER BY clause when there is neither explicit
+	/// ordering nor an identity column. SQL Server requires ORDER BY for
+	/// OFFSET/FETCH; other dialects may emit a deterministic shim or
+	/// nothing at all.
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="whereColumns">Column names for the WHERE clause.</param>
-	void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns)
-	{
-		if (whereColumns.Length == 0)
-			throw new InvalidOperationException($"Cannot generate DELETE for '{tableName}': no key columns specified for WHERE clause.");
-
-		sb.AppendLine("delete");
-		sb.Append($"from {QuoteIdentifier(tableName)}");
-		sb.AppendLine();
-		sb.AppendLine("where");
-		for (var i = 0; i < whereColumns.Length; i++)
-		{
-			if (i > 0)
-				sb.Append(" and ");
-			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
-		}
-	}
+	void AppendFallbackOrderBy(StringBuilder sb);
 
 	/// <summary>
-	/// Gets the SQL string concatenation operator (+ for SQL Server, || for PostgreSQL/SQLite).
+	/// Appends a UPSERT statement (MERGE on SQL Server, INSERT … ON
+	/// CONFLICT on PostgreSQL/SQLite).
 	/// </summary>
-	string ConcatOperator => "+";
+	void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns);
 
 	/// <summary>
-	/// Gets the SQL literal for boolean true (1 for SQL Server/SQLite, TRUE for PostgreSQL).
+	/// Appends an ALTER TABLE ADD CONSTRAINT for a new foreign key.
 	/// </summary>
-	string TrueLiteral => "1";
+	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName);
 
 	/// <summary>
-	/// Gets the SQL literal for boolean false (0 for SQL Server/SQLite, FALSE for PostgreSQL).
+	/// Appends ALTER TABLE ADD COLUMN.
 	/// </summary>
-	string FalseLiteral => "0";
+	void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef);
 
 	/// <summary>
-	/// Gets the Unicode string literal prefix (N for SQL Server, empty for PostgreSQL/SQLite).
+	/// Appends ALTER TABLE ALTER COLUMN.
 	/// </summary>
-	string UnicodePrefix => "N";
+	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0);
 
 	/// <summary>
-	/// Gets the SQL function name for string length (LEN for SQL Server, LENGTH for PostgreSQL/SQLite).
+	/// Appends ALTER TABLE DROP COLUMN.
 	/// </summary>
-	string LenFunction => "len";
+	void AppendDropColumn(StringBuilder sb, string tableName, string columnName);
 
 	/// <summary>
-	/// Gets the SQL function name for null-coalescing (ISNULL for SQL Server, COALESCE for PostgreSQL/SQLite).
+	/// Appends UPDATE … SET column = literal WHERE column IS NULL — used
+	/// during migrations to fill default values before altering nullability.
 	/// </summary>
-	string IsNullFunction => "isnull";
+	void AppendUpdateWhereNull(StringBuilder sb, string tableName, string columnName, string defaultLiteral);
 
 	/// <summary>
-	/// Appends dialect-specific date part extraction opening.
-	/// SQL Server: DATEPART(part, ...); PostgreSQL/SQLite: EXTRACT(part FROM ...).
+	/// Appends an UPDATE … SET … WHERE statement.
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="part">Date part name (year, month, day, etc.).</param>
-	void AppendDatePartOpen(StringBuilder sb, string part)
-	{
-		sb.Append($"datePart({part},");
-	}
+	void AppendUpdateBy(StringBuilder sb, string tableName, string[] setColumns, string[] whereColumns);
 
 	/// <summary>
-	/// Appends the closing part of a dialect-specific date part extraction.
+	/// Appends a DELETE … WHERE statement.
 	/// </summary>
-	void AppendDatePartClose(StringBuilder sb)
-	{
-		sb.Append(')');
-	}
+	void AppendDeleteBy(StringBuilder sb, string tableName, string[] whereColumns);
 
 	/// <summary>
-	/// Appends dialect-specific DATEADD expression.
-	/// SQL Server: dateAdd(part, amount, source); PostgreSQL: (source + make_interval(part => amount)); SQLite: datetime(source, amount || ' part').
+	/// Opens a date-part extraction expression (closed by
+	/// <see cref="AppendDatePartClose"/>).
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="part">Date part name (year, month, day, etc.).</param>
-	/// <param name="amountSql">Rendered SQL for the amount to add.</param>
-	/// <param name="sourceSql">Rendered SQL for the source date expression.</param>
-	void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql)
-	{
-		sb.Append($"dateAdd({part},{amountSql},{sourceSql})");
-	}
+	void AppendDatePartOpen(StringBuilder sb, string part);
 
 	/// <summary>
-	/// Appends the opening part of a dialect-specific TRIM expression.
-	/// SQL Server: LTRIM(RTRIM(..., PostgreSQL/SQLite: TRIM(....
+	/// Closes a date-part extraction expression opened by
+	/// <see cref="AppendDatePartOpen"/>.
 	/// </summary>
-	void AppendTrimOpen(StringBuilder sb)
-	{
-		sb.Append("LTrim(RTrim(");
-	}
+	void AppendDatePartClose(StringBuilder sb);
 
 	/// <summary>
-	/// Appends the closing part of a dialect-specific TRIM expression.
-	/// SQL Server: )), PostgreSQL/SQLite: ).
+	/// Appends a DATEADD-style expression.
 	/// </summary>
-	void AppendTrimClose(StringBuilder sb)
-	{
-		sb.Append("))");
-	}
+	void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql);
 
 	/// <summary>
-	/// Appends a fallback ORDER BY clause when no explicit ordering or identity column exists.
-	/// SQL Server requires ORDER BY for OFFSET/FETCH; PostgreSQL/SQLite do not.
+	/// Opens a TRIM expression (closed by <see cref="AppendTrimClose"/>).
 	/// </summary>
-	void AppendFallbackOrderBy(StringBuilder sb) { }
+	void AppendTrimOpen(StringBuilder sb);
 
 	/// <summary>
-	/// Appends dialect-specific parameterized pagination clause.
-	/// SQL Server outputs OFFSET then FETCH; PostgreSQL/SQLite output LIMIT then OFFSET.
+	/// Closes a TRIM expression opened by <see cref="AppendTrimOpen"/>.
 	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="skipParamExpr">Full parameter expression for skip (e.g. "@skip"), or null.</param>
-	/// <param name="takeParamExpr">Full parameter expression for take (e.g. "@take"), or null.</param>
-	void AppendPaginationParams(StringBuilder sb, string skipParamExpr, string takeParamExpr)
-	{
-		// Default: SqlServer order (OFFSET first, then FETCH)
-		if (skipParamExpr is not null)
-			sb.AppendLine(FormatSkip(skipParamExpr));
-		if (takeParamExpr is not null)
-			sb.AppendLine(FormatTake(takeParamExpr));
-	}
-
-	/// <summary>
-	/// Gets the batch separator for this dialect (e.g. "GO" for SQL Server).
-	/// Empty string means no batch separation is needed.
-	/// </summary>
-	string BatchSeparator => string.Empty;
-
-	/// <summary>
-	/// Appends UPDATE ... SET column = value WHERE column IS NULL statement.
-	/// Used during migration to fill default values before altering nullability.
-	/// </summary>
-	/// <param name="sb">String builder.</param>
-	/// <param name="tableName">Table name (unquoted).</param>
-	/// <param name="columnName">Column name (unquoted).</param>
-	/// <param name="defaultLiteral">SQL literal for the default value.</param>
-	void AppendUpdateWhereNull(StringBuilder sb, string tableName, string columnName, string defaultLiteral)
-	{
-		sb.Append($"UPDATE {QuoteIdentifier(tableName)} SET {QuoteIdentifier(columnName)} = {defaultLiteral} WHERE {QuoteIdentifier(columnName)} IS NULL;");
-	}
-
-	/// <summary>
-	/// Gets a SQL literal representing the default value for the given CLR type.
-	/// Used during migration to fill NOT NULL columns before altering nullability.
-	/// </summary>
-	/// <param name="clrType">CLR type.</param>
-	/// <returns>SQL literal string (e.g. "N''" for string, "0" for int).</returns>
-	string GetDefaultLiteral(Type clrType)
-	{
-		clrType = clrType.IsNullable() ? clrType.GetUnderlyingType() : clrType;
-
-		if (clrType == typeof(string))
-			return UnicodePrefix + "''";
-		if (clrType == typeof(bool))
-			return FalseLiteral;
-		if (clrType == typeof(DateTime) || clrType == typeof(DateTimeOffset))
-			return "'0001-01-01T00:00:00'";
-		if (clrType == typeof(Guid))
-			return "'00000000-0000-0000-0000-000000000000'";
-		if (clrType == typeof(byte[]))
-			return "0x";
-		if (clrType.IsNumeric())
-			return "0";
-
-		return "N''";
-	}
+	void AppendTrimClose(StringBuilder sb);
 
 	/// <summary>
 	/// Reads column metadata from a live database.
 	/// </summary>
-	/// <param name="connection">Open database connection.</param>
-	/// <param name="tableSchema">Schema filter (e.g. "dbo" for SQL Server, "public" for PostgreSQL). Null uses dialect default.</param>
-	/// <param name="cancellationToken">Cancellation token.</param>
-	/// <returns>List of column metadata from the database.</returns>
 	Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
 		DbConnection connection,
 		string tableSchema = null,
-		CancellationToken cancellationToken = default)
-		=> throw new NotSupportedException();
+		CancellationToken cancellationToken = default);
 }

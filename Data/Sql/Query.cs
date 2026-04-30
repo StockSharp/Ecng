@@ -562,12 +562,16 @@ public class Query
 		=> Raw("exists");
 
 	/// <summary>
-	/// Appends a BETWEEN clause with the specified bounds.
+	/// Appends a BETWEEN clause referencing two parameters by name. The
+	/// dialect prepends its own prefix (e.g. <c>@</c>, <c>$</c>) at render
+	/// time so callers must pass plain parameter names — passing raw values
+	/// here would land them as literals in the SQL and is not supported.
 	/// </summary>
-	/// <param name="low">Lower bound parameter name.</param>
-	/// <param name="high">Upper bound parameter name.</param>
-	public Query Between(string low, string high)
-		=> AddAction((dialect, builder) => builder.Append($" between {low} and {high}"));
+	/// <param name="lowParameter">Lower bound parameter name (no prefix).</param>
+	/// <param name="highParameter">Upper bound parameter name (no prefix).</param>
+	public Query Between(string lowParameter, string highParameter)
+		=> AddAction((dialect, builder) =>
+			builder.Append($" between {dialect.ParameterPrefix}{lowParameter} and {dialect.ParameterPrefix}{highParameter}"));
 
 	/// <summary>
 	/// Appends an opening parenthesis.

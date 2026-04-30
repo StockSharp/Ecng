@@ -473,6 +473,35 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region RelationSingle inside InnerSchema
+
+	[TestMethod]
+	public void InnerSchemaWithRelationSingle_Save_FlattensWithFkSuffix()
+	{
+		var entity = new GenTestEntityWithRelationSingleInsideInnerSchema
+		{
+			Id = 1,
+			Note = "n",
+			ShippingAddress = new GenTestAddressWithFk
+			{
+				Street = "S",
+				City = "C",
+				DeliveredBy = new GenTestOrderEntity { Id = 42 },
+			},
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		// Inner schema flattens column names with the prefix; the FK lands as
+		// the parent-prefixed column with the navigation member's name.
+		storage.GetValue<string>("ShippingAddressStreet").AssertEqual("S");
+		storage.GetValue<string>("ShippingAddressCity").AssertEqual("C");
+		storage.GetValue<long>("ShippingAddressDeliveredBy").AssertEqual(42L);
+	}
+
+	#endregion
 }
 
 #endif

@@ -140,6 +140,28 @@ public partial class GenTestNullableInnerEntity : GenTestBaseEntity
 	public string Code { get; set; }
 }
 
+/// <summary>
+/// Inner schema that contains a [RelationSingle] navigation property.
+/// Generator must emit the FK load as a post-init statement (await is
+/// not legal inside object-initializers).
+/// </summary>
+public class GenTestAddressWithFk
+{
+	public string Street { get; set; }
+	public string City { get; set; }
+
+	[RelationSingle]
+	public GenTestOrderEntity DeliveredBy { get; set; }
+}
+
+[Entity(Name = "Ecng_InnerWithFk")]
+public partial class GenTestEntityWithRelationSingleInsideInnerSchema : GenTestBaseEntity
+{
+	public GenTestAddressWithFk ShippingAddress { get; set; }
+
+	public string Note { get; set; }
+}
+
 // ===== Enum tests =====
 
 public enum GenTestStatus

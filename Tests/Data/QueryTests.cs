@@ -862,11 +862,29 @@ public class QueryTests : BaseTestClass
 	[TestMethod]
 	public void Between_Clause()
 	{
+		// Between accepts parameter names (without dialect prefix) and the
+		// dialect prepends its own prefix at render time. Passing raw values
+		// here would inline them as literals — that path is closed.
 		var sql = new Query()
-			.Column("t", "CreatedAt").Between("@Low", "@High")
+			.Column("t", "CreatedAt").Between("Low", "High")
 			.Render(_ss);
 
 		sql.AssertEqual("[t].[CreatedAt] between @Low and @High");
+	}
+
+	[TestMethod]
+	public void Between_RejectsRawLiteralsAsBoundsName()
+	{
+		// Defensive contract: a caller-supplied bound name still goes through
+		// the parameter-prefix machinery and never lands as a raw literal in
+		// the SQL output. (Historically callers passed values directly, which
+		// was an injection surface.)
+		var sql = new Query()
+			.Column("t", "CreatedAt").Between("low_value", "high_value")
+			.Render(_ss);
+
+		sql.Contains("@low_value").AssertTrue($"Expected @low_value parameter prefix, got: {sql}");
+		sql.Contains("@high_value").AssertTrue($"Expected @high_value parameter prefix, got: {sql}");
 	}
 
 	[TestMethod]

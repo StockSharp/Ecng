@@ -3,6 +3,8 @@ namespace Ecng.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 
+using Ecng.Common;
+
 /// <summary>
 /// Base class for SQL dialect implementations.
 /// </summary>
@@ -234,6 +236,27 @@ public abstract class SqlDialectBase : ISqlDialect
 				sb.Append(" and ");
 			sb.Append($"{QuoteIdentifier(whereColumns[i])} = {ParameterPrefix}{whereColumns[i]}");
 		}
+	}
+
+	/// <inheritdoc />
+	public virtual string GetDefaultLiteral(Type clrType)
+	{
+		clrType = clrType.IsNullable() ? clrType.GetUnderlyingType() : clrType;
+
+		if (clrType == typeof(string))
+			return UnicodePrefix + "''";
+		if (clrType == typeof(bool))
+			return FalseLiteral;
+		if (clrType == typeof(DateTime) || clrType == typeof(DateTimeOffset))
+			return "'0001-01-01T00:00:00'";
+		if (clrType == typeof(Guid))
+			return "'00000000-0000-0000-0000-000000000000'";
+		if (clrType == typeof(byte[]))
+			return "0x";
+		if (clrType.IsNumeric())
+			return "0";
+
+		return "N''";
 	}
 
 	/// <inheritdoc />

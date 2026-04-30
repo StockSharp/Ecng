@@ -142,13 +142,15 @@ public class SqlServerDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs)
 	{
-		sb.Append($"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{tableName}') CREATE TABLE {QuoteIdentifier(tableName)} ({columnDefs})");
+		var literal = tableName.Replace("'", "''");
+		sb.Append($"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{literal}') CREATE TABLE {QuoteIdentifier(tableName)} ({columnDefs})");
 	}
 
 	/// <inheritdoc />
 	public override void AppendDropTable(StringBuilder sb, string tableName)
 	{
-		sb.Append($"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE {QuoteIdentifier(tableName)}");
+		var literal = tableName.Replace("'", "''");
+		sb.Append($"IF OBJECT_ID('{literal}', 'U') IS NOT NULL DROP TABLE {QuoteIdentifier(tableName)}");
 	}
 
 	/// <inheritdoc />

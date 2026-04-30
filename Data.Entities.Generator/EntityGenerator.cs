@@ -11,44 +11,67 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 [Generator]
 public class EntityGenerator : IIncrementalGenerator
 {
+	private static readonly DiagnosticDescriptor _failureDescriptor = new(
+		id: "ECNGGEN001",
+		title: "Entity generator failed",
+		messageFormat: "Ecng entity generator threw an exception while generating sources: {0}",
+		category: "Ecng.Data.Entities.Generator",
+		defaultSeverity: DiagnosticSeverity.Error,
+		isEnabledByDefault: true);
+
 	void IIncrementalGenerator.Initialize(IncrementalGeneratorInitializationContext context)
 	{
 		context.RegisterSourceOutput(context.CompilationProvider, (spc, compilation) =>
 		{
-			var globalNs = compilation.SourceModule.ContainingAssembly.GlobalNamespace;
-
-			var allPartialClasses = GetAllTypes(globalNs)
-				.Where(m => m.TypeKind == TypeKind.Class && !m.IsStatic)
-				.Where(m => m.DeclaringSyntaxReferences.Any(r =>
-					r.GetSyntax() is ClassDeclarationSyntax cls
-					&& cls.Modifiers.Any(mod => mod.Text == "partial")))
-				.ToArray();
-
-			var entityTypes = allPartialClasses.Where(m => HasIdentityInHierarchy(m)).ToArray();
-			var joinTypes = allPartialClasses.Where(m => !HasIdentityInHierarchy(m) && IsJoinEntity(m)).ToArray();
-
-			// Group by namespace for SchemaInitializer
-			var byNamespace = new Dictionary<string, List<string>>();
-
-			foreach (var entityType in entityTypes)
+			try
 			{
-				GenerateEntity(spc, entityType);
-
-				if (!entityType.IsAbstract)
-				{
-					var ns = entityType.ContainingNamespace.ToDisplayString();
-					if (!byNamespace.TryGetValue(ns, out var list))
-						byNamespace[ns] = list = new List<string>();
-					list.Add(entityType.Name);
-				}
+				RunGeneration(spc, compilation);
 			}
-
-			foreach (var joinType in joinTypes)
-				GenerateJoinEntity(spc, joinType);
-
-			foreach (var kvp in byNamespace)
-				EmitSchemaInitializer(spc, kvp.Key, kvp.Value);
+			catch (Exception ex)
+			{
+				// Without this report a generator exception is swallowed by
+				// Roslyn — the build looks "succeeded" but no source is
+				// produced and the user has no idea why.
+				spc.ReportDiagnostic(Diagnostic.Create(_failureDescriptor, Location.None, ex.ToString()));
+			}
 		});
+	}
+
+	private static void RunGeneration(SourceProductionContext spc, Compilation compilation)
+	{
+		var globalNs = compilation.SourceModule.ContainingAssembly.GlobalNamespace;
+
+		var allPartialClasses = GetAllTypes(globalNs)
+			.Where(m => m.TypeKind == TypeKind.Class && !m.IsStatic)
+			.Where(m => m.DeclaringSyntaxReferences.Any(r =>
+				r.GetSyntax() is ClassDeclarationSyntax cls
+				&& cls.Modifiers.Any(mod => mod.Text == "partial")))
+			.ToArray();
+
+		var entityTypes = allPartialClasses.Where(m => HasIdentityInHierarchy(m)).ToArray();
+		var joinTypes = allPartialClasses.Where(m => !HasIdentityInHierarchy(m) && IsJoinEntity(m)).ToArray();
+
+		// Group by namespace for SchemaInitializer
+		var byNamespace = new Dictionary<string, List<string>>();
+
+		foreach (var entityType in entityTypes)
+		{
+			GenerateEntity(spc, entityType);
+
+			if (!entityType.IsAbstract)
+			{
+				var ns = entityType.ContainingNamespace.ToDisplayString();
+				if (!byNamespace.TryGetValue(ns, out var list))
+					byNamespace[ns] = list = new List<string>();
+				list.Add(entityType.Name);
+			}
+		}
+
+		foreach (var joinType in joinTypes)
+			GenerateJoinEntity(spc, joinType);
+
+		foreach (var kvp in byNamespace)
+			EmitSchemaInitializer(spc, kvp.Key, kvp.Value);
 	}
 
 	#region Type discovery
@@ -378,12 +401,112 @@ public class EntityGenerator : IIncrementalGenerator
 		var nameOverrides = GetNameOverrides(prop);
 		var typeName = FullType(innerType);
 
+		// If the inner schema (or anything nested under it) carries a
+		// [RelationSingle] property, the loader needs to await on the FK
+		// fetch — and `await` is not legal inside an object initializer.
+		// Switch to a post-init pattern: build the inner object via an
+		// initializer for sync-only properties, then assign each FK
+		// through `localVar.path.X = await storage.LoadFkAsync(...)`.
+		if (HasRelationSingleDeep(innerProps))
+		{
+			var local = "__" + prop.Name;
+			sb.AppendLine($"\t\tvar {local} = new {typeName}");
+			sb.AppendLine("\t\t{");
+			EmitInnerInitWithoutRelationSingle(sb, innerProps, prop.Name, nameOverrides, "\t\t\t");
+			sb.AppendLine("\t\t};");
+			EmitInnerRelationSinglePostInit(sb, innerProps, prop.Name, nameOverrides, local, "\t\t");
+			sb.AppendLine($"\t\t{prop.Name} = {local};");
+			return;
+		}
+
 		sb.AppendLine($"\t\t{prop.Name} = new {typeName}");
 		sb.AppendLine("\t\t{");
 
 		EmitLoadInnerSchemaRecursive(sb, innerProps, prop.Name, nameOverrides, "\t\t\t");
 
 		sb.AppendLine("\t\t};");
+	}
+
+	private static bool HasRelationSingleDeep(IPropertySymbol[] innerProps)
+	{
+		foreach (var p in innerProps)
+		{
+			if (IsRelationSingle(p))
+				return true;
+			if (IsInnerSchemaProperty(p))
+			{
+				var nested = UnwrapNullable(p.Type);
+				if (HasRelationSingleDeep(GetInnerTypeProperties(nested)))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	// Object-initializer body that intentionally skips [RelationSingle] members —
+	// they are filled in afterwards via EmitInnerRelationSinglePostInit.
+	private static void EmitInnerInitWithoutRelationSingle(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, string indent)
+	{
+		foreach (var inner in innerProps)
+		{
+			if (IsRelationSingle(inner))
+				continue;
+
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
+
+			if (inner.Type.TypeKind == TypeKind.Enum)
+			{
+				sb.AppendLine($"{indent}{inner.Name} = ({FullType(inner.Type)})storage.GetValue<{GetEnumUnderlyingType(inner.Type)}>(\"{colName}\"),");
+			}
+			else if (GetMappedDbType(inner.Type) is { } mappedInnerLoadType)
+			{
+				var originalType = FullType(UnwrapNullable(inner.Type));
+				if (IsNullableType(inner.Type))
+					sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\")?.To<{originalType}>(),");
+				else
+					sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{mappedInnerLoadType}>(\"{colName}\").To<{originalType}>(),");
+			}
+			else if (IsInnerSchemaProperty(inner))
+			{
+				var nestedType = UnwrapNullable(inner.Type);
+				var nestedProps = GetInnerTypeProperties(nestedType);
+				var nestedOverrides = GetNameOverrides(inner);
+				var nestedTypeName = FullType(nestedType);
+
+				sb.AppendLine($"{indent}{inner.Name} = new {nestedTypeName}");
+				sb.AppendLine($"{indent}{{");
+				EmitInnerInitWithoutRelationSingle(sb, nestedProps, colName, nestedOverrides, indent + "\t");
+				sb.AppendLine($"{indent}}},");
+			}
+			else
+			{
+				sb.AppendLine($"{indent}{inner.Name} = storage.GetValue<{FullType(inner.Type)}>(\"{colName}\"),");
+			}
+		}
+	}
+
+	// Statement-level FK loads for every [RelationSingle] member, qualified
+	// by the dotted access path from the local variable down to the member.
+	private static void EmitInnerRelationSinglePostInit(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, string accessPath, string indent)
+	{
+		foreach (var inner in innerProps)
+		{
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
+
+			if (IsRelationSingle(inner))
+			{
+				var innerIdType = GetRelationIdentityType(inner);
+				if (innerIdType == "long")
+					sb.AppendLine($"{indent}{accessPath}.{inner.Name} = await storage.LoadFkAsync<{FullType(inner.Type)}>(\"{colName}\", db, ct);");
+				else
+					sb.AppendLine($"{indent}{accessPath}.{inner.Name} = await storage.LoadFkAsync<{innerIdType}, {FullType(inner.Type)}>(\"{colName}\", db, ct);");
+			}
+			else if (IsInnerSchemaProperty(inner))
+			{
+				var nestedType = UnwrapNullable(inner.Type);
+				EmitInnerRelationSinglePostInit(sb, GetInnerTypeProperties(nestedType), colName, GetNameOverrides(inner), accessPath + "." + inner.Name, indent);
+			}
+		}
 	}
 
 	private static void EmitLoadInnerSchemaRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, string indent)
