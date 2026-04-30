@@ -138,6 +138,16 @@ public abstract class SqlDialectBase : ISqlDialect
 	public abstract void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns);
 
 	/// <inheritdoc />
+	public virtual void AppendInsertReturningClause(StringBuilder sb, string idColumn)
+	{
+		// Default: no RETURNING. SqlServer/SQLite read identity through a
+		// separate scope_identity()/last_insert_rowid() select.
+	}
+
+	/// <inheritdoc />
+	public virtual bool SupportsInsertReturning => false;
+
+	/// <inheritdoc />
 	public virtual string GetIdentitySelect(string idCol) => throw new NotSupportedException();
 
 	/// <inheritdoc />

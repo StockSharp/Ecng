@@ -73,7 +73,7 @@ public class OrderByConditionTests
 	[TestMethod]
 	public void Constructor_Descending()
 	{
-		var orderBy = new OrderByCondition("Column1", descending: true);
+		var orderBy = new OrderByCondition("Column1", Descending: true);
 
 		orderBy.Column.AssertEqual("Column1");
 		orderBy.Descending.AssertEqual(true);
@@ -82,7 +82,7 @@ public class OrderByConditionTests
 	[TestMethod]
 	public void Constructor_ExplicitAscending()
 	{
-		var orderBy = new OrderByCondition("Column1", descending: false);
+		var orderBy = new OrderByCondition("Column1", Descending: false);
 
 		orderBy.Column.AssertEqual("Column1");
 		orderBy.Descending.AssertEqual(false);

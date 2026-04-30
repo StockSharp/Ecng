@@ -21,6 +21,11 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 	private readonly MethodInfo _execResultAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResultAsync));
 	private readonly MethodInfo _execResult = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResult));
 
+	// Per-result-type cache for the closed generic IQueryContext.* methods we
+	// dispatch into. Without this every Execute<T>() pays for MakeGenericMethod
+	// on the hot path.
+	private readonly System.Collections.Concurrent.ConcurrentDictionary<Type, MethodInfo> _executeCache = new();
+
 	/// <summary>
 	/// Initializes a new instance using a relation-many list as the data source.
 	/// </summary>
@@ -53,26 +58,25 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 
 	T IQueryProvider.Execute<T>(Expression expression)
 	{
-		if (typeof(T).GetGenericType(typeof(IEnumerable<>)) is not null)
-		{
-			return (T)_execEnum.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, [expression]);
-		}
-		else if (typeof(T).GetGenericType(typeof(IAsyncEnumerable<>)) is not null)
-		{
-			return (T)_execEnumAsync.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, [expression]);
-		}
-		else if (typeof(T) == typeof(ValueTask))
-		{
-			return (T)_execAsync.Make(typeof(TEntity)).Invoke(_context, [expression]);
-		}
-		else if (typeof(T).GetGenericType(typeof(ValueTask<>)) is not null)
-		{
-			return (T)_execResultAsync.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, [expression]);
-		}
-		else
-		{
-			return (T)_execResult.Make(typeof(TEntity), typeof(T)).Invoke(_context, [expression]);
-		}
+		var closed = _executeCache.GetOrAdd(typeof(T), ResolveExecuteMethod);
+		return (T)closed.Invoke(_context, [expression]);
+	}
+
+	private MethodInfo ResolveExecuteMethod(Type resultType)
+	{
+		if (resultType.GetGenericType(typeof(IEnumerable<>)) is not null)
+			return _execEnum.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+
+		if (resultType.GetGenericType(typeof(IAsyncEnumerable<>)) is not null)
+			return _execEnumAsync.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+
+		if (resultType == typeof(ValueTask))
+			return _execAsync.Make(typeof(TEntity));
+
+		if (resultType.GetGenericType(typeof(ValueTask<>)) is not null)
+			return _execResultAsync.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+
+		return _execResult.Make(typeof(TEntity), resultType);
 	}
 
 	async ValueTask<IQueryable> IDefaultQueryProvider.TryInitBulkLoad(CancellationToken cancellationToken)

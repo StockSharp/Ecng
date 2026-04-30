@@ -285,7 +285,6 @@ public class ColumnAttributeTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("PostgreSql")]
-	[DataRow("SQLite")]
 	public void AppendDropColumn_GeneratesCorrectDdl(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -295,6 +294,15 @@ public class ColumnAttributeTests : BaseTestClass
 		dialect.AppendDropColumn(sb, "Users", "OldCol");
 
 		sb.ToString().AssertEqual($"ALTER TABLE {q("Users")} DROP COLUMN {q("OldCol")}");
+	}
+
+	[TestMethod]
+	public void AppendDropColumn_SQLite_ThrowsExplicitError()
+	{
+		// SQLite's DROP COLUMN is version-dependent; this dialect refuses
+		// to emit it and tells callers to use the table-rename pattern.
+		Assert.ThrowsExactly<NotSupportedException>(() =>
+			SQLiteDialect.Instance.AppendDropColumn(new StringBuilder(), "Users", "OldCol"));
 	}
 
 	#endregion

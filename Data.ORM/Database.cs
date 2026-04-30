@@ -92,6 +92,7 @@ public class Database : Disposable, IStorage
 
 			var cacheLock = _parent._cacheLock;
 			var cache = _parent._cache;
+			var cacheStore = _parent._cacheStore;
 
 			while (_newDeps.Count > 0)
 			{
@@ -173,6 +174,7 @@ public class Database : Disposable, IStorage
 
 					t.complete = true;
 					cache[key] = t;
+					cacheStore.Touch(key);
 				}
 			}
 
@@ -184,9 +186,37 @@ public class Database : Disposable, IStorage
 
 	private readonly SynchronizedDictionary<Query, TaskCompletionSource<DatabaseCommand>> _commandsByQuery = [];
 	private readonly SynchronizedDictionary<string, DatabaseCommand> _commandsByText = [];
-	private readonly AsyncLock _cacheLock = new();
-	private readonly Dictionary<(Type, string, object), (object entity, bool complete)> _cache = [];
+	// EntityCacheStore owns the entity dictionary, its async lock, the
+	// per-entry timestamps, and the TTL policy. Database accesses the
+	// dictionary directly through Entries / Lock for the hot CRUD paths,
+	// and goes through the helpers (Touch / Remove / TrimExpiredAsync)
+	// for higher-level operations.
+	private readonly EntityCacheStore _cacheStore = new();
+	private AsyncLock _cacheLock => _cacheStore.Lock;
+	private Dictionary<(Type, string, object), (object entity, bool complete)> _cache => _cacheStore.Entries;
 	private readonly SynchronizedDictionary<Type, BulkLoadInfo> _bulkLoad = [];
+
+	/// <summary>
+	/// Maximum age of an entity in the cache. Defaults to
+	/// <see cref="TimeSpan.MaxValue"/> meaning entries are never evicted
+	/// based on age (the cache only grows / clears explicitly via
+	/// <see cref="IStorage.ClearCacheAsync"/>). Lower the value for
+	/// long-running processes that risk OOM under unbounded growth, then
+	/// call <see cref="TrimExpiredCache"/> on a timer.
+	/// </summary>
+	public TimeSpan CacheTimeout
+	{
+		get => _cacheStore.Timeout;
+		set => _cacheStore.Timeout = value;
+	}
+
+	/// <summary>
+	/// Removes entries from the cache whose age exceeds
+	/// <see cref="CacheTimeout"/>. Safe to call concurrently with normal
+	/// CRUD — it acquires the same lock used by <c>ClearCacheAsync</c>.
+	/// </summary>
+	public ValueTask TrimExpiredCache(CancellationToken cancellationToken)
+		=> _cacheStore.TrimExpiredAsync(cancellationToken);
 
 	private readonly Regex _parameterRegex = new("@(?<parameterName>[_a-zA-Z0-9]+)", RegexOptions.Multiline);
 
@@ -322,7 +352,7 @@ public class Database : Disposable, IStorage
 	/// </summary>
 	public virtual ValueTask<DatabaseCommand> GetCommand(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns, CancellationToken cancellationToken)
 	{
-		var commandQuery = QueryProvider.Create(meta, type, keyColumns, valueColumns);
+		var commandQuery = QueryProvider.Create(meta, type, keyColumns, valueColumns, Dialect);
 
 		return _commandsByQuery.SafeAddAsync(commandQuery, (key, t) =>
 		{
@@ -530,6 +560,7 @@ public class Database : Disposable, IStorage
 					var entity = CreateEntity(meta, id);
 
 					_cache.Add(key, (entity, false));
+					_cacheStore.Touch(key);
 					scope.SetDep(key, null);
 
 					return entity;
@@ -560,7 +591,10 @@ public class Database : Disposable, IStorage
 						entity = t.entity;
 				}
 				else
+				{
 					_cache.Add(key, (default, true));
+					_cacheStore.Touch(key);
+				}
 			}
 			return entity;
 		}).NoWait();
@@ -773,7 +807,7 @@ public class Database : Disposable, IStorage
 	async ValueTask IStorage.ClearCacheAsync(CancellationToken cancellationToken)
 	{
 		using var _ = await _cacheLock.LockAsync(cancellationToken).ConfigureAwait(false);
-		_cache.Clear();
+		_cacheStore.Clear();
 	}
 
 	#endregion
@@ -923,6 +957,7 @@ public class Database : Disposable, IStorage
 				entity = CreateEntity(meta, id);
 
 				_cache.Add(key, (entity, false));
+				_cacheStore.Touch(key);
 				scope.SetDep(key, entity);
 			}
 		}
@@ -943,13 +978,22 @@ public class Database : Disposable, IStorage
 			if (t.complete)
 			{
 				if (t.entity is null && entity is not null)
+				{
 					_cache[key] = (entity, true);
+					_cacheStore.Touch(key);
+				}
 			}
 			else
+			{
 				_cache[key] = (entity, true);
+				_cacheStore.Touch(key);
+			}
 		}
 		else
+		{
 			_cache.Add(key, (entity, true));
+			_cacheStore.Touch(key);
+		}
 	}
 
 	private async ValueTask UpdateCache(Schema meta, IDbPersistable entity, CancellationToken cancellationToken)
@@ -999,7 +1043,7 @@ public class Database : Disposable, IStorage
 
 		using var _ = await _cacheLock.LockAsync(cancellationToken).ConfigureAwait(false);
 		foreach (var key in keys)
-			_cache.Remove(key);
+			_cacheStore.Remove(key);
 	}
 
 	private static SerializationItemCollection GroupSource(Schema meta, SerializationItemCollection input)

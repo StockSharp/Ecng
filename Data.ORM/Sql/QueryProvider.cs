@@ -7,18 +7,19 @@ using Ecng.Common;
 /// </summary>
 public class QueryProvider
 {
-	private readonly Dictionary<(Schema, SqlCommandTypes, string), Query> _queries = [];
+	private readonly Dictionary<(Schema, SqlCommandTypes, string, bool), Query> _queries = [];
 
 	/// <summary>
 	/// Creates or retrieves a cached SQL query for the specified schema, command type, and columns.
 	/// </summary>
-	public Query Create(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns)
+	public Query Create(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns, ISqlDialect dialect = null)
 	{
 		ArgumentNullException.ThrowIfNull(meta);
 		ArgumentNullException.ThrowIfNull(keyColumns);
 		ArgumentNullException.ThrowIfNull(valueColumns);
 
-		var cacheKey = (meta, type, keyColumns.Select(c => c.Name).JoinComma() + "|" + valueColumns.Select(c => c.Name).JoinComma());
+		var supportsReturning = dialect?.SupportsInsertReturning == true;
+		var cacheKey = (meta, type, keyColumns.Select(c => c.Name).JoinComma() + "|" + valueColumns.Select(c => c.Name).JoinComma(), supportsReturning);
 
 		return _queries.SafeAdd(cacheKey, key =>
 		{
@@ -53,6 +54,15 @@ public class QueryProvider
 
 					if (readOnlyNames.Length > 0)
 					{
+						// Single-statement INSERT … RETURNING when (a) the only
+						// readonly column is identity and (b) the dialect supports
+						// inline RETURNING. Pool-safe; sidesteps lastval()/scope_identity().
+						if (readOnlyNonIdentityNames.Length == 0 && supportsReturning)
+						{
+							query = query.Returning(meta.Identity.Name);
+							return query;
+						}
+
 						var batch = new BatchQuery();
 						batch.Queries.Add(query);
 

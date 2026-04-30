@@ -52,8 +52,13 @@ public class TestRelationManyList : RelationManyList<TestItem, long>
 		await GetRangeAsync(0, long.MaxValue, false, null, ListSortDirection.Ascending, ct);
 
 		var field = typeof(RelationManyList<TestItem, long>)
-			.GetField("_cachedEntities", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-		return (Dictionary<long, TestItem>)field.GetValue(this);
+			.GetField("_cachedEntitiesPair", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		var pair = field.GetValue(this);
+		if (pair is null)
+			return null;
+		// _cachedEntitiesPair is (AsyncReaderWriterLock, Dictionary<TId, TEntity>)?, boxed.
+		var dictField = pair.GetType().GetField("Item2");
+		return (Dictionary<long, TestItem>)dictField.GetValue(pair);
 	}
 }
 

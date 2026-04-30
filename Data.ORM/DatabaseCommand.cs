@@ -135,7 +135,9 @@ public sealed class DatabaseCommand : Disposable
 		}, cancellationToken);
 
 	/// <summary>
-	/// Executes the command and returns all result rows as a columnar serialization item collection.
+	/// Executes the command and returns all result rows as a columnar
+	/// serialization item collection. Loads the entire result set into
+	/// memory; for arbitrarily-large reads use <see cref="ExecuteRowsAsync"/>.
 	/// </summary>
 	public ValueTask<SerializationItemCollection> ExecuteTable(SerializationItemCollection input, CancellationToken cancellationToken)
 	{
@@ -164,6 +166,30 @@ public sealed class DatabaseCommand : Disposable
 
 			return table;
 		}, cancellationToken);
+	}
+
+	/// <summary>
+	/// Streams result rows one at a time without buffering the whole set
+	/// in memory — preferred over <see cref="ExecuteTable"/> for queries
+	/// that may return millions of rows.
+	/// </summary>
+	public async IAsyncEnumerable<SerializationItemCollection> ExecuteRowsAsync(
+		SerializationItemCollection input,
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(input);
+
+		using var connection = await _createConnection(cancellationToken).NoWait();
+		using var cmd = CreateCommand(connection, input);
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken).NoWait();
+
+		while (await reader.ReadAsync(cancellationToken).NoWait())
+		{
+			var row = new SerializationItemCollection();
+			for (var i = 0; i < reader.FieldCount; i++)
+				row.Add(new(reader.GetName(i), reader.GetFieldType(i), reader.GetValueEx(i)));
+			yield return row;
+		}
 	}
 
 	private DbCommand CreateCommand(DbConnection connection, IEnumerable<SerializationItem> source)

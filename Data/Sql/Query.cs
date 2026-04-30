@@ -310,6 +310,12 @@ public class Query
 
 	/// <summary>
 	/// Queue of wrapping actions applied around column references.
+	/// Translation-scoped: a single instance is shared between all
+	/// <see cref="Query"/> objects produced for one query translation
+	/// pass and is mutated single-threaded by that pass. Concurrent use
+	/// across translation Contexts is not supported.
+	/// The <see cref="bool"/> argument signals direction: <c>true</c>
+	/// before the column is emitted, <c>false</c> after.
 	/// </summary>
 	public Queue<Action<bool, Query>> WrapColumn;
 
@@ -587,10 +593,32 @@ public class Query
 
 	/// <summary>
 	/// Appends a LIKE condition for the specified column with a matching parameter.
+	/// The column name is validated against a conservative identifier shape
+	/// before being interpolated into SQL — anything else throws so a
+	/// caller-controlled column name cannot smuggle SQL through the LIKE
+	/// clause (which previously interpolated <paramref name="columnName"/>
+	/// both as identifier and parameter name without checks).
 	/// </summary>
 	/// <param name="columnName">Column name to match.</param>
 	public Query Like(string columnName)
-		=> AddAction((dialect, builder) => builder.Append($"{dialect.QuoteIdentifier(columnName)} like {dialect.ParameterPrefix}{columnName}"));
+	{
+		EnsureSafeIdentifier(columnName);
+		return AddAction((dialect, builder) => builder.Append($"{dialect.QuoteIdentifier(columnName)} like {dialect.ParameterPrefix}{columnName}"));
+	}
+
+	private static void EnsureSafeIdentifier(string identifier)
+	{
+		if (identifier.IsEmpty())
+			throw new ArgumentException("Identifier must not be empty.", nameof(identifier));
+
+		foreach (var ch in identifier)
+		{
+			if (!(char.IsLetterOrDigit(ch) || ch == '_'))
+				throw new ArgumentException(
+					$"Identifier '{identifier}' contains an unsupported character; only letters, digits and underscore are allowed.",
+					nameof(identifier));
+		}
+	}
 
 	#endregion
 
@@ -861,6 +889,24 @@ public class Query
 	/// Creates an INSERT query.
 	/// </summary>
 	public static Query CreateInsert(string tableName, IEnumerable<string> columns)
+		=> CreateInsert(tableName, columns, returningIdColumn: null);
+
+	/// <summary>
+	/// Appends a dialect-specific RETURNING clause to the previous INSERT
+	/// in this query (no-op for dialects that don't support it).
+	/// </summary>
+	public Query Returning(string idColumn)
+		=> AddAction((dialect, sb) => dialect.AppendInsertReturningClause(sb, idColumn));
+
+	/// <summary>
+	/// Creates an INSERT query that optionally appends a dialect-specific
+	/// <c>RETURNING</c> clause for the given identity column. Useful for
+	/// PostgreSQL, where a single-statement INSERT…RETURNING is the only
+	/// pool-safe way to read back a server-generated identity. Pass
+	/// <see langword="null"/> for non-identity inserts and for dialects
+	/// that read identity via a separate select (SqlServer/SQLite).
+	/// </summary>
+	public static Query CreateInsert(string tableName, IEnumerable<string> columns, string returningIdColumn)
 	{
 		var cols = columns.ToArray();
 		return new Query().AddAction((dialect, sb) =>
@@ -868,6 +914,9 @@ public class Query
 			var quotedCols = cols.Select(dialect.QuoteIdentifier);
 			var paramCols = cols.Select(c => dialect.ParameterPrefix + c);
 			sb.Append($"INSERT INTO {dialect.QuoteIdentifier(tableName)} ({quotedCols.JoinCommaSpace()}) VALUES ({paramCols.JoinCommaSpace()})");
+
+			if (!returningIdColumn.IsEmpty())
+				dialect.AppendInsertReturningClause(sb, returningIdColumn);
 		});
 	}
 

@@ -271,7 +271,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.BulkInsertAsync(rows, CancellationToken);
 
 		// Select with order by descending
-		var orderBy = new[] { new OrderByCondition("Id", descending: true) };
+		var orderBy = new[] { new OrderByCondition("Id", Descending: true) };
 		var results = await table.SelectAsync(null, orderBy, null, null, CancellationToken);
 		var list = results.ToList();
 

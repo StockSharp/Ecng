@@ -109,31 +109,33 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		int IEqualityComparer<object>.GetHashCode(object obj) => _underlying.GetHashCode(obj);
 	}
 
+	// LazyInitializer atomically publishes both the reader-writer lock and
+	// the dictionary as a single tuple so a concurrent reader cannot
+	// observe a half-initialised state (where _cachedEntities was assigned
+	// before _cachedEntitiesLock under the previous ad-hoc double-check).
+	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict)? _cachedEntitiesPair;
 	private readonly Lock _cachedEntitiesInitLock = new();
-	private AsyncReaderWriterLock _cachedEntitiesLock;
-	private Dictionary<TId, TEntity> _cachedEntities;
 
 	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict) CachedEntities
 	{
 		get
 		{
-			if (_cachedEntities is null)
+			if (_cachedEntitiesPair is { } existing)
+				return existing;
+
+			using (_cachedEntitiesInitLock.EnterScope())
 			{
-				using (_cachedEntitiesInitLock.EnterScope())
-				{
-					if (_cachedEntities is null)
-					{
-						_cachedEntitiesLock = new();
+				if (_cachedEntitiesPair is { } onceMore)
+					return onceMore;
 
-						if (Meta.Identity != null && typeof(TId) == typeof(string))
-							_cachedEntities = new(new StringIdComparer().To<IEqualityComparer<TId>>());
-						else
-							_cachedEntities = [];
-					}
-				}
+				var dict = Meta.Identity != null && typeof(TId) == typeof(string)
+					? new Dictionary<TId, TEntity>(new StringIdComparer().To<IEqualityComparer<TId>>())
+					: [];
+
+				var pair = (new AsyncReaderWriterLock(), dict);
+				_cachedEntitiesPair = pair;
+				return pair;
 			}
-
-			return (_cachedEntitiesLock, _cachedEntities);
 		}
 	}
 
@@ -455,7 +457,9 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 				var (sync, dict) = CachedEntities;
 
-				using (sync.ReaderLock())
+				// Real async lock instead of the previous sync ReaderLock,
+				// which blocked the calling Task while writers held the lock.
+				using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
 					source = dict.Values.ToArray();
 
 				if (orderByColumn is not null)

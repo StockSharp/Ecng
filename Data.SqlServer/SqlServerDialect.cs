@@ -300,6 +300,13 @@ ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
 		if (nonKeys.Length > 0)
 			sb.Append($"WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinCommaSpace()} ");
 
-		sb.Append($"WHEN NOT MATCHED THEN INSERT ({insertCols}) VALUES ({insertVals});");
+		sb.Append($"WHEN NOT MATCHED THEN INSERT ({insertCols}) VALUES ({insertVals}) ");
+
+		// OUTPUT lets the caller see whether the row was INSERTed or UPDATEd
+		// and pick up the post-merge key values (incl. server-generated
+		// identities). Without it MERGE was a black box for callers that
+		// expected the same identity round-trip the other dialects provide.
+		var keyOutputs = keyColumns.Select(k => $"INSERTED.{QuoteIdentifier(k)}").JoinCommaSpace();
+		sb.Append($"OUTPUT $action AS {QuoteIdentifier("MergeAction")}, {keyOutputs};");
 	}
 }

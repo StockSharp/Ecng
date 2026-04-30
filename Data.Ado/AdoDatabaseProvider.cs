@@ -24,9 +24,18 @@ public class AdoDatabaseProvider(Func<DatabaseConnectionPair, DbConnection> conn
 	private readonly Func<DatabaseConnectionPair, DbConnection> _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
 	/// <summary>
-	/// Singleton instance using <see cref="DatabaseProviderRegistry"/> to create connections.
+	/// Default singleton instance backed by <see cref="DatabaseProviderRegistry"/>.
+	/// Tests can swap this for a test double via <see cref="OverrideInstance"/>;
+	/// production code should leave it alone.
 	/// </summary>
-	public static readonly AdoDatabaseProvider Instance = new();
+	public static IDatabaseProvider Instance { get; private set; } = new AdoDatabaseProvider();
+
+	/// <summary>
+	/// Override the global <see cref="Instance"/>. Intended for tests; pass
+	/// <see langword="null"/> to restore the default <see cref="AdoDatabaseProvider"/>.
+	/// </summary>
+	public static void OverrideInstance(IDatabaseProvider provider)
+		=> Instance = provider ?? new AdoDatabaseProvider();
 
 	/// <summary>
 	/// Initializes a new instance using <see cref="DatabaseProviderRegistry"/> to create connections.
@@ -262,24 +271,52 @@ internal class AdoTable : IDatabaseTable
 
 	#region Helpers
 
-	private async Task<int> ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
+	private async Task<DbCommand> PrepareCommandAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
 		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
 
-		using var cmd = _connection.Connection.CreateCommand();
+		var cmd = _connection.Connection.CreateCommand();
 		cmd.CommandText = sql;
 		AddParameters(cmd, parameters);
+		return cmd;
+	}
 
-		return await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
+	// Light retry policy for transient driver/network errors. Provider-
+	// specific transient codes (deadlock victim, network reset, broker
+	// timeout) bubble up as DbException with various error codes; we
+	// avoid pinning to one DBMS by retrying on any DbException up to a
+	// small fixed number of times with exponential backoff.
+	private const int _retryCount = 3;
+	private static readonly TimeSpan _retryBaseDelay = TimeSpan.FromMilliseconds(100);
+
+	private static async Task<T> WithRetry<T>(Func<Task<T>> op, CancellationToken cancellationToken)
+	{
+		for (var attempt = 0; ; attempt++)
+		{
+			try
+			{
+				return await op().NoWait();
+			}
+			catch (DbException) when (attempt < _retryCount)
+			{
+				var delay = TimeSpan.FromTicks(_retryBaseDelay.Ticks << attempt);
+				await Task.Delay(delay, cancellationToken).NoWait();
+			}
+		}
+	}
+
+	private async Task<int> ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
+	{
+		return await WithRetry(async () =>
+		{
+			using var cmd = await PrepareCommandAsync(sql, parameters, cancellationToken).NoWait();
+			return await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
+		}, cancellationToken).NoWait();
 	}
 
 	private async Task<IEnumerable<IDictionary<string, object>>> QueryAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
-		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
-
-		using var cmd = _connection.Connection.CreateCommand();
-		cmd.CommandText = sql;
-		AddParameters(cmd, parameters);
+		using var cmd = await PrepareCommandAsync(sql, parameters, cancellationToken).NoWait();
 
 		var results = new List<IDictionary<string, object>>();
 		using var reader = await cmd.ExecuteReaderAsync(cancellationToken).NoWait();

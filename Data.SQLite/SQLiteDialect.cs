@@ -278,6 +278,28 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	{
+		// SQLite's ALTER TABLE … ALTER COLUMN does not exist — only
+		// RENAME COLUMN and a few specific cases were added in 3.25/3.35.
+		// Generic type/nullability changes need the table-rename dance.
+		throw new NotSupportedException(
+			$"SQLite cannot ALTER COLUMN ({tableName}.{columnName}). Use the table-rename migration pattern: " +
+			"create a new table with the desired schema, copy rows, drop the old table, rename the new one.");
+	}
+
+	/// <inheritdoc />
+	public override void AppendDropColumn(StringBuilder sb, string tableName, string columnName)
+	{
+		// DROP COLUMN landed in SQLite 3.35 (2021) but with a number of
+		// caveats — falls back to the table-rename pattern in our migrator
+		// to stay consistent across SQLite versions.
+		throw new NotSupportedException(
+			$"SQLite DROP COLUMN ({tableName}.{columnName}) is version-dependent and not used by this dialect. " +
+			"Use the table-rename migration pattern: create a new table without the column, copy rows, drop the old, rename.");
+	}
+
+	/// <inheritdoc />
 	public override void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns)
 	{
 		var nonKeys = allColumns.Except(keyColumns).ToArray();

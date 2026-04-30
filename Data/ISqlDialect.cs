@@ -185,6 +185,22 @@ public interface ISqlDialect
 	void AppendUpsert(StringBuilder sb, string tableName, string[] allColumns, string[] keyColumns);
 
 	/// <summary>
+	/// Appends a dialect-specific RETURNING clause to an INSERT, scoped to
+	/// the given identity column. PostgreSQL emits <c>RETURNING "Id"</c>;
+	/// SQL Server and SQLite have other identity-read mechanisms and emit
+	/// nothing here.
+	/// </summary>
+	void AppendInsertReturningClause(StringBuilder sb, string idColumn);
+
+	/// <summary>
+	/// True when this dialect can return a server-generated identity in
+	/// the same statement via <see cref="AppendInsertReturningClause"/>;
+	/// callers use it to choose between a single-statement INSERT…RETURNING
+	/// and a two-statement INSERT + SELECT identity batch.
+	/// </summary>
+	bool SupportsInsertReturning { get; }
+
+	/// <summary>
 	/// Appends an ALTER TABLE ADD CONSTRAINT for a new foreign key.
 	/// </summary>
 	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName);
