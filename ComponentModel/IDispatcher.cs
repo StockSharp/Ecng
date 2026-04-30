@@ -42,6 +42,17 @@ public class DummyDispatcher : IDispatcher
 	private ControllablePeriodicTimer _timer;
 	private TimeSpan _timerInterval = TimeSpan.Zero;
 
+	/// <summary>
+	/// Current interval at which the underlying timer fires; <see cref="TimeSpan.Zero"/>
+	/// when no periodic actions are registered. Useful for diagnostics.
+	/// </summary>
+	public TimeSpan CurrentTimerInterval => _timerInterval;
+
+	/// <summary>
+	/// Number of periodic actions currently registered with this dispatcher.
+	/// </summary>
+	public int PeriodicActionCount => _periodic.Count;
+
 	/// <inheritdoc />
 	bool IDispatcher.CheckAccess() => true;
 

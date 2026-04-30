@@ -20,10 +20,7 @@ public class DummyDispatcherTests : BaseTestClass
 		if (dispatcher is not DummyDispatcher dummy)
 			throw new ArgumentException($"Expected {nameof(DummyDispatcher)}.", nameof(dispatcher));
 
-		var field = typeof(DummyDispatcher).GetField("_timerInterval", BindingFlags.Instance | BindingFlags.NonPublic)
-			?? throw new InvalidOperationException($"Cannot access {nameof(DummyDispatcher)}._timerInterval.");
-
-		return (TimeSpan)field.GetValue(dummy);
+		return dummy.CurrentTimerInterval;
 	}
 
 	private static int GetPlannerCount(IDispatcher dispatcher)
@@ -31,11 +28,7 @@ public class DummyDispatcherTests : BaseTestClass
 		if (dispatcher is not DummyDispatcher dummy)
 			throw new ArgumentException($"Expected {nameof(DummyDispatcher)}.", nameof(dispatcher));
 
-		var field = typeof(DummyDispatcher).GetField("_periodic", BindingFlags.Instance | BindingFlags.NonPublic)
-			?? throw new InvalidOperationException($"Cannot access {nameof(DummyDispatcher)}._periodic.");
-
-		var planner = (PeriodicActionPlanner)field.GetValue(dummy);
-		return planner.Count;
+		return dummy.PeriodicActionCount;
 	}
 
 	[TestMethod]
