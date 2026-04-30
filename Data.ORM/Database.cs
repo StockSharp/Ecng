@@ -16,175 +16,10 @@ using Nito.AsyncEx;
 /// <summary>
 /// Provides database access and entity persistence via an ORM layer.
 /// </summary>
-public class Database : Disposable, IStorage
+public partial class Database : Disposable, IStorage
 {
-	private class BulkLoadInfo
-	{
-		private readonly Database _database;
-		private CachedSynchronizedDictionary<object, object> _cachedEntities;
-
-		public BulkLoadInfo(Database database, Schema meta)
-		{
-			_database = database ?? throw new ArgumentNullException(nameof(database));
-			Meta = meta ?? throw new ArgumentNullException(nameof(meta));
-
-			if (Meta.Identity is null)
-				throw new ArgumentException(Meta.EntityType.AssemblyQualifiedName, nameof(meta));
-		}
-
-		public Schema Meta { get; }
-
-		public async ValueTask<CachedSynchronizedDictionary<object, object>> EnsureInit(CancellationToken cancellationToken)
-		{
-			if (_cachedEntities is null)
-			{
-				object[] cachedEntities;
-
-				using (new Scope<BulkLoadInfo>(this))
-					cachedEntities = await _database.ReadAllAsync(Meta, 0, _database.MaxBulkLoadRows, default, Meta.Identity.Name, ListSortDirection.Ascending, cancellationToken).NoWait();
-				var dict = new CachedSynchronizedDictionary<object, object>();
-
-				foreach (var e in cachedEntities)
-					dict.Add(((IDbPersistable)e).GetIdentity(), e);
-
-				_cachedEntities = dict;
-			}
-
-			return _cachedEntities;
-		}
-	}
-
-	private class BulkScope : IAsyncDisposable
-	{
-		private readonly Scope<BulkScope> _scope;
-		private readonly Database _parent;
-		private readonly CancellationToken _token;
-		private readonly Dictionary<(Type, string, object), object> _pendingDeps = [];
-		private readonly Dictionary<(Type, string, object), object> _newDeps = [];
-
-		public static BulkScope Instance => Scope<BulkScope>.Current?.Value;
-
-		public BulkScope(Database parent, CancellationToken token)
-		{
-			if (Instance is not null)
-				throw new InvalidOperationException();
-
-			_scope = new Scope<BulkScope>(this);
-			_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-			_token = token;
-		}
-
-		public bool HasDep((Type, string, object) key) => _pendingDeps.ContainsKey(key);
-		public bool TryGetDep((Type, string, object) key, out object entity) => _pendingDeps.TryGetValue(key, out entity);
-		public void SetDep((Type, string, object) key, object entity)
-		{
-			if (entity is null)
-				_pendingDeps.TryAdd2(key, entity);
-			else
-				_pendingDeps[key] = entity;
-
-			_newDeps[key] = entity;
-		}
-
-		async ValueTask IAsyncDisposable.DisposeAsync()
-		{
-			var token = _token;
-
-			var cacheLock = _parent._cacheLock;
-			var cache = _parent._cache;
-			var cacheStore = _parent._cacheStore;
-
-			while (_newDeps.Count > 0)
-			{
-				var newDeps = _newDeps.CopyAndClear();
-
-				foreach (var g in newDeps.Where(p => p.Value is null).GroupBy(k => k.Key.Item1))
-				{
-					var entityType = g.Key;
-					var meta = SchemaRegistry.Get(entityType);
-					var ids = g.Select(i => i.Key.Item3).ToList();
-
-					using (await cacheLock.LockAsync(token).ConfigureAwait(false))
-					{
-						foreach (var id in ids.ToArray())
-						{
-							var key = (entityType, meta.Identity.Name, id);
-
-							if (TryGetDep(key, out var e) && e is not null)
-								ids.Remove(id);
-							else if (cache.TryGetValue(key, out var t) && t.complete)
-								ids.Remove(id);
-						}
-					}
-
-					if (ids.Count == 0)
-						continue;
-
-					foreach (var b in ids.Chunk(500))
-					{
-						var batch = b.ToArray();
-						Array res;
-
-						if (meta.IsView)
-						{
-							var processor = ViewProcessorRegistry.GetProcessor(meta.EntityType);
-
-							res = (Array)await processor.ReadRange(batch, token).NoWait();						}
-						else
-						{
-							var valueColumns = new List<SchemaColumn>();
-							var input = new SerializationItemCollection();
-
-							var idx = 0;
-							foreach (var id in batch)
-							{
-								var colName = $"Id{idx++}";
-								valueColumns.Add(new() { Name = colName, ClrType = meta.Identity.ClrType });
-								input.Add(new(colName, meta.Identity.ClrType, id));
-							}
-
-							var cmd = await _parent.GetCommand(meta, SqlCommandTypes.ReadRange, [meta.Identity], valueColumns, token).NoWait();
-							res = await _parent.ReadAllAsync(cmd, meta, input, token).NoWait();						}
-
-						if (res.Length != batch.Length)
-							throw new InvalidOperationException($"Res={res.Length} <> Batch={batch.Length}");
-					}
-				}
-			}
-
-			using (await cacheLock.LockAsync(token).ConfigureAwait(false))
-			{
-				foreach (var pair in _pendingDeps)
-				{
-					var key = pair.Key;
-					var entity = pair.Value;
-
-					var t = cache[key];
-
-					if (entity is null)
-					{
-						if (t.complete)
-							continue;
-						else
-							throw new InvalidOperationException(key.To<string>());
-					}
-
-					if (t.complete)
-						continue;
-
-					t.complete = true;
-					cache[key] = t;
-					cacheStore.Touch(key);
-				}
-			}
-
-			_scope.Dispose();
-		}
-	}
-
 	#region Private Fields
 
-	private readonly SynchronizedDictionary<Query, TaskCompletionSource<DatabaseCommand>> _commandsByQuery = [];
 	private readonly SynchronizedDictionary<string, DatabaseCommand> _commandsByText = [];
 	// EntityCacheStore owns the entity dictionary, its async lock, the
 	// per-entry timestamps, and the TTL policy. Database accesses the
@@ -211,14 +46,24 @@ public class Database : Disposable, IStorage
 	}
 
 	/// <summary>
+	/// Maximum entry count of the cache before LRU eviction kicks in.
+	/// <see cref="int.MaxValue"/> disables size-bounded eviction; lower
+	/// the value for long-running processes that should bound their
+	/// resident set.
+	/// </summary>
+	public int MaxCacheEntries
+	{
+		get => _cacheStore.MaxEntries;
+		set => _cacheStore.MaxEntries = value;
+	}
+
+	/// <summary>
 	/// Removes entries from the cache whose age exceeds
 	/// <see cref="CacheTimeout"/>. Safe to call concurrently with normal
 	/// CRUD — it acquires the same lock used by <c>ClearCacheAsync</c>.
 	/// </summary>
 	public ValueTask TrimExpiredCache(CancellationToken cancellationToken)
 		=> _cacheStore.TrimExpiredAsync(cancellationToken);
-
-	private readonly Regex _parameterRegex = new("@(?<parameterName>[_a-zA-Z0-9]+)", RegexOptions.Multiline);
 
 	private readonly Stat<string> _stat = new();
 	Stat<string> IStorage.Stat => _stat;
@@ -238,7 +83,11 @@ public class Database : Disposable, IStorage
 		ConnectionString = connectionString;
 		Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 		Dialect = dialect ?? throw new ArgumentNullException(nameof(dialect));
+
+		_commandFactory = new CommandFactory(Factory, Dialect, QueryProvider, CreateConnectionAsync);
 	}
+
+	private readonly CommandFactory _commandFactory;
 
 	/// <summary>
 	/// Gets the query provider used to generate SQL commands.
@@ -351,64 +200,7 @@ public class Database : Disposable, IStorage
 	/// Gets or creates a cached <see cref="DatabaseCommand"/> for the specified schema and command type.
 	/// </summary>
 	public virtual ValueTask<DatabaseCommand> GetCommand(Schema meta, SqlCommandTypes type, IReadOnlyList<SchemaColumn> keyColumns, IReadOnlyList<SchemaColumn> valueColumns, CancellationToken cancellationToken)
-	{
-		var commandQuery = QueryProvider.Create(meta, type, keyColumns, valueColumns, Dialect);
-
-		return _commandsByQuery.SafeAddAsync(commandQuery, (key, t) =>
-		{
-			var query = key.Render(Dialect);
-			var dbCommand = CreateDbCommand(query, CommandType.Text);
-
-			var command = new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, dbCommand);
-
-			foreach (Match match in _parameterRegex.Matches(query))
-			{
-				if (match.Success)
-				{
-					var group = match.Groups["parameterName"];
-
-					var fieldName = group.Value;
-
-					SchemaColumn col = null;
-
-					foreach (var c in keyColumns)
-					{
-						if (c.Name.EqualsIgnoreCase(fieldName))
-						{
-							col = c;
-							break;
-						}
-					}
-
-					if (col is null)
-					{
-						foreach (var c in valueColumns)
-						{
-							if (c.Name.EqualsIgnoreCase(fieldName))
-							{
-								col = c;
-								break;
-							}
-						}
-					}
-
-					col ??= meta.TryGetColumn(fieldName);
-
-					if (col is null)
-						throw new InvalidOperationException($"Column '{fieldName}' not found in {meta.EntityType}.");
-
-					command.Parameters.Add(
-						Factory.CreateDbParameter(
-							Dialect.ParameterPrefix + fieldName,
-							ParameterDirection.Input,
-							col.ClrType.ToDbType(),
-							DBNull.Value));
-				}
-			}
-
-			return Task.FromResult(command);
-		}, cancellationToken).AsValueTask();
-	}
+		=> _commandFactory.GetCommandAsync(meta, type, keyColumns, valueColumns, cancellationToken);
 
 	private DbCommand CreateDbCommand(string text, CommandType type)
 	{

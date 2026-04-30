@@ -84,7 +84,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			if (BulkInitialized())
 			{
-				var (sync, dict) = CachedEntities;
+				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = sync.ReaderLock();
 				return dict.Values.ToArray().AsQueryable();
@@ -116,7 +116,16 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict)? _cachedEntitiesPair;
 	private readonly Lock _cachedEntitiesInitLock = new();
 
-	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict) CachedEntities
+	/// <summary>
+	/// Read-only view of the lazily-built bulk-load cache, keyed by entity
+	/// identity. Returns <see langword="null"/> when the cache has not been
+	/// initialised yet (e.g. before the first read on a <see cref="BulkLoad"/>
+	/// list). Useful for diagnostics — and lets tests assert on cache state
+	/// without reaching into private fields.
+	/// </summary>
+	public IReadOnlyDictionary<TId, TEntity> CachedEntities => _cachedEntitiesPair?.dict;
+
+	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict) CachedEntitiesPair
 	{
 		get
 		{
@@ -178,7 +187,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// </summary>
 	public virtual void ResetCache()
 	{
-		var (sync, dict) = CachedEntities;
+		var (sync, dict) = CachedEntitiesPair;
 
 		using var _ = sync.WriterLock();
 
@@ -241,7 +250,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 			var isNew = false;
 
-			var (sync, dict) = CachedEntities;
+			var (sync, dict) = CachedEntitiesPair;
 
 			using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
 			{
@@ -298,7 +307,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			if (!BulkInitialized())
 				await GetRangeAsync(0, long.MaxValue, deleted, default, default, cancellationToken).NoWait();
 
-			var (sync, dict) = CachedEntities;
+			var (sync, dict) = CachedEntitiesPair;
 
 			using var _ = await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false);
 			return dict.Count;
@@ -338,7 +347,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			if (BulkInitialized())
 			{
-				var (sync, dict) = CachedEntities;
+				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 				dict.Add(GetCacheId(item), item);
@@ -366,7 +375,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			await GetRangeAsync(cancellationToken).NoWait();
 
-			var (sync, dict) = CachedEntities;
+			var (sync, dict) = CachedEntitiesPair;
 
 			using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 			dict.Clear();
@@ -401,7 +410,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			if (BulkInitialized())
 			{
-				var (sync, dict) = CachedEntities;
+				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 				dict.Remove(GetCacheId(item));
@@ -455,7 +464,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				IEnumerable<TEntity> source;
 
-				var (sync, dict) = CachedEntities;
+				var (sync, dict) = CachedEntitiesPair;
 
 				// Real async lock instead of the previous sync ReaderLock,
 				// which blocked the calling Task while writers held the lock.
@@ -508,7 +517,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			if (!BulkInitialized())
 			{
-				var (sync, dict) = CachedEntities;
+				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 

@@ -135,7 +135,16 @@ public class Schema
 		_uniqueColumns = null;
 		_indexColumns = null;
 		_columnsByName = null;
+		IsInitialized = true;
 	}
+
+	/// <summary>
+	/// True after <see cref="SetColumnsAndIdentity"/> has filled in the
+	/// reflection-derived metadata. SchemaRegistry exposes only initialised
+	/// instances through <c>TryGet</c> so a parallel reader cannot observe
+	/// a half-built schema while another thread is still walking properties.
+	/// </summary>
+	public bool IsInitialized { get; private set; }
 
 	private Lazy<IReadOnlyList<SchemaColumn>> _allColumns;
 

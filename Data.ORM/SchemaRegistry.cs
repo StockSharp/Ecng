@@ -13,6 +13,13 @@ using Ecng.Data.Sql;
 public static class SchemaRegistry
 {
 	private static readonly SynchronizedDictionary<Type, Schema> _cache = [];
+	// Schemas currently being built via reflection. They are only ever read
+	// from inside CreateFromReflection on the same thread that put them
+	// here (cycle resolution between mutually-FK-ed entities). Public
+	// TryGet never reads from this — it only sees fully-built schemas in
+	// _cache, which kills the previous race where a parallel reader could
+	// observe a half-initialised Schema.
+	private static readonly Dictionary<Type, Schema> _pending = [];
 	private static readonly SynchronizedDictionary<Type, Type> _typeMappings = [];
 
 	static SchemaRegistry()
@@ -40,19 +47,27 @@ public static class SchemaRegistry
 	}
 
 	/// <summary>
-	/// Tries to get a registered schema for the specified entity type.
+	/// Tries to get a fully-initialised schema for the specified entity type.
+	/// Schemas currently mid-build (used to break FK cycles inside
+	/// <see cref="CreateFromReflection"/>) are not visible here.
 	/// </summary>
 	public static bool TryGet(Type entityType, out Schema meta)
 		=> _cache.TryGetValue(entityType, out meta);
 
 	/// <summary>
-	/// Gets the schema for the specified entity type, creating one via reflection if not registered.
+	/// Gets the schema for the specified entity type, creating one via
+	/// reflection if not registered.
 	/// </summary>
 	public static Schema Get(Type entityType)
 	{
 		using (_cache.EnterScope())
 		{
 			if (_cache.TryGetValue(entityType, out var schema))
+				return schema;
+
+			// Already in flight on this thread (mutual FK cycle): hand back
+			// the in-progress instance so the caller can wire references.
+			if (_pending.TryGetValue(entityType, out schema))
 				return schema;
 
 			return CreateFromReflection(entityType);
@@ -256,7 +271,9 @@ public static class SchemaRegistry
 			IsView = entityType.GetAttribute<ViewProcessorAttribute>() is not null,
 		};
 
-		_cache[entityType] = schema;
+		// Stash as pending — visible to recursive Get() inside this thread
+		// (for FK cycles), invisible to TryGet() on other threads.
+		_pending[entityType] = schema;
 
 		// phase 2: discover columns via reflection
 		var columns = new List<SchemaColumn>();
@@ -365,6 +382,11 @@ public static class SchemaRegistry
 			}
 
 			schema.SetColumnsAndIdentity(identity, columns);
+
+		// Phase 3: atomically promote from pending → cache so external
+		// readers (TryGet) only ever see fully-built schemas.
+		_pending.Remove(entityType);
+		_cache[entityType] = schema;
 		return schema;
 	}
 

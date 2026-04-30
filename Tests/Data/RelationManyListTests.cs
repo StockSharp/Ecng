@@ -46,19 +46,11 @@ public class TestRelationManyList : RelationManyList<TestItem, long>
 	/// <summary>
 	/// Gets the internal cache dictionary for test assertions.
 	/// </summary>
-	public async ValueTask<Dictionary<long, TestItem>> GetCacheForTest(CancellationToken ct)
+	public async ValueTask<IReadOnlyDictionary<long, TestItem>> GetCacheForTest(CancellationToken ct)
 	{
 		// Force bulk initialization by reading range
 		await GetRangeAsync(0, long.MaxValue, false, null, ListSortDirection.Ascending, ct);
-
-		var field = typeof(RelationManyList<TestItem, long>)
-			.GetField("_cachedEntitiesPair", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-		var pair = field.GetValue(this);
-		if (pair is null)
-			return null;
-		// _cachedEntitiesPair is (AsyncReaderWriterLock, Dictionary<TId, TEntity>)?, boxed.
-		var dictField = pair.GetType().GetField("Item2");
-		return (Dictionary<long, TestItem>)dictField.GetValue(pair);
+		return CachedEntities;
 	}
 }
 
