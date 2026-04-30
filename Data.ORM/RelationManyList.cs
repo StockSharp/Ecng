@@ -458,42 +458,81 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			return source;
 		}
 
-		if (!deleted && BulkLoad)
+		IEnumerable<TEntity> OrderAndPage(IEnumerable<TEntity> snapshot)
 		{
-			if (BulkInitialized())
+			if (orderByColumn is not null)
 			{
-				IEnumerable<TEntity> source;
-
-				var (sync, dict) = CachedEntitiesPair;
-
-				// Real async lock instead of the previous sync ReaderLock,
-				// which blocked the calling Task while writers held the lock.
-				using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
-					source = dict.Values.ToArray();
-
-				if (orderByColumn is not null)
+				object KeySelector(TEntity entity)
 				{
-					object KeySelector(TEntity entity)
-					{
-						if (orderByColumn == Meta.Identity?.Name)
-							return entity.GetIdentity();
+					if (orderByColumn == Meta.Identity?.Name)
+						return entity.GetIdentity();
 
-						var s = new SettingsStorage();
-						entity.Save(s);
-						s.TryGetValue(orderByColumn, out var v);
-						return v;
-					}
-
-					source = direction == ListSortDirection.Ascending ? source.OrderBy(KeySelector) : source.OrderByDescending(KeySelector);
+					var s = new SettingsStorage();
+					entity.Save(s);
+					s.TryGetValue(orderByColumn, out var v);
+					return v;
 				}
 
-				return ApplySkipTake(source, startIndex, count);
+				snapshot = direction == ListSortDirection.Ascending ? snapshot.OrderBy(KeySelector) : snapshot.OrderByDescending(KeySelector);
 			}
-			else
+
+			return ApplySkipTake(snapshot, oldStartIndex, oldCount);
+		}
+
+		if (!deleted && BulkLoad)
+		{
+			var (sync, dict) = CachedEntitiesPair;
+
+			if (BulkInitialized())
 			{
-				startIndex = 0;
-				count = long.MaxValue;
+				TEntity[] cached;
+
+				using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
+					cached = [.. dict.Values];
+
+				return OrderAndPage(cached);
 			}
+
+			// First-time bulk init. Serialise concurrent initialisers under
+			// the writer lock so OnGetGroup is called once; re-check inside
+			// to handle the race where another caller populated the cache
+			// while we were waiting for the lock.
+			using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
+			{
+				if (!_bulkInitialized)
+				{
+					List<TEntity> loaded = [];
+					long offset = 0;
+
+					while (true)
+					{
+						var buffer = await OnGetGroup(offset, BufferSize, deleted, orderByColumn, direction, cancellationToken).NoWait();
+						loaded.AddRange(buffer);
+
+						if (buffer.Length < BufferSize)
+							break;
+
+						offset += BufferSize;
+					}
+
+					dict.Clear();
+
+					foreach (var entity in loaded)
+						dict.Add(GetCacheId(entity), entity);
+
+					_bulkInitialized = true;
+
+					if (CacheTimeOut < TimeSpan.MaxValue)
+						_cacheExpire = DateTime.UtcNow + CacheTimeOut;
+				}
+			}
+
+			TEntity[] postInit;
+
+			using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
+				postInit = [.. dict.Values];
+
+			return OrderAndPage(postInit);
 		}
 
 		List<TEntity> entities = [];
@@ -511,28 +550,6 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 			count -= pageSize;
 			startIndex += pageSize;
-		}
-
-		if (!deleted && BulkLoad)
-		{
-			if (!BulkInitialized())
-			{
-				var (sync, dict) = CachedEntitiesPair;
-
-				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
-
-				dict.Clear();
-
-				foreach (var entity in entities)
-					dict.Add(GetCacheId(entity), entity);
-
-				_bulkInitialized = true;
-
-				if (CacheTimeOut < TimeSpan.MaxValue)
-					_cacheExpire = DateTime.UtcNow + CacheTimeOut;
-
-				return ApplySkipTake(entities, oldStartIndex, oldCount);
-			}
 		}
 
 		return entities;
