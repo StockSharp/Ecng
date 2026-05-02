@@ -2841,6 +2841,39 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Translator regressions
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task LeftJoin_WithIdsContainsAndEntityNullCheck_TranslatesCorrectly(string provider)
+	{
+		// Regression: GroupJoin+SelectMany(DefaultIfEmpty) followed by a
+		// Where that combines `ids.Contains(p.Id)` with `t2 == null` used
+		// to emit "[t2].* IS NULL" plus a stray "[p].[Id]" — invalid SQL.
+		// The fix lifts entity-null comparisons to the identity column and
+		// resolves transparent-id chains to the right alias.
+		SetUp(provider);
+
+		var alice = await Storage.AddAsync(new TestPerson { Name = "Alice" }, CancellationToken);
+		var bob = await Storage.AddAsync(new TestPerson { Name = "Bob" }, CancellationToken);
+		await Storage.AddAsync(new TestTask { Title = "T1", Person = alice, Priority = 5 }, CancellationToken);
+
+		var ids = new[] { alice.Id, bob.Id };
+
+		var query = from p in Query<TestPerson>()
+					join t in Query<TestTask>() on p.Id equals t.Person.Id into tg
+					from t2 in tg.DefaultIfEmpty()
+					where ids.Contains(p.Id) && (t2 == null || t2.Priority > 0)
+					select p;
+
+		var result = await query.ToArrayAsyncEx(CancellationToken);
+		(result.Length >= 2).AssertTrue();
+	}
+
+	#endregion
 }
 
 #endif
