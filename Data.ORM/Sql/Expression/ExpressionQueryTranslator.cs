@@ -236,6 +236,21 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		var retVal = Visit(m.Arguments[0]);
 		Context.LeftJoinAlias = leftJoinAlias;
 
+		// Bind the result-selector parameters to their backing aliases so
+		// downstream visitors (and any sub-query that inherits Aliases)
+		// can resolve `<transparentId>.<field>` and `<rightSide>` chains.
+		// First param projects onto the running outer scope (FROM table or
+		// previous transparent identifier); second param maps to the LEFT
+		// JOIN alias produced by the source GroupJoin.
+		if (resultSelector.Parameters.Count > 0)
+		{
+			var outerAlias = Context.TableAlias.IsEmpty() ? Extensions.DefaultAlias : Context.TableAlias;
+			Context.Aliases[resultSelector.Parameters[0]] = outerAlias;
+		}
+
+		if (resultSelector.Parameters.Count > 1)
+			Context.Aliases[resultSelector.Parameters[1]] = resultSelector.Parameters[1].Name;
+
 		if (resultSelector.Body is MemberInitExpression)
 		{
 			// final projection folded into SelectMany result selector
@@ -527,42 +542,32 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			Curr.OpenBracket();
 			Curr.NewLine();
 
-			Context = new() { ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
+			// Pre-analyse the sub-query so the element type and the
+			// lambda-parameter alias are known BEFORE Visit. Setting
+			// TableAlias up front lets RegisterLambdaParameters bind the
+			// inner lambda's parameter to the right alias instead of the
+			// default one — without this the inner WHERE references "e"
+			// while FROM declares "x" and the SQL fails to bind.
+			AnalyseSubqueryShape(maExp, out var subItemType, out var subAlias);
+
+			Context = new()
+			{
+				ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset,
+				TableAlias = subAlias,
+			};
+
+			// Inherit outer alias bindings so a correlated reference like
+			// `outerParam.Field` inside the sub-query resolves to the outer
+			// FROM alias instead of leaking the transparent-id name.
+			foreach (var kv in ctx.Aliases)
+				Context.Aliases[kv.Key] = kv.Value;
 
 			if (visitor?.GetType().GetGenericType(typeof(CountVisitor<>)) != null)
 				Context.Count = true;
-		}
 
-		Visit(maExp);
+			Visit(maExp);
 
-		if (isSubquery)
-		{
-			Type itemType;
-
-			if (maExp is MethodCallExpression mca)
-			{
-				var args = mca.Method.GetGenericArguments();
-
-				itemType = args.Length > 0 ? args[0] : typeof(int);
-
-				while (mca.Arguments[0] is MethodCallExpression mca1)
-					mca = mca1;
-
-				Context.TableAlias = (mca.Arguments[1] is MemberExpression
-					? mca.Arguments[2]
-					: mca.Arguments[1])
-				.GetOperand().Parameters[0].Name;
-
-				if (itemType.IsSerializablePrimitive())
-				{
-					itemType = ((MemberExpression)mca.Arguments[0]).Member.GetMemberType().GetGenericArguments()[0];
-				}
-			}
-			else
-				itemType = _meta.EntityType;
-
-			var subquery = Context.Build(SchemaRegistry.Get(itemType));
-
+			var subquery = Context.Build(SchemaRegistry.Get(subItemType ?? _meta.EntityType));
 			var subParams = Context.Parameters;
 
 			Context = ctx;
@@ -571,8 +576,41 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 			Context.AddParamsFromSubquery(subParams, false);
 		}
+		else
+		{
+			Visit(maExp);
+		}
 
 		return maExp;
+	}
+
+	/// <summary>
+	/// Walks the outermost LINQ chain in <paramref name="maExp"/> to extract
+	/// (a) the element type of the sub-query result and (b) the lambda
+	/// parameter name of the deepest source. Both are needed to set up the
+	/// sub-query <see cref="Context"/> before the visitor descends.
+	/// </summary>
+	private static void AnalyseSubqueryShape(Expression maExp, out Type itemType, out string alias)
+	{
+		itemType = null;
+		alias = null;
+
+		if (maExp is not MethodCallExpression mca)
+			return;
+
+		var args = mca.Method.GetGenericArguments();
+		itemType = args.Length > 0 ? args[0] : typeof(int);
+
+		while (mca.Arguments[0] is MethodCallExpression mca1)
+			mca = mca1;
+
+		alias = (mca.Arguments[1] is MemberExpression
+			? mca.Arguments[2]
+			: mca.Arguments[1])
+			.GetOperand().Parameters[0].Name;
+
+		if (itemType.IsSerializablePrimitive())
+			itemType = ((MemberExpression)mca.Arguments[0]).Member.GetMemberType().GetGenericArguments()[0];
 	}
 
 	protected override Expression VisitMemberInit(MemberInitExpression i)
@@ -1069,14 +1107,19 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 	/// <summary>
 	/// Lookup overload that resolves a <see cref="ParameterExpression"/>
 	/// directly through <see cref="Context.Aliases"/> when the parameter
-	/// has been registered by the enclosing LINQ-method handler. Falls
-	/// back to the string-based <see cref="GetAlias(string)"/> otherwise
-	/// so callers do not need to know whether registration happened.
+	/// has been registered by the enclosing LINQ-method handler. The
+	/// stored value is already the canonical alias and must NOT be piped
+	/// through the string-based fallback — that would remap every alias
+	/// to <see cref="Context.TableAlias"/> and erase outer-scope
+	/// references in sub-queries that inherit the parent's alias map.
+	/// Falls back to the string-based <see cref="GetAlias(string)"/> when
+	/// the parameter is not registered, so callers do not need to know
+	/// whether registration happened.
 	/// </summary>
 	private string GetAlias(ParameterExpression parameter)
 	{
 		if (parameter is not null && Context.Aliases.TryGetValue(parameter, out var alias))
-			return GetAlias(alias);
+			return alias;
 
 		return GetAlias(parameter?.Name);
 	}
@@ -1170,10 +1213,13 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 					if (!TryEmitFromResolver(m.Update(me)))
 					{
-						// Last-resort fallback: emit through the legacy alias-name
-						// derivation so cases the resolver does not yet recognise
-						// continue to work as before.
-						Curr.Column(me.Member.Name, m.Member.Name);
+						// Walk the transparent-id chain to the actual lambda
+						// parameter and use its registered alias — using
+						// <c>me.Member.Name</c> (the field name on the
+						// compiler-generated transparent identifier) leaks as
+						// a fake SQL alias and breaks any chain longer than
+						// one hop.
+						Curr.Column(ResolveTransIdAlias(me), m.Member.Name);
 					}
 				}
 			}
@@ -1459,9 +1505,17 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 	/// </summary>
 	private void EmitMaterialisedValue(MemberInfo leafMember, object value)
 	{
-		if (value is IQueryable q && q.Expression is not ConstantExpression)
+		if (value is IQueryable q)
 		{
-			Visit(q.Expression);
+			// Captured local IQueryable<T>: re-visit the wrapped expression
+			// when it carries query operators, otherwise emit nothing.
+			// Constant-rooted queryables (the common Query<T>() shape)
+			// represent the bare table — the surrounding sub-query handler
+			// resolves the element type to a FROM, so a value-emit here
+			// would corrupt the sub-query's WHERE with a non-bindable
+			// IQueryable parameter.
+			if (q.Expression is not ConstantExpression)
+				Visit(q.Expression);
 			return;
 		}
 

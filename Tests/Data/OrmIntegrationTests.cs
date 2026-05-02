@@ -2873,6 +2873,61 @@ public class OrmIntegrationTests : BaseTestClass
 		(result.Length >= 2).AssertTrue();
 	}
 
+	/// <summary>
+	/// View-processor shape: GroupJoin + DefaultIfEmpty followed by a
+	/// projection that contains a sub-query referencing the outer source
+	/// (`i.Id`). The sub-query's reference to `i.Id` must resolve to the
+	/// original outer FROM alias — without the fix the translator leaks
+	/// the compiler-generated transparent identifier and SQL Server reports
+	///   "The multi-part identifier &lt;&gt;h__TransparentIdentifier2.Id could not be bound."
+	///
+	/// Generated SQL fragment (faulty):
+	///   ... ([b1].[File] = [&lt;&gt;h__TransparentIdentifier2].[Id]) ...
+	/// Should be:
+	///   ... ([b1].[File] = [e].[Id]) ...
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task ViewProcessorShape_GroupJoin_ProjectionWithSubqueryReferencingOuter(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("WithCat");
+		var i2 = await InsertItem("NoCat");
+		var cat = await InsertCategory("Cat1");
+		await InsertItemCategory(i1, cat);
+
+		await ClearCache();
+
+		// Sub-query sources are captured as locals before the main
+		// from-block — the translator cannot rewrite Query<T>() method
+		// calls inside an expression tree.
+		var itemCategories = Query<TestItemCategory>();
+
+		var view =
+			from i in Query<TestItem>()
+			join ic in itemCategories on i.Id equals ic.Item.Id into ics
+			from ic1 in ics.DefaultIfEmpty()
+			select new TestItem
+			{
+				Id = i.Id,
+				Name = i.Name,
+				// Sub-query references the outer `i.Id` — count-of-related
+				// pattern that view processors commonly emit.
+				Priority = (
+					from x in itemCategories
+					where x.Item.Id == i.Id
+					select x
+				).Count(),
+			};
+
+		var ids = new[] { i1.Id, i2.Id };
+		var results = await view.Where(e => ids.Contains(e.Id)).ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+	}
+
 	#endregion
 }
 
