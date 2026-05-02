@@ -93,12 +93,10 @@ public class QueryTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Repro for downstream Broker bug: when an entity has [RelationSingle] User,
-	/// ExpressionQueryTranslator emits an INNER JOIN with alias = nav member name
-	/// ("User"). Query.Table(name, alias) currently appends the alias *unquoted*,
-	/// so PostgreSQL receives <c>"User" User</c> and fails with
-	/// <c>42601: syntax error at or near "User"</c>. Aliases must be quoted just
-	/// like table names so reserved words don't break the parser.
+	/// Aliases that collide with reserved words (e.g. <c>User</c> on PostgreSQL)
+	/// must be quoted just like table names; otherwise the joined SQL ends up
+	/// with bare <c>"User" User</c> and PostgreSQL reports
+	/// <c>42601: syntax error at or near "User"</c>.
 	/// </summary>
 	[TestMethod]
 	[DataRow("SqlServer")]

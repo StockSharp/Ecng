@@ -364,8 +364,8 @@ public class TestItemTag : IDbPersistable
 }
 
 /// <summary>
-/// Mirrors BaseBrokerEntity from the Broker project: abstract base with
-/// audit FKs as RelationSingle navigation properties.
+/// Abstract base with two RelationSingle audit FKs (Created/Modified) for
+/// regression tests around FK-cycle resolution and inheritance-driven joins.
 /// </summary>
 public abstract class TestBrokerBase : IDbPersistable
 {
