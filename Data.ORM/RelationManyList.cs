@@ -109,11 +109,24 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		int IEqualityComparer<object>.GetHashCode(object obj) => _underlying.GetHashCode(obj);
 	}
 
-	// LazyInitializer atomically publishes both the reader-writer lock and
-	// the dictionary as a single tuple so a concurrent reader cannot
-	// observe a half-initialised state (where _cachedEntities was assigned
-	// before _cachedEntitiesLock under the previous ad-hoc double-check).
-	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict)? _cachedEntitiesPair;
+	// Reference-type wrapper so a concurrent reader either sees a fully
+	// constructed pair or null — never a torn read. (A nullable struct
+	// `(AsyncReaderWriterLock, Dictionary<,>)?` here was producing
+	// transient NREs under parallel access because nullable-struct reads
+	// are not atomic for payloads larger than 8 bytes.)
+	private sealed class BulkCachePair(AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict)
+	{
+		public AsyncReaderWriterLock Sync { get; } = sync;
+		public Dictionary<TId, TEntity> Dict { get; } = dict;
+
+		public void Deconstruct(out AsyncReaderWriterLock sync, out Dictionary<TId, TEntity> dict)
+		{
+			sync = Sync;
+			dict = Dict;
+		}
+	}
+
+	private BulkCachePair _cachedEntitiesPair;
 	private readonly Lock _cachedEntitiesInitLock = new();
 
 	/// <summary>
@@ -123,26 +136,28 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// list). Useful for diagnostics — and lets tests assert on cache state
 	/// without reaching into private fields.
 	/// </summary>
-	public IReadOnlyDictionary<TId, TEntity> CachedEntities => _cachedEntitiesPair?.dict;
+	public IReadOnlyDictionary<TId, TEntity> CachedEntities => Volatile.Read(ref _cachedEntitiesPair)?.Dict;
 
-	private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict) CachedEntitiesPair
+	private BulkCachePair CachedEntitiesPair
 	{
 		get
 		{
-			if (_cachedEntitiesPair is { } existing)
+			var existing = Volatile.Read(ref _cachedEntitiesPair);
+			if (existing is not null)
 				return existing;
 
 			using (_cachedEntitiesInitLock.EnterScope())
 			{
-				if (_cachedEntitiesPair is { } onceMore)
-					return onceMore;
+				existing = Volatile.Read(ref _cachedEntitiesPair);
+				if (existing is not null)
+					return existing;
 
 				var dict = Meta.Identity != null && typeof(TId) == typeof(string)
 					? new Dictionary<TId, TEntity>(new StringIdComparer().To<IEqualityComparer<TId>>())
 					: [];
 
-				var pair = (new AsyncReaderWriterLock(), dict);
-				_cachedEntitiesPair = pair;
+				var pair = new BulkCachePair(new AsyncReaderWriterLock(), dict);
+				Volatile.Write(ref _cachedEntitiesPair, pair);
 				return pair;
 			}
 		}
