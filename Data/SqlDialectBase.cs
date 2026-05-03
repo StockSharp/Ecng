@@ -20,6 +20,9 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual string FalseLiteral => "0";
 
 	/// <inheritdoc />
+	public virtual string BooleanCastSqlType => "bit";
+
+	/// <inheritdoc />
 	public virtual string UnicodePrefix => "N";
 
 	/// <inheritdoc />

@@ -2928,6 +2928,379 @@ public class OrmIntegrationTests : BaseTestClass
 		results.Length.AssertEqual(2);
 	}
 
+	/// <summary>
+	/// Mirrors VTopicViewProcessor: projection wraps single-`from` correlated
+	/// sub-queries (.Any() / .Count() / .Max()) referencing the outer source
+	/// via `x.Y.Id == outer.Id`. The translator must resolve `outer.Id` to the
+	/// outer FROM alias [e]; currently it leaks the sub-query's own alias and
+	/// emits e.g. `[x].[Item] = [x].[Id]` instead of `[x].[Item] = [e].[Id]`,
+	/// producing wrong per-row results (or, on PostgreSQL, a bool→bit cast
+	/// failure downstream of the broken SQL).
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task ViewProcessorShape_Projection_CorrelatedSubqueryWithAny(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("WithCat");
+		var i2 = await InsertItem("NoCat");
+		var cat = await InsertCategory("Cat1");
+		await InsertItemCategory(i1, cat);
+
+		await ClearCache();
+
+		var itemCategories = Query<TestItemCategory>();
+
+		var view =
+			from i in Query<TestItem>()
+			select new TestItem
+			{
+				Id = i.Id,
+				Name = i.Name,
+				IsActive = (from x in itemCategories where x.Item.Id == i.Id select x).Any(),
+			};
+
+		var results = (await view.ToArrayAsyncEx(CancellationToken))
+			.OrderBy(r => r.Id)
+			.ToArray();
+
+		results.Length.AssertEqual(2);
+		results[0].IsActive.AssertTrue("i1 (with category) should be IsActive=true");
+		results[1].IsActive.AssertFalse("i2 (no category) should be IsActive=false");
+	}
+
+	/// <summary>
+	/// Mirrors StockSharp.Web's DbTests.CountWithPaging:
+	///   view.ToQueryable().SkipLong(N).Take(M).CountAsyncEx()
+	/// where the view is itself a GROUP BY query that projects to a non-table
+	/// shape via `g.Key.X` / `g.Count()`. Currently the translator emits a
+	/// stray `[<>h__TransparentIdentifier0].[Id]` reference and SQL Server
+	/// fails to bind it.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupByProjection_PagingThenCount(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 1);
+		await InsertItem("B", priority: 1);
+		await InsertItem("C", priority: 2);
+
+		await ClearCache();
+
+		// View shape mirrored on VProductBugReportCount:
+		//   group by composite Key, project Key + Count() into a new TestItem
+		var view =
+			from i in Query<TestItem>()
+			group i by new { i.Priority, i.IsActive } into g
+			select new TestItem
+			{
+				Id = 0,
+				Name = "grouped",
+				Priority = g.Key.Priority,
+				IsActive = g.Key.IsActive,
+				NullableValue = g.Count(),
+			};
+
+		// Skip(0).Take(N).Count() — the same shape DbTests.CountWithPaging hits.
+		var count = await view.Skip(0).Take(10).CountAsyncEx(CancellationToken);
+
+		(count > 0).AssertTrue($"Expected count > 0 from grouped view, got {count}");
+	}
+
+	/// <summary>
+	/// Mirrors StockSharp.Web's GetPaged path: the LINQ tree applies
+	/// <c>.OrderBy(x =&gt; x.Id).Skip().Take()</c> on top of a GROUP BY view.
+	/// The translator wraps the grouped query in a CTE for paging, but
+	/// currently leaks the inner table alias into the outer ORDER BY,
+	/// producing <c>order by [e].[Id]</c> against <c>from [cteresults] [p]</c>
+	/// (SQL Server: "The multi-part identifier '[e].[Id]' could not be bound").
+	/// After the fix the outer ORDER BY must reference the CTE alias [p].
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupByProjection_OrderByThenPaging_RebindsAliasToCte(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 1);
+		await InsertItem("B", priority: 1);
+		await InsertItem("C", priority: 2);
+
+		await ClearCache();
+
+		var view =
+			from i in Query<TestItem>()
+			group i by new { i.Priority, i.IsActive } into g
+			select new TestItem
+			{
+				Id = 0,
+				Name = "grouped",
+				Priority = g.Key.Priority,
+				IsActive = g.Key.IsActive,
+				NullableValue = g.Count(),
+			};
+
+		// .OrderBy(x => x.Id).Skip(0).Take(N) — the same shape Apply() builds.
+		var rows = await view.OrderBy(x => x.Id).Skip(0).Take(10).ToArrayAsyncEx(CancellationToken);
+
+		(rows.Length > 0).AssertTrue($"Expected rows > 0 from grouped+ordered+paged view, got {rows.Length}");
+	}
+
+	/// <summary>
+	/// Mirrors VProductBugReportCount: group by composite key and project a
+	/// MEMBER whose value is a CASE expression that references both
+	/// <c>g.Key.X</c> AND <c>g.Count()</c>. The translator wraps the
+	/// conditional in a fresh sub-query Context with TableAlias=null (because
+	/// <c>AnalyseSubqueryShape</c> only handles MethodCallExpression). With
+	/// TableAlias missing, <c>GetAlias("Priority")</c> returns the member
+	/// name verbatim, which trips the <c>owner == m.Member.Name</c> branch
+	/// and emits invalid <c>[Priority].*</c> instead of <c>[e].[Priority]</c>.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupByProjection_ConditionalUsingKeyAndAggregate_ResolvesAlias(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 0);
+		await InsertItem("B", priority: 0);
+		await InsertItem("C", priority: 1);
+
+		await ClearCache();
+
+		// Mirrors the failing VProductBugReportCount projection shape:
+		//   Priority = (g.Key.Priority == default ? -g.Count() : g.Key.Priority)
+		var view =
+			from i in Query<TestItem>()
+			group i by new { i.Priority, i.IsActive } into g
+			select new TestItem
+			{
+				Id = 0,
+				Name = "grouped",
+				IsActive = g.Key.IsActive,
+				Priority = g.Key.Priority == default ? -g.Count() : g.Key.Priority,
+				NullableValue = g.Count(),
+			};
+
+		var rows = await view.OrderBy(x => x.Id).Skip(0).Take(10).ToArrayAsyncEx(CancellationToken);
+
+		(rows.Length > 0).AssertTrue($"Expected rows > 0 from conditional projection, got {rows.Length}");
+	}
+
+	/// <summary>
+	/// Mirrors VProductBugReportCount more precisely:
+	/// <c>from e in T1 join j in T2 on e.FK equals j.Id group e by new { j.Id, j.Field } into g</c>
+	/// then projecting <c>g.Key.Field</c> inside a conditional. The group key
+	/// references members of the JOINED table — they must resolve to the join
+	/// alias (e.g. <c>[i].[Priority]</c>), not the main FROM alias
+	/// (<c>[e].[Priority]</c>) which doesn't have those columns at all.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupByProjection_KeyOnJoinedTable_ResolvesToJoinAlias(string provider)
+	{
+		SetUp(provider);
+		var item1 = await InsertItem("A", priority: 0);
+		var item2 = await InsertItem("B", priority: 1);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(item1, cat);
+		await InsertItemCategory(item2, cat);
+
+		await ClearCache();
+
+		var view =
+			from ic in Query<TestItemCategory>()
+			join i in Query<TestItem>() on ic.Item.Id equals i.Id
+			group ic by new { i.Id, i.Priority, i.IsActive } into g
+			select new TestItem
+			{
+				Id = 0,
+				Name = "grouped",
+				IsActive = g.Key.IsActive,
+				// Key reference must resolve to JOIN alias, not the main alias
+				Priority = g.Key.Priority == default ? -g.Count() : g.Key.Priority,
+				NullableValue = g.Count(),
+			};
+
+		var rows = await view.OrderBy(x => x.Id).Skip(0).Take(10).ToArrayAsyncEx(CancellationToken);
+
+		(rows.Length > 0).AssertTrue($"Expected rows > 0 from join+groupby+conditional, got {rows.Length}");
+	}
+
+	/// <summary>
+	/// Mirrors StockSharp.Web's TopicTagService.FindAsync chain:
+	/// <c>(from a in T1 join b in T2 ... select new { A=a, B=b }).Where(p =&gt; p.B.Field == X)</c>
+	/// — a Where layered on top of an anonymous projection that includes
+	/// a joined entity. The Where lambda's `p.B.Field` must resolve to the
+	/// JOIN alias `[b]`, not the main FROM alias `[a]`. Currently the
+	/// translator emits <c>[a].[Field]</c> and SQL Server fails with
+	/// "Invalid column name 'Field'".
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task WhereAfterJoinAnonymousProjection_ResolvesJoinAlias(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("Match", priority: 1);
+		var i2 = await InsertItem("NoMatch", priority: 2);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+		await InsertItemCategory(i2, cat);
+
+		await ClearCache();
+
+		var view =
+			from ic in Query<TestItemCategory>()
+			join i in Query<TestItem>() on ic.Item.Id equals i.Id
+			select new { Mapping = ic, Detail = i };
+
+		// Where on the projected anonymous type — `p.Detail.Name` must
+		// resolve to TestItem's alias [i], not TestItemCategory's [e].
+		// Then unwrap to a registered entity to keep the materialiser happy.
+		var rows = await view
+			.Where(p => p.Detail.Name == "Match")
+			.Select(p => p.Mapping)
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+	}
+
+	/// <summary>
+	/// Mirrors VNugetSpecificationViewProcessor: a Join projects an FK
+	/// short-circuit through the JOINED parameter, e.g.
+	/// <c>(from e in T1 join b in T2 on e.X equals b.Id select new T { Ref = new() { Id = b.Cat.Id } })</c>.
+	/// The resolver must use <c>b</c>'s registered alias, not the main FROM
+	/// alias, so the FK column is emitted as <c>[b].[Cat]</c> rather than
+	/// <c>[e].[Cat]</c> (NugetSpecification has no Cat column).
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task ProjectionFkShortCircuitOnJoinParameter_UsesJoinAlias(string provider)
+	{
+		SetUp(provider);
+		var item = await InsertItem("OnlyItem", priority: 1);
+		var cat = await InsertCategory("CatOnly");
+		await InsertItemCategory(item, cat);
+
+		await ClearCache();
+
+		// `tic.Category.Id` where tic is the JOIN parameter — the FK
+		// short-circuit must qualify with [tic]'s alias, not [e]'s.
+		var view =
+			from e in Query<TestItem>()
+			join tic in Query<TestItemCategory>() on e.Id equals tic.Item.Id
+			select new TestItemCategory
+			{
+				Id = 0,
+				Item = new() { Id = e.Id },
+				Category = new() { Id = tic.Category.Id },
+			};
+
+		var rows = await view.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		(rows[0].Category?.Id ?? 0).AssertEqual(cat.Id);
+	}
+
+	/// <summary>
+	/// Mirrors StockSharp.Web's DbTests.EnumerateTopics:
+	/// <c>view.OrderBy(t =&gt; t.ProjectedComputedField).Take(N)</c>. The
+	/// translator currently qualifies the order-by with the source-table
+	/// alias (<c>[e].[ProjectedField]</c>) but the column is a computed
+	/// SELECT-list output, not a physical column on the source. ORDER BY
+	/// must reference the bare alias instead.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderByProjectedAlias_FromViewSelect_EmitsUnqualified(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 1);
+		await InsertItem("B", priority: 2);
+		await InsertItem("C", priority: 3);
+
+		await ClearCache();
+
+		// The projection introduces a SELECT-only field `NullableValue`
+		// computed via a correlated sub-query — it has no underlying column.
+		// Ordering by it must NOT qualify with the source alias — it must
+		// reference the SELECT-list alias.
+		var items = Query<TestItem>();
+
+		var view =
+			from i in items
+			select new TestItem
+			{
+				Id = i.Id,
+				Name = i.Name,
+				NullableValue = (from j in items where j.Priority <= i.Priority select j).Count(),
+			};
+
+		var rows = await view.OrderBy(t => t.NullableValue).Take(10).ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(3);
+		// First row must have the smallest NullableValue (running rank 1).
+		(rows[0].NullableValue >= 1).AssertTrue($"Expected first NullableValue >=1, got {rows[0].NullableValue}");
+	}
+
+	/// <summary>
+	/// Mirrors StockSharp.Web's ByGroups extension:
+	/// <c>source.Where(e =&gt; (from inner in inners where ... group ... select g.Key.Id).Contains(e.Id))</c>.
+	/// The translator must set the sub-query's <c>TableAlias</c> BEFORE
+	/// visiting the inner expression so references like <c>inner.X</c>
+	/// resolve to <c>[inner].[X]</c>, not the outer alias <c>[e].[X]</c>.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task ContainsSubqueryWithGroupBy_ResolvesInnerAlias(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("Match1", priority: 1);
+		var i2 = await InsertItem("Match2", priority: 2);
+		var i3 = await InsertItem("NoMatch", priority: 3);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+		await InsertItemCategory(i2, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+		var catIds = new[] { cat.Id };
+
+		// Sub-query with Where + GroupBy must resolve `pgp.X` to `[pgp]`
+		// alias, not the outer `[e]`.
+		var query = items.Where(e =>
+		(
+			from pgp in itemCategories
+			where catIds.Contains(pgp.Category.Id)
+			group pgp by pgp.Item into g
+			where g.Count() > 0
+			select g.Key.Id
+		).Contains(e.Id));
+
+		var rows = await query.OrderBy(t => t.Id).ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+	}
+
 	#endregion
 }
 

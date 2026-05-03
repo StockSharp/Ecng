@@ -9,6 +9,22 @@ class Context
 {
 	public (string origAlias, string modifiedAlias) CurrJoinAlias;
 	public readonly List<(string tableAlias, Query query)> JoinParts = [];
+
+	/// <summary>
+	/// Names of join inner aliases discovered by a pre-walk of the source
+	/// chain. Used to resolve transparent-id chains during projection-time
+	/// visits — before <see cref="JoinParts"/> itself is populated by the
+	/// recursive source visit at the end of <see cref="ExpressionQueryTranslator.VisitSelectCall"/>.
+	/// </summary>
+	public readonly HashSet<string> PreknownJoinAliases = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Records the SQL alias backing each member of an anonymous projection
+	/// produced by a Join's result selector (e.g. <c>(a, b) =&gt; new { A=a, B=b }</c>).
+	/// Lets a downstream <c>Where(p =&gt; p.B.Field)</c> resolve <c>p.B</c>
+	/// through the underlying join alias instead of the main FROM alias.
+	/// </summary>
+	public readonly Dictionary<(Type AnonType, MemberInfo Member), string> AnonProjectionAliases = [];
 	public readonly Query FromPart = new();
 	public readonly List<Query> WhereParts = [];
 	public readonly Query OrderByPart = new();
@@ -137,9 +153,17 @@ class Context
 		if (!Exists)
 			return;
 
+		// Open `cast(` only when the dialect actually wraps the boolean
+		// expression in a cast. PostgreSQL represents booleans natively and
+		// rejects `cast(<bool> as bit)`, so the prologue is a no-op there
+		// and the epilogue stops short of emitting `as bit )`.
+		query.AddAction((d, sb) =>
+		{
+			if (d.BooleanCastSqlType is not null)
+				sb.Append("cast(");
+		});
+
 		query
-			.Cast()
-			.OpenBracket()
 			.NewLine()
 				.Case()
 				.NewLine()
@@ -158,7 +182,12 @@ class Context
 			.Then().AddAction((d, sb) => sb.Append(d.TrueLiteral))
 			.NewLine()
 			.Else().AddAction((d, sb) => sb.Append(d.FalseLiteral))
-			.NewLine().End().As().Raw("bit").CloseBracket();
+			.NewLine().End()
+			.AddAction((d, sb) =>
+			{
+				if (d.BooleanCastSqlType is not null)
+					sb.Append(" as ").Append(d.BooleanCastSqlType).Append(')');
+			});
 	}
 
 	private void EmitSelectClause(Query query)
@@ -387,6 +416,16 @@ class Context
 			.Table(tableRes, TableAlias = "p")
 			.NewLine();
 
+		// ORDER BY collected from the LINQ tree still references inner table
+		// aliases (e.g. [e].[Id]), but those aliases are now hidden inside
+		// the CTE. Rebind every entry to the CTE outer alias so the final
+		// query reads `order by [p].[Column]`.
+		for (var i = 0; i < OrderBy.Count; i++)
+		{
+			var (_, name, asc) = OrderBy[i];
+			OrderBy[i] = ("p", name, asc);
+		}
+
 		return cte;
 	}
 
@@ -406,7 +445,13 @@ class Context
 		{
 			if (Skip is not null || Take is not null)
 			{
-				if (schema.Identity is not null)
+				// SELECT DISTINCT requires every ORDER BY column to also be
+				// in the SELECT list. A blind `[TableAlias].[Identity]`
+				// fallback usually picks a column that isn't in the
+				// projection — pick the first projected member name instead.
+				if (Distinct && SelectColumns.Count > 0 && SelectColumns[0].Keys.FirstOrDefault() is { } firstKey)
+					query.OrderBy().Column(firstKey.Name);
+				else if (schema.Identity is not null)
 					query.OrderBy().Column(TableAlias, schema.Identity.Name);
 				else
 					query.AddAction((d, sb) => d.AppendFallbackOrderBy(sb));
@@ -425,7 +470,16 @@ class Context
 				else
 					query.Comma();
 
-				if (alias is not null)
+				// If the column matches a projected output (SELECT-list alias)
+				// from a view processor or explicit Select, emit unqualified —
+				// `[e].[MessageCount]` would fail because MessageCount is a
+				// computed projection, not a real column on the underlying
+				// table. SQL's ORDER BY allows referencing SELECT-list aliases
+				// by bare name. Check every SelectColumns layer because
+				// chained Select(...).Distinct() pushes the projection deeper.
+				var isProjectedAlias = SelectColumns.Any(layer => layer.Keys.Any(k => k.Name == columnName));
+
+				if (alias is not null && !isProjectedAlias)
 					query.Column(alias, columnName);
 				else
 					query.Column(columnName);

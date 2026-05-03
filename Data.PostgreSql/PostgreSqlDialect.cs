@@ -82,6 +82,12 @@ public class PostgreSqlDialect : SqlDialectBase
 	public override string FalseLiteral => "FALSE";
 
 	/// <inheritdoc />
+	// PostgreSQL has a native boolean type — `cast(... as bit)` is not a
+	// valid coercion from boolean. Skip the cast entirely; the case
+	// expression already evaluates to boolean.
+	public override string BooleanCastSqlType => null;
+
+	/// <inheritdoc />
 	public override string UnicodePrefix => "";
 
 	/// <inheritdoc />

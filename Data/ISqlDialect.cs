@@ -42,6 +42,14 @@ public interface ISqlDialect
 	string FalseLiteral { get; }
 
 	/// <summary>
+	/// SQL type name to cast a boolean expression to when materialising
+	/// <c>EXISTS(...)</c> projections (e.g. <c>bit</c> on SQL Server). Return
+	/// <see langword="null"/> if the dialect represents booleans natively
+	/// and no cast is needed (e.g. PostgreSQL).
+	/// </summary>
+	string BooleanCastSqlType { get; }
+
+	/// <summary>
 	/// Unicode string-literal prefix (e.g. <c>N</c> for SQL Server).
 	/// </summary>
 	string UnicodePrefix { get; }

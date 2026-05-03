@@ -1640,7 +1640,38 @@ class ContainsVisitor<T> : MethodVisitor
 		var isSubQuery = firstArg.NodeType == ExpressionType.Call;
 
 		if (isSubQuery)
-			translator.Context = new() { Curr = new(), ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset };
+		{
+			// Walk to the deepest source so TableAlias can be set BEFORE
+			// `Visit(firstArg)` — otherwise inner-scope references like
+			// `pgp.X` inside the sub-query body resolve through the
+			// outer's alias and emit `[outer].[X]` instead of `[pgp].[X]`.
+			var deepest = (MethodCallExpression)firstArg;
+			while (deepest.Arguments.Count > 0 && deepest.Arguments[0] is MethodCallExpression deeper)
+				deepest = deeper;
+
+			string subAlias = null;
+			if (deepest.Arguments.Count > 1 && deepest.Arguments[1].StripQuotes() is LambdaExpression lambda && lambda.Parameters.Count > 0)
+				subAlias = lambda.Parameters[0].Name;
+
+			translator.Context = new()
+			{
+				Curr = new(),
+				ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset,
+				TableAlias = subAlias,
+			};
+
+			// Inherit outer alias bindings so a correlated reference like
+			// `outerParam.Field` inside the sub-query keeps the outer FROM
+			// alias instead of being remapped to the sub-query's alias.
+			foreach (var kv in ctx.Aliases)
+				translator.Context.Aliases[kv.Key] = kv.Value;
+
+			foreach (var jp in ctx.JoinParts)
+				translator.Context.JoinParts.Add(jp);
+
+			foreach (var preName in ctx.PreknownJoinAliases)
+				translator.Context.PreknownJoinAliases.Add(preName);
+		}
 
 		translator.Visit(firstArg);
 
@@ -1654,7 +1685,6 @@ class ContainsVisitor<T> : MethodVisitor
 
 			var type = mce.Method.ReturnType.GenericTypeArguments[0];
 
-			translator.Context.TableAlias = ((LambdaExpression)mce.Arguments[1].StripQuotes()).Parameters[0].Name;
 			translator.Context.Build(SchemaRegistry.Get(type)).CopyTo(q);
 
 			ctx.AddParamsFromSubquery(translator.Context.Parameters, false);
