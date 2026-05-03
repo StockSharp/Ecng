@@ -73,7 +73,7 @@ public class ReaderWriterLockSlimExtensionsTests : BaseTestClass
 		using (rw.ReadLock())
 		{
 			firstEntered.Set();
-			second.Wait(TimeSpan.FromSeconds(2), CancellationToken).AssertTrue();
+			second.Wait(2_000, CancellationToken).AssertTrue();
 		}
 
 		second.Result.AssertTrue();
@@ -108,8 +108,8 @@ public class ReaderWriterLockSlimExtensionsTests : BaseTestClass
 				readerObservedHeld.Set();
 		}, CancellationToken);
 
-		writer.Wait(TimeSpan.FromSeconds(2), CancellationToken).AssertTrue();
-		reader.Wait(TimeSpan.FromSeconds(2), CancellationToken).AssertTrue();
+		writer.Wait(2_000, CancellationToken).AssertTrue();
+		reader.Wait(2_000, CancellationToken).AssertTrue();
 		readerObservedHeld.IsSet.AssertTrue();
 	}
 
