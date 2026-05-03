@@ -121,6 +121,7 @@ public static class StringHelper
 	/// Handles <see cref="IDictionary"/> with any key type (enum, int, etc.)
 	/// and returns null for missing keys instead of throwing.
 	/// </summary>
+	[CLSCompliant(false)]
 	public static SmartFormatter AddDictionarySourceEx(this SmartFormatter formatter)
 	{
 		if (formatter is null)
@@ -134,6 +135,7 @@ public static class StringHelper
 	/// Creates a pre-configured <see cref="SmartFormatter"/> with
 	/// <see cref="DictionarySourceEx"/> and <c>DefaultFormatter.Name = "default"</c>.
 	/// </summary>
+	[CLSCompliant(false)]
 	public static SmartFormatter CreateSmartFormatterEx()
 	{
 		var formatter = Smart.CreateDefaultSmartFormat();

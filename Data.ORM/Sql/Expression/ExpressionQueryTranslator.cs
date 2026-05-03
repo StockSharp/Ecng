@@ -278,7 +278,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 	/// <summary>
 	/// Lightweight peek that walks the LINQ method chain rooted at
-	/// <paramref name="source"/> looking for <see cref="Queryable.Join{TOuter, TInner, TKey, TResult}"/>
+	/// <paramref name="source"/> looking for <c>Queryable.Join</c>
 	/// calls and records the inner alias name in
 	/// <see cref="Context.PreknownJoinAliases"/>. Lets projection-time
 	/// visitors that resolve transparent-id chains see the join alias before
