@@ -9,51 +9,49 @@ public class StatTests : BaseTestClass
 	{
 		Action1,
 		Action2,
-		Action3
+		Action3,
 	}
 
 	/// <summary>
-	/// Verifies that Stat.Longest returns entries sorted by duration (longest first).
-	/// Uses sampling to handle non-deterministic timing.
+	/// Verifies that <see cref="Stat{TAction}.GetInfo"/> returns the
+	/// <c>Longest</c> array sorted by duration. Action durations are
+	/// separated by an order of magnitude so CPU jitter cannot reorder
+	/// adjacent samples; the loop bails out the moment a sample reflects
+	/// the expected ordering, so a clean run finishes in one pass.
 	/// </summary>
 	[TestMethod]
 	public async Task Longest_ShouldReturnActualLongestDurations()
 	{
-		// Run multiple samples to ensure consistent behavior
-		const int sampleCount = 5;
-		var successCount = 0;
+		const int maxAttempts = 3;
 
-		for (var sample = 0; sample < sampleCount; sample++)
+		for (var attempt = 1; attempt <= maxAttempts; attempt++)
 		{
 			var stat = new Stat<TestAction> { LongestLimit = 10 };
 			var ip = IPAddress.Loopback;
 
-			// Use larger time differences to minimize timing variance impact
-			// Short action (~20ms)
 			using (stat.Begin(TestAction.Action1, ip))
-				await Task.Delay(20);
+				await Task.Delay(TimeSpan.FromMilliseconds(200), CancellationToken);
 
-			// Long action (~200ms)
 			using (stat.Begin(TestAction.Action2, ip))
-				await Task.Delay(200);
+				await Task.Delay(TimeSpan.FromSeconds(2), CancellationToken);
 
-			// Medium action (~80ms)
 			using (stat.Begin(TestAction.Action3, ip))
-				await Task.Delay(80);
+				await Task.Delay(TimeSpan.FromSeconds(1), CancellationToken);
 
 			var info = stat.GetInfo(0, 10);
 
-			// Verify entries are sorted by duration (longest first)
-			var isOrdered = info.Longest.Length >= 2 &&
-				info.Longest[0].Value >= info.Longest[1].Value &&
-				(info.Longest.Length < 3 || info.Longest[1].Value >= info.Longest[2].Value);
+			var ordered =
+				info.Longest.Length == 3 &&
+				info.Longest[0].Action.Equals(TestAction.Action2) &&
+				info.Longest[1].Action.Equals(TestAction.Action3) &&
+				info.Longest[2].Action.Equals(TestAction.Action1);
 
-			if (isOrdered && info.Longest[0].Action == TestAction.Action2)
-				successCount++;
+			if (ordered)
+				return;
+
+			if (attempt == maxAttempts)
+				Assert.Fail($"Longest order wrong after {maxAttempts} attempts: " +
+					$"[{string.Join(", ", info.Longest.Select(i => $"{i.Action}={i.Value.TotalMilliseconds:F0}ms"))}]");
 		}
-
-		// At least 3 out of 5 samples should succeed (60% threshold for flaky environments)
-		(successCount >= 3).AssertTrue(
-			$"Longest should be sorted by duration (longest first). Only {successCount}/{sampleCount} samples succeeded.");
 	}
 }
