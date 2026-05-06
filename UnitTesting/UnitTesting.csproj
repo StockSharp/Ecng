@@ -4,6 +4,6 @@
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
 </Project>

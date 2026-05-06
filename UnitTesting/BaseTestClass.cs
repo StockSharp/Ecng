@@ -3,12 +3,14 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Security;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.Serialization;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -843,8 +845,26 @@ public abstract class BaseTestClass
 	/// Same key is used for both ENV and JSON lookup.
 	/// </summary>
 	/// <param name="key">Secret key (e.g., "BACKUP_AWS_REGION").</param>
+	/// <param name="encrypted">
+	/// When <c>true</c>, the resolved value is treated as a base64 ciphertext
+	/// and decrypted via the same <c>SecureString</c> primitive path used by
+	/// <see cref="SettingsStorage"/>. Default <c>false</c> returns the raw value.
+	/// </param>
 	/// <returns>Secret value or null if not found.</returns>
-	protected static string TryGetSecret(string key)
+	protected static string TryGetSecret(string key, bool encrypted = false)
+	{
+		var raw = TryGetSecretRaw(key);
+		if (raw.IsEmpty())
+			return null;
+
+		if (!encrypted)
+			return raw;
+
+		var cipher = raw.Base64();
+		return cipher is null ? null : SecureStringHelper.Decrypt(cipher)?.UnSecure();
+	}
+
+	private static string TryGetSecretRaw(string key)
 	{
 		var value = Env(key);
 		if (!value.IsEmpty())
@@ -871,10 +891,14 @@ public abstract class BaseTestClass
 	/// Gets a secret value or marks test as inconclusive if not found.
 	/// </summary>
 	/// <param name="key">Secret key (e.g., "BACKUP_AWS_REGION").</param>
+	/// <param name="encrypted">
+	/// When <c>true</c>, the resolved value is treated as a base64 ciphertext
+	/// and decrypted. See <see cref="TryGetSecret(string, bool)"/>.
+	/// </param>
 	/// <returns>Secret value.</returns>
-	protected static string GetSecret(string key)
+	protected static string GetSecret(string key, bool encrypted = false)
 	{
-		var value = TryGetSecret(key);
+		var value = TryGetSecret(key, encrypted);
 		if (value.IsEmpty())
 			Assert.Inconclusive($"Secret '{key}' missing. Set env var or add to {SecretsFile}.");
 		return value;
