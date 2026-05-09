@@ -300,6 +300,68 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbForeignKeyInfo>> ReadDbForeignKeysAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "public";
+
+		// SELECT shape:
+		//   rc.constraint_name, kcu.table_name, kcu.column_name,
+		//   ccu.table_name, ccu.column_name
+		// FROM information_schema.referential_constraints rc
+		// JOIN information_schema.key_column_usage kcu
+		//   ON kcu.constraint_name = rc.constraint_name AND kcu.constraint_schema = rc.constraint_schema
+		// JOIN information_schema.constraint_column_usage ccu
+		//   ON ccu.constraint_name = rc.unique_constraint_name AND ccu.constraint_schema = rc.unique_constraint_schema
+		// WHERE kcu.constraint_schema = @schema
+		// ORDER BY rc.constraint_name, kcu.ordinal_position
+		var sql = new Query()
+			.Select()
+				.Column("rc", "constraint_name").Comma()
+				.Column("kcu", "table_name").Comma()
+				.Column("kcu", "column_name").Comma()
+				.Column("ccu", "table_name").Comma()
+				.Column("ccu", "column_name").NewLine()
+			.From().Raw("information_schema.referential_constraints rc").NewLine()
+			.InnerJoin().Raw("information_schema.key_column_usage kcu").On()
+				.Column("kcu", "constraint_name").Equal().Column("rc", "constraint_name")
+				.And().Column("kcu", "constraint_schema").Equal().Column("rc", "constraint_schema").NewLine()
+			.InnerJoin().Raw("information_schema.constraint_column_usage ccu").On()
+				.Column("ccu", "constraint_name").Equal().Column("rc", "unique_constraint_name")
+				.And().Column("ccu", "constraint_schema").Equal().Column("rc", "unique_constraint_schema").NewLine()
+			.Where().NewLine()
+				.Column("kcu", "constraint_schema").Equal().Param("schema").NewLine()
+			.OrderBy().Column("rc", "constraint_name").Comma().Column("kcu", "ordinal_position")
+			.Render(this);
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = sql;
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbForeignKeyInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbForeignKeyInfo(
+				ConstraintName: reader.GetString(0),
+				TableName: reader.GetString(1),
+				ColumnName: reader.GetString(2),
+				RefTableName: reader.GetString(3),
+				RefColumnName: reader.GetString(4)));
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;

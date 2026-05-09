@@ -230,6 +230,69 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbForeignKeyInfo>> ReadDbForeignKeysAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "dbo";
+
+		// SELECT shape:
+		//   fk.name, OBJECT_NAME(fkc.parent_object_id), c1.name,
+		//   OBJECT_NAME(fkc.referenced_object_id), c2.name
+		// FROM sys.foreign_keys fk
+		// JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+		// JOIN sys.columns c1 ON c1.object_id = fkc.parent_object_id AND c1.column_id = fkc.parent_column_id
+		// JOIN sys.columns c2 ON c2.object_id = fkc.referenced_object_id AND c2.column_id = fkc.referenced_column_id
+		// WHERE SCHEMA_NAME(fk.schema_id) = @schema
+		// ORDER BY fk.name, fkc.constraint_column_id
+		var sql = new Query()
+			.Select()
+				.Column("fk", "name").Comma()
+				.Raw("OBJECT_NAME(fkc.parent_object_id)").Comma()
+				.Column("c1", "name").Comma()
+				.Raw("OBJECT_NAME(fkc.referenced_object_id)").Comma()
+				.Column("c2", "name").NewLine()
+			.From().Raw("sys.foreign_keys fk").NewLine()
+			.InnerJoin().Raw("sys.foreign_key_columns fkc").On()
+				.Column("fkc", "constraint_object_id").Equal().Column("fk", "object_id").NewLine()
+			.InnerJoin().Raw("sys.columns c1").On()
+				.Column("c1", "object_id").Equal().Column("fkc", "parent_object_id")
+				.And().Column("c1", "column_id").Equal().Column("fkc", "parent_column_id").NewLine()
+			.InnerJoin().Raw("sys.columns c2").On()
+				.Column("c2", "object_id").Equal().Column("fkc", "referenced_object_id")
+				.And().Column("c2", "column_id").Equal().Column("fkc", "referenced_column_id").NewLine()
+			.Where().NewLine()
+				.Raw("SCHEMA_NAME(fk.schema_id) ").Equal().Param("schema").NewLine()
+			.OrderBy().Column("fk", "name").Comma().Column("fkc", "constraint_column_id")
+			.Render(this);
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = sql;
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbForeignKeyInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbForeignKeyInfo(
+				ConstraintName: reader.GetString(0),
+				TableName: reader.GetString(1),
+				ColumnName: reader.GetString(2),
+				RefTableName: reader.GetString(3),
+				RefColumnName: reader.GetString(4)));
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override string NormalizeDbType(string dbTypeName)
 	{
 		return dbTypeName.Trim().ToUpperInvariant() switch

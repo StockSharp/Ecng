@@ -129,6 +129,12 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void AppendDropForeignKey(StringBuilder sb, string tableName, string constraintName)
+	{
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} DROP CONSTRAINT {QuoteIdentifier(constraintName)}");
+	}
+
+	/// <inheritdoc />
 	public virtual void AppendCreateIndex(StringBuilder sb, string indexName, string tableName, string columnName, bool unique)
 	{
 		sb.Append("CREATE ");
@@ -285,6 +291,13 @@ public abstract class SqlDialectBase : ISqlDialect
 
 	/// <inheritdoc />
 	public virtual Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+		=> throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual Task<IReadOnlyList<DbForeignKeyInfo>> ReadDbForeignKeysAsync(
 		DbConnection connection,
 		string tableSchema = null,
 		CancellationToken cancellationToken = default)

@@ -30,6 +30,19 @@ public enum SchemaDiffKind
 
 	/// <summary>Column precision or scale differs between entity and database.</summary>
 	PrecisionMismatch,
+
+	/// <summary>
+	/// Entity declares a <c>[RelationSingle]</c> column but the live database
+	/// has no matching foreign-key constraint. Backfilled via
+	/// <c>ALTER TABLE … ADD CONSTRAINT</c>.
+	/// </summary>
+	MissingForeignKey,
+
+	/// <summary>
+	/// Database has a foreign-key constraint that no entity column declares.
+	/// Informational only — never auto-dropped (mirrors <see cref="ExtraColumn"/>).
+	/// </summary>
+	ExtraForeignKey,
 }
 
 /// <summary>
@@ -55,12 +68,20 @@ public static class SchemaMigrator
 	/// <param name="dbColumns">Database columns read via <see cref="ISqlDialect.ReadDbSchemaAsync"/>.</param>
 	/// <param name="dialect">SQL dialect for type name resolution.</param>
 	/// <param name="skipComputed">Skip computed (calculated) database columns.</param>
+	/// <param name="dbForeignKeys">
+	/// Foreign keys read via <see cref="ISqlDialect.ReadDbForeignKeysAsync"/>. When
+	/// supplied, missing/extra FK constraints are surfaced as
+	/// <see cref="SchemaDiffKind.MissingForeignKey"/> /
+	/// <see cref="SchemaDiffKind.ExtraForeignKey"/> diffs. Pass <see langword="null"/>
+	/// (the default) to skip FK comparison and preserve the pre-FK behaviour.
+	/// </param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
 		IReadOnlyList<DbColumnInfo> dbColumns,
 		ISqlDialect dialect,
-		bool skipComputed)
+		bool skipComputed,
+		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null)
 	{
 		var diffs = new List<SchemaDiff>();
 
@@ -142,7 +163,105 @@ public static class SchemaMigrator
 			}
 		}
 
+		if (dbForeignKeys is not null)
+			AppendForeignKeyDiffs(entities, dbColumns, dbForeignKeys, dbTables, diffs);
+
 		return diffs;
+	}
+
+	/// <summary>
+	/// Reads columns and foreign keys via <paramref name="dialect"/> in one
+	/// shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo})"/>.
+	/// Convenience for callers that want the full FK-aware comparison without
+	/// orchestrating two metadata reads themselves.
+	/// </summary>
+	public static async Task<IReadOnlyList<SchemaDiff>> CompareAsync(
+		IEnumerable<Schema> entities,
+		DbConnection connection,
+		ISqlDialect dialect,
+		bool skipComputed,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		if (entities is null)	throw new ArgumentNullException(nameof(entities));
+		if (connection is null)	throw new ArgumentNullException(nameof(connection));
+		if (dialect is null)	throw new ArgumentNullException(nameof(dialect));
+
+		var snapshot = entities as IReadOnlyList<Schema> ?? [.. entities];
+
+		var dbColumns = await dialect.ReadDbSchemaAsync(connection, tableSchema, cancellationToken);
+		var dbForeignKeys = await dialect.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
+
+		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys);
+	}
+
+	private static void AppendForeignKeyDiffs(
+		IEnumerable<Schema> entities,
+		IReadOnlyList<DbColumnInfo> dbColumns,
+		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys,
+		IReadOnlyDictionary<string, Dictionary<string, DbColumnInfo>> dbTables,
+		List<SchemaDiff> diffs)
+	{
+		var dbFkByPair = new Dictionary<(string Table, string Column), DbForeignKeyInfo>(
+			new TableColumnComparer());
+
+		foreach (var fk in dbForeignKeys)
+			dbFkByPair[(fk.TableName, fk.ColumnName)] = fk;
+
+		var entityFkPairs = new HashSet<(string Table, string Column)>(new TableColumnComparer());
+
+		foreach (var schema in entities)
+		{
+			if (schema.IsView)
+				continue;
+
+			// MissingTable already creates the table with inline FKs — skip
+			// it here so we don't double-emit.
+			if (!dbTables.ContainsKey(schema.TableName))
+				continue;
+
+			foreach (var col in schema.AllColumns)
+			{
+				if (col.ReferencedEntityType is null)
+					continue;
+
+				var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+				var refCol = refSchema.Identity?.Name ?? "Id";
+
+				entityFkPairs.Add((schema.TableName, col.Name));
+
+				if (!dbFkByPair.TryGetValue((schema.TableName, col.Name), out var existing) ||
+					!existing.RefTableName.EqualsIgnoreCase(refSchema.TableName) ||
+					!existing.RefColumnName.EqualsIgnoreCase(refCol))
+				{
+					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingForeignKey,
+						$"{refSchema.TableName}.{refCol}",
+						existing is null ? "missing" : $"{existing.RefTableName}.{existing.RefColumnName}"));
+				}
+			}
+		}
+
+		foreach (var fk in dbForeignKeys)
+		{
+			if (entityFkPairs.Contains((fk.TableName, fk.ColumnName)))
+				continue;
+
+			diffs.Add(new(fk.TableName, fk.ColumnName, SchemaDiffKind.ExtraForeignKey,
+				string.Empty,
+				$"{fk.RefTableName}.{fk.RefColumnName} ({fk.ConstraintName})"));
+		}
+	}
+
+	private sealed class TableColumnComparer : IEqualityComparer<(string Table, string Column)>
+	{
+		public bool Equals((string Table, string Column) x, (string Table, string Column) y)
+			=> string.Equals(x.Table, y.Table, StringComparison.OrdinalIgnoreCase)
+				&& string.Equals(x.Column, y.Column, StringComparison.OrdinalIgnoreCase);
+
+		public int GetHashCode((string Table, string Column) obj)
+			=> HashCode.Combine(
+				obj.Table?.ToLowerInvariant(),
+				obj.Column?.ToLowerInvariant());
 	}
 
 	/// <summary>
@@ -289,6 +408,27 @@ public static class SchemaMigrator
 					sb.AppendLine(";");
 					break;
 				}
+
+				case SchemaDiffKind.MissingForeignKey:
+				{
+					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
+						break;
+
+					var col = schema.TryGetColumn(diff.ColumnName);
+					if (col?.ReferencedEntityType is null)
+						break;
+
+					var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+					var refCol = refSchema.Identity?.Name ?? "Id";
+					dialect.AppendAddForeignKey(sb, diff.TableName, col.Name, refSchema.TableName, refCol);
+					sb.AppendLine(";");
+					break;
+				}
+
+				case SchemaDiffKind.ExtraForeignKey:
+					// extra FKs are informational only, not auto-dropped (mirrors ExtraColumn)
+					sb.AppendLine($"-- Extra foreign key: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
+					break;
 
 				case SchemaDiffKind.ExtraColumn:
 					// extra columns are informational only, not auto-dropped

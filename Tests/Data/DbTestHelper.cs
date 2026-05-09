@@ -1,6 +1,7 @@
 namespace Ecng.Tests.Data;
 
 using System.Data.Common;
+using System.Text;
 
 using Ecng.Data;
 using Ecng.Data.Sql;
@@ -153,6 +154,12 @@ static class DbTestHelper
 	{
 		var dialect = GetDialect(provider);
 
+		// Drop incoming FK constraints so the subsequent DROP TABLE doesn't
+		// fail with "referenced by a FOREIGN KEY constraint" when a prior
+		// test (e.g. SchemaMigratorFkTests' backfill) left FKs pointing at
+		// this table.
+		DropIncomingForeignKeysSync(provider, meta.TableName);
+
 		// Drop existing table to ensure correct schema (e.g., IDENTITY columns)
 		var dropSql = Query.CreateDropTable(meta.TableName).Render(dialect);
 		ExecuteRaw(provider, dropSql);
@@ -168,6 +175,51 @@ static class DbTestHelper
 		var sql = autoIncrement
 			? Query.CreateCreateTable(meta.TableName, columns, meta.Identity?.Name).Render(dialect)
 			: Query.CreateCreateTable(meta.TableName, columns, primaryKeyColumns: meta.Identity is not null ? [meta.Identity.Name] : null).Render(dialect);
+		ExecuteRaw(provider, sql);
+	}
+
+	/// <summary>
+	/// Drops every FK constraint that targets <paramref name="tableName"/>.
+	/// SQLite leaves enforcement off by default, so DROP TABLE there does
+	/// not need this dance.
+	/// </summary>
+	private static void DropIncomingForeignKeysSync(string provider, string tableName)
+	{
+		if (provider == DatabaseProviderRegistry.SQLite)
+			return;
+
+		var dialect = GetDialect(provider);
+		var connStr = TryGetConnectionString(provider);
+		var factory = GetFactory(provider);
+
+		using var conn = factory.CreateConnection();
+		conn.ConnectionString = connStr;
+		conn.Open();
+
+		var fks = dialect.ReadDbForeignKeysAsync(conn).GetAwaiter().GetResult();
+
+		foreach (var fk in fks)
+		{
+			if (!fk.RefTableName.EqualsIgnoreCase(tableName))
+				continue;
+
+			var sb = new StringBuilder();
+			dialect.AppendDropForeignKey(sb, fk.TableName, fk.ConstraintName);
+
+			using var cmd = conn.CreateCommand();
+			cmd.CommandText = sb.ToString();
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	/// <summary>
+	/// Drops <paramref name="tableName"/> via the dialect's <c>DROP TABLE IF EXISTS</c>
+	/// shape — saves callers from constructing the SQL by hand.
+	/// </summary>
+	public static void DropTable(string provider, string tableName)
+	{
+		var dialect = GetDialect(provider);
+		var sql = Query.CreateDropTable(tableName).Render(dialect);
 		ExecuteRaw(provider, sql);
 	}
 

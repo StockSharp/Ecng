@@ -214,6 +214,11 @@ public interface ISqlDialect
 	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName);
 
 	/// <summary>
+	/// Appends an ALTER TABLE DROP CONSTRAINT for an existing foreign key.
+	/// </summary>
+	void AppendDropForeignKey(StringBuilder sb, string tableName, string constraintName);
+
+	/// <summary>
 	/// Appends a CREATE INDEX (or CREATE UNIQUE INDEX) on a single column.
 	/// </summary>
 	void AppendCreateIndex(StringBuilder sb, string indexName, string tableName, string columnName, bool unique);
@@ -280,6 +285,20 @@ public interface ISqlDialect
 	/// Reads column metadata from a live database.
 	/// </summary>
 	Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Reads foreign-key metadata from a live database. Used by the schema
+	/// migrator to detect missing/extra FK constraints on tables that
+	/// already exist.
+	/// </summary>
+	/// <param name="connection">An open database connection.</param>
+	/// <param name="tableSchema">Schema name (e.g. <c>"dbo"</c> or <c>"public"</c>); dialect default when <see langword="null"/>.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>One row per FK column — compound FKs surface as multiple rows.</returns>
+	Task<IReadOnlyList<DbForeignKeyInfo>> ReadDbForeignKeysAsync(
 		DbConnection connection,
 		string tableSchema = null,
 		CancellationToken cancellationToken = default);

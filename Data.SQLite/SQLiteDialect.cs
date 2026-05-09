@@ -267,6 +267,53 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbForeignKeyInfo>> ReadDbForeignKeysAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		var result = new List<DbForeignKeyInfo>();
+
+		var tables = new List<string>();
+		using (var cmd = connection.CreateCommand())
+		{
+			cmd.CommandText = BuildListUserTablesSql();
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+				tables.Add(reader.GetString(0));
+		}
+
+		foreach (var table in tables)
+		{
+			using var cmd = connection.CreateCommand();
+			cmd.CommandText = $"PRAGMA foreign_key_list({QuoteIdentifier(table)})";
+
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				// PRAGMA foreign_key_list columns:
+				// id, seq, table, from, to, on_update, on_delete, match
+				var refTable = reader.GetString(2);
+				var fromCol = reader.GetString(3);
+				var toCol = reader.GetString(4);
+
+				// SQLite does not name FK constraints — synthesise a stable
+				// label from the column pair so the diff layer can match
+				// MissingForeignKey/ExtraForeignKey deterministically.
+				result.Add(new DbForeignKeyInfo(
+					ConstraintName: $"FK_{table}_{fromCol}",
+					TableName: table,
+					ColumnName: fromCol,
+					RefTableName: refTable,
+					RefColumnName: toCol));
+			}
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override string NormalizeDbType(string dbTypeName)
 	{
 		return dbTypeName.Trim().ToUpperInvariant() switch
@@ -290,6 +337,16 @@ public class SQLiteDialect : SqlDialectBase
 		throw new NotSupportedException(
 			$"SQLite cannot ALTER TABLE ADD CONSTRAINT FK on {tableName}.{columnName} → {refTableName}.{refColumnName}. " +
 			"Foreign keys must be declared inside CREATE TABLE in SQLite; " +
+			"recreate the table via the table-rename migration pattern.");
+	}
+
+	/// <inheritdoc />
+	public override void AppendDropForeignKey(StringBuilder sb, string tableName, string constraintName)
+	{
+		// SQLite has no per-constraint ALTER TABLE DROP CONSTRAINT either —
+		// FKs disappear only when the table is dropped or recreated.
+		throw new NotSupportedException(
+			$"SQLite cannot ALTER TABLE DROP CONSTRAINT {constraintName} on {tableName}; " +
 			"recreate the table via the table-rename migration pattern.");
 	}
 
