@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// SQL Server dialect implementation.
@@ -176,13 +177,31 @@ public class SqlServerDialect : SqlDialectBase
 	{
 		tableSchema ??= "dbo";
 
+		// SELECT shape:
+		//   c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE,
+		//   c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, c.NUMERIC_SCALE,
+		//   COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed')
+		// FROM INFORMATION_SCHEMA.COLUMNS c
+		// WHERE c.TABLE_SCHEMA = @schema
+		// ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION
+		var sql = new Query()
+			.Select()
+				.Column("c", "TABLE_NAME").Comma()
+				.Column("c", "COLUMN_NAME").Comma()
+				.Column("c", "DATA_TYPE").Comma()
+				.Column("c", "IS_NULLABLE").Comma()
+				.Column("c", "CHARACTER_MAXIMUM_LENGTH").Comma()
+				.Column("c", "NUMERIC_PRECISION").Comma()
+				.Column("c", "NUMERIC_SCALE").Comma()
+				.Raw("COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed')").NewLine()
+			.From().Raw("INFORMATION_SCHEMA.COLUMNS c").NewLine()
+			.Where().NewLine()
+				.Column("c", "TABLE_SCHEMA").Equal().Param("schema").NewLine()
+			.OrderBy().Column("c", "TABLE_NAME").Comma().Column("c", "ORDINAL_POSITION")
+			.Render(this);
+
 		using var cmd = connection.CreateCommand();
-		cmd.CommandText = @"
-SELECT c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, c.NUMERIC_SCALE,
-       COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed') AS IsComputed
-FROM INFORMATION_SCHEMA.COLUMNS c
-WHERE c.TABLE_SCHEMA = @schema
-ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION";
+		cmd.CommandText = sql;
 
 		var param = cmd.CreateParameter();
 		param.ParameterName = "@schema";

@@ -195,8 +195,8 @@ static class DbTestHelper
 	public static void DeleteAll(string provider, string tableName)
 	{
 		var dialect = GetDialect(provider);
-		var quoted = dialect.QuoteIdentifier(tableName);
-		ExecuteRaw(provider, $"DELETE FROM {quoted}");
+		var sql = Query.CreateDelete(tableName, whereClause: null).Render(dialect);
+		ExecuteRaw(provider, sql);
 	}
 
 	/// <summary>

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// SQLite dialect implementation.
@@ -201,6 +202,21 @@ public class SQLiteDialect : SqlDialectBase
 			sb.Append($" OFFSET {skip.Value}");
 	}
 
+	/// <summary>
+	/// Builds the SELECT that lists user tables from <c>sqlite_master</c>.
+	/// Routed through <see cref="Query"/> so the catalogue probe stays
+	/// aligned with the rest of the dialect's SQL emission.
+	/// </summary>
+	private string BuildListUserTablesSql()
+		=> new Query()
+			.Select().Column("name").NewLine()
+			.From().Raw("sqlite_master").NewLine()
+			.Where().NewLine()
+				.Column("type").Equal().Raw("'table'")
+				.And().Column("name").Not().Like().Raw("'sqlite_%'").NewLine()
+			.OrderBy().Column("name")
+			.Render(this);
+
 	/// <inheritdoc />
 	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
 		DbConnection connection,
@@ -214,7 +230,7 @@ public class SQLiteDialect : SqlDialectBase
 
 		using (var cmd = connection.CreateCommand())
 		{
-			cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name";
+			cmd.CommandText = BuildListUserTablesSql();
 
 			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 

@@ -214,6 +214,11 @@ public interface ISqlDialect
 	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName);
 
 	/// <summary>
+	/// Appends a CREATE INDEX (or CREATE UNIQUE INDEX) on a single column.
+	/// </summary>
+	void AppendCreateIndex(StringBuilder sb, string indexName, string tableName, string columnName, bool unique);
+
+	/// <summary>
 	/// Appends ALTER TABLE ADD COLUMN.
 	/// </summary>
 	void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef);

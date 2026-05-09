@@ -209,16 +209,15 @@ public static class SchemaMigrator
 					// generate CREATE INDEX for indexed columns
 					foreach (var col in schema.Columns)
 					{
-						if (col.IsUnique)
-						{
-							sb.Append($"CREATE UNIQUE INDEX {dialect.QuoteIdentifier($"IX_{diff.TableName}_{col.Name}")} ON {dialect.QuoteIdentifier(diff.TableName)} ({dialect.QuoteIdentifier(col.Name)})");
-							sb.AppendLine(";");
-						}
-						else if (col.IsIndex)
-						{
-							sb.Append($"CREATE INDEX {dialect.QuoteIdentifier($"IX_{diff.TableName}_{col.Name}")} ON {dialect.QuoteIdentifier(diff.TableName)} ({dialect.QuoteIdentifier(col.Name)})");
-							sb.AppendLine(";");
-						}
+						if (!col.IsUnique && !col.IsIndex)
+							continue;
+
+						dialect.AppendCreateIndex(sb,
+							indexName: $"IX_{diff.TableName}_{col.Name}",
+							tableName: diff.TableName,
+							columnName: col.Name,
+							unique: col.IsUnique);
+						sb.AppendLine(";");
 					}
 
 					break;

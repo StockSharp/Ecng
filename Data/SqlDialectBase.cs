@@ -129,6 +129,17 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void AppendCreateIndex(StringBuilder sb, string indexName, string tableName, string columnName, bool unique)
+	{
+		sb.Append("CREATE ");
+
+		if (unique)
+			sb.Append("UNIQUE ");
+
+		sb.Append($"INDEX {QuoteIdentifier(indexName)} ON {QuoteIdentifier(tableName)} ({QuoteIdentifier(columnName)})");
+	}
+
+	/// <inheritdoc />
 	public abstract void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
 
 	/// <inheritdoc />

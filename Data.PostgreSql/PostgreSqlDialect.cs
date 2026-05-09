@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.Data.Sql;
 
 /// <summary>
 /// PostgreSQL dialect implementation.
@@ -246,13 +247,31 @@ public class PostgreSqlDialect : SqlDialectBase
 	{
 		tableSchema ??= "public";
 
+		// SELECT shape:
+		//   table_name, column_name, data_type, is_nullable,
+		//   character_maximum_length, numeric_precision, numeric_scale,
+		//   is_generated <> 'NEVER'
+		// FROM information_schema.columns
+		// WHERE table_schema = @schema
+		// ORDER BY table_name, ordinal_position
+		var sql = new Query()
+			.Select()
+				.Column("table_name").Comma()
+				.Column("column_name").Comma()
+				.Column("data_type").Comma()
+				.Column("is_nullable").Comma()
+				.Column("character_maximum_length").Comma()
+				.Column("numeric_precision").Comma()
+				.Column("numeric_scale").Comma()
+				.Raw("is_generated <> 'NEVER'").NewLine()
+			.From().Raw("information_schema.columns").NewLine()
+			.Where().NewLine()
+				.Column("table_schema").Equal().Param("schema").NewLine()
+			.OrderBy().Column("table_name").Comma().Column("ordinal_position")
+			.Render(this);
+
 		using var cmd = connection.CreateCommand();
-		cmd.CommandText = @"
-SELECT table_name, column_name, data_type, is_nullable, character_maximum_length, numeric_precision, numeric_scale,
-       is_generated <> 'NEVER' AS is_computed
-FROM information_schema.columns
-WHERE table_schema = @schema
-ORDER BY table_name, ordinal_position";
+		cmd.CommandText = sql;
 
 		var param = cmd.CreateParameter();
 		param.ParameterName = "@schema";
