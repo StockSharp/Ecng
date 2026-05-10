@@ -121,146 +121,111 @@ public class ColumnAttributeTests : BaseTestClass
 
 	#endregion
 
-	#region GetColumnDefinition — SQL Server
+	#region GetColumnDefinition (driver-agnostic)
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_StringWithMaxLength()
+	[DataRow("SqlServer", "NVARCHAR(128) NOT NULL")]
+	[DataRow("PostgreSql", "VARCHAR(128) NOT NULL")]
+	// SQLite has dynamic typing — maxLength is intentionally dropped, the
+	// affinity stays TEXT.
+	[DataRow("SQLite", "TEXT NOT NULL")]
+	public void GetColumnDef_StringWithMaxLength(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(string), false, 128);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(string), isNullable: false, maxLength: 128);
 
-		def.AssertEqual("NVARCHAR(128) NOT NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_StringUnlimited()
+	[DataRow("SqlServer", "NVARCHAR(MAX) NULL")]
+	[DataRow("PostgreSql", "TEXT NULL")]
+	[DataRow("SQLite", "TEXT NULL")]
+	public void GetColumnDef_StringUnlimited(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(string), true, 0);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(string), isNullable: true, maxLength: 0);
 
-		def.AssertEqual("NVARCHAR(MAX) NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_StringMaxSentinel_MapsToMax()
+	[DataRow("SqlServer", "NVARCHAR(MAX) NOT NULL")]
+	[DataRow("PostgreSql", "TEXT NOT NULL")]
+	[DataRow("SQLite", "TEXT NOT NULL")]
+	public void GetColumnDef_StringMaxSentinel_MapsToUnbounded(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(string), false, ColumnAttribute.Max);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(string), isNullable: false, maxLength: ColumnAttribute.Max);
 
-		def.AssertEqual("NVARCHAR(MAX) NOT NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_ByteArrayMaxSentinel_MapsToMax()
+	[DataRow("SqlServer", "VARBINARY(256) NOT NULL")]
+	// PostgreSQL and SQLite use a single binary affinity; explicit length is dropped.
+	[DataRow("PostgreSql", "BYTEA NOT NULL")]
+	[DataRow("SQLite", "BLOB NOT NULL")]
+	public void GetColumnDef_ByteArrayWithMaxLength(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), true, ColumnAttribute.Max);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(byte[]), isNullable: false, maxLength: 256);
 
-		def.AssertEqual("VARBINARY(MAX) NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_ByteArrayWithMaxLength()
+	[DataRow("SqlServer", "VARBINARY(MAX) NULL")]
+	[DataRow("PostgreSql", "BYTEA NULL")]
+	[DataRow("SQLite", "BLOB NULL")]
+	public void GetColumnDef_ByteArrayUnlimited(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), false, 256);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(byte[]), isNullable: true, maxLength: 0);
 
-		def.AssertEqual("VARBINARY(256) NOT NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_ByteArrayUnlimited()
+	[DataRow("SqlServer", "VARBINARY(MAX) NULL")]
+	[DataRow("PostgreSql", "BYTEA NULL")]
+	[DataRow("SQLite", "BLOB NULL")]
+	public void GetColumnDef_ByteArrayMaxSentinel_MapsToUnbounded(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), true, 0);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(byte[]), isNullable: true, maxLength: ColumnAttribute.Max);
 
-		def.AssertEqual("VARBINARY(MAX) NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_Int()
+	[DataRow("SqlServer", "INT NOT NULL")]
+	[DataRow("PostgreSql", "INTEGER NOT NULL")]
+	[DataRow("SQLite", "INTEGER NOT NULL")]
+	public void GetColumnDef_Int(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(int), false);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(int), isNullable: false);
 
-		def.AssertEqual("INT NOT NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_SqlServer_NullableLong()
+	[DataRow("SqlServer", "BIGINT NULL")]
+	[DataRow("PostgreSql", "BIGINT NULL")]
+	[DataRow("SQLite", "INTEGER NULL")]
+	public void GetColumnDef_NullableLong(string dialectName, string expected)
 	{
-		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(long?), true);
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(long?), isNullable: true);
 
-		def.AssertEqual("BIGINT NULL");
-	}
-
-	#endregion
-
-	#region GetColumnDefinition — PostgreSQL
-
-	[TestMethod]
-	public void GetColumnDef_PostgreSql_StringWithMaxLength()
-	{
-		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(string), false, 128);
-
-		def.AssertEqual("VARCHAR(128) NOT NULL");
+		def.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetColumnDef_PostgreSql_StringUnlimited()
-	{
-		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(string), true, 0);
-
-		def.AssertEqual("TEXT NULL");
-	}
-
-	[TestMethod]
-	public void GetColumnDef_PostgreSql_StringMaxSentinel_MapsToText()
-	{
-		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(string), false, ColumnAttribute.Max);
-
-		def.AssertEqual("TEXT NOT NULL");
-	}
-
-	[TestMethod]
-	public void AppendAlterColumn_PostgreSql_StringMaxSentinel_MapsToText()
+	[DataRow("SqlServer", "NVARCHAR(MAX)")]
+	[DataRow("PostgreSql", "SET DATA TYPE TEXT")]
+	// SQLite has no ALTER COLUMN at all; that path throws by design and is
+	// covered separately in the dialect tests.
+	public void AppendAlterColumn_StringMaxSentinel_MapsToUnbounded(string dialectName, string expectedFragment)
 	{
 		var sb = new StringBuilder();
 
-		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Notes", typeof(string), true, ColumnAttribute.Max);
+		GetDialect(dialectName).AppendAlterColumn(sb, "Users", "Notes", typeof(string), isNullable: true, maxLength: ColumnAttribute.Max);
 
-		var sql = sb.ToString();
-		sql.Contains("SET DATA TYPE TEXT").AssertTrue($"Expected unbounded TEXT, got: {sql}");
-	}
-
-	[TestMethod]
-	public void GetColumnDef_PostgreSql_ByteArray()
-	{
-		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(byte[]), false, 256);
-
-		def.AssertEqual("BYTEA NOT NULL");
-	}
-
-	[TestMethod]
-	public void GetColumnDef_PostgreSql_Int()
-	{
-		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(int), true);
-
-		def.AssertEqual("INTEGER NULL");
-	}
-
-	#endregion
-
-	#region GetColumnDefinition — SQLite
-
-	[TestMethod]
-	public void GetColumnDef_SQLite_StringIgnoresMaxLength()
-	{
-		var def = SQLiteDialect.Instance.GetColumnDefinition(typeof(string), false, 128);
-
-		// SQLite uses dynamic typing, maxLength is ignored in base implementation
-		def.AssertEqual("TEXT NOT NULL");
-	}
-
-	[TestMethod]
-	public void GetColumnDef_SQLite_Int()
-	{
-		var def = SQLiteDialect.Instance.GetColumnDefinition(typeof(int), true);
-
-		def.AssertEqual("INTEGER NULL");
+		sb.ToString().Contains(expectedFragment).AssertTrue($"Expected '{expectedFragment}', got: {sb}");
 	}
 
 	#endregion
