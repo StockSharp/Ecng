@@ -140,6 +140,22 @@ public class ColumnAttributeTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void GetColumnDef_SqlServer_StringMaxSentinel_MapsToMax()
+	{
+		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(string), false, ColumnAttribute.Max);
+
+		def.AssertEqual("NVARCHAR(MAX) NOT NULL");
+	}
+
+	[TestMethod]
+	public void GetColumnDef_SqlServer_ByteArrayMaxSentinel_MapsToMax()
+	{
+		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), true, ColumnAttribute.Max);
+
+		def.AssertEqual("VARBINARY(MAX) NULL");
+	}
+
+	[TestMethod]
 	public void GetColumnDef_SqlServer_ByteArrayWithMaxLength()
 	{
 		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), false, 256);
@@ -189,6 +205,25 @@ public class ColumnAttributeTests : BaseTestClass
 		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(string), true, 0);
 
 		def.AssertEqual("TEXT NULL");
+	}
+
+	[TestMethod]
+	public void GetColumnDef_PostgreSql_StringMaxSentinel_MapsToText()
+	{
+		var def = PostgreSqlDialect.Instance.GetColumnDefinition(typeof(string), false, ColumnAttribute.Max);
+
+		def.AssertEqual("TEXT NOT NULL");
+	}
+
+	[TestMethod]
+	public void AppendAlterColumn_PostgreSql_StringMaxSentinel_MapsToText()
+	{
+		var sb = new StringBuilder();
+
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Notes", typeof(string), true, ColumnAttribute.Max);
+
+		var sql = sb.ToString();
+		sql.Contains("SET DATA TYPE TEXT").AssertTrue($"Expected unbounded TEXT, got: {sql}");
 	}
 
 	[TestMethod]
@@ -510,6 +545,94 @@ public class ColumnAttributeTests : BaseTestClass
 		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
 
 		diffs.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_MaxSentinel_AgainstSqlServerMaxColumn_NoMaxLengthDiff()
+	{
+		// Entity declares Max; SqlServer reports max_length = -1 for NVARCHAR(MAX).
+		// Both encode "unbounded" — must not produce a perpetual MaxLengthMismatch.
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Notes", ClrType = typeof(string), MaxLength = ColumnAttribute.Max },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Notes", "nvarchar", true, -1, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Any(d => d.Kind == SchemaDiffKind.MaxLengthMismatch).AssertFalse(
+			$"Expected no MaxLengthMismatch (both unbounded). Diffs: [{string.Join(", ", diffs.Select(d => $"{d.Kind} {d.ColumnName}"))}]");
+	}
+
+	[TestMethod]
+	public void Compare_MaxSentinel_AgainstBoundedDbColumn_EmitsMaxLengthDiff()
+	{
+		// Entity wants unbounded (Max), DB has bounded NVARCHAR(100) — mismatch.
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Notes", ClrType = typeof(string), MaxLength = ColumnAttribute.Max },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Notes", "nvarchar", true, 100, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Any(d => d.Kind == SchemaDiffKind.MaxLengthMismatch && d.ColumnName == "Notes").AssertTrue(
+			$"Expected MaxLengthMismatch for Notes (entity wants unbounded, DB has 100).");
+	}
+
+	[TestMethod]
+	public void Compare_MaxLengthZero_AgainstNullDbMaxLength_NoDiff()
+	{
+		// Default MaxLength = 0 paired with PostgreSQL TEXT (DB MaxLength == null)
+		// — historical behaviour, must remain unchanged.
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Notes", ClrType = typeof(string), MaxLength = 0 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Notes", "text", true, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, PostgreSqlDialect.Instance, false);
+
+		diffs.Any(d => d.Kind == SchemaDiffKind.MaxLengthMismatch).AssertFalse(
+			$"MaxLength == 0 vs DB null must not emit MaxLengthMismatch. Diffs: [{string.Join(", ", diffs.Select(d => d.Kind))}]");
+	}
+
+	[TestMethod]
+	public void ColumnAttribute_Max_EqualsIntMaxValue()
+	{
+		// Locks in the contract used by dialects: anything == int.MaxValue is
+		// the unbounded sentinel.
+		ColumnAttribute.Max.AssertEqual(int.MaxValue);
 	}
 
 	#endregion

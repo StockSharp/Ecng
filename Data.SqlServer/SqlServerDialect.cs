@@ -80,10 +80,14 @@ public class SqlServerDialect : SqlDialectBase
 
 		string typeName;
 
+		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit "MAX"
+		// sentinel — same encoding as MaxLength == 0, but lets entity authors
+		// document intent ("yes, this column is intentionally unbounded").
+		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = maxLength > 0 ? $"NVARCHAR({maxLength})" : "NVARCHAR(MAX)";
+			typeName = isMax ? "NVARCHAR(MAX)" : $"NVARCHAR({maxLength})";
 		else if (underlying == typeof(byte[]))
-			typeName = maxLength > 0 ? $"VARBINARY({maxLength})" : "VARBINARY(MAX)";
+			typeName = isMax ? "VARBINARY(MAX)" : $"VARBINARY({maxLength})";
 		else if (underlying == typeof(decimal) && precision > 0)
 			typeName = $"DECIMAL({precision},{scale})";
 		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) && precision > 0)

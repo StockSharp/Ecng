@@ -26,8 +26,20 @@ public class ColumnAttribute : Attribute
 	public bool IsNullableSet => _isNullableSet;
 
 	/// <summary>
+	/// Sentinel to request the dialect-specific unbounded string/binary type
+	/// (NVARCHAR(MAX) on SQL Server, TEXT on PostgreSQL/SQLite). Use when a
+	/// column is intentionally large — JSON blobs, exception bodies, raw
+	/// payloads — to make that intent explicit in the entity, instead of
+	/// leaving <see cref="MaxLength"/> at its 0 default.
+	/// </summary>
+	public const int Max = int.MaxValue;
+
+	/// <summary>
 	/// Gets or sets the maximum length for string/binary columns.
-	/// 0 means unlimited (MAX/TEXT). Applies only to string and byte[] columns.
+	/// 0 (the default) and <see cref="Max"/> both map to the dialect-specific
+	/// unbounded type (NVARCHAR(MAX) / TEXT). Set to a positive integer for
+	/// a fixed-size column (NVARCHAR(N) / VARCHAR(N)). Applies only to string
+	/// and byte[] columns.
 	/// </summary>
 	public int MaxLength { get; set; }
 

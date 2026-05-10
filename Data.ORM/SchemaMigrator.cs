@@ -129,8 +129,14 @@ public static class SchemaMigrator
 						expectedType, actualType));
 				}
 
-				// compare max length
-				if (col.MaxLength > 0 && dbCol.MaxLength is not null && col.MaxLength != dbCol.MaxLength)
+				// compare max length. int.MaxValue (ColumnAttribute.Max) is the
+				// explicit "unbounded" sentinel; SQL Server's sys.columns reports
+				// max_length == -1 for NVARCHAR(MAX)/VARBINARY(MAX). Treat the two
+				// as equivalent so an entity that explicitly declares its column
+				// as Max doesn't show a perpetual MaxLengthMismatch diff.
+				var entityMaxIsUnbounded = col.MaxLength == int.MaxValue;
+				var dbMaxIsUnbounded = dbCol.MaxLength == -1;
+				if (col.MaxLength > 0 && !(entityMaxIsUnbounded && dbMaxIsUnbounded) && dbCol.MaxLength is not null && col.MaxLength != dbCol.MaxLength)
 				{
 					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MaxLengthMismatch,
 						col.MaxLength.ToString(), dbCol.MaxLength.Value.ToString()));

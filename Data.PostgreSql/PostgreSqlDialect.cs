@@ -225,8 +225,12 @@ public class PostgreSqlDialect : SqlDialectBase
 
 		string typeName;
 
+		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit
+		// unbounded sentinel — same encoding as MaxLength == 0, lets entity
+		// authors document intent for "yes, intentionally TEXT" columns.
+		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
+			typeName = isMax ? "TEXT" : $"VARCHAR({maxLength})";
 		else if (underlying == typeof(byte[]))
 			typeName = "BYTEA";
 		else if (underlying == typeof(decimal) && precision > 0)
@@ -368,8 +372,12 @@ public class PostgreSqlDialect : SqlDialectBase
 
 		string typeName;
 
+		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit
+		// unbounded sentinel — same encoding as MaxLength == 0, lets entity
+		// authors document intent for "yes, intentionally TEXT" columns.
+		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = maxLength > 0 ? $"VARCHAR({maxLength})" : "TEXT";
+			typeName = isMax ? "TEXT" : $"VARCHAR({maxLength})";
 		else if (underlying == typeof(byte[]))
 			typeName = "BYTEA";
 		else if (underlying == typeof(decimal) && precision > 0)
