@@ -478,7 +478,7 @@ public class ConverterTest
 		// Test Type <-> DbType round-trip
 		typeof(int).To<DbType>().AssertEqual(DbType.Int32);
 		typeof(string).To<DbType>().AssertEqual(DbType.String);
-		typeof(DateTime).To<DbType>().AssertEqual(DbType.DateTime);
+		typeof(DateTime).To<DbType>().AssertEqual(DbType.DateTime2);
 		typeof(bool).To<DbType>().AssertEqual(DbType.Boolean);
 		typeof(byte[]).To<DbType>().AssertEqual(DbType.Binary);
 		typeof(decimal).To<DbType>().AssertEqual(DbType.Decimal);
