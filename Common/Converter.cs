@@ -47,7 +47,11 @@ public static class Converter
 		_dbTypes.Add(typeof(float), DbType.Single);
 		_dbTypes.Add(typeof(double), DbType.Double);
 		_dbTypes.Add(typeof(decimal), DbType.Decimal);
-		_dbTypes.Add(typeof(DateTime), DbType.DateTime);
+		// Modern wire type: full CLR DateTime range (0001-9999), backed by
+		// SQL Server's `datetime2`, Postgres `timestamp`, SQLite TEXT. The
+		// legacy DbType.DateTime is still accepted on the reverse path below
+		// for callers that hard-code that enum.
+		_dbTypes.Add(typeof(DateTime), DbType.DateTime2);
 		_dbTypes.Add(typeof(DateTimeOffset), DbType.DateTimeOffset);
 		_dbTypes.Add(typeof(TimeSpan), DbType.Time);
 		_dbTypes.Add(typeof(Guid), DbType.Guid);
@@ -89,7 +93,18 @@ public static class Converter
 				throw new ArgumentException($".NET type {input} doesn't have associated db type.");
 		});
 
-		AddTypedConverter<DbType, Type>(input => _dbTypes.First(pair => pair.Value == input).Key);
+		AddTypedConverter<DbType, Type>(input =>
+		{
+			// DbType.DateTime / DateTime2 / Date all back the same CLR
+			// DateTime — the variants differ on wire range/precision, not
+			// on the .NET side. Forward maps to DateTime2 (the modern
+			// canonical), but reverse accepts the legacy DateTime enum too
+			// so callers that hard-code that value still resolve.
+			if (input is DbType.DateTime or DbType.DateTime2 or DbType.Date)
+				return typeof(DateTime);
+
+			return _dbTypes.First(pair => pair.Value == input).Key;
+		});
 		AddTypedConverter<string, byte[]>(input => input.Unicode());
 		AddTypedConverter<byte[], string>(input => input.Unicode());
 		AddTypedConverter<bool[], BitArray>(input => new BitArray(input));
