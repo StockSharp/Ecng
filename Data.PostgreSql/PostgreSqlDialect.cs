@@ -366,6 +366,65 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "public";
+
+		// pg_index.indkey is an oid-vector of column attnums in key order;
+		// unnest with WITH ORDINALITY to recover the 1-based position so
+		// composite indexes can be reassembled in the right column order.
+		//
+		// SELECT shape:
+		//   c.relname, t.relname, a.attname, k.ord, ix.indisunique, ix.indisprimary
+		// FROM pg_index ix
+		// JOIN pg_class c ON c.oid = ix.indexrelid
+		// JOIN pg_class t ON t.oid = ix.indrelid
+		// JOIN pg_namespace n ON n.oid = t.relnamespace
+		// JOIN LATERAL unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord) ON TRUE
+		// JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = k.attnum
+		// WHERE n.nspname = @schema
+		// ORDER BY c.relname, k.ord
+		var sql =
+			"SELECT c.relname, t.relname, a.attname, k.ord::int, ix.indisunique, ix.indisprimary " +
+			"FROM pg_index ix " +
+			"JOIN pg_class c ON c.oid = ix.indexrelid " +
+			"JOIN pg_class t ON t.oid = ix.indrelid " +
+			"JOIN pg_namespace n ON n.oid = t.relnamespace " +
+			"JOIN LATERAL unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord) ON TRUE " +
+			"JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = k.attnum " +
+			"WHERE n.nspname = @schema " +
+			"ORDER BY c.relname, k.ord";
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = sql;
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbIndexInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbIndexInfo(
+				IndexName: reader.GetString(0),
+				TableName: reader.GetString(1),
+				ColumnName: reader.GetString(2),
+				ColumnOrdinal: reader.GetInt32(3),
+				IsUnique: reader.GetBoolean(4),
+				IsPrimaryKey: reader.GetBoolean(5)));
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;

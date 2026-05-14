@@ -302,4 +302,21 @@ public interface ISqlDialect
 		DbConnection connection,
 		string tableSchema = null,
 		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Reads index metadata from a live database. Used by the schema
+	/// migrator to detect missing entity-declared <c>[Index]</c> /
+	/// <c>[Unique]</c> attributes on tables that already exist. Composite
+	/// indexes are returned as multiple rows sharing
+	/// <see cref="DbIndexInfo.IndexName"/> with ascending
+	/// <see cref="DbIndexInfo.ColumnOrdinal"/>.
+	/// </summary>
+	/// <param name="connection">An open database connection.</param>
+	/// <param name="tableSchema">Schema name (e.g. <c>"dbo"</c> or <c>"public"</c>); dialect default when <see langword="null"/>.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>One row per indexed column — composite indexes surface as multiple rows.</returns>
+	Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default);
 }

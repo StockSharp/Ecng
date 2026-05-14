@@ -302,4 +302,11 @@ public abstract class SqlDialectBase : ISqlDialect
 		string tableSchema = null,
 		CancellationToken cancellationToken = default)
 		=> throw new NotSupportedException();
+
+	/// <inheritdoc />
+	public virtual Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+		=> throw new NotSupportedException();
 }

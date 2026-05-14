@@ -323,6 +323,8 @@ public static class SchemaRegistry
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 						ReferencedEntityType = prop.PropertyType,
+						IndexName = indexAttr?.Name ?? uniqueAttr?.Name,
+						IndexOrder = indexAttr?.Order ?? uniqueAttr?.Order ?? 0,
 					});
 					continue;
 				}
@@ -343,6 +345,8 @@ public static class SchemaRegistry
 						IsUnique = uniqueAttr is not null,
 						IsIndex = indexAttr is not null || uniqueAttr is not null,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+						IndexName = indexAttr?.Name ?? uniqueAttr?.Name,
+						IndexOrder = indexAttr?.Order ?? uniqueAttr?.Order ?? 0,
 					});
 					continue;
 				}
@@ -378,6 +382,8 @@ public static class SchemaRegistry
 					IsIndex = index is not null || unique is not null,
 					IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					MaxLength = colAttr?.MaxLength ?? 0,
+					IndexName = index?.Name ?? unique?.Name,
+					IndexOrder = index?.Order ?? unique?.Order ?? 0,
 				});
 			}
 

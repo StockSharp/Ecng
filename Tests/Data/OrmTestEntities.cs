@@ -127,6 +127,67 @@ public class TestPerson : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestCompositeIx")]
+public class TestCompositeIx : IDbPersistable
+{
+	public long Id { get; set; }
+
+	// Same IndexName + different Order on two columns groups them into one
+	// composite index `IX_TenantCreated` in CREATE TABLE.
+	[Index(Name = "IX_TenantCreated", Order = 0)]
+	public long TenantId { get; set; }
+
+	[Index(Name = "IX_TenantCreated", Order = 1)]
+	public DateTime CreatedAt { get; set; }
+
+	// Stand-alone single-column index lives next to the composite — verifies
+	// the two paths don't interfere when they share a table.
+	[Index]
+	public int Priority { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+		=> storage.Set(nameof(TenantId), TenantId).Set(nameof(CreatedAt), CreatedAt).Set(nameof(Priority), Priority);
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		TenantId = storage.GetValue<long>(nameof(TenantId));
+		CreatedAt = storage.GetValue<DateTime>(nameof(CreatedAt));
+		Priority = storage.GetValue<int>(nameof(Priority));
+		return default;
+	}
+}
+
+[Entity(Name = "Ecng_TestIndexed")]
+public class TestIndexed : IDbPersistable
+{
+	public long Id { get; set; }
+
+	// Two integer index targets — picked because every dialect can index
+	// fixed-width numeric columns out of the box, no MaxLength gymnastics
+	// to make CREATE INDEX accept the column type.
+	[Index]
+	public int Priority { get; set; }
+
+	[Index]
+	public long Owner { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+		=> storage.Set(nameof(Priority), Priority).Set(nameof(Owner), Owner);
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Priority = storage.GetValue<int>(nameof(Priority));
+		Owner = storage.GetValue<long>(nameof(Owner));
+		return default;
+	}
+}
+
 [Entity(Name = "Ecng_TestTask")]
 public class TestTask : IDbPersistable
 {

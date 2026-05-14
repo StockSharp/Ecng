@@ -314,6 +314,67 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		var result = new List<DbIndexInfo>();
+
+		var tables = new List<string>();
+		using (var cmd = connection.CreateCommand())
+		{
+			cmd.CommandText = BuildListUserTablesSql();
+			using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+				tables.Add(reader.GetString(0));
+		}
+
+		foreach (var table in tables)
+		{
+			// PRAGMA index_list yields one row per index with: seq, name,
+			// unique, origin ("c"=user-created via CREATE INDEX, "u"=UNIQUE
+			// constraint, "pk"=PRIMARY KEY), partial. We surface every index
+			// so the migrator can match against entity-declared
+			// [Index]/[Unique]/[Identity] attributes.
+			var indexList = new List<(string Name, bool Unique, string Origin)>();
+			using (var cmd = connection.CreateCommand())
+			{
+				cmd.CommandText = $"PRAGMA index_list({QuoteIdentifier(table)})";
+				using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+				while (await reader.ReadAsync(cancellationToken))
+				{
+					indexList.Add((
+						Name: reader.GetString(1),
+						Unique: reader.GetInt32(2) != 0,
+						Origin: reader.GetString(3)));
+				}
+			}
+
+			foreach (var (name, unique, origin) in indexList)
+			{
+				// PRAGMA index_info yields one row per indexed column with:
+				// seqno (0-based), cid (column id in table), name.
+				using var cmd = connection.CreateCommand();
+				cmd.CommandText = $"PRAGMA index_info({QuoteIdentifier(name)})";
+				using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+				while (await reader.ReadAsync(cancellationToken))
+				{
+					result.Add(new DbIndexInfo(
+						IndexName: name,
+						TableName: table,
+						ColumnName: reader.GetString(2),
+						ColumnOrdinal: reader.GetInt32(0) + 1,
+						IsUnique: unique,
+						IsPrimaryKey: origin.EqualsIgnoreCase("pk")));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override string NormalizeDbType(string dbTypeName)
 	{
 		return dbTypeName.Trim().ToUpperInvariant() switch

@@ -43,6 +43,22 @@ public enum SchemaDiffKind
 	/// Informational only — never auto-dropped (mirrors <see cref="ExtraColumn"/>).
 	/// </summary>
 	ExtraForeignKey,
+
+	/// <summary>
+	/// Entity declares a <c>[Index]</c> (or <c>[Unique]</c>) column but the
+	/// live database has no matching single-column index. Backfilled via
+	/// <c>CREATE INDEX</c> by <see cref="SchemaMigrator.GenerateMigrationSql"/>.
+	/// </summary>
+	MissingIndex,
+
+	/// <summary>
+	/// Database has an index that no entity column declares. Informational
+	/// only — never auto-dropped (mirrors <see cref="ExtraColumn"/> and
+	/// <see cref="ExtraForeignKey"/>). Primary-key and unique-constraint
+	/// backing indexes are filtered out before reaching this diff so they
+	/// don't surface as false positives.
+	/// </summary>
+	ExtraIndex,
 }
 
 /// <summary>
@@ -75,13 +91,21 @@ public static class SchemaMigrator
 	/// <see cref="SchemaDiffKind.ExtraForeignKey"/> diffs. Pass <see langword="null"/>
 	/// (the default) to skip FK comparison and preserve the pre-FK behaviour.
 	/// </param>
+	/// <param name="dbIndexes">
+	/// Indexes read via <see cref="ISqlDialect.ReadDbIndexesAsync"/>. When
+	/// supplied, missing/extra single-column indexes are surfaced as
+	/// <see cref="SchemaDiffKind.MissingIndex"/> /
+	/// <see cref="SchemaDiffKind.ExtraIndex"/> diffs. Pass <see langword="null"/>
+	/// (the default) to skip index comparison and preserve the pre-index behaviour.
+	/// </param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
 		IReadOnlyList<DbColumnInfo> dbColumns,
 		ISqlDialect dialect,
 		bool skipComputed,
-		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null)
+		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null,
+		IReadOnlyList<DbIndexInfo> dbIndexes = null)
 	{
 		var diffs = new List<SchemaDiff>();
 
@@ -172,6 +196,9 @@ public static class SchemaMigrator
 		if (dbForeignKeys is not null)
 			AppendForeignKeyDiffs(entities, dbColumns, dbForeignKeys, dbTables, diffs);
 
+		if (dbIndexes is not null)
+			AppendIndexDiffs(entities, dbIndexes, dbTables, diffs);
+
 		return diffs;
 	}
 
@@ -197,8 +224,9 @@ public static class SchemaMigrator
 
 		var dbColumns = await dialect.ReadDbSchemaAsync(connection, tableSchema, cancellationToken);
 		var dbForeignKeys = await dialect.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
+		var dbIndexes = await dialect.ReadDbIndexesAsync(connection, tableSchema, cancellationToken);
 
-		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys);
+		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes);
 	}
 
 	private static void AppendForeignKeyDiffs(
@@ -255,6 +283,164 @@ public static class SchemaMigrator
 			diffs.Add(new(fk.TableName, fk.ColumnName, SchemaDiffKind.ExtraForeignKey,
 				string.Empty,
 				$"{fk.RefTableName}.{fk.RefColumnName} ({fk.ConstraintName})"));
+		}
+	}
+
+	/// <summary>
+	/// Emits CREATE INDEX statements for every <c>[Index]</c>/<c>[Unique]</c>
+	/// column of <paramref name="schema"/>. Columns sharing the same
+	/// <see cref="SchemaColumn.IndexName"/> are grouped into one composite
+	/// index ordered by <see cref="SchemaColumn.IndexOrder"/>; columns
+	/// without an index name each get their own single-column index.
+	/// </summary>
+	private static void EmitCreateIndexesForTable(ISqlDialect dialect, StringBuilder sb, Schema schema, string tableName)
+	{
+		var indexable = schema.Columns
+			.Where(c => c.IsUnique || c.IsIndex)
+			.ToArray();
+
+		// Single-column path — preserves the original IX_{Table}_{Column}
+		// naming convention used by callers (and any DBA who already wrote
+		// monitoring around those names).
+		foreach (var col in indexable)
+		{
+			if (col.IndexName is not null)
+				continue;
+
+			dialect.AppendCreateIndex(sb,
+				indexName: $"IX_{tableName}_{col.Name}",
+				tableName: tableName,
+				columnName: col.Name,
+				unique: col.IsUnique);
+			sb.AppendLine(";");
+		}
+
+		// Composite path — one CREATE INDEX per unique IndexName, columns
+		// in IndexOrder. Uniqueness is taken from any group member that
+		// declares it (mixed declarations are rejected at registration time).
+		var composites = indexable
+			.Where(c => c.IndexName is not null)
+			.GroupBy(c => c.IndexName, StringComparer.Ordinal);
+
+		foreach (var group in composites)
+		{
+			var ordered = group.OrderBy(c => c.IndexOrder).ThenBy(c => c.Name, StringComparer.Ordinal).ToArray();
+			var unique = ordered.Any(c => c.IsUnique);
+
+			var cols = ordered.Select(c => dialect.QuoteIdentifier(c.Name)).JoinCommaSpace();
+
+			sb.Append(unique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ");
+			sb.Append(dialect.QuoteIdentifier(group.Key));
+			sb.Append(" ON ");
+			sb.Append(dialect.QuoteIdentifier(tableName));
+			sb.Append(" (");
+			sb.Append(cols);
+			sb.AppendLine(");");
+		}
+	}
+
+	private static void AppendIndexDiffs(
+		IEnumerable<Schema> entities,
+		IReadOnlyList<DbIndexInfo> dbIndexes,
+		IReadOnlyDictionary<string, Dictionary<string, DbColumnInfo>> dbTables,
+		List<SchemaDiff> diffs)
+	{
+		// Bucket DB indexes by (table, column) for single-column lookup. PK
+		// and unique-constraint backing indexes are filtered out: PK is
+		// implicit, and a [Unique] entity column already drives a UNIQUE
+		// INDEX diff via the same (table, column) key.
+		var dbIxByPair = new Dictionary<(string Table, string Column), DbIndexInfo>(new TableColumnComparer());
+		var compositeIndexColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		// Group rows by index name to detect composite indexes — those are
+		// not surfaced as MissingIndex/ExtraIndex (single-column only for now).
+		var byIndexName = dbIndexes
+			.GroupBy(ix => ix.IndexName, StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(g => g.Key, g => g.OrderBy(x => x.ColumnOrdinal).ToArray(), StringComparer.OrdinalIgnoreCase);
+
+		foreach (var (_, rows) in byIndexName)
+		{
+			// Skip the PK backing index — covered by the identity column itself.
+			if (rows[0].IsPrimaryKey)
+				continue;
+
+			if (rows.Length == 1)
+			{
+				dbIxByPair[(rows[0].TableName, rows[0].ColumnName)] = rows[0];
+			}
+			else
+			{
+				// Track composite-index columns so ExtraIndex doesn't fire on
+				// (table, column) pairs that participate in a composite the
+				// entity hasn't declared at single-column granularity.
+				foreach (var r in rows)
+					compositeIndexColumns.Add($"{r.TableName}.{r.ColumnName}");
+			}
+		}
+
+		var entityIxPairs = new HashSet<(string Table, string Column)>(new TableColumnComparer());
+
+		foreach (var schema in entities)
+		{
+			if (schema.IsView)
+				continue;
+
+			// MissingTable already emits CREATE INDEX inline with CREATE TABLE
+			// — skip it here so we don't try to re-add indexes that the table
+			// creation step will produce.
+			if (!dbTables.ContainsKey(schema.TableName))
+				continue;
+
+			foreach (var col in schema.AllColumns)
+			{
+				if (!col.IsIndex && !col.IsUnique)
+					continue;
+
+				// Identity column is backed by the PK index automatically —
+				// skip it so we don't emit a redundant CREATE INDEX next to
+				// the implicit primary-key constraint.
+				if (col == schema.Identity)
+					continue;
+
+				entityIxPairs.Add((schema.TableName, col.Name));
+
+				if (dbIxByPair.TryGetValue((schema.TableName, col.Name), out var existing))
+				{
+					// Unique declaration mismatch — entity wants UNIQUE INDEX
+					// but DB has a non-unique one (or vice versa). Surface as
+					// MissingIndex so the migrator re-creates with the right
+					// flag; the ExtraIndex pass will note the stale one.
+					if (existing.IsUnique != col.IsUnique)
+					{
+						diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingIndex,
+							col.IsUnique ? "UNIQUE INDEX" : "INDEX",
+							existing.IsUnique ? "UNIQUE INDEX" : "INDEX"));
+					}
+
+					continue;
+				}
+
+				// Skip if the column participates in a composite index we
+				// already accept as covering — composite/single-column
+				// declarations both satisfy `WHERE col = X` lookups against
+				// the left-most prefix.
+				if (compositeIndexColumns.Contains($"{schema.TableName}.{col.Name}"))
+					continue;
+
+				diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingIndex,
+					col.IsUnique ? "UNIQUE INDEX" : "INDEX",
+					"missing"));
+			}
+		}
+
+		foreach (var (key, ix) in dbIxByPair)
+		{
+			if (entityIxPairs.Contains(key))
+				continue;
+
+			diffs.Add(new(ix.TableName, ix.ColumnName, SchemaDiffKind.ExtraIndex,
+				string.Empty,
+				ix.IsUnique ? $"UNIQUE INDEX {ix.IndexName}" : $"INDEX {ix.IndexName}"));
 		}
 	}
 
@@ -331,19 +517,7 @@ public static class SchemaMigrator
 					dialect.AppendCreateTable(sb, diff.TableName, colDefs.JoinCommaSpace());
 					sb.AppendLine(";");
 
-					// generate CREATE INDEX for indexed columns
-					foreach (var col in schema.Columns)
-					{
-						if (!col.IsUnique && !col.IsIndex)
-							continue;
-
-						dialect.AppendCreateIndex(sb,
-							indexName: $"IX_{diff.TableName}_{col.Name}",
-							tableName: diff.TableName,
-							columnName: col.Name,
-							unique: col.IsUnique);
-						sb.AppendLine(";");
-					}
+					EmitCreateIndexesForTable(dialect, sb, schema, diff.TableName);
 
 					break;
 				}
@@ -434,6 +608,29 @@ public static class SchemaMigrator
 				case SchemaDiffKind.ExtraForeignKey:
 					// extra FKs are informational only, not auto-dropped (mirrors ExtraColumn)
 					sb.AppendLine($"-- Extra foreign key: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
+					break;
+
+				case SchemaDiffKind.MissingIndex:
+				{
+					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
+						break;
+
+					var col = schema.TryGetColumn(diff.ColumnName);
+					if (col is null || (!col.IsIndex && !col.IsUnique))
+						break;
+
+					dialect.AppendCreateIndex(sb,
+						indexName: $"IX_{diff.TableName}_{col.Name}",
+						tableName: diff.TableName,
+						columnName: col.Name,
+						unique: col.IsUnique);
+					sb.AppendLine(";");
+					break;
+				}
+
+				case SchemaDiffKind.ExtraIndex:
+					// extra indexes are informational only, not auto-dropped
+					sb.AppendLine($"-- Extra index: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} {diff.Actual}");
 					break;
 
 				case SchemaDiffKind.ExtraColumn:

@@ -297,6 +297,75 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "dbo";
+
+		// SELECT shape:
+		//   i.name, OBJECT_NAME(i.object_id), c.name, ic.key_ordinal,
+		//   i.is_unique, i.is_primary_key
+		// FROM sys.indexes i
+		// JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+		// JOIN sys.columns c       ON c.object_id  = ic.object_id AND c.column_id = ic.column_id
+		// JOIN sys.tables t        ON t.object_id  = i.object_id
+		// WHERE SCHEMA_NAME(t.schema_id) = @schema
+		//   AND i.type > 0                  -- skip heaps
+		//   AND ic.is_included_column = 0   -- skip INCLUDE columns
+		// ORDER BY i.name, ic.key_ordinal
+		var sql = new Query()
+			.Select()
+				.Column("i", "name").Comma()
+				.Raw("OBJECT_NAME(i.object_id)").Comma()
+				.Column("c", "name").Comma()
+				.Column("ic", "key_ordinal").Comma()
+				.Column("i", "is_unique").Comma()
+				.Column("i", "is_primary_key").NewLine()
+			.From().Raw("sys.indexes i").NewLine()
+			.InnerJoin().Raw("sys.index_columns ic").On()
+				.Column("ic", "object_id").Equal().Column("i", "object_id")
+				.And().Column("ic", "index_id").Equal().Column("i", "index_id").NewLine()
+			.InnerJoin().Raw("sys.columns c").On()
+				.Column("c", "object_id").Equal().Column("ic", "object_id")
+				.And().Column("c", "column_id").Equal().Column("ic", "column_id").NewLine()
+			.InnerJoin().Raw("sys.tables t").On()
+				.Column("t", "object_id").Equal().Column("i", "object_id").NewLine()
+			.Where().NewLine()
+				.Raw("SCHEMA_NAME(t.schema_id) ").Equal().Param("schema")
+				.And().Column("i", "type").More().Raw("0")
+				.And().Column("ic", "is_included_column").Equal().Raw("0").NewLine()
+			.OrderBy().Column("i", "name").Comma().Column("ic", "key_ordinal")
+			.Render(this);
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = sql;
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbIndexInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbIndexInfo(
+				IndexName: reader.GetString(0),
+				TableName: reader.GetString(1),
+				ColumnName: reader.GetString(2),
+				ColumnOrdinal: reader.GetByte(3),
+				IsUnique: reader.GetBoolean(4),
+				IsPrimaryKey: reader.GetBoolean(5)));
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
 	public override string NormalizeDbType(string dbTypeName)
 	{
 		return dbTypeName.Trim().ToUpperInvariant() switch

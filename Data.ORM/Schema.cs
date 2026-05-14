@@ -55,6 +55,22 @@ public record SchemaColumn
 	/// The target table name and PK column are resolved from the referenced entity's schema.
 	/// </summary>
 	public Type ReferencedEntityType { get; init; }
+
+	/// <summary>
+	/// Optional composite-index name. When set on two or more columns of the
+	/// same schema with matching value, those columns participate in a single
+	/// multi-column index ordered by <see cref="IndexOrder"/>. <see langword="null"/>
+	/// (the default) means the column is part of its own single-column index
+	/// named <c>IX_{Table}_{Column}</c>.
+	/// </summary>
+	public string IndexName { get; init; }
+
+	/// <summary>
+	/// Column position inside the composite index identified by
+	/// <see cref="IndexName"/> (lowest first). Ignored when
+	/// <see cref="IndexName"/> is <see langword="null"/>.
+	/// </summary>
+	public int IndexOrder { get; init; }
 }
 
 /// <summary>
