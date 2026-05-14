@@ -1577,24 +1577,25 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			if (lambdaBody is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } conv)
 				lambdaBody = conv.Operand;
 
+			var rootAlias = Context.TableAlias.IsEmpty() ? Extensions.DefaultAlias : Context.TableAlias;
+
 			if (lambdaBody is MemberExpression body)
 			{
-				var rootAlias = Context.TableAlias.IsEmpty() ? Extensions.DefaultAlias : Context.TableAlias;
+				Context.OrderBy.Insert(0, ResolveOrderByColumn(body, rootAlias, asc));
+			}
+			else if (lambdaBody is BinaryExpression { NodeType: ExpressionType.Coalesce } coalesce)
+			{
+				// `OrderBy(e => e.A ?? e.B)` — primary column with a fallback.
+				// Compiler may wrap either arm in Convert when widening a non-
+				// nullable side to the result type; strip it before resolving.
+				var primary = ResolveOrderByColumn(UnwrapConvert(coalesce.Left), rootAlias, asc);
+				var fallback = ResolveOrderByColumn(UnwrapConvert(coalesce.Right), rootAlias, asc);
 
-				if (MemberPathResolver.Resolve(body, rootAlias) is { } res)
+				Context.OrderBy.Insert(0, primary with
 				{
-					foreach (var jp in res.RequiredJoins)
-						RegisterJoinPlan(jp);
-
-					Context.OrderBy.Insert(0, (res.Column.Alias, res.Column.Name, asc));
-				}
-				else
-				{
-					// Resolver could not classify the chain (e.g. body.Member belongs
-					// to a projected/grouping result). Emit the column unqualified —
-					// matches the legacy "bare member.Name" fallback.
-					Context.OrderBy.Insert(0, (null, body.Member.Name, asc));
-				}
+					FallbackAlias = fallback.Alias,
+					FallbackColumnName = fallback.ColumnName,
+				});
 			}
 			else if (lambdaBody is MethodCallExpression call)
 			{
@@ -1614,6 +1615,39 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			Curr = curr;
 		}
 	}
+
+	/// <summary>
+	/// Resolves an ORDER BY <see cref="MemberExpression"/> into a column
+	/// reference for <see cref="Context.OrderBy"/>. Uses the join-aware
+	/// <see cref="MemberPathResolver"/> when the chain rooted at a parameter
+	/// can be classified, otherwise falls back to an unqualified bare column
+	/// name (the legacy behaviour for projection / grouping outputs).
+	/// </summary>
+	private OrderByEntry ResolveOrderByColumn(Expression body, string rootAlias, bool asc)
+	{
+		if (body is MemberExpression me)
+		{
+			if (MemberPathResolver.Resolve(me, rootAlias) is { } res)
+			{
+				foreach (var jp in res.RequiredJoins)
+					RegisterJoinPlan(jp);
+
+				return new(res.Column.Alias, res.Column.Name, asc);
+			}
+
+			return new(null, me.Member.Name, asc);
+		}
+
+		throw new NotSupportedException($"Cannot use {body.NodeType} as an ORDER BY column.");
+	}
+
+	/// <summary>
+	/// Strips a single <c>Convert</c>/<c>ConvertChecked</c> wrapper — the
+	/// compiler inserts one around either arm of <c>??</c> when widening a
+	/// non-nullable side to the nullable result type.
+	/// </summary>
+	private static Expression UnwrapConvert(Expression e)
+		=> e is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } u ? u.Operand : e;
 
 	/// <summary>
 	/// Resolves a single join-key <see cref="MemberExpression"/> into the

@@ -5,6 +5,22 @@ class ContextSelectColumns : Dictionary<MemberInfo, (Query, Expression)>
 	public readonly Dictionary<MemberInfo, MemberInfo> Map = [];
 }
 
+/// <summary>
+/// One entry of the SELECT's ORDER BY list. Encodes either a plain column
+/// reference (<see cref="Alias"/> / <see cref="ColumnName"/>) or a
+/// null-coalescing pair (ISNULL/COALESCE over a primary column with a
+/// fallback column) when <see cref="FallbackColumnName"/> is non-null.
+/// </summary>
+internal sealed record OrderByEntry(
+	string Alias,
+	string ColumnName,
+	bool Asc,
+	string FallbackAlias = null,
+	string FallbackColumnName = null)
+{
+	public bool IsCoalesce => FallbackColumnName is not null;
+}
+
 class Context
 {
 	public (string origAlias, string modifiedAlias) CurrJoinAlias;
@@ -60,7 +76,7 @@ class Context
 
 	public long? Skip;
 	public long? Take;
-	public readonly List<(string alias, string columnName, bool asc)> OrderBy = [];
+	public readonly List<OrderByEntry> OrderBy = [];
 	public string SelectAlias;
 	public bool Count;
 	public bool Distinct;
@@ -422,8 +438,12 @@ class Context
 		// query reads `order by [p].[Column]`.
 		for (var i = 0; i < OrderBy.Count; i++)
 		{
-			var (_, name, asc) = OrderBy[i];
-			OrderBy[i] = ("p", name, asc);
+			var entry = OrderBy[i];
+			OrderBy[i] = entry with
+			{
+				Alias = "p",
+				FallbackAlias = entry.FallbackAlias is null ? null : "p",
+			};
 		}
 
 		return cte;
@@ -463,28 +483,30 @@ class Context
 
 			var isFirstColumn = true;
 
-			foreach (var (alias, columnName, asc) in OrderBy)
+			foreach (var entry in OrderBy)
 			{
 				if (isFirstColumn)
 					isFirstColumn = false;
 				else
 					query.Comma();
 
-				// If the column matches a projected output (SELECT-list alias)
-				// from a view processor or explicit Select, emit unqualified —
-				// `[e].[MessageCount]` would fail because MessageCount is a
-				// computed projection, not a real column on the underlying
-				// table. SQL's ORDER BY allows referencing SELECT-list aliases
-				// by bare name. Check every SelectColumns layer because
-				// chained Select(...).Distinct() pushes the projection deeper.
-				var isProjectedAlias = SelectColumns.Any(layer => layer.Keys.Any(k => k.Name == columnName));
-
-				if (alias is not null && !isProjectedAlias)
-					query.Column(alias, columnName);
+				if (entry.IsCoalesce)
+				{
+					// ISNULL(primary, fallback) — used by `OrderBy(e => e.A ?? e.B)`.
+					// Dialect picks the function name (ISNULL on SQL Server,
+					// COALESCE on Postgres/SQLite) via Query.IsNull().
+					query.IsNull().OpenBracket();
+					EmitOrderByColumn(query, entry.Alias, entry.ColumnName);
+					query.Comma();
+					EmitOrderByColumn(query, entry.FallbackAlias, entry.FallbackColumnName);
+					query.CloseBracket();
+				}
 				else
-					query.Column(columnName);
+				{
+					EmitOrderByColumn(query, entry.Alias, entry.ColumnName);
+				}
 
-				if (!asc)
+				if (!entry.Asc)
 					query.Desc();
 			}
 		}
@@ -503,6 +525,24 @@ class Context
 				dialect.AppendPaginationParams(builder, skipExpr, takeExpr);
 			});
 		}
+	}
+
+	/// <summary>
+	/// Emits one column reference for ORDER BY — qualified
+	/// (<c>[alias].[column]</c>) when the alias is known and the column
+	/// isn't a SELECT-list projection alias, otherwise bare
+	/// <c>[column]</c>. SELECT-list aliases (from view processors or
+	/// explicit <c>Select(...)</c>) can't be qualified because the column
+	/// doesn't exist on the underlying table.
+	/// </summary>
+	private void EmitOrderByColumn(Query query, string alias, string columnName)
+	{
+		var isProjectedAlias = SelectColumns.Any(layer => layer.Keys.Any(k => k.Name == columnName));
+
+		if (alias is not null && !isProjectedAlias)
+			query.Column(alias, columnName);
+		else
+			query.Column(columnName);
 	}
 
 	private int _subCount;

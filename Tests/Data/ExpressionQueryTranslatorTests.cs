@@ -721,6 +721,88 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 			$"Expected INNER JOIN to Person table, got: {sql}");
 	}
 
+	/// <summary>
+	/// OrderBy with null-coalescing operator (?? ) must emit ISNULL/COALESCE,
+	/// not throw NotSupportedException. Common shape: "newest first by last
+	/// modification time, falling back to creation time when ModifiedAt is
+	/// null".
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_Coalesce_EmitsIsNullExpression()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.OrderBy(i => i.NullableValue ?? i.Priority);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("ORDER BY").AssertTrue(
+			$"Expected ORDER BY clause, got: {sql}");
+		sql.Contains("[NullableValue]").AssertTrue(
+			$"Expected first arm [NullableValue] in COALESCE/ISNULL, got: {sql}");
+		sql.Contains("[Priority]").AssertTrue(
+			$"Expected fallback arm [Priority] in COALESCE/ISNULL, got: {sql}");
+		(sql.ContainsIgnoreCase("ISNULL") || sql.ContainsIgnoreCase("COALESCE")).AssertTrue(
+			$"Expected ISNULL or COALESCE in ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// Descending variant must keep the DESC modifier on the COALESCE expression.
+	/// </summary>
+	[TestMethod]
+	public void OrderByDescending_Coalesce_EmitsIsNullExpressionWithDesc()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.OrderByDescending(i => i.NullableValue ?? i.Priority);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[NullableValue]").AssertTrue($"Got: {sql}");
+		sql.Contains("[Priority]").AssertTrue($"Got: {sql}");
+		(sql.ContainsIgnoreCase("ISNULL") || sql.ContainsIgnoreCase("COALESCE")).AssertTrue(
+			$"Expected ISNULL or COALESCE, got: {sql}");
+		sql.ContainsIgnoreCase("DESC").AssertTrue($"Expected DESC, got: {sql}");
+	}
+
+	/// <summary>
+	/// PostgreSQL emits COALESCE rather than ISNULL — same semantics, different
+	/// function name. Verifies the dialect-aware emission picks the right one.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_Coalesce_PostgreSql_EmitsCoalesce()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.OrderBy(i => i.NullableValue ?? i.Priority);
+
+		var sql = GenerateSql<TestItem>(query, _pgDialect);
+
+		sql.ContainsIgnoreCase("COALESCE").AssertTrue(
+			$"Expected COALESCE in Postgres ORDER BY, got: {sql}");
+	}
+
+	/// <summary>
+	/// COALESCE-based primary ordering must compose with column-based ThenBy
+	/// — the two paths share the OrderBy list and emit in a single ORDER BY
+	/// clause.
+	/// </summary>
+	[TestMethod]
+	public void OrderBy_Coalesce_ThenBy_BothEmit()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items
+			.OrderBy(i => i.NullableValue ?? i.Priority)
+			.ThenBy(i => i.Id);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[NullableValue]").AssertTrue($"Got: {sql}");
+		sql.Contains("[Priority]").AssertTrue($"Got: {sql}");
+		sql.Contains("[Id]").AssertTrue($"Expected [Id] from ThenBy, got: {sql}");
+	}
+
 	#endregion
 
 	#region String Parameterization Tests
