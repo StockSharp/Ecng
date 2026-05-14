@@ -127,6 +127,41 @@ public class TestPerson : IDbPersistable
 	}
 }
 
+[Entity(Name = "Ecng_TestMultiIx")]
+public class TestMultiIx : IDbPersistable
+{
+	public long Id { get; set; }
+
+	// One column carries three [Index] decorations — its own single-column
+	// index plus the leading slot of two different composites. Verifies the
+	// schema registry collects every attribute (AllowMultiple = true) and
+	// each declared index reaches the migrator.
+	[Index]
+	[Index(Name = "IX_MultiIx_TenantCreated", Order = 0)]
+	[Index(Name = "IX_MultiIx_TenantEntryType", Order = 0)]
+	public long TenantId { get; set; }
+
+	[Index(Name = "IX_MultiIx_TenantCreated", Order = 1)]
+	public DateTime CreatedAt { get; set; }
+
+	[Index(Name = "IX_MultiIx_TenantEntryType", Order = 1)]
+	public int EntryType { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+		=> storage.Set(nameof(TenantId), TenantId).Set(nameof(CreatedAt), CreatedAt).Set(nameof(EntryType), EntryType);
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		TenantId = storage.GetValue<long>(nameof(TenantId));
+		CreatedAt = storage.GetValue<DateTime>(nameof(CreatedAt));
+		EntryType = storage.GetValue<int>(nameof(EntryType));
+		return default;
+	}
+}
+
 [Entity(Name = "Ecng_TestCompositeIx")]
 public class TestCompositeIx : IDbPersistable
 {

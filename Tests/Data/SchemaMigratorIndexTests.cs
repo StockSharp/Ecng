@@ -101,6 +101,84 @@ public class SchemaMigratorIndexTests : BaseTestClass
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
 	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public void CreateTable_MultipleAttributes_EmitsAllDeclaredIndexes(string provider)
+	{
+		// `TestMultiIx.TenantId` carries three [Index] attributes — its own
+		// single-column index plus the leading slot of two distinct named
+		// composites. The migrator must emit one CREATE INDEX per declared
+		// index, not collapse them into the first attribute it finds.
+		DbTestHelper.RegisterAll();
+		var dialect = DbTestHelper.GetDialect(provider);
+		var schema = SchemaRegistry.Get(typeof(TestMultiIx));
+
+		var diff = new SchemaDiff("Ecng_TestMultiIx", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing");
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, [diff], [schema]);
+
+		// Standalone single-column index on TenantId — uses IX_{Table}_{Column}.
+		sql.Contains("IX_Ecng_TestMultiIx_TenantId").AssertTrue(
+			$"Expected standalone TenantId index, got: {sql}");
+
+		// First composite (TenantId, CreatedAt).
+		System.Text.RegularExpressions.Regex.Match(sql,
+			@"CREATE\s+INDEX\s+""?\[?IX_MultiIx_TenantCreated\]?""?\s+ON\s+""?\[?Ecng_TestMultiIx\]?""?\s*\(\s*""?\[?TenantId\]?""?\s*,\s*""?\[?CreatedAt\]?""?\s*\)",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase).Success.AssertTrue(
+				$"Expected composite IX_MultiIx_TenantCreated(TenantId, CreatedAt), got: {sql}");
+
+		// Second composite (TenantId, EntryType) — TenantId shared with the first.
+		System.Text.RegularExpressions.Regex.Match(sql,
+			@"CREATE\s+INDEX\s+""?\[?IX_MultiIx_TenantEntryType\]?""?\s+ON\s+""?\[?Ecng_TestMultiIx\]?""?\s*\(\s*""?\[?TenantId\]?""?\s*,\s*""?\[?EntryType\]?""?\s*\)",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase).Success.AssertTrue(
+				$"Expected composite IX_MultiIx_TenantEntryType(TenantId, EntryType), got: {sql}");
+
+		// Exactly three CREATE INDEX statements — one standalone + two composites.
+		System.Text.RegularExpressions.Regex.Matches(sql, "CREATE (UNIQUE )?INDEX", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+			.Count.AssertEqual(3, $"Expected 3 CREATE INDEX statements (1 single + 2 composites), got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Backfill_MultipleAttributes_AddsAllMissingIndexes(string provider)
+	{
+		DbTestHelper.SkipIfUnavailable(provider);
+		DbTestHelper.DropTable(provider, "Ecng_TestMultiIx");
+		DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestMultiIx)));
+
+		// Precondition: 0 user indexes.
+		(await CountIndexesOn(provider, "Ecng_TestMultiIx", CancellationToken)).AssertEqual(0);
+
+		var dialect = DbTestHelper.GetDialect(provider);
+		using var conn = await OpenAsync(provider, CancellationToken);
+		var schemas = new[] { SchemaRegistry.Get(typeof(TestMultiIx)) };
+
+		var diffs = KeepOnlyIndexDiffs(await SchemaMigrator.CompareAsync(
+			schemas, conn, dialect, skipComputed: false, cancellationToken: CancellationToken));
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, schemas);
+
+		if (!sql.IsEmpty())
+			await SchemaMigrator.ApplyAsync(conn, sql, dialect, CancellationToken);
+
+		// SQL Server / Postgres report one row per indexed column, so a
+		// composite (TenantId, CreatedAt) shows up as TWO rows sharing
+		// IndexName. Total rows = 1 (single TenantId) + 2 (IX_TenantCreated)
+		// + 2 (IX_TenantEntryType) = 5.
+		var dbIxs = await dialect.ReadDbIndexesAsync(conn, cancellationToken: CancellationToken);
+		var userIxs = dbIxs.Where(i => i.TableName.EqualsIgnoreCase("Ecng_TestMultiIx") && !i.IsPrimaryKey).ToArray();
+
+		userIxs.Length.AssertEqual(5,
+			$"Expected 5 rows (1 single-col + 2 composites x 2 cols each), got: " +
+			$"[{string.Join(", ", userIxs.Select(i => $"{i.IndexName}({i.ColumnName}@{i.ColumnOrdinal})"))}]");
+
+		// Distinct index names: 3 — IX_Ecng_TestMultiIx_TenantId, IX_MultiIx_TenantCreated, IX_MultiIx_TenantEntryType.
+		userIxs.Select(i => i.IndexName).Distinct(StringComparer.OrdinalIgnoreCase).Count().AssertEqual(3,
+			$"Expected 3 distinct user indexes, got: [{string.Join(", ", userIxs.Select(i => i.IndexName).Distinct())}]");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Backfill_AddsMissingIndex_OnExistingTable(string provider)
 	{
 		SetUp(provider);

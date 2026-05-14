@@ -203,10 +203,10 @@ public static class SchemaMigrator
 	}
 
 	/// <summary>
-	/// Reads columns and foreign keys via <paramref name="dialect"/> in one
-	/// shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo})"/>.
-	/// Convenience for callers that want the full FK-aware comparison without
-	/// orchestrating two metadata reads themselves.
+	/// Reads columns, foreign keys and indexes via <paramref name="dialect"/>
+	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo})"/>.
+	/// Convenience for callers that want the full FK + index-aware comparison
+	/// without orchestrating three metadata reads themselves.
 	/// </summary>
 	public static async Task<IReadOnlyList<SchemaDiff>> CompareAsync(
 		IEnumerable<Schema> entities,
@@ -287,24 +287,34 @@ public static class SchemaMigrator
 	}
 
 	/// <summary>
-	/// Emits CREATE INDEX statements for every <c>[Index]</c>/<c>[Unique]</c>
-	/// column of <paramref name="schema"/>. Columns sharing the same
-	/// <see cref="SchemaColumn.IndexName"/> are grouped into one composite
-	/// index ordered by <see cref="SchemaColumn.IndexOrder"/>; columns
-	/// without an index name each get their own single-column index.
+	/// Emits CREATE INDEX statements declared on <paramref name="schema"/>.
+	/// One column may carry several <c>[Index]</c> attributes (its own
+	/// single-column index plus participation in any number of named
+	/// composites), so each <see cref="SchemaColumnIndex"/> entry across
+	/// every column drives a separate index. Entries sharing
+	/// <see cref="SchemaColumnIndex.Name"/> are grouped into one composite
+	/// ordered by <see cref="SchemaColumnIndex.Order"/>; entries with
+	/// <see langword="null"/> <see cref="SchemaColumnIndex.Name"/> each get
+	/// their own single-column index named <c>IX_{Table}_{Column}</c>.
 	/// </summary>
 	private static void EmitCreateIndexesForTable(ISqlDialect dialect, StringBuilder sb, Schema schema, string tableName)
 	{
-		var indexable = schema.Columns
-			.Where(c => c.IsUnique || c.IsIndex)
+		// Flatten (column, index-participation) pairs so we can group across
+		// columns by composite name regardless of which column declared
+		// which slot. Each [Index] attribute on a property becomes one
+		// participation; columns with no [Index] but a non-Identity
+		// [Unique] (legacy single-column unique) still emit via the
+		// IsUnique fallback below.
+		var participations = schema.Columns
+			.SelectMany(c => c.Indexes.Select(ix => (Column: c, Index: ix)))
 			.ToArray();
 
-		// Single-column path — preserves the original IX_{Table}_{Column}
-		// naming convention used by callers (and any DBA who already wrote
-		// monitoring around those names).
-		foreach (var col in indexable)
+		// Single-column path — one CREATE INDEX per (column, null-named)
+		// participation. Naming sticks to IX_{Table}_{Column} so existing
+		// monitoring / DBA scripts keyed off that pattern keep working.
+		foreach (var (col, ix) in participations)
 		{
-			if (col.IndexName is not null)
+			if (ix.Name is not null)
 				continue;
 
 			dialect.AppendCreateIndex(sb,
@@ -315,19 +325,46 @@ public static class SchemaMigrator
 			sb.AppendLine(";");
 		}
 
-		// Composite path — one CREATE INDEX per unique IndexName, columns
-		// in IndexOrder. Uniqueness is taken from any group member that
-		// declares it (mixed declarations are rejected at registration time).
-		var composites = indexable
-			.Where(c => c.IndexName is not null)
-			.GroupBy(c => c.IndexName, StringComparer.Ordinal);
+		// Legacy fallback for hand-crafted schemas that flag IsIndex /
+		// IsUnique without populating the Indexes participation list
+		// (most reflection-built schemas go through CollectIndexes and
+		// fill Indexes, but tests and a few production callers construct
+		// SchemaColumn manually). Emit a single-column IX_{Table}_{Column}
+		// for them.
+		foreach (var col in schema.Columns)
+		{
+			if (col.Indexes.Count > 0)
+				continue;
+
+			if (!col.IsIndex && !col.IsUnique)
+				continue;
+
+			dialect.AppendCreateIndex(sb,
+				indexName: $"IX_{tableName}_{col.Name}",
+				tableName: tableName,
+				columnName: col.Name,
+				unique: col.IsUnique);
+			sb.AppendLine(";");
+		}
+
+		// Composite path — one CREATE INDEX per distinct Name, columns
+		// ordered by SchemaColumnIndex.Order across every column that
+		// declares membership in that name. Uniqueness is taken from any
+		// participating column flagged IsUnique (callers can mark the
+		// composite UNIQUE by giving one of its members [Unique(Name = ...)]).
+		var composites = participations
+			.Where(p => p.Index.Name is not null)
+			.GroupBy(p => p.Index.Name, StringComparer.Ordinal);
 
 		foreach (var group in composites)
 		{
-			var ordered = group.OrderBy(c => c.IndexOrder).ThenBy(c => c.Name, StringComparer.Ordinal).ToArray();
-			var unique = ordered.Any(c => c.IsUnique);
+			var ordered = group
+				.OrderBy(p => p.Index.Order)
+				.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
+				.ToArray();
+			var unique = ordered.Any(p => p.Column.IsUnique);
 
-			var cols = ordered.Select(c => dialect.QuoteIdentifier(c.Name)).JoinCommaSpace();
+			var cols = ordered.Select(p => dialect.QuoteIdentifier(p.Column.Name)).JoinCommaSpace();
 
 			sb.Append(unique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ");
 			sb.Append(dialect.QuoteIdentifier(group.Key));
@@ -345,103 +382,224 @@ public static class SchemaMigrator
 		IReadOnlyDictionary<string, Dictionary<string, DbColumnInfo>> dbTables,
 		List<SchemaDiff> diffs)
 	{
-		// Bucket DB indexes by (table, column) for single-column lookup. PK
-		// and unique-constraint backing indexes are filtered out: PK is
-		// implicit, and a [Unique] entity column already drives a UNIQUE
-		// INDEX diff via the same (table, column) key.
-		var dbIxByPair = new Dictionary<(string Table, string Column), DbIndexInfo>(new TableColumnComparer());
-		var compositeIndexColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		// Group DB rows by (Table, IndexName) so a composite shows up as one
+		// entry whose columns are ordered by ColumnOrdinal. PK backing
+		// indexes are filtered out — they live with the identity column.
+		var dbByName = dbIndexes
+			.Where(ix => !ix.IsPrimaryKey)
+			.GroupBy(ix => (ix.TableName, ix.IndexName), TableIndexNameComparer.Instance)
+			.ToDictionary(
+				g => g.Key,
+				g => new DbIndexShape(
+					Columns: g.OrderBy(x => x.ColumnOrdinal).Select(x => x.ColumnName).ToArray(),
+					IsUnique: g.First().IsUnique),
+				TableIndexNameComparer.Instance);
 
-		// Group rows by index name to detect composite indexes — those are
-		// not surfaced as MissingIndex/ExtraIndex (single-column only for now).
-		var byIndexName = dbIndexes
-			.GroupBy(ix => ix.IndexName, StringComparer.OrdinalIgnoreCase)
-			.ToDictionary(g => g.Key, g => g.OrderBy(x => x.ColumnOrdinal).ToArray(), StringComparer.OrdinalIgnoreCase);
+		// Collect every entity-declared index keyed by (Table, ResolvedName)
+		// where ResolvedName is the explicit composite name when set,
+		// otherwise the IX_{Table}_{Column} fallback for single-column.
+		var declaredByName = new Dictionary<(string Table, string Name), ExpectedIndexShape>(TableIndexNameComparer.Instance);
 
-		foreach (var (_, rows) in byIndexName)
+		void AddDeclared(string tableName, string indexName, string columnName, int order, bool unique)
 		{
-			// Skip the PK backing index — covered by the identity column itself.
-			if (rows[0].IsPrimaryKey)
-				continue;
-
-			if (rows.Length == 1)
+			var key = (tableName, indexName);
+			if (declaredByName.TryGetValue(key, out var existing))
 			{
-				dbIxByPair[(rows[0].TableName, rows[0].ColumnName)] = rows[0];
+				existing.Columns.Add((order, columnName));
+				if (unique)
+					existing.IsUnique = true;
 			}
 			else
 			{
-				// Track composite-index columns so ExtraIndex doesn't fire on
-				// (table, column) pairs that participate in a composite the
-				// entity hasn't declared at single-column granularity.
-				foreach (var r in rows)
-					compositeIndexColumns.Add($"{r.TableName}.{r.ColumnName}");
+				declaredByName[key] = new ExpectedIndexShape
+				{
+					Columns = [(order, columnName)],
+					IsUnique = unique,
+				};
 			}
 		}
-
-		var entityIxPairs = new HashSet<(string Table, string Column)>(new TableColumnComparer());
 
 		foreach (var schema in entities)
 		{
 			if (schema.IsView)
 				continue;
 
-			// MissingTable already emits CREATE INDEX inline with CREATE TABLE
-			// — skip it here so we don't try to re-add indexes that the table
-			// creation step will produce.
+			// MissingTable already emits CREATE INDEX inline with CREATE TABLE,
+			// so a table that's missing entirely is handled in the MissingTable
+			// branch — skip it here.
 			if (!dbTables.ContainsKey(schema.TableName))
 				continue;
 
-			foreach (var col in schema.AllColumns)
+			foreach (var col in schema.Columns)
 			{
-				if (!col.IsIndex && !col.IsUnique)
-					continue;
-
-				// Identity column is backed by the PK index automatically —
-				// skip it so we don't emit a redundant CREATE INDEX next to
-				// the implicit primary-key constraint.
+				// Identity column is backed by the PK index automatically.
 				if (col == schema.Identity)
 					continue;
 
-				entityIxPairs.Add((schema.TableName, col.Name));
-
-				if (dbIxByPair.TryGetValue((schema.TableName, col.Name), out var existing))
+				if (col.Indexes.Count == 0 && col.IsUnique)
 				{
-					// Unique declaration mismatch — entity wants UNIQUE INDEX
-					// but DB has a non-unique one (or vice versa). Surface as
-					// MissingIndex so the migrator re-creates with the right
-					// flag; the ExtraIndex pass will note the stale one.
-					if (existing.IsUnique != col.IsUnique)
-					{
-						diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingIndex,
-							col.IsUnique ? "UNIQUE INDEX" : "INDEX",
-							existing.IsUnique ? "UNIQUE INDEX" : "INDEX"));
-					}
-
+					// Legacy [Unique] without explicit [Index] — emit a
+					// standalone unique index named IX_{Table}_{Column}.
+					AddDeclared(schema.TableName, $"IX_{schema.TableName}_{col.Name}", col.Name, 0, unique: true);
 					continue;
 				}
 
-				// Skip if the column participates in a composite index we
-				// already accept as covering — composite/single-column
-				// declarations both satisfy `WHERE col = X` lookups against
-				// the left-most prefix.
-				if (compositeIndexColumns.Contains($"{schema.TableName}.{col.Name}"))
-					continue;
+				foreach (var ix in col.Indexes)
+				{
+					var name = ix.Name ?? $"IX_{schema.TableName}_{col.Name}";
+					AddDeclared(schema.TableName, name, col.Name, ix.Order, col.IsUnique);
+				}
+			}
+		}
 
-				diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingIndex,
-					col.IsUnique ? "UNIQUE INDEX" : "INDEX",
+		// Compare: declared vs DB by (Table, IndexName).
+		foreach (var kv in declaredByName)
+		{
+			var (table, name) = kv.Key;
+			var expected = kv.Value;
+
+			var expectedCols = expected.Columns
+				.OrderBy(c => c.Order)
+				.Select(c => c.ColumnName)
+				.ToArray();
+
+			if (dbByName.TryGetValue(kv.Key, out var actual))
+			{
+				// Same name — verify column shape + uniqueness match.
+				var matches = actual.Columns.SequenceEqual(expectedCols, StringComparer.OrdinalIgnoreCase)
+					&& actual.IsUnique == expected.IsUnique;
+
+				if (!matches)
+				{
+					diffs.Add(new(table, name, SchemaDiffKind.MissingIndex,
+						$"({string.Join(", ", expectedCols)}){(expected.IsUnique ? " UNIQUE" : "")}",
+						$"({string.Join(", ", actual.Columns)}){(actual.IsUnique ? " UNIQUE" : "")}"));
+				}
+				// Mark as seen so ExtraIndex pass below skips it.
+				dbByName.Remove(kv.Key);
+			}
+			else
+			{
+				diffs.Add(new(table, name, SchemaDiffKind.MissingIndex,
+					$"({string.Join(", ", expectedCols)}){(expected.IsUnique ? " UNIQUE" : "")}",
 					"missing"));
 			}
 		}
 
-		foreach (var (key, ix) in dbIxByPair)
+		// Anything left in dbByName is an index that exists in DB but no
+		// entity declares — informational only, not auto-dropped. Only
+		// surface ExtraIndex on tables the caller actually asked about
+		// (i.e. tables present in the `entities` argument); indexes on
+		// unrelated tables (other fixtures' leftovers, unrelated app
+		// schemas sharing the DB) would otherwise bubble through callers
+		// that pass a narrow schemas list.
+		var entityTableNames = new HashSet<string>(
+			entities.Where(s => !s.IsView).Select(s => s.TableName),
+			StringComparer.OrdinalIgnoreCase);
+
+		foreach (var kv in dbByName)
 		{
-			if (entityIxPairs.Contains(key))
+			var (table, name) = kv.Key;
+			if (!entityTableNames.Contains(table))
 				continue;
 
-			diffs.Add(new(ix.TableName, ix.ColumnName, SchemaDiffKind.ExtraIndex,
+			var actual = kv.Value;
+
+			diffs.Add(new(table, name, SchemaDiffKind.ExtraIndex,
 				string.Empty,
-				ix.IsUnique ? $"UNIQUE INDEX {ix.IndexName}" : $"INDEX {ix.IndexName}"));
+				$"({string.Join(", ", actual.Columns)}){(actual.IsUnique ? " UNIQUE" : "")}"));
 		}
+	}
+
+	/// <summary>
+	/// Emits one CREATE INDEX for the index identified by
+	/// <paramref name="indexName"/> on <paramref name="schema"/>. Used by
+	/// the MissingIndex diff branch: the diff carries only the index name
+	/// (composite name or IX_{Table}_{Column} fallback), and the schema
+	/// supplies the participating columns / uniqueness via
+	/// <see cref="SchemaColumn.Indexes"/> participations or the legacy
+	/// IsUnique fallback.
+	/// </summary>
+	private static void EmitIndexByName(ISqlDialect dialect, StringBuilder sb, Schema schema, string tableName, string indexName)
+	{
+		// Composite participation match — columns where any
+		// SchemaColumnIndex.Name (resolved) equals indexName.
+		var participating = schema.Columns
+			.SelectMany(c => c.Indexes
+				.Where(ix => string.Equals(ix.Name ?? $"IX_{tableName}_{c.Name}", indexName, StringComparison.OrdinalIgnoreCase))
+				.Select(ix => (Column: c, Order: ix.Order)))
+			.OrderBy(p => p.Order)
+			.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
+			.ToArray();
+
+		if (participating.Length == 0)
+		{
+			// No [Index] participation matched — must be a legacy [Unique]
+			// without explicit [Index]. Find the column whose
+			// IX_{Table}_{Column} fallback matches the requested name.
+			var legacy = schema.Columns.FirstOrDefault(c =>
+				c.IsUnique
+				&& c.Indexes.Count == 0
+				&& string.Equals($"IX_{tableName}_{c.Name}", indexName, StringComparison.OrdinalIgnoreCase));
+
+			if (legacy is null)
+				return;
+
+			dialect.AppendCreateIndex(sb,
+				indexName: indexName,
+				tableName: tableName,
+				columnName: legacy.Name,
+				unique: true);
+			sb.AppendLine(";");
+			return;
+		}
+
+		var unique = participating.Any(p => p.Column.IsUnique);
+
+		if (participating.Length == 1)
+		{
+			dialect.AppendCreateIndex(sb,
+				indexName: indexName,
+				tableName: tableName,
+				columnName: participating[0].Column.Name,
+				unique: unique);
+			sb.AppendLine(";");
+			return;
+		}
+
+		// Composite — emit inline rather than via dialect.AppendCreateIndex
+		// (which is single-column). The CREATE INDEX syntax is identical
+		// across SqlServer / Postgres / SQLite up to the quoting style,
+		// which dialect.QuoteIdentifier handles.
+		var cols = participating.Select(p => dialect.QuoteIdentifier(p.Column.Name)).JoinCommaSpace();
+
+		sb.Append(unique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ");
+		sb.Append(dialect.QuoteIdentifier(indexName));
+		sb.Append(" ON ");
+		sb.Append(dialect.QuoteIdentifier(tableName));
+		sb.Append(" (");
+		sb.Append(cols);
+		sb.AppendLine(");");
+	}
+
+	private sealed class ExpectedIndexShape
+	{
+		public List<(int Order, string ColumnName)> Columns { get; init; } = [];
+		public bool IsUnique { get; set; }
+	}
+
+	private sealed record DbIndexShape(IReadOnlyList<string> Columns, bool IsUnique);
+
+	private sealed class TableIndexNameComparer : IEqualityComparer<(string Table, string Name)>
+	{
+		public static readonly TableIndexNameComparer Instance = new();
+
+		public bool Equals((string Table, string Name) x, (string Table, string Name) y)
+			=> string.Equals(x.Table, y.Table, StringComparison.OrdinalIgnoreCase)
+				&& string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+
+		public int GetHashCode((string Table, string Name) obj)
+			=> HashCode.Combine(obj.Table?.ToLowerInvariant(), obj.Name?.ToLowerInvariant());
 	}
 
 	private sealed class TableColumnComparer : IEqualityComparer<(string Table, string Column)>
@@ -615,16 +773,11 @@ public static class SchemaMigrator
 					if (!schemaMap.TryGetValue(diff.TableName, out var schema))
 						break;
 
-					var col = schema.TryGetColumn(diff.ColumnName);
-					if (col is null || (!col.IsIndex && !col.IsUnique))
-						break;
-
-					dialect.AppendCreateIndex(sb,
-						indexName: $"IX_{diff.TableName}_{col.Name}",
-						tableName: diff.TableName,
-						columnName: col.Name,
-						unique: col.IsUnique);
-					sb.AppendLine(";");
+					// diff.ColumnName carries the index name as resolved by
+					// AppendIndexDiffs — either an explicit composite name
+					// or the IX_{Table}_{Column} fallback. Walk the schema
+					// to recover the participating columns and uniqueness.
+					EmitIndexByName(dialect, sb, schema, diff.TableName, diff.ColumnName);
 					break;
 				}
 

@@ -57,21 +57,23 @@ public record SchemaColumn
 	public Type ReferencedEntityType { get; init; }
 
 	/// <summary>
-	/// Optional composite-index name. When set on two or more columns of the
-	/// same schema with matching value, those columns participate in a single
-	/// multi-column index ordered by <see cref="IndexOrder"/>. <see langword="null"/>
-	/// (the default) means the column is part of its own single-column index
-	/// named <c>IX_{Table}_{Column}</c>.
+	/// All <c>[Index]</c> participations declared on this column. Each entry
+	/// pairs the optional composite-index name (<see langword="null"/> = own
+	/// single-column index named <c>IX_{Table}_{Column}</c>) with the
+	/// column's position inside that composite. A column may carry multiple
+	/// <c>[Index]</c> attributes — e.g. its own standalone index plus the
+	/// leading slot of two different named composites — and every entry
+	/// here drives a distinct <c>CREATE INDEX</c>.
 	/// </summary>
-	public string IndexName { get; init; }
-
-	/// <summary>
-	/// Column position inside the composite index identified by
-	/// <see cref="IndexName"/> (lowest first). Ignored when
-	/// <see cref="IndexName"/> is <see langword="null"/>.
-	/// </summary>
-	public int IndexOrder { get; init; }
+	public IReadOnlyList<SchemaColumnIndex> Indexes { get; init; } = [];
 }
+
+/// <summary>
+/// One <c>[Index]</c>-attribute participation of a column — either its own
+/// single-column index (when <see cref="Name"/> is <see langword="null"/>)
+/// or a slot inside a named composite identified by <see cref="Name"/>.
+/// </summary>
+public sealed record SchemaColumnIndex(string Name, int Order);
 
 /// <summary>
 /// Describes the database schema for an entity type.

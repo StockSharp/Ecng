@@ -256,6 +256,32 @@ public static class SchemaRegistry
 	private static bool ResolveNullable(ColumnAttribute colAttr, Type propType)
 		=> colAttr is { IsNullableSet: true } ? colAttr.IsNullable : propType.IsNullable();
 
+	/// <summary>
+	/// Reads every <c>[Index]</c> attribute on <paramref name="prop"/> (the
+	/// attribute is <c>AllowMultiple = true</c>) and returns one
+	/// <see cref="SchemaColumnIndex"/> per declaration plus a flag set when
+	/// any of the attributes is a <c>[Unique]</c>. <c>[Identity]</c> drives
+	/// the schema's PK and is filtered upstream, so it never reaches this
+	/// helper.
+	/// </summary>
+	private static (IReadOnlyList<SchemaColumnIndex> Indexes, bool HasUnique) CollectIndexes(PropertyInfo prop)
+	{
+		// AttributeUsage on IndexAttribute carries AllowMultiple = true —
+		// GetAttributes returns one entry per declaration plus UniqueAttribute
+		// subclass instances. Identity subclass is filtered out earlier as
+		// PK, so we only see Index + Unique here.
+		var attrs = prop.GetAttributes<IndexAttribute>().ToArray();
+
+		if (attrs.Length == 0)
+			return ([], false);
+
+		var indexes = attrs
+			.Select(a => new SchemaColumnIndex(a.Name, a.Order))
+			.ToArray();
+
+		return (indexes, attrs.Any(a => a is UniqueAttribute));
+	}
+
 	private static Schema CreateFromReflection(Type entityType)
 	{
 		var entityAttr = entityType.GetAttribute<EntityAttribute>();
@@ -312,19 +338,17 @@ public static class SchemaRegistry
 
 				if (isRelationSingle)
 				{
-					var uniqueAttr = prop.GetAttribute<UniqueAttribute>();
-					var indexAttr = prop.GetAttribute<IndexAttribute>();
+					var (indexes, hasUnique) = CollectIndexes(prop);
 
 					columns.Add(new()
 					{
 						Name = prop.Name,
 						ClrType = GetRelationIdentityType(prop.PropertyType),
-						IsUnique = uniqueAttr is not null,
-						IsIndex = indexAttr is not null || uniqueAttr is not null,
+						IsUnique = hasUnique,
+						IsIndex = indexes.Count > 0,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 						ReferencedEntityType = prop.PropertyType,
-						IndexName = indexAttr?.Name ?? uniqueAttr?.Name,
-						IndexOrder = indexAttr?.Order ?? uniqueAttr?.Order ?? 0,
+						Indexes = indexes,
 					});
 					continue;
 				}
@@ -335,18 +359,16 @@ public static class SchemaRegistry
 				var mappedType = GetMappedType(prop.PropertyType);
 				if (mappedType is not null)
 				{
-					var uniqueAttr = prop.GetAttribute<UniqueAttribute>();
-					var indexAttr = prop.GetAttribute<IndexAttribute>();
+					var (indexes, hasUnique) = CollectIndexes(prop);
 
 					columns.Add(new()
 					{
 						Name = prop.Name,
 						ClrType = mappedType,
-						IsUnique = uniqueAttr is not null,
-						IsIndex = indexAttr is not null || uniqueAttr is not null,
+						IsUnique = hasUnique,
+						IsIndex = indexes.Count > 0,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
-						IndexName = indexAttr?.Name ?? uniqueAttr?.Name,
-						IndexOrder = indexAttr?.Order ?? uniqueAttr?.Order ?? 0,
+						Indexes = indexes,
 					});
 					continue;
 				}
@@ -371,19 +393,17 @@ public static class SchemaRegistry
 					? Enum.GetUnderlyingType(propType)
 					: prop.PropertyType;
 
-				var unique = prop.GetAttribute<UniqueAttribute>();
-				var index = prop.GetAttribute<IndexAttribute>();
+				var (simpleIndexes, simpleHasUnique) = CollectIndexes(prop);
 
 				columns.Add(new()
 				{
 					Name = prop.Name,
 					ClrType = clrType,
-					IsUnique = unique is not null,
-					IsIndex = index is not null || unique is not null,
+					IsUnique = simpleHasUnique,
+					IsIndex = simpleIndexes.Count > 0,
 					IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					MaxLength = colAttr?.MaxLength ?? 0,
-					IndexName = index?.Name ?? unique?.Name,
-					IndexOrder = index?.Order ?? unique?.Order ?? 0,
+					Indexes = simpleIndexes,
 				});
 			}
 
