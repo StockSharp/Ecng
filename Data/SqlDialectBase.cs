@@ -103,6 +103,9 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void PrepareParameter(DbParameter parameter) { }
+
+	/// <inheritdoc />
 	public virtual object ConvertFromDbValue(object value, Type targetType)
 	{
 		if (value is null || value is DBNull)

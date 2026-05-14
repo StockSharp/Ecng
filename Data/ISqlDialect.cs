@@ -86,6 +86,16 @@ public interface ISqlDialect
 	object ConvertToDbValue(object value, Type clrType);
 
 	/// <summary>
+	/// Final-stage massaging of a fully populated <see cref="DbParameter"/>
+	/// before it leaves the ORM layer. Lets a dialect adjust provider-specific
+	/// type metadata that the generic <see cref="DbType"/> hint can't express —
+	/// e.g. PostgreSQL needs <c>timestamptz</c> binding for UTC-kind
+	/// <see cref="DateTime"/> values, which only Npgsql's own
+	/// <c>NpgsqlDbType</c> property can express. Default is a no-op.
+	/// </summary>
+	void PrepareParameter(DbParameter parameter);
+
+	/// <summary>
 	/// Converts a database value to the requested CLR target type.
 	/// </summary>
 	object ConvertFromDbValue(object value, Type targetType);

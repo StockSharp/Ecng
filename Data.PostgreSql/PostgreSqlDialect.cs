@@ -59,7 +59,13 @@ public class PostgreSqlDialect : SqlDialectBase
 			_ when underlying == typeof(double) => "DOUBLE PRECISION",
 			_ when underlying == typeof(float) => "REAL",
 			_ when underlying == typeof(string) => "TEXT",
-			_ when underlying == typeof(DateTime) => "TIMESTAMP",
+			// TIMESTAMPTZ for DateTime aligns with the Ecng read path
+			// (DatabaseCommandHelper.GetValueEx normalises returned values
+			// to Kind=Utc). Writing the same UTC moment we read back into a
+			// time-zone-aware column is the semantically honest choice;
+			// TIMESTAMP (without TZ) silently dropped the kind under Npgsql 5
+			// and got rejected outright under Npgsql 6+.
+			_ when underlying == typeof(DateTime) => "TIMESTAMPTZ",
 			_ when underlying == typeof(DateTimeOffset) => "TIMESTAMPTZ",
 			_ when underlying == typeof(TimeSpan) => "BIGINT", // stored as ticks
 			_ when underlying == typeof(Guid) => "UUID",
@@ -68,6 +74,30 @@ public class PostgreSqlDialect : SqlDialectBase
 			_ when underlying == typeof(TimeOnly) => "TIME",
 			_ => throw new NotSupportedException($"Type {clrType.Name} is not supported"),
 		};
+	}
+
+	/// <inheritdoc />
+	public override void PrepareParameter(DbParameter parameter)
+	{
+		// Npgsql 6+ refuses to write a Kind=Utc DateTime to a `timestamp
+		// without time zone` binding, which is what DbType.DateTime /
+		// DbType.DateTime2 resolve to. Re-bind DateTime values as
+		// DateTimeOffset so the parameter targets `timestamp with time
+		// zone` instead — that matches the schema (DateTime → TIMESTAMPTZ)
+		// and the Ecng read path (DatabaseCommandHelper.GetValueEx
+		// normalises returned values to Kind=Utc).
+		if (parameter.Value is DateTime dt)
+		{
+			var utc = dt.Kind switch
+			{
+				DateTimeKind.Utc => dt,
+				DateTimeKind.Local => dt.ToUniversalTime(),
+				_ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+			};
+
+			parameter.Value = new DateTimeOffset(utc);
+			parameter.DbType = System.Data.DbType.DateTimeOffset;
+		}
 	}
 
 	/// <inheritdoc />

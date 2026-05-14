@@ -1444,7 +1444,7 @@ public class ColumnAttributeTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow("SqlServer", "DATETIME2(3) NOT NULL")]
-	[DataRow("PostgreSql", "TIMESTAMP(3) NOT NULL")]
+	[DataRow("PostgreSql", "TIMESTAMPTZ(3) NOT NULL")]
 	public void GetColumnDefinition_DateTime_WithPrecision(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);

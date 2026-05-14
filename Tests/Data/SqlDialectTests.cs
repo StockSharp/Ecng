@@ -418,7 +418,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "DATETIME2")]
 	[DataRow("SQLite", "TEXT")]
-	[DataRow("PostgreSql", "TIMESTAMP")]
+	[DataRow("PostgreSql", "TIMESTAMPTZ")]
 	public void GetSqlTypeName_DateTime(string dialectName, string expected)
 	{
 		GetDialect(dialectName).GetSqlTypeName(typeof(DateTime)).AssertEqual(expected);

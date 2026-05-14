@@ -228,6 +228,8 @@ public sealed class DatabaseCommand : Disposable
 				clone.Value = value.To(clone.DbType.To<Type>());
 			else
 				clone.Value = DBNull.Value;
+
+			_dialect.PrepareParameter(clone);
 		}
 
 		return command;
