@@ -55,6 +55,12 @@ public interface ISqlDialect
 	string UnicodePrefix { get; }
 
 	/// <summary>
+	/// SQL literal for an empty binary value (e.g. <c>0x</c> for SQL Server,
+	/// <c>X''</c> for the SQL standard, an empty bytea for PostgreSQL).
+	/// </summary>
+	string EmptyBinaryLiteral { get; }
+
+	/// <summary>
 	/// Function name for string length.
 	/// </summary>
 	string LenFunction { get; }

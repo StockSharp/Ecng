@@ -26,6 +26,9 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual string UnicodePrefix => "N";
 
 	/// <inheritdoc />
+	public virtual string EmptyBinaryLiteral => "X''";
+
+	/// <inheritdoc />
 	public virtual string LenFunction => "len";
 
 	/// <inheritdoc />
@@ -285,11 +288,11 @@ public abstract class SqlDialectBase : ISqlDialect
 		if (clrType == typeof(Guid))
 			return "'00000000-0000-0000-0000-000000000000'";
 		if (clrType == typeof(byte[]))
-			return "0x";
+			return EmptyBinaryLiteral;
 		if (clrType.IsNumeric())
 			return "0";
 
-		return "N''";
+		return UnicodePrefix + "''";
 	}
 
 	/// <inheritdoc />

@@ -1125,4 +1125,61 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region GetDefaultLiteral
+
+	[TestMethod]
+	[DataRow("SqlServer", "N''")]
+	[DataRow("SQLite", "''")]
+	[DataRow("PostgreSql", "''")]
+	public void GetDefaultLiteral_String(string dialectName, string expected)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(string)).AssertEqual(expected);
+
+	[TestMethod]
+	[DataRow("SqlServer", "0")]
+	[DataRow("SQLite", "0")]
+	[DataRow("PostgreSql", "FALSE")]
+	public void GetDefaultLiteral_Bool(string dialectName, string expected)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(bool)).AssertEqual(expected);
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_Numeric(string dialectName)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(int)).AssertEqual("0");
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_Guid(string dialectName)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(Guid))
+			.AssertEqual("'00000000-0000-0000-0000-000000000000'");
+
+	/// <summary>
+	/// Each dialect must emit binary-empty syntax it can actually parse:
+	/// SQL Server uses 0x, SQLite uses the SQL-standard X'' bit-string
+	/// literal, PostgreSQL uses an empty bytea.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "0x")]
+	[DataRow("SQLite", "X''")]
+	[DataRow("PostgreSql", "'\\x'::bytea")]
+	public void GetDefaultLiteral_Binary(string dialectName, string expected)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(byte[])).AssertEqual(expected);
+
+	/// <summary>
+	/// The fallback branch (type that matches none of the explicit cases)
+	/// must respect the dialect's unicode prefix, not hardcode the
+	/// SQL Server N'' literal.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "N''")]
+	[DataRow("SQLite", "''")]
+	[DataRow("PostgreSql", "''")]
+	public void GetDefaultLiteral_UnknownType_Fallback(string dialectName, string expected)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(object)).AssertEqual(expected);
+
+	#endregion
 }

@@ -122,6 +122,10 @@ public class PostgreSqlDialect : SqlDialectBase
 	public override string UnicodePrefix => "";
 
 	/// <inheritdoc />
+	// PostgreSQL X'' is a bit-string, not bytea — use an empty bytea cast.
+	public override string EmptyBinaryLiteral => "'\\x'::bytea";
+
+	/// <inheritdoc />
 	public override string LenFunction => "LENGTH";
 
 	/// <inheritdoc />

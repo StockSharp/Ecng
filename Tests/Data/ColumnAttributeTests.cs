@@ -1116,6 +1116,50 @@ public class ColumnAttributeTests : BaseTestClass
 		diffs.Count.AssertEqual(0);
 	}
 
+	/// <summary>
+	/// The MissingColumn + NOT NULL migration path backfills the new column
+	/// via GetDefaultLiteral. On PostgreSQL a byte[] column must not emit the
+	/// SQL Server-only 0x binary literal, which Npgsql rejects with
+	/// "syntax error at or near 0x".
+	/// </summary>
+	[TestMethod]
+	[DataRow("PostgreSql")]
+	public void MissingColumn_NotNullBinary_DoesNotEmitSqlServerBinaryLiteral(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Id", ClrType = typeof(long), IsNullable = false },
+				new SchemaColumn { Name = "Data", ClrType = typeof(byte[]), IsNullable = false },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// Table exists (Id present) but the byte[] column is missing,
+		// so Compare yields a MissingColumn diff for Data.
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Id", "BIGINT", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, dialect, false);
+
+		diffs.Any(d => d.Kind == SchemaDiffKind.MissingColumn && d.ColumnName == "Data").AssertTrue(
+			$"Expected a MissingColumn diff for Data; got: " +
+			$"[{string.Join(", ", diffs.Select(d => $"{d.Kind} {d.ColumnName}"))}]");
+
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schema]);
+
+		sql.Contains("0x").AssertFalse(
+			$"{dialectName} migration SQL must not contain the SQL Server-only " +
+			$"0x binary literal; got: {sql}");
+	}
+
 	#endregion
 
 	#region ColumnAttribute IsNullable inference

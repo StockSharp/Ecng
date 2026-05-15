@@ -99,6 +99,9 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override string EmptyBinaryLiteral => "0x";
+
+	/// <inheritdoc />
 	public override string GetIdentitySelect(string idCol) => "scope_identity() as " + idCol;
 
 	/// <inheritdoc />
