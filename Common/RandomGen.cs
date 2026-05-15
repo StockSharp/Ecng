@@ -408,7 +408,17 @@ public static class RandomGen
 	/// <returns>A random enum value from the collection.</returns>
 	public static T GetEnum<T>(IEnumerable<T> values)
 		where T : struct
-		=> GetEnum(default, values.Max(value => value.To<long>()).To<T>());
+	{
+		if (values is null)
+			throw new ArgumentNullException(nameof(values));
+
+		var arr = values as T[] ?? values.ToArray();
+
+		if (arr.Length == 0)
+			throw new InvalidOperationException("No values to choose from.");
+
+		return arr[GetInt(0, arr.Length - 1)];
+	}
 
 	/// <summary>
 	/// Returns a random enum value between the specified minimum and maximum enum values.

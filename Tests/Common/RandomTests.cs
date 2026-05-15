@@ -293,6 +293,78 @@ public class RandomTests : BaseTestClass
 		ThrowsExactly<InvalidOperationException>(() => RandomGen.GetEnum(empty));
 	}
 
+	// Test enums that surface the GetEnum<T>(IEnumerable<T>) bug:
+	// the current impl does GetLong(0, max).To<T>() which only works
+	// for 0-based contiguous enums. It returns invalid values for
+	// 1-based (no zero member), non-contiguous, and [Flags] layouts.
+
+	private enum OneBased
+	{
+		A = 1,
+		B = 2,
+		C = 3,
+	}
+
+	private enum NonContiguous
+	{
+		Low = 1,
+		Mid = 5,
+		High = 10,
+	}
+
+	[Flags]
+	private enum FlagsEnum
+	{
+		None = 0,
+		A = 1,
+		B = 2,
+		D = 4,
+	}
+
+	[TestMethod]
+	public void GetEnum_Generic_OneBased_NeverReturnsZero()
+	{
+		var values = Enumerator.GetValues<OneBased>().ToArray();
+		for (int i = 0; i < 2000; i++)
+		{
+			var v = RandomGen.GetEnum<OneBased>();
+			values.Contains(v).AssertTrue($"v={v} ({(int)v}) is not a declared OneBased value");
+		}
+	}
+
+	[TestMethod]
+	public void GetEnum_GenericFromValues_OneBased_NeverReturnsZero()
+	{
+		var values = Enumerator.GetValues<OneBased>().ToArray();
+		for (int i = 0; i < 2000; i++)
+		{
+			var v = RandomGen.GetEnum(values);
+			values.Contains(v).AssertTrue($"v={v} ({(int)v}) is not a declared OneBased value");
+		}
+	}
+
+	[TestMethod]
+	public void GetEnum_GenericFromValues_NonContiguous_OnlyDeclaredValues()
+	{
+		var values = Enumerator.GetValues<NonContiguous>().ToArray();
+		for (int i = 0; i < 2000; i++)
+		{
+			var v = RandomGen.GetEnum(values);
+			values.Contains(v).AssertTrue($"v={v} ({(int)v}) is not a declared NonContiguous value");
+		}
+	}
+
+	[TestMethod]
+	public void GetEnum_Generic_Flags_OnlyDeclaredValues()
+	{
+		var values = Enumerator.GetValues<FlagsEnum>().ToArray();
+		for (int i = 0; i < 2000; i++)
+		{
+			var v = RandomGen.GetEnum<FlagsEnum>();
+			values.Contains(v).AssertTrue($"v={v} ({(int)v}) is not a declared FlagsEnum value");
+		}
+	}
+
 	[TestMethod]
 	public void EmptyEnumerable2()
 	{
