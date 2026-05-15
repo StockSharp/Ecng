@@ -1181,40 +1181,18 @@ public class ColumnAttributeTests : BaseTestClass
 	#region DateOnly / TimeOnly support
 
 	[TestMethod]
-	public void GetSqlTypeName_DateOnly_SqlServer()
-	{
-		SqlServerDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("DATE");
-	}
+	[DataRow("SqlServer", "DATE")]
+	[DataRow("PostgreSql", "DATE")]
+	[DataRow("SQLite", "TEXT")]
+	public void GetSqlTypeName_DateOnly(string dialectName, string expected)
+		=> GetDialect(dialectName).GetSqlTypeName(typeof(DateOnly)).AssertEqual(expected);
 
 	[TestMethod]
-	public void GetSqlTypeName_TimeOnly_SqlServer()
-	{
-		SqlServerDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TIME");
-	}
-
-	[TestMethod]
-	public void GetSqlTypeName_DateOnly_PostgreSql()
-	{
-		PostgreSqlDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("DATE");
-	}
-
-	[TestMethod]
-	public void GetSqlTypeName_TimeOnly_PostgreSql()
-	{
-		PostgreSqlDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TIME");
-	}
-
-	[TestMethod]
-	public void GetSqlTypeName_DateOnly_SQLite()
-	{
-		SQLiteDialect.Instance.GetSqlTypeName(typeof(DateOnly)).AssertEqual("TEXT");
-	}
-
-	[TestMethod]
-	public void GetSqlTypeName_TimeOnly_SQLite()
-	{
-		SQLiteDialect.Instance.GetSqlTypeName(typeof(TimeOnly)).AssertEqual("TEXT");
-	}
+	[DataRow("SqlServer", "TIME")]
+	[DataRow("PostgreSql", "TIME")]
+	[DataRow("SQLite", "TEXT")]
+	public void GetSqlTypeName_TimeOnly(string dialectName, string expected)
+		=> GetDialect(dialectName).GetSqlTypeName(typeof(TimeOnly)).AssertEqual(expected);
 
 	#endregion
 
