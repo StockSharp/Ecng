@@ -109,6 +109,8 @@ static class MethodVisitorRegistry
 		AddGenericVisitor(new CountVisitor<VoidType>());
 		AddGenericVisitor(new MaxVisitor<VoidType>());
 		AddGenericVisitor(new MinVisitor<VoidType>());
+		AddGenericVisitor(new MaxSelectorVisitor<VoidType>());
+		AddGenericVisitor(new MinSelectorVisitor<VoidType>());
 		AddGenericVisitor(new AvgVisitor<VoidType>());
 		AddGenericVisitor(new SumVisitor<VoidType>());
 		AddGenericVisitor(new NullableValueVisitor<VoidType>());
@@ -149,9 +151,14 @@ static class MethodVisitorRegistry
 		if (!_genericVisitors.TryGetValue(genMethod, out var genVisitor))
 			return false;
 
-		var type = method.GetGenericArguments()[0];
+		// The closed method may have several generic args (e.g.
+		// Max<TSource,TResult>(…selector)); the cache key must be the fully
+		// closed method, so pass ALL of them to Make. The visitor type
+		// itself is single-type-param, so it is still made with the first.
+		var args = method.GetGenericArguments();
+		var type = args[0];
 
-		visitor = _visitors.SafeAdd(genMethod.Make(type), key => genVisitor.Make(type).CreateInstance<MethodVisitor>());
+		visitor = _visitors.SafeAdd(genMethod.Make(args), key => genVisitor.Make(type).CreateInstance<MethodVisitor>());
 
 		return true;
 	}

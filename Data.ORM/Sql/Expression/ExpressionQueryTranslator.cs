@@ -1136,6 +1136,22 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 					Curr.Plus();
 				break;
 
+			case ExpressionType.Subtract:
+				Curr.Minus();
+				break;
+
+			case ExpressionType.Multiply:
+				Curr.Multiply();
+				break;
+
+			case ExpressionType.Divide:
+				Curr.Divide();
+				break;
+
+			case ExpressionType.Modulo:
+				Curr.Modulo();
+				break;
+
 			default:
 				throw new NotSupportedException($"The binary operator '{b.NodeType}' is not supported");
 

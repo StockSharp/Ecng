@@ -1364,6 +1364,16 @@ abstract class EnumerableAndQueryableVisitor<T>(string name) : MethodVisitor(typ
 	protected Type ItemType => GetType().GetGenericArguments()[0];
 }
 
+// Selector overloads like Max<TSource,TResult>(IEnumerable<TSource>,
+// Func<TSource,TResult>) have TWO generic args, so the single-arg base
+// above never registers them and `g.Max(x => x.Field)` over a grouping
+// fell through to "method not supported". Registering the open generic
+// definition (keying is by GetGenericMethodDefinition) makes the dispatch
+// find the visitor; the closed type args here are irrelevant.
+abstract class EnumerableAndQueryable2Visitor<T>(string name) : MethodVisitor(typeof(Enumerable).GetMember(name).Concat(typeof(Queryable).GetMember(name)).OfType<MethodInfo>().Where(m => m.GetGenericArguments().Length == 2).Select(m => m.Make(typeof(T), typeof(T))))
+{
+}
+
 class CountVisitor<T> : EnumerableAndQueryableVisitor<T>
 {
 	public CountVisitor()
@@ -1456,12 +1466,38 @@ class MaxVisitor<T> : EnumerableAndQueryableVisitor<T>
 		=> _visitor.Visit(translator, expression);
 }
 
+class MaxSelectorVisitor<T> : EnumerableAndQueryable2Visitor<T>
+{
+	private readonly MaxVisitorVisitor _visitor = new();
+
+	public MaxSelectorVisitor()
+		: base(nameof(Enumerable.Max))
+	{
+	}
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+		=> _visitor.Visit(translator, expression);
+}
+
 class MinVisitorVisitor : BaseGroupFuncVisitor
 {
 	public MinVisitorVisitor()
 		: base(q => q.Min())
 	{
 	}
+}
+
+class MinSelectorVisitor<T> : EnumerableAndQueryable2Visitor<T>
+{
+	private readonly MinVisitorVisitor _visitor = new();
+
+	public MinSelectorVisitor()
+		: base(nameof(Enumerable.Min))
+	{
+	}
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+		=> _visitor.Visit(translator, expression);
 }
 
 class MinVisitor : EnumerableAndQueryableVisitor

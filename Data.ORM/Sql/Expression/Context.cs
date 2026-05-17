@@ -270,7 +270,13 @@ class Context
 				{
 					q.CopyTo(query);
 
-					if (pair.Value.Item2 is not MemberExpression || q.Actions.Count > 1 || (top.Map.TryGetValue(mi, out var mi3) && mi.Name != mi3.Name))
+					// In a GROUP BY projection the result column name must equal
+					// the anonymous/DTO member (e.g. `g.Key` over
+					// e.Portfolio.User.Id must come back as [UserId], not
+					// [Id]), otherwise ctor-based materialisation finds no
+					// matching column. Plain table projections keep the
+					// original optimisation (skip a redundant self-alias).
+					if (GroupByPart.Actions.Count > 0 || pair.Value.Item2 is not MemberExpression || q.Actions.Count > 1 || (top.Map.TryGetValue(mi, out var mi3) && mi.Name != mi3.Name))
 						query.As().Column(mi.Name);
 				}
 			}

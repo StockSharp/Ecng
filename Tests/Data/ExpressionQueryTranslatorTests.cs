@@ -1149,6 +1149,113 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region Arithmetic operators
+
+	[TestMethod]
+	public void Arithmetic_Subtract_EmitsMinusOperator()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { V = x.Price - x.Priority });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains(" - ").AssertTrue($"Expected '-' operator, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Arithmetic_Multiply_EmitsStarOperator()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { V = x.Price * x.Priority });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains(" * ").AssertTrue($"Expected '*' operator, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Arithmetic_Divide_EmitsSlashOperator()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { V = x.Price / x.Priority });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains(" / ").AssertTrue($"Expected '/' operator, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Arithmetic_Modulo_EmitsPercentOperator()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(x => new { V = x.Id % x.Priority });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains(" % ").AssertTrue($"Expected '%' operator, got: {sql}");
+	}
+
+	#endregion
+
+	#region GROUP BY projection aliasing
+
+	/// <summary>
+	/// A single-member GROUP BY projection of <c>g.Key</c> over a navigation
+	/// must alias the column to the projected member so ctor/DTO
+	/// materialisation can map it (g.Key over t.Person.Id must come back as
+	/// [PersonId], not the raw FK column).
+	/// </summary>
+	[TestMethod]
+	public void GroupByKey_OverNavigation_AliasesToProjectedMember()
+	{
+		SchemaRegistry.Get(typeof(TestPerson));
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks
+			.GroupBy(t => t.Person.Id)
+			.Select(g => new { PersonId = g.Key });
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.ContainsIgnoreCase("AS [PersonId]").AssertTrue(
+			$"Expected GROUP BY key aliased to projected member 'AS [PersonId]', got: {sql}");
+	}
+
+	#endregion
+
+	#region Max/Min selector in ctor-based GROUP BY report
+
+	private sealed record PriorityReport(int Priority, decimal MaxPrice, decimal MinPrice);
+
+	/// <summary>
+	/// Constructor-based GROUP BY report projecting the two-generic-arg
+	/// <c>Max/Min&lt;TSource,TResult&gt;(selector)</c> over the grouping.
+	/// Both the selector-overload visitor registration and GROUP BY column
+	/// aliasing are required for this single-query report shape.
+	/// </summary>
+	[TestMethod]
+	public void GroupByCtorReport_MaxMinSelector_EmitsAggregatesAndAliases()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items
+			.GroupBy(i => i.Priority)
+			.Select(g => new PriorityReport(g.Key, g.Max(i => i.Price), g.Min(i => i.Price)));
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("max(").AssertTrue($"Expected MAX aggregate, got: {sql}");
+		sql.ContainsIgnoreCase("min(").AssertTrue($"Expected MIN aggregate, got: {sql}");
+		sql.ContainsIgnoreCase("AS [Priority]").AssertTrue(
+			$"Expected grouping key aliased to ctor parameter 'AS [Priority]', got: {sql}");
+	}
+
+	#endregion
+
 }
 
 public class VTestPersonWithTasks : IDbPersistable

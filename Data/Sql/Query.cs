@@ -387,6 +387,30 @@ public class Query
 		=> Raw(" + ");
 
 	/// <summary>
+	/// Appends - arithmetic operator.
+	/// </summary>
+	public Query Minus()
+		=> Raw(" - ");
+
+	/// <summary>
+	/// Appends * arithmetic operator.
+	/// </summary>
+	public Query Multiply()
+		=> Raw(" * ");
+
+	/// <summary>
+	/// Appends / arithmetic operator.
+	/// </summary>
+	public Query Divide()
+		=> Raw(" / ");
+
+	/// <summary>
+	/// Appends % arithmetic operator.
+	/// </summary>
+	public Query Modulo()
+		=> Raw(" % ");
+
+	/// <summary>
 	/// Appends dialect-specific string concatenation operator (+ for SQL Server, || for PostgreSQL/SQLite).
 	/// </summary>
 	public Query Concat()
