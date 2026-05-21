@@ -1088,6 +1088,65 @@ public class ColumnAttributeTests : BaseTestClass
 		diffs.Count.AssertEqual(0);
 	}
 
+	/// <summary>
+	/// Compare must accept VARCHAR(N) for [MaxLength=N] string on PostgreSQL,
+	/// otherwise Compare→Emit→Apply never converges.
+	/// </summary>
+	[TestMethod]
+	public void Compare_PostgreSql_StringWithMaxLength_ConvergesAgainstVarchar()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Code", ClrType = typeof(string), MaxLength = 64 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		// Mirrors what PostgreSqlDialect.GetColumnDefinition emits
+		// (VARCHAR(64)) and what information_schema reports for it.
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Code", "character varying", false, 64, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, PostgreSqlDialect.Instance, false);
+
+		diffs.Count.AssertEqual(0,
+			$"Expected Compare to converge for [MaxLength=64] string vs VARCHAR(64); " +
+			$"got diffs: [{string.Join(", ", diffs.Select(d => $"{d.Kind} {d.ColumnName} expected={d.Expected} actual={d.Actual}"))}]");
+	}
+
+	// SqlServer-side regression guard for the same shape.
+	[TestMethod]
+	public void Compare_SqlServer_StringWithMaxLength_ConvergesAgainstNvarchar()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Code", ClrType = typeof(string), MaxLength = 128 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TestTable", "Code", "nvarchar", false, 128, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(0,
+			$"Expected Compare to converge for [MaxLength=128] string vs NVARCHAR(128); " +
+			$"got diffs: [{string.Join(", ", diffs.Select(d => $"{d.Kind} {d.ColumnName} expected={d.Expected} actual={d.Actual}"))}]");
+	}
+
 	[TestMethod]
 	public void Compare_SQLite_NoDifferencesForNativeTypes()
 	{

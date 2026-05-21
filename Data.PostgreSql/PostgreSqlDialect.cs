@@ -77,6 +77,17 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override string GetSqlTypeName(Type clrType, int maxLength)
+	{
+		// PG: TEXT and VARCHAR(N) are distinct SQL types; int.MaxValue = unbounded.
+		if ((clrType.GetUnderlyingType() ?? clrType) == typeof(string) &&
+			maxLength > 0 && maxLength != int.MaxValue)
+			return $"VARCHAR({maxLength})";
+
+		return base.GetSqlTypeName(clrType, maxLength);
+	}
+
+	/// <inheritdoc />
 	public override void PrepareParameter(DbParameter parameter)
 	{
 		// Npgsql 6+ refuses to write a Kind=Utc DateTime to a `timestamp

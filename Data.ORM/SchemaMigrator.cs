@@ -144,7 +144,7 @@ public static class SchemaMigrator
 				}
 
 				// compare type
-				var expectedType = NormalizeSqlType(dialect.GetSqlTypeName(col.ClrType));
+				var expectedType = NormalizeSqlType(dialect.GetSqlTypeName(col.ClrType, col.MaxLength));
 				var actualType = dialect.NormalizeDbType(dbCol.DataType);
 
 				if (!expectedType.EqualsIgnoreCase(actualType))

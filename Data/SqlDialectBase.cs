@@ -93,6 +93,10 @@ public abstract class SqlDialectBase : ISqlDialect
 	public abstract string GetSqlTypeName(Type clrType);
 
 	/// <inheritdoc />
+	public virtual string GetSqlTypeName(Type clrType, int maxLength)
+		=> GetSqlTypeName(clrType);
+
+	/// <inheritdoc />
 	public virtual object ConvertToDbValue(object value, Type clrType)
 	{
 		if (value is null)

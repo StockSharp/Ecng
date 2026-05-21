@@ -87,6 +87,12 @@ public interface ISqlDialect
 	string GetSqlTypeName(Type clrType);
 
 	/// <summary>
+	/// Canonical SQL type name with length applied. Dialects override
+	/// when the type differs by length (e.g. PostgreSQL TEXT vs VARCHAR(N)).
+	/// </summary>
+	string GetSqlTypeName(Type clrType, int maxLength);
+
+	/// <summary>
 	/// Converts a CLR value to the form a database driver expects.
 	/// </summary>
 	object ConvertToDbValue(object value, Type clrType);
