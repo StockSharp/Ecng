@@ -1201,6 +1201,33 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region FK-shortcut projection over single relation
+
+	/// <summary>
+	/// Projecting the PK of a <c>[RelationSingle]</c> navigation as a
+	/// nullable scalar must reuse the same FK-column shortcut already used
+	/// by WHERE / GROUP BY — the FK lives on the source table, so no JOIN
+	/// to the related table is needed and the <c>(long?)</c> cast is a SQL
+	/// no-op (the FK column is already nullable through the relation).
+	/// </summary>
+	[TestMethod]
+	public void ProjectNavigationKey_AsNullable_EmitsFkColumnWithoutJoin()
+	{
+		SchemaRegistry.Get(typeof(TestPerson));
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = tasks.Select(t => (long?)t.Person.Id);
+
+		var sql = GenerateSql<TestTask>(query);
+
+		sql.Contains("[Person]").AssertTrue(
+			$"Expected FK column [Person] in SELECT, got: {sql}");
+		sql.ContainsIgnoreCase("Ecng_TestPerson").AssertFalse(
+			$"Expected no JOIN to [Ecng_TestPerson] (FK lives on source table), got: {sql}");
+	}
+
+	#endregion
+
 	#region GROUP BY projection aliasing
 
 	/// <summary>

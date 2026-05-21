@@ -172,6 +172,14 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		var body = m.Arguments[1].GetOperand().Body;
 
+		// Strip a SQL no-op widening cast (e.g. `(long?)t.Person.Id`) so the
+		// downstream body-shape switch sees the underlying MemberExpression
+		// and can reuse the same FK-via-Id shortcut already used by WHERE
+		// and GROUP BY. Only built-in casts (Method is null); user-defined
+		// op_Implicit/op_Explicit are left to the UnaryExpression branch.
+		if (body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked, Method: null } noopConv)
+			body = noopConv.Operand;
+
 		// Record member→alias mapping for an anonymous-projection body so a
 		// downstream Where/Select like `p.Topic.X` resolves `p.Topic` back
 		// to the underlying alias instead of the main FROM alias. Same idea
