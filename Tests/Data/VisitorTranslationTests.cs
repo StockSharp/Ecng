@@ -140,6 +140,90 @@ public class VisitorTranslationTests : BaseTestClass
 		"sqlite" => SQLiteDialect.Instance,
 		_ => throw new ArgumentOutOfRangeException(nameof(name)),
 	};
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void EnumEquals_Literal_InlinesUnderlyingIntegerValue(string dialectName)
+	{
+		var items = CreateQueryable<TestPermitted>();
+		var query = items.Where(p => p.Permissions == TestPermissions.Read);
+
+		var sql = Translate<TestPermitted>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase("where").AssertTrue($"Expected WHERE clause, got: {sql}");
+		sql.ContainsIgnoreCase("Permissions").AssertTrue($"Expected column reference, got: {sql}");
+		// Read = 1 — emitted as raw integer (VisitConstant converts enum via .To<long>()).
+		sql.Contains("= 1").AssertTrue($"Expected inline integer '= 1' for TestPermissions.Read, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void EnumEquals_Variable_EmitsParameterizedComparison(string dialectName)
+	{
+		var items = CreateQueryable<TestPermitted>();
+		var write = TestPermissions.Write;
+		var query = items.Where(p => p.Permissions == write);
+
+		var sql = Translate<TestPermitted>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase("where").AssertTrue($"Expected WHERE clause, got: {sql}");
+		sql.ContainsIgnoreCase("Permissions").AssertTrue($"Expected column reference, got: {sql}");
+		// Captured local does NOT fold to a constant — it is bound as a
+		// named parameter (e.g. @write0) for plan-cache reuse.
+		sql.Contains("@write").AssertTrue($"Expected '@write' parameter, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void EnumContains_Array_EmitsInClause(string dialectName)
+	{
+		var items = CreateQueryable<TestPermitted>();
+		var allowed = new[] { TestPermissions.Read, TestPermissions.Write };
+		var query = items.Where(p => allowed.Contains(p.Permissions));
+
+		var sql = Translate<TestPermitted>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase(" in ").AssertTrue($"Expected IN clause, got: {sql}");
+		sql.ContainsIgnoreCase("Permissions").AssertTrue($"Expected column reference, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void EnumOrderBy_EmitsColumn(string dialectName)
+	{
+		var items = CreateQueryable<TestPermitted>();
+		var query = items.OrderBy(p => p.Permissions);
+
+		var sql = Translate<TestPermitted>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase("order by").AssertTrue($"Expected ORDER BY, got: {sql}");
+		sql.ContainsIgnoreCase("Permissions").AssertTrue($"Expected enum column in ORDER BY, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void EnumGroupBy_EmitsColumn(string dialectName)
+	{
+		var items = CreateQueryable<TestPermitted>();
+		var query = items
+			.GroupBy(p => p.Permissions)
+			.Select(g => new { g.Key, Count = g.Count() });
+
+		var sql = Translate<TestPermitted>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase("group by").AssertTrue($"Expected GROUP BY, got: {sql}");
+		sql.ContainsIgnoreCase("Permissions").AssertTrue($"Expected enum column in GROUP BY, got: {sql}");
+	}
 }
 
 #endif
