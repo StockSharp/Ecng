@@ -60,6 +60,16 @@ public class RestBaseApiClientTests : BaseTestClass
 
 		public Task<int> GetCountAsync(string name, CancellationToken cancellationToken)
 			=> GetAsync<int>(GetCurrentMethod(), cancellationToken, name);
+
+		// Method signature carries an extra parameter, but the caller passes
+		// only `itemId` — exercises the args/params count-mismatch path.
+		public Task<string> GetWithMissingArgAsync(long tenantId, long itemId, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, itemId);
+
+		// Server-bound parameter: kept on the C# signature, excluded from
+		// the wire via [Rest(Ignore = true)]; caller passes only `itemId`.
+		public Task<string> GetWithIgnoredTenantAsync([Rest(Ignore = true)] long tenantId, long itemId, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, itemId);
 	}
 
 	/// <summary>
@@ -213,5 +223,44 @@ public class RestBaseApiClientTests : BaseTestClass
 		var result = await client.TryGetByNameAsync("empty", CancellationToken);
 
 		result.AssertNull();
+	}
+
+	/// <summary>
+	/// Verifies that the args/params count-mismatch exception names the
+	/// [Rest(Ignore = true)] escape hatch so callers can discover it without
+	/// reading GetInfo source.
+	/// </summary>
+	[TestMethod]
+	public async Task GetInfo_ArgCountMismatch_MentionsRestIgnoreEscapeHatch()
+	{
+		var handler = new UrlCapturingHandler();
+		var client = new TestRestClient(handler);
+
+		var ex = await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(
+			() => client.GetWithMissingArgAsync(42L, 7L, CancellationToken));
+
+		ex.Message.Contains("Rest(Ignore").AssertTrue(
+			$"Expected mismatch message to mention the [Rest(Ignore = true)] " +
+			$"escape hatch, got: {ex.Message}");
+	}
+
+	/// <summary>
+	/// Verifies that a [Rest(Ignore = true)] parameter is filtered out of
+	/// the wire shape: the call succeeds with one fewer arg, and the
+	/// parameter name never appears in the request URL.
+	/// </summary>
+	[TestMethod]
+	public async Task GetAsync_RestIgnoreParameter_IsFilteredFromWire()
+	{
+		var handler = new UrlCapturingHandler();
+		var client = new TestRestClient(handler);
+
+		await client.GetWithIgnoredTenantAsync(42L, 7L, CancellationToken);
+
+		var query = handler.LastRequestUri.Query;
+
+		query.ContainsIgnoreCase("tenantId").AssertFalse(
+			$"[Rest(Ignore=true)] tenantId must not appear on the wire; got: {query}");
+		query.Contains("7").AssertTrue($"Expected itemId=7 on the wire; got: {query}");
 	}
 }

@@ -18,7 +18,13 @@ public class RestAttribute : Attribute
 	public bool IsRequired { get; set; }
 
 	/// <summary>
-	/// Gets or sets a value indicating whether the REST element should be ignored.
+	/// When <see langword="true"/>, the parameter is excluded from the
+	/// request wire shape (<see cref="RestBaseApiClient.GetInfo"/> filters
+	/// it out of the params/args validation), but the C# signature still
+	/// carries it. Canonical use-case: a parameter that the server resolves
+	/// from auth context (JWT claim) rather than from the request body or
+	/// URL — e.g. <c>tenantId</c> / <c>userId</c> on a server-shaped client
+	/// interface.
 	/// </summary>
 	public bool Ignore { get; set; }
 }

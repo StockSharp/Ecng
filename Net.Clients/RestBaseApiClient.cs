@@ -499,7 +499,12 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 		var paramsArr = paramsEnum.ToArray();
 
 		if (args.Length != paramsArr.Length)
-			throw new ArgumentOutOfRangeException(nameof(args), $"Args='{args.Select(a => a.To<string>()).JoinCommaSpace()}' != Params='{paramsArr.Select(t => t.pi.Name).JoinCommaSpace()}'");
+			throw new ArgumentOutOfRangeException(nameof(args),
+				$"Args='{args.Select(a => a.To<string>()).JoinCommaSpace()}' != " +
+				$"Params='{paramsArr.Select(t => t.pi.Name).JoinCommaSpace()}'. " +
+				$"To skip a parameter from the wire (e.g. server-side bound from " +
+				$"auth context such as a JWT claim), annotate it with " +
+				$"[Rest(Ignore = true)] on the calling method's parameter.");
 
 		List<(string name, object value)> list = [];
 
