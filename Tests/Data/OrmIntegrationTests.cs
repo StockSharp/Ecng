@@ -1166,6 +1166,45 @@ public class OrmIntegrationTests : BaseTestClass
 		ids.Count(x => x == alice.Id).AssertEqual(1);
 	}
 
+	/// <summary>
+	/// Companion to <see cref="Select_NullableFkId_WithNullRow_MaterializesNulls"/>:
+	/// the same single-column <c>(long?)Nav.Id</c> projection through
+	/// <c>FirstOrDefaultAsyncEx</c> instead of <c>ToArrayAsyncEx</c>. Pre-fix
+	/// this threw <c>NullReferenceException</c> out of
+	/// <c>Database.GetOrAddCache</c> because the result-side dispatch in
+	/// <c>ExecuteResultAsync</c> took the entity-materialization branch on
+	/// <c>Nullable&lt;long&gt;</c> and called <c>SchemaRegistry.Get(typeof(long?))</c>,
+	/// which has no schema → null meta → NRE.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task FirstOrDefault_NullableFkId_NoMatch_ReturnsDefault(string provider)
+	{
+		SetUp(provider);
+		var alice = await InsertPerson("Alice");
+		await InsertTask("WithPerson", alice);
+
+		await ClearCache();
+
+		// No row passes the predicate -> FirstOrDefault must return default(long?).
+		var missing = await Query<TestTask>()
+			.Where(t => t.Title == "no-such-row")
+			.Select(t => (long?)t.Person.Id)
+			.FirstOrDefaultAsyncEx(CancellationToken);
+
+		missing.AssertNull();
+
+		// Matching row carries the FK -> the same call should return the id.
+		var found = await Query<TestTask>()
+			.Where(t => t.Title == "WithPerson")
+			.Select(t => (long?)t.Person.Id)
+			.FirstOrDefaultAsyncEx(CancellationToken);
+
+		found.AssertEqual(alice.Id);
+	}
+
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
 	[DataRow(DatabaseProviderRegistry.PostgreSql)]

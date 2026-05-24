@@ -1257,6 +1257,13 @@ public partial class Database : Disposable, IStorage
 
 		if (typeof(TResult).IsSerializablePrimitive())
 			return await ExecuteScalar<TResult>(command, input, token).NoWait();
+		else if (typeof(TResult).IsNullable() && typeof(TResult).GetUnderlyingType().IsSerializablePrimitive())
+			// Single-column Nullable<primitive> result (e.g. `.Select(x => (long?)x.Nav.Id).FirstOrDefaultAsyncEx()`).
+			// Mirrors the SelectAsyncEnumerable branch: the row carries one nullable
+			// scalar, not a registered entity schema, so route through ExecuteScalar
+			// instead of falling into Read + SchemaRegistry.Get(Nullable<T>) which
+			// returns no metadata and trips GetOrAddCache with NullReferenceException.
+			return await ExecuteScalar<TResult>(command, input, token).NoWait();
 		else
 			return (TResult)await Read(command, SchemaRegistry.Get(typeof(TResult)), input, token).NoWait();	}
 
