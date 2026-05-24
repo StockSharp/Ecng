@@ -1133,6 +1133,39 @@ public class OrmIntegrationTests : BaseTestClass
 		ids.OrderBy(i => i).ToArray().SequenceEqual([a.Id, b.Id]).AssertTrue();
 	}
 
+	/// <summary>
+	/// Regression: projecting <c>(long?)t.Nav.Id</c> over rows that include a
+	/// NULL FK must materialize into <c>long?[]</c> with the matching null
+	/// slots. Before the fix this threw
+	/// <c>NotSupportedException: No constructor of System.Nullable\`1[Int64]
+	/// matches the projected columns</c> out of <c>SelectAsyncEnumerator.
+	/// MaterializeByCtor</c> — the dispatch took the ctor-search branch
+	/// because <c>Nullable&lt;long&gt;</c> isn't an <c>IsSerializablePrimitive</c>,
+	/// and no ctor parameter names match the single-column projection.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NullableFkId_WithNullRow_MaterializesNulls(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		await InsertTask("WithPerson", alice);
+		await InsertTask("Orphan", null);    // FK column is NULL on this row
+
+		await ClearCache();
+
+		var ids = await Query<TestTask>()
+			.Select(t => (long?)t.Person.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		ids.Length.AssertEqual(2);
+		ids.Count(x => x is null).AssertEqual(1);
+		ids.Count(x => x == alice.Id).AssertEqual(1);
+	}
+
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
 	[DataRow(DatabaseProviderRegistry.PostgreSql)]

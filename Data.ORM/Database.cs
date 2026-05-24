@@ -1099,6 +1099,19 @@ public partial class Database : Disposable, IStorage
 								? []
 								: [.. ((IEnumerable<object>)table[0].Value).Select(e => e.To<TResult>())];
 						}
+						else if (typeof(TResult).IsNullable() && typeof(TResult).GetUnderlyingType().IsSerializablePrimitive())
+						{
+							// Single-column Nullable<primitive> projection (e.g. `(long?)t.Nav.Id`
+							// where the FK column is itself nullable). Route NULL rows to
+							// default(T?) and non-null rows through the same scalar conversion
+							// the primitive branch above uses. Without this dispatch the
+							// materializer falls through to MaterializeByCtor, which can't
+							// match Nullable<T>'s `(T value)` ctor against an arbitrary
+							// single-column name and throws NotSupportedException.
+							buffer = table.Count == 0
+								? []
+								: [.. ((IEnumerable<object>)table[0].Value).Select(e => e is null ? default : e.To<TResult>())];
+						}
 						else
 						{
 							buffer = MaterializeByCtor(table);
