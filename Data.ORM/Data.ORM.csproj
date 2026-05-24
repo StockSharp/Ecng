@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Linq\Linq.csproj" />
   </ItemGroup>
