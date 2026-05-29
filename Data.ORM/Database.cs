@@ -1134,6 +1134,7 @@ public partial class Database : Disposable, IStorage
 
 				var rowCount = ((ICollection)table[0].Value).Count;
 
+
 				if (rowCount == 0)
 					return [];
 
@@ -1149,6 +1150,7 @@ public partial class Database : Disposable, IStorage
 
 				var parameters = ctor.GetParameters();
 				var colIndices = new int[parameters.Length];
+				var consumed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 				for (var j = 0; j < parameters.Length; j++)
 				{
@@ -1165,6 +1167,24 @@ public partial class Database : Disposable, IStorage
 					}
 
 					colIndices[j] = idx;
+					consumed.Add(paramName);
+				}
+
+				// Columns not consumed by the ctor are routed to writable
+				// properties of TResult by case-insensitive name match — covers
+				// the `new NamedClass { Prop = ... }` projection shape where
+				// the only public ctor is parameterless.
+				var leftover = new List<(int colIndex, PropertyInfo prop)>();
+
+				for (var k = 0; k < table.Count; k++)
+				{
+					if (consumed.Contains(table[k].Name))
+						continue;
+
+					var prop = typeof(TResult).GetProperty(table[k].Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+					if (prop?.CanWrite == true)
+						leftover.Add((k, prop));
 				}
 
 				var result = new TResult[rowCount];
@@ -1179,7 +1199,15 @@ public partial class Database : Disposable, IStorage
 						args[j] = raw.To(parameters[j].ParameterType);
 					}
 
-					result[r] = (TResult)ctor.Invoke(args);
+					var instance = (TResult)ctor.Invoke(args);
+
+					foreach (var (colIndex, prop) in leftover)
+					{
+						var raw = ((IList)table[colIndex].Value)[r];
+						prop.SetValue(instance, raw.To(prop.PropertyType));
+					}
+
+					result[r] = instance;
 				}
 
 				return result;

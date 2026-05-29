@@ -1299,6 +1299,87 @@ public class OrmIntegrationTests : BaseTestClass
 		rows[0].Name.AssertEqual("Alpha");
 	}
 
+	public class SelectNamedRow
+	{
+		public long Id { get; set; }
+		public string Name { get; set; }
+		public int Priority { get; set; }
+		public decimal Price { get; set; }
+		public bool IsActive { get; set; }
+	}
+
+	/// <summary>
+	/// Select projection into a named class via member-init must populate
+	/// every assigned property from the row, mirroring the anonymous-type
+	/// path. Without the fix every property comes back as default(T).
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NamedClass_MemberInit_PopulatesProperties(string provider)
+	{
+		SetUp(provider);
+
+		var inserted = await InsertItem(
+			name: "Alpha",
+			priority: 42,
+			price: 123.45m,
+			isActive: true);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new SelectNamedRow
+			{
+				Id = x.Id,
+				Name = x.Name,
+				Priority = x.Priority,
+				Price = x.Price,
+				IsActive = x.IsActive,
+			})
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].Id.AssertEqual(inserted.Id);
+		rows[0].Name.AssertEqual("Alpha");
+		rows[0].Priority.AssertEqual(42);
+		rows[0].Price.AssertEqual(123.45m);
+		rows[0].IsActive.AssertEqual(true);
+	}
+
+	// Anonymous-type control for the named-class projection above.
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_AnonymousType_PopulatesProperties_Control(string provider)
+	{
+		SetUp(provider);
+
+		var inserted = await InsertItem(
+			name: "Alpha",
+			priority: 42,
+			price: 123.45m,
+			isActive: true);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new
+			{
+				Id = x.Id,
+				Name = x.Name,
+				Priority = x.Priority,
+				Price = x.Price,
+				IsActive = x.IsActive,
+			})
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].Id.AssertEqual(inserted.Id);
+		rows[0].Name.AssertEqual("Alpha");
+		rows[0].Priority.AssertEqual(42);
+		rows[0].Price.AssertEqual(123.45m);
+		rows[0].IsActive.AssertEqual(true);
+	}
+
 	#endregion
 
 	#region Aggregation with Filter Tests
