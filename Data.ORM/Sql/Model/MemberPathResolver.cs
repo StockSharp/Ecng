@@ -10,8 +10,10 @@ using Ecng.Serialization;
 ///
 /// Three traversal forms are recognised at each non-leaf hop:
 /// <list type="bullet">
-/// <item>RelationSingle navigation — emits an INNER JOIN to the target table;
-/// switches the running alias to the joined table.</item>
+/// <item>RelationSingle navigation — emits a LEFT OUTER JOIN to the target
+/// table (so a row whose foreign key is NULL is preserved rather than silently
+/// dropped; equivalent to an INNER JOIN for a non-null FK under referential
+/// integrity); switches the running alias to the joined table.</item>
 /// <item>Inner-schema (value object) — accumulates a column-name prefix that
 /// flattens nested members into a single physical column.</item>
 /// <item>FK short-circuit — when the leaf is <c>Id</c> directly under a
@@ -83,7 +85,11 @@ public static class MemberPathResolver
 				}
 
 				joins.Add(new JoinPlan(
-					JoinKind.Inner,
+					// LEFT OUTER, not INNER: projecting or filtering through a
+					// RelationSingle whose foreign key is NULL must keep the parent
+					// row instead of silently dropping it. For a non-null FK this is
+					// equivalent to an INNER JOIN under referential integrity.
+					JoinKind.LeftOuter,
 					targetSchema.Name,
 					hop.Name,
 					currentAlias,

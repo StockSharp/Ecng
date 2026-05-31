@@ -116,7 +116,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	/// <summary>
 	/// Two-level navigation in a Where clause (<c>s.Task.Person.Id == X</c>)
-	/// must register an INNER JOIN to the intermediate <c>Task</c> table so
+	/// must register a LEFT JOIN to the intermediate <c>Task</c> table so
 	/// the FK column <c>[Task].[Person]</c> becomes reachable, and then use
 	/// that FK column directly instead of joining the leaf <c>Person</c>
 	/// table just to read its primary key.
@@ -137,7 +137,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var sql = GenerateSql<TestSubTask>(query);
 
 		// Intermediate JOIN to TestTask is required so the FK column on Task is reachable.
-		sql.ContainsIgnoreCase("inner join").AssertTrue($"Expected at least one INNER JOIN, got: {sql}");
+		sql.ContainsIgnoreCase("left join").AssertTrue($"Expected at least one LEFT JOIN, got: {sql}");
 		sql.ContainsIgnoreCase("[Ecng_TestTask]").AssertTrue($"Expected JOIN to Ecng_TestTask, got: {sql}");
 		// Leaf .Id resolves through the FK column on Task — no need to join Person.
 		sql.ContainsIgnoreCase("[Ecng_TestPerson]").AssertFalse($"Should not join Ecng_TestPerson when only its Id is needed, got: {sql}");
@@ -697,8 +697,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.ContainsIgnoreCase("ORDER BY").AssertTrue($"Expected ORDER BY clause, got: {sql}");
 		sql.Contains("[Person].[Name]").AssertTrue(
 			$"Expected qualified [Person].[Name] in ORDER BY (implicit JOIN required), got: {sql}");
-		sql.ContainsIgnoreCase("INNER JOIN").AssertTrue(
-			$"Expected INNER JOIN to Person table for navigation OrderBy, got: {sql}");
+		sql.ContainsIgnoreCase("left join").AssertTrue(
+			$"Expected LEFT JOIN to Person table for navigation OrderBy, got: {sql}");
 	}
 
 	/// <summary>
@@ -717,8 +717,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.Contains("[Person].[Name]").AssertTrue(
 			$"Expected qualified [Person].[Name] in ORDER BY DESC, got: {sql}");
 		sql.ContainsIgnoreCase("DESC").AssertTrue($"Expected DESC, got: {sql}");
-		sql.ContainsIgnoreCase("INNER JOIN").AssertTrue(
-			$"Expected INNER JOIN to Person table, got: {sql}");
+		sql.ContainsIgnoreCase("left join").AssertTrue(
+			$"Expected LEFT JOIN to Person table, got: {sql}");
 	}
 
 	/// <summary>
@@ -1074,7 +1074,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	/// <summary>
 	/// A single Where with three OR'ed Like predicates over the same
 	/// navigation (p.User.Email / FirstName / LastName) must emit a single
-	/// INNER JOIN, and all three OR branches must reference the joined
+	/// LEFT JOIN, and all three OR branches must reference the joined
 	/// alias. Earlier the translator skipped the implicit JOIN and SQL
 	/// Server failed with "multi-part identifier 'User.Email' could not be
 	/// bound".
@@ -1109,9 +1109,9 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		// Defensive: do not duplicate the JOIN even though three branches
 		// reference the same nav.
-		var joinCount = sql.Split("inner join", StringSplitOptions.None).Length - 1;
+		var joinCount = sql.Split("left join", StringSplitOptions.None).Length - 1;
 		joinCount.AssertEqual(1,
-			$"Expected exactly 1 INNER JOIN to TestBrokerUser, got {joinCount}: {sql}");
+			$"Expected exactly 1 LEFT JOIN to TestBrokerUser, got {joinCount}: {sql}");
 	}
 
 	/// <summary>

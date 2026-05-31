@@ -74,9 +74,10 @@ public class MemberPathResolverTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Resolve_NavigationLeafIsNonId_AddsInnerJoinAndQualifiesColumn()
+	public void Resolve_NavigationLeafIsNonId_AddsLeftJoinAndQualifiesColumn()
 	{
-		// e.Person.Name → INNER JOIN Person, qualify Name with the join alias.
+		// e.Person.Name → LEFT JOIN Person, qualify Name with the join alias
+		// (LEFT so a row whose Person FK is NULL is preserved, not dropped).
 		var res = MemberPathResolver.Resolve(Body((TestTask t) => t.Person.Name), RootAlias);
 
 		res.AssertNotNull();
@@ -84,7 +85,7 @@ public class MemberPathResolverTests : BaseTestClass
 		res.RequiredJoins.Count.AssertEqual(1);
 
 		var join = res.RequiredJoins[0];
-		join.Kind.AssertEqual(JoinKind.Inner);
+		join.Kind.AssertEqual(JoinKind.LeftOuter);
 		join.Alias.AssertEqual("Person");
 		join.ParentAlias.AssertEqual(RootAlias);
 		join.OnParentColumn.AssertEqual("Person");
@@ -170,7 +171,7 @@ public class MemberPathResolverTests : BaseTestClass
 	[TestMethod]
 	public void Resolve_RelationSingleInsideInnerSchema_LeafIsNonId_AddsJoinOnPrefixedFk()
 	{
-		// e.ShippingAddress.Country.Name → INNER JOIN Country ON the
+		// e.ShippingAddress.Country.Name → LEFT JOIN Country ON the
 		// inner-schema-prefixed FK column on the parent (ShippingAddressCountry)
 		// matches the joined table's identity.
 		var res = MemberPathResolver.Resolve(Body((TestOrderWithAddressEx o) => o.ShippingAddress.Country.Name), RootAlias);
@@ -180,7 +181,7 @@ public class MemberPathResolverTests : BaseTestClass
 		res.RequiredJoins.Count.AssertEqual(1);
 
 		var join = res.RequiredJoins[0];
-		join.Kind.AssertEqual(JoinKind.Inner);
+		join.Kind.AssertEqual(JoinKind.LeftOuter);
 		join.Alias.AssertEqual("Country");
 		join.ParentAlias.AssertEqual(RootAlias);
 		join.OnParentColumn.AssertEqual("ShippingAddressCountry");

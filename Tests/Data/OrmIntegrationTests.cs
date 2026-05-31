@@ -1279,6 +1279,33 @@ public class OrmIntegrationTests : BaseTestClass
 		rows.All(r => r.PersonId == person.Id).AssertTrue();
 	}
 
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NullableNavigationMember_KeepsRowsWithNullFk(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		await InsertTask("with-person", alice, priority: 1);
+		// Orphan row: the nullable Person FK is left NULL.
+		await Storage.AddAsync(new TestTask { Title = "orphan", Priority = 2, Person = null }, CancellationToken);
+
+		// Projecting a non-Id member through the NULLABLE Person navigation must keep
+		// the orphan row (with PersonName == null), i.e. the nav hop has to resolve to
+		// a LEFT JOIN. The translator currently hard-codes an INNER JOIN for every
+		// relation hop, which silently drops the null-FK row; this asserts the fix.
+		var rows = await Query<TestTask>()
+			.Select(t => new { t.Id, t.Title, PersonName = t.Person.Name })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+		rows.Any(r => r.Title == "orphan").AssertTrue();
+		(rows.Single(r => r.Title == "orphan").PersonName is null).AssertTrue();
+		(rows.Single(r => r.Title == "with-person").PersonName == "Alice").AssertTrue();
+	}
+
 	public record SelectItemDto(long Id, string Name);
 
 	[TestMethod]
