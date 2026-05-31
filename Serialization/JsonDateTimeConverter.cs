@@ -20,10 +20,13 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	/// Determines whether this converter can convert the specified object type.
 	/// </summary>
 	/// <param name="objectType">The type of the object to check.</param>
-	/// <returns><c>true</c> if the objectType is DateTime; otherwise, <c>false</c>.</returns>
+	/// <returns><c>true</c> if the objectType is <see cref="DateTime"/> or
+	/// <see cref="Nullable{DateTime}"/>; otherwise, <c>false</c>. Accepting the
+	/// nullable form lets the converter be registered globally and still cover
+	/// optional <c>DateTime?</c> members.</returns>
 	public override bool CanConvert(Type objectType)
 	{
-		return typeof(DateTime) == objectType;
+		return objectType == typeof(DateTime) || objectType == typeof(DateTime?);
 	}
 
 	/// <summary>
@@ -73,6 +76,12 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	/// <param name="serializer">The calling serializer.</param>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 	{
+		if (value is null)
+		{
+			writer.WriteNull();
+			return;
+		}
+
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
 
@@ -122,6 +131,12 @@ public class JsonDateTimeMcsConverter : JsonDateTimeConverter
 	/// </summary>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 	{
+		if (value is null)
+		{
+			writer.WriteNull();
+			return;
+		}
+
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
 
@@ -157,6 +172,12 @@ public class JsonDateTimeNanoConverter : JsonDateTimeConverter
 	/// </summary>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 	{
+		if (value is null)
+		{
+			writer.WriteNull();
+			return;
+		}
+
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
 

@@ -107,6 +107,32 @@ public class JsonConvertersTests : BaseTestClass
 		dt2.AssertEqual(dt);
 	}
 
+	private class GlobalTimeDto
+	{
+		public DateTime Required { get; set; }
+		public DateTime? Optional { get; set; }
+	}
+
+	[TestMethod]
+	public void DateTimeMcsConverter_GlobalRegistration_HandlesNullable()
+	{
+		var settings = new JsonSerializerSettings();
+		settings.Converters.Add(new JsonDateTimeMcsConverter());
+
+		var t = TimeHelper.GregorianStart.AddMicroseconds(1_700_000_000_000_000L);
+
+		// registered globally (Converters list, not a per-field attribute):
+		// must cover both DateTime and DateTime?
+		var json = JsonConvert.SerializeObject(new GlobalTimeDto { Required = t, Optional = t }, settings);
+		var back = JsonConvert.DeserializeObject<GlobalTimeDto>(json, settings);
+		back.Required.ToUnixMcs().AssertEqual(t.ToUnixMcs());
+		back.Optional.Value.ToUnixMcs().AssertEqual(t.ToUnixMcs());
+
+		// null DateTime? — no throw, round-trips to null
+		var jsonNull = JsonConvert.SerializeObject(new GlobalTimeDto { Required = t, Optional = null }, settings);
+		JsonConvert.DeserializeObject<GlobalTimeDto>(jsonNull, settings).Optional.HasValue.AssertEqual(false);
+	}
+
 	[TestMethod]
 	public void JArrayConverter_WriteRead_Object()
 	{

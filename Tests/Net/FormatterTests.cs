@@ -3,7 +3,10 @@ namespace Ecng.Tests.Net;
 using System.Net.Http.Formatting;
 
 using Ecng.Net;
+using Ecng.Serialization;
 using Ecng.Tests.Net.Mocks;
+
+using Newtonsoft.Json;
 
 using JsonFormatter = Ecng.Net.JsonMediaTypeFormatter;
 
@@ -46,6 +49,101 @@ public class FormatterTests : BaseTestClass
 	{
 		using var content = new StringContent(text, Encoding.UTF8, mediaType);
 		return await formatter.DeserializeAsync<T>(content, default);
+	}
+
+	#endregion
+
+	#region Newtonsoft formatter
+
+	private class TimeDto
+	{
+		public DateTime Time { get; set; }
+	}
+
+	[TestMethod]
+	public async Task Newtonsoft_RoundTrips_Poco()
+	{
+		var f = new NewtonsoftMediaTypeFormatter();
+
+		var dto = new TimeDto { Time = new DateTime(2026, 5, 31, 10, 0, 0, DateTimeKind.Utc) };
+
+		var json = await SerializeNew(f, dto);
+		var back = await DeserializeNew<TimeDto>(f, json, "application/json");
+
+		back.Time.AssertEqual(dto.Time);
+	}
+
+	[TestMethod]
+	public async Task Newtonsoft_DateTime_As_UnixMicroseconds()
+	{
+		var settings = new JsonSerializerSettings();
+		settings.Converters.Add(new JsonDateTimeMcsConverter());
+
+		var f = new NewtonsoftMediaTypeFormatter(settings);
+
+		// sub-millisecond time to prove microsecond precision survives
+		var t = new DateTime(2026, 5, 31, 10, 0, 0, DateTimeKind.Utc).AddTicks(4560);
+
+		var json = await SerializeNew(f, new TimeDto { Time = t });
+
+		// the wire carries a bare microsecond number, not an ISO date string
+		json.Contains(t.ToUnixMcs().ToString()).AssertEqual(true);
+
+		var back = await DeserializeNew<TimeDto>(f, json, "application/json");
+		back.Time.ToUnixMcs().AssertEqual(t.ToUnixMcs());
+	}
+
+	private class OptTimeDto
+	{
+		[JsonConverter(typeof(JsonDateTimeMcsConverter))]
+		public DateTime? OptTime { get; set; }
+	}
+
+	[TestMethod]
+	public async Task Newtonsoft_NullableDateTime_RoundTrips()
+	{
+		// per-field [JsonConverter] on a DateTime? with null-ignoring settings —
+		// the exact shape the WS DTOs use for optional time fields.
+		var f = new NewtonsoftMediaTypeFormatter(new JsonSerializerSettings
+		{
+			NullValueHandling = NullValueHandling.Ignore,
+		});
+
+		// non-null → microsecond number, round-trips
+		var t = new DateTime(2026, 5, 31, 10, 0, 0, DateTimeKind.Utc).AddTicks(4560);
+		var json = await SerializeNew(f, new OptTimeDto { OptTime = t });
+		json.Contains(t.ToUnixMcs().ToString()).AssertEqual(true);
+		(await DeserializeNew<OptTimeDto>(f, json, "application/json")).OptTime.Value.ToUnixMcs().AssertEqual(t.ToUnixMcs());
+
+		// null → omitted on write, null on read (no throw)
+		var jsonNull = await SerializeNew(f, new OptTimeDto { OptTime = null });
+		jsonNull.Contains("OptTime").AssertEqual(false);
+		(await DeserializeNew<OptTimeDto>(f, jsonNull, "application/json")).OptTime.HasValue.AssertEqual(false);
+	}
+
+	private record PositionalDto(long Id, string Name, DateTime Stamp);
+
+	[TestMethod]
+	public async Task Newtonsoft_RoundTrips_PositionalRecord_WithMcsTime()
+	{
+		// The codegen client deserializes response DTOs — some of which are
+		// positional records (e.g. the Designer catalog DTOs) — via Newtonsoft
+		// now. Prove Newtonsoft binds the positional constructor AND that a
+		// DateTime member rides as a Unix-microsecond number through the very
+		// same formatter the client uses.
+		var settings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+		settings.Converters.Add(new JsonDateTimeMcsConverter());
+		var f = new NewtonsoftMediaTypeFormatter(settings);
+
+		var dto = new PositionalDto(42, "comp", new DateTime(2026, 5, 31, 10, 0, 0, DateTimeKind.Utc).AddTicks(4560));
+
+		var json = await SerializeNew(f, dto);
+		json.Contains(dto.Stamp.ToUnixMcs().ToString()).AssertEqual(true);
+
+		var back = await DeserializeNew<PositionalDto>(f, json, "application/json");
+		back.Id.AssertEqual(dto.Id);
+		back.Name.AssertEqual(dto.Name);
+		back.Stamp.ToUnixMcs().AssertEqual(dto.Stamp.ToUnixMcs());
 	}
 
 	#endregion
