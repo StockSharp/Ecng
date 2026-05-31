@@ -61,14 +61,16 @@ public class ReaderWriterLockSlimExtensionsTests : BaseTestClass
 		using var rw = new ReaderWriterLockSlim();
 
 		using var firstEntered = new ManualResetEventSlim();
-		using var release = new ManualResetEventSlim();
 
-		var second = Task.Run(() =>
+		// Dedicated thread (LongRunning) instead of Task.Run: this assembly runs tests
+		// with method-level parallelism, so a thread-pool reader can be starved past the
+		// 2s budget below under load, turning a correct lock into a flaky timeout.
+		var second = Task.Factory.StartNew(() =>
 		{
 			firstEntered.Wait(CancellationToken);
 			using (rw.ReadLock())
 				return rw.IsReadLockHeld;
-		}, CancellationToken);
+		}, CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
 		using (rw.ReadLock())
 		{
@@ -88,7 +90,10 @@ public class ReaderWriterLockSlimExtensionsTests : BaseTestClass
 		using var readerStarted = new ManualResetEventSlim();
 		using var readerObservedHeld = new ManualResetEventSlim();
 
-		var writer = Task.Run(() =>
+		// Dedicated threads (LongRunning) instead of Task.Run: method-level test
+		// parallelism can starve the thread pool, so a pooled writer/reader might not
+		// run within the 2s budget below and flip this timing check into a flaky timeout.
+		var writer = Task.Factory.StartNew(() =>
 		{
 			using (rw.WriteLock())
 			{
@@ -97,16 +102,16 @@ public class ReaderWriterLockSlimExtensionsTests : BaseTestClass
 				Thread.Sleep(50);
 				rw.IsWriteLockHeld.AssertTrue();
 			}
-		}, CancellationToken);
+		}, CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
 		writerEntered.Wait(CancellationToken);
 		readerStarted.Set();
 
-		var reader = Task.Run(() =>
+		var reader = Task.Factory.StartNew(() =>
 		{
 			using (rw.ReadLock())
 				readerObservedHeld.Set();
-		}, CancellationToken);
+		}, CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
 		writer.Wait(2_000, CancellationToken).AssertTrue();
 		reader.Wait(2_000, CancellationToken).AssertTrue();
