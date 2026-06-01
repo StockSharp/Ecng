@@ -59,6 +59,15 @@ public enum SchemaDiffKind
 	/// don't surface as false positives.
 	/// </summary>
 	ExtraIndex,
+
+	/// <summary>
+	/// Table exists in the database but no entity maps to it. Surfaced only when the
+	/// caller opts in (<c>detectExtraTables</c> on <see cref="SchemaMigrator.Compare"/>),
+	/// because a partial entity set would otherwise flag every unrelated table. Never
+	/// auto-dropped — emitted as a commented-out <c>DROP TABLE</c> (mirrors
+	/// <see cref="ExtraColumn"/>).
+	/// </summary>
+	ExtraTable,
 }
 
 /// <summary>
@@ -105,7 +114,8 @@ public static class SchemaMigrator
 		ISqlDialect dialect,
 		bool skipComputed,
 		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null,
-		IReadOnlyList<DbIndexInfo> dbIndexes = null)
+		IReadOnlyList<DbIndexInfo> dbIndexes = null,
+		bool detectExtraTables = false)
 	{
 		var diffs = new List<SchemaDiff>();
 
@@ -193,6 +203,22 @@ public static class SchemaMigrator
 			}
 		}
 
+		// Tables present in the DB that no entity maps to. Opt-in: a partial entity set
+		// (the common case for a focused migration) would otherwise flag every unrelated
+		// table. Never auto-dropped — surfaced as a commented-out DROP TABLE downstream.
+		if (detectExtraTables)
+		{
+			var modelTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+			foreach (var schema in entities)
+				if (!schema.IsView)
+					modelTables.Add(schema.TableName);
+
+			foreach (var dbTable in dbTables.Keys)
+				if (!modelTables.Contains(dbTable))
+					diffs.Add(new(dbTable, string.Empty, SchemaDiffKind.ExtraTable, string.Empty, "exists in DB"));
+		}
+
 		if (dbForeignKeys is not null)
 			AppendForeignKeyDiffs(entities, dbColumns, dbForeignKeys, dbTables, diffs);
 
@@ -214,6 +240,7 @@ public static class SchemaMigrator
 		ISqlDialect dialect,
 		bool skipComputed,
 		string tableSchema = null,
+		bool detectExtraTables = false,
 		CancellationToken cancellationToken = default)
 	{
 		if (entities is null)	throw new ArgumentNullException(nameof(entities));
@@ -226,7 +253,7 @@ public static class SchemaMigrator
 		var dbForeignKeys = await dialect.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
 		var dbIndexes = await dialect.ReadDbIndexesAsync(connection, tableSchema, cancellationToken);
 
-		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes);
+		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes, detectExtraTables);
 	}
 
 	private static void AppendForeignKeyDiffs(
@@ -259,7 +286,7 @@ public static class SchemaMigrator
 				if (col.ReferencedEntityType is null)
 					continue;
 
-				var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+				var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 				var refCol = refSchema.Identity?.Name ?? "Id";
 
 				entityFkPairs.Add((schema.TableName, col.Name));
@@ -284,6 +311,21 @@ public static class SchemaMigrator
 				string.Empty,
 				$"{fk.RefTableName}.{fk.RefColumnName} ({fk.ConstraintName})"));
 		}
+	}
+
+	/// <summary>
+	/// Resolves the schema a foreign key should reference. A relation may target a view entity, but a
+	/// database foreign key cannot reference a view — so a view is resolved to its backing table via
+	/// its <see cref="IViewProcessor.TableType"/>.
+	/// </summary>
+	private static Schema ResolveForeignKeyTarget(Type referencedEntityType)
+	{
+		var refSchema = SchemaRegistry.Get(referencedEntityType);
+
+		if (refSchema.IsView)
+			refSchema = SchemaRegistry.Get(ViewProcessorRegistry.GetProcessor(referencedEntityType).TableType);
+
+		return refSchema;
 	}
 
 	/// <summary>
@@ -667,7 +709,7 @@ public static class SchemaMigrator
 						if (col.ReferencedEntityType is null)
 							continue;
 
-						var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+						var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 						var refCol = refSchema.Identity?.Name ?? "Id";
 						colDefs.Add(dialect.GetForeignKeyConstraint(diff.TableName, col.Name, refSchema.TableName, refCol));
 					}
@@ -721,7 +763,7 @@ public static class SchemaMigrator
 					// if the new column is a foreign key, append ALTER TABLE ADD CONSTRAINT
 					if (col.ReferencedEntityType is not null)
 					{
-						var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+						var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 						var refCol = refSchema.Identity?.Name ?? "Id";
 						dialect.AppendAddForeignKey(sb, diff.TableName, col.Name, refSchema.TableName, refCol);
 						sb.AppendLine(";");
@@ -756,7 +798,7 @@ public static class SchemaMigrator
 					if (col?.ReferencedEntityType is null)
 						break;
 
-					var refSchema = SchemaRegistry.Get(col.ReferencedEntityType);
+					var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 					var refCol = refSchema.Identity?.Name ?? "Id";
 					dialect.AppendAddForeignKey(sb, diff.TableName, col.Name, refSchema.TableName, refCol);
 					sb.AppendLine(";");
@@ -787,8 +829,27 @@ public static class SchemaMigrator
 					break;
 
 				case SchemaDiffKind.ExtraColumn:
-					// extra columns are informational only, not auto-dropped
-					sb.AppendLine($"-- Extra column: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)}");
+				{
+					// Extra columns are never auto-dropped — emit the DROP COLUMN commented
+					// out, ready for a human to review and uncomment. Dialects that refuse
+					// DROP COLUMN (SQLite) keep a plain note instead of an executable statement.
+					try
+					{
+						var drop = new StringBuilder();
+						dialect.AppendDropColumn(drop, diff.TableName, diff.ColumnName);
+						sb.Append("-- ").Append(drop).AppendLine(";");
+					}
+					catch (NotSupportedException)
+					{
+						sb.AppendLine($"-- Extra column: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} (DROP COLUMN not supported by this dialect)");
+					}
+
+					break;
+				}
+
+				case SchemaDiffKind.ExtraTable:
+					// Extra tables are never auto-dropped — emit a commented-out DROP TABLE.
+					sb.AppendLine($"-- DROP TABLE {dialect.QuoteIdentifier(diff.TableName)};");
 					break;
 			}
 		}

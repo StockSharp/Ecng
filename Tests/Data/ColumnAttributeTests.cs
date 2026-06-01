@@ -807,8 +807,76 @@ public class ColumnAttributeTests : BaseTestClass
 
 		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
 
-		sql.Contains("--").AssertTrue($"Expected comment for extra column: {sql}");
-		sql.Contains("ALTER TABLE").AssertFalse($"Should not generate ALTER for extra column: {sql}");
+		// Extra columns are never auto-dropped: the DROP COLUMN is emitted commented out,
+		// ready for a human to review and uncomment.
+		sql.Contains("DROP COLUMN").AssertTrue($"Expected a DROP COLUMN for the extra column: {sql}");
+		sql.Contains("[OldCol]").AssertTrue($"Expected the extra column name: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP COLUMN")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"DROP COLUMN for an extra column must be commented out: {sql}");
+	}
+
+	[TestMethod]
+	public void GenerateSql_ExtraColumn_SQLite_FallsBackToComment()
+	{
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = new[]
+		{
+			new SchemaDiff("Users", "OldCol", SchemaDiffKind.ExtraColumn, string.Empty, "exists in DB"),
+		};
+
+		// SQLite refuses DROP COLUMN (version-dependent). The migrator must not throw and
+		// must keep an informational comment instead of an executable statement.
+		var sql = SchemaMigrator.GenerateMigrationSql(SQLiteDialect.Instance, diffs, [schema]);
+
+		sql.Contains("OldCol").AssertTrue($"Expected the extra column noted: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP COLUMN")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"SQLite must not emit an executable DROP COLUMN: {sql}");
+	}
+
+	[TestMethod]
+	public void Compare_ExtraTable_DetectedOnlyWhenOptedIn()
+	{
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Name", ClrType = typeof(string), IsNullable = true }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Name", "NVARCHAR", true, -1, null, null),
+			// A table present in the DB that no entity maps to.
+			new DbColumnInfo("LegacyAudit", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("LegacyAudit", "Note", "NVARCHAR", true, -1, null, null),
+		};
+
+		// Default: extra tables are NOT tracked — a partial model must not flag unrelated tables.
+		SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false)
+			.Any(d => d.Kind == SchemaDiffKind.ExtraTable).AssertFalse("extra tables must be off by default");
+
+		// Opt-in: the DB-only table surfaces as exactly one ExtraTable diff.
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, detectExtraTables: true);
+		var extra = diffs.Where(d => d.Kind == SchemaDiffKind.ExtraTable).ToArray();
+		extra.Length.AssertEqual(1);
+		extra[0].TableName.AssertEqual("LegacyAudit");
+
+		// GenerateMigrationSql emits it as a commented-out DROP TABLE (never auto-dropped).
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+		sql.Contains("DROP TABLE").AssertTrue($"Expected DROP TABLE for the extra table: {sql}");
+		sql.Contains("[LegacyAudit]").AssertTrue($"Expected the extra table name: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP TABLE")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"DROP TABLE for an extra table must be commented out: {sql}");
 	}
 
 	[TestMethod]
@@ -1311,10 +1379,11 @@ public class ColumnAttributeTests : BaseTestClass
 
 		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
 
-		sql.Contains("-- Extra column").AssertTrue($"Expected comment for extra columns: {sql}");
+		sql.Contains("DROP COLUMN").AssertTrue($"Expected DROP COLUMN for extra columns: {sql}");
 		sql.Contains("[OldDescription]").AssertTrue($"Expected OldDescription in SQL: {sql}");
 		sql.Contains("[LegacyCode]").AssertTrue($"Expected LegacyCode in SQL: {sql}");
-		sql.Contains("ALTER TABLE").AssertFalse($"Extra columns should not produce ALTER: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP COLUMN")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"extra-column DROP COLUMN must be commented out: {sql}");
 	}
 
 	[TestMethod]
@@ -1482,7 +1551,9 @@ public class ColumnAttributeTests : BaseTestClass
 		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
 
 		sql.Contains("ADD [NewField]").AssertTrue($"Expected ADD for missing column: {sql}");
-		sql.Contains("-- Extra column").AssertTrue($"Expected comment for extra column: {sql}");
+		sql.Contains("DROP COLUMN [Removed]").AssertTrue($"Expected commented DROP COLUMN for extra column: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP COLUMN")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"extra-column DROP COLUMN must be commented out: {sql}");
 	}
 
 	[TestMethod]

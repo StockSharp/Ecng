@@ -904,6 +904,70 @@ public class SchemaRegistryTests : BaseTestClass
 		sql.Contains("REFERENCES [Ecng_TestItem]").AssertTrue($"Expected REFERENCES [Ecng_TestItem], got: {sql}");
 	}
 
+	[TestMethod]
+	public void Migrator_MissingTable_ForeignKeyToView_ReferencesBackingTable()
+	{
+		// A [RelationSingle] to a VIEW entity (ReflTestViewEntity, backed by TestItem) must produce a
+		// foreign key that targets the backing TABLE (Ecng_TestItem), not the view (V_ReflTestView):
+		// you cannot create a foreign key that references a view.
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ReflTestOrder),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "ViewRef",
+					ClrType = typeof(long),
+					ReferencedEntityType = typeof(ReflTestViewEntity),
+				},
+			],
+		};
+
+		var diffs = new List<SchemaDiff>
+		{
+			new("Orders", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing"),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
+
+		sql.Contains("REFERENCES [Ecng_TestItem]").AssertTrue($"FK must target the backing table, got: {sql}");
+		sql.Contains("[V_ReflTestView]").AssertFalse($"FK must not target the view, got: {sql}");
+	}
+
+	[TestMethod]
+	public void Migrator_MissingColumn_ForeignKeyToView_ReferencesBackingTable()
+	{
+		var schema = new Schema
+		{
+			TableName = "Orders",
+			EntityType = typeof(ReflTestOrder),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long) },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "ViewRef",
+					ClrType = typeof(long),
+					IsNullable = true,
+					ReferencedEntityType = typeof(ReflTestViewEntity),
+				},
+			],
+		};
+
+		var diffs = new List<SchemaDiff>
+		{
+			new("Orders", "ViewRef", SchemaDiffKind.MissingColumn, "expected", string.Empty),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
+
+		sql.Contains("REFERENCES [Ecng_TestItem]").AssertTrue($"FK must target the backing table, got: {sql}");
+		sql.Contains("[V_ReflTestView]").AssertFalse($"FK must not target the view, got: {sql}");
+	}
+
 	#endregion
 
 	#region Finding #3: ViewProcessorAttribute → IsView
