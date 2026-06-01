@@ -880,6 +880,76 @@ public class ColumnAttributeTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Compare_ExtraForeignKey_EmitsCommentedDropConstraint()
+	{
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Name", ClrType = typeof(string), IsNullable = true }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Name", "NVARCHAR", true, -1, null, null),
+		};
+
+		// A foreign key present in the DB on a column the model does not declare as a relation.
+		var dbFks = new[]
+		{
+			new DbForeignKeyInfo("FK_Users_Name", "Users", "Name", "Users", "Id"),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, dbFks);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraForeignKey).AssertEqual(1);
+
+		// Rendered as a commented-out DROP CONSTRAINT (never auto-dropped).
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+		sql.Contains("DROP CONSTRAINT").AssertTrue($"Expected DROP CONSTRAINT for the extra FK: {sql}");
+		sql.Contains("[FK_Users_Name]").AssertTrue($"Expected the FK constraint name: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP CONSTRAINT")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"DROP CONSTRAINT for an extra FK must be commented out: {sql}");
+	}
+
+	[TestMethod]
+	public void Compare_ExtraIndex_EmitsCommentedDropIndex()
+	{
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Name", ClrType = typeof(string), IsNullable = true }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Name", "NVARCHAR", true, -1, null, null),
+		};
+
+		// An index present in the DB that the model does not declare.
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_Users_Name", "Users", "Name", 1, false, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(1);
+
+		// Rendered as a commented-out DROP INDEX (never auto-dropped).
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+		sql.Contains("DROP INDEX").AssertTrue($"Expected DROP INDEX for the extra index: {sql}");
+		sql.Contains("[IX_Users_Name]").AssertTrue($"Expected the index name: {sql}");
+		sql.Split('\n').Where(l => l.Contains("DROP INDEX")).All(l => l.TrimStart().StartsWith("--"))
+			.AssertTrue($"DROP INDEX for an extra index must be commented out: {sql}");
+	}
+
+	[TestMethod]
 	public void GenerateSql_PostgreSql_MissingColumn_UsesVarchar()
 	{
 		var schema = new Schema

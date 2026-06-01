@@ -308,8 +308,8 @@ public static class SchemaMigrator
 				continue;
 
 			diffs.Add(new(fk.TableName, fk.ColumnName, SchemaDiffKind.ExtraForeignKey,
-				string.Empty,
-				$"{fk.RefTableName}.{fk.RefColumnName} ({fk.ConstraintName})"));
+				fk.ConstraintName,
+				$"{fk.RefTableName}.{fk.RefColumnName}"));
 		}
 	}
 
@@ -806,8 +806,10 @@ public static class SchemaMigrator
 				}
 
 				case SchemaDiffKind.ExtraForeignKey:
-					// extra FKs are informational only, not auto-dropped (mirrors ExtraColumn)
-					sb.AppendLine($"-- Extra foreign key: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
+					// Extra FKs are never auto-dropped — emit the DROP CONSTRAINT commented
+					// out, ready for a human to review and uncomment. diff.Expected carries
+					// the constraint name; diff.Actual the referenced table.column for context.
+					sb.AppendLine($"-- ALTER TABLE {dialect.QuoteIdentifier(diff.TableName)} DROP CONSTRAINT {dialect.QuoteIdentifier(diff.Expected)};   -- {dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
 					break;
 
 				case SchemaDiffKind.MissingIndex:
@@ -824,8 +826,10 @@ public static class SchemaMigrator
 				}
 
 				case SchemaDiffKind.ExtraIndex:
-					// extra indexes are informational only, not auto-dropped
-					sb.AppendLine($"-- Extra index: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} {diff.Actual}");
+					// Extra indexes are never auto-dropped — emit the DROP INDEX commented
+					// out, ready for a human to review and uncomment. diff.ColumnName carries
+					// the index name; diff.Actual the column list for context.
+					sb.AppendLine($"-- DROP INDEX {dialect.QuoteIdentifier(diff.ColumnName)} ON {dialect.QuoteIdentifier(diff.TableName)};   -- {diff.Actual}");
 					break;
 
 				case SchemaDiffKind.ExtraColumn:
