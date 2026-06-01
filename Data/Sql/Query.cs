@@ -508,12 +508,6 @@ public class Query
 		=> Raw("dateAdd");
 
 	/// <summary>
-	/// Appends DATEDIFF function name.
-	/// </summary>
-	public Query DateDiff()
-		=> Raw("dateDiff");
-
-	/// <summary>
 	/// Appends DATEPART function name.
 	/// </summary>
 	public Query DatePart()

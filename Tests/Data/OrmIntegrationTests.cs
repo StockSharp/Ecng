@@ -53,6 +53,7 @@ public class OrmIntegrationTests : BaseTestClass
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItemCategory)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestPerson)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestTask)), autoIncrement: true);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestSubTask)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNode)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNodeChild)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItemTag)), autoIncrement: false);
@@ -66,6 +67,7 @@ public class OrmIntegrationTests : BaseTestClass
 
 		DbTestHelper.DeleteAll(provider, "Ecng_TestItemCategory");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestNodeChild");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestSubTask");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestTask");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestItem");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestCategory");
@@ -91,7 +93,7 @@ public class OrmIntegrationTests : BaseTestClass
 	private async Task ClearCache()
 		=> await Storage.ClearCacheAsync(CancellationToken);
 
-	private async Task<TestItem> InsertItem(string name = "Test", int priority = 1, decimal price = 9.99m, bool isActive = true, int? nullableValue = null, DateTime? createdAt = null)
+	private async Task<TestItem> InsertItem(string name = "Test", int priority = 1, decimal price = 9.99m, bool isActive = true, int? nullableValue = null, DateTime? createdAt = null, DateTime? modifiedAt = null)
 	{
 		var item = new TestItem
 		{
@@ -99,6 +101,7 @@ public class OrmIntegrationTests : BaseTestClass
 			Priority = priority,
 			Price = price,
 			CreatedAt = createdAt ?? DateTime.UtcNow,
+			ModifiedAt = modifiedAt,
 			IsActive = isActive,
 			NullableValue = nullableValue,
 		};
@@ -1306,6 +1309,132 @@ public class OrmIntegrationTests : BaseTestClass
 		(rows.Single(r => r.Title == "with-person").PersonName == "Alice").AssertTrue();
 	}
 
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_TwoHopNavigationMember_IntoAnonymous(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var task = await InsertTask("T1", alice, priority: 1);
+		await Storage.AddAsync(new TestSubTask { Description = "with-task", Task = task }, CancellationToken);
+		// Orphan: a sub-task whose Task FK is NULL. The two-hop projection must keep
+		// it (PersonName == null) rather than INNER-JOIN dropping it.
+		await Storage.AddAsync(new TestSubTask { Description = "orphan", Task = null }, CancellationToken);
+
+		// Two-hop navigation (SubTask -> Task -> Person) projected into an anonymous
+		// type. Confirms the SELECT path resolves a chain longer than one hop and that
+		// every hop is a LEFT OUTER join, so a null FK anywhere along the chain keeps
+		// the parent row. This is the projection guarantee the Broker trading/admin
+		// repositories need to drop their post-query display-painting passes.
+		var rows = await Query<TestSubTask>()
+			.Select(s => new { s.Id, s.Description, PersonName = s.Task.Person.Name })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+		(rows.Single(r => r.Description == "with-task").PersonName == "Alice").AssertTrue();
+		(rows.Single(r => r.Description == "orphan").PersonName is null).AssertTrue();
+	}
+
+	/// <summary>
+	/// Server-side AVG over a date-difference, grouped by a real column. Isolates the
+	/// dialect-aware DATEDIFF rendering from the grand-total path: a non-constant
+	/// GROUP BY key is valid on every provider, so the only thing under test is that
+	/// <c>(end - start).TotalHours</c> renders to portable SQL — SQL Server DATEDIFF,
+	/// PostgreSQL EXTRACT(EPOCH ...) and SQLite julianday(). Latencies are whole hours
+	/// so integer (SqlServer) and real (PostgreSQL/SQLite) AVG converge to the same value.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupByColumn_AverageOfDateDiffHours_TranslatesServerSide(string provider)
+	{
+		SetUp(provider);
+
+		var t0 = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		// priority 1 -> latencies 10h and 20h (avg 15h); priority 2 -> 30h (avg 30h).
+		await InsertItem("a", priority: 1, createdAt: t0, modifiedAt: t0.AddHours(10));
+		await InsertItem("b", priority: 1, createdAt: t0, modifiedAt: t0.AddHours(20));
+		await InsertItem("c", priority: 2, createdAt: t0, modifiedAt: t0.AddHours(30));
+
+		var rows = await Query<TestItem>()
+			.Where(x => x.ModifiedAt != null)
+			.GroupBy(x => x.Priority)
+			.Select(g => new { Priority = g.Key, Avg = g.Average(x => ((x.ModifiedAt ?? x.CreatedAt) - x.CreatedAt).TotalHours) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(2);
+		(Math.Abs(rows.Single(r => r.Priority == 1).Avg - 15d) < 1.0).AssertTrue();
+		(Math.Abs(rows.Single(r => r.Priority == 2).Avg - 30d) < 1.0).AssertTrue();
+	}
+
+	/// <summary>
+	/// Constant-key GroupBy denotes a grand total over the whole filtered set, so it
+	/// must emit NO GROUP BY clause: a bare <c>SELECT avg(...) FROM ... WHERE ...</c>
+	/// collapses to a single row on every dialect, whereas <c>GROUP BY 1</c> is
+	/// rejected by SQL Server. Uses a plain integer column (no DATEDIFF) so the only
+	/// thing under test is the constant-key grand-total path.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupBy_ConstantKey_GrandTotalAverage(string provider)
+	{
+		SetUp(provider);
+
+		await InsertItem("a", priority: 10);
+		await InsertItem("b", priority: 20);
+		await InsertItem("c", priority: 30);
+
+		var rows = await Query<TestItem>()
+			.GroupBy(x => 1)
+			.Select(g => new { Avg = g.Average(x => x.Priority) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		(Math.Abs(rows[0].Avg - 20d) < 0.0001).AssertTrue();
+	}
+
+	/// <summary>
+	/// Server-side AVG over a date-difference, aggregated as a single grand total —
+	/// the KycRepository average-decision-latency KPI: average of
+	/// <c>(ModifiedAt ?? CreatedAt) - CreatedAt</c> in hours across the whole filtered
+	/// set. Exercises the two features it once depended on together — the constant-key
+	/// grand total (<c>GroupBy(x =&gt; 1)</c> emits no GROUP BY) and dialect-aware
+	/// DATEDIFF rendering — on SqlServer, PostgreSQL and SQLite. Latencies are whole
+	/// hours, so integer (SqlServer) and real (PostgreSQL/SQLite) AVG converge to 15.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupBy_AverageOfDateDiffHours_TranslatesServerSide(string provider)
+	{
+		SetUp(provider);
+
+		var t0 = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		// Two "decided" items with latencies 10h and 20h -> average 15h. Integer
+		// DATEDIFF(hour) over {10, 20} averages to exactly 15, so the assertion does
+		// not depend on whether AVG returns an integer or a real.
+		await InsertItem("a", createdAt: t0, modifiedAt: t0.AddHours(10));
+		await InsertItem("b", createdAt: t0, modifiedAt: t0.AddHours(20));
+		// An "undecided" item (ModifiedAt null) that the filter excludes.
+		await InsertItem("c", createdAt: t0, modifiedAt: null);
+
+		var rows = await Query<TestItem>()
+			.Where(x => x.ModifiedAt != null)
+			.GroupBy(x => 1)
+			.Select(g => new { Avg = g.Average(x => ((x.ModifiedAt ?? x.CreatedAt) - x.CreatedAt).TotalHours) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		(Math.Abs(rows[0].Avg - 15d) < 1.0).AssertTrue();
+	}
+
 	public record SelectItemDto(long Id, string Name);
 
 	[TestMethod]
@@ -1405,6 +1534,93 @@ public class OrmIntegrationTests : BaseTestClass
 		rows[0].Priority.AssertEqual(42);
 		rows[0].Price.AssertEqual(123.45m);
 		rows[0].IsActive.AssertEqual(true);
+	}
+
+	// Named-class target for the navigation member-init projection below. PersonName
+	// is fed from a joined column (TestTask.Person.Name), not a self column of the
+	// queried entity, so it can only land via the leftover-column property setter path.
+	public class SelectTaskNamedRow
+	{
+		public long Id { get; set; }
+		public string Title { get; set; }
+		public string PersonName { get; set; }
+	}
+
+	/// <summary>
+	/// Multi-row Select projection into a named class via member-init, where one of
+	/// the assigned members is a NAVIGATION column (<c>t.Person.Name</c>) rather than a
+	/// self column of the queried entity. This is the exact shape the Broker trading/admin
+	/// repositories used to avoid — they ran the query first and then "painted" the
+	/// joined display values onto each row in a separate <c>Populate*Display</c> pass,
+	/// because the named-class object-initializer projection used to come back with every
+	/// property at <c>default(T)</c>.
+	///
+	/// <para>Two regression surfaces are exercised together here:</para>
+	/// <list type="bullet">
+	/// <item><b>Per-row materialization.</b> Three rows are seeded with distinct values;
+	/// each result row must carry its OWN column values. A regression in the leftover-column
+	/// setter loop (which indexes the column buffer by row <c>[r]</c>) would paint every row
+	/// with row 0's values or leave them at <c>default</c> — the precise corruption the
+	/// post-query painting workaround existed to dodge.</item>
+	/// <item><b>Navigation column into a named class.</b> <c>PersonName = t.Person.Name</c>
+	/// is sourced from a LEFT OUTER join, not from the root entity, so it can only be
+	/// materialized through the by-name property-setter path for columns not consumed by
+	/// the (parameterless) constructor.</item>
+	/// </list>
+	///
+	/// <para>Background: anonymous-type projections (<c>Select(x =&gt; new { ... })</c>) and
+	/// positional-record projections (<c>Select(x =&gt; new Dto(...))</c>) have always
+	/// materialized correctly via the constructor path. The named-class object-initializer
+	/// shape (<c>Select(x =&gt; new Named { A = x.A, B = x.Nav.B })</c>) was the remaining
+	/// Ecng ORM gap: leftover columns went unread, so every assigned property returned its
+	/// default. That gap was closed in Data.ORM/Database.cs by routing each column not
+	/// consumed by the constructor to a case-insensitively matched writable property after
+	/// the instance is created. This test is the per-row + navigation guard for that fix and,
+	/// passing, demonstrates the Broker <c>Populate*Display</c> workaround is now fully
+	/// removable.</para>
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NamedClass_MemberInit_NavigationColumn_MultiRow(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+		await InsertTask("T1", alice, priority: 1);
+		await InsertTask("T2", bob, priority: 2);
+		await InsertTask("T3", alice, priority: 3);
+
+		var rows = await Query<TestTask>()
+			.Select(t => new SelectTaskNamedRow
+			{
+				Id = t.Id,
+				Title = t.Title,
+				PersonName = t.Person.Name,
+			})
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(3);
+
+		// Each row must carry its own column values, including the joined PersonName.
+		var t1 = rows.Single(r => r.Title == "T1");
+		(t1.Id > 0).AssertTrue();
+		t1.PersonName.AssertEqual("Alice");
+
+		var t2 = rows.Single(r => r.Title == "T2");
+		(t2.Id > 0).AssertTrue();
+		t2.PersonName.AssertEqual("Bob");
+
+		var t3 = rows.Single(r => r.Title == "T3");
+		(t3.Id > 0).AssertTrue();
+		t3.PersonName.AssertEqual("Alice");
+
+		// No row may collapse to defaults (the pre-fix failure: blank Title / null PersonName).
+		rows.All(r => !r.Title.IsEmpty()).AssertTrue();
+		rows.All(r => !r.PersonName.IsEmpty()).AssertTrue();
+		rows.All(r => r.Id > 0).AssertTrue();
 	}
 
 	#endregion

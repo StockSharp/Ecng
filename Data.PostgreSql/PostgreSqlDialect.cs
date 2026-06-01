@@ -165,6 +165,29 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override void AppendDateDiff(StringBuilder sb, string part, string startSql, string endSql)
+	{
+		// PostgreSQL has no DATEDIFF. Subtracting two timestamps yields an interval;
+		// EXTRACT(EPOCH FROM ...) gives the total seconds, scaled to the target unit.
+		// Month/year use mean lengths (30.4375 / 365.25 days) since calendar
+		// boundaries are not representable from an epoch delta.
+		var perUnitSeconds = part switch
+		{
+			"year" => "31557600",
+			"month" => "2629800",
+			"week" => "604800",
+			"day" => "86400",
+			"hour" => "3600",
+			"minute" => "60",
+			"second" => "1",
+			"millisecond" => "0.001",
+			_ => throw new NotSupportedException($"Date part '{part}' is not supported for DATEDIFF in PostgreSQL"),
+		};
+
+		sb.Append($"(extract(epoch from ({endSql} - {startSql})) / {perUnitSeconds})");
+	}
+
+	/// <inheritdoc />
 	public override void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("TRIM(");

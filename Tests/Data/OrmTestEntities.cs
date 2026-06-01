@@ -13,6 +13,7 @@ public class TestItem : IDbPersistable
 	public int Priority { get; set; }
 	public decimal Price { get; set; }
 	public DateTime CreatedAt { get; set; }
+	public DateTime? ModifiedAt { get; set; }
 	public bool IsActive { get; set; }
 	public int? NullableValue { get; set; }
 
@@ -26,6 +27,7 @@ public class TestItem : IDbPersistable
 			.Set(nameof(Priority), Priority)
 			.Set(nameof(Price), Price)
 			.Set(nameof(CreatedAt), CreatedAt)
+			.Set(nameof(ModifiedAt), ModifiedAt)
 			.Set(nameof(IsActive), IsActive)
 			.Set(nameof(NullableValue), NullableValue);
 	}
@@ -36,6 +38,7 @@ public class TestItem : IDbPersistable
 		Priority = storage.GetValue<int>(nameof(Priority));
 		Price = storage.GetValue<decimal>(nameof(Price));
 		CreatedAt = storage.GetValue<DateTime>(nameof(CreatedAt));
+		ModifiedAt = storage.GetValue<DateTime?>(nameof(ModifiedAt));
 		IsActive = storage.GetValue<bool>(nameof(IsActive));
 		NullableValue = storage.GetValue<int?>(nameof(NullableValue));
 		return default;

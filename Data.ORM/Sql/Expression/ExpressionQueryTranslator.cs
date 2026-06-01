@@ -570,15 +570,24 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 	{
 		Visit(m.Arguments[0]);
 
+		var keyLambda = (LambdaExpression)m.Arguments[1].StripQuotes();
+		Context.GroupKeySelector = keyLambda.Body;
+
+		// A constant group key (e.g. GroupBy(x => 1)) denotes a grand total over the
+		// whole filtered set. Emitting `GROUP BY <constant>` is non-portable — SQL
+		// Server rejects `GROUP BY 1` ("Each GROUP BY expression must contain at least
+		// one column that is not an outer reference") — and a grand total needs no
+		// GROUP BY at all: `SELECT <aggregates> FROM ... WHERE ...` already collapses
+		// to a single row on every dialect. Leave GroupByPart empty.
+		if (keyLambda.Body is ConstantExpression)
+			return m;
+
 		var curr = Curr;
 		Curr = Context.GroupByPart;
 
 		Curr.GroupBy();
 
 		var isGroup = Context.IsGroup;
-
-		var keyLambda = (LambdaExpression)m.Arguments[1].StripQuotes();
-		Context.GroupKeySelector = keyLambda.Body;
 
 		// Register the key-selector lambda's parameter against the running
 		// table alias so downstream VisitMember resolves `i.Field` to

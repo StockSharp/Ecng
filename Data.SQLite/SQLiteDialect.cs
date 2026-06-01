@@ -128,6 +128,29 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override void AppendDateDiff(StringBuilder sb, string part, string startSql, string endSql)
+	{
+		// SQLite has no DATEDIFF. julianday() returns a (fractional) day count, so the
+		// difference of two julianday values is the gap in days, scaled to the target
+		// unit. Month/year use mean lengths (30.4375 / 365.25 days) since calendar
+		// boundaries are not representable from a day delta.
+		var perDayUnits = part switch
+		{
+			"year" => "(1.0 / 365.25)",
+			"month" => "(1.0 / 30.4375)",
+			"week" => "(1.0 / 7)",
+			"day" => "1",
+			"hour" => "24",
+			"minute" => "1440",
+			"second" => "86400",
+			"millisecond" => "86400000",
+			_ => throw new NotSupportedException($"Date part '{part}' is not supported for DATEDIFF in SQLite"),
+		};
+
+		sb.Append($"((julianday({endSql}) - julianday({startSql})) * {perDayUnits})");
+	}
+
+	/// <inheritdoc />
 	public override void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("TRIM(");

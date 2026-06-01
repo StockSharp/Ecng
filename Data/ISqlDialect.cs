@@ -294,6 +294,16 @@ public interface ISqlDialect
 	void AppendDateAdd(StringBuilder sb, string part, string amountSql, string sourceSql);
 
 	/// <summary>
+	/// Appends a DATEDIFF-style expression computing <paramref name="endSql"/> minus
+	/// <paramref name="startSql"/>, expressed in <paramref name="part"/> units.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="part">Unit of the result: <c>year</c>, <c>month</c>, <c>week</c>, <c>day</c>, <c>hour</c>, <c>minute</c>, <c>second</c> or <c>millisecond</c>.</param>
+	/// <param name="startSql">SQL of the start date.</param>
+	/// <param name="endSql">SQL of the end date.</param>
+	void AppendDateDiff(StringBuilder sb, string part, string startSql, string endSql);
+
+	/// <summary>
 	/// Opens a TRIM expression (closed by <see cref="AppendTrimClose"/>).
 	/// </summary>
 	void AppendTrimOpen(StringBuilder sb);

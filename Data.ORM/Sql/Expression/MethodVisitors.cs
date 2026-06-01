@@ -1316,26 +1316,34 @@ class TimeSpanPartVisitor : MethodVisitor
 	{
 		var q = translator.Context.Curr;
 
-		q.DateDiff();
-		q.OpenBracket();
-
 		var me = (MemberExpression)expression;
 
 		var part = GetDatePart(me.Member.Name);
 
-		q.Raw(part);
-		q.Comma();
+		// Capture the two date operands into temporary queries, then defer to the
+		// dialect at render time — DATEDIFF has no portable syntax (SqlServer uses
+		// DATEDIFF, PostgreSQL EXTRACT(EPOCH ...), SQLite julianday()). For a
+		// (left - right) subtraction, DATEDIFF(part, start, end) == end - start, so
+		// start = right and end = left.
+		var startQuery = new Query();
+		var endQuery = new Query();
 
 		if (me.Expression is BinaryExpression be)
 		{
+			translator.Context.Curr = startQuery;
 			translator.Visit(be.Right);
-			q.Comma();
+
+			translator.Context.Curr = endQuery;
 			translator.Visit(be.Left);
 		}
 		else
+		{
+			translator.Context.Curr = endQuery;
 			translator.Visit(me.Expression);
+		}
 
-		q.CloseBracket();
+		translator.Context.Curr = q;
+		q.AddAction((d, sb) => d.AppendDateDiff(sb, part, startQuery.Render(d), endQuery.Render(d)));
 	}
 
 	private static string GetDatePart(string member)

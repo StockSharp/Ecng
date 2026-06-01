@@ -53,6 +53,13 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void AppendDateDiff(StringBuilder sb, string part, string startSql, string endSql)
+	{
+		// SQL Server native DATEDIFF(part, startdate, enddate) == enddate - startdate.
+		sb.Append($"dateDiff({part},{startSql},{endSql})");
+	}
+
+	/// <inheritdoc />
 	public virtual void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("LTrim(RTrim(");
