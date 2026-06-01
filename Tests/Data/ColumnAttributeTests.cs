@@ -39,6 +39,10 @@ public class ColAttrTestEntity : IDbPersistable
 
 	public int RequiredInt { get; set; }
 
+	// Plain id column that declares its FK target without being a navigation relation.
+	[ForeignKey(typeof(ColAttrTestEntity))]
+	public long ParentId { get; set; }
+
 	public ColAttrInner Meta { get; set; }
 
 	object IDbPersistable.GetIdentity() => Id;
@@ -947,6 +951,43 @@ public class ColumnAttributeTests : BaseTestClass
 		sql.Contains("[IX_Users_Name]").AssertTrue($"Expected the index name: {sql}");
 		sql.Split('\n').Where(l => l.Contains("DROP INDEX")).All(l => l.TrimStart().StartsWith("--"))
 			.AssertTrue($"DROP INDEX for an extra index must be commented out: {sql}");
+	}
+
+	[TestMethod]
+	public void ForeignKeyAttribute_SetsReferencedEntityTypeOnPlainIdColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var col = schema.Columns.First(c => c.Name == "ParentId");
+
+		// [ForeignKey(typeof(X))] declares the FK target for schema comparison...
+		col.ReferencedEntityType.AssertEqual(typeof(ColAttrTestEntity));
+		// ...while the column stays a plain scalar id (no navigation type swap).
+		col.ClrType.AssertEqual(typeof(long));
+	}
+
+	[TestMethod]
+	public void ForeignKeyAttribute_KnownFk_NotExtra_AndMissingWhenAbsent()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var table = schema.TableName;
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo(table, "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo(table, "ParentId", "BIGINT", false, null, null, null),
+		};
+
+		// No DB foreign key on the declared column -> MissingForeignKey.
+		var noFk = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, []);
+		noFk.Any(d => d.Kind == SchemaDiffKind.MissingForeignKey && d.ColumnName == "ParentId")
+			.AssertTrue("a [ForeignKey] column without a DB FK must surface as MissingForeignKey");
+
+		// A matching DB foreign key -> neither extra nor missing.
+		var dbFks = new[] { new DbForeignKeyInfo("FK_ColAttr_Parent", table, "ParentId", table, "Id") };
+		var withFk = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, dbFks);
+		withFk.Any(d => d.ColumnName == "ParentId" &&
+				(d.Kind == SchemaDiffKind.ExtraForeignKey || d.Kind == SchemaDiffKind.MissingForeignKey))
+			.AssertFalse("a [ForeignKey] column with a matching DB FK must be neither extra nor missing");
 	}
 
 	[TestMethod]

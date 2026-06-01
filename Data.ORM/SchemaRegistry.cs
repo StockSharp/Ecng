@@ -198,6 +198,9 @@ public static class SchemaRegistry
 
 			var colName = GetColumnName(prefix, prop.Name, nameOverrides);
 			var colAttr = prop.GetAttribute<ColumnAttribute>();
+			// A plain id column may declare its FK target via [ForeignKey(typeof(X))]
+			// (without being a navigation relation) so schema comparison knows it.
+			var fkAttr = prop.GetAttribute<ForeignKeyAttribute>();
 
 			bool isNullable;
 
@@ -228,6 +231,7 @@ public static class SchemaRegistry
 					Name = colName,
 					ClrType = mappedType,
 					IsNullable = isNullable,
+					ReferencedEntityType = fkAttr?.ReferencedType,
 				});
 			}
 			else if (IsSimpleType(prop.PropertyType))
@@ -242,6 +246,7 @@ public static class SchemaRegistry
 					ClrType = clrType,
 					IsNullable = isNullable,
 					MaxLength = colAttr?.MaxLength ?? 0,
+					ReferencedEntityType = fkAttr?.ReferencedType,
 				});
 			}
 			else if ((propType.IsClass || propType.IsValueType) && IsInnerSchemaType(propType, visiting))
@@ -335,6 +340,9 @@ public static class SchemaRegistry
 
 				var isRelationSingle = prop.GetAttribute<RelationSingleAttribute>() is not null;
 				var colAttr = prop.GetAttribute<ColumnAttribute>();
+				// A plain id column may declare its FK target via [ForeignKey(typeof(X))]
+				// (without being a navigation relation) so schema comparison knows it.
+				var fkAttr = prop.GetAttribute<ForeignKeyAttribute>();
 
 				if (isRelationSingle)
 				{
@@ -368,6 +376,7 @@ public static class SchemaRegistry
 						IsUnique = hasUnique,
 						IsIndex = indexes.Count > 0,
 						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+						ReferencedEntityType = fkAttr?.ReferencedType,
 						Indexes = indexes,
 					});
 					continue;
@@ -403,6 +412,7 @@ public static class SchemaRegistry
 					IsIndex = simpleIndexes.Count > 0,
 					IsNullable = ResolveNullable(colAttr, prop.PropertyType),
 					MaxLength = colAttr?.MaxLength ?? 0,
+					ReferencedEntityType = fkAttr?.ReferencedType,
 					Indexes = simpleIndexes,
 				});
 			}
