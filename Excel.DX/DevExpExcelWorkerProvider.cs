@@ -300,6 +300,20 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			return this;
 		}
 
+		IExcelWorker IExcelWorker.SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, string bgColor, string fgColor)
+		{
+			// Note: DevExpress XlExport streaming API has limited conditional formatting support.
+			// This is a no-op in this implementation.
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, ExcelConditionalFormat format)
+		{
+			// Note: DevExpress XlExport streaming API has limited conditional formatting support.
+			// This is a no-op in this implementation.
+			return this;
+		}
+
 		IExcelWorker IExcelWorker.SetColorScale(int col, int startRow, string minColor, string midColor, string maxColor)
 		{
 			// Note: DevExpress XlExport streaming API has limited conditional formatting support.
@@ -389,6 +403,14 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 
 		IExcelWorker IExcelWorker.SetCellColor(int col, int row, string bgColor, string fgColor)
 		{
+			_currSheet.SetCellColor(col, row, bgColor, fgColor);
+			return this;
+		}
+
+		IExcelWorker IExcelWorker.SetCellColor(int col, int row, string bgColor, ExcelFillPattern pattern, string patternColor, string fgColor)
+		{
+			// DevExpress XlExport streaming fills are solid only — the pattern/patternColor
+			// are ignored and the fill renders as a solid bgColor.
 			_currSheet.SetCellColor(col, row, bgColor, fgColor);
 			return this;
 		}

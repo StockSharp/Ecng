@@ -369,6 +369,68 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void OpenXml_ConditionalFormatting_FillColorIsApplied()
+	{
+		// Regression: a conditional-formatting (differential) solid fill must put
+		// the requested colour in the PatternFill BackgroundColor — that is the
+		// slot Excel actually paints for a <dxf> fill (the opposite of a normal
+		// cell fill, which uses ForegroundColor). Putting the colour in
+		// ForegroundColor with BackgroundColor=Indexed 64 renders the cells black.
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, 100)
+				.SetCell(0, 1, 50)
+				.SetConditionalFormatting(0, ComparisonOperator.Greater, "75", "#00FF00", "#FFFFFF");
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var dxfs = doc.WorkbookPart?.WorkbookStylesPart?.Stylesheet?.DifferentialFormats;
+		(dxfs is not null).AssertTrue();
+
+		var dxf = dxfs.Elements<DifferentialFormat>().First();
+		var patternFill = dxf.Fill?.PatternFill;
+		(patternFill is not null).AssertTrue();
+
+		// The visible fill colour lives in the BackgroundColor of a dxf fill.
+		// Extract first, then assert — a `?.` chain ending in AssertEqual would
+		// short-circuit to no-op when the value is null (the very bug we test for).
+		var bgRgb = patternFill.BackgroundColor?.Rgb?.Value;
+		bgRgb.AssertEqual("FF00FF00");
+		// Font colour is applied too.
+		var fontRgb = dxf.Font?.Color?.Rgb?.Value;
+		fontRgb.AssertEqual("FFFFFFFF");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetCellColor_FillColorIsApplied()
+	{
+		// A plain cell fill stores the colour in ForegroundColor of a solid
+		// PatternFill; verify the actual bytes, not just that the call survived.
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "x")
+				.SetCellColor(0, 0, "#FF0000", "#FFFFFF");  // A1 red on white text
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var stylesheet = doc.WorkbookPart.WorkbookStylesPart.Stylesheet;
+		var cell = doc.WorkbookPart.WorksheetParts.First().Worksheet.Descendants<Cell>().First(c => c.CellReference == "A1");
+		var xf = stylesheet.CellFormats.Elements<CellFormat>().ElementAt((int)(cell.StyleIndex?.Value ?? 0));
+		var fill = stylesheet.Fills.Elements<Fill>().ElementAt((int)(xf.FillId?.Value ?? 0));
+
+		var fgRgb = fill.PatternFill?.ForegroundColor?.Rgb?.Value;
+		fgRgb.AssertEqual("FFFF0000");
+	}
+
+	[TestMethod]
 	[DataRow(nameof(DevExpExcelWorkerProvider))]
 	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
 	public void ComplexWorkflow_Success(string providerName)
@@ -1457,6 +1519,257 @@ public class ExcelWorkerTests : BaseTestClass
 
 		wsPart.DrawingsPart.AssertNotNull("DrawingsPart should exist for StockChart");
 		wsPart.DrawingsPart!.ChartParts.Count().AssertEqual(1, "Should have 1 ChartPart for StockChart");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormattingFormula_WritesExpressionRule()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "Status")    // A1
+				.SetCell(0, 1, "OVERDUE")   // A2
+				.SetCell(0, 2, "OK")        // A3
+				// Paint A2:A3 red-on-white whenever the cell text equals "OVERDUE".
+				// A real expression rule, so Excel recomputes the fill when the user
+				// edits the value — not a static fill baked onto the cell.
+				.SetConditionalFormattingFormula(0, 1, 0, 2, "$A2=\"OVERDUE\"", "#FF0000", "#FFFFFF");
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart!.WorksheetParts.First().Worksheet;
+
+		var cf = worksheet.Elements<ConditionalFormatting>().FirstOrDefault();
+		cf.AssertNotNull("ConditionalFormatting element should be written");
+		cf.SequenceOfReferences.InnerText.AssertEqual("A2:A3");
+
+		var rule = cf.Elements<ConditionalFormattingRule>().First();
+		rule.Type.Value.AssertEqual(ConditionalFormatValues.Expression);
+		rule.GetFirstChild<Formula>()!.Text.AssertEqual("$A2=\"OVERDUE\"");
+		rule.FormatId.AssertNotNull("rule must reference a differential format");
+
+		// The referenced dxf carries the requested fill (bg) and font (fg) colors.
+		// A dxf solid fill stores the colour in BackgroundColor (the slot Excel
+		// paints), not ForegroundColor.
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var dxf = (DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId.Value];
+		dxf.Fill!.PatternFill!.BackgroundColor!.Rgb!.Value.AssertEqual("FFFF0000");
+		dxf.Font!.GetFirstChild<Color>()!.Rgb!.Value.AssertEqual("FFFFFFFF");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormattingFormula_AppliesFullFontStyling()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "Value") // A1
+				.SetCell(0, 1, -5)      // A2
+				.SetCell(0, 2, 10)      // A3
+				// Highlight negatives with a fully styled font + yellow fill.
+				.SetConditionalFormattingFormula(0, 1, 0, 2, "$A2<0", new ExcelConditionalFormat
+				{
+					BackgroundColor = "#FFFF00",
+					FontColor = "#FF0000",
+					Bold = true,
+					Italic = true,
+					Underline = true,
+					Strikethrough = true,
+					FontSize = 14,
+					FontName = "Calibri",
+				});
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart!.WorksheetParts.First().Worksheet;
+		var rule = worksheet.Elements<ConditionalFormatting>().First().Elements<ConditionalFormattingRule>().First();
+
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var dxf = (DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId!.Value];
+		var font = dxf.Font!;
+
+		font.GetFirstChild<Bold>()!.Val!.Value.AssertEqual(true);
+		font.GetFirstChild<Italic>()!.Val!.Value.AssertEqual(true);
+		font.GetFirstChild<Strike>()!.Val!.Value.AssertEqual(true);
+		font.GetFirstChild<Underline>()!.Val!.Value.AssertEqual(UnderlineValues.Single);
+		font.GetFirstChild<FontSize>()!.Val!.Value.AssertEqual(14d);
+		font.GetFirstChild<FontName>()!.Val!.Value.AssertEqual("Calibri");
+		font.GetFirstChild<Color>()!.Rgb!.Value.AssertEqual("FFFF0000");
+		dxf.Fill!.PatternFill!.BackgroundColor!.Rgb!.Value.AssertEqual("FFFFFF00");
+
+		// No border was requested (Border defaults to None) -> the dxf carries none.
+		(dxf.Border is null).AssertTrue("Border=None must not write a border element");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormattingFormula_AppliesNumberFormatAndBorder()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "Rate") // A1
+				.SetCell(0, 1, 0.25)   // A2
+				.SetConditionalFormattingFormula(0, 1, 0, 1, "$A2>0", new ExcelConditionalFormat
+				{
+					NumberFormat = "0.00%",
+					Border = ExcelBorderStyle.Thick,
+					BorderColor = "#0000FF",
+				});
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart!.WorksheetParts.First().Worksheet;
+		var rule = worksheet.Elements<ConditionalFormatting>().First().Elements<ConditionalFormattingRule>().First();
+
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var dxf = (DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId!.Value];
+
+		dxf.NumberingFormat!.FormatCode!.Value.AssertEqual("0.00%");
+
+		var border = dxf.Border!;
+		border.LeftBorder!.Style!.Value.AssertEqual(BorderStyleValues.Thick);
+		border.LeftBorder!.Color!.Rgb!.Value.AssertEqual("FF0000FF");
+		border.RightBorder!.Style!.Value.AssertEqual(BorderStyleValues.Thick);
+		border.TopBorder!.Style!.Value.AssertEqual(BorderStyleValues.Thick);
+		border.BottomBorder!.Style!.Value.AssertEqual(BorderStyleValues.Thick);
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormattingFormula_BooleanFalseForcesOff()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "X")  // A1
+				.SetCell(0, 1, 1)    // A2
+				// false must write the element with Val=false (force OFF), not omit it
+				// (which would mean "leave unchanged"). FontColor is set so a font is built.
+				.SetConditionalFormattingFormula(0, 1, 0, 1, "$A2>0", new ExcelConditionalFormat
+				{
+					FontColor = "#000000",
+					Bold = false,
+					Underline = false,
+				});
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var rule = doc.WorkbookPart!.WorksheetParts.First().Worksheet
+			.Elements<ConditionalFormatting>().First().Elements<ConditionalFormattingRule>().First();
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var font = ((DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId!.Value]).Font!;
+
+		font.GetFirstChild<Bold>()!.Val!.Value.AssertEqual(false);
+		font.GetFirstChild<Underline>()!.Val!.Value.AssertEqual(UnderlineValues.None);
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormatting_CellIs_WritesFillAndFontColor()
+	{
+		// The CellIs path was refactored to share the dxf builder with the formula
+		// path; this guards that its differential format is still written correctly.
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, 100) // A1
+				.SetCell(0, 1, 50)  // A2
+				.SetConditionalFormatting(0, ComparisonOperator.Greater, "75", "#00FF00", "#FFFFFF");
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var rule = doc.WorkbookPart!.WorksheetParts.First().Worksheet
+			.Elements<ConditionalFormatting>().First().Elements<ConditionalFormattingRule>().First();
+		rule.Type!.Value.AssertEqual(ConditionalFormatValues.CellIs);
+		rule.GetFirstChild<Formula>()!.Text.AssertEqual("75");
+
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var dxf = (DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId!.Value];
+		dxf.Fill!.PatternFill!.BackgroundColor!.Rgb!.Value.AssertEqual("FF00FF00");
+		dxf.Font!.GetFirstChild<Color>()!.Rgb!.Value.AssertEqual("FFFFFFFF");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetConditionalFormattingFormula_AppliesFillPattern()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "X")  // A1
+				.SetCell(0, 1, 1)    // A2
+				// A non-solid pattern: red grid lines over a yellow background.
+				.SetConditionalFormattingFormula(0, 1, 0, 1, "$A2>0", new ExcelConditionalFormat
+				{
+					BackgroundColor = "#FFFF00",
+					FillPattern = ExcelFillPattern.LightGrid,
+					PatternColor = "#FF0000",
+				});
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var rule = doc.WorkbookPart!.WorksheetParts.First().Worksheet
+			.Elements<ConditionalFormatting>().First().Elements<ConditionalFormattingRule>().First();
+		var dxfs = doc.WorkbookPart.WorkbookStylesPart!.Stylesheet.DifferentialFormats!;
+		var pf = ((DifferentialFormat)dxfs.ChildElements[(int)rule.FormatId!.Value]).Fill!.PatternFill!;
+
+		pf.PatternType!.Value.AssertEqual(PatternValues.LightGrid);
+		pf.ForegroundColor!.Rgb!.Value.AssertEqual("FFFF0000"); // pattern lines
+		pf.BackgroundColor!.Rgb!.Value.AssertEqual("FFFFFF00");  // background
+	}
+
+	[TestMethod]
+	public void OpenXml_SetCellColor_AppliesFillPattern()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "X")  // A1
+				.SetCellColor(0, 0, "#FFFF00", ExcelFillPattern.DarkUp, "#0000FF");
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var styles = doc.WorkbookPart!.WorkbookStylesPart!.Stylesheet;
+		var cell = doc.WorkbookPart.WorksheetParts.First().Worksheet
+			.GetFirstChild<SheetData>()!.Elements<Row>().First().Elements<Cell>().First();
+		var cellFormat = (CellFormat)styles.CellFormats!.ChildElements[(int)cell.StyleIndex!.Value];
+		var pf = ((Fill)styles.Fills!.ChildElements[(int)cellFormat.FillId!.Value]).PatternFill!;
+
+		pf.PatternType!.Value.AssertEqual(PatternValues.DarkUp);
+		pf.ForegroundColor!.Rgb!.Value.AssertEqual("FF0000FF"); // pattern lines
+		pf.BackgroundColor!.Rgb!.Value.AssertEqual("FFFFFF00");  // background
 	}
 
 	#endregion

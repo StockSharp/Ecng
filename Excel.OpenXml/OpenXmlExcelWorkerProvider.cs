@@ -299,44 +299,47 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			};
 
 			cfRule.Append(new Formula(condition));
-
-			// Create DifferentialFormat for the style
-			var dxf = new DifferentialFormat();
-			if (!bgColor.IsEmpty())
-			{
-				dxf.Fill = new Fill(new PatternFill
-				{
-					PatternType = PatternValues.Solid,
-					ForegroundColor = new ForegroundColor { Rgb = ParseColor(bgColor) },
-					BackgroundColor = new BackgroundColor { Indexed = 64 }
-				});
-			}
-			if (!fgColor.IsEmpty())
-			{
-				dxf.Font = new Font(new Color { Rgb = ParseColor(fgColor) });
-			}
-
-			// Add DifferentialFormat to stylesheet
-			var stylesheet = EnsureStylesheet();
-			if (stylesheet.DifferentialFormats == null)
-			{
-				stylesheet.DifferentialFormats = new DifferentialFormats { Count = 0 };
-			}
-
-			stylesheet.DifferentialFormats.Append(dxf);
-			stylesheet.DifferentialFormats.Count = (uint)stylesheet.DifferentialFormats.ChildElements.Count;
-
-			// Reference the DifferentialFormat
-			cfRule.FormatId = stylesheet.DifferentialFormats.Count.Value - 1;
+			cfRule.FormatId = AddDifferentialFormat(bgColor, fgColor);
 
 			conditionalFormatting.Append(cfRule);
 
-			// Insert ConditionalFormatting after SheetData
-			var sheetData = worksheet.GetFirstChild<SheetData>();
-			if (sheetData != null)
-				worksheet.InsertAfter(conditionalFormatting, sheetData);
-			else
-				worksheet.Append(conditionalFormatting);
+			InsertConditionalFormatting(worksheet, conditionalFormatting);
+
+			return this;
+		}
+
+		/// <inheritdoc />
+		public IExcelWorker SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, string bgColor, string fgColor = null)
+			=> SetConditionalFormattingFormula(startCol, startRow, endCol, endRow, formula,
+				new ExcelConditionalFormat { BackgroundColor = bgColor, FontColor = fgColor });
+
+		/// <inheritdoc />
+		public IExcelWorker SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, ExcelConditionalFormat format)
+		{
+			var worksheet = _currentWorksheetPart?.Worksheet;
+			if (worksheet == null || formula.IsEmpty())
+				return this;
+
+			var sqRef = $"{ToColumnName(startCol)}{startRow + 1}:{ToColumnName(endCol)}{endRow + 1}";
+
+			var conditionalFormatting = new ConditionalFormatting
+			{
+				SequenceOfReferences = new ListValue<StringValue> { InnerText = sqRef }
+			};
+
+			var cfRule = new ConditionalFormattingRule
+			{
+				// Expression rule (not CellIs): Excel re-evaluates the formula on edit,
+				// so the dxf follows the value instead of being a static cell fill.
+				Type = ConditionalFormatValues.Expression,
+				Priority = ++_conditionalFormattingPriority,
+				FormatId = AddDifferentialFormat(format ?? new ExcelConditionalFormat()),
+			};
+
+			cfRule.Append(new Formula(formula));
+			conditionalFormatting.Append(cfRule);
+
+			InsertConditionalFormatting(worksheet, conditionalFormatting);
 
 			return this;
 		}
@@ -382,12 +385,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			cfRule.Append(colorScale);
 			conditionalFormatting.Append(cfRule);
 
-			// Insert ConditionalFormatting after SheetData
-			var sheetData = worksheet.GetFirstChild<SheetData>();
-			if (sheetData != null)
-				worksheet.InsertAfter(conditionalFormatting, sheetData);
-			else
-				worksheet.Append(conditionalFormatting);
+			InsertConditionalFormatting(worksheet, conditionalFormatting);
 
 			return this;
 		}
@@ -594,6 +592,10 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		/// <inheritdoc />
 		public IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null)
+			=> SetCellColor(col, row, bgColor, ExcelFillPattern.Solid, null, fgColor);
+
+		/// <inheritdoc />
+		public IExcelWorker SetCellColor(int col, int row, string bgColor, ExcelFillPattern pattern, string patternColor = null, string fgColor = null)
 		{
 			if (bgColor.IsEmpty() && fgColor.IsEmpty())
 				return this;
@@ -603,7 +605,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			uint? fontId = null;
 
 			if (!bgColor.IsEmpty())
-				fillId = GetOrCreateFillIndex(bgColor);
+				fillId = GetOrCreateFillIndex(bgColor, pattern, patternColor);
 
 			if (!fgColor.IsEmpty())
 				fontId = GetOrCreateFontIndex(fgColor);
@@ -1373,6 +1375,190 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			}
 		}
 
+		// Custom number-format ids in a dxf start above the built-in range (0-163).
+		// Seeded lazily on first use from the highest id already present (cell numFmts
+		// plus existing dxf numFmts) so opening a template that already defines custom
+		// formats via OpenExist does not collide. Counter is per-worker (per workbook).
+		private uint _nextDxfNumberFormatId = 164;
+		private bool _dxfNumberFormatIdSeeded;
+
+		private uint NextDxfNumberFormatId(Stylesheet stylesheet)
+		{
+			if (!_dxfNumberFormatIdSeeded)
+			{
+				_dxfNumberFormatIdSeeded = true;
+
+				var max = 163u; // built-in number-format ids end at 163
+
+				if (stylesheet.NumberingFormats is { } numFmts)
+					foreach (var nf in numFmts.Elements<NumberingFormat>())
+						if (nf.NumberFormatId?.Value is { } id && id > max)
+							max = id;
+
+				if (stylesheet.DifferentialFormats is { } dxfs)
+					foreach (var d in dxfs.Elements<DifferentialFormat>())
+						if (d.NumberingFormat?.NumberFormatId?.Value is { } id && id > max)
+							max = id;
+
+				_nextDxfNumberFormatId = max + 1;
+			}
+
+			return _nextDxfNumberFormatId++;
+		}
+
+		private uint AddDifferentialFormat(string bgColor, string fgColor)
+			=> AddDifferentialFormat(new ExcelConditionalFormat { BackgroundColor = bgColor, FontColor = fgColor });
+
+		/// <summary>
+		/// Builds a differential format (dxf) for the given <see cref="ExcelConditionalFormat"/>,
+		/// registers it in the stylesheet's <see cref="DifferentialFormats"/>, and returns its
+		/// zero-based index for a conditional formatting rule to reference via <c>FormatId</c>.
+		/// </summary>
+		private uint AddDifferentialFormat(ExcelConditionalFormat fmt)
+		{
+			var stylesheet = EnsureStylesheet();
+
+			var dxf = new DifferentialFormat();
+
+			// Font: build it only when at least one font aspect is requested. The SDK
+			// serialises CT_Font children in schema order regardless of assignment order.
+			if (fmt.Bold.HasValue || fmt.Italic.HasValue || fmt.Underline.HasValue ||
+				fmt.Strikethrough.HasValue || fmt.FontSize.HasValue ||
+				!fmt.FontName.IsEmpty() || !fmt.FontColor.IsEmpty())
+			{
+				var font = new Font();
+
+				if (fmt.Bold.HasValue)
+					font.Bold = new Bold { Val = fmt.Bold.Value };
+				if (fmt.Italic.HasValue)
+					font.Italic = new Italic { Val = fmt.Italic.Value };
+				if (fmt.Strikethrough.HasValue)
+					font.Strike = new Strike { Val = fmt.Strikethrough.Value };
+				if (fmt.Underline.HasValue)
+					font.Underline = new Underline { Val = fmt.Underline.Value ? UnderlineValues.Single : UnderlineValues.None };
+				if (fmt.FontSize.HasValue)
+					font.FontSize = new FontSize { Val = fmt.FontSize.Value };
+				if (!fmt.FontColor.IsEmpty())
+					font.Color = new Color { Rgb = ParseColor(fmt.FontColor) };
+				if (!fmt.FontName.IsEmpty())
+					font.FontName = new FontName { Val = fmt.FontName };
+
+				dxf.Font = font;
+			}
+
+			// Number format: a dxf numFmt carries both a (custom) id and the literal code.
+			if (!fmt.NumberFormat.IsEmpty())
+			{
+				dxf.NumberingFormat = new NumberingFormat
+				{
+					NumberFormatId = NextDxfNumberFormatId(stylesheet),
+					FormatCode = fmt.NumberFormat,
+				};
+			}
+
+			// Fill: a dxf solid fill stores the colour in BackgroundColor (the slot Excel
+			// actually paints), unlike a normal cell fill which uses ForegroundColor.
+			if (!fmt.BackgroundColor.IsEmpty() || fmt.FillPattern != ExcelFillPattern.Solid)
+			{
+				PatternFill patternFill;
+
+				if (fmt.FillPattern == ExcelFillPattern.Solid)
+				{
+					patternFill = new PatternFill
+					{
+						PatternType = PatternValues.Solid,
+						BackgroundColor = new BackgroundColor { Rgb = ParseColor(fmt.BackgroundColor) }
+					};
+				}
+				else
+				{
+					// Two-colour pattern: ForegroundColor draws the lines/dots, BackgroundColor
+					// is the cell background. Default the pattern colour to black when unspecified.
+					patternFill = new PatternFill
+					{
+						PatternType = MapFillPattern(fmt.FillPattern),
+						ForegroundColor = new ForegroundColor { Rgb = ParseColor(fmt.PatternColor.IsEmpty() ? "#000000" : fmt.PatternColor) },
+					};
+
+					if (!fmt.BackgroundColor.IsEmpty())
+						patternFill.BackgroundColor = new BackgroundColor { Rgb = ParseColor(fmt.BackgroundColor) };
+				}
+
+				dxf.Fill = new Fill(patternFill);
+			}
+
+			// Border: one style/colour applied to all four sides.
+			if (fmt.Border != ExcelBorderStyle.None)
+			{
+				var style = MapBorderStyle(fmt.Border);
+				var rgb = ParseColor(fmt.BorderColor.IsEmpty() ? "#000000" : fmt.BorderColor);
+
+				dxf.Border = new Border
+				{
+					LeftBorder = new LeftBorder(new Color { Rgb = rgb }) { Style = style },
+					RightBorder = new RightBorder(new Color { Rgb = rgb }) { Style = style },
+					TopBorder = new TopBorder(new Color { Rgb = rgb }) { Style = style },
+					BottomBorder = new BottomBorder(new Color { Rgb = rgb }) { Style = style },
+				};
+			}
+
+			stylesheet.DifferentialFormats ??= new DifferentialFormats { Count = 0 };
+			stylesheet.DifferentialFormats.Append(dxf);
+			stylesheet.DifferentialFormats.Count = (uint)stylesheet.DifferentialFormats.ChildElements.Count;
+
+			return stylesheet.DifferentialFormats.Count.Value - 1;
+		}
+
+		private static BorderStyleValues MapBorderStyle(ExcelBorderStyle style) => style switch
+		{
+			ExcelBorderStyle.Hair => BorderStyleValues.Hair,
+			ExcelBorderStyle.Thin => BorderStyleValues.Thin,
+			ExcelBorderStyle.Medium => BorderStyleValues.Medium,
+			ExcelBorderStyle.Thick => BorderStyleValues.Thick,
+			ExcelBorderStyle.Dashed => BorderStyleValues.Dashed,
+			ExcelBorderStyle.Dotted => BorderStyleValues.Dotted,
+			ExcelBorderStyle.Double => BorderStyleValues.Double,
+			_ => BorderStyleValues.None,
+		};
+
+		private static PatternValues MapFillPattern(ExcelFillPattern pattern) => pattern switch
+		{
+			ExcelFillPattern.None => PatternValues.None,
+			ExcelFillPattern.Solid => PatternValues.Solid,
+			ExcelFillPattern.MediumGray => PatternValues.MediumGray,
+			ExcelFillPattern.DarkGray => PatternValues.DarkGray,
+			ExcelFillPattern.LightGray => PatternValues.LightGray,
+			ExcelFillPattern.Gray125 => PatternValues.Gray125,
+			ExcelFillPattern.Gray0625 => PatternValues.Gray0625,
+			ExcelFillPattern.DarkHorizontal => PatternValues.DarkHorizontal,
+			ExcelFillPattern.DarkVertical => PatternValues.DarkVertical,
+			ExcelFillPattern.DarkDown => PatternValues.DarkDown,
+			ExcelFillPattern.DarkUp => PatternValues.DarkUp,
+			ExcelFillPattern.DarkGrid => PatternValues.DarkGrid,
+			ExcelFillPattern.DarkTrellis => PatternValues.DarkTrellis,
+			ExcelFillPattern.LightHorizontal => PatternValues.LightHorizontal,
+			ExcelFillPattern.LightVertical => PatternValues.LightVertical,
+			ExcelFillPattern.LightDown => PatternValues.LightDown,
+			ExcelFillPattern.LightUp => PatternValues.LightUp,
+			ExcelFillPattern.LightGrid => PatternValues.LightGrid,
+			ExcelFillPattern.LightTrellis => PatternValues.LightTrellis,
+			_ => PatternValues.Solid,
+		};
+
+		/// <summary>
+		/// Inserts a conditional formatting block right after the sheet data (the schema
+		/// requires it to follow <see cref="SheetData"/>), appending it if no sheet data
+		/// exists yet.
+		/// </summary>
+		private static void InsertConditionalFormatting(Worksheet worksheet, ConditionalFormatting conditionalFormatting)
+		{
+			var sheetData = worksheet.GetFirstChild<SheetData>();
+			if (sheetData != null)
+				worksheet.InsertAfter(conditionalFormatting, sheetData);
+			else
+				worksheet.Append(conditionalFormatting);
+		}
+
 		private Stylesheet EnsureStylesheet()
 		{
 			var stylesPart = _workbookPart.WorkbookStylesPart;
@@ -1441,30 +1627,52 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return nextId;
 		}
 
-		private uint GetOrCreateFillIndex(string bgColor)
+		private uint GetOrCreateFillIndex(string bgColor, ExcelFillPattern pattern = ExcelFillPattern.Solid, string patternColor = null)
 		{
 			if (bgColor.IsEmpty())
 				return 0;
 
-			if (_fillIndexCache.TryGetValue(bgColor, out var cached))
+			var cacheKey = $"{bgColor}|{pattern}|{patternColor}";
+			if (_fillIndexCache.TryGetValue(cacheKey, out var cached))
 				return cached;
 
 			var stylesheet = EnsureStylesheet();
 			var fills = stylesheet.Fills;
 
 			var color = ParseColor(bgColor);
-			var fill = new Fill(new PatternFill
+
+			PatternFill patternFill;
+
+			if (pattern == ExcelFillPattern.Solid)
 			{
-				PatternType = PatternValues.Solid,
-				ForegroundColor = new ForegroundColor { Rgb = color },
-				BackgroundColor = new BackgroundColor { Indexed = 64 }
-			});
+				// A normal cell solid fill paints from ForegroundColor; BackgroundColor=Indexed 64
+				// is the conventional placeholder.
+				patternFill = new PatternFill
+				{
+					PatternType = PatternValues.Solid,
+					ForegroundColor = new ForegroundColor { Rgb = color },
+					BackgroundColor = new BackgroundColor { Indexed = 64 }
+				};
+			}
+			else
+			{
+				// Two-colour pattern: ForegroundColor draws the lines/dots, BackgroundColor is the
+				// cell background. Default the pattern colour to black when unspecified.
+				patternFill = new PatternFill
+				{
+					PatternType = MapFillPattern(pattern),
+					ForegroundColor = new ForegroundColor { Rgb = ParseColor(patternColor.IsEmpty() ? "#000000" : patternColor) },
+					BackgroundColor = new BackgroundColor { Rgb = color }
+				};
+			}
+
+			var fill = new Fill(patternFill);
 
 			fills.Append(fill);
 			fills.Count = (uint)fills.ChildElements.Count;
 
 			var index = fills.Count.Value - 1;
-			_fillIndexCache[bgColor] = index;
+			_fillIndexCache[cacheKey] = index;
 			return index;
 		}
 

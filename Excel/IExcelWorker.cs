@@ -58,6 +58,33 @@ public interface IExcelWorker : IDisposable
 	IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor);
 
 	/// <summary>
+	/// Sets a formula-based ("expression") conditional formatting rule over a cell range.
+	/// </summary>
+	/// <param name="startCol">Range start column index (0-based).</param>
+	/// <param name="startRow">Range start row index (0-based).</param>
+	/// <param name="endCol">Range end column index (0-based).</param>
+	/// <param name="endRow">Range end row index (0-based).</param>
+	/// <param name="formula">Excel formula that returns TRUE to apply the format, without a leading '=' (e.g. <c>$A2="OVERDUE"</c>).</param>
+	/// <param name="bgColor">Background fill color applied when the formula is true (hex code or name). Optional.</param>
+	/// <param name="fgColor">Foreground (text) color applied when the formula is true (hex code or name). If null, the font color is left unchanged.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, string bgColor, string fgColor = null);
+
+	/// <summary>
+	/// Sets a formula-based ("expression") conditional formatting rule over a cell range, applying
+	/// a full <see cref="ExcelConditionalFormat"/> (fill, font color/styles/size/name, number format
+	/// and border) when the formula is true.
+	/// </summary>
+	/// <param name="startCol">Range start column index (0-based).</param>
+	/// <param name="startRow">Range start row index (0-based).</param>
+	/// <param name="endCol">Range end column index (0-based).</param>
+	/// <param name="endRow">Range end row index (0-based).</param>
+	/// <param name="formula">Excel formula that returns TRUE to apply the format, without a leading '=' (e.g. <c>$A2="OVERDUE"</c>).</param>
+	/// <param name="format">The format to apply when the formula is true. Only the members that are set are written.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetConditionalFormattingFormula(int startCol, int startRow, int endCol, int endRow, string formula, ExcelConditionalFormat format);
+
+	/// <summary>
 	/// Sets a 3-color scale conditional formatting for a column (gradient from min to mid to max).
 	/// </summary>
 	/// <param name="col">The column index (0-based).</param>
@@ -182,6 +209,20 @@ public interface IExcelWorker : IDisposable
 	/// <param name="fgColor">The foreground (text) color. If null, default is used.</param>
 	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
 	IExcelWorker SetCellColor(int col, int row, string bgColor, string fgColor = null);
+
+	/// <summary>
+	/// Sets the fill of a specific cell with an explicit pattern. <see cref="ExcelFillPattern.Solid"/>
+	/// fills with <paramref name="bgColor"/>; any other pattern draws <paramref name="patternColor"/>
+	/// lines/dots over a <paramref name="bgColor"/> background.
+	/// </summary>
+	/// <param name="col">The column index (0-based).</param>
+	/// <param name="row">The row index (0-based).</param>
+	/// <param name="bgColor">The fill / background color (hex code or name).</param>
+	/// <param name="pattern">The fill pattern.</param>
+	/// <param name="patternColor">Pattern (lines/dots) color for a non-solid pattern. Defaults to black when empty. Ignored for <see cref="ExcelFillPattern.Solid"/>.</param>
+	/// <param name="fgColor">The foreground (text) color. If null, default is used.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker SetCellColor(int col, int row, string bgColor, ExcelFillPattern pattern, string patternColor = null, string fgColor = null);
 
 	/// <summary>
 	/// Gets the names of all sheets in the workbook.
