@@ -126,14 +126,14 @@ public class EmailLogListener : LogListener
 	/// <summary>
 	/// Release resources.
 	/// </summary>
-	protected override async ValueTask DisposeManaged()
+	protected override void DisposeManaged()
 	{
 		_cts.Cancel();
 		_channel.Writer.Complete();
 
 		try
 		{
-			await _processingTask.WaitAsync(TimeSpan.FromSeconds(5)).NoWait();
+			_processingTask.Wait(TimeSpan.FromSeconds(5));
 		}
 		catch (Exception ex)
 		{
@@ -142,6 +142,6 @@ public class EmailLogListener : LogListener
 
 		_cts.Dispose();
 
-		await base.DisposeManaged().NoWait();
+		base.DisposeManaged();
 	}
 }
