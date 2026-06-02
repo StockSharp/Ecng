@@ -710,13 +710,19 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		/// <inheritdoc />
 		public IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
+			=> AddPieChart(name, dataRange, anchorCol, anchorRow, width, height, null);
+
+		/// <inheritdoc />
+		public IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height, IEnumerable<string> colors)
 		{
+			var colorList = colors?.ToArray();
+
 			AddChartCore(name, dataRange, anchorCol, anchorRow, width, height, plotArea =>
 			{
 				var pieChart = new C.PieChart();
 				pieChart.Append(new C.VaryColors { Val = true });
 
-				var series = CreatePieSeries(0, name, dataRange);
+				var series = CreatePieSeries(0, name, dataRange, colors: colorList);
 				pieChart.Append(series);
 
 				plotArea.Append(pieChart);
@@ -1105,7 +1111,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
+		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2, IReadOnlyList<string> colors = null)
 		{
 			var series = new C.PieChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1117,6 +1123,25 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				{
 					NumericValue = new C.NumericValue(name)
 				});
+			}
+
+			// Per-slice fills as data points. CT_PieSer orders dPt after the series text
+			// and before the category/value references, so emit them here. A solid fill on
+			// each dPt overrides Office's automatic per-slice colour; slices without a colour
+			// keep the automatic one.
+			if (colors is not null)
+			{
+				for (var i = 0; i < colors.Count; i++)
+				{
+					if (colors[i].IsEmpty())
+						continue;
+
+					series.Append(new C.DataPoint(
+						new C.Index { Val = (uint)i },
+						new C.Bubble3D { Val = false },
+						new C.ChartShapeProperties(
+							new A.SolidFill(new A.RgbColorModelHex { Val = ToChartHex(colors[i]) }))));
+				}
 			}
 
 			// Use separate columns for categories and values
@@ -1728,6 +1753,14 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var index = cellFormats.Count.Value - 1;
 			_cellFormatCache[key] = index;
 			return index;
+		}
+
+		// Chart srgbClr values are 6-hex RRGGBB (no alpha), whereas ParseColor yields the
+		// 8-hex AARRGGBB used for cell/fill colours; drop the leading alpha byte.
+		private static string ToChartHex(string color)
+		{
+			var argb = ParseColor(color);
+			return argb.Length == 8 ? argb.Substring(2) : argb;
 		}
 
 		private static string ParseColor(string color)

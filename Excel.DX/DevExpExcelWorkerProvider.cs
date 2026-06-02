@@ -455,6 +455,13 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			return this;
 		}
 
+		IExcelWorker IExcelWorker.AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height, IEnumerable<string> colors)
+		{
+			// Note: DevExpress XlExport streaming API does not support chart creation.
+			// Use OpenXmlExcelWorkerProvider for chart support.
+			return this;
+		}
+
 		IExcelWorker IExcelWorker.AddAreaChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height)
 		{
 			// Note: DevExpress XlExport streaming API does not support chart creation.

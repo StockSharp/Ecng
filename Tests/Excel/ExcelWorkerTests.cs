@@ -8,6 +8,8 @@ using DocumentFormat.OpenXml.Validation;
 using Ecng.Excel;
 
 using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using C = DocumentFormat.OpenXml.Drawing.Charts;
+using A = DocumentFormat.OpenXml.Drawing;
 
 [TestClass]
 [TestCategory("Integration")]
@@ -1361,6 +1363,43 @@ public class ExcelWorkerTests : BaseTestClass
 
 		wsPart.DrawingsPart.AssertNotNull("DrawingsPart should exist for PieChart");
 		wsPart.DrawingsPart!.ChartParts.Count().AssertEqual(1, "Should have 1 ChartPart for PieChart");
+	}
+
+	[TestMethod]
+	public void OpenXml_AddPieChart_WithColors_SetsPerSliceFills()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "Cat").SetCell(1, 0, "Val") // A1:B1
+				.SetCell(0, 1, "A").SetCell(1, 1, 30)       // A2:B2
+				.SetCell(0, 2, "B").SetCell(1, 2, 50)       // A3:B3
+				.SetCell(0, 3, "C").SetCell(1, 3, 20)       // A4:B4
+				.AddPieChart("Pie", "A2:B4", 3, 0, 400, 300, new[] { "#FF0000", "#00FF00", "#0000FF" });
+		}
+
+		AssertOpenXmlValid(stream);
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var chartPart = doc.WorkbookPart!.WorksheetParts.First().DrawingsPart!.ChartParts.First();
+		var series = chartPart.ChartSpace.Descendants<C.PieChartSeries>().First();
+		var dataPoints = series.Elements<C.DataPoint>().ToList();
+
+		dataPoints.Count.AssertEqual(3);
+
+		// Each data point colours its slice by index with the requested srgbClr (6-hex, no alpha).
+		string ColorOf(int idx)
+		{
+			var dp = dataPoints.Single(d => d.GetFirstChild<C.Index>()!.Val!.Value == (uint)idx);
+			return dp.Descendants<A.RgbColorModelHex>().First().Val!.Value;
+		}
+
+		ColorOf(0).AssertEqual("FF0000");
+		ColorOf(1).AssertEqual("00FF00");
+		ColorOf(2).AssertEqual("0000FF");
 	}
 
 	[TestMethod]

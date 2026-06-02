@@ -276,6 +276,20 @@ public interface IExcelWorker : IDisposable
 	IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height);
 
 	/// <summary>
+	/// Adds a pie chart whose slices are explicitly coloured, instead of using Office's
+	/// automatic per-slice palette.
+	/// </summary>
+	/// <param name="name">Chart title.</param>
+	/// <param name="dataRange">Data range in A1 notation (e.g., "A1:B100").</param>
+	/// <param name="anchorCol">Column where chart is anchored (0-based).</param>
+	/// <param name="anchorRow">Row where chart is anchored (0-based).</param>
+	/// <param name="width">Chart width in pixels.</param>
+	/// <param name="height">Chart height in pixels.</param>
+	/// <param name="colors">Per-slice colors (hex code or name) by slice index; the i-th color fills the i-th slice. Slices beyond the supplied colors (or whose color is empty) keep Office's automatic color.</param>
+	/// <returns>The current <see cref="IExcelWorker"/> instance for method chaining.</returns>
+	IExcelWorker AddPieChart(string name, string dataRange, int anchorCol, int anchorRow, int width, int height, IEnumerable<string> colors);
+
+	/// <summary>
 	/// Adds an area chart to the current sheet.
 	/// </summary>
 	/// <param name="name">Chart title.</param>
