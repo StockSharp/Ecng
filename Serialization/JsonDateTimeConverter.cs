@@ -90,8 +90,17 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	private static object NoValue(Type objectType)
 		=> objectType == typeof(DateTime?) ? null : default(DateTime);
 
+	// The wire is all-UTC. A Local token is converted; an Unspecified token (e.g. an ISO-8601
+	// string with no zone designator) is taken AS UTC rather than assumed local — consistent
+	// with the textual-date path's AssumeUniversal, so a no-zone timestamp is not shifted by the
+	// server's local offset.
 	private static DateTime NormalizeUtc(DateTime dt)
-		=> dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+		=> dt.Kind switch
+		{
+			DateTimeKind.Utc => dt,
+			DateTimeKind.Local => dt.ToUniversalTime(),
+			_ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+		};
 
 	// Pre-epoch / unset (e.g. default(DateTime)) is written as the 0 sentinel that ReadJson maps back
 	// to "no value". This keeps the wire format numeric and avoids the GetUnixDiff pre-epoch throw.

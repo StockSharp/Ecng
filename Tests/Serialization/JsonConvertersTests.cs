@@ -3,6 +3,7 @@ namespace Ecng.Tests.Serialization;
 using Ecng.Serialization;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 [TestClass]
 public class JsonConvertersTests : BaseTestClass
@@ -206,6 +207,52 @@ public class JsonConvertersTests : BaseTestClass
 		var json = "{\"Required\":\"2025-01-15T00:00:00Z\",\"Optional\":null}";
 		var back = JsonConvert.DeserializeObject<GlobalTimeDto>(json, settings);
 		back.Required.ToUniversalTime().AssertEqual(from);
+	}
+
+	[TestMethod]
+	public void DateTimeMcsConverter_ReadIsoStringWithoutZone_AssumesUtc()
+	{
+		// An ISO-8601 string without a zone designator must be read as UTC (the wire is all-UTC),
+		// not shifted by the server's local offset. Newtonsoft tokenises it into a DateTime of
+		// Kind=Unspecified; the converter must treat that as UTC — consistent with the textual-date
+		// path (which uses AssumeUniversal) — instead of assuming local time.
+		var converter = new JsonDateTimeMcsConverter();
+		var expected = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+
+		var reader = new JsonTextReader(new StringReader("\"2025-02-01T00:00:00\""));
+		reader.Read();
+
+		var dt = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, JsonSerializer.CreateDefault());
+		dt.AssertEqual(expected);
+		dt.Kind.AssertEqual(DateTimeKind.Utc);
+	}
+
+	[TestMethod]
+	public void DateTimeMcsConverter_ReadDateToken_NormalizesEveryKind()
+	{
+		// The converter accepts a DateTime token of any Kind (a JValue carries the Kind verbatim).
+		// All three must yield the correct UTC instant: Utc unchanged, Local converted, and
+		// Unspecified taken AS UTC (not assumed local — the wire is all-UTC).
+		var converter = new JsonDateTimeMcsConverter();
+
+		DateTime ReadToken(DateTime token)
+		{
+			var reader = new JTokenReader(new JValue(token));
+			reader.Read();
+			return (DateTime)converter.ReadJson(reader, typeof(DateTime), null, JsonSerializer.CreateDefault());
+		}
+
+		// Utc -> unchanged.
+		var utc = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+		ReadToken(utc).AssertEqual(utc);
+
+		// Local -> converted to its UTC instant (machine-independent: same conversion both sides).
+		var local = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Local);
+		ReadToken(local).AssertEqual(local.ToUniversalTime());
+
+		// Unspecified -> same wall-clock taken as UTC (no local-offset shift).
+		var unspecified = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Unspecified);
+		ReadToken(unspecified).AssertEqual(DateTime.SpecifyKind(unspecified, DateTimeKind.Utc));
 	}
 
 	[TestMethod]
