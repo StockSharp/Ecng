@@ -45,17 +45,65 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 
 		try
 		{
-			var value = reader.Value.To<double?>();
+			switch (reader.Value)
+			{
+				case null:
+					return NoValue(objectType);
 
-			if (value is not double d || (int)d == 0)
-				return null;
+				// Newtonsoft auto-parses an ISO-8601 string into a DateTime/DateTimeOffset token;
+				// use it directly instead of coercing it to a number (which collapses to the epoch).
+				case DateTime dt:
+					return NormalizeUtc(dt);
 
-			return Convert(d);
+				case DateTimeOffset dto:
+					return dto.UtcDateTime;
+
+				case string s:
+				{
+					if (double.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var num))
+						return FromNumber(num, objectType);
+
+					return DateTime.Parse(s, System.Globalization.CultureInfo.InvariantCulture,
+						System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal);
+				}
+			}
+
+			return FromNumber(reader.Value.To<double?>(), objectType);
 		}
 		catch (Exception ex)
 		{
 			throw new JsonReaderException(ex.Message, ex);
 		}
+	}
+
+	private object FromNumber(double? value, Type objectType)
+	{
+		if (value is not double d || (int)d == 0)
+			return NoValue(objectType);
+
+		return Convert(d);
+	}
+
+	// "No value" on the wire (null / absent / the 0 sentinel) maps to null for a DateTime? target,
+	// but to default(DateTime) for a non-nullable DateTime target — returning null there makes
+	// Newtonsoft fail with NullReferenceException when assigning into the value-type member.
+	private static object NoValue(Type objectType)
+		=> objectType == typeof(DateTime?) ? null : default(DateTime);
+
+	private static DateTime NormalizeUtc(DateTime dt)
+		=> dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+
+	// Pre-epoch / unset (e.g. default(DateTime)) is written as the 0 sentinel that ReadJson maps back
+	// to "no value". This keeps the wire format numeric and avoids the GetUnixDiff pre-epoch throw.
+	private protected static bool TryWriteSentinel(JsonWriter writer, DateTime dt)
+	{
+		if (dt.ToUniversalTime() < TimeHelper.GregorianStart)
+		{
+			writer.WriteRawValue("0");
+			return true;
+		}
+
+		return false;
 	}
 
 	/// <summary>
@@ -84,6 +132,9 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
+
+		if (TryWriteSentinel(writer, dt))
+			return;
 
 		writer.WriteRawValue(dt.ToUnix(_isSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
@@ -140,6 +191,9 @@ public class JsonDateTimeMcsConverter : JsonDateTimeConverter
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
 
+		if (TryWriteSentinel(writer, dt))
+			return;
+
 		writer.WriteRawValue(dt.ToUnixMcs().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }
@@ -180,6 +234,9 @@ public class JsonDateTimeNanoConverter : JsonDateTimeConverter
 
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
+
+		if (TryWriteSentinel(writer, dt))
+			return;
 
 		writer.WriteRawValue((dt.ToUniversalTime() - TimeHelper.GregorianStart).ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
