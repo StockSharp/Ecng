@@ -72,8 +72,11 @@ public record SchemaColumn
 /// One <c>[Index]</c>-attribute participation of a column — either its own
 /// single-column index (when <see cref="Name"/> is <see langword="null"/>)
 /// or a slot inside a named composite identified by <see cref="Name"/>.
+/// <see cref="IsUnique"/> is per index: a column may take part in a unique
+/// composite and a non-unique single index at the same time, so uniqueness
+/// belongs to the participation, not to the column.
 /// </summary>
-public sealed record SchemaColumnIndex(string Name, int Order);
+public sealed record SchemaColumnIndex(string Name, int Order, bool IsUnique = false);
 
 /// <summary>
 /// Describes the database schema for an entity type.

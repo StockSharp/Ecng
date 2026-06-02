@@ -281,7 +281,7 @@ public static class SchemaRegistry
 			return ([], false);
 
 		var indexes = attrs
-			.Select(a => new SchemaColumnIndex(a.Name, a.Order))
+			.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute))
 			.ToArray();
 
 		return (indexes, attrs.Any(a => a is UniqueAttribute));
@@ -310,6 +310,32 @@ public static class SchemaRegistry
 		var columns = new List<SchemaColumn>();
 		SchemaColumn identity = null;
 		var visiting = new HashSet<Type> { entityType };
+
+		// Type-level [Index]/[Unique] declarations carry a FieldName that targets a column
+		// by name, letting an entity declare composite (or single) indexes over columns it
+		// does not own as its own property — most importantly the soft-delete `Deleted`
+		// column inherited from a base entity, which a property-level attribute could not
+		// reach without applying to every derived table. Group them by target column so
+		// each column picks up these participations alongside any property-level [Index].
+		var typeIndexLookup = entityType.GetAttributes<IndexAttribute>()
+			.Where(a => a is not IdentityAttribute && !a.FieldName.IsEmpty())
+			.GroupBy(a => a.FieldName, StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(
+				g => g.Key,
+				g => (
+					Indexes: (IReadOnlyList<SchemaColumnIndex>)g.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute)).ToArray(),
+					HasUnique: g.Any(a => a is UniqueAttribute)),
+				StringComparer.OrdinalIgnoreCase);
+
+		(IReadOnlyList<SchemaColumnIndex> Indexes, bool HasUnique) MergeTypeLevelIndexes(string columnName, IReadOnlyList<SchemaColumnIndex> propIndexes, bool propHasUnique)
+		{
+			if (!typeIndexLookup.TryGetValue(columnName, out var typeLevel))
+				return (propIndexes, propHasUnique);
+
+			return (
+				propIndexes.Count == 0 ? typeLevel.Indexes : propIndexes.Concat(typeLevel.Indexes).ToArray(),
+				propHasUnique || typeLevel.HasUnique);
+		}
 
 			foreach (var prop in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 			{
@@ -347,6 +373,7 @@ public static class SchemaRegistry
 				if (isRelationSingle)
 				{
 					var (indexes, hasUnique) = CollectIndexes(prop);
+					(indexes, hasUnique) = MergeTypeLevelIndexes(prop.Name, indexes, hasUnique);
 
 					columns.Add(new()
 					{
@@ -368,6 +395,7 @@ public static class SchemaRegistry
 				if (mappedType is not null)
 				{
 					var (indexes, hasUnique) = CollectIndexes(prop);
+					(indexes, hasUnique) = MergeTypeLevelIndexes(prop.Name, indexes, hasUnique);
 
 					columns.Add(new()
 					{
@@ -403,6 +431,7 @@ public static class SchemaRegistry
 					: prop.PropertyType;
 
 				var (simpleIndexes, simpleHasUnique) = CollectIndexes(prop);
+				(simpleIndexes, simpleHasUnique) = MergeTypeLevelIndexes(prop.Name, simpleIndexes, simpleHasUnique);
 
 				columns.Add(new()
 				{

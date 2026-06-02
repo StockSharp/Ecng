@@ -363,7 +363,7 @@ public static class SchemaMigrator
 				indexName: $"IX_{tableName}_{col.Name}",
 				tableName: tableName,
 				columnName: col.Name,
-				unique: col.IsUnique);
+				unique: ix.IsUnique);
 			sb.AppendLine(";");
 		}
 
@@ -404,7 +404,7 @@ public static class SchemaMigrator
 				.OrderBy(p => p.Index.Order)
 				.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
 				.ToArray();
-			var unique = ordered.Any(p => p.Column.IsUnique);
+			var unique = ordered.Any(p => p.Index.IsUnique);
 
 			var cols = ordered.Select(p => dialect.QuoteIdentifier(p.Column.Name)).JoinCommaSpace();
 
@@ -489,13 +489,41 @@ public static class SchemaMigrator
 				foreach (var ix in col.Indexes)
 				{
 					var name = ix.Name ?? $"IX_{schema.TableName}_{col.Name}";
-					AddDeclared(schema.TableName, name, col.Name, ix.Order, col.IsUnique);
+					AddDeclared(schema.TableName, name, col.Name, ix.Order, ix.IsUnique);
 				}
 			}
 		}
 
-		// Compare: declared vs DB by (Table, IndexName).
-		foreach (var kv in declaredByName)
+		// Compare declared vs DB by index SHAPE — the ordered column set plus
+		// uniqueness — rather than by index name. Index names are author-chosen
+		// (UX_*, hand-named composites) and almost never equal the IX_{Table}_{Column}
+		// the model generates, so name-based matching reported the very same index as
+		// both MissingIndex (model name absent in DB) and ExtraIndex (DB name absent in
+		// model). Shape matching reconciles an index regardless of its name; the name is
+		// kept only for rendering (model name on CREATE, DB name on the commented DROP).
+		static string ShapeKey(string table, IEnumerable<string> columns, bool unique)
+			=> string.Concat(
+				table.ToLowerInvariant(), "",
+				string.Join("", columns.Select(c => c.ToLowerInvariant())), "",
+				unique ? "U" : "N");
+
+		// Pool DB indexes by shape. A list per shape tolerates the (rare) case of two
+		// DB indexes sharing the same columns + uniqueness under different names.
+		var dbByShape = new Dictionary<string, List<((string Table, string Name) Key, DbIndexShape Shape)>>();
+		foreach (var kv in dbByName)
+		{
+			var (dbTable, _) = kv.Key;
+			var shapeKey = ShapeKey(dbTable, kv.Value.Columns, kv.Value.IsUnique);
+			if (!dbByShape.TryGetValue(shapeKey, out var list))
+				dbByShape[shapeKey] = list = [];
+			list.Add((kv.Key, kv.Value));
+		}
+
+		// Each declared index consumes a DB index of the same shape if one exists,
+		// otherwise it is genuinely missing. Stable order for deterministic output.
+		foreach (var kv in declaredByName
+			.OrderBy(k => k.Key.Table, StringComparer.OrdinalIgnoreCase)
+			.ThenBy(k => k.Key.Name, StringComparer.OrdinalIgnoreCase))
 		{
 			var (table, name) = kv.Key;
 			var expected = kv.Value;
@@ -505,20 +533,13 @@ public static class SchemaMigrator
 				.Select(c => c.ColumnName)
 				.ToArray();
 
-			if (dbByName.TryGetValue(kv.Key, out var actual))
-			{
-				// Same name — verify column shape + uniqueness match.
-				var matches = actual.Columns.SequenceEqual(expectedCols, StringComparer.OrdinalIgnoreCase)
-					&& actual.IsUnique == expected.IsUnique;
+			var shapeKey = ShapeKey(table, expectedCols, expected.IsUnique);
 
-				if (!matches)
-				{
-					diffs.Add(new(table, name, SchemaDiffKind.MissingIndex,
-						$"({string.Join(", ", expectedCols)}){(expected.IsUnique ? " UNIQUE" : "")}",
-						$"({string.Join(", ", actual.Columns)}){(actual.IsUnique ? " UNIQUE" : "")}"));
-				}
-				// Mark as seen so ExtraIndex pass below skips it.
-				dbByName.Remove(kv.Key);
+			if (dbByShape.TryGetValue(shapeKey, out var pool) && pool.Count > 0)
+			{
+				// Same column set + uniqueness already exists in the DB under some
+				// name — reconciled; consume it so it is not later reported as extra.
+				pool.RemoveAt(pool.Count - 1);
 			}
 			else
 			{
@@ -528,28 +549,27 @@ public static class SchemaMigrator
 			}
 		}
 
-		// Anything left in dbByName is an index that exists in DB but no
-		// entity declares — informational only, not auto-dropped. Only
-		// surface ExtraIndex on tables the caller actually asked about
-		// (i.e. tables present in the `entities` argument); indexes on
-		// unrelated tables (other fixtures' leftovers, unrelated app
-		// schemas sharing the DB) would otherwise bubble through callers
-		// that pass a narrow schemas list.
+		// Anything left unconsumed is an index present in the DB whose shape no entity
+		// declares — informational only, never auto-dropped. Only surface ExtraIndex on
+		// tables the caller actually asked about (present in the `entities` argument);
+		// indexes on unrelated tables (other fixtures' leftovers, unrelated app schemas
+		// sharing the DB) would otherwise bubble through callers passing a narrow list.
 		var entityTableNames = new HashSet<string>(
 			entities.Where(s => !s.IsView).Select(s => s.TableName),
 			StringComparer.OrdinalIgnoreCase);
 
-		foreach (var kv in dbByName)
+		foreach (var (key, shape) in dbByShape.Values
+			.SelectMany(l => l)
+			.OrderBy(x => x.Key.Table, StringComparer.OrdinalIgnoreCase)
+			.ThenBy(x => x.Key.Name, StringComparer.OrdinalIgnoreCase))
 		{
-			var (table, name) = kv.Key;
+			var (table, name) = key;
 			if (!entityTableNames.Contains(table))
 				continue;
 
-			var actual = kv.Value;
-
 			diffs.Add(new(table, name, SchemaDiffKind.ExtraIndex,
 				string.Empty,
-				$"({string.Join(", ", actual.Columns)}){(actual.IsUnique ? " UNIQUE" : "")}"));
+				$"({string.Join(", ", shape.Columns)}){(shape.IsUnique ? " UNIQUE" : "")}"));
 		}
 	}
 
@@ -569,7 +589,7 @@ public static class SchemaMigrator
 		var participating = schema.Columns
 			.SelectMany(c => c.Indexes
 				.Where(ix => string.Equals(ix.Name ?? $"IX_{tableName}_{c.Name}", indexName, StringComparison.OrdinalIgnoreCase))
-				.Select(ix => (Column: c, Order: ix.Order)))
+				.Select(ix => (Column: c, Order: ix.Order, ix.IsUnique)))
 			.OrderBy(p => p.Order)
 			.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
 			.ToArray();
@@ -596,7 +616,7 @@ public static class SchemaMigrator
 			return;
 		}
 
-		var unique = participating.Any(p => p.Column.IsUnique);
+		var unique = participating.Any(p => p.IsUnique);
 
 		if (participating.Length == 1)
 		{

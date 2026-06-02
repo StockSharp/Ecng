@@ -53,6 +53,51 @@ public class ColAttrTestEntity : IDbPersistable
 
 #endregion
 
+// Base class contributing an inherited column — mirrors the soft-delete `Deleted`
+// column that lives on a shared base entity in real models and so cannot be reached
+// by a property-level [Index] on a derived entity without applying to every table.
+public class TypeIndexBase
+{
+	public bool Flag { get; set; }
+}
+
+// Composite index declared at the TYPE level via [Index(FieldName=...)], spanning an
+// own column (Code) and the inherited base column (Flag).
+[Index(FieldName = "Code", Name = "IX_TypeIndex_CodeFlag", Order = 0)]
+[Index(FieldName = "Flag", Name = "IX_TypeIndex_CodeFlag", Order = 1)]
+public class TypeIndexEntity : TypeIndexBase, IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Column(MaxLength = 64)]
+	public string Code { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+// Column A participates in BOTH a non-unique single index (its own [Index]) and a unique
+// composite (A, B). Uniqueness must be tracked per index, not per column, so the single
+// index on A stays non-unique while the composite is unique.
+[Unique(FieldName = "A", Name = "UX_PerIndex_AB", Order = 0)]
+[Unique(FieldName = "B", Name = "UX_PerIndex_AB", Order = 1)]
+public class PerIndexUniqueEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[Index]
+	public long A { get; set; }
+
+	public long B { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 [TestClass]
 public class ColumnAttributeTests : BaseTestClass
 {
@@ -951,6 +996,190 @@ public class ColumnAttributeTests : BaseTestClass
 		sql.Contains("[IX_Users_Name]").AssertTrue($"Expected the index name: {sql}");
 		sql.Split('\n').Where(l => l.Contains("DROP INDEX")).All(l => l.TrimStart().StartsWith("--"))
 			.AssertTrue($"DROP INDEX for an extra index must be commented out: {sql}");
+	}
+
+	[TestMethod]
+	public void Compare_UniqueIndex_MatchedByColumnsNotName_NotMissingNotExtra()
+	{
+		// Model declares a unique index on Code (legacy [Unique] -> generated name
+		// IX_Users_Code). The DB has the same single-column unique index but under a
+		// hand-chosen name (UX_Users_Code). The index is the SAME index — matching must
+		// be by column set + uniqueness, not by name, so neither Missing nor Extra fires.
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Code", ClrType = typeof(string), MaxLength = 64, IsUnique = true }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Code", "NVARCHAR", false, 64, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("UX_Users_Code", "Users", "Code", 1, true, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(0);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_CompositeIndex_MatchedByColumnsNotName_NotMissingNotExtra()
+	{
+		// A composite index declared in the model under one name (IX_Composite over
+		// A, B) matches a DB index over the same ordered columns under a different name
+		// (IX_DbHandName). Shape matching reconciles them regardless of the name.
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn { Name = "A", ClrType = typeof(long), Indexes = [new SchemaColumnIndex("IX_Composite", 0)] },
+				new SchemaColumn { Name = "B", ClrType = typeof(long), Indexes = [new SchemaColumnIndex("IX_Composite", 1)] },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "A", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "B", "BIGINT", false, null, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_DbHandName", "Users", "A", 1, false, false),
+			new DbIndexInfo("IX_DbHandName", "Users", "B", 2, false, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(0);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_Index_UniquenessDiffers_IsBothMissingAndExtra()
+	{
+		// Uniqueness is part of the index shape: a unique index in the model and a
+		// non-unique index in the DB on the same column are NOT the same index. The
+		// model's unique index is missing, and the DB's non-unique one is extra.
+		var schema = new Schema
+		{
+			TableName = "Users",
+			EntityType = typeof(ColAttrTestEntity),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Code", ClrType = typeof(string), MaxLength = 64, IsUnique = true }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("Users", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("Users", "Code", "NVARCHAR", false, 64, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_Users_Code", "Users", "Code", 1, false, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(1);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void TypeLevelIndex_CompositeOverInheritedColumn_AddsParticipationsToBothColumns()
+	{
+		// A type-level [Index(FieldName=...)] composite must attach its participation to
+		// the named column even when that column is inherited from a base class (Flag).
+		var schema = SchemaRegistry.Get(typeof(TypeIndexEntity));
+
+		var code = schema.Columns.First(c => c.Name == "Code");
+		var flag = schema.Columns.First(c => c.Name == "Flag");
+
+		code.Indexes.Any(i => i.Name == "IX_TypeIndex_CodeFlag" && i.Order == 0)
+			.AssertTrue("Code should carry the type-level composite participation at order 0.");
+		flag.Indexes.Any(i => i.Name == "IX_TypeIndex_CodeFlag" && i.Order == 1)
+			.AssertTrue("Inherited Flag should carry the type-level composite participation at order 1.");
+	}
+
+	[TestMethod]
+	public void TypeLevelIndex_CompositeReconcilesWithDbIndexByShape()
+	{
+		// The type-level composite (Code, Flag) declared on the entity must reconcile with
+		// a DB index over the same ordered columns under a different name — proving the
+		// type-level declaration flows through to shape-based index matching end to end.
+		var schema = SchemaRegistry.Get(typeof(TypeIndexEntity));
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("TypeIndexEntity", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("TypeIndexEntity", "Code", "NVARCHAR", true, 64, null, null),
+			new DbColumnInfo("TypeIndexEntity", "Flag", "BIT", false, null, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_DbHandName_CodeFlag", "TypeIndexEntity", "Code", 1, false, false),
+			new DbIndexInfo("IX_DbHandName_CodeFlag", "TypeIndexEntity", "Flag", 2, false, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(0);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void PerIndexUniqueness_SingleParticipationIsNonUnique_CompositeIsUnique()
+	{
+		var schema = SchemaRegistry.Get(typeof(PerIndexUniqueEntity));
+		var a = schema.Columns.First(c => c.Name == "A");
+
+		// A carries two participations: its own single index (non-unique) and the
+		// composite UX_PerIndex_AB (unique). Uniqueness lives on the participation.
+		var single = a.Indexes.First(i => i.Name is null);
+		var composite = a.Indexes.First(i => i.Name == "UX_PerIndex_AB");
+
+		single.IsUnique.AssertFalse("Own single [Index] on A must stay non-unique.");
+		composite.IsUnique.AssertTrue("The [Unique] composite participation must be unique.");
+	}
+
+	[TestMethod]
+	public void Compare_ColumnInUniqueCompositeAndNonUniqueSingle_BothReconcile()
+	{
+		// The single non-unique index on A and the unique composite (A, B) must each
+		// reconcile with their DB counterparts — the single must NOT be treated as unique
+		// just because A also belongs to a unique composite.
+		var schema = SchemaRegistry.Get(typeof(PerIndexUniqueEntity));
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("PerIndexUniqueEntity", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("PerIndexUniqueEntity", "A", "BIGINT", false, null, null, null),
+			new DbColumnInfo("PerIndexUniqueEntity", "B", "BIGINT", false, null, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_db_A", "PerIndexUniqueEntity", "A", 1, false, false),
+			new DbIndexInfo("UX_db_AB", "PerIndexUniqueEntity", "A", 1, true, false),
+			new DbIndexInfo("UX_db_AB", "PerIndexUniqueEntity", "B", 2, true, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(0);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(0);
 	}
 
 	[TestMethod]
