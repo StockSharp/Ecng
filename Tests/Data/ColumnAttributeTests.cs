@@ -98,6 +98,23 @@ public class PerIndexUniqueEntity : IDbPersistable
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
 }
 
+// Composite index declared with the EF-Core-style column-list constructor: one attribute
+// lists the ordered columns, the index name is auto-generated, no Order/Name needed.
+[Index(nameof(A), nameof(B))]
+public class ColumnListIndexEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	public long A { get; set; }
+
+	public long B { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 [TestClass]
 public class ColumnAttributeTests : BaseTestClass
 {
@@ -1175,6 +1192,47 @@ public class ColumnAttributeTests : BaseTestClass
 			new DbIndexInfo("IX_db_A", "PerIndexUniqueEntity", "A", 1, false, false),
 			new DbIndexInfo("UX_db_AB", "PerIndexUniqueEntity", "A", 1, true, false),
 			new DbIndexInfo("UX_db_AB", "PerIndexUniqueEntity", "B", 2, true, false),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);
+		diffs.Count(d => d.Kind == SchemaDiffKind.MissingIndex).AssertEqual(0);
+		diffs.Count(d => d.Kind == SchemaDiffKind.ExtraIndex).AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void TypeLevelIndex_ColumnListForm_GroupsColumnsIntoOneAutoNamedComposite()
+	{
+		// [Index(nameof(A), nameof(B))] must produce ONE composite: both columns share a single
+		// auto-generated name and are ordered by argument position — no Name/Order in the source.
+		var schema = SchemaRegistry.Get(typeof(ColumnListIndexEntity));
+
+		var a = schema.Columns.First(c => c.Name == "A").Indexes.Single();
+		var b = schema.Columns.First(c => c.Name == "B").Indexes.Single();
+
+		a.Name.AssertEqual("IX_ColumnListIndexEntity_A_B");
+		b.Name.AssertEqual("IX_ColumnListIndexEntity_A_B");
+		a.Order.AssertEqual(0);
+		b.Order.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void Compare_ColumnListComposite_ReconcilesWithDbByShape()
+	{
+		// The column-list composite reconciles with a DB index over the same ordered columns
+		// under any name — proving auto-named composites flow through shape matching.
+		var schema = SchemaRegistry.Get(typeof(ColumnListIndexEntity));
+
+		var dbCols = new[]
+		{
+			new DbColumnInfo("ColumnListIndexEntity", "Id", "BIGINT", false, null, null, null),
+			new DbColumnInfo("ColumnListIndexEntity", "A", "BIGINT", false, null, null, null),
+			new DbColumnInfo("ColumnListIndexEntity", "B", "BIGINT", false, null, null, null),
+		};
+
+		var dbIndexes = new[]
+		{
+			new DbIndexInfo("IX_some_db_name", "ColumnListIndexEntity", "A", 1, false, false),
+			new DbIndexInfo("IX_some_db_name", "ColumnListIndexEntity", "B", 2, false, false),
 		};
 
 		var diffs = SchemaMigrator.Compare([schema], dbCols, SqlServerDialect.Instance, false, null, dbIndexes);

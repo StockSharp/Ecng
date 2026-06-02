@@ -311,21 +311,56 @@ public static class SchemaRegistry
 		SchemaColumn identity = null;
 		var visiting = new HashSet<Type> { entityType };
 
-		// Type-level [Index]/[Unique] declarations carry a FieldName that targets a column
-		// by name, letting an entity declare composite (or single) indexes over columns it
-		// does not own as its own property — most importantly the soft-delete `Deleted`
-		// column inherited from a base entity, which a property-level attribute could not
-		// reach without applying to every derived table. Group them by target column so
-		// each column picks up these participations alongside any property-level [Index].
-		var typeIndexLookup = entityType.GetAttributes<IndexAttribute>()
-			.Where(a => a is not IdentityAttribute && !a.FieldName.IsEmpty())
-			.GroupBy(a => a.FieldName, StringComparer.OrdinalIgnoreCase)
-			.ToDictionary(
-				g => g.Key,
-				g => (
-					Indexes: (IReadOnlyList<SchemaColumnIndex>)g.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute)).ToArray(),
-					HasUnique: g.Any(a => a is UniqueAttribute)),
-				StringComparer.OrdinalIgnoreCase);
+		// Type-level [Index]/[Unique] declarations describe one whole index over one or more
+		// columns named by string — the preferred form is the column-list constructor
+		// [Index(nameof(A), nameof(B))], plus the legacy single FieldName form. This lets an
+		// entity declare composite indexes and indexes over columns it does not own as its own
+		// property — most importantly the soft-delete `Deleted` inherited from a base entity.
+		// Each attribute is ONE index: its name is auto-generated (IX_{Table}_{col1}_{col2}…)
+		// unless an explicit Name is set, and a single column with no name keeps the
+		// IX_{Table}_{Column} fallback. Expand every attribute into per-column participations
+		// (shared name groups a composite) so each column picks them up below alongside any
+		// property-level [Index].
+		var typeIndexLookup = new Dictionary<string, (List<SchemaColumnIndex> Indexes, bool HasUnique)>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var attr in entityType.GetAttributes<IndexAttribute>())
+		{
+			if (attr is IdentityAttribute)
+				continue;
+
+			// Preferred form: the column-list constructor [Index(nameof(A), nameof(B))] — one
+			// attribute spanning ordered columns. Legacy form: a single FieldName with an
+			// explicit Order, where several attributes sharing a Name make up a composite.
+			var useList = attr.FieldNames is { Length: > 0 };
+
+			var cols = useList
+				? attr.FieldNames
+				: (attr.FieldName.IsEmpty() ? null : [attr.FieldName]);
+
+			if (cols is null)
+				continue;
+
+			var isUnique = attr is UniqueAttribute;
+
+			// One shared name groups a composite's columns into a single index; a single column
+			// with no explicit name stays null so it falls back to IX_{Table}_{Column}.
+			var indexName = attr.Name.IsEmpty()
+				? (cols.Length == 1 ? null : $"IX_{schema.TableName}_{string.Join("_", cols)}")
+				: attr.Name;
+
+			for (var i = 0; i < cols.Length; i++)
+			{
+				// Column-list form orders by argument position; the legacy single-FieldName form
+				// carries its own Order so multiple attributes can compose by a shared Name.
+				var order = useList ? i : attr.Order;
+
+				if (!typeIndexLookup.TryGetValue(cols[i], out var entry))
+					entry = (new(), false);
+
+				entry.Indexes.Add(new SchemaColumnIndex(indexName, order, isUnique));
+				typeIndexLookup[cols[i]] = (entry.Indexes, entry.HasUnique || isUnique);
+			}
+		}
 
 		(IReadOnlyList<SchemaColumnIndex> Indexes, bool HasUnique) MergeTypeLevelIndexes(string columnName, IReadOnlyList<SchemaColumnIndex> propIndexes, bool propHasUnique)
 		{

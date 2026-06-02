@@ -7,9 +7,37 @@ namespace Ecng.Serialization;
 public class IndexAttribute : Attribute
 {
 	/// <summary>
+	/// Initializes a new <see cref="IndexAttribute"/>.
+	/// </summary>
+	public IndexAttribute()
+	{
+	}
+
+	/// <summary>
+	/// Type-level constructor declaring one whole index (single- or multi-column) over the
+	/// named columns, in argument order. Use <c>nameof</c> for compile-safe column names —
+	/// e.g. <c>[Index(nameof(Client), nameof(Deleted), nameof(Topic))]</c>. The index name is
+	/// auto-generated (<c>IX_{Table}_{col1}_{col2}…</c>) unless <see cref="Name"/> is set, and
+	/// no per-column <see cref="Order"/> is needed — order follows the argument order. This is
+	/// the preferred way to declare composite indexes and indexes over inherited base columns.
+	/// </summary>
+	public IndexAttribute(params string[] fieldNames)
+	{
+		FieldNames = fieldNames;
+	}
+
+	/// <summary>
 	/// Gets or sets the database field name for the index.
 	/// </summary>
 	public string FieldName { get; set; }
+
+	/// <summary>
+	/// The ordered set of columns this type-level index spans (set via the
+	/// <see cref="IndexAttribute(string[])"/> constructor). When it holds more than one column
+	/// the columns form a single composite index in this order; with one column it is a
+	/// single-column index. Takes precedence over <see cref="FieldName"/> when both are set.
+	/// </summary>
+	public string[] FieldNames { get; set; }
 
 	/// <summary>
 	/// Gets or sets whether null values should be cached for this index.
@@ -38,6 +66,21 @@ public class IndexAttribute : Attribute
 /// </summary>
 public class UniqueAttribute : IndexAttribute
 {
+	/// <summary>
+	/// Initializes a new <see cref="UniqueAttribute"/>.
+	/// </summary>
+	public UniqueAttribute()
+	{
+	}
+
+	/// <summary>
+	/// Type-level constructor declaring a unique index over the named columns, in argument
+	/// order — e.g. <c>[Unique(nameof(Topic), nameof(Role), nameof(Write))]</c>.
+	/// </summary>
+	public UniqueAttribute(params string[] fieldNames)
+		: base(fieldNames)
+	{
+	}
 }
 
 /// <summary>
