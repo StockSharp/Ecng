@@ -107,6 +107,11 @@ public static class SchemaMigrator
 	/// <see cref="SchemaDiffKind.ExtraIndex"/> diffs. Pass <see langword="null"/>
 	/// (the default) to skip index comparison and preserve the pre-index behaviour.
 	/// </param>
+	/// <param name="detectExtraTables">
+	/// When <see langword="true"/>, tables present in the database but not mapped by any
+	/// entity are surfaced as <see cref="SchemaDiffKind.ExtraTable"/> diffs. Off by default,
+	/// because a partial entity set would otherwise flag every unrelated table.
+	/// </param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
@@ -230,7 +235,7 @@ public static class SchemaMigrator
 
 	/// <summary>
 	/// Reads columns, foreign keys and indexes via <paramref name="dialect"/>
-	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo})"/>.
+	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo},bool)"/>.
 	/// Convenience for callers that want the full FK + index-aware comparison
 	/// without orchestrating three metadata reads themselves.
 	/// </summary>
