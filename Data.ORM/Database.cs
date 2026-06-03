@@ -1060,8 +1060,6 @@ public partial class Database : Disposable, IStorage
 		{
 			private readonly SelectAsyncEnumerable<TSource, TResult> _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			private readonly CancellationToken _cancellationToken = cancellationToken;
-			private static bool UsesCtorProjection(Type t)
-				=> !t.IsSerializablePrimitive() && !typeof(IDbPersistable).IsAssignableFrom(t);
 
 			private readonly Schema _meta = typeof(TResult).IsSerializablePrimitive() || UsesCtorProjection(typeof(TResult))
 				? null
@@ -1114,7 +1112,7 @@ public partial class Database : Disposable, IStorage
 						}
 						else
 						{
-							buffer = MaterializeByCtor(table);
+							buffer = MaterializeByCtor<TResult>(table);
 						}
 					}
 					else
@@ -1126,92 +1124,6 @@ public partial class Database : Disposable, IStorage
 				}
 
 				return await _underlying.MoveNextAsync().NoWait();			}
-
-			private static TResult[] MaterializeByCtor(SerializationItemCollection table)
-			{
-				if (table.IsEmpty())
-					return [];
-
-				var rowCount = ((ICollection)table[0].Value).Count;
-
-
-				if (rowCount == 0)
-					return [];
-
-				var ctors = typeof(TResult).GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-
-				if (ctors.Length == 0)
-					throw new NotSupportedException($"Type {typeof(TResult)} has no public constructor for ctor-based materialization.");
-
-				var ctor = ctors
-					.OrderByDescending(c => c.GetParameters().Length)
-					.FirstOrDefault(c => c.GetParameters().All(p => table.Any(col => col.Name.EqualsIgnoreCase(p.Name))))
-					?? throw new NotSupportedException($"No constructor of {typeof(TResult)} matches the projected columns.");
-
-				var parameters = ctor.GetParameters();
-				var colIndices = new int[parameters.Length];
-				var consumed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-				for (var j = 0; j < parameters.Length; j++)
-				{
-					var paramName = parameters[j].Name;
-					var idx = -1;
-
-					for (var k = 0; k < table.Count; k++)
-					{
-						if (table[k].Name.EqualsIgnoreCase(paramName))
-						{
-							idx = k;
-							break;
-						}
-					}
-
-					colIndices[j] = idx;
-					consumed.Add(paramName);
-				}
-
-				// Columns not consumed by the ctor are routed to writable
-				// properties of TResult by case-insensitive name match — covers
-				// the `new NamedClass { Prop = ... }` projection shape where
-				// the only public ctor is parameterless.
-				var leftover = new List<(int colIndex, PropertyInfo prop)>();
-
-				for (var k = 0; k < table.Count; k++)
-				{
-					if (consumed.Contains(table[k].Name))
-						continue;
-
-					var prop = typeof(TResult).GetProperty(table[k].Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-
-					if (prop?.CanWrite == true)
-						leftover.Add((k, prop));
-				}
-
-				var result = new TResult[rowCount];
-
-				for (var r = 0; r < rowCount; r++)
-				{
-					var args = new object[parameters.Length];
-
-					for (var j = 0; j < parameters.Length; j++)
-					{
-						var raw = ((IList)table[colIndices[j]].Value)[r];
-						args[j] = raw.To(parameters[j].ParameterType);
-					}
-
-					var instance = (TResult)ctor.Invoke(args);
-
-					foreach (var (colIndex, prop) in leftover)
-					{
-						var raw = ((IList)table[colIndex].Value)[r];
-						prop.SetValue(instance, raw.To(prop.PropertyType));
-					}
-
-					result[r] = instance;
-				}
-
-				return result;
-			}
 		}
 
 		private readonly Database _database = database ?? throw new ArgumentNullException(nameof(database));
@@ -1278,6 +1190,105 @@ public partial class Database : Disposable, IStorage
 	/// <summary>
 	/// Executes a LINQ expression and returns a single result asynchronously.
 	/// </summary>
+	/// <summary>
+	/// True when <paramref name="t"/> is a projection target that must be materialized by
+	/// constructor/property binding (anonymous types, records, plain named classes) rather
+	/// than loaded as an entity — i.e. it is neither a serializable primitive nor an
+	/// <see cref="IDbPersistable"/> entity.
+	/// </summary>
+	private static bool UsesCtorProjection(Type t)
+		=> !t.IsSerializablePrimitive() && !typeof(IDbPersistable).IsAssignableFrom(t);
+
+	/// <summary>
+	/// Materializes the projected <paramref name="table"/> rows into <typeparamref name="TResult"/>
+	/// by matching the longest constructor whose parameters all map to projected columns, then
+	/// assigning any remaining columns to writable properties by name. This covers anonymous
+	/// types and positional records (full ctor) as well as the <c>new Named { A = ..., B = ... }</c>
+	/// object-initializer shape (parameterless ctor + property setters).
+	/// </summary>
+	private static TResult[] MaterializeByCtor<TResult>(SerializationItemCollection table)
+	{
+		if (table.IsEmpty())
+			return [];
+
+		var rowCount = ((ICollection)table[0].Value).Count;
+
+		if (rowCount == 0)
+			return [];
+
+		var ctors = typeof(TResult).GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+
+		if (ctors.Length == 0)
+			throw new NotSupportedException($"Type {typeof(TResult)} has no public constructor for ctor-based materialization.");
+
+		var ctor = ctors
+			.OrderByDescending(c => c.GetParameters().Length)
+			.FirstOrDefault(c => c.GetParameters().All(p => table.Any(col => col.Name.EqualsIgnoreCase(p.Name))))
+			?? throw new NotSupportedException($"No constructor of {typeof(TResult)} matches the projected columns.");
+
+		var parameters = ctor.GetParameters();
+		var colIndices = new int[parameters.Length];
+		var consumed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		for (var j = 0; j < parameters.Length; j++)
+		{
+			var paramName = parameters[j].Name;
+			var idx = -1;
+
+			for (var k = 0; k < table.Count; k++)
+			{
+				if (table[k].Name.EqualsIgnoreCase(paramName))
+				{
+					idx = k;
+					break;
+				}
+			}
+
+			colIndices[j] = idx;
+			consumed.Add(paramName);
+		}
+
+		// Columns not consumed by the ctor are routed to writable properties of TResult by
+		// case-insensitive name match — covers the `new NamedClass { Prop = ... }` shape.
+		var leftover = new List<(int colIndex, PropertyInfo prop)>();
+
+		for (var k = 0; k < table.Count; k++)
+		{
+			if (consumed.Contains(table[k].Name))
+				continue;
+
+			var prop = typeof(TResult).GetProperty(table[k].Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+			if (prop?.CanWrite == true)
+				leftover.Add((k, prop));
+		}
+
+		var result = new TResult[rowCount];
+
+		for (var r = 0; r < rowCount; r++)
+		{
+			var args = new object[parameters.Length];
+
+			for (var j = 0; j < parameters.Length; j++)
+			{
+				var raw = ((IList)table[colIndices[j]].Value)[r];
+				args[j] = raw.To(parameters[j].ParameterType);
+			}
+
+			var instance = (TResult)ctor.Invoke(args);
+
+			foreach (var (colIndex, prop) in leftover)
+			{
+				var raw = ((IList)table[colIndex].Value)[r];
+				prop.SetValue(instance, raw.To(prop.PropertyType));
+			}
+
+			result[r] = instance;
+		}
+
+		return result;
+	}
+
 	public async ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression)
 	{
 		var (translator, query, token) = GetQuery<TSource>(expression);
@@ -1292,6 +1303,16 @@ public partial class Database : Disposable, IStorage
 			// instead of falling into Read + SchemaRegistry.Get(Nullable<T>) which
 			// returns no metadata and trips GetOrAddCache with NullReferenceException.
 			return await ExecuteScalar<TResult>(command, input, token).NoWait();
+		else if (UsesCtorProjection(typeof(TResult)))
+		{
+			// Named/anonymous/ctor projection class (not an IDbPersistable entity):
+			// materialize the first row by constructor + property binding, mirroring the
+			// SelectAsyncEnumerable path. Routing it through Read would call SchemaRegistry.Get
+			// + CreateEntity, which casts the projected row to IDbPersistable and throws.
+			var table = await ExecuteTable(command, input, token).NoWait();
+			var rows = MaterializeByCtor<TResult>(table);
+			return rows.Length > 0 ? rows[0] : default;
+		}
 		else
 			return (TResult)await Read(command, SchemaRegistry.Get(typeof(TResult)), input, token).NoWait();	}
 

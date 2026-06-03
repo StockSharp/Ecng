@@ -1623,6 +1623,45 @@ public class OrmIntegrationTests : BaseTestClass
 		rows.All(r => r.Id > 0).AssertTrue();
 	}
 
+	/// <summary>
+	/// The same named-class member-init projection (including a navigation column)
+	/// but through the single-result terminal <c>FirstOrDefaultAsyncEx</c>. Unlike
+	/// <c>ToArrayAsyncEx</c> (which enumerates via the async SelectAsyncEnumerable /
+	/// MaterializeByCtor path), FirstOrDefaultAsyncEx falls through to the synchronous
+	/// <c>FirstOrDefault()</c> result-dispatch. That dispatch must treat a named,
+	/// non-entity projection class as a constructor/property projection, not as an
+	/// entity — otherwise it casts the projected row to <c>IDbPersistable</c> and throws
+	/// <c>InvalidCastException</c>.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NamedClass_MemberInit_FirstOrDefaultAsyncEx(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var task = await InsertTask("Build", alice, priority: 5);
+
+		await ClearCache();
+
+		var row = await Query<TestTask>()
+			.Where(t => t.Id == task.Id)
+			.Select(t => new SelectTaskNamedRow
+			{
+				Id = t.Id,
+				Title = t.Title,
+				PersonName = t.Person.Name,
+			})
+			.FirstOrDefaultAsyncEx(CancellationToken);
+
+		row.AssertNotNull();
+		row.Id.AssertEqual(task.Id);
+		row.Title.AssertEqual("Build");
+		row.PersonName.AssertEqual("Alice");
+	}
+
 	#endregion
 
 	#region Aggregation with Filter Tests
