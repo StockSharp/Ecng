@@ -7,6 +7,10 @@
     <FSharpVer>43.9.300</FSharpVer>
     <MsTestVer>3.11.1</MsTestVer>
     <MsTestSdkVer>17.13.0</MsTestSdkVer>
+    <!-- net6.0 is past end-of-life and many transitive packages (10.x) no longer claim
+         net6.0 support. Silence the TFM-support warning for the net6 build only (not net10),
+         since net6 is kept intentionally. -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net10'))">
