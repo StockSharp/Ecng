@@ -37,7 +37,7 @@
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
-    <NuGetApiVer>7.3.1</NuGetApiVer>
+    <NuGetApiVer>7.6.0</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>7.*</MsSqlClientVer>
     <MsDataSqliteVer>10.*</MsDataSqliteVer>
