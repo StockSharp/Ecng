@@ -80,8 +80,8 @@ public sealed class TarReader : IDisposable
 		if (archiveStream is null)
 			throw new ArgumentNullException(nameof(archiveStream));
 
-		// SharpCompress 0.47 OpenReader wraps the stream in SharpCompressStream
-		// and calls Rewind/Position which fails on non-seekable streams (e.g. GZipStream).
+		// SharpCompress Open wraps the stream in SharpCompressStream and calls
+		// Rewind/Position which fails on non-seekable streams (e.g. GZipStream).
 		// Buffer into a seekable MemoryStream when necessary.
 		if (!archiveStream.CanSeek)
 		{
@@ -98,7 +98,7 @@ public sealed class TarReader : IDisposable
 
 		_stream = archiveStream;
 		_leaveOpen = leaveOpen;
-		_reader = SharpTarReader.OpenReader(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
+		_reader = SharpTarReader.Open(archiveStream, new ReaderOptions { LeaveStreamOpen = true });
 	}
 
 	/// <summary>

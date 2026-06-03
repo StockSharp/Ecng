@@ -39,10 +39,10 @@
     <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>7.3.1</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
-    <MsSqlClientVer>6.*</MsSqlClientVer>
-    <MsDataSqliteVer>9.*</MsDataSqliteVer>
+    <MsSqlClientVer>7.*</MsSqlClientVer>
+    <MsDataSqliteVer>10.*</MsDataSqliteVer>
     <OpenXmlVer>3.*</OpenXmlVer>
-    <SharpCompressVer>0.*</SharpCompressVer>
+    <SharpCompressVer>1.*</SharpCompressVer>
     <NpgsqlVer>10.*</NpgsqlVer>
     <SmartFormatVer>3.*</SmartFormatVer>
   </PropertyGroup>

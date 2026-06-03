@@ -1127,7 +1127,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR archive using SharpCompress
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			foreach (var (name, content) in original)
 			{
@@ -1157,7 +1157,7 @@ public class CompressTests : BaseTestClass
 	{
 		// Create TAR archive
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content1 = new MemoryStream("include"u8.ToArray());
 			var content2 = new MemoryStream("exclude"u8.ToArray());
@@ -1189,7 +1189,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR archive
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content1 = new MemoryStream("content1"u8.ToArray());
 			var content2 = new MemoryStream("content2"u8.ToArray());
@@ -1225,7 +1225,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR archive
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content1 = new MemoryStream("async content 1"u8.ToArray());
 			var content2 = new MemoryStream("async content 2"u8.ToArray());
@@ -1255,7 +1255,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR archive
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("new content"u8.ToArray());
 			archive.AddEntry("file.txt", content, true, content.Length, null);
@@ -1293,7 +1293,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR archive
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var contentA = new MemoryStream("aaa"u8.ToArray());
 			var contentB = new MemoryStream("bbb"u8.ToArray());
@@ -1331,7 +1331,7 @@ public class CompressTests : BaseTestClass
 		// Create TAR.GZ archive
 		using var tgzStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			foreach (var (name, content) in original)
 			{
@@ -1366,7 +1366,7 @@ public class CompressTests : BaseTestClass
 		// Create TAR.GZ archive
 		using var tgzStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content1 = new MemoryStream("tgz content 1"u8.ToArray());
 			var content2 = new MemoryStream("tgz content 2"u8.ToArray());
@@ -1400,7 +1400,7 @@ public class CompressTests : BaseTestClass
 		// Create TAR.GZ archive
 		using var tgzStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("async tgz content"u8.ToArray());
 			archive.AddEntry("async_tgz.txt", content, true, content.Length, null);
@@ -1429,7 +1429,7 @@ public class CompressTests : BaseTestClass
 		// Create TAR.GZ archive
 		using var tgzStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content1 = new MemoryStream("content1"u8.ToArray());
 			var content2 = new MemoryStream("content2"u8.ToArray());
@@ -1470,7 +1470,7 @@ public class CompressTests : BaseTestClass
 
 		// Create a malicious TAR with "../malicious.txt" entry
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("malicious content"u8.ToArray());
 			archive.AddEntry("../malicious.txt", content, true, content.Length, null);
@@ -1497,7 +1497,7 @@ public class CompressTests : BaseTestClass
 
 		// Create a malicious TAR with nested path traversal
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("escaped content"u8.ToArray());
 			archive.AddEntry("subdir/../../escape.txt", content, true, content.Length, null);
@@ -1525,7 +1525,7 @@ public class CompressTests : BaseTestClass
 
 		// Create TAR with absolute path entry
 		using var tarStream = new MemoryStream();
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("root:x:0:0"u8.ToArray());
 			archive.AddEntry("/etc/passwd", content, true, content.Length, null);
@@ -1553,7 +1553,7 @@ public class CompressTests : BaseTestClass
 		// Create a malicious TAR.GZ with path traversal
 		using var tgzStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(tgzStream, CompressionLevel.Optimal, leaveOpen: true))
-		using (var archive = SharpCompress.Archives.Tar.TarArchive.CreateArchive())
+		using (var archive = SharpCompress.Archives.Tar.TarArchive.Create())
 		{
 			var content = new MemoryStream("escaped"u8.ToArray());
 			archive.AddEntry("../../escaped.txt", content, true, content.Length, null);
