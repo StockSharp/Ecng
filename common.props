@@ -4,6 +4,8 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;net10.0</TargetFrameworks>
 
+    <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
+    <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <AssemblyTitle>Ecng.$(MSBuildProjectName)</AssemblyTitle>
     <Product>Ecng system framework</Product>
     <Description>Ecng system framework</Description>
@@ -11,6 +13,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsSourcesAllow>false</IsSourcesAllow>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -62,12 +65,6 @@
 
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
-    <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
