@@ -1,17 +1,35 @@
-﻿namespace Ecng.Serialization;
+namespace Ecng.Serialization;
 
 using System.Security.Cryptography;
 
 using Ecng.Security;
 
-class SecureStringEncryptor
+/// <summary>
+/// Default AES-based <see cref="ISecureStringEncryptor"/>. The key and entropy are always
+/// supplied explicitly via the constructor — the built-in default secret lives in
+/// <see cref="SecureStringHelper"/>. Implement <see cref="ISecureStringEncryptor"/> directly
+/// for a completely custom scheme and assign it to <see cref="SecureStringHelper.Encryptor"/>.
+/// </summary>
+public class SecureStringEncryptor : ISecureStringEncryptor
 {
-	private static readonly Lazy<SecureStringEncryptor> _instance = new(() => new());
-	public static SecureStringEncryptor Instance => _instance.Value;
+	/// <summary>
+	/// Initializes a new instance with the given key and entropy.
+	/// </summary>
+	/// <param name="key">Encryption key.</param>
+	/// <param name="entropy">Encryption entropy (also used as the IV salt).</param>
+	public SecureStringEncryptor(SecureString key, byte[] entropy)
+	{
+		Key = key ?? throw new ArgumentNullException(nameof(key));
+		Entropy = entropy ?? throw new ArgumentNullException(nameof(entropy));
+	}
 
-	public SecureString Key { get; set; } = "RClVEDn0O3EUsKqym1qd".Secure();
-	public byte[] Entropy { get; set; } = "3hj67-!3".To<byte[]>();
+	/// <summary>Encryption key.</summary>
+	public SecureString Key { get; }
 
+	/// <summary>Encryption entropy (also used as the IV salt).</summary>
+	public byte[] Entropy { get; }
+
+	/// <inheritdoc />
 	public SecureString Decrypt(byte[] source)
 	{
 		if (source is null)
@@ -33,6 +51,7 @@ class SecureStringEncryptor
 		}
 	}
 
+	/// <inheritdoc />
 	public byte[] Encrypt(SecureString instance)
 	{
 		if (instance is null)

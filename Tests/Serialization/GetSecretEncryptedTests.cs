@@ -53,4 +53,57 @@ public class GetSecretEncryptedTests : BaseTestClass
 		TryGetSecret(key).AssertNull();
 		TryGetSecret(key, encrypted: true).AssertNull();
 	}
+
+	private sealed class CountingEncryptor : ISecureStringEncryptor
+	{
+		public int EncryptCalls;
+		public int DecryptCalls;
+
+		public byte[] Encrypt(SecureString value)
+		{
+			EncryptCalls++;
+			return value is null ? null : ("custom:" + value.UnSecure()).To<byte[]>();
+		}
+
+		public SecureString Decrypt(byte[] cipher)
+		{
+			DecryptCalls++;
+
+			if (cipher is null)
+				return null;
+
+			var s = cipher.To<string>();
+			return (s.StartsWith("custom:") ? s.Substring("custom:".Length) : s).Secure();
+		}
+	}
+
+	[TestMethod]
+	public void Encryptor_Default_IsBuiltInAes()
+		=> (SecureStringHelper.Encryptor is SecureStringEncryptor).AssertTrue();
+
+	[TestMethod]
+	public void Encryptor_SetNull_Throws()
+		=> Throws<ArgumentNullException>(() => SecureStringHelper.Encryptor = null);
+
+	[TestMethod]
+	public void Encryptor_Override_IsUsedByEncryptAndDecrypt()
+	{
+		var original = SecureStringHelper.Encryptor;
+		var custom = new CountingEncryptor();
+
+		try
+		{
+			SecureStringHelper.Encryptor = custom;
+
+			var cipher = SecureStringHelper.Encrypt("hunter2".Secure());
+			custom.EncryptCalls.AssertEqual(1);
+
+			SecureStringHelper.Decrypt(cipher).UnSecure().AssertEqual("hunter2");
+			custom.DecryptCalls.AssertEqual(1);
+		}
+		finally
+		{
+			SecureStringHelper.Encryptor = original;
+		}
+	}
 }

@@ -10,7 +10,7 @@ static class JsonConversions
 {
 	static JsonConversions()
 	{
-		Converter.AddTypedConverter<object[], SecureString>(val => SecureStringEncryptor.Instance.Decrypt([.. val.Select(i => i.To<byte>())]));
+		Converter.AddTypedConverter<object[], SecureString>(val => SecureStringHelper.Decrypt([.. val.Select(i => i.To<byte>())]));
 	}
 }
 
@@ -293,7 +293,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 					? await reader.ReadAsBytesAsync(cancellationToken).NoWait()
 					: (await reader.ReadAsStringAsync(cancellationToken).NoWait())?.Base64();
 
-				value = bytes is null ? null : SecureStringEncryptor.Instance.Decrypt(bytes);
+				value = bytes is null ? null : SecureStringHelper.Decrypt(bytes);
 			}
 			else if (type.TryGetAdapterType(out var adapterType))
 			{
@@ -350,7 +350,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		}
 		else if (value is SecureString secStr)
 		{
-			var encrypted = SecureStringEncryptor.Instance.Encrypt(secStr);
+			var encrypted = SecureStringHelper.Encrypt(secStr);
 			await WriteAsync(writer, EncryptedAsByteArray ? encrypted : encrypted?.Base64(), cancellationToken).NoWait();
 		}
 		else

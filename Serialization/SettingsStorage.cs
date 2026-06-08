@@ -190,7 +190,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 		}
 		else if (type == typeof(SecureString) && value is string str)
 		{
-			value = SecureStringEncryptor.Instance.Decrypt(str.Base64());
+			value = SecureStringHelper.Decrypt(str.Base64());
 		}
 
 		return value.To(type);
