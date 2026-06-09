@@ -45,6 +45,11 @@ public interface IJsonSerializer
 	bool EncryptedAsByteArray { get; set; }
 
 	/// <summary>
+	/// Gets or sets the local <see cref="SecureString"/> encryptor used by this serializer.
+	/// </summary>
+	ISecureStringEncryptor SecureStringEncryptor { get; set; }
+
+	/// <summary>
 	/// Gets or sets the buffer size used during serialization and deserialization.
 	/// </summary>
 	int BufferSize { get; set; }
@@ -92,6 +97,13 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	public bool EncryptedAsByteArray { get; set; }
 
 	/// <summary>
+	/// Gets or sets the local <see cref="SecureString"/> encryptor used by this serializer.
+	/// When set, it overrides <see cref="SecureStringHelper.Encryptor"/> only while this
+	/// serializer is serializing or deserializing.
+	/// </summary>
+	public ISecureStringEncryptor SecureStringEncryptor { get; set; }
+
+	/// <summary>
 	/// Gets or sets the buffer size used during serialization and deserialization.
 	/// </summary>
 	public int BufferSize { get; set; } = FileSizes.KB;
@@ -129,6 +141,8 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	/// <returns>A task representing the asynchronous serialization operation.</returns>
 	public override async ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
 	{
+		using var encryptorScope = CreateSecureStringEncryptorScope();
+
 		var isPrimitive = IsJsonPrimitive();
 
 		using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, BufferSize, true))
@@ -153,6 +167,8 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	/// <returns>A task representing the asynchronous deserialization operation. The task result contains the deserialized object graph.</returns>
 	public override async ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
 	{
+		using var encryptorScope = CreateSecureStringEncryptorScope();
+
 		var isPrimitive = IsJsonPrimitive();
 
 		using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true))
@@ -173,6 +189,9 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		return retVal;
 	}
+
+	private Scope<ISecureStringEncryptor> CreateSecureStringEncryptorScope()
+		=> SecureStringEncryptor is null ? null : new Scope<ISecureStringEncryptor>(SecureStringEncryptor, false);
 
 	private async ValueTask<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 	{

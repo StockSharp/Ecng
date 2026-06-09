@@ -6,7 +6,7 @@ using Ecng.Security;
 
 /// <summary>
 /// Default AES-based <see cref="ISecureStringEncryptor"/>. The key and entropy are always
-/// supplied explicitly via the constructor — the built-in default secret lives in
+/// supplied explicitly via the constructor - the built-in default secret lives in
 /// <see cref="SecureStringHelper"/>. Implement <see cref="ISecureStringEncryptor"/> directly
 /// for a completely custom scheme and assign it to <see cref="SecureStringHelper.Encryptor"/>.
 /// </summary>

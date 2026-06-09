@@ -4,7 +4,8 @@ namespace Ecng.Serialization;
 /// Public facade over the active <see cref="ISecureStringEncryptor"/>: encrypts and decrypts
 /// <see cref="SecureString"/> payloads using the same encryptor the JSON /
 /// <see cref="SettingsStorage"/> primitive path applies. Assign <see cref="Encryptor"/> to
-/// replace the secret or algorithm process-wide.
+/// replace the secret or algorithm process-wide, or use <see cref="Scope{T}"/> for a local
+/// <see cref="ISecureStringEncryptor"/> override.
 /// </summary>
 public static class SecureStringHelper
 {
@@ -28,12 +29,18 @@ public static class SecureStringHelper
 	}
 
 	/// <summary>
+	/// The encryptor active in the current async flow.
+	/// </summary>
+	public static ISecureStringEncryptor CurrentEncryptor
+		=> Scope<ISecureStringEncryptor>.Current?.Value ?? Encryptor;
+
+	/// <summary>
 	/// Encrypts <paramref name="value"/> to a byte array.
 	/// </summary>
 	/// <param name="value">SecureString to encrypt; <see langword="null"/> returns <see langword="null"/>.</param>
 	/// <returns>Encrypted bytes, or <see langword="null"/> when <paramref name="value"/> is <see langword="null"/>.</returns>
 	public static byte[] Encrypt(SecureString value)
-		=> Encryptor.Encrypt(value);
+		=> CurrentEncryptor.Encrypt(value);
 
 	/// <summary>
 	/// Decrypts <paramref name="cipher"/> previously produced by <see cref="Encrypt"/>.
@@ -41,5 +48,5 @@ public static class SecureStringHelper
 	/// <param name="cipher">Encrypted bytes; <see langword="null"/> returns <see langword="null"/>.</param>
 	/// <returns>Original <see cref="SecureString"/>, or <see langword="null"/> when <paramref name="cipher"/> is <see langword="null"/>.</returns>
 	public static SecureString Decrypt(byte[] cipher)
-		=> Encryptor.Decrypt(cipher);
+		=> CurrentEncryptor.Decrypt(cipher);
 }

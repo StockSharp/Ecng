@@ -2,9 +2,10 @@ namespace Ecng.Serialization;
 
 /// <summary>
 /// Encrypts and decrypts <see cref="SecureString"/> payloads. The instance used across the
-/// package — by <see cref="SecureStringHelper"/> and the JSON / <see cref="SettingsStorage"/>
-/// primitive path — can be replaced process-wide via <see cref="SecureStringHelper.Encryptor"/>,
-/// letting an application plug in its own secret or algorithm instead of the built-in default.
+/// package - by <see cref="SecureStringHelper"/> and the JSON / <see cref="SettingsStorage"/>
+/// primitive path - can be replaced process-wide via <see cref="SecureStringHelper.Encryptor"/>
+/// or locally via <see cref="Scope{T}"/>, letting an application plug in its own secret or
+/// algorithm instead of the built-in default.
 /// </summary>
 public interface ISecureStringEncryptor
 {
