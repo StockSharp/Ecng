@@ -287,6 +287,37 @@ public static class SchemaRegistry
 		return (indexes, attrs.Any(a => a is UniqueAttribute));
 	}
 
+	// Enumerates an entity's properties in a deterministic, base-class-first order so the
+	// system columns inherited from a base entity always precede the derived entity's own
+	// columns (the identity is pulled out separately by the caller regardless of position).
+	// Type.GetProperties() returns members in an order the CLR does not contractually define
+	// (often derived-first, and runtime-dependent), which made generated column order vary.
+	// Walk the inheritance chain base -> derived and, within each type, keep declaration
+	// order (approximated by MetadataToken). Properties hidden/overridden in a derived type
+	// keep their base position (deduped by name, base wins).
+	private static IEnumerable<PropertyInfo> GetOrderedProperties(Type entityType)
+	{
+		var chain = new List<Type>();
+
+		for (var t = entityType; t is not null && t != typeof(object); t = t.BaseType)
+			chain.Add(t);
+
+		chain.Reverse();
+
+		var seen = new HashSet<string>(StringComparer.Ordinal);
+
+		foreach (var t in chain)
+		{
+			foreach (var prop in t
+				.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+				.OrderBy(p => p.MetadataToken))
+			{
+				if (seen.Add(prop.Name))
+					yield return prop;
+			}
+		}
+	}
+
 	private static Schema CreateFromReflection(Type entityType)
 	{
 		var entityAttr = entityType.GetAttribute<EntityAttribute>();
@@ -372,7 +403,7 @@ public static class SchemaRegistry
 				propHasUnique || typeLevel.HasUnique);
 		}
 
-			foreach (var prop in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+			foreach (var prop in GetOrderedProperties(entityType))
 			{
 				if (prop.GetMethod is null || prop.SetMethod is null)
 					continue;

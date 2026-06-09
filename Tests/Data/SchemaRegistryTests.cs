@@ -982,6 +982,34 @@ public class SchemaRegistryTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Column ordering
+
+	[TestMethod]
+	public void BaseClassColumns_ComeBeforeDerived()
+	{
+		// System columns declared on the base entity must precede the derived entity's own
+		// columns (the identity stays separate). TestBrokerUser : TestBrokerBase — the base
+		// declares CreatedBy, ModifiedBy; the derived adds Email, FirstName, LastName.
+		var schema = SchemaRegistry.Get(typeof(TestBrokerUser));
+
+		schema.Identity.Name.AssertEqual("Id");
+		string.Join(",", schema.Columns.Select(c => c.Name))
+			.AssertEqual("CreatedBy,ModifiedBy,Email,FirstName,LastName");
+	}
+
+	[TestMethod]
+	public void BaseClassColumns_ComeBeforeDerived_WithDerivedFk()
+	{
+		// TestBrokerPortfolio : TestBrokerBase — base CreatedBy, ModifiedBy precede the
+		// derived User (FK) and Name.
+		var schema = SchemaRegistry.Get(typeof(TestBrokerPortfolio));
+
+		string.Join(",", schema.Columns.Select(c => c.Name))
+			.AssertEqual("CreatedBy,ModifiedBy,User,Name");
+	}
+
+	#endregion
 }
 
 #endif
