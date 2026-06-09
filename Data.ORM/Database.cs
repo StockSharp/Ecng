@@ -1289,6 +1289,13 @@ public partial class Database : Disposable, IStorage
 		return result;
 	}
 
+	/// <summary>
+	/// Executes the specified query expression and returns a single result.
+	/// </summary>
+	/// <typeparam name="TSource">The source entity type.</typeparam>
+	/// <typeparam name="TResult">The result type.</typeparam>
+	/// <param name="expression">The query expression to execute.</param>
+	/// <returns>The query result.</returns>
 	public async ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression)
 	{
 		var (translator, query, token) = GetQuery<TSource>(expression);
