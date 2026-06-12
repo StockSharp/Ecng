@@ -23,7 +23,9 @@ public class YandexDiskClientTests : BaseTestClass
 		public IMetaInfoClient MetaInfo => MetaInfoClient;
 		public ICommandsClient Commands => CommandsClient;
 
-		public void Dispose() { }
+		public int DisposeCount { get; private set; }
+
+		public void Dispose() => DisposeCount++;
 	}
 
 	private sealed class FakeFilesClient : IFilesClient
@@ -62,6 +64,9 @@ public class YandexDiskClientTests : BaseTestClass
 	{
 		public Dictionary<string, Resource> Resources { get; } = [];
 
+		// When set, PublishFolderAsync returns this Href (mimics the cloud-api metadata URL).
+		public string PublishHref { get; set; }
+
 		public Task<Disk> GetDiskInfoAsync(CancellationToken cancellationToken = default)
 			=> Task.FromResult(new Disk());
 
@@ -81,7 +86,7 @@ public class YandexDiskClientTests : BaseTestClass
 		public Task<Resource> AppendCustomProperties(string path, IDictionary<string, string> properties, CancellationToken cancellationToken = default)
 			=> throw new NotImplementedException();
 		public Task<Link> PublishFolderAsync(string path, CancellationToken cancellationToken = default)
-			=> Task.FromResult(new Link { Href = $"https://yadi.sk/d{path}" });
+			=> Task.FromResult(new Link { Href = PublishHref ?? $"https://yadi.sk/d{path}" });
 		public Task<Link> UnpublishFolderAsync(string path, CancellationToken cancellationToken = default)
 			=> Task.FromResult(new Link());
 	}
@@ -90,12 +95,20 @@ public class YandexDiskClientTests : BaseTestClass
 	{
 		public HashSet<string> Directories { get; } = [];
 
+		// The HttpStatusCode reported on the Link returned by DeleteAsync.
+		public HttpStatusCode DeleteStatusCode { get; set; } = HttpStatusCode.NoContent;
+
+		// Statuses returned by successive GetOperationStatus calls.
+		public Queue<OperationStatus> OperationStatuses { get; } = new();
+
+		public int GetOperationStatusCalls { get; private set; }
+
 		public Task<Link> CopyAsync(CopyFileRequest request, CancellationToken cancellationToken = default)
 			=> throw new NotImplementedException();
 		public Task<Link> MoveAsync(MoveFileRequest request, CancellationToken cancellationToken = default)
 			=> throw new NotImplementedException();
 		public Task<Link> DeleteAsync(DeleteFileRequest request, CancellationToken cancellationToken = default)
-			=> Task.FromResult(new Link());
+			=> Task.FromResult(new Link { HttpStatusCode = DeleteStatusCode, Href = "https://cloud-api.yandex.net/v1/disk/operations/op-1" });
 		public Task<Link> CreateDirectoryAsync(string path, CancellationToken cancellationToken = default)
 		{
 			Directories.Add(path);
@@ -106,7 +119,59 @@ public class YandexDiskClientTests : BaseTestClass
 		public Task<Link> RestoreFromTrashAsync(RestoreFromTrashRequest request, CancellationToken cancellationToken = default)
 			=> throw new NotImplementedException();
 		public Task<Operation> GetOperationStatus(Link link, CancellationToken cancellationToken = default)
-			=> throw new NotImplementedException();
+		{
+			GetOperationStatusCalls++;
+			var status = OperationStatuses.Count > 0 ? OperationStatuses.Dequeue() : OperationStatus.Success;
+			return Task.FromResult(new Operation { Status = status });
+		}
+	}
+
+	// Seekable read-only stream with a configurable initial Position, to exercise
+	// upload progress against a non-rewound stream.
+	private sealed class SeekableReadStream(byte[] data) : Stream
+	{
+		private readonly byte[] _data = data ?? throw new ArgumentNullException(nameof(data));
+		private int _pos;
+
+		public override bool CanRead => true;
+		public override bool CanSeek => true;
+		public override bool CanWrite => false;
+		public override long Length => _data.Length;
+
+		public override long Position
+		{
+			get => _pos;
+			set => _pos = (int)value;
+		}
+
+		public override int Read(byte[] buffer, int offset, int count)
+		{
+			var remaining = _data.Length - _pos;
+			if (remaining <= 0 || count <= 0)
+				return 0;
+
+			var toRead = Math.Min(count, remaining);
+			Array.Copy(_data, _pos, buffer, offset, toRead);
+			_pos += toRead;
+			return toRead;
+		}
+
+		public override long Seek(long offset, SeekOrigin origin)
+		{
+			_pos = origin switch
+			{
+				SeekOrigin.Begin => (int)offset,
+				SeekOrigin.Current => _pos + (int)offset,
+				SeekOrigin.End => _data.Length + (int)offset,
+				_ => _pos,
+			};
+
+			return _pos;
+		}
+
+		public override void Flush() { }
+		public override void SetLength(long value) => throw new NotSupportedException();
+		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 	}
 
 	#endregion
@@ -165,6 +230,164 @@ public class YandexDiskClientTests : BaseTestClass
 
 		(progressCalls.Count > 0).AssertTrue("Progress callback should be called during UploadAsync");
 		progressCalls.Last().AssertEqual(100, "Final progress should be 100");
+	}
+
+	/// <summary>
+	/// BUG: PublishAsync returns link.Href from PublishFolderAsync, which is the
+	/// OAuth-protected cloud-api metadata URL ("URL for requesting resource metadata"),
+	/// not the shareable public link. The real public URL is Resource.PublicUrl,
+	/// obtained from a follow-up GetInfoAsync. (Backup.Yandex\YandexDiskService.cs:232)
+	/// Expected: PublishAsync returns the public "https://yadi.sk/..." URL (PublicUrl).
+	/// Actual: it returns the "https://cloud-api.yandex.net/..." metadata Href.
+	/// </summary>
+	[TestMethod]
+	public async Task PublishAsync_ShouldReturnPublicUrl_NotMetadataHref()
+	{
+		const string publicUrl = "https://yadi.sk/i/qmsXWAtm_WRmIQ";
+		const string metadataHref = "https://cloud-api.yandex.net/v1/disk/resources?path=disk%3A%2Ffolder%2Ffile.txt";
+
+		var fakeApi = new FakeDiskApi();
+		fakeApi.MetaInfoClient.PublishHref = metadataHref;
+
+		var folder = new BackupEntry { Name = "folder" };
+		var entry = new BackupEntry { Name = "file.txt", Parent = folder };
+
+		// After publishing, the resource metadata exposes the public URL.
+		fakeApi.MetaInfoClient.Resources[entry.GetFullPath()] = new Resource
+		{
+			Type = ResourceType.File,
+			Name = entry.Name,
+			PublicUrl = publicUrl,
+		};
+
+		using var service = new YandexDiskService(fakeApi);
+		var svc = (IBackupService)service;
+
+		var url = await svc.PublishAsync(entry, expiresIn: null, cancellationToken: CancellationToken);
+
+		AreEqual(publicUrl, url);
+	}
+
+	/// <summary>
+	/// BUG: DeleteAsync forwards the raw Task from Commands.DeleteAsync. Yandex.Disk
+	/// deletes non-empty folders asynchronously, returning 202 Accepted plus an
+	/// operation Link; the service reports completion before the server-side delete
+	/// finishes instead of polling via DeleteAndWaitAsync / GetOperationStatus.
+	/// (Backup.Yandex\YandexDiskService.cs:118)
+	/// Expected: DeleteAsync waits for the operation, so GetOperationStatus is polled
+	/// at least once when the delete returns 202 Accepted.
+	/// Actual: GetOperationStatus is never called; DeleteAsync returns immediately.
+	/// </summary>
+	[TestMethod]
+	public async Task DeleteAsync_OnAcceptedOperation_ShouldWaitForCompletion()
+	{
+		var fakeApi = new FakeDiskApi();
+		fakeApi.CommandsClient.DeleteStatusCode = HttpStatusCode.Accepted;
+		fakeApi.CommandsClient.OperationStatuses.Enqueue(OperationStatus.Success);
+
+		var entry = new BackupEntry { Name = "non-empty-folder" };
+
+		using var service = new YandexDiskService(fakeApi);
+		var svc = (IBackupService)service;
+
+		await svc.DeleteAsync(entry, CancellationToken);
+
+		(fakeApi.CommandsClient.GetOperationStatusCalls > 0)
+			.AssertTrue("DeleteAsync must poll the operation status for a 202 Accepted delete.");
+	}
+
+	/// <summary>
+	/// BUG: FindAsyncImpl dereferences info.Embedded.Items unguarded. When the parent
+	/// path resolves to a file, GetInfoAsync succeeds with a Resource whose Embedded is
+	/// null (the API omits "_embedded" for files), so enumeration throws a bare
+	/// NullReferenceException. (Backup.Yandex\YandexDiskService.cs:84)
+	/// Expected: a file parent yields no children (empty sequence) rather than NRE.
+	/// Actual: NullReferenceException is thrown while enumerating.
+	/// </summary>
+	[TestMethod]
+	public async Task FindAsync_WhenParentIsFile_ShouldNotThrowNullReference()
+	{
+		var fakeApi = new FakeDiskApi();
+
+		var parent = new BackupEntry { Name = "some-file.txt" };
+
+		// FindAsyncImpl queries "<path>/" for the parent; register a file resource
+		// (Embedded == null) at that exact path.
+		var path = parent.GetFullPath().TrimEnd('/') + "/";
+		fakeApi.MetaInfoClient.Resources[path] = new Resource
+		{
+			Type = ResourceType.File,
+			Name = parent.Name,
+			Embedded = null,
+		};
+
+		using var service = new YandexDiskService(fakeApi);
+		var svc = (IBackupService)service;
+
+		var found = new List<BackupEntry>();
+
+		await foreach (var item in svc.FindAsync(parent, null).WithCancellation(CancellationToken))
+			found.Add(item);
+
+		AreEqual(0, found.Count);
+	}
+
+	/// <summary>
+	/// BUG: UploadAsync uses stream.Length as the progress total, ignoring the current
+	/// Position. For a non-rewound seekable stream only (Length - Position) bytes are
+	/// uploaded, so reported percentages are understated for the whole transfer and only
+	/// reach 100 via the final fallback. (Backup.Yandex\YandexDiskService.cs:173)
+	/// Expected: progress reflects the remaining bytes, so values above 50% (and below
+	/// 100) are reported when half the stream has already been consumed.
+	/// Actual: progress tops out around 50% then jumps straight to 100.
+	/// </summary>
+	[TestMethod]
+	public async Task UploadAsync_NonRewoundStream_ShouldReportProgressFromRemaining()
+	{
+		var fakeApi = new FakeDiskApi();
+
+		var entry = new BackupEntry { Name = "upload.bin", Parent = new BackupEntry { Name = "uploads" } };
+
+		var data = new byte[10000];
+		RandomGen.GetBytes(data);
+
+		using var stream = new SeekableReadStream(data);
+		stream.Position = data.Length / 2; // half already consumed
+
+		var progressCalls = new List<int>();
+
+		using var service = new YandexDiskService(fakeApi);
+		var svc = (IBackupService)service;
+
+		await svc.UploadAsync(entry, stream, progressCalls.Add, CancellationToken);
+
+		// With the bug the only reported values are 0..~50 then the 100 fallback,
+		// so no genuine intermediate value lands in (50, 100).
+		progressCalls.Any(p => p > 50 && p < 100)
+			.AssertTrue("Progress must account for the stream Position, reporting values above 50% before completion.");
+	}
+
+	/// <summary>
+	/// BUG: DisposeManaged unconditionally calls _client.Dispose(), disposing an
+	/// IDiskApi that was injected by the caller via the YandexDiskService(IDiskApi)
+	/// constructor. The shared client (documented as cache-and-reuse) then breaks every
+	/// other consumer. (Backup.Yandex\YandexDiskService.cs:47)
+	/// Expected: an injected client is owned by the caller and is NOT disposed by the
+	/// service.
+	/// Actual: the service disposes the injected client.
+	/// </summary>
+	[TestMethod]
+	public void Dispose_ShouldNotDisposeInjectedClient()
+	{
+		var fakeApi = new FakeDiskApi();
+
+		using (var service = new YandexDiskService(fakeApi))
+		{
+			var svc = (IBackupService)service;
+			(svc.CanFolders).AssertTrue();
+		}
+
+		AreEqual(0, fakeApi.DisposeCount);
 	}
 
 	#endregion

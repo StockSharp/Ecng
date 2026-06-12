@@ -22,12 +22,19 @@ public class AmazonGlacierServiceTests : BaseTestClass
 		public List<InitiateJobRequest> InitiatedJobs { get; } = [];
 		public string LastInventoryJobId { get; private set; }
 
+		// Maps an archive-retrieval job id to the source archive being retrieved.
+		private readonly Dictionary<string, ArchiveData> _retrievalJobs = new(StringComparer.Ordinal);
+
 		public sealed class ArchiveData
 		{
 			public string ArchiveId { get; init; }
 			public string Description { get; init; }
 			public long Size { get; init; }
 			public DateTime CreationDate { get; init; }
+
+			// Optional payload for archive-retrieval (download) scenarios. When set,
+			// Size is ignored for retrieval and the body length is used instead.
+			public byte[] Body { get; init; } = [];
 		}
 
 		public void Dispose() { }
@@ -39,6 +46,11 @@ public class AmazonGlacierServiceTests : BaseTestClass
 
 			if (request.JobParameters.Type == "inventory-retrieval")
 				LastInventoryJobId = jobId;
+			else if (request.JobParameters.Type == "archive-retrieval")
+			{
+				var archive = Archives.FirstOrDefault(a => a.ArchiveId == request.JobParameters.ArchiveId);
+				_retrievalJobs[jobId] = archive;
+			}
 
 			return Task.FromResult(new InitiateJobResponse
 			{
@@ -49,23 +61,58 @@ public class AmazonGlacierServiceTests : BaseTestClass
 
 		public Task<DescribeJobResponse> DescribeJobAsync(DescribeJobRequest request, CancellationToken cancellationToken = default)
 		{
-			return Task.FromResult(new DescribeJobResponse
+			var response = new DescribeJobResponse
 			{
 				Completed = true,
 				HttpStatusCode = HttpStatusCode.OK
-			});
+			};
+
+			// For archive-retrieval jobs the service reads ArchiveSizeInBytes from this
+			// response to compute download progress; expose the full archive size.
+			if (_retrievalJobs.TryGetValue(request.JobId, out var archive) && archive is not null)
+				response.ArchiveSizeInBytes = archive.Body.Length;
+
+			return Task.FromResult(response);
 		}
 
 		public Task<GetJobOutputResponse> GetJobOutputAsync(GetJobOutputRequest request, CancellationToken cancellationToken = default)
 		{
-			// Return inventory JSON
+			// Archive-retrieval: return the archive payload, honoring any requested byte range.
+			if (_retrievalJobs.TryGetValue(request.JobId, out var archive) && archive is not null)
+			{
+				var body = archive.Body;
+				var start = 0;
+				var count = body.Length;
+
+				// Honor the requested byte range (bytes=start-end, inclusive end).
+				if (!request.Range.IsEmpty())
+				{
+					var spec = request.Range.Replace("bytes=", string.Empty);
+					var parts = spec.Split('-');
+					start = parts[0].To<int>();
+					var end = parts[1].To<int>();
+					count = end - start + 1;
+				}
+
+				var slice = new byte[count];
+				Array.Copy(body, start, slice, 0, count);
+
+				return Task.FromResult(new GetJobOutputResponse
+				{
+					Body = new MemoryStream(slice),
+					ContentRange = $"bytes {start}-{start + count - 1}/{body.Length}",
+					HttpStatusCode = HttpStatusCode.OK
+				});
+			}
+
+			// Inventory-retrieval: return the archive list as JSON.
 			var inventory = new
 			{
 				ArchiveList = Archives.Select(a => new
 				{
 					ArchiveId = a.ArchiveId,
 					ArchiveDescription = a.Description,
-					Size = a.Size,
+					Size = a.Body.Length > 0 ? (long)a.Body.Length : a.Size,
 					CreationDate = a.CreationDate.ToString("o")
 				}).ToList()
 			};
@@ -318,5 +365,115 @@ public class AmazonGlacierServiceTests : BaseTestClass
 			.AssertFalse("folderA/file.txt should be deleted");
 		client.Archives.Any(a => a.Description == "folderB/file.txt")
 			.AssertTrue("folderB/file.txt should remain");
+	}
+
+	/// <summary>
+	/// BUG: FindAsync(parent, ...) re-attaches the rebuilt hierarchy root to the parent
+	/// parameter, but GetPath already encodes the full path, so the parent prefix is
+	/// duplicated. (AmazonGlacierService.cs:157-166)
+	/// Expected: for parent "folder/subfolder" and archive "folder/subfolder/file.txt",
+	/// the returned entry's full path is "folder/subfolder/file.txt".
+	/// Actual: GetFullPath() yields the doubled "folder/subfolder/folder/subfolder/file.txt".
+	/// </summary>
+	[TestMethod]
+	public async Task FindAsync_NonEmptyParent_ShouldNotDoubleParentPath()
+	{
+		var client = new FakeGlacierClient();
+		client.Archives.Add(new FakeGlacierClient.ArchiveData
+		{
+			ArchiveId = "archive1",
+			Description = "folder/subfolder/file.txt",
+			Body = new byte[10],
+			CreationDate = DateTime.UtcNow,
+		});
+
+		using var service = CreateService(client);
+		var svc = (IBackupService)service;
+
+		var parent = new BackupEntry { Name = "subfolder", Parent = new BackupEntry { Name = "folder" } };
+
+		var entries = await svc.FindAsync(parent, null).ToListAsync(CancellationToken);
+
+		AreEqual(1, entries.Count);
+		AreEqual("folder/subfolder/file.txt", entries[0].GetFullPath());
+	}
+
+	/// <summary>
+	/// BUG: Glacier entries return LastModified converted to local time via ToLocalTime().
+	/// (AmazonGlacierService.cs:168)
+	/// Expected: LastModified is kept in UTC (Kind=Utc) and equals the stored UTC instant,
+	/// matching the repository-wide UTC convention and all other IBackupService backends.
+	/// Actual: the value is shifted to local time with Kind=Local.
+	/// </summary>
+	[TestMethod]
+	public async Task FindAsync_LastModified_ShouldBeUtc()
+	{
+		var utc = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+
+		var client = new FakeGlacierClient();
+		client.Archives.Add(new FakeGlacierClient.ArchiveData
+		{
+			ArchiveId = "archive1",
+			Description = "data/file.txt",
+			Body = new byte[10],
+			CreationDate = utc,
+		});
+
+		using var service = CreateService(client);
+		var svc = (IBackupService)service;
+
+		var entries = await svc.FindAsync(null, null).ToListAsync(CancellationToken);
+
+		AreEqual(1, entries.Count);
+
+		var lastModified = entries[0].LastModified;
+
+		AreEqual(DateTimeKind.Utc, lastModified.Kind);
+		AreEqual(utc, lastModified);
+	}
+
+	/// <summary>
+	/// BUG: ranged Glacier download computes progress against the full archive size
+	/// (describe.ArchiveSizeInBytes) instead of the requested range length.
+	/// (AmazonGlacierService.cs:229)
+	/// Expected: progress is relative to the downloaded range, so when the whole range
+	/// arrives in a single read the only reported value is the final 100%.
+	/// Actual: an intermediate value far below 100 (range/full * 100) is reported because
+	/// the denominator is the full archive size.
+	/// </summary>
+	[TestMethod]
+	public async Task DownloadAsync_RangedProgress_ShouldUseRangeLength()
+	{
+		// 100-byte archive; download only the first 10 bytes.
+		var body = new byte[100];
+		for (var i = 0; i < body.Length; i++)
+			body[i] = (byte)i;
+
+		var client = new FakeGlacierClient();
+		client.Archives.Add(new FakeGlacierClient.ArchiveData
+		{
+			ArchiveId = "archive1",
+			Description = "data/file.bin",
+			Body = body,
+			CreationDate = DateTime.UtcNow,
+		});
+
+		using var service = CreateService(client);
+		var svc = (IBackupService)service;
+
+		var entry = new BackupEntry { Name = "file.bin", Parent = new BackupEntry { Name = "data" } };
+
+		var reported = new List<int>();
+
+		using var output = new MemoryStream();
+		await svc.DownloadAsync(entry, output, offset: 0, length: 10, progress: reported.Add, CancellationToken);
+
+		// The requested 10-byte range arrives in a single buffered read, so a correct
+		// implementation reports only the final 100% (any intermediate 100% is suppressed
+		// by the < 100 guard). The bug reports an intermediate value (~10%) computed from
+		// the full 100-byte archive size.
+		IsFalse(reported.Any(p => p < 100),
+			$"Ranged progress must be relative to the range length; got [{reported.Select(p => p.To<string>()).Join(", ")}].");
+		IsTrue(reported.Contains(100), "Progress should reach 100%.");
 	}
 }

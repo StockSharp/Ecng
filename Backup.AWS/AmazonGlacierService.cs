@@ -155,17 +155,8 @@ public class AmazonGlacierService : Disposable, IBackupService
 				continue;
 
 			var be = GetPath(fullPath);
-			// Connect the root of the hierarchy to the parent parameter (if any)
-			// instead of overwriting be.Parent which would flatten the hierarchy
-			if (parent != null)
-			{
-				var root = be;
-				while (root.Parent != null)
-					root = root.Parent;
-				root.Parent = parent;
-			}
 			be.Size = item.Size;
-			be.LastModified = item.CreationDate?.ToLocalTime() ?? default;
+			be.LastModified = ToUtc(item.CreationDate);
 			yield return be;
 		}
 	}
@@ -177,7 +168,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 	{
 		var info = await ResolveArchiveAsync(entry, cancellationToken).NoWait();
 		entry.Size = info.Size;
-		entry.LastModified = info.CreationDate?.ToLocalTime() ?? default;
+		entry.LastModified = ToUtc(info.CreationDate);
 	}
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
@@ -226,7 +217,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 		var bytes = new byte[_bufferSize];
 		var readTotal = 0L;
-		var objLen = describe.ArchiveSizeInBytes ?? 0;
+		var objLen = length ?? describe.ArchiveSizeInBytes ?? 0;
 		var prevProgress = -1;
 
 		while (true)
@@ -254,6 +245,19 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 		if (objLen > 0 && prevProgress < 100)
 			progress(100);
+	}
+
+	private static DateTime ToUtc(DateTime? value)
+	{
+		if (value is null)
+			return default;
+
+		return value.Value.Kind switch
+		{
+			DateTimeKind.Utc => value.Value,
+			DateTimeKind.Local => value.Value.ToUniversalTime(),
+			_ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc),
+		};
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)

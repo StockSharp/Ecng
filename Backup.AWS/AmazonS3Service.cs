@@ -62,10 +62,14 @@ public class AmazonS3Service : Disposable, IBackupService
 		//if (parent != null && !parent.IsDirectory)
 		//	throw new ArgumentException("{0} should be directory.".Put(parent.Name), "parent");
 
+		var prefix = parent?.GetFullPath();
+		if (!prefix.IsEmpty())
+			prefix = prefix.TrimEnd('/') + "/";
+
 		var request = new ListObjectsV2Request
 		{
 			BucketName = _bucket,
-			Prefix = parent?.GetFullPath() ?? string.Empty,
+			Prefix = prefix ?? string.Empty,
 		};
 
 		if (!criteria.IsEmpty())
@@ -183,6 +187,19 @@ public class AmazonS3Service : Disposable, IBackupService
 			throw new ArgumentNullException(nameof(progress));
 
 		var key = entry.GetFullPath();
+
+		if (stream.CanSeek && stream.Position >= stream.Length)
+		{
+			await _client.PutObjectAsync(new()
+			{
+				BucketName = _bucket,
+				Key = key,
+				InputStream = stream,
+			}, cancellationToken).NoWait();
+
+			progress(100);
+			return;
+		}
 
 		var initResponse = await _client.InitiateMultipartUploadAsync(new()
 		{

@@ -23,12 +23,44 @@ using YandexDisk.Client.Protocol;
 public class YandexDiskService : Disposable, IBackupService
 {
 	private readonly IDiskApi _client;
+	private readonly bool _ownsClient;
+
+	private sealed class MaxReadStream(Stream inner, int maxReadSize) : Stream
+	{
+		public override bool CanRead => inner.CanRead;
+		public override bool CanSeek => inner.CanSeek;
+		public override bool CanWrite => false;
+		public override long Length => inner.Length;
+
+		public override long Position
+		{
+			get => inner.Position;
+			set => inner.Position = value;
+		}
+
+		public override int Read(byte[] buffer, int offset, int count)
+			=> inner.Read(buffer, offset, Math.Min(count, maxReadSize));
+
+		public override int Read(Span<byte> buffer)
+			=> inner.Read(buffer[..Math.Min(buffer.Length, maxReadSize)]);
+
+		public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+			=> inner.ReadAsync(buffer, offset, Math.Min(count, maxReadSize), cancellationToken);
+
+		public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+			=> inner.ReadAsync(buffer[..Math.Min(buffer.Length, maxReadSize)], cancellationToken);
+
+		public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+		public override void Flush() => inner.Flush();
+		public override void SetLength(long value) => throw new NotSupportedException();
+		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 	/// </summary>
 	public YandexDiskService(SecureString token)
-		: this(new DiskHttpApi(token.IsEmpty() ? throw new ArgumentNullException(nameof(token)) : token.UnSecure()))
+		: this(new DiskHttpApi(token.IsEmpty() ? throw new ArgumentNullException(nameof(token)) : token.UnSecure()), true)
 	{
 	}
 
@@ -37,14 +69,22 @@ public class YandexDiskService : Disposable, IBackupService
 	/// </summary>
 	/// <param name="client">The Yandex.Disk client.</param>
 	public YandexDiskService(IDiskApi client)
+		: this(client, false)
+	{
+	}
+
+	private YandexDiskService(IDiskApi client, bool ownsClient)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
+		_ownsClient = ownsClient;
 	}
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
-		_client.Dispose();
+		if (_ownsClient)
+			_client.Dispose();
+
 		base.DisposeManaged();
 	}
 
@@ -81,6 +121,9 @@ public class YandexDiskService : Disposable, IBackupService
 				yield break;
 			}
 
+			if (info.Embedded?.Items is null)
+				yield break;
+
 			foreach (var item in info.Embedded.Items)
 			{
 				if (!criteria.IsEmpty() && !item.Name.ContainsIgnoreCase(criteria))
@@ -113,12 +156,12 @@ public class YandexDiskService : Disposable, IBackupService
 		entry.LastModified = info.Modified;
 	}
 
-	Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
+	async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
-		return _client.Commands.DeleteAsync(new()
+		await _client.Commands.DeleteAndWaitAsync(new()
 		{
 			Path = entry.GetFullPath(),
-		}, cancellationToken);
+		}, cancellationToken, TimeSpan.Zero).NoWait();
 	}
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
@@ -170,8 +213,17 @@ public class YandexDiskService : Disposable, IBackupService
 		}
 		else
 		{
+			var startPosition = stream.Position;
 			var totalBytes = stream.Length;
-			var wrapper = new ProgressStream(stream, totalBytes, progress, trackReads: true, trackWrites: false, leaveOpen: true);
+			var remainingBytes = totalBytes - startPosition;
+			var maxReadSize = (int)Math.Max(1, Math.Min(81920, remainingBytes / 2));
+			using var limited = new MaxReadStream(stream, maxReadSize);
+			var wrapper = new ProgressStream(limited, remainingBytes, percent =>
+			{
+				var uploadedBytes = remainingBytes * percent / 100;
+				var overallPercent = totalBytes > 0 ? (int)((startPosition + uploadedBytes) * 100 / totalBytes) : percent;
+				progress(overallPercent);
+			}, trackReads: true, trackWrites: false, leaveOpen: true);
 			await _client.Files.UploadAsync(link, wrapper, cancellationToken).NoWait();
 
 			if (wrapper.LastReportedPercent != 100)
@@ -230,7 +282,12 @@ public class YandexDiskService : Disposable, IBackupService
 			throw new NotSupportedException("Expiring links are not supported by Yandex.Disk publish API.");
 
 		var link = await _client.MetaInfo.PublishFolderAsync(entry.GetFullPath(), cancellationToken).NoWait();
-		return link.Href;
+		var info = await _client.MetaInfo.GetInfoAsync(new()
+		{
+			Path = entry.GetFullPath(),
+		}, cancellationToken).NoWait();
+
+		return info.PublicUrl.IsEmpty() ? link.Href : info.PublicUrl;
 	}
 
 	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
