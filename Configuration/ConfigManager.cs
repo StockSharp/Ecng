@@ -200,21 +200,31 @@ public static class ConfigManager
 		if (registered is null)
 			throw new ArgumentNullException(nameof(registered));
 
-		if (!_subscribers.TryGetValue(typeof(T), out var subscribers))
+		using (_sync.EnterScope())
 		{
-			subscribers = [];
-			_subscribers.Add(typeof(T), subscribers);
-		}
+			if (!_subscribers.TryGetValue(typeof(T), out var subscribers))
+			{
+				subscribers = [];
+				_subscribers.Add(typeof(T), subscribers);
+			}
 
-		subscribers.Add(svc => registered((T)svc));
+			subscribers.Add(svc => registered((T)svc));
+		}
 	}
 
 	private static void RaiseServiceRegistered(Type type, object service)
 	{
 		ServiceRegistered?.Invoke(type, service);
 
-		if (!_subscribers.TryGetValue(type, out var subscribers))
-			return;
+		Action<object>[] subscribers;
+
+		using (_sync.EnterScope())
+		{
+			if (!_subscribers.TryGetValue(type, out var list))
+				return;
+
+			subscribers = [.. list];
+		}
 
 		foreach (var subscriber in subscribers)
 			subscriber(service);
@@ -326,8 +336,19 @@ public static class ConfigManager
 		}
 
 		var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
+		T typed = default;
 
-		var typed = (T)fallback(typeof(T), name) ?? throw new InvalidOperationException($"Service '{name}' not constructed.");
+		foreach (Func<Type, string, object> handler in fallback.GetInvocationList())
+		{
+			if (handler(typeof(T), name) is T service)
+			{
+				typed = service;
+				break;
+			}
+		}
+
+		if (typed is null)
+			throw new InvalidOperationException($"Service '{name}' not constructed.");
 
 		RegisterService(name, typed);
 

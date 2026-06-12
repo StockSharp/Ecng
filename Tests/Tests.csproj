@@ -30,6 +30,7 @@
     <ProjectReference Include="..\Backup.Azure\Backup.Azure.csproj" />
     <ProjectReference Include="..\Backup.Mega\Backup.Mega.csproj" />
     <ProjectReference Include="..\Backup.Yandex\Backup.Yandex.csproj" />
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Excel.DX\Excel.DX.csproj" />
     <ProjectReference Include="..\Excel.OpenXml\Excel.OpenXml.csproj" />
