@@ -55,11 +55,17 @@ public class AzureBlobService : Disposable, IBackupService
 	{
 		await EnsureContainerAsync(cancellationToken).NoWait();
 
-		var prefix = parent?.GetFullPath();
+		// Append a trailing '/' so listing a folder does not also match sibling folders
+		// whose name merely starts with the same prefix (e.g. "data" vs "data-old").
+		var prefix = parent is null ? null : parent.GetFullPath().TrimEnd('/') + "/";
 
 		await foreach (var item in _container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken))
 		{
-			if (!criteria.IsEmpty() && !item.Name.ContainsIgnoreCase(criteria))
+			// Match the criteria against the leaf (entry) name only, not the full blob
+			// path, so a folder segment cannot satisfy the filter.
+			var leaf = item.Name.Substring(item.Name.LastIndexOf('/') + 1);
+
+			if (!criteria.IsEmpty() && !leaf.ContainsIgnoreCase(criteria))
 				continue;
 
 			var be = GetPath(item.Name);
