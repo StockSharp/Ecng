@@ -356,12 +356,23 @@ public class ReflectionTests : BaseTestClass
 		public void MethodWithOut(out int x) { x = 1; }
 		public void MethodWithIn(in int x) { }
 		public void MethodWithParams(params object[] args) { }
+		public void MethodWithStringParams(params string[] args) { }
+		public void ParamsBeforeExact(params object[] args) { }
+		public void ParamsBeforeExact(string first, string second) { }
 	}
 
 	private abstract class AbstractClass
 	{
 		public abstract void AbstractMethod();
+		public void BaseMethod() { }
 		public abstract int AbstractProperty { get; set; }
+	}
+
+	public sealed class PublicNestedDisposable : IDisposable
+	{
+		public void Dispose()
+		{
+		}
 	}
 
 	private class DerivedClass : AbstractClass
@@ -468,10 +479,8 @@ public class ReflectionTests : BaseTestClass
 	public void GetParameterTypes_InParam_WithRemoveRef()
 	{
 		var method = typeof(TestClass).GetMethod(nameof(TestClass.MethodWithIn));
-		// in parameters are ByRef but IsOutput is false
 		var types = method.GetParameterTypes(true);
-		// in params should not be "removed" because IsOutput is false
-		types[0].type.IsByRef.AssertTrue();
+		types[0].type.AssertEqual(typeof(int));
 	}
 
 	[TestMethod]
@@ -515,7 +524,9 @@ public class ReflectionTests : BaseTestClass
 	[TestMethod]
 	public void GetGenericType_NotGenericDefinition_Throws()
 	{
-		ThrowsExactly<ArgumentException>(() => typeof(List<int>).GetGenericType(typeof(List<int>)));
+		var ex = ThrowsExactly<ArgumentException>(() => typeof(List<int>).GetGenericType(typeof(List<int>)));
+
+		ex.ParamName.AssertEqual("genericType");
 	}
 
 	#endregion
@@ -535,7 +546,9 @@ public class ReflectionTests : BaseTestClass
 	[TestMethod]
 	public void GetGenericTypeArg_NoMatch_Throws()
 	{
-		ThrowsExactly<ArgumentException>(() => typeof(string).GetGenericTypeArg(typeof(List<>), 0));
+		var ex = ThrowsExactly<ArgumentException>(() => typeof(string).GetGenericTypeArg(typeof(List<>), 0));
+
+		ex.ParamName.AssertEqual("targetType");
 	}
 
 	#endregion
@@ -614,6 +627,15 @@ public class ReflectionTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void GetMember_FieldLikeEventByName_ReturnsSingleMember()
+	{
+		var member = typeof(TestClass).GetMember<MemberInfo>(nameof(TestClass.PublicEvent));
+
+		member.AssertNotNull();
+		member.Name.AssertEqual(nameof(TestClass.PublicEvent));
+	}
+
+	[TestMethod]
 	public void GetMember_NotFound_Throws()
 	{
 		ThrowsExactly<ArgumentException>(() => typeof(TestClass).GetMember<PropertyInfo>("NonExistent"));
@@ -650,6 +672,53 @@ public class ReflectionTests : BaseTestClass
 	{
 		var members = typeof(DerivedClass).GetMembers<MethodInfo>(ReflectionHelper.AllInstanceMembers, true);
 		members.Any(m => m.Name == nameof(DerivedClass.AbstractMethod)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void GetMembers_InheritanceFalseExcludesBaseMembers()
+	{
+		var members = typeof(DerivedClass).GetMembers<MethodInfo>(
+			ReflectionHelper.AllInstanceMembers,
+			inheritance: false,
+			nameof(AbstractClass.BaseMethod),
+			default);
+
+		members.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void GetMembers_ParamsChecksExpandedElementTypes()
+	{
+		var nonMatching = typeof(TestClass).GetMembers<MethodInfo>(
+			BindingFlags.Public | BindingFlags.Instance,
+			inheritance: true,
+			nameof(TestClass.MethodWithStringParams),
+			default,
+			typeof(int),
+			typeof(int));
+
+		nonMatching.Length.AssertEqual(0);
+
+		var matching = typeof(TestClass).GetMembers<MethodInfo>(
+			BindingFlags.Public | BindingFlags.Instance,
+			inheritance: true,
+			nameof(TestClass.MethodWithStringParams),
+			default,
+			typeof(string),
+			typeof(string));
+
+		matching.Length.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void GetMember_ParamsCandidateDoesNotPolluteLaterCandidates()
+	{
+		var method = typeof(TestClass).GetMember<MethodInfo>(
+			nameof(TestClass.ParamsBeforeExact),
+			typeof(string),
+			typeof(string));
+
+		method.GetParameters().Length.AssertEqual(2);
 	}
 
 	#endregion
@@ -1125,6 +1194,14 @@ public class ReflectionTests : BaseTestClass
 		var implementations = assembly.FindImplementations<IDisposable>(showNonPublic: true);
 		// Should find some disposable types
 		implementations.AssertNotNull();
+	}
+
+	[TestMethod]
+	public void FindImplementations_IncludesPublicNestedTypesByDefault()
+	{
+		var implementations = typeof(ReflectionTests).Assembly.FindImplementations<IDisposable>();
+
+		implementations.Contains(typeof(PublicNestedDisposable)).AssertTrue();
 	}
 
 	#endregion

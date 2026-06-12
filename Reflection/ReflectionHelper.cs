@@ -97,7 +97,7 @@ public static class ReflectionHelper
 		{
 			Type paramType;
 
-			if (removeRef && IsOutput(param))
+			if (removeRef && param.ParameterType.IsByRef)
 				paramType = param.ParameterType.GetElementType();
 			else
 				paramType = param.ParameterType;
@@ -132,7 +132,7 @@ public static class ReflectionHelper
 			throw new ArgumentNullException(nameof(genericType));
 
 		if (!genericType.IsGenericTypeDefinition)
-			throw new ArgumentException(nameof(genericType));
+			throw new ArgumentException("Type must be a generic type definition.", nameof(genericType));
 
 		if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == genericType)
 			return targetType;
@@ -174,7 +174,7 @@ public static class ReflectionHelper
 		genericType = GetGenericType(targetType, genericType);
 
 		if (genericType is null)
-			throw new ArgumentException(nameof(targetType));
+			throw new ArgumentException("Target type does not implement or inherit the specified generic type.", nameof(targetType));
 		else
 			return genericType.GetGenericArguments()[index];
 	}
@@ -266,7 +266,7 @@ public static class ReflectionHelper
 
 		var members = type.GetMembers<T>(flags, true, memberName, isSetter, additionalTypes);
 
-		if (members.Length > 1)
+		if (members.Length > 1 && (isSetter is not null || additionalTypes.Length > 0 || members.Any(m => m is MethodBase)))
 			members = [.. FilterMembers(members, isSetter, additionalTypes)];
 
 		if (members.Length != 1)
@@ -363,7 +363,7 @@ public static class ReflectionHelper
 		{
 			foreach (Type item in type.GetInterfaces().Concat([type]))
 			{
-				var allMembers = memberName.IsEmpty() ? item.GetMembers(flags) : item.GetMember(memberName, flags);
+				var allMembers = item.GetRawMembers(memberName, flags);
 
 				foreach (var member in allMembers)
 				{
@@ -374,11 +374,11 @@ public static class ReflectionHelper
 		}
 		else
 		{
-			var allMembers = memberName.IsEmpty() ? type.GetMembers(flags) : type.GetMember(memberName, flags);
+			var allMembers = type.GetRawMembers(memberName, flags);
 
 			foreach (var member in allMembers)
 			{
-				if (member is T && member is not Type && member.ReflectedType == type)
+				if (member is T && member is not Type && member.DeclaringType == type)
 					members.AddMember(member);
 			}
 		}
@@ -426,6 +426,20 @@ public static class ReflectionHelper
 			retVal.AddRange(collection);
 
 		return retVal;
+	}
+
+	private static MemberInfo[] GetRawMembers(this Type type, string memberName, BindingFlags flags)
+	{
+		if (memberName.IsEmpty())
+			return type.GetMembers(flags);
+
+		var members = type.GetMembers(flags).Where(m => m.Name == memberName).ToList();
+
+		var evt = type.GetEvent(memberName, flags);
+		if (evt is not null && !members.Contains(evt))
+			members.Add(evt);
+
+		return [.. members];
 	}
 
 	private static void AddMember<T>(this Dictionary<(string, MemberTypes, MemberSignature), ICollection<T>> members, MemberInfo member)
@@ -500,30 +514,54 @@ public static class ReflectionHelper
 			else if (arg is MethodBase mb)
 			{
 				var tuples = mb.GetParameterTypes(true);
+				var expectedTypes = additionalTypes;
 
 				if (tuples.Length > 0 && tuples.Last().info.IsParams())
 				{
-					// wrap plain params types into object[]
-					var paramsTypes = additionalTypes.Skip(tuples.Length - 1).ToArray();
-
-					if (paramsTypes.Length > 0)
-					{
-						additionalTypes = [.. additionalTypes.Take(tuples.Length - 1), tuples.Last().type];
-					}
+					return IsParamsMatch(tuples, expectedTypes, useInheritance);
 				}
 
-				return tuples.Select(t => t.type).SequenceEqual(additionalTypes, (paramType, additionalType) =>
-				{
-					if (additionalType == typeof(void))
-						return true;
-					else
-						return paramType.Compare(additionalType, useInheritance);
-				});
+				return tuples.Select(t => t.type).SequenceEqual(expectedTypes, (paramType, additionalType) => IsTypeMatch(paramType, additionalType, useInheritance));
 			}
 			else
 				return false;
 		});
 	}
+
+	private static bool IsParamsMatch((ParameterInfo info, Type type)[] tuples, Type[] additionalTypes, bool useInheritance)
+	{
+		var paramsIndex = tuples.Length - 1;
+
+		if (additionalTypes.Length < paramsIndex)
+			return false;
+
+		for (var i = 0; i < paramsIndex; i++)
+		{
+			if (!IsTypeMatch(tuples[i].type, additionalTypes[i], useInheritance))
+				return false;
+		}
+
+		var paramsArrayType = tuples[paramsIndex].type;
+
+		if (additionalTypes.Length == tuples.Length && IsTypeMatch(paramsArrayType, additionalTypes[paramsIndex], useInheritance))
+			return true;
+
+		var elementType = paramsArrayType.GetElementType();
+
+		if (elementType is null)
+			return false;
+
+		for (var i = paramsIndex; i < additionalTypes.Length; i++)
+		{
+			if (!IsTypeMatch(elementType, additionalTypes[i], useInheritance))
+				return false;
+		}
+
+		return true;
+	}
+
+	private static bool IsTypeMatch(Type paramType, Type additionalType, bool useInheritance)
+		=> additionalType == typeof(void) || paramType.Compare(additionalType, useInheritance);
 
 	#endregion
 
@@ -1017,7 +1055,7 @@ public static class ReflectionHelper
 		return assembly
 			.GetTypes()
 			.Where(t => t.Is<T>() && !t.IsAbstract && !t.IsInterface &&
-				(showNonPublic || t.IsPublic) &&
+				(showNonPublic || t.IsPublic || t.IsNestedPublic) &&
 				(showObsolete || !t.IsObsolete()) &&
 				(showNonBrowsable || t.IsBrowsable()) &&
 				extraFilter(t));
