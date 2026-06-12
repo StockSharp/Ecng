@@ -12,6 +12,19 @@ public class AsymmetricCryptographer : Disposable
 		{
 		}
 
+		public static AsymmetricAlgorithm CreateCompatible(AsymmetricAlgorithm algorithm)
+		{
+			if (algorithm is null)
+				throw new ArgumentNullException(nameof(algorithm));
+
+			return algorithm switch
+			{
+				RSA => RSA.Create(),
+				DSA => DSA.Create(),
+				_ => (AsymmetricAlgorithm)Activator.CreateInstance(algorithm.GetType()),
+			};
+		}
+
 		private static AsymmetricAlgorithm CreateAlgo(AsymmetricAlgorithm algorithm, byte[] key)
 		{
 			if (algorithm is RSA rsa)
@@ -71,48 +84,12 @@ public class AsymmetricCryptographer : Disposable
 		{
 			if (Value is RSA rsa)
 			{
-				// Try SHA256 first (most common)
-				try
-				{
-					if (rsa.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
-						return true;
-				}
-				catch
-				{
-				}
-
-				// Fallback to SHA1 for backward compatibility
-				try
-				{
-					return rsa.VerifyData(data, signature, HashAlgorithmName.SHA1, RSASignaturePadding.Pkcs1);
-				}
-				catch
-				{
-					return false;
-				}
+				return VerifyRsa(rsa, data, signature);
 			}
 			else if (Value is DSA dsa)
 			{
 #if NET6_0_OR_GREATER
-				// Try SHA256 first (most common)
-				try
-				{
-					if (dsa.VerifyData(data, signature, HashAlgorithmName.SHA256))
-						return true;
-				}
-				catch
-				{
-				}
-
-				// Fallback to SHA1 for backward compatibility
-				try
-				{
-					return dsa.VerifyData(data, signature, HashAlgorithmName.SHA1);
-				}
-				catch
-				{
-					return false;
-				}
+				return VerifyDsa(dsa, data, signature);
 #else
 				// .NET Standard 2.0: use SHA1 hash manually
 				using var sha1 = SHA1.Create();
@@ -124,6 +101,51 @@ public class AsymmetricCryptographer : Disposable
 				throw new NotSupportedException($"Signature verification is not supported for algorithm type {Value.GetType().Name}");
 		}
 
+		private static readonly HashAlgorithmName[] _signatureHashes =
+		[
+			HashAlgorithmName.SHA256,
+			HashAlgorithmName.SHA384,
+			HashAlgorithmName.SHA512,
+			HashAlgorithmName.SHA1,
+			HashAlgorithmName.MD5,
+		];
+
+		private static bool VerifyRsa(RSA rsa, byte[] data, byte[] signature)
+		{
+			foreach (var hash in _signatureHashes)
+			{
+				try
+				{
+					if (rsa.VerifyData(data, signature, hash, RSASignaturePadding.Pkcs1))
+						return true;
+				}
+				catch
+				{
+				}
+			}
+
+			return false;
+		}
+
+#if NET6_0_OR_GREATER
+		private static bool VerifyDsa(DSA dsa, byte[] data, byte[] signature)
+		{
+			foreach (var hash in _signatureHashes)
+			{
+				try
+				{
+					if (dsa.VerifyData(data, signature, hash))
+						return true;
+				}
+				catch
+				{
+				}
+			}
+
+			return false;
+		}
+#endif
+
 		public override Wrapper<AsymmetricAlgorithm> Clone()
 		{
 			throw new NotSupportedException();
@@ -131,7 +153,7 @@ public class AsymmetricCryptographer : Disposable
 
 		protected override void DisposeManaged()
 		{
-			Value.Clear();
+			Value?.Clear();
 			base.DisposeManaged();
 		}
 	}
@@ -152,8 +174,11 @@ public class AsymmetricCryptographer : Disposable
 	/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 	/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
 	public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey, byte[] privateKey)
-		: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, privateKey))
+		: this(
+			publicKey is null ? null : new AsymmetricAlgorithmWrapper(AsymmetricAlgorithmWrapper.CreateCompatible(algorithm), publicKey),
+			privateKey is null ? null : new AsymmetricAlgorithmWrapper(AsymmetricAlgorithmWrapper.CreateCompatible(algorithm), privateKey))
 	{
+		algorithm?.Dispose();
 	}
 
 	/// <summary>
@@ -172,7 +197,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <param name="encryptor">The encryptor.</param>
 	/// <param name="decryptor">The decryptor.</param>
 	protected AsymmetricCryptographer(AsymmetricAlgorithm encryptor, AsymmetricAlgorithm decryptor)
-		: this(new AsymmetricAlgorithmWrapper(encryptor), new AsymmetricAlgorithmWrapper(decryptor))
+		: this(encryptor is null ? null : new AsymmetricAlgorithmWrapper(encryptor), decryptor is null ? null : new AsymmetricAlgorithmWrapper(decryptor))
 	{
 	}
 

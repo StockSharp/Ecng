@@ -126,8 +126,10 @@ public static class CryptoHelper
 	// We divide this by 8 within the code below to get the equivalent number of bytes.
 	private const int _keySize = 256;
 
-	// This constant determines the number of iterations for the password bytes generation function.
-	private const int _derivationIterations = 1000;
+	private const int _legacyDerivationIterations = 1000;
+	private const int _derivationIterations = 100000;
+	private static readonly HashAlgorithmName _legacyDerivationHash = HashAlgorithmName.SHA1;
+	private static readonly HashAlgorithmName _derivationHash = HashAlgorithmName.SHA256;
 
 	private static SymmetricAlgorithm CreateRijndaelManaged()
 	{
@@ -159,12 +161,7 @@ public static class CryptoHelper
 		if (iv?.Length > 16)
 			iv = iv.AsSpan(0, 16).ToArray();
 
-#if NET10_0_OR_GREATER
-		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
-#else
-		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-		var keyBytes = password.GetBytes(_keySize / 8);
-#endif
+		var keyBytes = DeriveKey(passPhrase, salt, false);
 
 		using var symmetricKey = CreateRijndaelManaged();
 
@@ -224,20 +221,43 @@ public static class CryptoHelper
 		if (iv?.Length > 16)
 			iv = iv.AsSpan(0, 16).ToArray();
 
-#if NET10_0_OR_GREATER
-		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
-#else
-		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-		var keyBytes = password.GetBytes(_keySize / 8);
-#endif
+		var keyBytes = DeriveKey(passPhrase, salt, false);
 
 		using var symmetricKey = CreateRijndaelManaged();
 
-		using var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv);
-		using var memoryStream = new MemoryStream(cipherText);
-		using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+		try
+		{
+			using var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv);
+			using var memoryStream = new MemoryStream(cipherText);
+			using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-		return cryptoStream.ReadStream(cipherText.Length);
+			return cryptoStream.ReadStream(cipherText.Length);
+		}
+		catch (CryptographicException)
+		{
+			keyBytes = DeriveKey(passPhrase, salt, true);
+
+			using var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv);
+			using var memoryStream = new MemoryStream(cipherText);
+			using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+
+			return cryptoStream.ReadStream(cipherText.Length);
+		}
+	}
+
+	private static byte[] DeriveKey(string passPhrase, byte[] salt, bool legacy)
+	{
+#if NET10_0_OR_GREATER
+		return Rfc2898DeriveBytes.Pbkdf2(
+			passPhrase,
+			salt,
+			legacy ? _legacyDerivationIterations : _derivationIterations,
+			legacy ? _legacyDerivationHash : _derivationHash,
+			_keySize / 8);
+#else
+		using var password = new Rfc2898DeriveBytes(passPhrase, salt, legacy ? _legacyDerivationIterations : _derivationIterations);
+		return password.GetBytes(_keySize / 8);
+#endif
 	}
 
 	private static byte[] TransformAes(bool isEncrypt, byte[] inputBytes, string passPhrase, byte[] salt, byte[] iv)
@@ -248,12 +268,7 @@ public static class CryptoHelper
 		if (passPhrase.IsEmpty())
 			throw new ArgumentNullException(nameof(passPhrase));
 
-#if NET10_0_OR_GREATER
-		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
-#else
-		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-		var keyBytes = password.GetBytes(_keySize / 8);
-#endif
+		var keyBytes = DeriveKey(passPhrase, salt, false);
 
 		using var aes = Aes.Create();
 
@@ -272,11 +287,24 @@ public static class CryptoHelper
 		}
 		else
 		{
-			using var decryptor = aes.CreateDecryptor(keyBytes, iv);
-			using var memoryStream = new MemoryStream(inputBytes);
-			using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+			try
+			{
+				using var decryptor = aes.CreateDecryptor(keyBytes, iv);
+				using var memoryStream = new MemoryStream(inputBytes);
+				using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-			return cryptoStream.ReadStream(inputBytes.Length);
+				return cryptoStream.ReadStream(inputBytes.Length);
+			}
+			catch (CryptographicException)
+			{
+				keyBytes = DeriveKey(passPhrase, salt, true);
+
+				using var decryptor = aes.CreateDecryptor(keyBytes, iv);
+				using var memoryStream = new MemoryStream(inputBytes);
+				using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+
+				return cryptoStream.ReadStream(inputBytes.Length);
+			}
 		}
 	}
 

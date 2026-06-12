@@ -44,6 +44,8 @@ public class SymmetricCryptographer : Disposable
 	{
 		byte[] cipherText = null;
 
+		_algorithm.GenerateIV();
+
 		using (ICryptoTransform transform = _algorithm.CreateEncryptor())
 		{
 			cipherText = Transform(transform, plaintext);

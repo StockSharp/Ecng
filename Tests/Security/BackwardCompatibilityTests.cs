@@ -51,9 +51,11 @@ public class BackwardCompatibilityTests
 		var encrypted = plainBytes.Encrypt(_password, _salt, _iv);
 		var encryptedBase64 = encrypted.Base64();
 
-		// Assert
-		encryptedBase64.AssertEqual(_expectedEncrypted,
-			"Ciphertext must match the .NET 6.0 baseline. This ensures data encrypted on older versions can be decrypted on newer ones.");
+		// Assert: new encryption uses hardened key derivation, but legacy ciphertext must still decrypt.
+		encryptedBase64.AssertNotEqual(_expectedEncrypted,
+			"New ciphertext must not reproduce the weak .NET 6.0 PBKDF2-SHA1/1000 baseline.");
+		encrypted.Decrypt(_password, _salt, _iv).UTF8().AssertEqual(_plainText,
+			"Current ciphertext must decrypt successfully.");
 	}
 
 	[TestMethod]
@@ -83,9 +85,11 @@ public class BackwardCompatibilityTests
 		var encryptedAes = plainBytes.EncryptAes(_password, _salt, _iv);
 		var encryptedAesBase64 = encryptedAes.Base64();
 
-		// Assert
-		encryptedAesBase64.AssertEqual(_expectedEncrypted,
-			"EncryptAes should produce the same data as on .NET 6.0");
+		// Assert: new encryption uses hardened key derivation, but the roundtrip must work.
+		encryptedAesBase64.AssertNotEqual(_expectedEncrypted,
+			"EncryptAes must not reproduce the weak .NET 6.0 PBKDF2-SHA1/1000 baseline.");
+		encryptedAes.DecryptAes(_password, _salt, _iv).UTF8().AssertEqual(_plainText,
+			"EncryptAes output must decrypt successfully.");
 	}
 
 	[TestMethod]
@@ -196,9 +200,9 @@ public class BackwardCompatibilityTests
 		decryptedText.AssertEqual(_plainText,
 			"Full encryption/decryption cycle must restore the original data");
 
-		// Also check that ciphertext matches the baseline
-		encrypted.Base64().AssertEqual(_expectedEncrypted,
-			"Ciphertext must match the .NET 6.0 baseline");
+		// New encryption is intentionally hardened; old ciphertext compatibility is covered by Decrypt_EncryptedData.
+		encrypted.Base64().AssertNotEqual(_expectedEncrypted,
+			"New ciphertext must not reproduce the weak .NET 6.0 PBKDF2-SHA1/1000 baseline");
 	}
 
 	[TestMethod]
@@ -272,9 +276,8 @@ public class BackwardCompatibilityTests
 		encrypted2.Base64().AssertEqual(encrypted3.Base64(),
 			"Repeated encryption with the same parameters must produce the same result");
 
-		// All must match the baseline
-		encrypted1.Base64().AssertEqual(_expectedEncrypted,
-			"Result must match the .NET 6.0 baseline");
+		encrypted1.Base64().AssertNotEqual(_expectedEncrypted,
+			"New ciphertext must not reproduce the weak .NET 6.0 PBKDF2-SHA1/1000 baseline");
 	}
 
 	[TestMethod]

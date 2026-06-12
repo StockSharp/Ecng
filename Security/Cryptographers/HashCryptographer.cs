@@ -18,10 +18,35 @@ public class HashCryptographer : Disposable
 	/// </remarks>
 	public HashCryptographer(HashAlgorithm algorithm, byte[] key = default)
 	{
-		_algorithm = algorithm ?? throw new ArgumentNullException(nameof(algorithm));
+		if (algorithm is null)
+			throw new ArgumentNullException(nameof(algorithm));
 
-		if (algorithm is KeyedHashAlgorithm keyAlgo)
-			keyAlgo.Key = key;
+		_algorithm = CreateAlgorithm(algorithm, key);
+	}
+
+	private static HashAlgorithm CreateAlgorithm(HashAlgorithm algorithm, byte[] key)
+	{
+		if (key is null || key.Length == 0)
+			return algorithm;
+
+		algorithm.Dispose();
+
+		return algorithm switch
+		{
+			SHA256 => new HMACSHA256(key),
+			SHA384 => new HMACSHA384(key),
+			SHA512 => new HMACSHA512(key),
+			SHA1 => new HMACSHA1(key),
+			MD5 => new HMACMD5(key),
+			KeyedHashAlgorithm keyed => SetKey(keyed, key),
+			_ => throw new NotSupportedException($"Keyed hashing is not supported for algorithm type {algorithm.GetType().Name}"),
+		};
+	}
+
+	private static KeyedHashAlgorithm SetKey(KeyedHashAlgorithm algorithm, byte[] key)
+	{
+		algorithm.Key = key;
+		return algorithm;
 	}
 
 	/// <inheritdoc />

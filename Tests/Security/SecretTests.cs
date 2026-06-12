@@ -1,5 +1,8 @@
 namespace Ecng.Tests.Security;
 
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
 using Ecng.Security;
 using Ecng.Security.Cryptographers;
 
@@ -165,6 +168,52 @@ public class SecretTests : BaseTestClass
 		data.Md5().AssertEqual("900150983CD24FB0D6963F7D28E17F72");
 		data.Sha256().AssertEqual("BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD");
 		data.Sha512().AssertEqual("DDAF35A193617ABACC417349AE20413112E6FA4E89A97EA20A9EEEE64B55D39A2192992A274FC1A836BA3C23A3FEEBBD454D4423643CE80E2A9AC94FA54CA49F");
+	}
+
+	[TestMethod]
+	public void CryptoAlgorithmHashKeyAffectsDigest()
+	{
+		var data = "payload".UTF8();
+
+		using var first = CryptoAlgorithm.Create(AlgorithmTypes.Hash, "first-key".UTF8());
+		using var second = CryptoAlgorithm.Create(AlgorithmTypes.Hash, "second-key".UTF8());
+
+		first.Encrypt(data).SequenceEqual(second.Encrypt(data)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void CryptoAlgorithmHashKeyAffectsDigestForDifferentKeyLengths()
+	{
+		var data = "payload".UTF8();
+
+		using var shortKey = CryptoAlgorithm.Create(AlgorithmTypes.Hash, "k1".UTF8());
+		using var longKey = CryptoAlgorithm.Create(AlgorithmTypes.Hash, "longer-key-material".UTF8());
+
+		shortKey.Encrypt(data).SequenceEqual(longKey.Encrypt(data)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void SymmetricCryptographer_GeneratesFreshIvPerEncryption()
+	{
+		using var cryptographer = new SymmetricCryptographer(Aes.Create(), Enumerable.Range(0, 32).Select(i => (byte)i).ToArray());
+		var plaintext = "same plaintext block".UTF8();
+
+		var first = cryptographer.Encrypt(plaintext);
+		var second = cryptographer.Encrypt(plaintext);
+
+		first.Take(16).SequenceEqual(second.Take(16)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void SymmetricCryptographer_GeneratesFreshCiphertextForRepeatedMessages()
+	{
+		using var cryptographer = new SymmetricCryptographer(Aes.Create(), Enumerable.Range(0, 32).Select(i => (byte)(255 - i)).ToArray());
+		var plaintext = Enumerable.Range(0, 64).Select(i => (byte)i).ToArray();
+
+		var first = cryptographer.Encrypt(plaintext);
+		var second = cryptographer.Encrypt(plaintext);
+
+		first.SequenceEqual(second).AssertFalse();
 	}
 
 	[TestMethod]
@@ -366,6 +415,148 @@ public class SecretTests : BaseTestClass
 		var decrypted = algo2.Decrypt(encrypted, System.Security.Cryptography.RSAEncryptionPadding.Pkcs1);
 
 		decrypted.AssertEqual(plainText, "Data encrypted with public key should be decryptable with private key");
+	}
+
+	[TestMethod]
+	public void AsymmetricCryptographer_EncryptUsesConstructorPublicKey()
+	{
+		using var recipient = RSA.Create(2048);
+		using var local = RSA.Create(2048);
+		using var algo = RSA.Create();
+		using var cryptographer = new AsymmetricCryptographer(
+			algo,
+			recipient.ExportParameters(false).FromRsa(),
+			local.ExportParameters(true).FromRsa());
+
+		var encrypted = cryptographer.Encrypt("secret".UTF8());
+
+		recipient.Decrypt(encrypted, RSAEncryptionPadding.Pkcs1).UTF8().AssertEqual("secret");
+	}
+
+	[TestMethod]
+	public void AsymmetricCryptographer_VerifiesSha384SignatureItCreated()
+	{
+		using var rsa = RSA.Create(2048);
+		using var algo = RSA.Create();
+		using var cryptographer = new AsymmetricCryptographer(
+			algo,
+			rsa.ExportParameters(false).FromRsa(),
+			rsa.ExportParameters(true).FromRsa());
+		var data = "signed".UTF8();
+		var signature = cryptographer.CreateSignature(data, SHA384.Create);
+
+		cryptographer.VerifySignature(data, signature).AssertTrue();
+	}
+
+	[TestMethod]
+	public void AsymmetricCryptographer_VerifiesSha512SignatureItCreated()
+	{
+		using var rsa = RSA.Create(2048);
+		using var algo = RSA.Create();
+		using var cryptographer = new AsymmetricCryptographer(
+			algo,
+			rsa.ExportParameters(false).FromRsa(),
+			rsa.ExportParameters(true).FromRsa());
+		var data = "signed-sha512".UTF8();
+		var signature = cryptographer.CreateSignature(data, SHA512.Create);
+
+		cryptographer.VerifySignature(data, signature).AssertTrue();
+	}
+
+	/// <summary>
+	/// BUG: <see cref="X509Cryptographer"/> built from a public-only certificate wraps a null
+	/// private-key algorithm into a non-null <c>AsymmetricAlgorithmWrapper</c>; its
+	/// <c>DisposeManaged</c> calls <c>Value.Clear()</c> on the null algorithm.
+	/// Expected: a public-only certificate supports Encrypt/VerifySignature and disposes cleanly.
+	/// Actual: disposing throws <see cref="NullReferenceException"/>.
+	/// Security\Cryptographers\AsymmetricCryptographer.cs:175 (protected ctor) and :134 (Value.Clear()).
+	/// </summary>
+	[TestMethod]
+	public void X509Cryptographer_PublicOnlyCertificate_EncryptsAndDisposesWithoutNre()
+	{
+		using var key = RSA.Create(2048);
+
+		var request = new CertificateRequest(
+			"CN=Ecng.Tests.Security",
+			key,
+			HashAlgorithmName.SHA256,
+			RSASignaturePadding.Pkcs1);
+
+		var notBefore = new DateTimeOffset(DateTime.UtcNow.AddDays(-1));
+		var notAfter = new DateTimeOffset(DateTime.UtcNow.AddDays(1));
+
+		using var fullCert = request.CreateSelfSigned(notBefore, notAfter);
+
+		// Reload as a public-only certificate: GetRSAPrivateKey() returns null.
+		var publicBytes = fullCert.Export(X509ContentType.Cert);
+
+#if NET8_0_OR_GREATER
+		using var publicOnly = X509CertificateLoader.LoadCertificate(publicBytes);
+#else
+		using var publicOnly = new X509Certificate2(publicBytes);
+#endif
+
+		// Sanity: the reloaded certificate indeed has no private key.
+		(publicOnly.GetRSAPrivateKey() is null).AssertTrue("Reloaded certificate must be public-only.");
+
+		var plainText = "public-only".UTF8();
+
+		// Encrypt with the public key (must work) and dispose without throwing.
+		byte[] encrypted;
+
+		using (var cryptographer = new X509Cryptographer(publicOnly))
+		{
+			encrypted = cryptographer.Encrypt(plainText);
+		}
+
+		(encrypted is not null && encrypted.Length > 0).AssertTrue("Encryption with public-only certificate must produce ciphertext.");
+
+		// And confirm the ciphertext is genuinely the recipient's: it decrypts with the original private key.
+		key.Decrypt(encrypted, RSAEncryptionPadding.Pkcs1).AssertEqual(plainText);
+	}
+
+	/// <summary>
+	/// BUG: <see cref="CryptoHelper.Encrypt(byte[], string, byte[], byte[])"/> derives the AES key with
+	/// PBKDF2-HMAC-SHA1 and only 1000 iterations, far below current recommendations.
+	/// Expected: the derivation is hardened (stronger hash and/or far more iterations), so the helper
+	/// output no longer matches the weak SHA1/1000-iteration derivation.
+	/// Actual: the helper output equals the weak SHA1/1000-iteration AES-CBC ciphertext.
+	/// Security\CryptoHelper.cs:130 (_derivationIterations = 1000) and :163 (HashAlgorithmName.SHA1).
+	/// </summary>
+	[TestMethod]
+	public void CryptoHelper_Encrypt_UsesHardenedKeyDerivation()
+	{
+		var plain = "key derivation must be hardened".UTF8();
+		var passPhrase = "correct horse battery staple";
+		var salt = TypeHelper.GenerateSalt(16);
+		var iv = "iv12345678901234".ASCII();
+
+		var actual = plain.Encrypt(passPhrase, salt, iv);
+
+		// Reproduce the WEAK derivation the finding describes: PBKDF2-HMAC-SHA1, 1000 iterations, 256-bit key.
+		const int weakIterations = 1000;
+		const int keySizeBytes = 256 / 8;
+
+		var weakKey = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, weakIterations, HashAlgorithmName.SHA1, keySizeBytes);
+
+		using var aes = Aes.Create();
+		aes.BlockSize = 128;
+		aes.Mode = CipherMode.CBC;
+		aes.Padding = PaddingMode.PKCS7;
+
+		using var encryptor = aes.CreateEncryptor(weakKey, iv);
+		using var memoryStream = new MemoryStream();
+		using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+		{
+			cryptoStream.Write(plain, 0, plain.Length);
+			cryptoStream.FlushFinalBlock();
+		}
+
+		var weakCipher = memoryStream.ToArray();
+
+		// While the bug is present the helper reproduces the weak ciphertext exactly; once the
+		// derivation is hardened (different hash or iteration count) the two diverge.
+		actual.SequenceEqual(weakCipher).AssertFalse("CryptoHelper.Encrypt must not use the weak PBKDF2-SHA1/1000 key derivation.");
 	}
 
 	#endregion
