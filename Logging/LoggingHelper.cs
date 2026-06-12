@@ -406,7 +406,7 @@ public static class LoggingHelper
 			// observe
 			if (t.IsFaulted)
 				observer(t.Exception);
-			else
+			else if (t.IsCompletedSuccessfully)
 				other?.Invoke(t);
 		});
 	}
@@ -429,7 +429,7 @@ public static class LoggingHelper
 			// observe
 			if (t.IsFaulted)
 				observer(t.Exception);
-			else
+			else if (t.IsCompletedSuccessfully)
 				other?.Invoke(t);
 		});
 	}

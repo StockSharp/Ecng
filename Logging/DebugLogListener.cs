@@ -40,27 +40,33 @@ public class DebugLogListener : LogListener
 
 	private static void Dump(LogLevels level, StringBuilder builder)
 	{
+		if (builder.Length == 0)
+			return;
+
 		var str = builder.ToString();
 
-		switch (level)
+		TraceSource.Suppress(() =>
 		{
-			case LogLevels.Off:
-				break;
-			case LogLevels.Inherit:
-			case LogLevels.Verbose:
-			case LogLevels.Debug:
-			case LogLevels.Info:
-				Trace.TraceInformation(str);
-				break;
-			case LogLevels.Warning:
-				Trace.TraceWarning(str);
-				break;
-			case LogLevels.Error:
-				Trace.TraceError(str);
-				break;
-			default:
-				throw new ArgumentOutOfRangeException(nameof(level), level, "Invalid value.".Localize());
-		}
+			switch (level)
+			{
+				case LogLevels.Off:
+					break;
+				case LogLevels.Inherit:
+				case LogLevels.Verbose:
+				case LogLevels.Debug:
+				case LogLevels.Info:
+					Trace.TraceInformation(str);
+					break;
+				case LogLevels.Warning:
+					Trace.TraceWarning(str);
+					break;
+				case LogLevels.Error:
+					Trace.TraceError(str);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(level), level, "Invalid value.".Localize());
+			}
+		});
 
 		builder.Clear();
 	}

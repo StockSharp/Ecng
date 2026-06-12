@@ -80,6 +80,7 @@ public class LogManager : Disposable, IPersistable
 	private readonly ControllablePeriodicTimer _flushTimer;
 	private bool _isFlushing;
 	private readonly bool _asyncMode;
+	private readonly UnhandledExceptionSource _unhandledExceptionSource;
 
 	/// <summary>
 	/// Instance.
@@ -101,11 +102,12 @@ public class LogManager : Disposable, IPersistable
 	public LogManager(bool asyncMode)
 	{
 		Instance ??= this;
+		_unhandledExceptionSource = new();
 
 		Sources = new LogSourceList(this)
 		{
 			Application,
-			new UnhandledExceptionSource()
+			_unhandledExceptionSource
 		};
 
 		_asyncMode = asyncMode;
@@ -301,6 +303,7 @@ public class LogManager : Disposable, IPersistable
 	protected override void DisposeManaged()
 	{
 		Sources.Clear();
+		_unhandledExceptionSource.Dispose();
 
 		if (_asyncMode)
 		{
@@ -320,6 +323,9 @@ public class LogManager : Disposable, IPersistable
 			_flushTimer.Dispose();
 		}
 
+		if (ReferenceEquals(Instance, this))
+			Instance = null;
+
 		base.DisposeManaged();
 	}
 
@@ -329,7 +335,9 @@ public class LogManager : Disposable, IPersistable
 	/// <param name="storage">Settings storage.</param>
 	public virtual void Load(SettingsStorage storage)
 	{
-		FlushInterval = storage.GetValue<TimeSpan>(nameof(FlushInterval));
+		if (storage.Contains(nameof(FlushInterval)))
+			FlushInterval = storage.GetValue<TimeSpan>(nameof(FlushInterval));
+
 		//MaxMessageCount = storage.GetValue<int>(nameof(MaxMessageCount));
 		Listeners.AddRange(storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Listeners)).Select(s =>
 		{

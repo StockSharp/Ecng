@@ -96,6 +96,7 @@ public class FileLogListener : LogListener
 	}
 
 	private readonly SynchronizedPairSet<(string fileName, DateTime date), StreamWriterEx> _writers = [];
+	private int _closeWritersAfterRecovery;
 
 	/// <summary>
 	/// To create <see cref="FileLogListener"/>. For each <see cref="ILogSource"/> a separate file with a name equal to <see cref="ILogSource.Name"/> will be created.
@@ -636,43 +637,57 @@ public class FileLogListener : LogListener
 
 					using (_writers.EnterScope())
 					{
-						var key = _writers[writer];
-						writer.Dispose();
-
-						var maxIndex = 0;
-
-						while (FileSystem.FileExists(GetRollingFileName(fileName, maxIndex + 1)))
+						try
 						{
-							maxIndex++;
-						}
+							var key = _writers[writer];
+							_writers.Remove(key);
+							writer.Dispose();
+							writer = null;
 
-						for (var i = maxIndex; i > 0; i--)
-						{
-							FileSystem.MoveFile(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
-						}
+							var maxIndex = 0;
 
-						FileSystem.MoveFile(fileName, GetRollingFileName(fileName, 1));
-
-						if (MaxCount > 0)
-						{
-							maxIndex++;
-
-							for (var i = MaxCount; i <= maxIndex; i++)
+							while (FileSystem.FileExists(GetRollingFileName(fileName, maxIndex + 1)))
 							{
-								FileSystem.DeleteFile(GetRollingFileName(fileName, i));
+								maxIndex++;
 							}
-						}
 
-						writer = OnCreateWriter(fileName);
-						_writers[key] = writer;
+							for (var i = maxIndex; i > 0; i--)
+							{
+								FileSystem.MoveFile(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
+							}
+
+							FileSystem.MoveFile(fileName, GetRollingFileName(fileName, 1));
+
+							if (MaxCount > 0)
+							{
+								maxIndex++;
+
+								for (var i = MaxCount; i <= maxIndex; i++)
+								{
+									FileSystem.DeleteFile(GetRollingFileName(fileName, i));
+								}
+							}
+
+							writer = OnCreateWriter(fileName);
+							_writers.Add(key, writer);
+						}
+						catch
+						{
+							Volatile.Write(ref _closeWritersAfterRecovery, 1);
+							throw;
+						}
 					}
 				}
 			}
 			finally
 			{
-				await writer.FlushAsync(cancellationToken).NoWait();
+				if (writer != null)
+					await writer.FlushAsync(cancellationToken).NoWait();
 			}
 		}).WhenAll();
+
+		if (Interlocked.Exchange(ref _closeWritersAfterRecovery, 0) != 0)
+			CloseWriters();
 
 		if (isDisposing)
 			Dispose();
@@ -917,9 +932,17 @@ public class FileLogListener : LogListener
 	/// </summary>
 	protected override void DisposeManaged()
 	{
-		_writers.Values.ForEach(w => w.Dispose());
-		_writers.Clear();
+		CloseWriters();
 
 		base.DisposeManaged();
+	}
+
+	private void CloseWriters()
+	{
+		using (_writers.EnterScope())
+		{
+			_writers.Values.ForEach(w => w.Dispose());
+			_writers.Clear();
+		}
 	}
 }

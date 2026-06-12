@@ -1,6 +1,7 @@
 namespace Ecng.Tests.Logging;
 
 using Ecng.Logging;
+using Ecng.Serialization;
 
 [TestClass]
 public class LoggingTests : BaseTestClass
@@ -40,6 +41,20 @@ public class LoggingTests : BaseTestClass
 			}
 
 			return base.OnWriteMessagesAsync(messages, cancellationToken); // fallback to sync
+		}
+	}
+
+	private sealed class CollectingTraceListener : TraceListener
+	{
+		public List<string> Entries { get; } = [];
+
+		public override void Write(string message)
+		{
+		}
+
+		public override void WriteLine(string message)
+		{
+			Entries.Add(message);
 		}
 	}
 
@@ -110,6 +125,151 @@ public class LoggingTests : BaseTestClass
 		var msg = new LogMessage(a, DateTime.UtcNow, LogLevels.Info, "x");
 
 		((ILogReceiver)a).AddLog(msg);
+	}
+
+	[TestMethod]
+	[DataRow(LogLevels.Warning, LogLevels.Debug, false)]
+	[DataRow(LogLevels.Warning, LogLevels.Warning, true)]
+	[DataRow(LogLevels.Error, LogLevels.Warning, false)]
+	[DataRow(LogLevels.Error, LogLevels.Error, true)]
+	public void InheritedLogLevel_FiltersMessagesThroughParent(LogLevels parentLevel, LogLevels messageLevel, bool expectedRaised)
+	{
+		var parent = new LogReceiver("Parent") { LogLevel = parentLevel };
+		var child = new LogReceiver("Child") { Parent = parent };
+		var raised = false;
+
+		parent.Log += _ => raised = true;
+
+		((ILogReceiver)child).AddLog(new LogMessage(child, DateTime.UtcNow, messageLevel, "message"));
+
+		raised.AssertEqual(expectedRaised);
+	}
+
+	[TestMethod]
+	public void InheritedLogLevel_UsesAncestorLevel()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+		var raised = false;
+
+		root.Log += _ => raised = true;
+
+		((ILogReceiver)child).AddLog(new LogMessage(child, DateTime.UtcNow, LogLevels.Warning, "warning"));
+
+		raised.AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task ObserveError_DoesNotTreatCanceledTaskAsSuccess()
+	{
+		var token = new CancellationToken(true);
+		var completed = false;
+		var observedError = false;
+
+		await Task.FromCanceled(token).ObserveError(_ => observedError = true, _ => completed = true);
+
+		observedError.AssertFalse();
+		completed.AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task ObserveErrorGeneric_DoesNotTreatCanceledTaskAsSuccess()
+	{
+		var token = new CancellationToken(true);
+		var completed = false;
+		var observedError = false;
+
+		await Task.FromCanceled<int>(token).ObserveError(_ => observedError = true, _ => completed = true);
+
+		observedError.AssertFalse();
+		completed.AssertFalse();
+	}
+
+	[TestMethod]
+	[DoNotParallelize]
+	public void DebugLogListener_FirstNonInfoMessage_DoesNotEmitEmptyTraceEntry()
+	{
+		var trace = new CollectingTraceListener();
+		Trace.Listeners.Add(trace);
+
+		try
+		{
+			var listener = new DebugLogListener();
+			var src = new LogReceiver("S");
+
+			listener.WriteMessages([Msg(src, LogLevels.Error, "boom")]);
+		}
+		finally
+		{
+			Trace.Listeners.Remove(trace);
+		}
+
+		trace.Entries.Any(e => e.IsEmpty()).AssertFalse();
+		trace.Entries.Count.AssertEqual(1);
+		trace.Entries[0].AssertContains("boom");
+	}
+
+	[TestMethod]
+	[DoNotParallelize]
+	public void LogManager_AfterDispose_NewInstanceBecomesCurrent()
+	{
+		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		instanceField.AssertNotNull();
+
+		var original = LogManager.Instance;
+
+		try
+		{
+			instanceField.SetValue(null, null);
+
+			var first = new LogManager(false);
+			LogManager.Instance.AssertSame(first);
+
+			first.Dispose();
+
+			var second = new LogManager(false);
+			try
+			{
+				LogManager.Instance.AssertSame(second);
+			}
+			finally
+			{
+				second.Dispose();
+			}
+		}
+		finally
+		{
+			instanceField.SetValue(null, original);
+		}
+	}
+
+	[TestMethod]
+	[DoNotParallelize]
+	public void LogManager_LoadWithoutFlushInterval_KeepsDefault()
+	{
+		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		instanceField.AssertNotNull();
+
+		var original = LogManager.Instance;
+
+		try
+		{
+			instanceField.SetValue(null, null);
+
+			using var manager = new LogManager();
+			var before = manager.FlushInterval;
+			var storage = new SettingsStorage()
+				.Set(nameof(LogManager.Listeners), Array.Empty<SettingsStorage>());
+
+			manager.Load(storage);
+
+			manager.FlushInterval.AssertEqual(before);
+		}
+		finally
+		{
+			instanceField.SetValue(null, original);
+		}
 	}
 
 	private static LogMessage Msg(ILogSource src, LogLevels level, string text)
@@ -239,5 +399,88 @@ public class LoggingTests : BaseTestClass
 		listener.OnWriteMessageCalls.AssertEqual(0);
 		listener.SyncMessages.Count.AssertEqual(0);
 		listener.AsyncMessages.Count.AssertEqual(1);
+	}
+
+	/// <summary>
+	/// BUG: LogManager creates an <see cref="UnhandledExceptionSource"/> in its ctor but never disposes it
+	/// (DisposeManaged only clears Sources, which unsubscribes Log but does not Dispose owned sources).
+	/// Expected: after the manager is disposed, the UnhandledExceptionSource it created is disposed too,
+	/// releasing its static AppDomain/TaskScheduler event subscriptions.
+	/// Actual: the source stays alive and subscribed forever (permanent leak).
+	/// Cite: Logging\LogManager.cs:108 (ctor adds the source) and :303 (DisposeManaged only Sources.Clear()).
+	/// </summary>
+	[TestMethod]
+	[DoNotParallelize]
+	public void Manager_Dispose_DisposesOwnedUnhandledExceptionSource()
+	{
+		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		instanceField.AssertNotNull();
+
+		var original = LogManager.Instance;
+
+		try
+		{
+			instanceField.SetValue(null, null);
+
+			// sync mode avoids the flush-timer dispose path entirely
+			var manager = new LogManager(false);
+
+			var unhandled = manager.Sources.OfType<UnhandledExceptionSource>().FirstOrDefault();
+			unhandled.AssertNotNull("LogManager should own an UnhandledExceptionSource.");
+			unhandled.IsDisposed.AssertFalse();
+
+			manager.Dispose();
+
+			unhandled.IsDisposed.AssertTrue("UnhandledExceptionSource owned by the manager must be disposed on manager dispose.");
+		}
+		finally
+		{
+			instanceField.SetValue(null, original);
+		}
+	}
+
+	/// <summary>
+	/// BUG: TraceSource re-raises every Trace event as a LogMessage, and DebugLogListener writes every flushed
+	/// message back into Trace (Trace.TraceInformation). With both wired together a single Trace.TraceInformation
+	/// feeds back into TraceSource and re-amplifies without any reentrancy guard - an unbounded loop.
+	/// Expected: a single seed Trace write is processed once; the pipeline-generated Trace output is not
+	/// swallowed back into TraceSource, so the source raises the message exactly once.
+	/// Actual: the message re-feeds itself indefinitely (here bounded by a test guard) - more than one raise.
+	/// Cite: Logging\TraceSource.cs:22 (TraceEvent re-raises) and Logging\DebugLogListener.cs:53 (Dump -> Trace.TraceInformation).
+	/// </summary>
+	[TestMethod]
+	[DoNotParallelize]
+	public void TraceSource_WithTraceWritingListener_DoesNotFeedbackLoop()
+	{
+		using var traceSource = new TraceSource();
+		var debug = new DebugLogListener();
+
+		var raised = 0;
+		const int guard = 50;
+
+		void Handler(LogMessage message)
+		{
+			raised++;
+
+			// Bounded recursion guard so the bug does not crash the runner with a StackOverflow.
+			if (raised >= guard)
+				return;
+
+			debug.WriteMessages([message]);
+		}
+
+		traceSource.Log += Handler;
+
+		try
+		{
+			// Seed a single Trace event; correct behavior raises exactly once on the source.
+			Trace.TraceInformation("seed");
+		}
+		finally
+		{
+			traceSource.Log -= Handler;
+		}
+
+		raised.AssertEqual(1, "A single Trace write must not re-feed into TraceSource (no infinite loop).");
 	}
 }

@@ -189,7 +189,9 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 		if (message == null)
 			throw new ArgumentNullException(nameof(message));
 
-		if (message.Level < message.Source.LogLevel)
+		var level = message.Source.GetLogLevel();
+
+		if (level != LogLevels.Inherit && message.Level < level)
 			return;
 
 		_log?.Invoke(message);

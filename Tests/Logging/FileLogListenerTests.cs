@@ -25,6 +25,47 @@ public class FileLogListenerTests : BaseTestClass
 		public event Action<LogMessage> Log { add { } remove { } }
 	}
 
+	/// <summary>
+	/// File system wrapper that delegates everything to an inner one but throws
+	/// on the first <see cref="MoveFile"/> call to emulate a locked rotation target.
+	/// </summary>
+	private sealed class FailFirstMoveFileSystem(IFileSystem inner) : IFileSystem
+	{
+		private readonly IFileSystem _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+
+		public int MoveFileCalls { get; private set; }
+
+		public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
+		{
+			MoveFileCalls++;
+
+			if (MoveFileCalls == 1)
+				throw new IOException("Target file is locked.");
+
+			_inner.MoveFile(sourceFileName, destFileName, overwrite);
+		}
+
+		public bool FileExists(string path) => _inner.FileExists(path);
+		public bool DirectoryExists(string path) => _inner.DirectoryExists(path);
+		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None) => _inner.Open(path, mode, access, share);
+		public void CreateDirectory(string path) => _inner.CreateDirectory(path);
+		public void DeleteDirectory(string path, bool recursive = false) => _inner.DeleteDirectory(path, recursive);
+		public void DeleteFile(string path) => _inner.DeleteFile(path);
+		public void MoveDirectory(string sourceDirName, string destDirName) => _inner.MoveDirectory(sourceDirName, destDirName);
+		public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false) => _inner.CopyFile(sourceFileName, destFileName, overwrite);
+		public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => _inner.EnumerateFiles(path, searchPattern, searchOption);
+		public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => _inner.EnumerateDirectories(path, searchPattern, searchOption);
+		public DateTime GetCreationTimeUtc(string path) => _inner.GetCreationTimeUtc(path);
+		public DateTime GetLastWriteTimeUtc(string path) => _inner.GetLastWriteTimeUtc(path);
+		public long GetFileLength(string path) => _inner.GetFileLength(path);
+		public void SetReadOnly(string path, bool isReadOnly) => _inner.SetReadOnly(path, isReadOnly);
+		public FileAttributes GetAttributes(string path) => _inner.GetAttributes(path);
+
+		public long MaxSize { get => _inner.MaxSize; set => _inner.MaxSize = value; }
+		public FileSystemOverflowBehavior OverflowBehavior { get => _inner.OverflowBehavior; set => _inner.OverflowBehavior = value; }
+		public long TotalSize => _inner.TotalSize;
+	}
+
 	// Regex for log line with date: "yyyy/MM/dd HH:mm:ss.fff|Level  |Source    |Message"
 	private static readonly Regex _logLineWithDateRegex = new(
 		@"^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\|.{7}\|.+\|.+$",
@@ -1616,6 +1657,71 @@ public class FileLogListenerTests : BaseTestClass
 			var path = Path.Combine(root, $"Src{i}.txt");
 			fs.FileExists(path).AssertTrue($"File for Src{i} should exist");
 		}
+	}
+
+	#endregion
+
+	#region Rotation Recovery Tests
+
+	/// <summary>
+	/// BUG: When MaxLength rotation fails (FileSystem.MoveFile throws after the current writer was already
+	/// disposed), the disposed writer is left in the internal _writers map; the outer finally flushes a
+	/// disposed writer and every later batch reuses that disposed writer, so file logging is permanently dead.
+	/// Expected: after a failed rotation the listener recovers - a subsequent write succeeds and the new
+	/// message is recorded in the log file.
+	/// Actual: the subsequent write throws ObjectDisposedException (or silently loses the message).
+	/// Cite: Logging\FileLogListener.cs:640 (writer.Dispose before MoveFile) and :667 (writers map not restored on failure).
+	/// </summary>
+	[TestMethod]
+	public async Task FileListener_FailedRotation_RecoversOnNextWrite()
+	{
+		var memory = new MemoryFileSystem();
+		var root = "/logs";
+		memory.CreateDirectory(root);
+
+		var fs = new FailFirstMoveFileSystem(memory);
+
+		var src = new LogReceiver("RotSrc") { IsRoot = true };
+
+		using var listener = new FileLogListener(fs)
+		{
+			LogDirectory = root,
+			FileName = "rot",
+			SeparateByDates = SeparateByDateModes.None,
+			MaxLength = 200,
+			MaxCount = 3,
+		};
+
+		var token = CancellationToken;
+
+		// Drive the writer past MaxLength so that rotation (and the first, failing, MoveFile) is triggered.
+		for (var i = 0; i < 40; i++)
+		{
+			try
+			{
+				await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"seed message number {i:D3}")], token);
+			}
+			catch (IOException)
+			{
+				// expected: the failing rotation surfaces the IO error for this batch
+			}
+			catch (ObjectDisposedException)
+			{
+				// current buggy behavior masks the IO error with a disposed-writer error
+			}
+
+			if (fs.MoveFileCalls > 0)
+				break;
+		}
+
+		fs.MoveFileCalls.AssertGreater(0, "Rotation (MoveFile) should have been attempted.");
+
+		// After a failed rotation, logging must recover: this write should succeed and be persisted.
+		await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Error, "after recovery marker")], token);
+
+		var file = Path.Combine(root, "rot.txt");
+		fs.FileExists(file).AssertTrue("Log file should still exist after a failed rotation.");
+		ReadAllText(fs, file).AssertContains("after recovery marker");
 	}
 
 	#endregion

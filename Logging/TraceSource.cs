@@ -5,22 +5,33 @@ namespace Ecng.Logging;
 /// </summary>
 public class TraceSource : BaseLogSource
 {
+	private static readonly AsyncLocal<int> _suppress = new();
+
 	private class TraceListenerEx(TraceSource source) : TraceListener
 	{
 		private readonly TraceSource _source = source ?? throw new ArgumentNullException(nameof(source));
 
 		public override void Write(string message)
 		{
+			if (_suppress.Value > 0)
+				return;
+
 			_source.RaiseDebugLog(message);
 		}
 
 		public override void WriteLine(string message)
 		{
+			if (_suppress.Value > 0)
+				return;
+
 			_source.RaiseDebugLog(message);
 		}
 
 		public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
 		{
+			if (_suppress.Value > 0)
+				return;
+
 			var level = ToEcng(eventType);
 
 			if (level == null)
@@ -31,6 +42,9 @@ public class TraceSource : BaseLogSource
 
 		public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
 		{
+			if (_suppress.Value > 0)
+				return;
+
 			var level = ToEcng(eventType);
 
 			if (level == null)
@@ -59,6 +73,23 @@ public class TraceSource : BaseLogSource
 	}
 
 	private readonly TraceListenerEx _listenerEx;
+
+	internal static void Suppress(Action action)
+	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
+		_suppress.Value++;
+
+		try
+		{
+			action();
+		}
+		finally
+		{
+			_suppress.Value--;
+		}
+	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TraceSource"/>.
