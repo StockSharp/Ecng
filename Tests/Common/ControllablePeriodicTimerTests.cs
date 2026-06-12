@@ -107,12 +107,18 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 
 		(counter >= 3).AssertTrue($"Expected counter >= 3, but was {counter}");
 
-		var counterBefore = counter;
 		timer.Stop();
+
+		// A tick already in flight when Stop() is called may still land, so snapshot the
+		// counter only after letting it settle, then verify no further ticks occur. Snapshotting
+		// before Stop() races that in-flight tick and makes the test flaky under load.
+		await Task.Delay(200, CancellationToken);
+
+		var afterStop = counter;
 
 		await Task.Delay(200, CancellationToken);
 
-		counter.AssertEqual(counterBefore, $"Expected counter to stay at {counterBefore} after Stop(), but was {counter}");
+		counter.AssertEqual(afterStop, $"Timer must not tick after Stop(); was {counter}");
 	}
 
 	[TestMethod]
