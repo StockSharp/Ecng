@@ -9,11 +9,13 @@ public class LicenseTests : BaseTestClass
 {
 	private const string _licPath = "../../../Resources/license_123.xml";
 
+	private static byte[] GetLicenseBody() => File.ReadAllBytes(_licPath);
+
 	[TestMethod]
 	public void ParseLicense()
 	{
 		File.Exists(_licPath).AssertTrue();
-		var body = File.ReadAllBytes(_licPath);
+		var body = GetLicenseBody();
 		var lic = new License(_licPath, body);
 
 		lic.Version.AssertEqual(new Version(2,0));
@@ -37,11 +39,44 @@ public class LicenseTests : BaseTestClass
 	[TestMethod]
 	public void BodyWithoutSignature()
 	{
-		var body = File.ReadAllBytes(_licPath);
+		var body = GetLicenseBody();
 		var lic = new License(body);
 		var text = body.UTF8();
 		text.Contains("<signature>").AssertTrue();
 		var noSigText = lic.BodyWithoutSignature.UTF8();
 		noSigText.Contains("<signature>").AssertFalse();
+	}
+
+	[TestMethod]
+	public void ParseLicense_WithUtf8Bom()
+	{
+		var body = GetLicenseBody();
+		var bom = Encoding.UTF8.GetPreamble();
+		var bodyWithBom = bom.Concat(body).ToArray();
+
+		var lic = new License(_licPath, bodyWithBom);
+
+		lic.Id.AssertEqual(123L);
+		lic.IssuedTo.AssertEqual("some@email.com");
+		lic.Features.ContainsKey(OSPlatform.Windows).AssertTrue();
+	}
+
+	[TestMethod]
+	public void ParseLicense_DuplicatePlatformNamesMergeFeatures()
+	{
+		var text = GetLicenseBody().UTF8();
+		var duplicatePlatform =
+"""
+    <platform name="Windows">
+      <feature name="feature3" expire="20301231 11:32:32" expireAction="PreventWork" hardwareId="SECOND-HW" account="ACC2" />
+    </platform>
+""";
+		var body = text.Replace("  </platforms>", duplicatePlatform + Environment.NewLine + "  </platforms>").UTF8();
+
+		var lic = new License(body);
+
+		var features = lic.Features[OSPlatform.Windows].ToArray();
+		features.Select(f => f.Name).AssertEqual(["feature1", "feature2", "feature3"]);
+		features.Single(f => f.Name == "feature3").HardwareId.AssertEqual("SECOND-HW");
 	}
 }

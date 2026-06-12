@@ -24,7 +24,7 @@ public class License
 	{
 		Body = body ?? throw new ArgumentNullException(nameof(body));
 
-		var xml = body.UTF8().To<XElement>();
+		var xml = body.UTF8().TrimStart('\uFEFF').To<XElement>();
 
 		Version = xml.GetElementValue("ver", new Version(1, 0));
 		Id = xml.GetElementValue<long>("id");
@@ -46,14 +46,19 @@ public class License
 		{
 			foreach (var platformElem in platformsElem.Elements("platform"))
 			{
-				Features.Add(platformElem.GetAttributeValue<string>("name").To<OSPlatform>(),
-					[.. platformElem.Elements("feature").Select(featureElem => new LicenseFeature(this,
+				var platform = platformElem.GetAttributeValue<string>("name").To<OSPlatform>();
+				var features = platformElem.Elements("feature").Select(featureElem => new LicenseFeature(this,
 						featureElem.GetAttributeValue<string>("name"),
 						toDate(featureElem.GetAttributeValue<string>("expire")),
 						featureElem.GetAttributeValue<LicenseExpireActions>("expireAction"),
 						featureElem.GetAttributeValue<string>("hardwareId"),
 						featureElem.GetAttributeValue<string>("account"),
-						featureElem.GetAttributeValue<long?>("oneApp")))]);
+						featureElem.GetAttributeValue<long?>("oneApp")));
+
+				if (Features.TryGetValue(platform, out var existing))
+					Features[platform] = [.. existing, .. features];
+				else
+					Features.Add(platform, [.. features]);
 			}
 		}
 		else
