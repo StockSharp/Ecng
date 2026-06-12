@@ -760,7 +760,18 @@ public static class TimeHelper
 	/// <returns>A <see cref="DateTime"/> parsed from the string, in UTC.</returns>
 	public static DateTime FromIso8601(this string str, IFormatProvider provider = null)
 	{
-		return DateTime.Parse(str, provider, DateTimeStyles.RoundtripKind).UtcKind();
+		if (str.IsEmpty())
+			throw new ArgumentNullException(nameof(str));
+
+		var timeSeparator = str.IndexOf('T');
+		var hasZone = str.EndsWith("Z", StringComparison.OrdinalIgnoreCase)
+			|| str.LastIndexOf('+') > timeSeparator
+			|| str.LastIndexOf('-') > timeSeparator;
+
+		if (!hasZone)
+			throw new FormatException("ISO8601 timestamp must include a UTC or offset designator.");
+
+		return DateTimeOffset.Parse(str, provider ?? CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind).UtcDateTime;
 	}
 
 	/// <summary>
@@ -771,7 +782,7 @@ public static class TimeHelper
 	/// <returns>An ISO8601-formatted string.</returns>
 	public static string ToIso8601(this DateTime dt, IFormatProvider provider = null)
 	{
-		return dt.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", provider);
+		return dt.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", provider ?? CultureInfo.InvariantCulture);
 	}
 
 	// https://stackoverflow.com/questions/11154673/get-the-correct-week-number-of-a-given-date

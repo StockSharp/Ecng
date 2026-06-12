@@ -216,6 +216,30 @@ public class StringTests : BaseTestClass
 		"10,00".RemoveTrailingZeros(",").AssertEqual("10");
 		"0,00".RemoveTrailingZeros(",").AssertEqual("0");
 		"10.5000".RemoveTrailingZeros(".").AssertEqual("10.5");
+		"1200.000".RemoveTrailingZeros(".").AssertEqual("1200");
+
+		foreach (var value in new[] { "1200", "1000000", "001200", "10" })
+			value.RemoveTrailingZeros(".").AssertEqual(value);
+	}
+
+	[TestMethod]
+	[DataRow(1536L, "1.5 KB")]
+	[DataRow(2560L, "2.5 KB")]
+	[DataRow(1572864L, "1.5 MB")]
+	public void ToHumanReadableFileSize_PreservesRoundedFraction(long value, string expected)
+	{
+		value.ToHumanReadableFileSize().AssertEqual(expected);
+	}
+
+	[TestMethod]
+	[DataRow("abcdefghij", 7, "ab...ij")]
+	[DataRow("abcdefghij", 8, "ab...hij")]
+	public void TruncateMiddle_RespectsRequestedLimit(string value, int limit, string expected)
+	{
+		var truncated = value.TruncateMiddle(limit);
+
+		truncated.AssertEqual(expected);
+		truncated.Length.AssertEqual(limit);
 	}
 
 	[TestMethod]
@@ -314,6 +338,15 @@ public class StringTests : BaseTestClass
 		var bytes = new byte[] { 0b10101010, 0b01010101 };
 		var bitStr = bytes.ToBitString();
 		bitStr.ToByteArray().AssertEqual(bytes);
+
+		new byte[] { 0b11110000, 0b00001111 }.ToBitString(index: 1)
+			.AssertEqual("00001111");
+
+		new byte[] { 0b11110000, 0b00001111 }.ToBitString(index: 1, count: 1)
+			.AssertEqual("00001111");
+
+		new byte[] { 0b11110000, 0b00001111, 0b10101010 }.ToBitString(index: 1, count: 2)
+			.AssertEqual("0000111110101010");
 	}
 
 	[TestMethod]
@@ -491,7 +524,7 @@ public class StringTests : BaseTestClass
 	{
 		"café".RemoveDiacritics().AssertEqual("cafe");
 		"тест".ToLatin().AssertEqual("test");
-		"abcdefghij".TruncateMiddle(7).AssertEqual("ab...hij");
+		"abcdefghij".TruncateMiddle(7).AssertEqual("ab...ij");
 	}
 
 	[TestMethod]

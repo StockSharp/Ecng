@@ -67,10 +67,16 @@ public abstract class Wrapper<T> : Equatable<Wrapper<T>>, IDisposable
 	/// <returns><c>true</c> if the wrapped values are equal; otherwise, <c>false</c>.</returns>
 	protected override bool OnEquals(Wrapper<T> other)
 	{
-		if (Value is IEnumerable<T> enumerable)
-			return enumerable.SequenceEqual((IEnumerable<T>)other.Value);
+		if (Value is null)
+			return other.Value is null;
+
+		if (other.Value is null)
+			return false;
+
+		if (Value is IEnumerable<T> enumerable && other.Value is IEnumerable<T> otherEnumerable)
+			return enumerable.SequenceEqual(otherEnumerable);
 		else
-			return Value.Equals(other.Value);
+			return EqualityComparer<T>.Default.Equals(Value, other.Value);
 	}
 
 	/// <summary>

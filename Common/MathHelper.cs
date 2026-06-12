@@ -1776,7 +1776,7 @@ public static class MathHelper
 						.Aggregate(1M, (acc, _) => acc * 10M))
 		];
 
-	private static readonly decimal[] _posPow10 = CreatePow10Array(MaxExponent);
+	private static readonly decimal[] _posPow10 = CreatePow10Array(MaxExponent + 1);
 
 	private static readonly decimal[] _negPow10 = [.. _posPow10.Select(v => 1M / v)];
 
@@ -1890,7 +1890,8 @@ public static class MathHelper
 		if (x < 1000000000000000) return 15;
 		if (x < 10000000000000000) return 16;
 		if (x < 100000000000000000) return 17;
+		if (x < 1000000000000000000) return 18;
 
-		return 18;
+		return 19;
 	}
 }

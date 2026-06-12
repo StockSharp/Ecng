@@ -50,7 +50,7 @@ public abstract class AsyncDisposable : DisposableBase, IAsyncReasonDisposable, 
 	/// </summary>
 	public void Dispose()
 	{
-		DisposeAsync().AsTask().Wait();
+		DisposeAsync().AsTask().GetAwaiter().GetResult();
 	}
 
 	#endregion

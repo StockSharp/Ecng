@@ -237,6 +237,19 @@ public class RandomTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Decimal_AllowsLargeValidatedDigitCounts()
+	{
+		for (var i = 0; i < 20; i++)
+		{
+			var value = RandomGen.GetDecimal(28, 28);
+
+			value.AssertNotEqual(0m);
+			(value <= decimal.MaxValue).AssertTrue();
+			(value >= decimal.MinValue).AssertTrue();
+		}
+	}
+
+	[TestMethod]
 	public void Enum()
 	{
 		var allValues = Enumerator.GetValues<CurrencyTypes>();

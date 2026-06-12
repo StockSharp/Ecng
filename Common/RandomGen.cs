@@ -500,17 +500,27 @@ public static class RandomGen
 		if (fractional < 0 || fractional > 28)
 			throw new ArgumentOutOfRangeException(nameof(fractional), fractional, "Must be in range 0..28");
 
-		for (var k = 0; k < 10; k++)
-		{
-			var i1 = Enumerable.Repeat(9, GetInt(1, integer)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
-			var i2 = fractional == 0 ? 0 : Enumerable.Repeat(9, GetInt(1, fractional)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
-			var value = decimal.Parse(i1 + "." + i2, CultureInfo.InvariantCulture);
+		var fractionalDigits = fractional == 0 ? 0 : GetInt(0, fractional.Min(27));
+		var integerDigits = GetInt(1, integer.Min(28 - fractionalDigits));
 
-			if (value != 0)
-				return value;
+		static string CreateDigits(int count, bool allowLeadingZero)
+		{
+			if (count == 0)
+				return "0";
+
+			var builder = new StringBuilder(count);
+			builder.Append((char)('0' + (allowLeadingZero ? GetInt(9) : GetInt(1, 9))));
+
+			for (var i = 1; i < count; i++)
+				builder.Append((char)('0' + GetInt(9)));
+
+			return builder.ToString();
 		}
 
-		throw new InvalidOperationException("Failed to generate non-zero decimal value.");
+		var integerPart = CreateDigits(integerDigits, false);
+		var fractionalPart = CreateDigits(fractionalDigits, true);
+
+		return decimal.Parse($"{integerPart}.{fractionalPart}", CultureInfo.InvariantCulture);
 	}
 
 	/// <summary>

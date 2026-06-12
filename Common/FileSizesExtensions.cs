@@ -43,7 +43,7 @@ public static class FileSizesExtensions
 	public static string ToHumanReadableFileSize(this long byteCount)
 	{
 		int place;
-		int num;
+		double num;
 
 		if (byteCount == 0)
 		{
@@ -54,9 +54,9 @@ public static class FileSizesExtensions
 		{
 			var bytes = byteCount.Abs();
 			place = (int)Math.Log(bytes, FileSizes.KB).Floor();
-			num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(FileSizes.KB, place), 1));
+			num = Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(FileSizes.KB, place), 1);
 		}
 
-		return num + " " + _suf[place];
+		return num.ToString("0.#", CultureInfo.InvariantCulture) + " " + _suf[place];
 	}
 }

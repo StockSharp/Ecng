@@ -6,7 +6,7 @@ using System.Data;
 using Ecng.ComponentModel;
 
 [TestClass]
-public class ConverterTest
+public class ConverterTest : BaseTestClass
 {
 	[TestMethod]
 	public void TimeZone()
@@ -166,6 +166,16 @@ public class ConverterTest
 	}
 
 	[TestMethod]
+	public void ArrayCovariance_NonGenericDestinationFailsMeaningfully()
+	{
+		var ex = ThrowsExactly<InvalidCastException>(() =>
+			new object[] { 1, 2, 3 }.To(typeof(IComparable)));
+
+		(ex.InnerException is ArgumentException).AssertTrue(
+			$"Expected a conversion failure, not a reflection helper failure. Actual: {ex.InnerException?.GetType().Name}");
+	}
+
+	[TestMethod]
 	public void EnumerableCovariance()
 	{
 		IEnumerable<object> objArr = new object[] { 1, 2, 3 };
@@ -198,6 +208,34 @@ public class ConverterTest
 		var loopback = IPAddress.Loopback;
 		loopback.AssertEqual(loopback.To<long>().To<IPAddress>());
 		loopback.AssertEqual(loopback.To<string>().To<IPAddress>());
+
+		var firstV6 = IPAddress.Parse("2001:db8::1");
+		var secondV6 = IPAddress.Parse("2001:db8::2");
+		firstV6.To<long>().AssertNotEqual(secondV6.To<long>());
+	}
+
+	[TestMethod]
+	public void StringNumberConverters_UseInvariantCulture()
+	{
+		var currentCulture = Thread.CurrentThread.CurrentCulture;
+		var currentUiCulture = Thread.CurrentThread.CurrentUICulture;
+
+		try
+		{
+			var culture = CultureInfo.GetCultureInfo("fr-FR");
+			Thread.CurrentThread.CurrentCulture = culture;
+			Thread.CurrentThread.CurrentUICulture = culture;
+
+			"1.5".To<double>().AssertEqual(1.5);
+			"1.5".To<decimal>().AssertEqual(1.5m);
+			1.5.To<string>().AssertEqual("1.5");
+			1.5m.To<string>().AssertEqual("1.5");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = currentCulture;
+			Thread.CurrentThread.CurrentUICulture = currentUiCulture;
+		}
 	}
 
 	[TestMethod]
@@ -396,6 +434,10 @@ public class ConverterTest
 		var sec = "secret".Secure();
 		sec.To<string>().AssertEqual("secret");
 		"secret".To<SecureString>().UnSecure().AssertEqual("secret");
+
+		var ex = ThrowsExactly<InvalidCastException>(() => new byte[] { 65 }.To<SecureString>());
+		(ex.InnerException is ArgumentException).AssertTrue(
+			$"Odd byte counts should be rejected before indexing past the array. Actual: {ex.InnerException?.GetType().Name}");
 
 		// byte[] <-> string
 		const string helloStr = "hello";

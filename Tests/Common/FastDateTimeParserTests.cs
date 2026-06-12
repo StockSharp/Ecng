@@ -18,6 +18,30 @@ public class FastDateTimeParserTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void TwoDigitYear_UsesInvariantPivot()
+	{
+		var currentCulture = Thread.CurrentThread.CurrentCulture;
+		var currentUiCulture = Thread.CurrentThread.CurrentUICulture;
+
+		try
+		{
+			var culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+			culture.DateTimeFormat.Calendar.TwoDigitYearMax = 2099;
+			Thread.CurrentThread.CurrentCulture = culture;
+			Thread.CurrentThread.CurrentUICulture = culture;
+
+			var parser = new FastDateTimeParser("yy-MM-dd");
+
+			parser.Parse("98-01-01").Year.AssertEqual(1998);
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = currentCulture;
+			Thread.CurrentThread.CurrentUICulture = currentUiCulture;
+		}
+	}
+
+	[TestMethod]
 	public void ShortInput()
 	{
 		var parser = new FastDateTimeParser("yyyy-MM-dd HH:mm:ss.fff");
@@ -38,6 +62,14 @@ public class FastDateTimeParserTests : BaseTestClass
 			str.AssertEqual("2024-02-29");
 			parser.Parse(str).AssertEqual(dt);
 		});
+	}
+
+	[TestMethod]
+	public void ToString_PreservesTrailingLiteral()
+	{
+		var parser = new FastDateTimeParser("yyyyMMddZ");
+
+		parser.ToString(new DateTime(2024, 1, 2)).AssertEqual("20240102Z");
 	}
 
 	[TestMethod]

@@ -131,7 +131,13 @@ public static class Converter
 			{
 				case AddressFamily.InterNetworkV6:
 				{
-					return input.ScopeId;
+					var bytes = input.GetAddressBytes();
+					var value = 0L;
+
+					for (var i = 8; i < bytes.Length; i++)
+						value = (value << 8) | bytes[i];
+
+					return value;
 				}
 				case AddressFamily.InterNetwork:
 				{
@@ -270,6 +276,8 @@ public static class Converter
 		});
 		AddTypedConverter<byte[], SecureString>(input =>
 		{
+			RequireEvenLength(input);
+
 			var charArray = new char[input.Length / 2];
 
 			var offset = 0;
@@ -281,35 +289,35 @@ public static class Converter
 		AddTypedConverter<string, char[]>(input => input.ToCharArray());
 		AddTypedConverter<char[], string>(input => new string(input));
 		AddTypedConverter<byte, byte[]>(input => [input]);
-		AddTypedConverter<byte[], byte>(input => input[0]);
+		AddTypedConverter<byte[], byte>(input => RequireLength(input, sizeof(byte), typeof(byte))[0]);
 		AddTypedConverter<bool, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], bool>(input => BitConverter.ToBoolean(input, 0));
+		AddTypedConverter<byte[], bool>(input => BitConverter.ToBoolean(RequireLength(input, sizeof(bool), typeof(bool)), 0));
 		AddTypedConverter<char, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], char>(input => BitConverter.ToChar(input, 0));
+		AddTypedConverter<byte[], char>(input => BitConverter.ToChar(RequireLength(input, sizeof(char), typeof(char)), 0));
 		AddTypedConverter<short, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], short>(input => BitConverter.ToInt16(input, 0));
+		AddTypedConverter<byte[], short>(input => BitConverter.ToInt16(RequireLength(input, sizeof(short), typeof(short)), 0));
 		AddTypedConverter<int, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], int>(input => BitConverter.ToInt32(input, 0));
+		AddTypedConverter<byte[], int>(input => BitConverter.ToInt32(RequireLength(input, sizeof(int), typeof(int)), 0));
 		AddTypedConverter<long, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], long>(input => BitConverter.ToInt64(input, 0));
+		AddTypedConverter<byte[], long>(input => BitConverter.ToInt64(RequireLength(input, sizeof(long), typeof(long)), 0));
 		AddTypedConverter<ushort, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], ushort>(input => BitConverter.ToUInt16(input, 0));
+		AddTypedConverter<byte[], ushort>(input => BitConverter.ToUInt16(RequireLength(input, sizeof(ushort), typeof(ushort)), 0));
 		AddTypedConverter<uint, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], uint>(input => BitConverter.ToUInt32(input, 0));
+		AddTypedConverter<byte[], uint>(input => BitConverter.ToUInt32(RequireLength(input, sizeof(uint), typeof(uint)), 0));
 		AddTypedConverter<ulong, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], ulong>(input => BitConverter.ToUInt64(input, 0));
+		AddTypedConverter<byte[], ulong>(input => BitConverter.ToUInt64(RequireLength(input, sizeof(ulong), typeof(ulong)), 0));
 		AddTypedConverter<float, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], float>(input => BitConverter.ToSingle(input, 0));
+		AddTypedConverter<byte[], float>(input => BitConverter.ToSingle(RequireLength(input, sizeof(float), typeof(float)), 0));
 		AddTypedConverter<double, byte[]>(BitConverter.GetBytes);
-		AddTypedConverter<byte[], double>(input => BitConverter.ToDouble(input, 0));
+		AddTypedConverter<byte[], double>(input => BitConverter.ToDouble(RequireLength(input, sizeof(double), typeof(double)), 0));
 		AddTypedConverter<DateTime, byte[]>(input => BitConverter.GetBytes(input.Ticks));
-		AddTypedConverter<byte[], DateTime>(input => new DateTime(BitConverter.ToInt64(input, 0)));
+		AddTypedConverter<byte[], DateTime>(input => new DateTime(BitConverter.ToInt64(RequireLength(input, sizeof(long), typeof(DateTime)), 0)));
 		AddTypedConverter<DateTimeOffset, byte[]>(input => BitConverter.GetBytes(input.UtcTicks));
-		AddTypedConverter<byte[], DateTimeOffset>(input => new DateTimeOffset(BitConverter.ToInt64(input, 0), TimeSpan.Zero));
+		AddTypedConverter<byte[], DateTimeOffset>(input => new DateTimeOffset(BitConverter.ToInt64(RequireLength(input, sizeof(long), typeof(DateTimeOffset)), 0), TimeSpan.Zero));
 		AddTypedConverter<TimeSpan, byte[]>(input => BitConverter.GetBytes(input.Ticks));
-		AddTypedConverter<byte[], TimeSpan>(input => new TimeSpan(BitConverter.ToInt64(input, 0)));
+		AddTypedConverter<byte[], TimeSpan>(input => new TimeSpan(BitConverter.ToInt64(RequireLength(input, sizeof(long), typeof(TimeSpan)), 0)));
 		AddTypedConverter<Guid, byte[]>(input => input.ToByteArray());
-		AddTypedConverter<byte[], Guid>(input => new Guid(input));
+		AddTypedConverter<byte[], Guid>(input => new Guid(RequireLength(input, 16, typeof(Guid))));
 
 		AddTypedConverter<decimal, byte[]>(input =>
 		{
@@ -343,7 +351,7 @@ public static class Converter
 		});
 		AddTypedConverter<byte[], decimal>(input =>
 		{
-			var bytes = input;
+			var bytes = RequireLength(input, 16, typeof(decimal));
 
 			var bits = new[]
 			{
@@ -388,10 +396,10 @@ public static class Converter
 				return input.UtcDateTime;
 		});
 
-		AddTypedConverter<byte, string>(input => input.ToString());
-		AddTypedConverter<string, byte>(byte.Parse);
-		AddTypedConverter<sbyte, string>(input => input.ToString());
-		AddTypedConverter<string, sbyte>(sbyte.Parse);
+		AddTypedConverter<byte, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, byte>(input => byte.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<sbyte, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, sbyte>(input => sbyte.Parse(input, CultureInfo.InvariantCulture));
 		AddTypedConverter<bool, string>(input => input.ToString());
 		AddTypedConverter<string, bool>(input =>
 		{
@@ -403,33 +411,33 @@ public static class Converter
 				return bool.Parse(input);
 		});
 		AddTypedConverter<string, bool?>(s => s.IsEmpty() ? null : s.To<bool>());
-		AddTypedConverter<float, string>(input => input.ToString());
-		AddTypedConverter<string, float>(float.Parse);
-		AddTypedConverter<string, float?>(s => s.IsEmpty() ? null : float.Parse(s));
-		AddTypedConverter<double, string>(input => input.ToString());
-		AddTypedConverter<string, double>(double.Parse);
-		AddTypedConverter<string, double?>(s => s.IsEmpty() ? null : double.Parse(s));
-		AddTypedConverter<decimal, string>(input => input.ToString());
-		AddTypedConverter<string, decimal>(decimal.Parse);
-		AddTypedConverter<string, decimal?>(s => s.IsEmpty() ? null : decimal.Parse(s));
-		AddTypedConverter<short, string>(input => input.ToString());
-		AddTypedConverter<string, short>(short.Parse);
-		AddTypedConverter<string, short?>(s => s.IsEmpty() ? null : short.Parse(s));
-		AddTypedConverter<int, string>(input => input.ToString());
-		AddTypedConverter<string, int>(int.Parse);
-		AddTypedConverter<string, int?>(s => s.IsEmpty() ? null : int.Parse(s));
-		AddTypedConverter<long, string>(input => input.ToString());
-		AddTypedConverter<string, long>(long.Parse);
-		AddTypedConverter<string, long?>(s => s.IsEmpty() ? null : long.Parse(s));
-		AddTypedConverter<ushort, string>(input => input.ToString());
-		AddTypedConverter<string, ushort>(ushort.Parse);
-		AddTypedConverter<string, ushort?>(s => s.IsEmpty() ? null : ushort.Parse(s));
-		AddTypedConverter<uint, string>(input => input.ToString());
-		AddTypedConverter<string, uint>(uint.Parse);
-		AddTypedConverter<string, uint?>(s => s.IsEmpty() ? null : uint.Parse(s));
-		AddTypedConverter<ulong, string>(input => input.ToString());
-		AddTypedConverter<string, ulong>(ulong.Parse);
-		AddTypedConverter<string, ulong?>(s => s.IsEmpty() ? null : ulong.Parse(s));
+		AddTypedConverter<float, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, float>(input => float.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, float?>(s => s.IsEmpty() ? null : float.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<double, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, double>(input => double.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, double?>(s => s.IsEmpty() ? null : double.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<decimal, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, decimal>(input => decimal.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, decimal?>(s => s.IsEmpty() ? null : decimal.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<short, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, short>(input => short.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, short?>(s => s.IsEmpty() ? null : short.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<int, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, int>(input => int.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, int?>(s => s.IsEmpty() ? null : int.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<long, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, long>(input => long.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, long?>(s => s.IsEmpty() ? null : long.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<ushort, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, ushort>(input => ushort.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, ushort?>(s => s.IsEmpty() ? null : ushort.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<uint, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, uint>(input => uint.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, uint?>(s => s.IsEmpty() ? null : uint.Parse(s, CultureInfo.InvariantCulture));
+		AddTypedConverter<ulong, string>(input => input.ToString(CultureInfo.InvariantCulture));
+		AddTypedConverter<string, ulong>(input => ulong.Parse(input, CultureInfo.InvariantCulture));
+		AddTypedConverter<string, ulong?>(s => s.IsEmpty() ? null : ulong.Parse(s, CultureInfo.InvariantCulture));
 		AddTypedConverter<char, string>(input => input.ToString());
 		AddTypedConverter<string, char>(char.Parse);
 		AddTypedConverter<OSPlatform, string>(input => input.ToString());
@@ -460,6 +468,20 @@ public static class Converter
 		AddTypedConverter<string, Guid?>(s => s.IsEmpty() ? null : Guid.Parse(s));
 		AddTypedConverter<TimeZoneInfo, string>(input => input.Id);
 		AddTypedConverter<string, TimeZoneInfo>(s => TZConvert.TryGetTimeZoneInfo(s, out var tz) ? tz : TimeZoneInfo.Utc);
+	}
+
+	private static byte[] RequireLength(byte[] input, int length, Type destinationType)
+	{
+		if (input.Length < length)
+			throw new ArgumentException($"Byte array must contain at least {length} bytes to convert to '{destinationType}'.", nameof(input));
+
+		return input;
+	}
+
+	private static void RequireEvenLength(byte[] input)
+	{
+		if ((input.Length % 2) != 0)
+			throw new ArgumentException("Byte array length must be even to convert to SecureString.", nameof(input));
 	}
 
 	/// <summary>
@@ -710,8 +732,10 @@ public static class Converter
 				return (dt.Ticks % TimeSpan.TicksPerSecond) != 0 ? dt.ToString("o") : value.ToString();
 			else if (value is DateTimeOffset dto && destinationType == typeof(string))
 				return (dto.Ticks % TimeSpan.TicksPerSecond) != 0 ? dto.ToString("o") : value.ToString();
-			else if (value is string str4 && destinationType == typeof(DateTimeOffset))
-				return DateTimeOffset.Parse(str4);
+			else if (value is string str4 && destinationType == typeof(DateTime))
+				return DateTime.Parse(str4, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+			else if (value is string str5 && destinationType == typeof(DateTimeOffset))
+				return DateTimeOffset.Parse(str5, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 			else if (value is string s6 && destinationType == typeof(XDocument))
 				return XDocument.Parse(s6);
 			else if (value is string s7 && destinationType == typeof(XElement))
@@ -788,7 +812,7 @@ public static class Converter
 			result = destArr;
 			return true;
 		}
-		else if (destinationType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+		else if (destinationType.IsGenericType && destinationType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 		{
 			var elemType = destinationType.GetGenericArguments().First();
 			result = new CovarianceEnumerable<object>(source).ChangeType(elemType);

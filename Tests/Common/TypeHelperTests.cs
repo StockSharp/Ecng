@@ -17,6 +17,26 @@ public class TypeHelperTests : BaseTestClass
 		public int Value { get; set; }
 	}
 
+	private sealed class StringWrapper(string value) : Wrapper<string>(value)
+	{
+		public override Wrapper<string> Clone()
+			=> new StringWrapper(Value);
+	}
+
+	private sealed class ComparableEquatable(int value) : Equatable<ComparableEquatable>
+	{
+		public int Value { get; } = value;
+
+		public override ComparableEquatable Clone()
+			=> new(Value);
+
+		protected override bool OnEquals(ComparableEquatable other)
+			=> Value == other.Value;
+
+		public override int GetHashCode()
+			=> Value;
+	}
+
 	[TestMethod]
 	public void CreateInstance_NullType_ThrowsArgumentNullException()
 	{
@@ -555,5 +575,28 @@ public class TypeHelperTests : BaseTestClass
 
 		dynamic obj4 = new ExpandoObject();
 		TypeHelper.HasProperty((object)obj4, propName).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Wrapper_EqualsHandlesNullValues()
+	{
+		new StringWrapper(null).Equals(new StringWrapper(null)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void Wrapper_EqualsHandlesNullAndNonNullValues()
+	{
+		new StringWrapper(null).Equals(new StringWrapper("value")).AssertFalse();
+		new StringWrapper("value").Equals(new StringWrapper(null)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Equatable_CompareToIsAntisymmetricForDifferentValues()
+	{
+		var first = new ComparableEquatable(1);
+		var second = new ComparableEquatable(2);
+
+		(first.CompareTo(second) < 0).AssertTrue();
+		(second.CompareTo(first) > 0).AssertTrue();
 	}
 }

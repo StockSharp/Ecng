@@ -92,7 +92,17 @@ public abstract class Equatable<T> : Cloneable<T>, IEquatable<T>, IComparable<T>
 	/// </returns>
 	public virtual int CompareTo(T value)
 	{
-		return Equals(value) ? 0 : -1;
+		if (value is null)
+			return 1;
+
+		if (Equals(value))
+			return 0;
+
+		var result = GetHashCode().CompareTo(value.GetHashCode());
+		if (result != 0)
+			return result;
+
+		return string.CompareOrdinal(ToString(), value.ToString());
 	}
 
 	#endregion

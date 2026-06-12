@@ -173,6 +173,9 @@ public class FastDateTimeParser
 			};
 		}
 
+		if (prevIndex < template.Length)
+			parts2.Add((Parts.String, template.Substring(prevIndex)));
+
 		_parts = [.. parts2];
 	}
 
@@ -219,7 +222,7 @@ public class FastDateTimeParser
 			else if (_isYearTwoChars)
 			{
 				var yy = (input[_yearStart] - '0') * 10 + (input[_yearStart + 1] - '0');
-				years = CultureInfo.CurrentCulture.Calendar.ToFourDigitYear(yy);
+				years = CultureInfo.InvariantCulture.Calendar.ToFourDigitYear(yy);
 			}
 			else
 			{

@@ -415,6 +415,10 @@ public class MathHelperTest : BaseTestClass
 	[TestMethod]
 	public void DigitCount()
 	{
+		1_000_000_000_000_000_000L.GetDigitCount().AssertEqual(19);
+		long.MaxValue.GetDigitCount().AssertEqual(19);
+		999_999_999_999_999_999L.GetDigitCount().AssertEqual(18);
+
 		for (var i = 0; i < 100000; i++)
 		{
 			var v = RandomGen.GetInt();
@@ -1222,6 +1226,17 @@ public class MathHelperTest : BaseTestClass
 		MathHelper.ToDecimal(123, 0).AssertEqual(123m);
 		MathHelper.ToDecimal(123, 2).AssertEqual(12300m);
 		MathHelper.ToDecimal(123, -2).AssertEqual(1.23m);
+		MathHelper.ToDecimal(1, 28).AssertEqual(10000000000000000000000000000m);
+	}
+
+	[TestMethod]
+	[DataRow(1L, 28, "10000000000000000000000000000")]
+	[DataRow(2L, 28, "20000000000000000000000000000")]
+	[DataRow(7L, 28, "70000000000000000000000000000")]
+	public void ToDecimal_MantissaExponent_PositiveBoundary(long mantissa, int exponent, string expected)
+	{
+		MathHelper.ToDecimal(mantissa, exponent)
+			.AssertEqual(decimal.Parse(expected, CultureInfo.InvariantCulture));
 	}
 
 	#endregion

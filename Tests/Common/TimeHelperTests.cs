@@ -1728,6 +1728,25 @@ public class TimeHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void ToIso8601_UsesInvariantTimeSeparators()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("fi-FI");
+
+			new DateTime(2026, 1, 2, 3, 4, 5, 6, DateTimeKind.Utc)
+				.ToIso8601()
+				.AssertEqual("2026-01-02T03:04:05.006Z");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
+	}
+
+	[TestMethod]
 	public void FromIso8601_ShouldParseCorrectly()
 	{
 		var dt = "2024-06-15T14:30:45.123Z".FromIso8601();
@@ -1739,6 +1758,12 @@ public class TimeHelperTests : BaseTestClass
 		dt.Minute.AssertEqual(30);
 		dt.Second.AssertEqual(45);
 		dt.Kind.AssertEqual(DateTimeKind.Utc);
+	}
+
+	[TestMethod]
+	public void FromIso8601_RejectsLocalUnspecifiedTimestamp()
+	{
+		ThrowsExactly<FormatException>(() => "2024-06-15T14:30:45.123".FromIso8601());
 	}
 
 	[TestMethod]
@@ -2145,4 +2170,3 @@ public class TimeHelperTests : BaseTestClass
 
 	#endregion
 }
-

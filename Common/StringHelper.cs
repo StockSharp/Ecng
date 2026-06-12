@@ -1031,18 +1031,12 @@ public static class StringHelper
 		if (output.Length <= limit || limit <= 0)
 			return output;
 
-		// figure out how much to make it fit...
-		var left = (limit / 2) - (middle.Length / 2);
-		var right = limit - left - (middle.Length / 2);
+		var available = limit - middle.Length;
+		if (available <= 0)
+			return middle.Substring(0, limit);
 
-		if ((left + right + middle.Length) < limit)
-		{
-			right++;
-		}
-		else if ((left + right + middle.Length) > limit)
-		{
-			right--;
-		}
+		var left = available / 2;
+		var right = available - left;
 
 		// cut the left side
 		output = input.Substring(0, left);
@@ -1080,46 +1074,18 @@ public static class StringHelper
 		if (separator.IsEmpty())
 			throw new ArgumentNullException(nameof(separator));
 
-		s = s.TrimStart('0').TrimEnd('0');
+		var index = s.IndexOf(separator, StringComparison.Ordinal);
+		if (index == -1)
+			return s;
 
-		//var index = s.IndexOf(separator);
+		var integerPart = s.Substring(0, index);
+		if (integerPart.IsEmpty())
+			integerPart = "0";
 
-		//if (index == -1)
-		//    index = s.Length;
-
-		//var endIndex = 0;
-
-		//for (var i = 0; i < index; i++)
-		//{
-		//    if (s[i] == '0')
-		//        endIndex = i + 1;
-		//    else
-		//        break;
-		//}
-
-		//if (endIndex > 0)
-		//    s = s.Substring(endIndex);
-
-		//for (var i = s.Length - 1; i > index; i--)
-		//{
-		//    if (s[i] == '0')
-		//        endIndex = i - 1;
-		//    else
-		//        break;
-		//}
-
-		//s = s.TrimStart('0').TrimEnd('0', separator[0]);
-
-		if (s.StartsWith(separator))
-			s = "0" + s;
-
-		if (s.EndsWith(separator))
-			s = s.Substring(0, s.Length - 1);
-
-		if (s.IsEmpty())
-			s = "0";
-
-		return s;
+		var fractionalPart = s.Substring(index + separator.Length).TrimEnd('0');
+		return fractionalPart.IsEmpty()
+			? integerPart
+			: integerPart + separator + fractionalPart;
 	}
 
 	/// <summary>
@@ -1799,24 +1765,28 @@ public static class StringHelper
 			throw new ArgumentNullException(nameof(buffer));
 
 		var offset = index ?? 0;
-		var len = count ?? buffer.Length;
+		var len = count ?? (buffer.Length - offset);
 
-		if ((offset + len) > buffer.Length)
+		if (offset < 0 || len < 0 || (offset + len) > buffer.Length)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
-		if (offset == len)
+		if (len == 0)
 			return string.Empty;
 
 		var builder = new StringBuilder();
+		var useSeparator = separator != ' ' || (!index.HasValue && !count.HasValue);
 
 		for (var i = 0; i < len; i++)
 		{
 			var bits = Convert.ToString(buffer[i + offset] & 0xFF, 2).PadLeft(8, '0');
 
-			builder.Append(bits).Append(separator);
+			builder.Append(bits);
+
+			if (useSeparator)
+				builder.Append(separator);
 		}
 
-		if (builder.Length > 0)
+		if (useSeparator && builder.Length > 0)
 			builder.Remove(builder.Length - 1, 1);
 
 		return builder.ToString();
@@ -1836,7 +1806,9 @@ public static class StringHelper
 		if (bitString.Length == 0)
 			return [];
 
-		var bitStrings = bitString.Split(separator);
+		var bitStrings = bitString.Contains(separator)
+			? bitString.Split(separator)
+			: bitString.Chunk(8).Select(c => new string(c)).ToArray();
 		var bytes = new byte[bitStrings.Length];
 
 		for (var i = 0; i < bitStrings.Length; i++)
