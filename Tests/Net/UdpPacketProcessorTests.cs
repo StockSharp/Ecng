@@ -747,6 +747,17 @@ public class UdpPacketProcessorTests : BaseTestClass
 		catch (OperationCanceledException)
 		{
 		}
+		catch (Exception ex) when (
+			ex is SocketException { SocketErrorCode: SocketError.AddressNotAvailable or SocketError.NetworkUnreachable } ||
+			ex.InnerException is SocketException { SocketErrorCode: SocketError.AddressNotAvailable or SocketError.NetworkUnreachable })
+		{
+			// After the receiver-swallow fix the failed multicast join propagates instead of
+			// being logged; classify it by the typed SocketErrorCode (the host cannot join an
+			// IPv6 multicast group) rather than by message text, and skip on such environments.
+			receiver.Dispose();
+			Inconclusive("IPv6 multicast not available in this environment (CI/container limitation).");
+			return;
+		}
 
 		receiver.Dispose();
 
