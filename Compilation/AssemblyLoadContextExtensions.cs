@@ -18,7 +18,8 @@ public static class AssemblyLoadContextExtensions
 		{
 			base.DisposeManaged();
 
-			_context.Unload();
+			if (_context.IsCollectible)
+				_context.Unload();
 		}
 	}
 

@@ -99,6 +99,7 @@ public abstract class RoslynCompiler(string extension) : ICompiler
 		static CompilationErrorTypes ToType(DiagnosticSeverity severity)
 			=> severity switch
 			{
+				DiagnosticSeverity.Hidden => CompilationErrorTypes.Info,
 				DiagnosticSeverity.Info => CompilationErrorTypes.Info,
 				DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
 				DiagnosticSeverity.Error => CompilationErrorTypes.Error,

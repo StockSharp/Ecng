@@ -85,7 +85,8 @@ static class PythonAttrs
 	{
 		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, _documentationUrl) is string docUrl)
 			return [new DocAttribute(docUrl.Trim())];
-		else if (attributeType == typeof(DisplayAttribute))
+
+		if (attributeType == typeof(DisplayAttribute))
 		{
 			var dispName = TryGetAttr(ops, obj, _displayName);
 			var desc = TryGetAttr(ops, obj, _description);
@@ -93,23 +94,25 @@ static class PythonAttrs
 			if (!dispName.IsEmpty() || !desc.IsEmpty())
 				return [new DisplayAttribute { Name = dispName, Description = desc }];
 		}
-		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, _icon) is string icon)
+
+		if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, _icon) is string icon)
 			return [new IconAttribute(icon)];
-		else if (TryGetDict(ops, obj, out var dict))
+
+		if (TryGetDict(ops, obj, out var dict))
 		{
 			foreach (var (_, value) in dict)
 			{
 				if (value is Attribute attr && attr.GetType().Is(attributeType))
 					return [attr];
 			}
+		}
 
-			if (inherit && obj is PythonType pt)
-			{
-				var attr = GetCustomAttributes(ops, obj, inherit).Where(a => a.GetType().Is(attributeType)).FirstOrDefault();
+		if (inherit && obj is PythonType)
+		{
+			var attr = GetCustomAttributes(ops, obj, inherit).FirstOrDefault(a => a.GetType().Is(attributeType));
 
-				if (attr != null)
-					return [attr];
-			}
+			if (attr != null)
+				return [attr];
 		}
 
 		return [];
@@ -263,7 +266,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 
 				public override ParameterInfo[] GetParameters() => _parameters;
 				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
-					=> _function.__call__(DefaultContext.Default, [obj, .. parameters]);
+					=> _function.__call__(DefaultContext.Default, [obj, .. (parameters ?? [])]);
 
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
@@ -552,7 +555,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			public override FieldInfo[] GetFields(BindingFlags bindingAttr) => _dotNetBaseType.GetFields(bindingAttr);
 
 			public override Type GetInterface(string name, bool ignoreCase) => GetInterfaces().FirstOrDefault(i => ignoreCase ? i.Name.EqualsIgnoreCase(name) : i.Name == name);
-			public override Type[] GetInterfaces() => _dotNetBaseType.GetInterfaces();
+			public override Type[] GetInterfaces() => [.. _underlyingType.GetInterfaces().Concat(_dotNetBaseType.GetInterfaces()).Distinct()];
 
 			public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
 				=> [.. GetProperties(bindingAttr), .. GetMethods(bindingAttr), .. GetEvents(bindingAttr)];
@@ -572,7 +575,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				switch (member)
 				{
 					case PythonFunction pythonFunction:
-						return pythonFunction.__call__(DefaultContext.Default, target, args);
+						return pythonFunction.__call__(DefaultContext.Default, [target, .. (args ?? [])]);
 
 					case PythonProperty:
 
@@ -621,7 +624,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 						.OfType<PythonFunction>()
 						.Select(addFunc =>
 						{
-							var name = addFunc.__name__.Remove(_eventAddPrefix, true);
+							var name = addFunc.__name__[_eventAddPrefix.Length..];
 
 							if (!_ops.TryGetMember(_pythonType, _eventRemovePrefix + name, true, out var r) || r is not PythonFunction removeFunc)
 								return null;
@@ -629,6 +632,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 							var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
 							return new EventImpl(name, eventType, addFunc, removeFunc, this);
 						})
+						.Where(e => e is not null)
 						;
 
 					_events = [.. dotNetEvents, .. pythonEvents];
@@ -638,6 +642,23 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			}
 
 			private MethodInfo[] _methods;
+
+			private bool IsEventAccessorName(string name)
+			{
+				if (name.StartsWithIgnoreCase(_eventAddPrefix))
+				{
+					var eventName = name[_eventAddPrefix.Length..];
+					return _ops.TryGetMember(_pythonType, _eventRemovePrefix + eventName, true, out var removeFunc) && removeFunc is PythonFunction;
+				}
+
+				if (name.StartsWithIgnoreCase(_eventRemovePrefix))
+				{
+					var eventName = name[_eventRemovePrefix.Length..];
+					return _ops.TryGetMember(_pythonType, _eventAddPrefix + eventName, true, out var addFunc) && addFunc is PythonFunction;
+				}
+
+				return false;
+			}
 
 			public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
 			{
@@ -649,7 +670,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 
 					var pythonMethods = _ops
 						.GetMemberNames(_pythonType)
-						.Where(n => !n.StartsWithIgnoreCase(_eventAddPrefix) && !n.StartsWithIgnoreCase(_eventRemovePrefix))
+						.Where(n => !IsEventAccessorName(n))
 						.Select(name => _ops.GetMember(_pythonType, name))
 						.OfType<PythonFunction>();
 
@@ -672,7 +693,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			}
 
 			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
-				=> GetMethods(bindingAttr).FirstOrDefault(m => m.Name == name && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(types));
+				=> GetMethods(bindingAttr).FirstOrDefault(m => m.Name == name && (types is null || m.GetParameters().Select(p => p.ParameterType).SequenceEqual(types)));
 
 			public object CreateInstance(params object[] args)
 				=> _ops.CreateInstance(_pythonType, args);

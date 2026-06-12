@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Collections;
+using Ecng.Security;
 
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
@@ -34,7 +35,7 @@ public class FSharpCompiler : ICompiler
 
 			public override bool FileExistsShim(string fileName)
 			{
-				if (_input.ContainsKey(Path.GetFileName(fileName)))
+				if (_input.ContainsKey(fileName) || _input.ContainsKey(Path.GetFileName(fileName)))
 					return true;
 
 				return base.FileExistsShim(fileName);
@@ -42,7 +43,7 @@ public class FSharpCompiler : ICompiler
 
 			public override Stream OpenFileForReadShim(string filePath, FSharpOption<bool> useMemoryMappedFile, FSharpOption<bool> shouldShadowCopy)
 			{
-				if (_input.TryGetValue(Path.GetFileName(filePath), out var body))
+				if (_input.TryGetValue(filePath, out var body) || _input.TryGetValue(Path.GetFileName(filePath), out body))
 					return new MemoryStream(body);
 
 				return base.OpenFileForReadShim(filePath, useMemoryMappedFile, shouldShadowCopy);
@@ -107,12 +108,25 @@ public class FSharpCompiler : ICompiler
 		);
 	}
 
-	private static string[] CreateOptions(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs)
+	private static string GetReferencePath((string name, byte[] body) reference)
+		=> Path.Combine(Path.GetTempPath(), $"{reference.body.Sha512()}_{Path.GetFileName(reference.name)}");
+
+	private static Dictionary<string, byte[]> CreateReferenceMap(IEnumerable<(string name, byte[] body)> refs)
+	{
+		var retVal = new Dictionary<string, byte[]>(StringComparer.InvariantCultureIgnoreCase);
+
+		foreach (var reference in refs)
+			retVal.TryAdd(GetReferencePath(reference), reference.body);
+
+		return retVal;
+	}
+
+	private static string[] CreateOptions(string name, IEnumerable<string> sources, IEnumerable<string> refs)
 	{
 		if (sources == null)	throw new ArgumentNullException(nameof(sources));
 		if (refs == null)		throw new ArgumentNullException(nameof(refs));
 
-		var referencePaths = refs.Select(r => $"--reference:{Path.Combine(Path.GetTempPath(), r.name)}").ToList();
+		var referencePaths = refs.Select(r => $"--reference:{r}").ToList();
 
 		return
 		[
@@ -131,20 +145,31 @@ public class FSharpCompiler : ICompiler
 		if (sources == null)
 			throw new ArgumentNullException(nameof(sources));
 
-		var options = CreateOptions(name, [], refs);
+		var index = 0;
+		var sourcesArr = sources.ToArray();
+		var sourceNames = sourcesArr.Select(_ => $"{name}_{index++}.fs").ToArray();
+		var sourcesDict = sourceNames.Zip(sourcesArr).ToDictionary(p => p.First, p => p.Second.UTF8(), StringComparer.InvariantCultureIgnoreCase);
+		var referenceDict = CreateReferenceMap(refs);
+		var projectDict = new Dictionary<string, byte[]>(referenceDict, StringComparer.InvariantCultureIgnoreCase);
+		projectDict.AddRange(sourcesDict);
+
+		var options = CreateOptions(name, sourceNames, referenceDict.Keys);
 		var projectOptions = _checker.GetProjectOptionsFromCommandLineArgs(name, options, default, default, default);
 
 		var diagnostics = new List<CompilationError>();
 
 		using var _ = await _lock.LockAsync(cancellationToken);
-		using var __ = new FileSystemContext([], new());
+		using var __ = new FileSystemContext(projectDict, new());
 
-		foreach (var source in sources)
+		foreach (var (sourceName, source) in sourceNames.Zip(sourcesArr))
 		{
 			var sourceText = SourceText.ofString(source);
-			var (results, answer) = await FSharpAsync.StartAsTask(_checker.ParseAndCheckFileInProject(name, 0, sourceText, projectOptions, default), default, cancellationToken);
+			var (results, answer) = await FSharpAsync.StartAsTask(_checker.ParseAndCheckFileInProject(sourceName, 0, sourceText, projectOptions, default), default, cancellationToken);
 
 			diagnostics.AddRange(results.Diagnostics.Select(ToError));
+
+			if (answer is FSharpCheckFileAnswer.Succeeded succeeded)
+				diagnostics.AddRange(succeeded.Item.Diagnostics.Select(ToError));
 		}
 
 		return [.. diagnostics];
@@ -160,13 +185,12 @@ public class FSharpCompiler : ICompiler
 		var index = 0;
 		var sourcesDict = sources.ToDictionary(s => $"file{index++}.fs", s => s.UTF8());
 
-		var projectOptions = CreateOptions(name, sourcesDict.Keys, refs);
+		var referenceDict = CreateReferenceMap(refs);
+		var projectOptions = CreateOptions(name, sourcesDict.Keys, referenceDict.Keys);
 
 		var projectDict = new Dictionary<string, byte[]>(StringComparer.InvariantCultureIgnoreCase);
 		projectDict.AddRange(sourcesDict);
-
-		foreach (var (n, b) in refs)
-			projectDict.Add(n, b);
+		projectDict.AddRange(referenceDict);
 
 		using var stream = new MemoryStream();
 		using var _ = await _lock.LockAsync(cancellationToken);
@@ -198,7 +222,7 @@ public class FSharpCompiler : ICompiler
 
 		return new()
 		{
-			Line = diag.StartLine,
+			Line = Math.Max(0, diag.StartLine - 1),
 			Character = diag.StartColumn,
 			Message = diag.Message,
 			Type = toType(diag.Severity),

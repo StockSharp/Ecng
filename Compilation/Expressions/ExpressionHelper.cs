@@ -31,7 +31,7 @@ public static class ExpressionHelper
 
 			// Auto-add 'm' suffix to decimal literals without type suffix (e.g., 0.5 → 0.5m)
 			// This makes formulas more user-friendly since users don't need to remember the suffix
-			input = Regex.Replace(input, @"(\d+\.\d+)(?![mMdDfFeE])", "$1m");
+			input = AddDecimalSuffixes(input);
 
 			var variables = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -61,6 +61,12 @@ public static class ExpressionHelper
 				{
 					case States.None:
 					{
+						if (char.IsWhiteSpace(c))
+						{
+							code.Append(c);
+							break;
+						}
+
 						switch (c)
 						{
 							case '[':
@@ -95,6 +101,9 @@ public static class ExpressionHelper
 								break;
 
 							default:
+								if (c == '%')
+									throw new InvalidOperationException($"Unsupported character '{c}'.");
+
 								if (c.IsDigit() || c == '.' || (c == 'm' && i > 0 && input[i - 1].IsDigit()))
 								{
 									code.Append(c);
@@ -112,6 +121,20 @@ public static class ExpressionHelper
 					}
 					case States.Name:
 					{
+						if (char.IsWhiteSpace(c))
+						{
+							var name = nameBuilder.GetAndClear();
+
+							if (_funcReplaces.TryGetValue(name, out var replace))
+								code.Append(replace);
+							else
+								AppendVar(name);
+
+							state = _state.Pop();
+							code.Append(c);
+							break;
+						}
+
 						switch (c)
 						{
 							case '+':
@@ -146,6 +169,9 @@ public static class ExpressionHelper
 								break;
 							}
 							default:
+								if (c == '%')
+									throw new InvalidOperationException($"Unsupported character '{c}'.");
+
 								nameBuilder.Append(c);
 								break;
 						}
@@ -179,6 +205,47 @@ public static class ExpressionHelper
 
 			return (code.ToString(), variables.Keys.ToArray());
 		}
+	}
+
+	private static readonly Regex _decimalLiteralRegex = new(@"(\d+\.\d+)(?![mMdDfFeE])", RegexOptions.Compiled);
+
+	private static string AddDecimalSuffixes(string input)
+	{
+		var retVal = new StringBuilder(input.Length);
+		var chunk = new StringBuilder();
+
+		void flushChunk()
+		{
+			if (chunk.Length == 0)
+				return;
+
+			retVal.Append(_decimalLiteralRegex.Replace(chunk.ToString(), "$1m"));
+			chunk.Clear();
+		}
+
+		var inBracket = false;
+
+		foreach (var c in input)
+		{
+			if (c == '[')
+			{
+				flushChunk();
+				inBracket = true;
+				retVal.Append(c);
+			}
+			else if (c == ']')
+			{
+				inBracket = false;
+				retVal.Append(c);
+			}
+			else if (inBracket)
+				retVal.Append(c);
+			else
+				chunk.Append(c);
+		}
+
+		flushChunk();
+		return retVal.ToString();
 	}
 
 	/// <summary>
@@ -283,6 +350,8 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 		if (expression.IsEmptyOrWhiteSpace())
 			throw new ArgumentException("Expression cannot consist only of whitespace characters.", nameof(expression));
 
+		cancellationToken.ThrowIfCancellationRequested();
+
 		try
 		{
 			var refs = new HashSet<string>(
@@ -314,6 +383,10 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 				assembly = context.LoadFromBinary(assemblyBody);
 
 			return getType(assembly, "TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
+		}
+		catch (OperationCanceledException)
+		{
+			throw;
 		}
 		catch (Exception ex)
 		{

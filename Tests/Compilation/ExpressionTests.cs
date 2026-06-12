@@ -44,6 +44,48 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task Cache_ExpiredMemoryEntryDoesNotReviveFromDisk()
+	{
+		var cache = new CompilerCache(new MemoryFileSystem(), "compiler-cache-expire", TimeSpan.FromMilliseconds(10));
+		await cache.InitAsync(CancellationToken);
+		cache.Add(FileExts.CSharp, ["A"], ["B"], [1, 2, 3]);
+
+		await Task.Delay(50, CancellationToken);
+
+		cache.TryGet(FileExts.CSharp, ["A"], ["B"], out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task Cache_AddAfterClear_RecreatesCacheDirectory()
+	{
+		var cache = new CompilerCache(new MemoryFileSystem(), "compiler-cache-clear", TimeSpan.MaxValue);
+		await cache.InitAsync(CancellationToken);
+
+		cache.Add(FileExts.CSharp, ["A"], [], [1]);
+		cache.Clear();
+		cache.Add(FileExts.CSharp, ["B"], [], [2]);
+
+		cache.TryGet(FileExts.CSharp, ["B"], [], out var assembly).AssertTrue();
+		assembly.SequenceEqual(new byte[] { 2 }).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task Cache_KeySeparatesSourcesFromReferences()
+	{
+		var cache = new CompilerCache(new MemoryFileSystem(), "compiler-cache-key", TimeSpan.MaxValue);
+		await cache.InitAsync(CancellationToken);
+
+		cache.Add(FileExts.CSharp, ["A"], ["B"], [1]);
+		cache.Add(FileExts.CSharp, ["AB"], [], [2]);
+
+		cache.TryGet(FileExts.CSharp, ["A"], ["B"], out var first).AssertTrue();
+		first.SequenceEqual(new byte[] { 1 }).AssertTrue();
+
+		cache.TryGet(FileExts.CSharp, ["AB"], [], out var second).AssertTrue();
+		second.SequenceEqual(new byte[] { 2 }).AssertTrue();
+	}
+
+	[TestMethod]
 	public async Task FileCache()
 	{
 		var fs = _fileSystem;
@@ -134,6 +176,34 @@ public class ExpressionTests : BaseTestClass
 	{
 		var formula = Compile("[SPFB.SBRF@FORTS] + SBER@TQBR");
 		formula.Calculate([6, 4]).AssertEqual(10);
+	}
+
+	[TestMethod]
+	[DataRow("[RTS-12.24@FORTS]", "RTS-12.24@FORTS")]
+	[DataRow("[V1.5]", "V1.5")]
+	public void GetVariables_DoesNotAddDecimalSuffixInsideBracketedNames(string expression, string expected)
+	{
+		var variables = ExpressionHelper.GetVariables(expression);
+
+		variables.AssertEqual([expected]);
+	}
+
+	[TestMethod]
+	public void GetVariables_TreatsAllWhitespaceAsSeparators()
+	{
+		var variables = ExpressionHelper.GetVariables("a +\nb +\tc +\rd");
+
+		variables.AssertEqual(["a", "b", "c", "d"]);
+	}
+
+	[TestMethod]
+	public Task Compile_PropagatesCancellation()
+	{
+		using var cts = new CancellationTokenSource();
+		cts.Cancel();
+
+		return ThrowsExactlyAsync<OperationCanceledException>(() =>
+			_compiler.Compile<decimal>(_context, _fileSystem, "x + 1", cancellationToken: cts.Token));
 	}
 
 	[TestMethod]
@@ -630,5 +700,49 @@ public class ExpressionTests : BaseTestClass
 		Throws<ArgumentException>(() => Compile("\t"));
 		Throws<ArgumentException>(() => Compile("  \t  "));
 		Throws<ArgumentException>(() => Compile("\n"));
+	}
+
+	/// <summary>
+	/// BUG: CompilerCache.Clear() recursively deletes the whole _path directory, and when the
+	/// constructor is given an empty path it defaults _path to Directory.GetCurrentDirectory()
+	/// (ICompilerCache.cs:74, :205). A plain Clear() then wipes every unrelated file in the
+	/// process working directory.
+	/// Expected: Clear() empties the cache without destroying arbitrary user files living in the
+	/// working directory.
+	/// Actual: the unrelated user file is recursively deleted together with the whole directory.
+	/// </summary>
+	[TestMethod]
+	public void Clear_DoesNotDeleteUnrelatedFilesInWorkingDirectory()
+	{
+		var fs = new MemoryFileSystem();
+
+		// Empty path makes the cache default _path to Directory.GetCurrentDirectory().
+		var workingDir = Directory.GetCurrentDirectory();
+		var cache = new CompilerCache(fs, string.Empty, TimeSpan.MaxValue);
+
+		// Seed an unrelated user file that happens to live in the working directory.
+		fs.CreateDirectory(workingDir);
+		var unrelatedFile = Path.Combine(workingDir, "user-data.txt");
+		fs.WriteAllBytes(unrelatedFile, [1, 2, 3]);
+
+		cache.Clear();
+
+		// Clear() must not destroy files that do not belong to the cache.
+		IsTrue(fs.FileExists(unrelatedFile), "Clear() must not delete unrelated files in the working directory.");
+	}
+
+	/// <summary>
+	/// BUG: the expression parser only treats known operators, digits and identifier chars as
+	/// terminators; an unsupported character such as '%' is silently appended to a variable name
+	/// (ExpressionHelper.cs:129). GetVariables("x % 2") returns a phantom variable named "%"
+	/// instead of reporting the malformed input.
+	/// Expected: an unsupported operator character raises a descriptive parsing exception.
+	/// Actual: parsing succeeds and yields a bogus "%" variable, no error is reported.
+	/// </summary>
+	[TestMethod]
+	public void GetVariables_UnsupportedOperatorThrows()
+	{
+		// '%' is not a supported operator, digit or identifier char and must not be swallowed.
+		Throws<Exception>(() => ExpressionHelper.GetVariables("x % 2"));
 	}
 }

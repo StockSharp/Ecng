@@ -71,7 +71,7 @@ public class CompilerCache : ICompilerCache
 	public CompilerCache(IFileSystem fileSystem, string path, TimeSpan timeout)
 	{
 		_fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
-		_path = path.IsEmpty(Directory.GetCurrentDirectory());
+		_path = path.IsEmpty(Path.Combine(Directory.GetCurrentDirectory(), nameof(CompilerCache)));
 
 		if (timeout <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "Must be positive");
@@ -112,7 +112,10 @@ public class CompilerCache : ICompilerCache
 		if (sources is null)	throw new ArgumentNullException(nameof(sources));
 		if (refs is null)		throw new ArgumentNullException(nameof(refs));
 
-		return $"{ext.Substring(1)}{(sources.JoinN() + refs.JoinN()).UTF8().Sha512()}";
+		static string normalize(IEnumerable<string> values)
+			=> string.Join("|", values.Select(v => $"{v?.Length ?? -1}:{v}"));
+
+		return $"{ext.Substring(1)}{(normalize(sources) + "|" + normalize(refs)).UTF8().Sha512()}";
 	}
 
 	/// <summary>
@@ -155,6 +158,8 @@ public class CompilerCache : ICompilerCache
 		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
+		_fileSystem.CreateDirectory(_path);
+
 		using (var s = _fileSystem.OpenWrite(fileName))
 			s.Write(assembly ?? throw new ArgumentNullException(nameof(assembly)), 0, assembly.Length);
 
@@ -178,13 +183,30 @@ public class CompilerCache : ICompilerCache
 	{
 		var key = GetKey(ext, sources, refs);
 
-		if (TryGet(key, out assembly))
-			return true;
-
 		var fileName = GetFileName(key);
 
-		if (!_fileSystem.FileExists(fileName))
+		if (_cache.TryGetValue(key, out var cached))
+		{
+			if (cached.till >= DateTime.UtcNow)
+			{
+				assembly = cached.assembly;
+				return true;
+			}
+
+			_cache.Remove(key);
+
+			if (_fileSystem.FileExists(fileName))
+				_fileSystem.DeleteFile(fileName);
+
+			assembly = null;
 			return false;
+		}
+
+		if (!_fileSystem.FileExists(fileName))
+		{
+			assembly = null;
+			return false;
+		}
 
 		using (var stream = _fileSystem.OpenRead(fileName))
 		using (var ms = new MemoryStream())
@@ -235,4 +257,3 @@ public class CompilerCache : ICompilerCache
 	private string GetFileName(string key)
 		=> Path.Combine(_path, $"{key}.bin");
 }
-
