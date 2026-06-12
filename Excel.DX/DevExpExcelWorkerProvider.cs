@@ -3,6 +3,7 @@ namespace Ecng.Excel;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -63,7 +64,15 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 			public T GetCell<T>(int col, int row)
 			{
 				var cellData = TryGetCellData(col, row);
-				return cellData?.Value is T val ? val : default;
+				var value = cellData?.Value;
+				if (value == null)
+					return default;
+
+				if (value is T val)
+					return val;
+
+				var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+				return (T)Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
 			}
 
 			public void SetCellFormat(int col, int row, string format)
@@ -137,7 +146,7 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 						{
 							xlCol.Formatting = new XlCellFormatting
 							{
-								IsDateTimeFormatString = true,
+								IsDateTimeFormatString = false,
 								NetFormatString = pair.Value.format,
 							};
 						}
@@ -159,7 +168,8 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 						foreach (var pair in dict)
 						{
 							var cellData = pair.Value;
-							if (cellData.Value == null && cellData.HyperlinkUrl == null)
+							if (cellData.Value == null && cellData.HyperlinkUrl == null &&
+								cellData.Format.IsEmpty() && cellData.BgColor.IsEmpty() && cellData.FgColor.IsEmpty())
 								continue;
 
 							using var cell = xlRow.CreateCell(pair.Key);
@@ -171,7 +181,7 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 
 								if (!cellData.Format.IsEmpty())
 								{
-									formatting.IsDateTimeFormatString = true;
+									formatting.IsDateTimeFormatString = false;
 									formatting.NetFormatString = cellData.Format;
 								}
 
@@ -214,6 +224,16 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 
 								cell.Value = xlVal;
 							}
+
+							if (!cellData.HyperlinkUrl.IsEmpty())
+							{
+								sheet.Hyperlinks.Add(new XlHyperlink
+								{
+									Reference = new XlCellRange(new XlCellPosition(pair.Key, row)),
+									TargetUri = cellData.HyperlinkUrl,
+									DisplayText = cellData.HyperlinkText,
+								});
+							}
 						}
 					}
 
@@ -246,8 +266,17 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 					return ColorTranslator.FromHtml(colorStr);
 				}
 
+				if (IsHexColor(colorStr, 6))
+					return ColorTranslator.FromHtml("#" + colorStr);
+
+				if (IsHexColor(colorStr, 8))
+					return Color.FromArgb(int.Parse(colorStr, NumberStyles.HexNumber, CultureInfo.InvariantCulture));
+
 				return Color.FromName(colorStr);
 			}
+
+			private static bool IsHexColor(string value, int length)
+				=> value.Length == length && value.All(Uri.IsHexDigit);
 		}
 
 		private readonly IXlExporter _exporter = XlExport.CreateExporter(XlDocumentFormat.Xlsx);
@@ -513,7 +542,6 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 	IExcelWorker IExcelWorkerProvider.OpenExist(Stream stream)
 	{
 		// Note: DevExpress XlExport is write-only, it cannot read existing files.
-		// This creates a new document on the stream.
-		return new DevExpExcelWorker(stream);
+		throw new NotSupportedException("DevExpress XlExport is write-only and cannot open existing workbooks.");
 	}
 }

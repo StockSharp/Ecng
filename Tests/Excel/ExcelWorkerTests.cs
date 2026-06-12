@@ -102,6 +102,42 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void OpenXml_GetCell_NullableDateTimeReadsValue()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream);
+		var value = new DateTime(2026, 2, 3, 4, 5, 6);
+
+		worker
+			.AddSheet()
+			.SetCell(0, 0, value);
+
+		worker.GetCell<DateTime?>(0, 0).AssertEqual(value);
+	}
+
+	[TestMethod]
+	[DataRow(0)]
+	[DataRow(2)]
+	public void OpenXml_SetCell_DateTimeOffsetPreservesOwnClockTime(int offsetHours)
+	{
+		var inputOffset = TimeSpan.FromHours(offsetHours);
+		var value = new DateTimeOffset(2026, 1, 1, 10, 0, 0, inputOffset);
+
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, value);
+		}
+
+		var cell = GetCell(stream, "A1");
+		var stored = DateTime.FromOADate(double.Parse(cell.CellValue!.Text, CultureInfo.InvariantCulture));
+
+		stored.AssertEqual(value.DateTime);
+	}
+
+	[TestMethod]
 	[DataRow(nameof(DevExpExcelWorkerProvider))]
 	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
 	public void SetCell_GetCell_BoolValue_Success(string providerName)
@@ -114,6 +150,40 @@ public class ExcelWorkerTests : BaseTestClass
 			.SetCell(0, 0, true);  // A1
 
 		worker.GetCell<bool>(0, 0).AssertEqual(true);
+	}
+
+	[TestMethod]
+	[DataRow(1_000_000_000_000_000L)]
+	[DataRow(9_007_199_254_740_991L)]
+	public void OpenXml_SetCell_LongWithinDoublePrecisionRangeStaysNumeric(long value)
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, value);
+		}
+
+		var cell = GetCell(stream, "A1");
+
+		(cell.DataType?.Value == CellValues.InlineString).AssertFalse();
+	}
+
+	[TestMethod]
+	public void OpenXml_SetCell_LongMinValueWritesWithoutOverflow()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, long.MinValue);
+		}
+
+		var cell = GetCell(stream, "A1");
+
+		cell.InnerText.AssertEqual(long.MinValue.ToString(CultureInfo.InvariantCulture));
 	}
 
 	[TestMethod]
@@ -430,6 +500,25 @@ public class ExcelWorkerTests : BaseTestClass
 
 		var fgRgb = fill.PatternFill?.ForegroundColor?.Rgb?.Value;
 		fgRgb.AssertEqual("FFFF0000");
+	}
+
+	[TestMethod]
+	public void OpenXml_SetCellColor_PreservesExistingNumberFormat()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, new DateTime(2026, 1, 1))
+				.SetCellFormat(0, 0, "yyyy-MM-dd")
+				.SetCellColor(0, 0, "#FF0000");
+		}
+
+		var cell = GetCell(stream, "A1");
+		var format = GetCellFormat(stream, cell);
+
+		(format.NumberFormatId?.Value ?? 0).AssertGreater(0u);
 	}
 
 	[TestMethod]
@@ -834,6 +923,30 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void OpenXml_AddLineChart_UsesZeroBasedColumnIndexes()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(0, 0, "X")
+				.SetCell(1, 0, "Y")
+				.SetCell(0, 1, 1)
+				.SetCell(1, 1, 2)
+				.AddLineChart("Line", "Data!$A$1:$B$2", xCol: 0, yCol: 1, 3, 0, 400, 300);
+		}
+
+		var xml = GetFirstChartXml(stream);
+
+		xml.Contains("$$").AssertFalse();
+		xml.Contains("$A$1:$A$2").AssertTrue();
+		xml.Contains("$B$1:$B$2").AssertTrue();
+	}
+
+	[TestMethod]
 	[DataRow(nameof(DevExpExcelWorkerProvider))]
 	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
 	public void AddAreaChart_Success(string providerName)
@@ -1018,6 +1131,31 @@ public class ExcelWorkerTests : BaseTestClass
 		cells.Any(c => c.CellReference?.Value == "BA1").AssertTrue("Cell BA1 should exist");
 	}
 
+	[TestMethod]
+	public void OpenXml_SetCell_CellsBeyondZAreInsertedByColumnIndex()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(2, 0, "C")
+				.SetCell(25, 0, "Z")
+				.SetCell(26, 0, "AA")
+				.SetCell(27, 0, "AB");
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var refs = doc.WorkbookPart!.WorksheetParts.First()
+			.Worksheet.Descendants<Row>().First()
+			.Elements<Cell>()
+			.Select(c => c.CellReference!.Value)
+			.ToArray();
+
+		refs.AssertEqual(["C1", "Z1", "AA1", "AB1"]);
+	}
+
 	#endregion
 
 	#region OpenXML Validation and Structure Tests
@@ -1039,6 +1177,40 @@ public class ExcelWorkerTests : BaseTestClass
 			$"- {e.Description}; Part={e.Part?.Uri}; Path={e.Path?.XPath}").JoinN();
 
 		Fail($"OpenXmlValidator found {errors.Length} error(s):\n{msg}");
+	}
+
+	private static string GetFirstChartXml(MemoryStream stream)
+	{
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+
+		return doc.WorkbookPart!.WorksheetParts.First()
+			.DrawingsPart!.ChartParts.First()
+			.ChartSpace.OuterXml;
+	}
+
+	private static Cell GetCell(MemoryStream stream, string cellRef)
+	{
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+
+		return (Cell)doc.WorkbookPart!.WorksheetParts.First()
+			.Worksheet.Descendants<Cell>()
+			.First(c => c.CellReference?.Value == cellRef)
+			.CloneNode(true);
+	}
+
+	private static CellFormat GetCellFormat(MemoryStream stream, Cell cell)
+	{
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+
+		var styleIndex = (int)(cell.StyleIndex?.Value ?? 0);
+
+		return (CellFormat)doc.WorkbookPart!.WorkbookStylesPart!.Stylesheet
+			.CellFormats!.Elements<CellFormat>()
+			.ElementAt(styleIndex)
+			.CloneNode(true);
 	}
 
 	/// <summary>
@@ -1182,6 +1354,37 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[DataRow(2, 3, "Data!$C$1:$D$2", "$C$1:$C$2", "$D$1:$D$2")]
+	[DataRow(4, 5, "Data!$E$1:$F$2", "$E$1:$E$2", "$F$1:$F$2")]
+	public void OpenXml_AddBarChart_UsesColumnsFromDataRange(
+		int categoryColumn,
+		int valueColumn,
+		string dataRange,
+		string expectedCategoryRange,
+		string expectedValueRange)
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(categoryColumn, 0, "Category")
+				.SetCell(valueColumn, 0, "Value")
+				.SetCell(categoryColumn, 1, "A")
+				.SetCell(valueColumn, 1, 10)
+				.AddBarChart("Bar", dataRange, valueColumn + 2, 0, 400, 300);
+		}
+
+		var xml = GetFirstChartXml(stream);
+
+		xml.Contains(expectedCategoryRange).AssertTrue();
+		xml.Contains(expectedValueRange).AssertTrue();
+		xml.Contains("$A$1:$A$2").AssertFalse();
+		xml.Contains("$B$1:$B$2").AssertFalse();
+	}
+
+	[TestMethod]
 	public void OpenXml_FreezeRows_ValidPaneStructure()
 	{
 		using var stream = new MemoryStream();
@@ -1234,6 +1437,30 @@ public class ExcelWorkerTests : BaseTestClass
 		pane.AssertNotNull("Pane should exist after FreezeCols");
 		pane!.State!.Value.AssertEqual(PaneStateValues.Frozen, "Pane should be frozen");
 		pane.HorizontalSplit!.Value.AssertEqual(1D, "HorizontalSplit should be 1");
+	}
+
+	[TestMethod]
+	public void OpenXml_FreezeRowsAndCols_CombinesPaneState()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.FreezeRows(1)
+				.FreezeCols(1);
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var pane = doc.WorkbookPart!.WorksheetParts.First()
+			.Worksheet.GetFirstChild<SheetViews>()?.GetFirstChild<SheetView>()?.GetFirstChild<Pane>();
+
+		pane.AssertNotNull();
+		pane!.VerticalSplit!.Value.AssertEqual(1D);
+		pane.HorizontalSplit!.Value.AssertEqual(1D);
+		pane.TopLeftCell!.Value.AssertEqual("B2");
+		pane.ActivePane!.Value.AssertEqual(PaneValues.BottomRight);
 	}
 
 	[TestMethod]
@@ -1561,6 +1788,38 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void OpenXml_AddStockChart_UsesDistinctOhlcColumns()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(0, 0, "Date")
+				.SetCell(1, 0, "Open")
+				.SetCell(2, 0, "High")
+				.SetCell(3, 0, "Low")
+				.SetCell(4, 0, "Close")
+				.SetCell(0, 1, new DateTime(2026, 1, 1))
+				.SetCell(1, 1, 10)
+				.SetCell(2, 1, 12)
+				.SetCell(3, 1, 9)
+				.SetCell(4, 1, 11)
+				.AddStockChart("OHLC", "Data!$A$1:$E$2", 6, 0, 500, 300);
+		}
+
+		var xml = GetFirstChartXml(stream);
+
+		xml.Contains("$$").AssertFalse();
+		xml.Contains("$A$1:$A$2").AssertTrue();
+		xml.Contains("$B$1:$B$2").AssertTrue();
+		xml.Contains("$C$1:$C$2").AssertTrue();
+		xml.Contains("$D$1:$D$2").AssertTrue();
+		xml.Contains("$E$1:$E$2").AssertTrue();
+	}
+
+	[TestMethod]
 	public void OpenXml_SetConditionalFormattingFormula_WritesExpressionRule()
 	{
 		using var stream = new MemoryStream();
@@ -1872,6 +2131,547 @@ public class ExcelWorkerTests : BaseTestClass
 	// Note: OpenExist does NOT have readOnly parameter in interface
 	// This is a design issue - OpenExist always opens for editing
 	// If readOnly support is needed for OpenExist, interface should be extended
+
+	#endregion
+
+	#region DevExp audit regression tests
+
+	/// <summary>
+	/// Finding #1 (CRITICAL), DevExpExcelWorkerProvider.cs:517.
+	/// BUG: OpenExist creates a brand-new write-only document on top of the caller's stream,
+	/// silently overwriting and corrupting the existing workbook bytes; read-APIs then return empty.
+	/// Expected: OpenExist refuses the unsupported operation with NotSupportedException, leaving the stream untouched.
+	/// Actual: returns a DevExpExcelWorker that destroys the original content.
+	/// </summary>
+	[TestMethod]
+	public void OpenExist_ThrowsNotSupported()
+	{
+		using var stream = new MemoryStream();
+
+		// Fill the stream with some pre-existing bytes representing an existing workbook.
+		var original = new byte[] { 1, 2, 3, 4, 5 };
+		stream.Write(original, 0, original.Length);
+		stream.Position = 0;
+
+		var provider = CreateProvider(nameof(DevExpExcelWorkerProvider));
+
+		Throws<NotSupportedException>(() => provider.OpenExist(stream));
+	}
+
+	/// <summary>
+	/// Finding #2 (HIGH), DevExpExcelWorkerProvider.cs:193.
+	/// BUG: SetHyperlink stores url/text but the sheet's Hyperlinks collection is never populated,
+	/// so the produced xlsx contains no hyperlink at all; the URL is silently dropped.
+	/// Expected: the written workbook contains a real hyperlink relationship for the cell.
+	/// Actual: no Hyperlinks element is emitted.
+	/// </summary>
+	[TestMethod]
+	public void SetHyperlink_WritesHyperlinkToOutput()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Links")
+				.SetHyperlink(0, 0, "https://stocksharp.com", "StockSharp");  // A1
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart.WorksheetParts.First().Worksheet;
+		var hyperlinks = worksheet.GetFirstChild<Hyperlinks>();
+
+		hyperlinks.AssertNotNull("Hyperlinks element should exist in the produced workbook");
+		hyperlinks.GetFirstChild<Hyperlink>().AssertNotNull("A hyperlink for the cell should be present");
+	}
+
+	/// <summary>
+	/// Finding #3 (HIGH), DevExpExcelWorkerProvider.cs:174.
+	/// BUG: SetCellFormat unconditionally sets IsDateTimeFormatString=true and feeds the Excel
+	/// number-format code into NetFormatString, so DevExpress mangles "#,##0.00" as a date-time
+	/// .NET format and the resulting Excel number format is wrong.
+	/// Expected: the produced xlsx stores the literal Excel number format code "#,##0.00".
+	/// Actual: the format code in the output does not match (it is treated as a date-time format).
+	/// </summary>
+	[TestMethod]
+	public void SetCellFormat_PreservesNumericFormatCode()
+	{
+		const string format = "#,##0.00";
+
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, 12345.6789)   // A1
+				.SetCellFormat(0, 0, format);
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var stylesPart = doc.WorkbookPart.WorkbookStylesPart;
+
+		stylesPart.AssertNotNull("Styles part should exist");
+
+		var numberingFormats = stylesPart.Stylesheet.NumberingFormats;
+		numberingFormats.AssertNotNull("Custom number formats should be present");
+
+		var hasFormat = numberingFormats
+			.Elements<NumberingFormat>()
+			.Any(nf => nf.FormatCode?.Value == format);
+
+		hasFormat.AssertTrue($"The literal Excel number format '{format}' should be written, not a mangled date-time format");
+	}
+
+	/// <summary>
+	/// Finding #4 (MEDIUM), DevExpExcelWorkerProvider.cs:162.
+	/// BUG: a cell that has only formatting/colors (no value and no hyperlink) is skipped before the
+	/// formatting block, so SetCellColor on a value-less cell produces nothing in the output.
+	/// Expected: the cell is emitted (with its fill) even when it has no value.
+	/// Actual: the cell is dropped and the requested coloring is lost.
+	/// </summary>
+	[TestMethod]
+	public void SetCellColor_OnValuelessCell_EmitsCell()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Colors")
+				.SetCellColor(0, 0, "#FF0000");  // A1 colored but no value
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart.WorksheetParts.First().Worksheet;
+
+		var cell = worksheet.Descendants<Cell>().FirstOrDefault(c => c.CellReference?.Value == "A1");
+		cell.AssertNotNull("The value-less but colored cell A1 should still be written to the output");
+	}
+
+	/// <summary>
+	/// Finding #5 (MEDIUM), DevExpExcelWorkerProvider.cs:66.
+	/// BUG: GetCell uses a type-pattern (Value is T) and returns default(T) for convertible-but-not-exact
+	/// types, so SetCell(int) then GetCell&lt;double&gt; returns 0.0 and GetCell&lt;string&gt; returns null.
+	/// Expected: convertible stored values are converted (42 -> 42.0 / "42"), matching the OpenXml provider
+	/// and the IExcelWorker contract ("the value of the cell cast to type T").
+	/// Actual: default(T) is returned for convertible types.
+	/// </summary>
+	[TestMethod]
+	public void GetCell_ConvertsCompatibleStoredValue()
+	{
+		using var stream = new MemoryStream();
+		using var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream);
+
+		worker
+			.AddSheet()
+			.SetCell(0, 0, 42);  // A1, stored as int
+
+		worker.GetCell<double>(0, 0).AssertEqual(42d);
+		worker.GetCell<string>(0, 0).AssertEqual("42");
+	}
+
+	/// <summary>
+	/// Finding #7 (LOW), DevExpExcelWorkerProvider.cs:249.
+	/// BUG: ParseColor sends non-'#' strings straight to Color.FromName, which returns a transparent
+	/// ARGB=0 color for an unrecognized name like a bare hex "FF0000"; the fill is then written as an
+	/// empty/transparent color instead of the intended red.
+	/// Expected: a bare 6-digit hex value is parsed as that RGB color (red), so the produced fill is red.
+	/// Actual: the fill comes out as a transparent/empty color (or is not the expected red).
+	/// </summary>
+	[TestMethod]
+	public void SetCellColor_BareHex_ProducesExpectedFill()
+	{
+		using var stream = new MemoryStream();
+
+		using (var worker = CreateProvider(nameof(DevExpExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "x")             // A1
+				.SetCellColor(0, 0, "FF0000");  // bare hex, no leading '#'
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var stylesheet = doc.WorkbookPart.WorkbookStylesPart.Stylesheet;
+		var cell = doc.WorkbookPart.WorksheetParts.First().Worksheet.Descendants<Cell>().First(c => c.CellReference?.Value == "A1");
+		var xf = stylesheet.CellFormats.Elements<CellFormat>().ElementAt((int)(cell.StyleIndex?.Value ?? 0));
+		var fill = stylesheet.Fills.Elements<Fill>().ElementAt((int)(xf.FillId?.Value ?? 0));
+
+		// The fill color is stored in the solid PatternFill ForegroundColor as ARGB.
+		// A correctly parsed bare-hex "FF0000" must yield opaque red (FFFF0000);
+		// the bug routes it through Color.FromName, which returns transparent black,
+		// so DevExpress writes FF000000 (black) instead.
+		var rgb = fill.PatternFill?.ForegroundColor?.Rgb?.Value;
+		rgb.AssertNotNull("A solid fill color should be written for the bare-hex color input");
+		rgb.AssertEqual("FFFF0000", "The bare hex 'FF0000' should be parsed as red, not a black/empty color");
+	}
+
+	#endregion
+
+	#region OpenXml CT_Worksheet element-order and lifecycle regressions
+
+	/// <summary>
+	/// Returns the index of the first child of <paramref name="worksheet"/> whose
+	/// runtime type is <typeparamref name="T"/>, or -1 when absent.
+	/// </summary>
+	private static int IndexOf<T>(Worksheet worksheet)
+		where T : OpenXmlElement
+	{
+		var children = worksheet.ChildElements;
+		for (var i = 0; i < children.Count; i++)
+			if (children[i] is T)
+				return i;
+
+		return -1;
+	}
+
+	private static byte[] BuildSimpleWorkbookBytes()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(0, 0, "Header"); // A1
+		}
+
+		return stream.ToArray();
+	}
+
+	/// <summary>
+	/// Finding #6 (MEDIUM), OpenXmlExcelWorkerProvider.cs:444.
+	/// BUG: SetColumnWidth inserts the &lt;cols&gt; element at worksheet index 0, and EnsureSheetView
+	/// inserts &lt;sheetViews&gt; at index 0 too. CT_Worksheet requires the order sheetViews &lt; cols.
+	/// Calling FreezeRows() (which creates sheetViews) then SetColumnWidth() yields the order
+	/// [cols, sheetViews, sheetData], which is invalid by schema.
+	/// Expected: &lt;sheetViews&gt; precedes &lt;cols&gt; and the worksheet passes OpenXml validation.
+	/// Actual: &lt;cols&gt; is emitted before &lt;sheetViews&gt;, breaking the CT_Worksheet element order.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_FreezeRowsThenSetColumnWidth_KeepsValidElementOrder()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, "Header") // A1
+				.SetCell(0, 1, "Data")   // A2
+				.FreezeRows(1)           // inserts <sheetViews>
+				.SetColumnWidth(0, 20);  // inserts <cols>
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart!.WorksheetParts.First().Worksheet;
+
+		var sheetViewsIndex = IndexOf<SheetViews>(worksheet);
+		var colsIndex = IndexOf<Columns>(worksheet);
+
+		sheetViewsIndex.AssertGreater(-1, "SheetViews should exist after FreezeRows");
+		colsIndex.AssertGreater(-1, "Columns should exist after SetColumnWidth");
+		(sheetViewsIndex < colsIndex).AssertTrue("CT_Worksheet requires <sheetViews> before <cols>");
+
+		AssertOpenXmlValid(stream);
+	}
+
+	/// <summary>
+	/// Finding #6 (MEDIUM), OpenXmlExcelWorkerProvider.cs:444.
+	/// BUG: SetColumnWidth blindly inserts &lt;cols&gt; at index 0. A real xlsx opened via OpenExist
+	/// typically begins with &lt;dimension&gt;; inserting &lt;cols&gt; at index 0 places it before
+	/// &lt;dimension&gt;, violating CT_Worksheet order (dimension &lt; cols).
+	/// Expected: &lt;cols&gt; is inserted after the existing &lt;dimension&gt; element.
+	/// Actual: &lt;cols&gt; is placed at index 0, before &lt;dimension&gt;.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_OpenExist_SetColumnWidth_KeepsColsAfterDimension()
+	{
+		using var stream = new MemoryStream();
+
+		// Build a minimal but realistic template whose worksheet starts with <dimension>.
+		using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+		{
+			var workbookPart = doc.AddWorkbookPart();
+			workbookPart.Workbook = new Workbook();
+			var sheets = workbookPart.Workbook.AppendChild(new Sheets());
+
+			var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+			worksheetPart.Worksheet = new Worksheet(
+				new SheetDimension { Reference = "A1" },
+				new SheetData(new Row { RowIndex = 1U }));
+
+			sheets.Append(new Sheet
+			{
+				Id = workbookPart.GetIdOfPart(worksheetPart),
+				SheetId = 1U,
+				Name = "Data",
+			});
+		}
+
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			worker.SetColumnWidth(0, 25);
+		}
+
+		stream.Position = 0;
+		using var reopened = SpreadsheetDocument.Open(stream, false);
+		var worksheet = reopened.WorkbookPart!.WorksheetParts.First().Worksheet;
+
+		var dimensionIndex = IndexOf<SheetDimension>(worksheet);
+		var colsIndex = IndexOf<Columns>(worksheet);
+
+		dimensionIndex.AssertGreater(-1, "the template <dimension> should be preserved");
+		colsIndex.AssertGreater(-1, "Columns should exist after SetColumnWidth");
+		(dimensionIndex < colsIndex).AssertTrue("CT_Worksheet requires <dimension> before <cols>");
+
+		AssertOpenXmlValid(stream);
+	}
+
+	/// <summary>
+	/// Finding #7 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1582.
+	/// BUG: MergeCells, the conditional-formatting block and Hyperlinks are each inserted directly
+	/// after SheetData, so the last call ends up first. CT_Worksheet mandates the order
+	/// mergeCells &lt; conditionalFormatting &lt; hyperlinks. Calling MergeCells, then
+	/// SetConditionalFormatting, then SetHyperlink therefore yields hyperlinks &lt; conditionalFormatting
+	/// &lt; mergeCells - the exact reverse.
+	/// Expected: the three elements appear in schema order and the worksheet passes validation.
+	/// Actual: they appear reversed (hyperlinks first), violating the CT_Worksheet sequence.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_MergeConditionalHyperlink_KeepValidElementOrder()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(0, 0, 100) // A1
+				.SetCell(0, 1, 50)  // A2
+				.MergeCells(1, 0, 2, 0) // B1:C1
+				.SetConditionalFormatting(0, ComparisonOperator.Greater, "75", "#00FF00", null)
+				.SetHyperlink(3, 0, "https://stocksharp.com", "Link"); // D1
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var worksheet = doc.WorkbookPart!.WorksheetParts.First().Worksheet;
+
+		var mergeIndex = IndexOf<MergeCells>(worksheet);
+		var condIndex = IndexOf<ConditionalFormatting>(worksheet);
+		var linkIndex = IndexOf<Hyperlinks>(worksheet);
+
+		mergeIndex.AssertGreater(-1, "MergeCells should exist");
+		condIndex.AssertGreater(-1, "ConditionalFormatting should exist");
+		linkIndex.AssertGreater(-1, "Hyperlinks should exist");
+
+		(mergeIndex < condIndex).AssertTrue("CT_Worksheet requires <mergeCells> before <conditionalFormatting>");
+		(condIndex < linkIndex).AssertTrue("CT_Worksheet requires <conditionalFormatting> before <hyperlinks>");
+
+		AssertOpenXmlValid(stream);
+	}
+
+	/// <summary>
+	/// Finding #10 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1825.
+	/// BUG: Dispose unconditionally calls _targetStream.SetLength(0) and copies the workbook back,
+	/// even when the target stream is not writable. Opening a read-only stream via OpenExist and then
+	/// disposing therefore throws NotSupportedException from SetLength on a non-writable stream.
+	/// Expected: Dispose skips the write-back for a non-writable target and completes without throwing.
+	/// Actual: Dispose throws NotSupportedException.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_Dispose_ReadOnlyTargetStream_DoesNotThrow()
+	{
+		var bytes = BuildSimpleWorkbookBytes();
+
+		// A non-writable, seekable stream over the workbook bytes (e.g. a file opened FileAccess.Read).
+		using var readOnly = new MemoryStream(bytes, writable: false);
+
+		var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(readOnly);
+		worker.GetCell<string>(0, 0).AssertEqual("Header");
+
+		// Must not throw NotSupportedException when writing back is impossible.
+		worker.Dispose();
+	}
+
+	/// <summary>
+	/// Finding #10 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1825.
+	/// BUG: Dispose has no idempotency guard, so a second Dispose call invokes _doc.Save() on an
+	/// already-disposed document and throws ObjectDisposedException, violating the IDisposable contract.
+	/// Expected: a second Dispose is a no-op and does not throw.
+	/// Actual: the second Dispose throws ObjectDisposedException.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_Dispose_IsIdempotent()
+	{
+		using var stream = new MemoryStream();
+
+		var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream);
+		worker
+			.AddSheet()
+			.SetCell(0, 0, "X");
+
+		worker.Dispose();
+
+		// A second dispose must be a harmless no-op per the IDisposable contract.
+		worker.Dispose();
+	}
+
+	/// <summary>
+	/// Finding #11 (LOW), OpenXmlExcelWorkerProvider.cs:1967.
+	/// BUG: When inserting a new row, the sorted-insert lookup dereferences r.RowIndex.Value without
+	/// the null guard used two lines above. The r attribute of &lt;row&gt; is optional per ECMA-376
+	/// and some streaming writers omit it; opening such a file and calling SetCell on a new row throws
+	/// NullReferenceException.
+	/// Expected: SetCell succeeds on a worksheet whose existing rows lack a RowIndex, writing the value.
+	/// Actual: a NullReferenceException is thrown.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_OpenExist_SetCell_WhenExistingRowLacksRowIndex()
+	{
+		using var stream = new MemoryStream();
+
+		// Build a template whose single existing <row> has NO r attribute (RowIndex omitted).
+		using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+		{
+			var workbookPart = doc.AddWorkbookPart();
+			workbookPart.Workbook = new Workbook();
+			var sheets = workbookPart.Workbook.AppendChild(new Sheets());
+
+			var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+			var indexlessRow = new Row();
+			indexlessRow.Append(new Cell
+			{
+				CellReference = "A1",
+				DataType = CellValues.InlineString,
+				InlineString = new InlineString(new Text("existing")),
+			});
+			worksheetPart.Worksheet = new Worksheet(new SheetData(indexlessRow));
+
+			sheets.Append(new Sheet
+			{
+				Id = workbookPart.GetIdOfPart(worksheetPart),
+				SheetId = 1U,
+				Name = "Data",
+			});
+		}
+
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			// Inserting a brand new row must not crash on the missing RowIndex of the existing row.
+			worker.SetCell(0, 2, "new"); // A3
+		}
+
+		stream.Position = 0;
+		using var reopened = SpreadsheetDocument.Open(stream, false);
+		var added = reopened.WorkbookPart!.WorksheetParts.First()
+			.Worksheet.Descendants<Cell>()
+			.FirstOrDefault(c => c.CellReference?.Value == "A3");
+
+		added.AssertNotNull("the new cell A3 should be written");
+	}
+
+	/// <summary>
+	/// Finding #14 (LOW), OpenXmlExcelWorkerProvider.cs:1643.
+	/// BUG: NextDxfNumberFormatId (dxf path) and GetOrCreateNumberFormatId (cell path) each compute
+	/// the next custom number-format id independently. A dxf numFmt lives in DifferentialFormats, so
+	/// GetOrCreateNumberFormatId (which scans only NumberingFormats) does not see it and hands out the
+	/// same id (e.g. 164) for a different format code. Custom number-format ids must be unique across
+	/// cell numFmts and dxf numFmts.
+	/// Expected: the dxf numFmt id and the cell numFmt id differ.
+	/// Actual: both are assigned the same id (164), a collision.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_DxfAndCellNumberFormatIds_AreUnique()
+	{
+		using var stream = new MemoryStream();
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.SetCell(0, 0, 0.25) // A1
+				// dxf number format -> AddDifferentialFormat -> NextDxfNumberFormatId.
+				.SetConditionalFormattingFormula(0, 0, 0, 0, "$A1>0", new ExcelConditionalFormat
+				{
+					NumberFormat = "0.00%",
+				})
+				// cell number format -> GetOrCreateNumberFormatId (independent counter).
+				.SetStyle(0, "0.000");
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var stylesheet = doc.WorkbookPart!.WorkbookStylesPart!.Stylesheet;
+
+		var cellNumFmtId = stylesheet.NumberingFormats!
+			.Elements<NumberingFormat>()
+			.First(nf => nf.FormatCode?.Value == "0.000")
+			.NumberFormatId!.Value;
+
+		var dxfNumFmtId = stylesheet.DifferentialFormats!
+			.Elements<DifferentialFormat>()
+			.Select(d => d.NumberingFormat)
+			.First(nf => nf?.FormatCode?.Value == "0.00%")!
+			.NumberFormatId!.Value;
+
+		(cellNumFmtId != dxfNumFmtId).AssertTrue(
+			$"custom number-format ids must be unique across cell numFmts and dxf numFmts (both were {cellNumFmtId})");
+	}
+
+	/// <summary>
+	/// Finding #15 (LOW), OpenXmlExcelWorkerProvider.cs:925.
+	/// BUG: chart drawing ids come from a per-worker counter that starts at 0 (++_chartId), never seeded
+	/// from the existing drawing content. Reopening a template that already holds a chart with
+	/// NonVisualDrawingProperties.Id=1 and adding another chart assigns Id=1 again, a duplicate that is
+	/// invalid by the drawingML uniqueness requirement.
+	/// Expected: every NonVisualDrawingProperties.Id in the worksheet drawing is unique.
+	/// Actual: the new chart reuses an id already present in the template, producing a duplicate.
+	/// </summary>
+	[TestMethod]
+	public void OpenXml_AddChartToTemplateWithExistingChart_AssignsUniqueDrawingId()
+	{
+		using var stream = new MemoryStream();
+
+		// Template already contains one chart (its GraphicFrame gets drawing Id 1).
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream))
+		{
+			worker
+				.AddSheet()
+				.RenameSheet("Data")
+				.SetCell(0, 0, 1)
+				.SetCell(1, 0, 10)
+				.SetCell(0, 1, 2)
+				.SetCell(1, 1, 20)
+				.AddLineChart("First", "Data!$A$1:$B$2", 1, 2, 3, 0, 400, 300);
+		}
+
+		// Reopen and add a second chart - a fresh worker resets its chart-id counter.
+		stream.Position = 0;
+		using (var worker = CreateProvider(nameof(OpenXmlExcelWorkerProvider)).OpenExist(stream))
+		{
+			worker.AddLineChart("Second", "Data!$A$1:$B$2", 1, 2, 10, 0, 400, 300);
+		}
+
+		stream.Position = 0;
+		using var doc = SpreadsheetDocument.Open(stream, false);
+		var drawing = doc.WorkbookPart!.WorksheetParts.First().DrawingsPart!.WorksheetDrawing;
+
+		var ids = drawing.Descendants<Xdr.NonVisualDrawingProperties>()
+			.Select(p => p.Id!.Value)
+			.ToArray();
+
+		(ids.Length >= 2).AssertTrue("two charts should produce two drawing ids");
+		(ids.Length == ids.Distinct().Count()).AssertTrue(
+			$"drawing ids must be unique within the worksheet drawing, got [{ids.Select(id => id.ToString()).JoinComma()}]");
+	}
 
 	#endregion
 }

@@ -65,6 +65,9 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		private readonly Dictionary<int, uint> _columnStyleIndex2 = new();
 		private int _conditionalFormattingPriority = 0;
 		private uint _chartId = 0;
+		private uint _nextNumberFormatId = 164;
+		private bool _numberFormatIdSeeded;
+		private bool _disposed;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OpenXmlExcelWorker"/>.
@@ -222,20 +225,22 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (raw == null)
 				return default;
 
+			var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+
 			// Handle Boolean conversion (Excel stores as "1" or "0")
-			if (typeof(T) == typeof(bool))
+			if (targetType == typeof(bool))
 			{
 				return (T)(object)(raw == "1");
 			}
 
 			// Handle DateTime conversion (Excel stores as OADate double)
-			if (typeof(T) == typeof(DateTime))
+			if (targetType == typeof(DateTime))
 			{
 				if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var oaDate))
 					return (T)(object)DateTime.FromOADate(oaDate);
 			}
 
-			return (T)Convert.ChangeType(raw, typeof(T), CultureInfo.InvariantCulture);
+			return (T)Convert.ChangeType(raw, targetType, CultureInfo.InvariantCulture);
 		}
 
 		/// <inheritdoc />
@@ -441,7 +446,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (columns == null)
 			{
 				columns = new Columns();
-				worksheet.InsertAt(columns, 0);
+				InsertWorksheetChildInOrder(worksheet, columns);
 			}
 
 			var colIndex = (uint)(col + 1);
@@ -490,9 +495,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			var pane = sheetView.GetFirstChild<Pane>() ?? sheetView.AppendChild(new Pane());
 			pane.VerticalSplit = count;
-			pane.TopLeftCell = $"A{count + 1}";
-			pane.ActivePane = PaneValues.BottomLeft;
-			pane.State = PaneStateValues.Frozen;
+			UpdateFrozenPane(pane);
 
 			return this;
 		}
@@ -508,9 +511,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			var pane = sheetView.GetFirstChild<Pane>() ?? sheetView.AppendChild(new Pane());
 			pane.HorizontalSplit = count;
-			pane.TopLeftCell = $"{ToColumnName(count)}1";
-			pane.ActivePane = PaneValues.TopRight;
-			pane.State = PaneStateValues.Frozen;
+			UpdateFrozenPane(pane);
 
 			return this;
 		}
@@ -526,12 +527,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (mergeCells == null)
 			{
 				mergeCells = new MergeCells();
-				// MergeCells must be after SheetData
-				var sheetData = worksheet.GetFirstChild<SheetData>();
-				if (sheetData != null)
-					worksheet.InsertAfter(mergeCells, sheetData);
-				else
-					worksheet.Append(mergeCells);
+				InsertWorksheetChildInOrder(worksheet, mergeCells);
 			}
 
 			var startRef = ToCellReference(startCol, startRow);
@@ -559,11 +555,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (hyperlinks == null)
 			{
 				hyperlinks = new Hyperlinks();
-				var sheetData = worksheet.GetFirstChild<SheetData>();
-				if (sheetData != null)
-					worksheet.InsertAfter(hyperlinks, sheetData);
-				else
-					worksheet.Append(hyperlinks);
+				InsertWorksheetChildInOrder(worksheet, hyperlinks);
 			}
 
 			var relId = _currentWorksheetPart.AddHyperlinkRelationship(new Uri(url, UriKind.Absolute), true).Id;
@@ -584,7 +576,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			var cell = GetCell(col, row, createIfMissing: true);
 			var numFmtId = GetOrCreateNumberFormatId(format);
-			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, null, null);
+			var (_, fillId, fontId) = GetCellFormatIds(cell);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, fillId, fontId);
 			cell.StyleIndex = styleIndex;
 
 			return this;
@@ -610,7 +603,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (!fgColor.IsEmpty())
 				fontId = GetOrCreateFontIndex(fgColor);
 
-			var styleIndex = GetOrCreateCellFormatIndex(null, fillId, fontId);
+			var (numFmtId, existingFillId, existingFontId) = GetCellFormatIds(cell);
+			var styleIndex = GetOrCreateCellFormatIndex(numFmtId, fillId ?? existingFillId, fontId ?? existingFontId);
 			cell.StyleIndex = styleIndex;
 
 			return this;
@@ -849,10 +843,10 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				var stockChart = new C.StockChart();
 
 				// Stock chart requires 4 series: Open, High, Low, Close
-				stockChart.Append(CreateLineSeries(0, "Open", dataRange, 0, 0));
-				stockChart.Append(CreateLineSeries(1, "High", dataRange, 0, 0));
-				stockChart.Append(CreateLineSeries(2, "Low", dataRange, 0, 0));
-				stockChart.Append(CreateLineSeries(3, "Close", dataRange, 0, 0));
+				stockChart.Append(CreateLineSeries(0, "Open", dataRange, 0, 1));
+				stockChart.Append(CreateLineSeries(1, "High", dataRange, 0, 2));
+				stockChart.Append(CreateLineSeries(2, "Low", dataRange, 0, 3));
+				stockChart.Append(CreateLineSeries(3, "Close", dataRange, 0, 4));
 
 				// Add high-low lines and up-down bars for proper stock chart appearance
 				// Per OpenXML schema (CT_StockChart): ser, dLbls, dropLines, hiLowLines, upDownBars, axId
@@ -890,7 +884,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				if (drawing == null)
 				{
 					drawing = new DocumentFormat.OpenXml.Spreadsheet.Drawing { Id = _currentWorksheetPart.GetIdOfPart(drawingsPart) };
-					worksheet.Append(drawing);
+					InsertWorksheetChildInOrder(worksheet, drawing);
 				}
 			}
 
@@ -922,7 +916,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				Macro = string.Empty,
 				NonVisualGraphicFrameProperties = new Xdr.NonVisualGraphicFrameProperties
 				{
-					NonVisualDrawingProperties = new Xdr.NonVisualDrawingProperties { Id = ++_chartId, Name = name ?? "Chart" },
+					NonVisualDrawingProperties = new Xdr.NonVisualDrawingProperties { Id = NextDrawingId(drawingsPart.WorksheetDrawing), Name = name ?? "Chart" },
 					NonVisualGraphicFrameDrawingProperties = new Xdr.NonVisualGraphicFrameDrawingProperties()
 				},
 				Transform = new Xdr.Transform
@@ -1034,20 +1028,18 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 		private static (string xFormula, string yFormula) BuildColumnFormulas(string dataRange, int xCol, int yCol)
 		{
-			return (BuildSingleColumnFormula(dataRange, xCol), BuildSingleColumnFormula(dataRange, yCol));
+			var zeroBased = xCol == 0 || yCol == 0;
+			return (BuildSingleColumnFormula(dataRange, xCol, zeroBased), BuildSingleColumnFormula(dataRange, yCol, zeroBased));
 		}
 
-		private static string BuildSingleColumnFormula(string dataRange, int col)
+		private static string BuildSingleColumnFormula(string dataRange, int col, bool zeroBased = false)
 		{
 			// dataRange format: "SheetName!$A$2:$B$10" or "Sheet!A2:B10"
 			// We need to extract sheet name and row range, then build a single column reference
 
 			var exclamationIdx = dataRange.IndexOf('!');
-			if (exclamationIdx < 0)
-				return dataRange; // fallback
-
-			var sheetName = dataRange[..exclamationIdx];
-			var cellRange = dataRange[(exclamationIdx + 1)..];
+			var sheetName = exclamationIdx < 0 ? string.Empty : dataRange[..exclamationIdx];
+			var cellRange = exclamationIdx < 0 ? dataRange : dataRange[(exclamationIdx + 1)..];
 
 			// Parse cell range like "$A$2:$B$10" or "A2:B10"
 			var colonIdx = cellRange.IndexOf(':');
@@ -1060,11 +1052,16 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			// Extract row numbers from cells
 			var startRow = ExtractRowNumber(startCell);
 			var endRow = ExtractRowNumber(endCell);
+			var startCol = ExtractColumnIndex(startCell);
 
-			// Build column letter (col is 1-based per interface, ToColumnName expects 0-based)
-			var colLetter = ToColumnName(col - 1);
+			var colIndex = zeroBased ? startCol + col : col - 1;
+			if (colIndex < 0)
+				colIndex = startCol;
 
-			return $"{sheetName}!${colLetter}${startRow}:${colLetter}${endRow}";
+			var colLetter = ToColumnName(colIndex);
+			var prefix = sheetName.IsEmpty() ? string.Empty : $"{sheetName}!";
+
+			return $"{prefix}${colLetter}${startRow}:${colLetter}${endRow}";
 		}
 
 		private static int ExtractRowNumber(string cell)
@@ -1075,7 +1072,24 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return int.TryParse(digits, out var row) ? row : 1;
 		}
 
-		private static C.BarChartSeries CreateBarSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
+		private static int ExtractColumnIndex(string cell)
+		{
+			var cleaned = cell.Replace("$", "");
+			var letters = new string(cleaned.TakeWhile(char.IsLetter).ToArray()).ToUpperInvariant();
+			if (letters.IsEmpty())
+				return 0;
+
+			var col = 0;
+			foreach (var ch in letters)
+			{
+				col *= 26;
+				col += ch - 'A' + 1;
+			}
+
+			return col - 1;
+		}
+
+		private static C.BarChartSeries CreateBarSeries(uint index, string name, string dataRange, int catCol = 0, int valCol = 1)
 		{
 			var series = new C.BarChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1111,7 +1125,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2, IReadOnlyList<string> colors = null)
+		private static C.PieChartSeries CreatePieSeries(uint index, string name, string dataRange, int catCol = 0, int valCol = 1, IReadOnlyList<string> colors = null)
 		{
 			var series = new C.PieChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1166,7 +1180,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.AreaChartSeries CreateAreaSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
+		private static C.AreaChartSeries CreateAreaSeries(uint index, string name, string dataRange, int catCol = 0, int valCol = 1)
 		{
 			var series = new C.AreaChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1242,7 +1256,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return series;
 		}
 
-		private static C.RadarChartSeries CreateRadarSeries(uint index, string name, string dataRange, int catCol = 1, int valCol = 2)
+		private static C.RadarChartSeries CreateRadarSeries(uint index, string name, string dataRange, int catCol = 0, int valCol = 1)
 		{
 			var series = new C.RadarChartSeries();
 			series.Append(new C.Index { Val = index });
@@ -1295,9 +1309,10 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			}
 
 			// Build column formulas from the column indices
-			var xFormula = BuildSingleColumnFormula(dataRange, xCol);
-			var yFormula = BuildSingleColumnFormula(dataRange, yCol);
-			var sizeFormula = BuildSingleColumnFormula(dataRange, sizeCol);
+			var zeroBased = xCol == 0 || yCol == 0 || sizeCol == 0;
+			var xFormula = BuildSingleColumnFormula(dataRange, xCol, zeroBased);
+			var yFormula = BuildSingleColumnFormula(dataRange, yCol, zeroBased);
+			var sizeFormula = BuildSingleColumnFormula(dataRange, sizeCol, zeroBased);
 
 			series.Append(new C.XValues
 			{
@@ -1392,7 +1407,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (sheetViews == null)
 			{
 				sheetViews = new SheetViews(new SheetView { WorkbookViewId = 0 });
-				worksheet.InsertAt(sheetViews, 0);
+				InsertWorksheetChildInOrder(worksheet, sheetViews);
 			}
 			else if (!sheetViews.Elements<SheetView>().Any())
 			{
@@ -1400,18 +1415,11 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			}
 		}
 
-		// Custom number-format ids in a dxf start above the built-in range (0-163).
-		// Seeded lazily on first use from the highest id already present (cell numFmts
-		// plus existing dxf numFmts) so opening a template that already defines custom
-		// formats via OpenExist does not collide. Counter is per-worker (per workbook).
-		private uint _nextDxfNumberFormatId = 164;
-		private bool _dxfNumberFormatIdSeeded;
-
-		private uint NextDxfNumberFormatId(Stylesheet stylesheet)
+		private uint NextCustomNumberFormatId(Stylesheet stylesheet)
 		{
-			if (!_dxfNumberFormatIdSeeded)
+			if (!_numberFormatIdSeeded)
 			{
-				_dxfNumberFormatIdSeeded = true;
+				_numberFormatIdSeeded = true;
 
 				var max = 163u; // built-in number-format ids end at 163
 
@@ -1425,10 +1433,10 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 						if (d.NumberingFormat?.NumberFormatId?.Value is { } id && id > max)
 							max = id;
 
-				_nextDxfNumberFormatId = max + 1;
+				_nextNumberFormatId = max + 1;
 			}
 
-			return _nextDxfNumberFormatId++;
+			return _nextNumberFormatId++;
 		}
 
 		private uint AddDifferentialFormat(string bgColor, string fgColor)
@@ -1476,7 +1484,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			{
 				dxf.NumberingFormat = new NumberingFormat
 				{
-					NumberFormatId = NextDxfNumberFormatId(stylesheet),
+					NumberFormatId = NextCustomNumberFormatId(stylesheet),
 					FormatCode = fmt.NumberFormat,
 				};
 			}
@@ -1577,11 +1585,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// </summary>
 		private static void InsertConditionalFormatting(Worksheet worksheet, ConditionalFormatting conditionalFormatting)
 		{
-			var sheetData = worksheet.GetFirstChild<SheetData>();
-			if (sheetData != null)
-				worksheet.InsertAfter(conditionalFormatting, sheetData);
-			else
-				worksheet.Append(conditionalFormatting);
+			InsertWorksheetChildInOrder(worksheet, conditionalFormatting);
 		}
 
 		private Stylesheet EnsureStylesheet()
@@ -1639,12 +1643,15 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			var stylesheet = EnsureStylesheet();
 			var numFmts = stylesheet.NumberingFormats;
 
-			// Custom number formats start at 164
-			var nextId = numFmts.Elements<NumberingFormat>()
-				.Select(nf => nf.NumberFormatId?.Value ?? 0)
-				.DefaultIfEmpty(163u)
-				.Max() + 1;
+			var existing = numFmts.Elements<NumberingFormat>()
+				.FirstOrDefault(nf => string.Equals(nf.FormatCode?.Value, format, StringComparison.Ordinal));
+			if (existing?.NumberFormatId?.Value is { } existingId)
+			{
+				_numberFormatIdCache[format] = existingId;
+				return existingId;
+			}
 
+			var nextId = NextCustomNumberFormatId(stylesheet);
 			numFmts.Append(new NumberingFormat { NumberFormatId = nextId, FormatCode = format });
 			numFmts.Count = (uint)numFmts.ChildElements.Count;
 
@@ -1755,6 +1762,21 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			return index;
 		}
 
+		private (uint? numFmtId, uint? fillId, uint? fontId) GetCellFormatIds(Cell cell)
+		{
+			if (cell?.StyleIndex?.Value is not { } styleIndex)
+				return (null, null, null);
+
+			var cellFormat = _workbookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?
+				.Elements<CellFormat>()
+				.ElementAtOrDefault((int)styleIndex);
+
+			if (cellFormat == null)
+				return (null, null, null);
+
+			return (cellFormat.NumberFormatId?.Value, cellFormat.FillId?.Value, cellFormat.FontId?.Value);
+		}
+
 		// Chart srgbClr values are 6-hex RRGGBB (no alpha), whereas ParseColor yields the
 		// 8-hex AARRGGBB used for cell/fill colours; drop the leading alpha byte.
 		private static string ToChartHex(string color)
@@ -1803,7 +1825,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 			if (rowRef == null)
 			{
 				rowRef = new Row { RowIndex = rowIndex };
-				var nextRow = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex.Value > rowIndex);
+				var nextRow = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value > rowIndex);
 				if (nextRow != null)
 					sheetData.InsertBefore(rowRef, nextRow);
 				else
@@ -1816,18 +1838,28 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 		/// <inheritdoc />
 		public void Dispose()
 		{
+			if (_disposed)
+				return;
+
+			_disposed = true;
+
 			_doc.Save();
 			_doc.Dispose();
 
-			if (_targetStream.CanSeek)
-				_targetStream.Position = 0;
+			if (_targetStream.CanWrite)
+			{
+				if (_targetStream.CanSeek)
+				{
+					_targetStream.Position = 0;
+					_targetStream.SetLength(0);
+				}
 
-			_targetStream.SetLength(0);
-			_workStream.Position = 0;
-			_workStream.CopyTo(_targetStream);
+				_workStream.Position = 0;
+				_workStream.CopyTo(_targetStream);
 
-			if (_targetStream.CanSeek)
-				_targetStream.Position = 0;
+				if (_targetStream.CanSeek)
+					_targetStream.Position = 0;
+			}
 
 			_workStream.Dispose();
 		}
@@ -1910,9 +1942,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 				case DateTimeOffset dto:
 					// Preserve local clock time (do NOT force UTC).
-					var localDt = dto.LocalDateTime;
 					cell.DataType = null;
-					cell.CellValue = new CellValue(localDt.ToOADate().ToString(CultureInfo.InvariantCulture));
+					cell.CellValue = new CellValue(dto.DateTime.ToOADate().ToString(CultureInfo.InvariantCulture));
 					return;
 			}
 
@@ -1920,7 +1951,8 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 			// Keep IDs as text if you want to avoid any double precision issues in Excel itself.
 			// (Excel also shows only ~15 significant digits for numbers.)
-			if (value is long l && (l.Abs() >= 9_000_000_000_000_00L))
+			const long maxExactInteger = 9_007_199_254_740_991L;
+			if (value is long l && (l < -maxExactInteger || l > maxExactInteger))
 			{
 				WriteInlineString(cell, l.ToString(CultureInfo.InvariantCulture));
 				return;
@@ -1964,7 +1996,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				rowRef = new Row { RowIndex = rowIndex };
 
 				// Keep rows sorted
-				var nextRow = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex.Value > rowIndex);
+				var nextRow = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value > rowIndex);
 				if (nextRow != null)
 					sheetData.InsertBefore(rowRef, nextRow);
 				else
@@ -1983,7 +2015,7 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 
 				// Keep cells sorted within the row
 				var nextCell = rowRef.Elements<Cell>()
-					.FirstOrDefault(c => string.Compare(c.CellReference?.Value, cellRef, StringComparison.OrdinalIgnoreCase) > 0);
+					.FirstOrDefault(c => ParseCellReference(c.CellReference?.Value).col > col);
 
 				if (nextCell != null)
 					rowRef.InsertBefore(cell, nextCell);
@@ -2050,5 +2082,69 @@ public sealed class OpenXmlExcelWorkerProvider : IExcelWorkerProvider
 				|| t == typeof(float) || t == typeof(double)
 				|| t == typeof(decimal);
 		}
+
+		private static void UpdateFrozenPane(Pane pane)
+		{
+			var frozenRows = (int)(pane.VerticalSplit?.Value ?? 0D);
+			var frozenCols = (int)(pane.HorizontalSplit?.Value ?? 0D);
+
+			pane.TopLeftCell = $"{ToColumnName(frozenCols)}{frozenRows + 1}";
+			pane.ActivePane = frozenRows > 0 && frozenCols > 0
+				? PaneValues.BottomRight
+				: frozenCols > 0 ? PaneValues.TopRight : PaneValues.BottomLeft;
+			pane.State = PaneStateValues.Frozen;
+		}
+
+		private uint NextDrawingId(Xdr.WorksheetDrawing drawing)
+		{
+			var max = drawing.Descendants<Xdr.NonVisualDrawingProperties>()
+				.Select(p => p.Id?.Value ?? 0u)
+				.DefaultIfEmpty(0u)
+				.Max();
+
+			if (_chartId < max)
+				_chartId = max;
+
+			return ++_chartId;
+		}
+
+		private static void InsertWorksheetChildInOrder(Worksheet worksheet, OpenXmlElement element)
+		{
+			var priority = GetWorksheetChildPriority(element);
+			var next = worksheet.ChildElements.FirstOrDefault(child => GetWorksheetChildPriority(child) > priority);
+
+			if (next != null)
+				worksheet.InsertBefore(element, next);
+			else
+				worksheet.Append(element);
+		}
+
+		private static int GetWorksheetChildPriority(OpenXmlElement element)
+			=> element switch
+			{
+				SheetProperties => 0,
+				SheetDimension => 1,
+				SheetViews => 2,
+				SheetFormatProperties => 3,
+				Columns => 4,
+				SheetData => 5,
+				DocumentFormat.OpenXml.Spreadsheet.MergeCells => 14,
+				ConditionalFormatting => 16,
+				DataValidations => 17,
+				Hyperlinks => 18,
+				PrintOptions => 19,
+				PageMargins => 20,
+				PageSetup => 21,
+				HeaderFooter => 22,
+				RowBreaks => 23,
+				ColumnBreaks => 24,
+				DocumentFormat.OpenXml.Spreadsheet.Drawing => 29,
+				LegacyDrawing => 30,
+				LegacyDrawingHeaderFooter => 31,
+				Picture => 32,
+				TableParts => 36,
+				WorksheetExtensionList => 37,
+				_ => int.MaxValue,
+			};
 	}
 }
