@@ -81,6 +81,19 @@ public class SynchronizedListTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void RemoveRange_ByIndexRespectsRemovingVeto()
+	{
+		var list = new SynchronizedList<int>();
+		list.AddRange([1, 2, 3]);
+		list.Removing += item => item != 2;
+
+		var removed = list.RemoveRange(0, 3);
+
+		removed.AssertEqual(2);
+		list.AssertEqual([2]);
+	}
+
+	[TestMethod]
 	public void RemoveRangeByIndex_CallsOnRemoving()
 	{
 		// Create a custom list that tracks OnRemoving calls

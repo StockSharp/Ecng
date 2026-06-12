@@ -32,6 +32,10 @@ public class DynamicTuple(object[] values) : Equatable<DynamicTuple>
 	public override DynamicTuple Clone()
 		=> new([.. Values]);
 
+	/// <inheritdoc />
+	public override int CompareTo(DynamicTuple value)
+		=> Equals(value) ? 0 : -1;
+
 	/// <summary>
 	/// Returns a string representation of the tuple, with values separated by commas.
 	/// </summary>

@@ -242,6 +242,21 @@ public class CollectionHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Sync_HashSetPreservesComparer()
+	{
+		var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			"Alpha",
+		};
+
+		var sync = set.Sync();
+
+		sync.Contains("alpha").AssertTrue();
+		sync.TryAdd("ALPHA").AssertFalse();
+		sync.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
 	public void RemoveRange_RemovesSpecifiedItems()
 	{
 		// Arrange
@@ -1915,4 +1930,60 @@ public class CollectionHelperTests : BaseTestClass
 	}
 
 	#endregion
+
+	/// <summary>
+	/// BUG: SafeAddAsync (AsyncReaderWriterLock overload) runs the handler via a discarded
+	/// Task.Factory.StartNew(async ...) that never completes the TaskCompletionSource on failure.
+	/// Expected: when the handler throws, the returned task faults with that exception (within a timeout).
+	/// Actual: the inner exception is swallowed, source.SetResult is never called, so the task hangs forever.
+	/// See Collections\CollectionHelper.cs:1101.
+	/// </summary>
+	[TestMethod]
+	public async Task SafeAddAsync_RwLock_HandlerThrows_FaultsTask()
+	{
+		var sync = new AsyncReaderWriterLock();
+		var dict = new Dictionary<int, TaskCompletionSource<string>>();
+
+		var boom = new InvalidOperationException("boom");
+
+		Task<string> Run()
+			=> dict.SafeAddAsync(sync, 1, (k, t) => Task.FromException<string>(boom), CancellationToken);
+
+		// Guard with a timeout: while the bug is present the task never completes and this throws TimeoutException,
+		// which is exactly the failure we want to surface.
+		await ThrowsAsync<InvalidOperationException>(()
+			=> Run().WaitAsync(TimeSpan.FromSeconds(5), CancellationToken));
+	}
+
+	/// <summary>
+	/// BUG: SafeAddAsync (AsyncReaderWriterLock overload) leaves a dead TaskCompletionSource in the dictionary
+	/// after a failing handler (unlike the synchronized overload, it never removes the key).
+	/// Expected: after a failed attempt, a subsequent call for the same key with a good handler succeeds.
+	/// Actual: the poisoned key keeps returning the never-completing task, hanging all later callers.
+	/// See Collections\CollectionHelper.cs:1101.
+	/// </summary>
+	[TestMethod]
+	public async Task SafeAddAsync_RwLock_HandlerThrows_DoesNotPoisonKey()
+	{
+		var sync = new AsyncReaderWriterLock();
+		var dict = new Dictionary<int, TaskCompletionSource<string>>();
+
+		var firstAttempt = dict.SafeAddAsync(sync, 1, (k, t) => Task.FromException<string>(new InvalidOperationException("boom")), CancellationToken);
+
+		try
+		{
+			await firstAttempt.WaitAsync(TimeSpan.FromSeconds(5), CancellationToken);
+		}
+		catch (InvalidOperationException)
+		{
+			// expected: the failing handler should surface its exception
+		}
+
+		// The key must not stay poisoned: a retry with a working handler must complete.
+		var second = await dict
+			.SafeAddAsync(sync, 1, (k, t) => "ok".FromResult(), CancellationToken)
+			.WaitAsync(TimeSpan.FromSeconds(5), CancellationToken);
+
+		second.AssertEqual("ok");
+	}
 }

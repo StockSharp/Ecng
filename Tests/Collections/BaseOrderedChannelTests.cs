@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Collections;
 
+using System.Threading.Channels;
+
 /// <summary>
 /// Tests for <see cref="BaseOrderedChannel{TSort, TValue, TCollection}"/>.
 /// </summary>
@@ -231,6 +233,22 @@ public class BaseOrderedChannelTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task Enqueue_WhenClosedWhileWriteIsPending_DropsValue()
+	{
+		var token = CancellationToken;
+		var queue = CreateQueue(maxSize: 1);
+		queue.Open();
+
+		await queue.Add(1, "first", token);
+		var writeTask = queue.Add(2, "second", token).AsTask();
+
+		await Task.Delay(100, token);
+		queue.Close();
+
+		await writeTask.WaitAsync(TimeSpan.FromSeconds(2), token);
+	}
+
+	[TestMethod]
 	public async Task Count_ReflectsQueueSize()
 	{
 		var token = CancellationToken;
@@ -255,6 +273,25 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.DequeueAsync(token);
 
 		queue.Count.AssertEqual(0);
+	}
+
+	/// <summary>
+	/// BUG: DequeueAsync busy-polls forever (await Task.Delay(1); continue;) when the channel is null
+	/// because the queue was closed before ever being opened; _isClosed is ignored in that branch.
+	/// Expected: DequeueAsync on a closed-but-never-opened queue throws ChannelClosedException.
+	/// Actual: it spins on a 1ms timer indefinitely (here surfaced as a TimeoutException via WaitAsync).
+	/// See Collections\BaseOrderedChannel.cs:192.
+	/// </summary>
+	[TestMethod]
+	public async Task DequeueAsync_ClosedBeforeOpened_Throws()
+	{
+		var queue = CreateQueue();
+
+		// Close without ever opening: _channel stays null and _isClosed becomes true.
+		queue.Close();
+
+		await ThrowsAsync<ChannelClosedException>(()
+			=> queue.DequeueAsync(CancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(5), CancellationToken));
 	}
 
 	private static TestOrderedChannel CreateQueue(int maxSize = -1) => new(maxSize);

@@ -145,7 +145,7 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		try
 		{
 			if (!channel.Writer.TryWrite((sort, value)))
-				return channel.Writer.WriteAsync((sort, value), cancellationToken);
+				return WriteAsync(channel.Writer, (sort, value), cancellationToken);
 		}
 		catch (ChannelClosedException)
 		{
@@ -158,6 +158,23 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		}
 
 		return default;
+
+		static async ValueTask WriteAsync(ChannelWriter<(TSort sort, TValue value)> writer, (TSort sort, TValue value) item, CancellationToken cancellationToken)
+		{
+			try
+			{
+				await writer.WriteAsync(item, cancellationToken).NoWait();
+			}
+			catch (ChannelClosedException)
+			{
+				// Queue was closed while the writer was waiting for capacity.
+			}
+			catch
+			{
+				if (!cancellationToken.IsCancellationRequested)
+					throw;
+			}
+		}
 	}
 
 	/// <summary>
@@ -170,10 +187,12 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		while (true)
 		{
 			Channel<(TSort, TValue)> channel;
+			bool closed;
 
 			using (_sync.EnterScope())
 			{
 				channel = _channel;
+				closed = _isClosed;
 
 				if (channel is not null)
 				{
@@ -189,6 +208,9 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 
 			if (channel is null)
 			{
+				if (closed)
+					throw new ChannelClosedException();
+
 				await Task.Delay(1, cancellationToken).NoWait();
 				continue;
 			}

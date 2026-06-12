@@ -207,4 +207,44 @@ public class SynchronizedDictionaryTests
 
 		exceptions.Count.AssertEqual(0);
 	}
+
+	/// <summary>
+	/// BUG: SynchronizedDictionary.Contains(KeyValuePair) delegates to ContainsKey(item.Key), ignoring the value.
+	/// Expected: per the ICollection&lt;KeyValuePair&gt; contract, a pair is contained only when the stored value matches.
+	/// Actual: it returns true for any pair whose key exists, regardless of the value.
+	/// See Collections\SynchronizedDictionary.cs:112.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedDictionary_ContainsKvp_ChecksValue()
+	{
+		var dict = new SynchronizedDictionary<string, int> { { "key", 1 } };
+		var coll = (ICollection<KeyValuePair<string, int>>)dict;
+
+		coll.Contains(new KeyValuePair<string, int>("key", 1)).AssertTrue();
+		coll.Contains(new KeyValuePair<string, int>("key", 2)).AssertFalse();
+		coll.Contains(new KeyValuePair<string, int>("missing", 1)).AssertFalse();
+	}
+
+	/// <summary>
+	/// BUG: SynchronizedDictionary.Remove(KeyValuePair) delegates to Remove(item.Key), ignoring the value.
+	/// Expected: per the ICollection&lt;KeyValuePair&gt; contract, the pair is removed only when the stored value matches;
+	/// a mismatched value must leave the entry intact (avoids a silent lost update).
+	/// Actual: it removes the entry by key regardless of the value.
+	/// See Collections\SynchronizedDictionary.cs:133.
+	/// </summary>
+	[TestMethod]
+	public void SynchronizedDictionary_RemoveKvp_ChecksValue()
+	{
+		var dict = new SynchronizedDictionary<string, int> { { "key", 1 } };
+		var coll = (ICollection<KeyValuePair<string, int>>)dict;
+
+		// Value mismatch: must not remove and must report false.
+		coll.Remove(new KeyValuePair<string, int>("key", 2)).AssertFalse();
+		dict.ContainsKey("key").AssertTrue();
+		dict["key"].AssertEqual(1);
+
+		// Exact pair: removes and reports true.
+		coll.Remove(new KeyValuePair<string, int>("key", 1)).AssertTrue();
+		dict.ContainsKey("key").AssertFalse();
+	}
 }

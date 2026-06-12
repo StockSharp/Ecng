@@ -44,6 +44,38 @@ public class SynchronizedSetTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void AddRange_WhenItemEventThrows_RestoresSingleItemRangeEvents()
+	{
+		var set = new SynchronizedSet<int>();
+		set.Added += item =>
+		{
+			if (item == 2)
+				throw new InvalidOperationException("boom");
+		};
+
+		ThrowsExactly<InvalidOperationException>(() => set.AddRange([1, 2]));
+
+		var addedRange = new List<int>();
+		set.AddedRange += items => addedRange.AddRange(items);
+
+		set.Add(3);
+
+		addedRange.AssertEqual([3]);
+	}
+
+	[TestMethod]
+	public void AddRange_WithDuplicateInputAndIndexingAddsEachValueOnce()
+	{
+		var set = new SynchronizedSet<int>(true);
+
+		set.AddRange([1, 1, 2]);
+
+		set.Count.AssertEqual(2);
+		set[0].AssertEqual(1);
+		set[1].AssertEqual(2);
+	}
+
+	[TestMethod]
 	public void UnionIntersectExceptSymmetric()
 	{
 		var set = new SynchronizedSet<int>(true);

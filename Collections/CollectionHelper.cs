@@ -1082,30 +1082,62 @@ public static class CollectionHelper
 		if (handler is null)
 			throw new ArgumentNullException(nameof(handler));
 
-		async Task<Task<TValue>> InternalSafeAddAsync()
+		TaskCompletionSource<TValue> source;
+		var isNew = false;
+		Task<TValue> existingTask = null;
+
+		using (await sync.ReaderLockAsync(cancellationToken))
 		{
-			TaskCompletionSource<TValue> source;
+			if (dictionary.TryGetValue(key, out source))
+				existingTask = source.Task;
+		}
 
-			using (await sync.ReaderLockAsync(cancellationToken))
+		if (existingTask is not null)
+			return await existingTask;
+
+		using (await sync.WriterLockAsync(cancellationToken))
+		{
+			if (dictionary.TryGetValue(key, out source))
+				existingTask = source.Task;
+			else
 			{
-				if (dictionary.TryGetValue(key, out source))
-					return source.Task;
-			}
-
-			using (await sync.WriterLockAsync(cancellationToken))
-			{
-				if (dictionary.TryGetValue(key, out source))
-					return source.Task;
-
-				source = new TaskCompletionSource<TValue>();
-				_ = Task.Factory.StartNew(async () => source.SetResult(await handler(key, cancellationToken)));
-
+				source = new(TaskCreationOptions.RunContinuationsAsynchronously);
 				dictionary.Add(key, source);
-				return source.Task;
+				isNew = true;
 			}
 		}
 
-		return await (await InternalSafeAddAsync());
+		if (existingTask is not null)
+			return await existingTask;
+
+		if (isNew)
+		{
+			try
+			{
+				source.TrySetResult(await handler(key, cancellationToken));
+			}
+			catch (OperationCanceledException ex)
+			{
+				await RemoveFailedAsync();
+				source.TrySetCanceled(ex.CancellationToken);
+			}
+			catch (Exception ex)
+			{
+				await RemoveFailedAsync();
+				source.TrySetException(ex);
+			}
+		}
+
+		return await source.Task;
+
+		async Task RemoveFailedAsync()
+		{
+			using (await sync.WriterLockAsync(CancellationToken.None))
+			{
+				if (dictionary.TryGetValue(key, out var current) && ReferenceEquals(current, source))
+					dictionary.Remove(key);
+			}
+		}
 	}
 
 	/// <summary>
@@ -1858,7 +1890,7 @@ public static class CollectionHelper
 		if (list is null)
 			return null;
 
-		var syncList = new SynchronizedSet<T>();
+		var syncList = new SynchronizedSet<T>(list.Comparer);
 		syncList.AddRange(list);
 		return syncList;
 	}

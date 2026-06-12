@@ -148,15 +148,25 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 			if (actualCount <= 0)
 				return 0;
 
-			var removedItems = InnerCollection.GetRange(index, actualCount);
-			var filteredItems = removedItems.Where(OnRemoving).ToArray();
+			var removals = new List<(int Index, T Item)>();
 
-			InnerCollection.RemoveRange(index, actualCount);
-			filteredItems.ForEach(base.OnRemoved);
+			for (var i = 0; i < actualCount; i++)
+			{
+				var item = InnerCollection[index + i];
 
-			RemovedRange?.Invoke(filteredItems);
+				if (OnRemoving(item))
+					removals.Add((index + i, item));
+			}
 
-			return actualCount;
+			for (var i = removals.Count - 1; i >= 0; i--)
+				InnerCollection.RemoveAt(removals[i].Index);
+
+			var removedItems = removals.Select(r => r.Item).ToArray();
+			removedItems.ForEach(base.OnRemoved);
+
+			RemovedRange?.Invoke(removedItems);
+
+			return removedItems.Length;
 		}
 	}
 

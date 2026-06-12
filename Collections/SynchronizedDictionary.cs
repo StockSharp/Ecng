@@ -111,7 +111,11 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the dictionary contains the key-value pair; otherwise, <c>false</c>.</returns>
 	public bool Contains(KeyValuePair<TKey, TValue> item)
 	{
-		return ContainsKey(item.Key);
+		using (EnterScope())
+		{
+			return _inner.TryGetValue(item.Key, out var value)
+				&& EqualityComparer<TValue>.Default.Equals(value, item.Value);
+		}
 	}
 
 	/// <summary>
@@ -132,7 +136,16 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the key-value pair was successfully removed; otherwise, <c>false</c>.</returns>
 	public bool Remove(KeyValuePair<TKey, TValue> item)
 	{
-		return Remove(item.Key);
+		using (EnterScope())
+		{
+			if (!_inner.TryGetValue(item.Key, out var value))
+				return false;
+
+			if (!EqualityComparer<TValue>.Default.Equals(value, item.Value))
+				return false;
+
+			return _inner.Remove(item.Key);
+		}
 	}
 
 	/// <summary>

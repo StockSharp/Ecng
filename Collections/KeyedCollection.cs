@@ -221,8 +221,11 @@ public abstract class KeyedCollection<TKey, TValue>(IDictionary<TKey, TValue> in
 	/// </summary>
 	/// <param name="item">The key-value pair to locate.</param>
 	/// <returns>True if the pair is found; otherwise, false.</returns>
-	/// <remarks>This implementation only checks the presence of the key, not the value equality.</remarks>
-	public bool Contains(KeyValuePair<TKey, TValue> item) => ContainsKey(item.Key);
+	public bool Contains(KeyValuePair<TKey, TValue> item)
+	{
+		return InnerDictionary.TryGetValue(item.Key, out var value)
+			&& EqualityComparer<TValue>.Default.Equals(value, item.Value);
+	}
 
 	/// <summary>
 	/// Copies the elements of the collection to an array, starting at the specified index.
@@ -239,8 +242,16 @@ public abstract class KeyedCollection<TKey, TValue>(IDictionary<TKey, TValue> in
 	/// </summary>
 	/// <param name="item">The key-value pair to remove.</param>
 	/// <returns>True if the pair was found and removed; otherwise, false.</returns>
-	/// <remarks>This implementation only considers the key for removal, ignoring the value in <paramref name="item"/>.</remarks>
-	public bool Remove(KeyValuePair<TKey, TValue> item) => Remove(item.Key);
+	public bool Remove(KeyValuePair<TKey, TValue> item)
+	{
+		if (!InnerDictionary.TryGetValue(item.Key, out var value))
+			return false;
+
+		if (!EqualityComparer<TValue>.Default.Equals(value, item.Value))
+			return false;
+
+		return Remove(item.Key);
+	}
 
 	/// <summary>
 	/// Returns an enumerator that iterates through the collection (non-generic version).

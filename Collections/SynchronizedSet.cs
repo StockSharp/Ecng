@@ -421,29 +421,32 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	{
 		using (EnterScope())
 		{
-			var filteredItems = items.Where(t =>
+			var addedItems = new List<T>();
+
+			foreach (var item in items)
 			{
-				if (CheckNullableItems && t.IsNull())
-					throw new ArgumentNullException(nameof(t));
+				if (CheckNullableItems && item.IsNull())
+					throw new ArgumentNullException(nameof(item));
 
-				return OnAdding(t);
-			}).ToArray();
-			InnerCollection.AddRange(filteredItems);
+				if (!OnAdding(item))
+					continue;
 
-			ProcessRange(filteredItems, item =>
+				if (InnerCollection.Add(item))
+					addedItems.Add(item);
+			}
+
+			ProcessRange(addedItems, item =>
 			{
-				//AddIndicies(item);
-
 				if (_indecies != null)
 				{
-					_indecies.Add(_maxIndex + 1, item);
 					_maxIndex++;
+					_indecies.Add(_maxIndex, item);
 				}
 
 				OnAdded(item);
 			});
 
-			AddedRange?.Invoke(filteredItems);
+			AddedRange?.Invoke(addedItems);
 		}
 	}
 
@@ -471,9 +474,14 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	{
 		_raiseRangeEvents = false;
 
-		items.ForEach(action);
-
-		_raiseRangeEvents = true;
+		try
+		{
+			items.ForEach(action);
+		}
+		finally
+		{
+			_raiseRangeEvents = true;
+		}
 	}
 
 	/// <summary>
