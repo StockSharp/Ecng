@@ -32,10 +32,10 @@ public static class EntityPropertyHelper
 
 	private static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, HashSet<Type> processed, Func<PropertyInfo, bool> filter)
 	{
+		type = type.GetUnderlyingType() ?? type;
+
 		if (processed.Contains(type))
 			yield break;
-
-		type = type.GetUnderlyingType() ?? type;
 
 		var propertyInfos = type
 			.GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
@@ -52,13 +52,17 @@ public static class EntityPropertyHelper
 			if (!names.Add(name))
 				continue;
 
+			var propType = pi.PropertyType;
+			var underlyingPropType = propType.GetUnderlyingType() ?? propType;
+
+			if (!underlyingPropType.IsPrimitive() && processed.Contains(underlyingPropType))
+				continue;
+
 			var prop = new EntityProperty(name, pi.GetDisplayName(), pi.GetDescription(), pi.PropertyType, parent);
 
-			var propType = pi.PropertyType;
-
-			if (!propType.IsPrimitive())
+			if (!underlyingPropType.IsPrimitive())
 			{
-				prop.Properties = GetEntityProperties(propType, prop, processed, filter);
+				prop.Properties = [.. GetEntityProperties(propType, prop, processed, filter)];
 			}
 
 			yield return prop;

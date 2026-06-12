@@ -43,6 +43,17 @@ public class EntityPropertyHelperTests : BaseTestClass
 		public DateTime? NullableDate { get; set; }
 	}
 
+	private class CyclicParent
+	{
+		public CyclicChild Child { get; set; }
+	}
+
+	private class CyclicChild
+	{
+		public CyclicParent Parent { get; set; }
+		public int Value { get; set; }
+	}
+
 	#endregion
 
 	#region GetEntityProperties tests
@@ -76,6 +87,18 @@ public class EntityPropertyHelperTests : BaseTestClass
 
 		props.Count.AssertEqual(1);
 		props[0].Name.AssertEqual("Id");
+	}
+
+	[TestMethod]
+	public void GetEntityProperties_MaterializedRoot_DoesNotReenterProcessedType()
+	{
+		var props = typeof(CyclicParent).GetEntityProperties().ToArray();
+
+		var child = props.Single(p => p.Name == nameof(CyclicParent.Child));
+		var childProps = child.Properties.ToArray();
+
+		childProps.Any(p => p.Name == "Child.Value").AssertTrue();
+		childProps.Any(p => p.Name == "Child.Parent").AssertFalse();
 	}
 
 	#endregion

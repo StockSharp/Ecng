@@ -155,21 +155,29 @@ public static class RangeHelper
 
 		const long step = TimeSpan.TicksPerDay;
 
-		var beginDate = from;
-		var nextDate = beginDate + step;
+		var filtered = dates
+			.Where(d => d >= from && d <= to)
+			.ToArray();
 
-		foreach (var date in dates.Skip(1))
+		if (filtered.Length == 0)
+			yield break;
+
+		var beginDate = filtered[0];
+		var prevDate = beginDate;
+
+		foreach (var date in filtered.Skip(1))
 		{
-			if (date != nextDate)
+			if (date != prevDate + step)
 			{
-				yield return new(beginDate, nextDate - 1);
+				yield return new(beginDate, prevDate + step - 1);
 				beginDate = date;
 			}
 
-			nextDate = date + step;
+			prevDate = date;
 		}
 
-		yield return new(beginDate, nextDate - 1);
+		var toBoundary = (to % step) == 0 ? to + step - 1 : to;
+		yield return new(beginDate, toBoundary);
 	}
 
 	/// <summary>

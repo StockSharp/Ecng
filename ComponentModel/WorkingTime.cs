@@ -77,15 +77,20 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 		get => [.. SpecialDays.Where(p => p.Value.Length > 0).Select(p => p.Key)];
 		set
 		{
-			var holidays = SpecialHolidays.ToHashSet();
-
-			_specialDays = (value ?? throw new ArgumentNullException(nameof(value)))
+			var workDays = (value ?? throw new ArgumentNullException(nameof(value)))
 				.Select(d => d.Date)
+				.ToHashSet();
+
+			var holidays = SpecialHolidays
+				.Where(d => !workDays.Contains(d))
+				.ToHashSet();
+
+			_specialDays = workDays
 				.Concat(holidays)
 				.Distinct()
 				.ToDictionary(
 					d => d,
-					d => holidays.Contains(d) ? [] : SpecialDays.TryGetValue(d, out var r) ? r : [new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay)]);
+					d => holidays.Contains(d) ? [] : SpecialDays.TryGetValue(d, out var r) && r.Length > 0 ? r : [new Range<TimeSpan>(TimeSpan.Zero, TimeHelper.LessOneDay)]);
 		}
 	}
 
@@ -97,10 +102,15 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 		get => [.. SpecialDays.Where(p => p.Value.Length == 0).Select(p => p.Key)];
 		set
 		{
-			var workDays = SpecialWorkingDays.ToHashSet();
-
-			_specialDays = (value ?? throw new ArgumentNullException(nameof(value)))
+			var holidays = (value ?? throw new ArgumentNullException(nameof(value)))
 				.Select(d => d.Date)
+				.ToHashSet();
+
+			var workDays = SpecialWorkingDays
+				.Where(d => !holidays.Contains(d))
+				.ToHashSet();
+
+			_specialDays = holidays
 				.Concat(workDays)
 				.Distinct()
 				.ToDictionary(

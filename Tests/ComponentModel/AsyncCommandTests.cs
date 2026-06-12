@@ -518,4 +518,74 @@ public class AsyncCommandTests : BaseTestClass
 
 		await ThrowsExactlyAsync<InvalidOperationException>(async () => await cmd.ExecuteAsync());
 	}
+
+	/// <summary>
+	/// BUG: AsyncCommand.ExecuteAsync (ComponentModel\AsyncCommand.cs:120) mismanages state when
+	/// allowMultipleExecution=true: the finally resets IsExecuting once the FIRST of several
+	/// overlapping executions completes, and Cancel() signals only the latest CTS (the previous
+	/// execution's CTS was disposed at the second start), so older executions stay uncancellable.
+	/// Expected: IsExecuting stays true while any execution is running, and Cancel() cancels ALL
+	/// active executions.
+	/// Actual: IsExecuting flips to false after the first completion, and only the newest token
+	/// observes the cancellation.
+	/// </summary>
+	[TestMethod]
+	public async Task AsyncCommand_AllowMultipleExecution_TracksStateAndCancelsAllExecutions()
+	{
+		var tcs1 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var tcs2 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		CancellationToken token1 = default;
+		CancellationToken token2 = default;
+		var index = 0;
+
+		var cmd = new AsyncCommand<int>(async (p, ct) =>
+		{
+			var current = Interlocked.Increment(ref index);
+
+			if (current == 1)
+			{
+				token1 = ct;
+				await tcs1.Task;
+			}
+			else
+			{
+				token2 = ct;
+				await tcs2.Task;
+			}
+		}, allowMultipleExecution: true);
+
+		try
+		{
+			// Start two overlapping executions. The synchronous part of each (token capture
+			// and CTS setup) runs before ExecuteAsync returns its still-pending task.
+			var exec1 = cmd.ExecuteAsync(1);
+			var exec2 = cmd.ExecuteAsync(2);
+
+			IsTrue(cmd.IsExecuting, "Command must report executing while operations run.");
+
+			// Cancel while BOTH executions are still running.
+			cmd.Cancel();
+
+			IsTrue(token2.IsCancellationRequested, "The latest execution must observe cancellation.");
+			IsTrue(token1.IsCancellationRequested, "Older still-running executions must also be cancellable.");
+
+			// Complete the first execution only; the second is still running.
+			tcs1.SetResult(true);
+			await exec1;
+
+			IsTrue(cmd.IsExecuting, "Command must stay executing while the second operation is still running.");
+
+			// Complete the second execution and verify state resets afterwards.
+			tcs2.SetResult(true);
+			await exec2;
+
+			IsFalse(cmd.IsExecuting, "Command must stop reporting executing once all operations complete.");
+		}
+		finally
+		{
+			tcs1.TrySetResult(true);
+			tcs2.TrySetResult(true);
+		}
+	}
 }

@@ -342,6 +342,20 @@ public class RangeTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void GetRanges_UsesFirstDateAndClampsToBoundary()
+	{
+		var from = new DateTime(2025, 1, 1).Ticks;
+		var day3 = new DateTime(2025, 1, 3).Ticks;
+		var day4Noon = new DateTime(2025, 1, 4, 12, 0, 0).Ticks;
+
+		var result = new[] { day3 }.GetRanges(from, day4Noon).ToArray();
+
+		result.Length.AssertEqual(1);
+		result[0].Min.AssertEqual(day3);
+		result[0].Max.AssertEqual(day4Noon);
+	}
+
+	[TestMethod]
 	public void GetRanges_NonConsecutiveDays_ReturnsMultipleRanges()
 	{
 		var day1 = new DateTime(2025, 1, 1).Ticks;

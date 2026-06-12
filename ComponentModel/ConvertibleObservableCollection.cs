@@ -110,6 +110,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	public void RemoveRange(IEnumerable<TItem> items)
 	{
 		var arr = items.ToArray();
+		var removed = new List<TItem>();
 
 		using (EnterScope())
 		{
@@ -117,19 +118,21 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 
 			foreach (var item in arr)
 			{
-				var display = TryGet(item);
-
-				if (display == null)
+				if (!_convertedValues.Contains(item))
 					continue;
 
+				var pair = (KVPair)_convertedValues[item]!;
 				_convertedValues.Remove(item);
-				converted.Add(display);
+				converted.Add(pair.Display);
+				removed.Add(item);
 			}
 
-			_collection.RemoveRange(converted);
+			if (converted.Count > 0)
+				_collection.RemoveRange(converted);
 		}
 
-		RemovedRange?.Invoke(arr);
+		if (removed.Count > 0)
+			RemovedRange?.Invoke(removed);
 	}
 
 	/// <summary>
@@ -140,12 +143,13 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <returns>Number of items removed.</returns>
 	public override int RemoveRange(int index, int count)
 	{
+		TItem[] items;
+
 		using (EnterScope())
-		{
-			var items = _convertedValues.Keys.Cast<TItem>().Skip(index).Take(count).ToArray();
-			RemoveRange(items);
-			return items.Length;
-		}
+			items = _convertedValues.Keys.Cast<TItem>().Skip(index).Take(count).ToArray();
+
+		RemoveRange(items);
+		return items.Length;
 	}
 
 	/// <summary>

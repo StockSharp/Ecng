@@ -9,6 +9,8 @@ public class AsyncCommand<T> : NotifiableObject, IRevalidatableCommand, IDisposa
 	private readonly Func<T, CancellationToken, Task> _execute;
 	private readonly Func<T, bool> _canExecute;
 	private readonly bool _allowMultipleExecution;
+	private readonly Lock _syncRoot = new();
+	private readonly List<CancellationTokenSource> _activeCts = [];
 
 	private CancellationTokenSource _cts;
 	private bool _isExecuting;
@@ -117,18 +119,33 @@ public class AsyncCommand<T> : NotifiableObject, IRevalidatableCommand, IDisposa
 		if (!CanExecute(parameter))
 			return;
 
-		_cts?.Dispose();
-		_cts = new CancellationTokenSource();
+		var cts = new CancellationTokenSource();
 
-		IsExecuting = true;
+		using (_syncRoot.EnterScope())
+		{
+			_activeCts.Add(cts);
+			_cts = cts;
+			IsExecuting = true;
+		}
+
 
 		try
 		{
-			await _execute(parameter, _cts.Token);
+			await _execute(parameter, cts.Token);
 		}
 		finally
 		{
-			IsExecuting = false;
+			using (_syncRoot.EnterScope())
+			{
+				_activeCts.Remove(cts);
+
+				if (ReferenceEquals(_cts, cts))
+					_cts = _activeCts.Count == 0 ? null : _activeCts[^1];
+
+				IsExecuting = _activeCts.Count > 0;
+			}
+
+			cts.Dispose();
 		}
 	}
 
@@ -137,7 +154,13 @@ public class AsyncCommand<T> : NotifiableObject, IRevalidatableCommand, IDisposa
 	/// </summary>
 	public void Cancel()
 	{
-		_cts?.Cancel();
+		CancellationTokenSource[] active;
+
+		using (_syncRoot.EnterScope())
+			active = [.. _activeCts];
+
+		foreach (var cts in active)
+			cts.Cancel();
 	}
 
 	/// <inheritdoc />
@@ -165,8 +188,17 @@ public class AsyncCommand<T> : NotifiableObject, IRevalidatableCommand, IDisposa
 		{
 			DelegateCommandSettings.Registry?.Unregister(this);
 			Cancel();
-			_cts?.Dispose();
-			_cts = null;
+
+			using (_syncRoot.EnterScope())
+			{
+				foreach (var cts in _activeCts)
+					cts.Dispose();
+
+				_activeCts.Clear();
+				_cts = null;
+				IsExecuting = false;
+			}
+
 			(CancelCommand as IDisposable)?.Dispose();
 		}
 

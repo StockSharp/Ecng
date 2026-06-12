@@ -547,5 +547,37 @@ public class ObservableCollectionExTests : BaseTestClass
 		collection.Count.AssertEqual(3, "Should have 1, 3, 4 remaining");
 	}
 
+	[TestMethod]
+	public void ConvertibleRemoveRange_ReportsOnlyActuallyRemovedItems()
+	{
+		var display = new ObservableCollectionEx<string>();
+		var collection = new ConvertibleObservableCollection<int, string>(display, i => i.To<string>());
+		var removed = new List<int>();
+		collection.RemovedRange += items => removed.AddRange(items);
+		collection.AddRange([1, 2]);
+
+		collection.RemoveRange([2, 3]);
+
+		removed.AssertEqual([2]);
+		collection.Items.AssertEqual([1]);
+		display.AssertEqual(["1"]);
+	}
+
+	[TestMethod]
+	public void ConvertibleRemoveRangeByIndex_RaisesEventOutsideSyncRoot()
+	{
+		var display = new List<string>();
+		var syncRoot = ((ICollection)display).SyncRoot;
+		var collection = new ConvertibleObservableCollection<int, string>(display, i => i.To<string>());
+		var raisedUnderLock = false;
+
+		collection.AddRange([1, 2]);
+		collection.RemovedRange += _ => raisedUnderLock = Monitor.IsEntered(syncRoot);
+
+		collection.RemoveRange(0, 1);
+
+		raisedUnderLock.AssertFalse();
+	}
+
 	#endregion
 }

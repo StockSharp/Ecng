@@ -130,6 +130,38 @@ public class WorkingTimeTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void WorkingTime_SpecialWorkingDaysOverrideExistingHolidays()
+	{
+		var day = new DateTime(2026, 1, 3);
+		var wt = new WorkingTime
+		{
+			SpecialHolidays = [day],
+		};
+
+		wt.SpecialWorkingDays = [day];
+
+		wt.SpecialWorkingDays.AssertEqual([day]);
+		wt.SpecialHolidays.Length.AssertEqual(0);
+		wt.SpecialDays[day].Length.AssertGreater(0);
+	}
+
+	[TestMethod]
+	public void WorkingTime_SpecialHolidaysOverrideExistingWorkingDays()
+	{
+		var day = new DateTime(2026, 1, 4);
+		var wt = new WorkingTime
+		{
+			SpecialWorkingDays = [day],
+		};
+
+		wt.SpecialHolidays = [day];
+
+		wt.SpecialHolidays.AssertEqual([day]);
+		wt.SpecialWorkingDays.Length.AssertEqual(0);
+		wt.SpecialDays[day].Length.AssertEqual(0);
+	}
+
+	[TestMethod]
 	public void WorkingTime_Clone()
 	{
 		var wt = new WorkingTime

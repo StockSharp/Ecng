@@ -89,7 +89,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		_syncCopy.AddRange(arr);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.AddRange(arr);
 		else
 			AddAction(new(ActionTypes.Add, arr));
@@ -107,7 +107,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		_syncCopy.RemoveRange(arr);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.RemoveRange(arr);
 		else
 			AddAction(new(ActionTypes.Remove, arr));
@@ -124,7 +124,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		var retVal = _syncCopy.RemoveRange(index, count);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.RemoveRange(index, count);
 		else
 			AddAction(new(ActionTypes.Remove, index, count));
@@ -144,7 +144,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	{
 		_syncCopy.Add(item);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.Add(item);
 		else
 			AddAction(new(ActionTypes.Add, item));
@@ -159,7 +159,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		if (removed)
 		{
-			if (Dispatcher.CheckAccess())
+			if (CanApplyImmediately())
 				Items.Remove(item);
 			else
 				AddAction(new(ActionTypes.Remove, item));
@@ -182,7 +182,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	{
 		_syncCopy.Clear();
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.Clear();
 		else
 			AddAction(new(ActionTypes.Clear));
@@ -231,7 +231,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	{
 		_syncCopy.Insert(index, item);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.Insert(index, item);
 		else
 			AddAction(new(ActionTypes.Insert, item) { Index = index });
@@ -242,7 +242,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	{
 		_syncCopy.RemoveAt(index);
 
-		if (Dispatcher.CheckAccess())
+		if (CanApplyImmediately())
 			Items.RemoveAt(index);
 		else
 			AddAction(new(ActionTypes.RemoveAt) { Index = index });
@@ -262,11 +262,20 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 		{
 			_syncCopy[index] = value;
 
-			if (Dispatcher.CheckAccess())
+			if (CanApplyImmediately())
 				Items[index] = value;
 			else
 				AddAction(new(ActionTypes.Set, value) { Index = index });
 		}
+	}
+
+	private bool CanApplyImmediately()
+	{
+		if (!Dispatcher.CheckAccess())
+			return false;
+
+		using (EnterScope())
+			return _pendingActions.Count == 0;
 	}
 
 	private void AddAction(CollectionAction item)
