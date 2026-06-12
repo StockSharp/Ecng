@@ -41,7 +41,10 @@ public static class AsyncEnumerableExtensions
 				var current = iterator.Current;
 
 				if (!predicate(previous, current))
+				{
+					previous = current;
 					continue;
+				}
 
 				yield return current;
 				previous = current;

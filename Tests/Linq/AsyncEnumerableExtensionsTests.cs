@@ -45,6 +45,24 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task WhereWithPrevious_UsesPreviousSourceElementAfterRejectedItem()
+	{
+		var token = CancellationToken;
+
+		var first = await new[] { 1, 4, 3, 4 }.ToAsyncEnumerable()
+			.WhereWithPrevious((prev, curr) => curr > prev)
+			.ToArrayAsync(token);
+
+		first.AssertEqual([1, 4, 4]);
+
+		var second = await new[] { 5, 1, 2 }.ToAsyncEnumerable()
+			.WhereWithPrevious((prev, curr) => curr > prev)
+			.ToArrayAsync(token);
+
+		second.AssertEqual([5, 2]);
+	}
+
+	[TestMethod]
 	public async Task WhereWithPrevious_EmptySource()
 	{
 		var token = CancellationToken;

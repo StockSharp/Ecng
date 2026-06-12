@@ -387,4 +387,29 @@ public class QueryableExtensionsTests : BaseTestClass
 		var hasAny = await query.AnyAsync(CancellationToken);
 		hasAny.AssertTrue();
 	}
+
+	[TestMethod]
+	public void ReplaceSource_TypedConstantExpression_ReplacesProvider()
+	{
+		var source = AsTestQueryable([1, 2, 3]);
+		var provider = new TestQueryProvider();
+		var expression = Expression.Constant(source, typeof(IQueryable<int>));
+
+		expression.ReplaceSource(provider);
+
+		((ConstantExpression)expression).Value.AssertSame(provider);
+	}
+
+	[TestMethod]
+	public void ReplaceSource_InstanceMethodWithoutArguments_UsesObjectRoot()
+	{
+		var source = AsTestQueryable([1, 2, 3]);
+		var provider = new TestQueryProvider();
+		var root = Expression.Constant(source);
+		var expression = Expression.Call(root, typeof(object).GetMethod(nameof(ToString))!);
+
+		expression.ReplaceSource(provider);
+
+		root.Value.AssertSame(provider);
+	}
 }

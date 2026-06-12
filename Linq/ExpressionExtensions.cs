@@ -47,10 +47,25 @@ public static class ExpressionExtensions
 			throw new ArgumentNullException(nameof(provider));
 
 		while (expression is MethodCallExpression mce)
-			expression = mce.Arguments[0];
+			expression = mce.Arguments.Count > 0 ? mce.Arguments[0] : mce.Object;
 
-		var field = expression.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic).First();
+		if (expression is not ConstantExpression constant)
+			throw new ArgumentOutOfRangeException(nameof(expression), expression.NodeType.ToString());
+
+		var field = expression.GetType().GetInstanceFields()
+			.FirstOrDefault(f => ReferenceEquals(f.GetValue(expression), constant.Value))
+			?? throw new InvalidOperationException("Cannot find constant value field.");
+
 		field.SetValue(expression, provider);
+	}
+
+	private static IEnumerable<FieldInfo> GetInstanceFields(this Type type)
+	{
+		for (var t = type; t != null; t = t.BaseType)
+		{
+			foreach (var field in t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
+				yield return field;
+		}
 	}
 
 	/// <summary>
