@@ -34,6 +34,9 @@ public static class SitemapGenerator
 
 	private const string _timeFormat = "yyyy-MM-ddTHH:mm:sszzz";
 
+	private static string FormatLastModified(DateTime value)
+		=> new DateTimeOffset(value.ToUniversalTime()).ToString(_timeFormat, CultureInfo.InvariantCulture);
+
 	/// <summary>
 	/// Gets the sitemap index XML document, containing links to all the sitemap XML documents.
 	/// </summary>
@@ -50,7 +53,7 @@ public static class SitemapGenerator
 				xmlns + "sitemap",
 				new XElement(xmlns + "loc", Url2Abs(sitemap)),
 					new XElement(xmlns + "lastmod",
-						DateTime.UtcNow.ToString(_timeFormat)));
+						FormatLastModified(DateTime.UtcNow)));
 
 			root.Add(sitemapElement);
 		}
@@ -106,7 +109,7 @@ public static class SitemapGenerator
 			if (sitemapNode.LastModified is not null)
 			{
 				urlElement.Add(new XElement(xmlns + "lastmod",
-					sitemapNode.LastModified.Value.ToUniversalTime().ToString(_timeFormat)));
+					FormatLastModified(sitemapNode.LastModified.Value)));
 			}
 
 			if (sitemapNode.Frequency is not null)

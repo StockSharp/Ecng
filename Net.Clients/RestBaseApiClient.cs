@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
+using System.Globalization;
 
 using Ecng.Reflection;
 
@@ -14,7 +15,7 @@ using Ecng.Reflection;
 /// </summary>
 public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeFormatter request, IMediaTypeFormatter response)
 {
-	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
+	private static readonly SynchronizedDictionary<(Type type, string methodName, int argCount), MethodInfo> _methodsCache = [];
 
 	/// <summary>
 	/// Gets or sets the base address for the API.
@@ -192,7 +193,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 	{
 		var request = new HttpRequestMessage(method, uri);
 
-		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(RequestFormatter.MediaType));
+		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ResponseFormatter.MediaType));
 
 		if (PerRequestHeaders.Count > 0)
 		{
@@ -453,9 +454,10 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 		if (args is null)
 			throw new ArgumentNullException(nameof(args));
 
-		var callerMethod = _methodsCache.SafeAdd((GetType(), methodName), key =>
+		var cacheKey = (type: GetType(), methodName, argCount: args.Length);
+		var callerMethod = _methodsCache.SafeAdd(cacheKey, key =>
 		{
-			var methods = key.Item1.GetMembers<MethodInfo>(BindingFlags.Public | BindingFlags.Instance, true, key.methodName, null);
+			var methods = key.type.GetMembers<MethodInfo>(BindingFlags.Public | BindingFlags.Instance, true, key.methodName, null);
 
 			MethodInfo callerMethod;
 
@@ -465,12 +467,11 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 				{
 					var parameters = m.GetParameters();
 
-					var count = parameters.Length;
+					var count = parameters.Count(p =>
+						p.ParameterType != typeof(CancellationToken) &&
+						p.GetAttribute<RestAttribute>()?.Ignore != true);
 
-					if (count > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
-						count--;
-
-					return count == args.Length;
+					return count == key.argCount;
 				});
 			}
 			else
@@ -554,7 +555,12 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, IMediaTypeForma
 	/// <param name="value">The value to format.</param>
 	/// <returns>The formatted string representation.</returns>
 	protected virtual string FormatQueryValue(object value)
-		=> value?.ToString().EncodeToHtml();
+		=> value switch
+		{
+			null => null,
+			IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+			_ => value.ToString(),
+		};
 
 	private void AppendQueryParam(Url url, string name, object value)
 	{

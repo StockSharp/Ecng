@@ -63,6 +63,30 @@ public class UrlTests
 		url.QueryString.AssertNotSame(clone);
     }
 
+	[TestMethod]
+	public void QueryString_CloneMutationDoesNotRewriteOriginalUrl()
+	{
+		var url = new Url("https://example.com/path?foo=bar");
+		var clone = url.QueryString.Clone();
+
+		clone.Append("extra", "42");
+
+		url.ToString().AssertEqual("https://example.com/path?foo=bar");
+		url.QueryString.Contains("extra").AssertFalse();
+	}
+
+	[TestMethod]
+	public void QueryString_CloneClearDoesNotRewriteOriginalUrl()
+	{
+		var url = new Url("https://example.com/path?foo=bar&baz=qux");
+		var clone = url.QueryString.Clone();
+
+		clone.Clear();
+
+		url.ToString().AssertEqual("https://example.com/path?foo=bar&baz=qux");
+		url.QueryString.Count.AssertEqual(2);
+	}
+
     [TestMethod]
     public void QueryString_TryGetValue_Works()
     {
@@ -116,6 +140,7 @@ public class UrlTests
         // Should be equal regardless of order
         url1.QueryString.Equals(url2.QueryString).AssertTrue();
         (url1.QueryString == url2.QueryString).AssertTrue();
+        url1.QueryString.GetHashCode().AssertEqual(url2.QueryString.GetHashCode());
     }
 
     [TestMethod]
@@ -134,6 +159,52 @@ public class UrlTests
         url1.QueryString.Equals(url2.QueryString).AssertFalse();
         (url1.QueryString == url2.QueryString).AssertFalse();
     }
+
+	[TestMethod]
+	public void QueryString_Equality_ComparesValuesCaseSensitively()
+	{
+		var url1 = new Url("https://example.com") { Encode = UrlEncodes.None };
+		url1.QueryString.Append("key", "value");
+
+		var url2 = new Url("https://example.com") { Encode = UrlEncodes.None };
+		url2.QueryString.Append("key", "VALUE");
+
+		url1.QueryString.Equals(url2.QueryString).AssertFalse();
+	}
+
+	[TestMethod]
+	public void QueryString_Equality_ComparesDuplicateValuesCaseSensitively()
+	{
+		var url1 = new Url("https://example.com") { Encode = UrlEncodes.None };
+		url1.QueryString.Append("key", "a");
+		url1.QueryString.Append("key", "b");
+
+		var url2 = new Url("https://example.com") { Encode = UrlEncodes.None };
+		url2.QueryString.Append("key", "a");
+		url2.QueryString.Append("key", "B");
+
+		url1.QueryString.Equals(url2.QueryString).AssertFalse();
+	}
+
+	[TestMethod]
+	public void QueryString_RefreshUriPreservesEscapedPathAndFragment()
+	{
+		var url = new Url("http://host/a%2Fb?x=1#frag") { Encode = UrlEncodes.None };
+
+		url.QueryString.Append("y", 2);
+
+		url.ToString().AssertEqual("http://host/a%2Fb?x=1&y=2#frag");
+	}
+
+	[TestMethod]
+	public void QueryString_RefreshUriPreservesEncodedQueryValuesAndFragment()
+	{
+		var url = new Url("http://host/path?x=a%2Bb#frag") { Encode = UrlEncodes.None };
+
+		url.QueryString.Append("y", "c%2Fd");
+
+		url.ToString().AssertEqual("http://host/path?x=a%2Bb&y=c%2Fd#frag");
+	}
 
     [TestMethod]
     public void QueryString_Equality_Works_WithDifferentCaseKeys()

@@ -77,12 +77,17 @@ public class RealPacketReceiver(
 	private readonly IUdpSocketFactory _socketFactory = socketFactory ?? throw new ArgumentNullException(nameof(socketFactory));
     private readonly ILogReceiver _logs = logs ?? throw new ArgumentNullException(nameof(logs));
 	private readonly PacketQueueFullModes _fullMode = fullMode;
+	private readonly CancellationTokenSource _disposeCts = new();
+	private IUdpSocket _socket;
 	private Channel<(IMemoryOwner<byte> packet, int length)> _packetsQueue;
 	private int _dropped;
 
 	/// <inheritdoc />
-	public Task RunAsync(CancellationToken token)
+	public async Task RunAsync(CancellationToken token)
 	{
+		using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, _disposeCts.Token);
+		token = linkedCts.Token;
+
 		_packetsQueue = Channel.CreateBounded<(IMemoryOwner<byte>, int)>(new BoundedChannelOptions(_processor.MaxIncomingQueueSize)
 		{
 			SingleReader = _fullMode != PacketQueueFullModes.DropOldest,
@@ -93,7 +98,7 @@ public class RealPacketReceiver(
 		var rt = RunThread(ReceivePackets, _processor.Name + "-receiver", token);
 		var pt = RunThread(ProcessPackets, _processor.Name + "-processor", token);
 
-		return Task.WhenAll(rt, pt);
+		await Task.WhenAll(rt, pt).NoWait();
 	}
 
 	private async Task RunThread(Func<CancellationToken, Task> action, string name, CancellationToken token)
@@ -105,7 +110,10 @@ public class RealPacketReceiver(
 		catch (Exception ex)
 		{
 			if (!token.IsCancellationRequested)
+			{
 				_logs.LogError(ex);
+				throw;
+			}
 			else
 				throw;
 		}
@@ -134,7 +142,10 @@ public class RealPacketReceiver(
 				catch (Exception ex)
 				{
 					if (!token.IsCancellationRequested)
+					{
+						_processor.DisposePacket(packet, "processing error");
 						_processor.ErrorHandler(ex, ++errorCount, false);
+					}
 				}
 			}
 		}
@@ -166,6 +177,8 @@ public class RealPacketReceiver(
 	/// <inheritdoc/>
 	protected override void DisposeManaged()
 	{
+		_disposeCts.Cancel();
+		_socket?.Dispose();
 		base.DisposeManaged();
 		_packetsQueue?.Writer.TryComplete();
 	}
@@ -177,6 +190,7 @@ public class RealPacketReceiver(
 
 		var addressFamily = _address.GroupAddress.AddressFamily;
 		using var socket = _socketFactory.Create(addressFamily);
+		_socket = socket;
 
 		try
 		{
@@ -201,12 +215,19 @@ public class RealPacketReceiver(
 				{
 					packet = _processor.AllocatePacket(packetSize);
 					var len = await socket.ReceiveAsync(packet.Memory, SocketFlags.None, token).NoWait();
-					if (len <= 0)
+					if (len < 0)
 					{
-						_logs.LogError($"{_address} returned 0 bytes.");
+						_logs.LogError($"{_address} returned a negative packet length.");
 						packet.Dispose();
 						packet = null;
 						break;
+					}
+					else if (len == 0)
+					{
+						packet.Dispose();
+						packet = null;
+						errorCount = 0;
+						continue;
 					}
 
 					if (reader.Completion.IsCompleted)

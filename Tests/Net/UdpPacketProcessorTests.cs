@@ -774,4 +774,297 @@ public class UdpPacketProcessorTests : BaseTestClass
 				"JoinMulticast uses SocketOptionLevel.IP instead of SocketOptionLevel.IPv6.");
 		}
 	}
+
+	/// <summary>
+	/// BUG: RunThread (Net.Udp\IPacketReceiver.cs:107) logs non-cancellation exceptions
+	/// but does NOT rethrow them; only OperationCanceledException raised while the token is
+	/// cancelled propagates. A fatal startup failure (e.g. socket.Bind throwing
+	/// "address already in use", or JoinMulticast failing) therefore gets swallowed: the
+	/// receive thread ends, the channel writer completes, ProcessPackets drains and ends,
+	/// and the Task returned by RunAsync completes SUCCESSFULLY - so a receiver that never
+	/// started is indistinguishable from an orderly shutdown.
+	/// Expected: when a fatal (non-cancellation) error kills the receiver, the Task returned
+	/// by RunAsync must FAULT so the caller can observe the failure.
+	/// Actual: RunAsync completes without faulting.
+	/// </summary>
+	[TestMethod]
+	public async Task RunAsync_FatalStartupError_ShouldFaultTask()
+	{
+		var processor = new MockPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			MaxUdpDatagramSize = 65535,
+		};
+
+		var bindError = new InvalidOperationException("address already in use");
+		var socketFactory = new FailingSocketFactory(new FailingUdpSocket { BindException = bindError });
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+
+		// The token is NOT cancelled - this is a genuine fatal failure, not a cancellation.
+		// RunAsync must surface it as a faulted task instead of completing successfully.
+		await ThrowsAsync<Exception>(() => receiver.RunAsync(CancellationToken));
+
+		receiver.Dispose();
+	}
+
+	/// <summary>
+	/// BUG: ReceivePackets (Net.Udp\IPacketReceiver.cs:204) treats len &lt;= 0 from
+	/// socket.ReceiveAsync as fatal: it logs an error and breaks out of the receive loop,
+	/// which completes the channel writer and tears the whole receiver down. A zero-length
+	/// UDP datagram is a perfectly legal packet (recv returning 0 bytes for UDP means an empty
+	/// datagram, NOT a closed connection), so a single empty datagram permanently stops the feed.
+	/// Expected: an empty datagram must be tolerated - the receiver keeps running and continues
+	/// processing subsequent packets.
+	/// Actual: the receiver stops on the empty datagram and never processes the following packet.
+	/// </summary>
+	[TestMethod]
+	public async Task ReceivePackets_EmptyDatagram_ShouldNotStopReceiver()
+	{
+		var processor = new MockPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			MaxUdpDatagramSize = 65535,
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(100, CancellationToken);
+
+		// First an empty (zero-length) datagram, then a real one.
+		socket.EnqueuePacket([]);
+		socket.EnqueuePacket([1, 2, 3]);
+
+		// The real packet must still be processed despite the preceding empty datagram.
+		var received = await processor.WaitForPacketsAsync(1, TimeSpan.FromSeconds(5));
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		received.AssertTrue();
+		IsTrue(processor.ProcessedPackets.Any(p => p.data.SequenceEqual(new byte[] { 1, 2, 3 })),
+			"The non-empty datagram following an empty one was not processed - " +
+			"the empty datagram stopped the receiver.");
+	}
+
+	/// <summary>
+	/// BUG: ProcessPackets (Net.Udp\IPacketReceiver.cs:134) wraps ProcessNewPacket in a
+	/// try/catch that only calls ErrorHandler. When ProcessNewPacket throws (e.g. a parse error
+	/// before the processor takes ownership of the buffer), the rented IMemoryOwner&lt;byte&gt;
+	/// is never released - it is neither processed nor disposed, so the pooled buffer leaks.
+	/// Every other failure path in the class disposes the packet; this one does not.
+	/// Expected: the buffer is released on the exception path - allocated buffers == disposed buffers.
+	/// Actual: each throwing packet leaks one rented buffer (allocated &gt; disposed).
+	/// </summary>
+	[TestMethod]
+	public async Task ProcessPackets_ProcessorThrows_ShouldNotLeakBuffer()
+	{
+		const int packetCount = 20;
+		var processor = new LeakTrackingProcessor
+		{
+			MaxIncomingQueueSize = 1000,
+			ThrowOnProcess = new InvalidOperationException("parse error"),
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+		var runTask = receiver.RunAsync(cts.Token);
+
+		await Task.Delay(100, CancellationToken);
+
+		for (var i = 0; i < packetCount; i++)
+			socket.EnqueuePacket([(byte)i]);
+
+		// Every packet reaches ProcessNewPacket and throws -> one ErrorHandler call each.
+		await processor.WaitForErrorsAsync(packetCount, TimeSpan.FromSeconds(10));
+
+		cts.Cancel();
+		try { await runTask; } catch (OperationCanceledException) { }
+		receiver.Dispose();
+
+		IsGreater(processor.Errors, 0);
+		// KEY invariant: no rented buffer may leak, even when ProcessNewPacket throws.
+		AreEqual(processor.Allocated, processor.Disposed,
+			$"Leaked {processor.Allocated - processor.Disposed} buffers on the processing-exception path " +
+			$"(allocated={processor.Allocated}, disposed={processor.Disposed}).");
+	}
+
+	/// <summary>
+	/// BUG: DisposeManaged (Net.Udp\IPacketReceiver.cs:167) only completes the channel writer;
+	/// it does not interrupt a receive that is currently blocked in socket.ReceiveAsync. The
+	/// receive loop only checks reader.Completion.IsCompleted BETWEEN receives, so on a quiet
+	/// network the loop stays blocked forever after Dispose: the socket remains open and
+	/// group-joined, and the Task returned by RunAsync never completes unless the caller also
+	/// cancels the token.
+	/// Expected: Dispose() (without cancelling the token) interrupts the blocked receive so the
+	/// receiver shuts down and RunAsync completes promptly.
+	/// Actual: RunAsync stays pending after Dispose because the blocked ReceiveAsync is never cancelled.
+	/// </summary>
+	[TestMethod]
+	public async Task Dispose_WithoutCancel_ShouldCompleteRunAsync()
+	{
+		var processor = new MockPacketProcessor
+		{
+			MaxIncomingQueueSize = 100,
+			MaxUdpDatagramSize = 65535,
+		};
+		var socketFactory = new MockUdpSocketFactory();
+		var socket = new MockUdpSocket();
+		socketFactory.NextSocket = socket;
+		var logs = new MockLogReceiver();
+
+		var receiver = new RealPacketReceiver(processor, CreateTestAddress(), socketFactory, logs, PacketQueueFullModes.DropNewest);
+
+		// Safety net only - the test must pass via Dispose, NOT via this cancellation.
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		var runTask = receiver.RunAsync(cts.Token);
+
+		// Let the receive loop reach its blocking ReceiveAsync (no packets are ever enqueued).
+		await Task.Delay(200, CancellationToken);
+
+		// Dispose WITHOUT cancelling the token - this alone must stop the receiver.
+		receiver.Dispose();
+
+		var completed = await Task.WhenAny(runTask, Task.Delay(TimeSpan.FromSeconds(3), CancellationToken));
+
+		var stoppedByDispose = ReferenceEquals(completed, runTask);
+
+		cts.Cancel();
+		try { await runTask; } catch { }
+
+		IsTrue(stoppedByDispose,
+			"RunAsync did not complete after Dispose(): the receiver stayed blocked in " +
+			"ReceiveAsync because Dispose does not interrupt the in-progress receive.");
+	}
+
+	/// <summary>
+	/// UDP socket that fails on Bind to simulate a fatal startup error (e.g. address in use).
+	/// </summary>
+	private class FailingUdpSocket : Disposable, IUdpSocket
+	{
+		public Exception BindException { get; set; }
+
+		public void Bind(EndPoint localEP)
+		{
+			if (BindException != null)
+				throw BindException;
+		}
+
+		public void SetSocketOption(SocketOptionLevel optionLevel, SocketOptionName optionName, bool optionValue)
+		{
+		}
+
+		public void JoinMulticast(MulticastSourceAddress address)
+		{
+		}
+
+		public void LeaveMulticast(MulticastSourceAddress address)
+		{
+		}
+
+		public void LeaveMulticast(IPAddress groupAddress)
+		{
+		}
+
+		public ValueTask<int> ReceiveAsync(Memory<byte> buffer, SocketFlags socketFlags, CancellationToken cancellationToken)
+			=> throw new InvalidOperationException("socket not started");
+
+		public ValueTask<SocketReceiveFromResult> ReceiveFromAsync(Memory<byte> buffer, SocketFlags socketFlags, EndPoint remoteEndPoint, CancellationToken cancellationToken)
+			=> throw new InvalidOperationException("socket not started");
+	}
+
+	/// <summary>
+	/// Socket factory returning a single pre-configured failing socket.
+	/// </summary>
+	private class FailingSocketFactory(IUdpSocket socket) : IUdpSocketFactory
+	{
+		public IUdpSocket Create(AddressFamily addressFamily = AddressFamily.InterNetwork)
+			=> socket;
+	}
+
+	/// <summary>
+	/// Packet processor that tracks rented-buffer allocation/disposal and throws from
+	/// ProcessNewPacket before taking ownership, to expose buffer leaks on the exception path.
+	/// </summary>
+	private class LeakTrackingProcessor : IPacketProcessor
+	{
+		private int _allocated;
+		private int _disposed;
+		private int _errors;
+
+		public int Allocated => Volatile.Read(ref _allocated);
+		public int Disposed => Volatile.Read(ref _disposed);
+		public int Errors => Volatile.Read(ref _errors);
+
+		public Exception ThrowOnProcess { get; set; }
+
+		public int MaxIncomingQueueSize { get; set; } = 10000;
+		public int MaxUdpDatagramSize { get; set; } = 65535;
+		public string Name => "LeakTracking";
+
+		public IMemoryOwner<byte> AllocatePacket(int size)
+		{
+			Interlocked.Increment(ref _allocated);
+			return new TrackingMemoryOwner(this, new byte[size]);
+		}
+
+		public ValueTask<bool> ProcessNewPacket(IMemoryOwner<byte> packet, int length, CancellationToken cancellationToken)
+		{
+			// Throw before taking ownership of the buffer (simulating a parse error).
+			if (ThrowOnProcess != null)
+				throw ThrowOnProcess;
+
+			packet.Dispose();
+			return new(true);
+		}
+
+		public void DisposePacket(IMemoryOwner<byte> packet, string reason)
+			=> packet.Dispose();
+
+		public void ErrorHandler(Exception ex, int errorCount, bool isFatal)
+			=> Interlocked.Increment(ref _errors);
+
+		public async Task<bool> WaitForErrorsAsync(int count, TimeSpan timeout)
+		{
+			using var cts = new CancellationTokenSource(timeout);
+			try
+			{
+				while (Volatile.Read(ref _errors) < count && !cts.Token.IsCancellationRequested)
+					await Task.Delay(10, cts.Token);
+
+				return Volatile.Read(ref _errors) >= count;
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
+			}
+		}
+
+		private class TrackingMemoryOwner(LeakTrackingProcessor owner, byte[] buffer) : IMemoryOwner<byte>
+		{
+			private int _disposed;
+
+			public Memory<byte> Memory => buffer;
+
+			public void Dispose()
+			{
+				if (Interlocked.Exchange(ref _disposed, 1) == 0)
+					Interlocked.Increment(ref owner._disposed);
+			}
+		}
+	}
 }

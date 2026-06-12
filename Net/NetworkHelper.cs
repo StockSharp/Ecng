@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Diagnostics;
+using System.Globalization;
 
 /// <summary>
 /// Provides various network helper extension methods.
@@ -98,6 +99,9 @@ public static class NetworkHelper
 
 		if (address.GroupAddress.AddressFamily == AddressFamily.InterNetworkV6)
 		{
+			if (address.SourceAddress is not null)
+				throw new NotSupportedException("IPv6 source-specific multicast is not supported.");
+
 			// IPv6 multicast
 			socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.AddMembership, new IPv6MulticastOption(address.GroupAddress));
 		}
@@ -139,6 +143,9 @@ public static class NetworkHelper
 
 		if (address.GroupAddress.AddressFamily == AddressFamily.InterNetworkV6)
 		{
+			if (address.SourceAddress is not null)
+				throw new NotSupportedException("IPv6 source-specific multicast is not supported.");
+
 			// IPv6 multicast
 			socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.DropMembership, new IPv6MulticastOption(address.GroupAddress));
 		}
@@ -634,15 +641,40 @@ public static class NetworkHelper
 	/// <returns>The associated HttpStatusCode if found; otherwise, <c>null</c>.</returns>
 	public static HttpStatusCode? TryGetStatusCode(this HttpRequestException ex)
 	{
-		var msg = ex.CheckOnNull(nameof(ex)).Message;
+		ex.CheckOnNull(nameof(ex));
+
+#if NET5_0_OR_GREATER
+		if (ex.StatusCode is not null)
+			return ex.StatusCode.Value;
+#endif
+
+		var msg = ex.Message;
 
 		foreach (var pair in _phrases.CachedPairs)
 		{
-			if (msg.Contains(((int)pair.Key).To<string>()) || msg.ContainsIgnoreCase(pair.Value))
+			if (ContainsStatusCode(msg, (int)pair.Key) || msg.ContainsIgnoreCase(pair.Value))
 				return pair.Key;
 		}
 
 		return null;
+	}
+
+	private static bool ContainsStatusCode(string message, int code)
+	{
+		var codeText = code.To<string>();
+		var index = -1;
+
+		while ((index = message.IndexOf(codeText, index + 1, StringComparison.Ordinal)) >= 0)
+		{
+			var before = index == 0 ? '\0' : message[index - 1];
+			var afterIndex = index + codeText.Length;
+			var after = afterIndex >= message.Length ? '\0' : message[afterIndex];
+
+			if (!char.IsDigit(before) && before != '.' && !char.IsDigit(after) && after != '.')
+				return true;
+		}
+
+		return false;
 	}
 
 	/// <summary>
@@ -669,7 +701,12 @@ public static class NetworkHelper
 	/// <returns>The formatted string.</returns>
 	public static string Format<T>(this T value, bool encode)
 	{
-		var str = value?.ToString();
+		var str = value switch
+		{
+			null => null,
+			IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+			_ => value.ToString(),
+		};
 
 		if (encode && !str.IsEmpty())
 			str = str.EncodeUrl();
@@ -836,7 +873,19 @@ public static class NetworkHelper
 		if (policy is null)
 			throw new ArgumentNullException(nameof(policy));
 
-		var delay = (policy.InitialDelay.Ticks * 2.Pow(attemptNumber - 1)).To<TimeSpan>();
+		if (attemptNumber <= 0)
+			throw new ArgumentOutOfRangeException(nameof(attemptNumber), attemptNumber, "Invalid value.");
+
+		var delayTicks = (double)policy.InitialDelay.Ticks;
+		var maxTicks = (double)policy.MaxDelay.Ticks;
+
+		for (var i = 1; i < attemptNumber && delayTicks < maxTicks; i++)
+			delayTicks *= 2;
+
+		if (delayTicks >= maxTicks)
+			return policy.MaxDelay;
+
+		var delay = TimeSpan.FromTicks((long)delayTicks);
 		var jitter = RandomGen.GetDouble() * delay.TotalMilliseconds * 0.1;
 
 		return TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Min(policy.MaxDelay);

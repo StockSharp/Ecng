@@ -811,12 +811,85 @@ public class SitemapTests : BaseTestClass
 
 		var lastModElement = urlElement.Element(xmlns + "lastmod");
 		lastModElement.AssertNotNull();
-		
+
 		// Should be able to parse back as DateTime
 		var parsedDate = DateTime.Parse(lastModElement.Value);
 		parsedDate.Year.AssertEqual(2023);
 		parsedDate.Month.AssertEqual(12);
 		parsedDate.Day.AssertEqual(25);
+	}
+
+	/// <summary>
+	/// BUG: SitemapGenerator formats UTC DateTime values with the "zzz" specifier
+	/// (Net.Clients\Sitemap\SitemapGenerator.cs:35,109). For a DateTime value, "zzz"
+	/// always emits the LOCAL machine offset regardless of DateTimeKind, so a UTC instant
+	/// is stamped with the local offset and therefore denotes a different instant
+	/// (e.g. "10:30:00+03:00" for a 10:30 UTC value — actually 07:30 UTC).
+	/// Expected: the emitted lastmod, parsed back as an instant, equals the original UTC
+	/// instant (the value was already normalized via ToUniversalTime), i.e. a zero offset.
+	/// Actual: on a non-UTC machine the lastmod carries the local offset and shifts the instant.
+	/// </summary>
+	[TestMethod]
+	public void Sitemap_LastMod_UtcInstantPreserved()
+	{
+		var utc = new DateTime(2023, 12, 25, 10, 30, 45, DateTimeKind.Utc);
+
+		var nodes = new List<SitemapNode>
+		{
+			new("https://example.com/page") { LastModified = utc },
+		};
+
+		var document = SitemapGenerator.GenerateSitemap(nodes);
+
+		XNamespace xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+		var lastMod = document.Root.Elements().First().Element(xmlns + "lastmod").Value;
+
+		// Parse the emitted timestamp as an absolute instant and normalize to UTC.
+		var parsed = DateTimeOffset.Parse(lastMod, CultureInfo.InvariantCulture,
+			DateTimeStyles.RoundtripKind | DateTimeStyles.AssumeUniversal);
+
+		// The wire value must denote the same instant as the original UTC value.
+		parsed.UtcDateTime.AssertEqual(utc);
+	}
+
+	/// <summary>
+	/// BUG: SitemapGenerator formats lastmod via ToString(_timeFormat) without
+	/// CultureInfo.InvariantCulture (Net.Clients\Sitemap\SitemapGenerator.cs:35,53,109).
+	/// In a custom format string ":" is the culture's time separator, so under cultures
+	/// like fi-FI (separator ".") "HH:mm:ss" renders as "HH.mm.ss" — an invalid W3C
+	/// datetime that search engines reject.
+	/// Expected: the time portion always uses the ISO ":" separator regardless of culture.
+	/// Actual: under fi-FI the lastmod time uses "." and is not a valid ISO 8601 timestamp.
+	/// </summary>
+	[TestMethod]
+	public void Sitemap_LastMod_InvariantTimeSeparator()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("fi-FI");
+
+			var utc = new DateTime(2023, 12, 25, 10, 30, 45, DateTimeKind.Utc);
+
+			var nodes = new List<SitemapNode>
+			{
+				new("https://example.com/page") { LastModified = utc },
+			};
+
+			var document = SitemapGenerator.GenerateSitemap(nodes);
+
+			XNamespace xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+			var lastMod = document.Root.Elements().First().Element(xmlns + "lastmod").Value;
+
+			// W3C / ISO 8601 mandates ':' between hours, minutes and seconds.
+			lastMod.Contains("10:30:45").AssertTrue(
+				$"Expected ISO time separator ':' regardless of culture, got: {lastMod}");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
 	}
 
 	#endregion

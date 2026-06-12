@@ -289,6 +289,27 @@ public class FormatterTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task FormUrlEncoded_Dict_FormatsValuesInvariantly()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+
+			var actual = await SerializeNew(
+				new RestApiFormUrlEncodedMediaTypeFormatter(),
+				new Dictionary<string, object> { ["price"] = 1.5m });
+
+			actual.AssertEqual("price=1.5");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
+	}
+
+	[TestMethod]
 	public void FormUrlEncoded_MediaType_SameAsLegacy()
 	{
 		var legacy = new LegacyFormUrlEncodedFormatter();

@@ -29,6 +29,24 @@ public class RestBaseApiClientTests : BaseTestClass
 		}
 	}
 
+	private sealed class TestFormatter(string mediaType) : IMediaTypeFormatter
+	{
+		public string MediaType { get; } = mediaType;
+
+		public HttpContent Serialize(object value)
+			=> new StringContent(value?.To<string>() ?? string.Empty, Encoding.UTF8, MediaType);
+
+		public Task<T> DeserializeAsync<T>(HttpContent content, CancellationToken cancellationToken)
+			=> Task.FromResult(default(T));
+	}
+
+	private sealed class HeaderRestClient(IMediaTypeFormatter requestFormatter, IMediaTypeFormatter responseFormatter)
+		: RestBaseApiClient(new HttpClient(new UrlCapturingHandler()), requestFormatter, responseFormatter)
+	{
+		public HttpRequestMessage CreateGet(Uri uri)
+			=> CreateRequest(HttpMethod.Get, uri);
+	}
+
 	private class TestRestClient : RestBaseApiClient
 	{
 		public TestRestClient(HttpMessageHandler handler)
@@ -45,6 +63,9 @@ public class RestBaseApiClientTests : BaseTestClass
 
 		public Task<string> GetByNameAsync(string name, CancellationToken cancellationToken)
 			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, name);
+
+		public Task<string> GetByPriceAsync(decimal price, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, price);
 
 		public Task<string> GetFilteredAsync(long[] ids, string filter, CancellationToken cancellationToken)
 			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, ids, filter);
@@ -70,6 +91,12 @@ public class RestBaseApiClientTests : BaseTestClass
 		// the wire via [Rest(Ignore = true)]; caller passes only `itemId`.
 		public Task<string> GetWithIgnoredTenantAsync([Rest(Ignore = true)] long tenantId, long itemId, CancellationToken cancellationToken)
 			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, itemId);
+
+		public Task<string> GetOverloadedAsync(string name, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, name);
+
+		public Task<string> GetOverloadedAsync(string name, int page, CancellationToken cancellationToken)
+			=> GetAsync<string>(GetCurrentMethod(), cancellationToken, name, page);
 	}
 
 	/// <summary>
@@ -90,6 +117,21 @@ public class RestBaseApiClientTests : BaseTestClass
 		query.Contains("1153").AssertTrue();
 		query.Contains("1154").AssertTrue();
 		query.Contains("Int64").AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task GetAsync_OverloadsWithSameNameUseMatchingSignature()
+	{
+		var handler = new UrlCapturingHandler();
+		var client = new TestRestClient(handler);
+
+		await client.GetOverloadedAsync("alpha", CancellationToken);
+		await client.GetOverloadedAsync("beta", 2, CancellationToken);
+
+		var query = handler.LastRequestUri.Query;
+
+		query.Contains("beta").AssertTrue();
+		query.Contains("2").AssertTrue();
 	}
 
 	/// <summary>
@@ -262,5 +304,100 @@ public class RestBaseApiClientTests : BaseTestClass
 		query.ContainsIgnoreCase("tenantId").AssertFalse(
 			$"[Rest(Ignore=true)] tenantId must not appear on the wire; got: {query}");
 		query.Contains("7").AssertTrue($"Expected itemId=7 on the wire; got: {query}");
+	}
+
+	[TestMethod]
+	[DataRow("application/request", "application/response")]
+	[DataRow("application/json", "text/plain")]
+	public void CreateRequest_AcceptHeaderUsesResponseFormatter(string requestMediaType, string responseMediaType)
+	{
+		var client = new HeaderRestClient(
+			new TestFormatter(requestMediaType),
+			new TestFormatter(responseMediaType));
+		using var request = client.CreateGet(new Uri("https://example.com/api"));
+
+		request.Headers.Accept.Single().MediaType.AssertEqual(responseMediaType);
+	}
+
+	/// <summary>
+	/// Extracts the value of the named query parameter from <paramref name="uri"/> and
+	/// URL-decodes it back to the raw value the server would observe.
+	/// </summary>
+	private static string GetDecodedQueryValue(Uri uri, string name)
+	{
+		// Query starts with '?'; strip it and split on '&'.
+		var query = uri.Query.TrimStart('?');
+
+		foreach (var pair in query.Split('&'))
+		{
+			var idx = pair.IndexOf('=');
+
+			if (idx < 0)
+				continue;
+
+			var key = WebUtility.UrlDecode(pair.Substring(0, idx));
+
+			if (key == name)
+				return WebUtility.UrlDecode(pair.Substring(idx + 1));
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// BUG: RestBaseApiClient.FormatQueryValue HTML-encodes GET/DELETE query values
+	/// (Net.Clients\RestBaseApiClient.cs:557 — value?.ToString().EncodeToHtml()).
+	/// QueryString.RefreshUri then URL-encodes the already-HTML-encoded text, so the
+	/// server receives a corrupted value: "a&amp;b" instead of "a&b" (and "é" becomes
+	/// "&#233;").
+	/// Expected: after URL-decoding the wire value, it equals the original raw value exactly,
+	/// with no HTML entity escaping.
+	/// Actual: the decoded wire value is the HTML-encoded "a&amp;b".
+	/// </summary>
+	[TestMethod]
+	public async Task FormatQueryValue_SpecialChars_NotHtmlEncoded()
+	{
+		var handler = new UrlCapturingHandler();
+		var client = new TestRestClient(handler);
+
+		const string raw = "a&b<é>";
+
+		await client.GetByNameAsync(raw, CancellationToken);
+
+		var decoded = GetDecodedQueryValue(handler.LastRequestUri, "name");
+
+		// The server must receive the original value, with no HTML entity escaping.
+		decoded.AssertEqual(raw);
+	}
+
+	/// <summary>
+	/// BUG: RestBaseApiClient.FormatQueryValue uses value?.ToString() with the current
+	/// thread culture (Net.Clients\RestBaseApiClient.cs:557), so a decimal/double GET arg
+	/// is formatted culture-dependently (e.g. "1,5" on ru-RU) and silently sent wrong.
+	/// Expected: numeric query values are formatted invariantly ("1.5").
+	/// Actual: on ru-RU the wire value is "1,5".
+	/// </summary>
+	[TestMethod]
+	public async Task FormatQueryValue_Decimal_InvariantCulture()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+
+			var handler = new UrlCapturingHandler();
+			var client = new TestRestClient(handler);
+
+			await client.GetByPriceAsync(1.5m, CancellationToken);
+
+			var decoded = GetDecodedQueryValue(handler.LastRequestUri, "price");
+
+			decoded.AssertEqual("1.5");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
 	}
 }

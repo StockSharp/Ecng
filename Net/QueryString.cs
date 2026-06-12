@@ -1,7 +1,6 @@
 namespace Ecng.Net;
 
 using System.Collections;
-using System.Collections.Specialized;
 using System.Reflection;
 
 using Ecng.Reflection;
@@ -22,18 +21,14 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	private string _compiledString;
 
 	internal QueryString(Url url)
-		: this(url, url.Query.ParseUrl())
+		: this(url, ParseQuery(url.Query))
 	{
 	}
 
-	internal QueryString(Url url, NameValueCollection queryString)
+	private QueryString(Url url, IEnumerable<KeyValuePair<string, string>> queryString)
 	{
 		Url = url;
-		_queryString = [];
-
-		foreach (var key in queryString.Cast<string>().Where(k => !k.IsEmpty()))
-			_queryString.Add(new(key, queryString[key]));
-
+		_queryString = [.. queryString.Where(p => !p.Key.IsEmpty())];
 		_compiledString = url.Query;
 	}
 
@@ -223,7 +218,19 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 				.ToQueryString();
 		}
 
-		_createUri.Invoke(Url, [Url.Clone(), Url.LocalPath + _compiledString, false]);
+		_createUri.Invoke(Url, [Url.Clone(), GetEscapedPathAndFragment(), false]);
+	}
+
+	private string GetEscapedPathAndFragment()
+	{
+		var path = Url.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
+		path = path.IsEmpty() ? "/" : "/" + path;
+
+		var fragment = Url.GetComponents(UriComponents.Fragment, UriFormat.UriEscaped);
+		if (!fragment.IsEmpty())
+			fragment = "#" + fragment;
+
+		return path + _compiledString + fragment;
 	}
 
 	private string Encode(string str)
@@ -264,7 +271,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>A new instance of <see cref="QueryString"/> with the same query parameters and URL.</returns>
 	public override QueryString Clone()
 	{
-		return new QueryString(Url)
+		return new QueryString(Url.Clone())
 		{
 			_queryString = new(_queryString),
 			_compiledString = _compiledString,
@@ -278,6 +285,60 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	/// <returns>True if the query strings are equal (ignoring case); otherwise, false.</returns>
 	protected override bool OnEquals(QueryString other)
 	{
-		return _compiledString.EqualsIgnoreCase(other._compiledString);
+		return GetEqualityPairs().SequenceEqual(other.GetEqualityPairs(), QueryStringPairComparer.Instance);
+	}
+
+	/// <inheritdoc />
+	public override int GetHashCode()
+	{
+		var hash = new HashCode();
+
+		foreach (var pair in GetEqualityPairs())
+		{
+			hash.Add(pair.Key, StringComparer.InvariantCultureIgnoreCase);
+			hash.Add(pair.Value, StringComparer.InvariantCulture);
+		}
+
+		return hash.ToHashCode();
+	}
+
+	private IEnumerable<KeyValuePair<string, string>> GetEqualityPairs()
+		=> _queryString
+			.OrderBy(p => p.Key, StringComparer.InvariantCultureIgnoreCase)
+			.ThenBy(p => p.Value, StringComparer.InvariantCulture);
+
+	private static IEnumerable<KeyValuePair<string, string>> ParseQuery(string query)
+	{
+		if (query.IsEmpty())
+			yield break;
+
+		if (query[0] == '?')
+			query = query.Substring(1);
+
+		foreach (var part in query.Split('&'))
+		{
+			if (part.IsEmpty())
+				continue;
+
+			var idx = part.IndexOf('=');
+
+			if (idx < 0)
+				yield return new(part, string.Empty);
+			else
+				yield return new(part.Substring(0, idx), part.Substring(idx + 1));
+		}
+	}
+
+	private sealed class QueryStringPairComparer : IEqualityComparer<KeyValuePair<string, string>>
+	{
+		public static readonly QueryStringPairComparer Instance = new();
+
+		public bool Equals(KeyValuePair<string, string> x, KeyValuePair<string, string> y)
+			=> x.Key.EqualsIgnoreCase(y.Key) && x.Value.Equals(y.Value);
+
+		public int GetHashCode(KeyValuePair<string, string> obj)
+			=> HashCode.Combine(
+				StringComparer.InvariantCultureIgnoreCase.GetHashCode(obj.Key),
+				StringComparer.InvariantCulture.GetHashCode(obj.Value));
 	}
 }

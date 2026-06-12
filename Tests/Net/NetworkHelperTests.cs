@@ -1,6 +1,7 @@
 namespace Ecng.Tests.Net;
 
 using Ecng.Net;
+using Ecng.Serialization;
 
 using SixLabors.ImageSharp;
 
@@ -45,6 +46,14 @@ public class NetworkHelperTests : BaseTestClass
 		cache.Set(method, correctUrl, default, 0);
 		cache.Remove(method, "https://stocksharp.com/api/products");
 		cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
+
+		cache.Set(HttpMethod.Get, new Uri("https://example.com/api?token=ABC"), default, "cached");
+		cache.TryGet<string>(HttpMethod.Get, new Uri("https://example.com/api?token=abc"), default, out _)
+			.AssertFalse();
+
+		cache.Set(HttpMethod.Get, new Uri("https://example.com/api?token=abc&mode=Full"), default, "cached");
+		cache.TryGet<string>(HttpMethod.Get, new Uri("https://example.com/api?token=abc&mode=full"), default, out _)
+			.AssertFalse();
 	}
 
 	[TestMethod]
@@ -155,6 +164,44 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void ToQueryString_FormatsNumbersInvariantly()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+
+			new[] { new KeyValuePair<string, decimal>("price", 1.5m) }
+				.ToQueryString()
+				.AssertEqual("price=1.5");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
+	}
+
+	[TestMethod]
+	public void ToQueryString_FormatsFloatingPointNumbersInvariantly()
+	{
+		var oldCulture = Thread.CurrentThread.CurrentCulture;
+
+		try
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+
+			new[] { new KeyValuePair<string, double>("ratio", 2.25d) }
+				.ToQueryString()
+				.AssertEqual("ratio=2.25");
+		}
+		finally
+		{
+			Thread.CurrentThread.CurrentCulture = oldCulture;
+		}
+	}
+
+	[TestMethod]
 	public void TryExtractEncoding_And_UrlEncodeUpper()
 	{
 		"text/html; charset=utf-8".TryExtractEncoding().WebName.AssertEqual(Encoding.UTF8.WebName);
@@ -233,6 +280,28 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void TryGetStatusCode_PrefersStatusCodeProperty()
+	{
+		var forbidden = new HttpRequestException("404 not found in a stale message", null, HttpStatusCode.Forbidden);
+		forbidden.TryGetStatusCode().AssertEqual(HttpStatusCode.Forbidden);
+
+		var badRequest = new HttpRequestException("500 from old gateway log", null, HttpStatusCode.BadRequest);
+		badRequest.TryGetStatusCode().AssertEqual(HttpStatusCode.BadRequest);
+	}
+
+	[TestMethod]
+	public void TryGetStatusCode_DoesNotMatchArbitrarySubstrings()
+	{
+		new HttpRequestException("connect failed to 192.168.1.401")
+			.TryGetStatusCode()
+			.AssertNull();
+
+		new HttpRequestException("request id abc500xyz")
+			.TryGetStatusCode()
+			.AssertNull();
+	}
+
+	[TestMethod]
 	public void IsInSubnet_Ipv4_and_Ipv6()
 	{
 		"95.31.174.147".To<IPAddress>().IsInSubnet("95.31.0.0/16").AssertTrue();
@@ -278,6 +347,30 @@ public class NetworkHelperTests : BaseTestClass
 		var res = await policy.TryRepeat(Handler, 5, CancellationToken);
 		res.AssertEqual("done");
 		attempts.AssertGreater(1);
+	}
+
+	[TestMethod]
+	public void RetryPolicyInfo_LoadMissingTrackPreservesDefaults()
+	{
+		var policy = new RetryPolicyInfo();
+		var expected = policy.Track.ToArray();
+
+		policy.Load(new SettingsStorage());
+
+		policy.Track.Count.AssertEqual(expected.Length);
+		expected.All(policy.Track.Contains).AssertTrue();
+	}
+
+	[TestMethod]
+	public void GetDelay_LargeAttemptClampsToMaxDelay()
+	{
+		var policy = new RetryPolicyInfo
+		{
+			InitialDelay = TimeSpan.FromDays(1),
+			MaxDelay = TimeSpan.FromDays(2),
+		};
+
+		policy.GetDelay(63).AssertEqual(policy.MaxDelay);
 	}
 
 	[TestMethod]
@@ -652,5 +745,32 @@ public class NetworkHelperTests : BaseTestClass
 		// These should NOT be localhost - if they are, it's a security bug!
 		maliciousUrl.IsLocalhost().AssertFalse("localhost.evil.com should NOT be considered localhost!");
 		anotherMalicious.IsLocalhost().AssertFalse("localhost-fake.com should NOT be considered localhost!");
+	}
+
+	/// <summary>
+	/// BUG: JoinMulticast (and LeaveMulticast) silently ignore SourceAddress for IPv6 groups
+	/// (Net\NetworkHelper.cs:102 / :143). For IPv4 the source address selects source-specific
+	/// multicast via AddSourceMembership, but the IPv6 branch always performs an any-source join
+	/// (IPv6MulticastOption) and drops the configured SourceAddress without any error.
+	/// Expected: when a SourceAddress is set for an IPv6 group (which the helper cannot honor,
+	/// because GetBytes only supports 4-byte IPv4 addresses), the call must throw
+	/// NotSupportedException instead of quietly degrading to an unfiltered any-source join.
+	/// Actual: no validation is performed; the IPv6 source-specific request is silently ignored.
+	/// </summary>
+	[TestMethod]
+	public void JoinMulticast_IPv6WithSourceAddress_ShouldThrowNotSupported()
+	{
+		var address = new MulticastSourceAddress
+		{
+			GroupAddress = IPAddress.Parse("ff02::1"),
+			SourceAddress = IPAddress.Parse("fe80::1"),
+			Port = 54321,
+		};
+
+		using var joinSocket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+		Throws<NotSupportedException>(() => joinSocket.JoinMulticast(address));
+
+		using var leaveSocket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+		Throws<NotSupportedException>(() => leaveSocket.LeaveMulticast(address));
 	}
 }

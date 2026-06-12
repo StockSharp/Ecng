@@ -108,10 +108,12 @@ public class RetryPolicyInfo : IPersistable
 		InitialDelay = storage.GetValue(nameof(InitialDelay), InitialDelay);
 		MaxDelay = storage.GetValue(nameof(MaxDelay), MaxDelay);
 		
-		var strs = storage.GetValue(nameof(Track), string.Empty).SplitByComma();
+		if (!storage.ContainsKey(nameof(Track)))
+			return;
 
+		var strs = storage.GetValue(nameof(Track), string.Empty).SplitByComma();
 		Track.Clear();
-		Track.AddRange(strs.Select(s => (SocketError)s.To<int>()));
+		Track.AddRange(strs.Where(s => !s.IsEmpty()).Select(s => (SocketError)s.To<int>()));
 	}
 
 	/// <inheritdoc />

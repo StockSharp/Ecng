@@ -3,9 +3,10 @@
 using System.IO;
 using System.Net.Mail;
 using System.Net.Mime;
+using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 
 /// <summary>
 /// Provides helper methods to send emails and to manage mail attachments.
@@ -16,6 +17,9 @@ public static partial class MailHelper
 public static class MailHelper
 #endif
 {
+	private static readonly FieldInfo _attachmentNameField = GetAttachmentField("_name") ?? GetAttachmentField("name");
+	private static readonly FieldInfo _attachmentNameEncodingField = GetAttachmentField("_nameEncoding") ?? GetAttachmentField("nameEncoding");
+
 	/// <summary>
 	/// Adds an HTML body alternate view to the specified <see cref="MailMessage"/>.
 	/// </summary>
@@ -51,10 +55,10 @@ public static class MailHelper
 	}
 
 #if NET7_0_OR_GREATER
-	[GeneratedRegex(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Singleline)]
+	[GeneratedRegex(@"^([\w\.\+\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Singleline)]
 	private static partial Regex EmailRegex();
 #else
-	private static readonly Regex _emailRegex = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
+	private static readonly Regex _emailRegex = new(@"^([\w\.\+\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
 	private static Regex EmailRegex() => _emailRegex;
 #endif
 
@@ -127,6 +131,7 @@ public static class MailHelper
 
 		string transferEncodingMarker;
 		string encodingMarker;
+		Encoding nameEncoding;
 		int maxChunkLength;
 
 		switch (transferEncoding)
@@ -134,44 +139,123 @@ public static class MailHelper
 			case TransferEncoding.Base64:
 				transferEncodingMarker = "B";
 				encodingMarker = "UTF-8";
+				nameEncoding = Encoding.UTF8;
 				maxChunkLength = 30;
 				break;
 			case TransferEncoding.QuotedPrintable:
 				transferEncodingMarker = "Q";
-				encodingMarker = "ISO-8859-1";
+				encodingMarker = "UTF-8";
+				nameEncoding = Encoding.UTF8;
 				maxChunkLength = 76;
 				break;
 			default:
 				throw new ArgumentOutOfRangeException(nameof(transferEncoding), transferEncoding, "The specified TransferEncoding is not supported.");
 		}
 
-		attachment.NameEncoding = Encoding.GetEncoding(encodingMarker);
+		attachment.NameEncoding = nameEncoding;
 
-		var encodingtoken = $"=?{encodingMarker}?{transferEncodingMarker}?";
+		var encodedName = EncodeAttachmentName(displayName, Encoding.GetEncoding(encodingMarker), transferEncodingMarker, maxChunkLength);
+		attachment.Name = encodedName;
+		attachment.ContentType.Parameters["name"] = encodedName;
 
-		const string softbreak = "?=";
-
-		var encodedAttachmentName = attachment.TransferEncoding == TransferEncoding.QuotedPrintable
-			? HttpUtility.UrlEncode(displayName, Encoding.Default).Replace("+", " ").Replace("%", "=")
-			: displayName.UTF8().Base64();
-
-		encodedAttachmentName = SplitEncodedAttachmentName(encodingtoken, softbreak, maxChunkLength, encodedAttachmentName);
-		attachment.Name = encodedAttachmentName;
+		if (transferEncoding == TransferEncoding.QuotedPrintable)
+		{
+			_attachmentNameField?.SetValue(attachment, encodedName);
+			_attachmentNameEncodingField?.SetValue(attachment, nameEncoding);
+		}
 
 		return attachment;
 	}
 
-	private static string SplitEncodedAttachmentName(string encodingtoken, string softbreak, int maxChunkLength, string encoded)
+	private static string EncodeAttachmentName(string displayName, Encoding encoding, string transferEncodingMarker, int maxChunkLength)
 	{
-		var splitLength = maxChunkLength - encodingtoken.Length - (softbreak.Length * 2);
-		var parts = encoded.SplitByLength(splitLength);
+		var encodingToken = $"=?{encoding.WebName.ToUpperInvariant()}?{transferEncodingMarker}?";
+		const string softBreak = "?=";
+		var maxPayloadLength = maxChunkLength - encodingToken.Length - softBreak.Length;
 
-		var encodedAttachmentName = encodingtoken;
+		var payloads = transferEncodingMarker == "B"
+			? EncodeBase64Chunks(displayName, encoding, maxPayloadLength)
+			: EncodeQuotedPrintableChunks(displayName, encoding, maxPayloadLength);
 
-		foreach (var part in parts)
-			encodedAttachmentName += part + softbreak + encodingtoken;
-
-		encodedAttachmentName = encodedAttachmentName.Remove(encodedAttachmentName.Length - encodingtoken.Length, encodingtoken.Length);
-		return encodedAttachmentName;
+		return payloads.Select(p => encodingToken + p + softBreak).Join(" ");
 	}
+
+	private static IEnumerable<string> EncodeBase64Chunks(string value, Encoding encoding, int maxPayloadLength)
+	{
+		maxPayloadLength -= maxPayloadLength % 4;
+		var maxBytes = Math.Max(1, maxPayloadLength / 4 * 3);
+		var chunk = new StringBuilder();
+		var chunkBytes = 0;
+
+		foreach (var textElement in GetTextElements(value))
+		{
+			var bytes = encoding.GetByteCount(textElement);
+
+			if (chunk.Length > 0 && chunkBytes + bytes > maxBytes)
+			{
+				yield return Convert.ToBase64String(encoding.GetBytes(chunk.ToString()));
+				chunk.Clear();
+				chunkBytes = 0;
+			}
+
+			chunk.Append(textElement);
+			chunkBytes += bytes;
+		}
+
+		if (chunk.Length > 0)
+			yield return Convert.ToBase64String(encoding.GetBytes(chunk.ToString()));
+	}
+
+	private static IEnumerable<string> EncodeQuotedPrintableChunks(string value, Encoding encoding, int maxPayloadLength)
+	{
+		var chunk = new StringBuilder();
+
+		foreach (var textElement in GetTextElements(value))
+		{
+			var encoded = EncodeQuotedPrintableTextElement(textElement, encoding);
+
+			if (chunk.Length > 0 && chunk.Length + encoded.Length > maxPayloadLength)
+			{
+				yield return chunk.ToString();
+				chunk.Clear();
+			}
+
+			chunk.Append(encoded);
+		}
+
+		if (chunk.Length > 0)
+			yield return chunk.ToString();
+	}
+
+	private static string EncodeQuotedPrintableTextElement(string value, Encoding encoding)
+	{
+		if (value == " ")
+			return "_";
+
+		var bytes = encoding.GetBytes(value);
+		var sb = new StringBuilder();
+
+		foreach (var b in bytes)
+		{
+			var c = (char)b;
+
+			if (b is >= 33 and <= 126 && c is not '=' and not '?' and not '_')
+				sb.Append(c);
+			else
+				sb.Append('=').Append(b.ToString("X2", CultureInfo.InvariantCulture));
+		}
+
+		return sb.ToString();
+	}
+
+	private static IEnumerable<string> GetTextElements(string value)
+	{
+		var enumerator = StringInfo.GetTextElementEnumerator(value);
+
+		while (enumerator.MoveNext())
+			yield return enumerator.GetTextElement();
+	}
+
+	private static FieldInfo GetAttachmentField(string name)
+		=> typeof(Attachment).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
 }

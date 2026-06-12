@@ -56,7 +56,7 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 			builder.Query = sortedQuery;
 		}
 
-		return (method, builder.Uri.ToString().ToLowerInvariant(), null);
+		return (method, builder.Uri.ToString(), null);
 	}
 
 	/// <summary>
