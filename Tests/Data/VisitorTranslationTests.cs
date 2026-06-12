@@ -80,7 +80,6 @@ public class VisitorTranslationTests : BaseTestClass
 	[TestMethod]
 	[DataRow("sqlserver", "newid()")]
 	[DataRow("postgresql", "gen_random_uuid()")]
-	[DataRow("sqlite", "lower(hex(randomblob(16)))")]
 	public void GuidNewGuid_RendersDialectSpecificFunction(string dialectName, string expectedFragment)
 	{
 		// Project Guid.NewGuid() through Select so the SQL surfaces in the
@@ -93,6 +92,18 @@ public class VisitorTranslationTests : BaseTestClass
 
 		sql.ContainsIgnoreCase(expectedFragment).AssertTrue(
 			$"Expected dialect-specific UUID call '{expectedFragment}' for {dialectName}, got: {sql}");
+	}
+
+	[TestMethod]
+	public void GuidNewGuid_RendersSQLiteDialectNewId()
+	{
+		var items = CreateQueryable<TestItem>();
+		var query = items.Select(i => new { i.Id, NewToken = Guid.NewGuid() });
+
+		var sql = Translate<TestItem>(query, SQLiteDialect.Instance);
+
+		sql.ContainsIgnoreCase(SQLiteDialect.Instance.NewId()).AssertTrue(
+			$"Expected SQLite UUID call '{SQLiteDialect.Instance.NewId()}', got: {sql}");
 	}
 
 	[TestMethod]

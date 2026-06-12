@@ -1,4 +1,8 @@
-namespace Ecng.Tests.Data;
+﻿namespace Ecng.Tests.Data;
+
+#if NET10_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 using Ecng.Data;
 using Ecng.Data.Sql;
@@ -53,9 +57,9 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	[TestMethod]
-	[DataRow("SqlServer", "OFFSET 10 ROWS", "FETCH NEXT 20 ROWS ONLY")]
-	[DataRow("SQLite", "OFFSET 10", "LIMIT 20")]
-	[DataRow("PostgreSql", "OFFSET 10", "LIMIT 20")]
+	[DataRow("SqlServer", "offset @skip rows", "fetch next @take rows only")]
+	[DataRow("SQLite", "OFFSET @skip", "LIMIT @take")]
+	[DataRow("PostgreSql", "OFFSET @skip", "LIMIT @take")]
 	public void CreateSelect_WithPagination(string dialectName, string expectedOffset, string expectedLimit)
 	{
 		var dialect = GetDialect(dialectName);
@@ -360,6 +364,14 @@ public class SqlDialectTests : BaseTestClass
 		dialect.QuoteIdentifier("Column").AssertEqual(expected);
 	}
 
+	[TestMethod]
+	public void SqlServerDialect_QuoteIdentifier_EscapesClosingBracket()
+		=> SqlServerDialect.Instance.QuoteIdentifier("Col]Name").AssertEqual("[Col]]Name]");
+
+	[TestMethod]
+	public void SQLiteDialect_QuoteIdentifier_EscapesDoubleQuote()
+		=> SQLiteDialect.Instance.QuoteIdentifier("Col\"Name").AssertEqual("\"Col\"\"Name\"");
+
 	#endregion
 
 	#region ParameterPrefix Tests
@@ -408,7 +420,7 @@ public class SqlDialectTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow("SqlServer", "DECIMAL(18,8)")]
-	[DataRow("SQLite", "REAL")]
+	[DataRow("SQLite", "TEXT")]
 	[DataRow("PostgreSql", "NUMERIC(18,8)")]
 	public void GetSqlTypeName_Decimal(string dialectName, string expected)
 	{
@@ -440,6 +452,22 @@ public class SqlDialectTests : BaseTestClass
 	public void GetSqlTypeName_ByteArray(string dialectName, string expected)
 	{
 		GetDialect(dialectName).GetSqlTypeName(typeof(byte[])).AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public void SqlServerDialect_GetColumnDefinition_UsesMaxForOversizedString()
+	{
+		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(string), isNullable: false, maxLength: 4001);
+
+		def.StartsWithIgnoreCase("NVARCHAR(MAX)").AssertTrue($"Expected NVARCHAR(MAX), got: {def}");
+	}
+
+	[TestMethod]
+	public void SqlServerDialect_GetColumnDefinition_UsesMaxForOversizedBinary()
+	{
+		var def = SqlServerDialect.Instance.GetColumnDefinition(typeof(byte[]), isNullable: false, maxLength: 8001);
+
+		def.StartsWithIgnoreCase("VARBINARY(MAX)").AssertTrue($"Expected VARBINARY(MAX), got: {def}");
 	}
 
 	[TestMethod]
@@ -569,7 +597,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "getUtcDate()")]
 	[DataRow("SQLite", "datetime('now')")]
-	[DataRow("PostgreSql", "now() AT TIME ZONE 'UTC'")]
+	[DataRow("PostgreSql", "now()")]
 	public void UtcNow(string dialectName, string expected)
 	{
 		GetDialect(dialectName).UtcNow().AssertEqual(expected);
@@ -587,19 +615,63 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "sysUtcDateTime()")]
 	[DataRow("SQLite", "datetime('now')")]
-	[DataRow("PostgreSql", "now() AT TIME ZONE 'UTC'")]
+	[DataRow("PostgreSql", "now()")]
 	public void SysUtcNow(string dialectName, string expected)
 	{
 		GetDialect(dialectName).SysUtcNow().AssertEqual(expected);
 	}
 
+	/// <summary>
+	/// BUG: <c>UtcNow()</c>/<c>SysUtcNow()</c> emit <c>now() AT TIME ZONE 'UTC'</c>, which
+	/// yields a <c>timestamp WITHOUT time zone</c>. But this dialect maps every
+	/// <c>DateTime</c> column to <c>TIMESTAMPTZ</c> (GetSqlTypeName), so comparing/writing
+	/// the without-tz value against a <c>TIMESTAMPTZ</c> column makes PostgreSQL reinterpret
+	/// it in the session time zone — shifting the moment by the session UTC offset on any
+	/// server whose <c>TimeZone</c> is not UTC. The expression should produce a
+	/// <c>timestamptz</c> "now".
+	/// Expected: both return <c>"now()"</c> (a <c>timestamptz</c>, matching the TIMESTAMPTZ schema).
+	/// Actual: both return <c>"now() AT TIME ZONE 'UTC'"</c> (timestamp without tz).
+	/// File: Data.PostgreSql\PostgreSqlDialect.cs:222,228.
+	/// </summary>
+	[TestMethod]
+	public void UtcNow_SysUtcNow_ReturnTimestampTz_NotWithoutTimeZone()
+	{
+		var dialect = PostgreSqlDialect.Instance;
+
+		dialect.UtcNow().AssertEqual("now()",
+			"UtcNow() must yield a timestamptz ('now()') to match the dialect's TIMESTAMPTZ DateTime columns, " +
+			"not a timestamp-without-tz that gets shifted by the session time zone.");
+
+		dialect.SysUtcNow().AssertEqual("now()",
+			"SysUtcNow() must yield a timestamptz ('now()') to match the dialect's TIMESTAMPTZ DateTime columns, " +
+			"not a timestamp-without-tz that gets shifted by the session time zone.");
+	}
+
 	[TestMethod]
 	[DataRow("SqlServer", "newId()")]
-	[DataRow("SQLite", "lower(hex(randomblob(16)))")]
 	[DataRow("PostgreSql", "gen_random_uuid()")]
 	public void NewId(string dialectName, string expected)
 	{
 		GetDialect(dialectName).NewId().AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public async Task SQLiteDialect_NewId_EvaluatesToProviderGuidTextFormat()
+	{
+		using var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+		await connection.OpenAsync(CancellationToken);
+
+		using var command = connection.CreateCommand();
+		command.CommandText = $"SELECT {SQLiteDialect.Instance.NewId()}";
+
+		var value = (string)await command.ExecuteScalarAsync(CancellationToken);
+
+		value.Length.AssertEqual(36);
+		value[8].AssertEqual('-');
+		value[13].AssertEqual('-');
+		value[18].AssertEqual('-');
+		value[23].AssertEqual('-');
+		value.AssertEqual(Guid.Parse(value).ToString("D"));
 	}
 
 	#endregion
@@ -847,6 +919,22 @@ public class SqlDialectTests : BaseTestClass
 	[DataRow("SqlServer")]
 	[DataRow("SQLite")]
 	[DataRow("PostgreSql")]
+	public void ConvertFromDbValue_LongToNullableTimeSpan(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var ticks = TimeSpan.FromMinutes(5).Ticks;
+
+		dialect.ConvertFromDbValue(ticks, typeof(TimeSpan?))
+			.AssertEqual(TimeSpan.FromMinutes(5));
+
+		dialect.ConvertFromDbValue(0L, typeof(TimeSpan?))
+			.AssertEqual(TimeSpan.Zero);
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
 	public void ConvertFromDbValue_Null_ReturnsNull(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);
@@ -1039,6 +1127,29 @@ public class SqlDialectTests : BaseTestClass
 
 	#endregion
 
+	#region SQLite type normalization
+
+	[TestMethod]
+	[DataRow("VARCHAR(50)", "TEXT")]
+	[DataRow("NVARCHAR(100)", "TEXT")]
+	[DataRow("DECIMAL(18,2)", "REAL")]
+	[DataRow("VARBINARY(16)", "BLOB")]
+	public void SQLiteDialect_NormalizeDbType_StripsLengthAndPrecisionSuffix(string dbType, string expected)
+		=> SQLiteDialect.Instance.NormalizeDbType(dbType).AssertEqual(expected);
+
+	[TestMethod]
+	public void SQLiteDialect_ListUserTablesSql_EscapesInternalTablePrefixUnderscore()
+	{
+		var method = typeof(SQLiteDialect).GetMethod("BuildListUserTablesSql", BindingFlags.Instance | BindingFlags.NonPublic);
+
+		var sql = (string)method.Invoke(SQLiteDialect.Instance, []);
+
+		sql.Contains("sqlite!_%").AssertTrue($"Expected escaped sqlite_ prefix, got: {sql}");
+		sql.ContainsIgnoreCase("ESCAPE").AssertTrue($"Expected LIKE escape clause, got: {sql}");
+	}
+
+	#endregion
+
 	#region SQLite unsupported migrations
 
 	[TestMethod]
@@ -1079,8 +1190,8 @@ public class SqlDialectTests : BaseTestClass
 		SqlServerDialect.Instance.AppendDropTable(sb, "evil'name");
 		var sql = sb.ToString();
 
-		sql.Contains("'evil''name'").AssertTrue($"Expected escaped 'evil''name' literal, got: {sql}");
-		sql.Contains("'evil'name'").AssertFalse($"Single quote leaked unescaped, got: {sql}");
+		sql.Contains("OBJECT_ID(N'[dbo].[evil''name]', N'U')").AssertTrue($"Expected escaped object name literal, got: {sql}");
+		sql.Contains("OBJECT_ID(N'[dbo].[evil'name]', N'U')").AssertFalse($"Single quote leaked unescaped, got: {sql}");
 	}
 
 	#endregion
@@ -1110,18 +1221,60 @@ public class SqlDialectTests : BaseTestClass
 	[DataRow("month", "months")]
 	[DataRow("day", "days")]
 	[DataRow("hour", "hours")]
-	[DataRow("minute", "minutes")]
-	[DataRow("second", "seconds")]
+	[DataRow("minute", "mins")]
+	[DataRow("second", "secs")]
+	[DataRow("millisecond", "secs")]
 	public void PostgreSqlDialect_AppendDateAdd_UsesValidMakeIntervalKeyword(string part, string pgKeyword)
 	{
-		// PostgreSQL's make_interval() expects the keywords years/months/days/
-		// hours/minutes/seconds — anything else is a syntax error at runtime.
+		// PostgreSQL's make_interval() expects years/months/days/hours/mins/secs.
 		var sb = new System.Text.StringBuilder();
 		PostgreSqlDialect.Instance.AppendDateAdd(sb, part, "5", "now()");
 		var sql = sb.ToString();
 
 		sql.Contains($"{pgKeyword} =>").AssertTrue(
 			$"Expected '{pgKeyword} =>' in PostgreSQL DateAdd SQL, got: {sql}");
+	}
+
+	private static string PostgreSqlDatePart(string part)
+	{
+		var sb = new System.Text.StringBuilder();
+		PostgreSqlDialect.Instance.AppendDatePartOpen(sb, part);
+		sb.Append("ts");
+		PostgreSqlDialect.Instance.AppendDatePartClose(sb);
+		return sb.ToString();
+	}
+
+	[TestMethod]
+	public void PostgreSqlDialect_AppendDatePart_DayOfYearUsesDoyToken()
+		=> PostgreSqlDatePart("dayofyear").AssertEqual("EXTRACT(doy FROM ts)");
+
+	[TestMethod]
+	public void PostgreSqlDialect_AppendDatePart_SecondDropsFraction()
+	{
+		var sql = PostgreSqlDatePart("second");
+
+		sql.Contains("FLOOR(").AssertTrue($"DateTime.Second must ignore fractional seconds, got: {sql}");
+		sql.Contains("EXTRACT(second FROM").AssertTrue($"Expected second extraction, got: {sql}");
+	}
+
+	[TestMethod]
+	public void PostgreSqlDialect_AppendDatePart_MillisecondReturnsSubsecondRemainder()
+	{
+		var sql = PostgreSqlDatePart("millisecond");
+
+		sql.Contains("milliseconds").AssertTrue($"Expected PostgreSQL milliseconds extraction, got: {sql}");
+		sql.Contains("% 1000").AssertTrue($"DateTime.Millisecond must return 0-999 remainder, got: {sql}");
+	}
+
+	[TestMethod]
+	public void PostgreSqlDialect_AppendPagination_AddsFallbackOrderByWhenMissingOrder()
+	{
+		var sb = new System.Text.StringBuilder();
+
+		PostgreSqlDialect.Instance.AppendPagination(sb, skip: 10, take: 20, hasOrderBy: false);
+
+		var sql = sb.ToString();
+		sql.Contains("ORDER BY 1").AssertTrue($"Expected fallback ORDER BY for paginated PostgreSQL query, got: {sql}");
 	}
 
 	#endregion
@@ -1148,6 +1301,13 @@ public class SqlDialectTests : BaseTestClass
 	[DataRow("PostgreSql")]
 	public void GetDefaultLiteral_Numeric(string dialectName)
 		=> GetDialect(dialectName).GetDefaultLiteral(typeof(int)).AssertEqual("0");
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_TimeSpan(string dialectName)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(TimeSpan)).AssertEqual("0");
 
 	[TestMethod]
 	[DataRow("SqlServer")]
@@ -1182,4 +1342,471 @@ public class SqlDialectTests : BaseTestClass
 		=> GetDialect(dialectName).GetDefaultLiteral(typeof(object)).AssertEqual(expected);
 
 	#endregion
+
+	#region SqlServer DDL shape regressions
+
+	/// <summary>
+	/// BUG: <c>AppendUpsert</c> emits a bare <c>MERGE {table} AS target USING ...</c> with no
+	/// locking hint. Under the default READ COMMITTED isolation a SQL Server MERGE takes no
+	/// key-range locks, so two concurrent upserts of the same fresh key can both evaluate the
+	/// ON predicate as "not matched" and both run the INSERT branch — either a duplicate-key
+	/// exception (burned as a transient retry) or silent duplicate rows. The standard race-free
+	/// form pins the target with <c>WITH (HOLDLOCK)</c> (a SERIALIZABLE range lock for the
+	/// statement), matching the atomic <c>INSERT ... ON CONFLICT</c> the other dialects use.
+	/// Expected: the generated MERGE locks the target via <c>WITH (HOLDLOCK)</c>.
+	/// Actual: no HOLDLOCK / SERIALIZABLE hint is present — the upsert is racy.
+	/// File: Data.SqlServer\SqlServerDialect.cs:456.
+	/// </summary>
+	[TestMethod]
+	public void AppendUpsert_LocksTargetWithHoldlock_ToPreventUpsertRace()
+	{
+		var sb = new StringBuilder();
+		SqlServerDialect.Instance.AppendUpsert(sb, "TestTable",
+			allColumns: ["Id", "Name", "Value"], keyColumns: ["Id"]);
+		var sql = sb.ToString();
+
+		// Accept either spelling of the range-lock hint that closes the upsert race:
+		// the documented fix is WITH (HOLDLOCK); SERIALIZABLE is its synonym.
+		var hasHoldlock = sql.ContainsIgnoreCase("HOLDLOCK") || sql.ContainsIgnoreCase("SERIALIZABLE");
+
+		hasHoldlock.AssertTrue(
+			$"MERGE upsert must lock the target (WITH (HOLDLOCK)) so two concurrent upserts of the " +
+			$"same key cannot both INSERT; got: {sql}");
+	}
+
+	/// <summary>
+	/// BUG: <c>AppendCreateTable</c> guards creation with
+	/// <c>IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{name}')</c> — no schema filter.
+	/// <c>sys.tables</c> spans every schema, so when a same-named table exists in another schema
+	/// (e.g. <c>history.Orders</c>) the guard is satisfied and the <c>dbo</c> table is silently
+	/// never created, while the migrator's ReadDb* methods (which default to <c>dbo</c>) keep
+	/// reporting it missing. The check must be scoped to the schema the table is created in.
+	/// Expected: the existence guard is schema-scoped (SCHEMA_ID/schema_id or an OBJECT_ID over
+	/// a schema-qualified name), not a bare name match across all schemas.
+	/// Actual: the guard matches by name only, ignoring the schema.
+	/// File: Data.SqlServer\SqlServerDialect.cs:154.
+	/// </summary>
+	[TestMethod]
+	public void AppendCreateTable_ExistenceGuard_IsSchemaScoped()
+	{
+		var sb = new StringBuilder();
+		SqlServerDialect.Instance.AppendCreateTable(sb, "Orders", "Id int NOT NULL");
+		var sql = sb.ToString();
+
+		// A schema-scoped guard pins the existence check to a single schema. Any of these tokens
+		// signals that: a SCHEMA_ID('dbo')/schema_id filter, or an OBJECT_ID over a schema-qualified
+		// name (e.g. N'dbo.' + QUOTENAME(...)). A bare "WHERE name = '...'" across sys.tables has none.
+		var isSchemaScoped =
+			sql.ContainsIgnoreCase("SCHEMA_ID") ||
+			sql.ContainsIgnoreCase("schema_id") ||
+			sql.ContainsIgnoreCase("dbo.");
+
+		isSchemaScoped.AssertTrue(
+			$"CREATE TABLE existence guard must be schema-scoped so a same-named table in another " +
+			$"schema does not suppress creation in the target schema; got: {sql}");
+	}
+
+	#endregion
+
+#if NET10_0_OR_GREATER
+
+	#region ReadDbForeignKeysAsync composite FK
+
+	[ClassInitialize]
+	public static void ClassInit(TestContext context) => DbTestHelper.RegisterAll();
+
+	[ClassCleanup]
+	public static void ClassCleanup() => DbTestHelper.ClearSQLitePools();
+
+	private static async Task<DbConnection> OpenAsync(string provider, CancellationToken cancellationToken)
+	{
+		var factory = DbTestHelper.GetFactory(provider);
+		var connStr = DbTestHelper.TryGetConnectionString(provider);
+		var conn = factory.CreateConnection();
+		conn.ConnectionString = connStr;
+		await conn.OpenAsync(cancellationToken);
+		return conn;
+	}
+
+	/// <summary>
+	/// BUG: <c>ReadDbForeignKeysAsync</c> joins <c>information_schema.key_column_usage</c>
+	/// (one row per FK column, ordered) to <c>information_schema.constraint_column_usage</c>
+	/// (one row per referenced column, unordered) by constraint name only. For an N-column
+	/// composite FK this is a Cartesian product: N*N rows where each referencing column is
+	/// paired with every referenced column, so <c>RefColumnName</c> is wrong for most rows
+	/// and the rows are duplicated. The contract (<see cref="DbForeignKeyInfo"/>) promises
+	/// exactly one row per referencing/referenced column pair, position-aligned.
+	/// Expected: a 2-column composite FK yields exactly 2 rows, each pairing the referencing
+	/// column with its correctly positioned referenced column.
+	/// Actual: 4 rows (2*2) with mis-paired/duplicated referenced columns.
+	/// File: Data.PostgreSql\PostgreSqlDialect.cs:403.
+	/// </summary>
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task ReadDbForeignKeysAsync_CompositeFk_PairsColumnsByPosition_NoCartesianProduct()
+	{
+		const string provider = DatabaseProviderRegistry.PostgreSql;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		const string parentTable = "Ecng_PgCompositeFkParent";
+		const string childTable = "Ecng_PgCompositeFkChild";
+
+		var dialect = DbTestHelper.GetDialect(provider);
+
+		// Child first so the FK no longer references the parent we drop next.
+		DbTestHelper.DropTable(provider, childTable);
+		DbTestHelper.DropTable(provider, parentTable);
+
+		var longType = dialect.GetSqlTypeName(typeof(long));
+		var qParent = dialect.QuoteIdentifier(parentTable);
+		var qChild = dialect.QuoteIdentifier(childTable);
+		var qA = dialect.QuoteIdentifier("KeyA");
+		var qB = dialect.QuoteIdentifier("KeyB");
+		var qFkA = dialect.QuoteIdentifier("ParentA");
+		var qFkB = dialect.QuoteIdentifier("ParentB");
+		var qConstraint = dialect.QuoteIdentifier("FK_PgComposite");
+
+		// Parent with a two-column composite primary key.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {qParent} ({qA} {longType} NOT NULL, {qB} {longType} NOT NULL, " +
+			$"PRIMARY KEY ({qA}, {qB}))");
+
+		// Child with a two-column composite foreign key referencing the parent's PK.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {qChild} (" +
+			$"{dialect.QuoteIdentifier("Id")} {longType} NOT NULL PRIMARY KEY, " +
+			$"{qFkA} {longType} NOT NULL, {qFkB} {longType} NOT NULL, " +
+			$"CONSTRAINT {qConstraint} FOREIGN KEY ({qFkA}, {qFkB}) " +
+			$"REFERENCES {qParent} ({qA}, {qB}))");
+
+		try
+		{
+			using var conn = await OpenAsync(provider, CancellationToken);
+
+			var fks = (await dialect.ReadDbForeignKeysAsync(conn, cancellationToken: CancellationToken))
+				.Where(fk => fk.TableName.EqualsIgnoreCase(childTable))
+				.ToArray();
+
+			var dump = string.Join(", ",
+				fks.Select(f => $"{f.TableName}.{f.ColumnName}->{f.RefTableName}.{f.RefColumnName}"));
+
+			// Exactly two pairs — not 2*2 = 4 Cartesian rows.
+			fks.Length.AssertEqual(2,
+				$"A 2-column composite FK must surface exactly 2 column pairs, not a Cartesian product; got: [{dump}]");
+
+			// ParentA references KeyA, ParentB references KeyB — paired by position.
+			var pairA = fks.FirstOrDefault(f => f.ColumnName.EqualsIgnoreCase("ParentA"));
+			pairA.AssertNotNull($"Expected a pair for the ParentA column; got: [{dump}]");
+			pairA.RefColumnName.EqualsIgnoreCase("KeyA").AssertTrue(
+				$"ParentA must reference KeyA (position-aligned), got {pairA.RefColumnName}; all: [{dump}]");
+
+			var pairB = fks.FirstOrDefault(f => f.ColumnName.EqualsIgnoreCase("ParentB"));
+			pairB.AssertNotNull($"Expected a pair for the ParentB column; got: [{dump}]");
+			pairB.RefColumnName.EqualsIgnoreCase("KeyB").AssertTrue(
+				$"ParentB must reference KeyB (position-aligned), got {pairB.RefColumnName}; all: [{dump}]");
+
+			pairA.RefTableName.EqualsIgnoreCase(parentTable).AssertTrue(
+				$"Expected ref table {parentTable}, got {pairA.RefTableName}");
+		}
+		finally
+		{
+			DbTestHelper.DropTable(provider, childTable);
+			DbTestHelper.DropTable(provider, parentTable);
+		}
+	}
+
+	#endregion
+
+	#region SQLite schema-read robustness
+
+	/// <summary>
+	/// BUG: <c>ReadDbForeignKeysAsync</c> reads the referenced column with
+	/// <c>reader.GetString(4)</c> from <c>PRAGMA foreign_key_list</c>. SQLite returns NULL in
+	/// the "to" column when the FK references the parent's implicit primary key — the common
+	/// shorthand <c>REFERENCES Parent</c> without an explicit column list. Microsoft.Data.Sqlite
+	/// throws on <c>GetString</c> over a NULL ordinal, so the whole schema read (and therefore
+	/// <c>SchemaMigrator.CompareAsync</c>) blows up for any externally created DB that uses this
+	/// perfectly legal FK syntax.
+	/// Expected: the read completes without throwing and surfaces the FK row for the child
+	/// column (RefTableName resolved to the parent; RefColumnName resolved to the parent PK or
+	/// left null/empty so the diff layer can cope).
+	/// Actual: <c>InvalidOperationException</c> is thrown on the NULL "to" ordinal.
+	/// File: Data.SQLite\SQLiteDialect.cs:322.
+	/// </summary>
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task ReadDbForeignKeysAsync_ImplicitParentPkRef_DoesNotThrow()
+	{
+		const string provider = DatabaseProviderRegistry.SQLite;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		const string parentTable = "Ecng_SqliteImplicitFkParent";
+		const string childTable = "Ecng_SqliteImplicitFkChild";
+
+		var dialect = DbTestHelper.GetDialect(provider);
+
+		// Child first so the FK no longer references the parent we drop next.
+		DbTestHelper.DropTable(provider, childTable);
+		DbTestHelper.DropTable(provider, parentTable);
+
+		var qParent = dialect.QuoteIdentifier(parentTable);
+		var qChild = dialect.QuoteIdentifier(childTable);
+		var qPid = dialect.QuoteIdentifier("Pid");
+
+		// Parent with a single-column integer primary key.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {qParent} (Id INTEGER PRIMARY KEY)");
+
+		// Child FK uses the implicit-PK shorthand: REFERENCES Parent with no column list,
+		// so PRAGMA foreign_key_list returns NULL in the "to" column.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {qChild} ({qPid} INTEGER REFERENCES {qParent})");
+
+		try
+		{
+			using var conn = await OpenAsync(provider, CancellationToken);
+
+			IReadOnlyList<DbForeignKeyInfo> fks = null;
+
+			// The defect throws here; the correct behaviour is a clean read.
+			try
+			{
+				fks = await dialect.ReadDbForeignKeysAsync(conn, cancellationToken: CancellationToken);
+			}
+			catch (Exception ex)
+			{
+				Fail($"ReadDbForeignKeysAsync must tolerate an implicit-PK FK (NULL 'to' column) " +
+					$"and not throw, but it threw {ex.GetType().Name}: {ex.Message}");
+			}
+
+			var match = fks.FirstOrDefault(fk =>
+				fk.TableName.EqualsIgnoreCase(childTable) &&
+				fk.ColumnName.EqualsIgnoreCase("Pid"));
+
+			var dump = string.Join(", ",
+				fks.Select(f => $"{f.TableName}.{f.ColumnName}->{f.RefTableName}.{f.RefColumnName}"));
+
+			match.AssertNotNull(
+				$"Expected an FK row for {childTable}.Pid referencing {parentTable}; got: [{dump}]");
+
+			match.RefTableName.EqualsIgnoreCase(parentTable).AssertTrue(
+				$"Expected ref table {parentTable}, got {match.RefTableName}; all: [{dump}]");
+		}
+		finally
+		{
+			DbTestHelper.DropTable(provider, childTable);
+			DbTestHelper.DropTable(provider, parentTable);
+		}
+	}
+
+	/// <summary>
+	/// BUG: <c>ReadDbIndexesAsync</c> reads the column name with <c>reader.GetString(2)</c> from
+	/// <c>PRAGMA index_info</c>. For an expression index (e.g. <c>CREATE INDEX i ON t(lower(Name))</c>,
+	/// cid = -2) or a rowid key (cid = -1) SQLite returns NULL there, and Microsoft.Data.Sqlite
+	/// throws on <c>GetString</c> over the NULL ordinal. Because every index from
+	/// <c>index_list</c> is enumerated unconditionally, a single expression index makes the whole
+	/// schema read — and thus <c>SchemaMigrator.CompareAsync</c> — fail for any DB that legitimately
+	/// uses one.
+	/// Expected: the read completes without throwing; expression-key rows are simply skipped
+	/// (they cannot be matched to a single-column entity index anyway), while ordinary
+	/// single-column indexes on the same table are still surfaced.
+	/// Actual: <c>InvalidOperationException</c> is thrown on the NULL column-name ordinal.
+	/// File: Data.SQLite\SQLiteDialect.cs:389.
+	/// </summary>
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task ReadDbIndexesAsync_ExpressionIndex_DoesNotThrow()
+	{
+		const string provider = DatabaseProviderRegistry.SQLite;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		const string table = "Ecng_SqliteExprIndex";
+
+		var dialect = DbTestHelper.GetDialect(provider);
+
+		DbTestHelper.DropTable(provider, table);
+
+		var qTable = dialect.QuoteIdentifier(table);
+		var qName = dialect.QuoteIdentifier("Name");
+		var qPriority = dialect.QuoteIdentifier("Priority");
+
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {qTable} (Id INTEGER PRIMARY KEY, {qName} TEXT, {qPriority} INTEGER)");
+
+		// Expression index — PRAGMA index_info reports cid = -2 and a NULL column name.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE INDEX {dialect.QuoteIdentifier("IX_Ecng_SqliteExprIndex_LowerName")} " +
+			$"ON {qTable} (lower({qName}))");
+
+		// A plain single-column index on the same table that must still be surfaced.
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE INDEX {dialect.QuoteIdentifier("IX_Ecng_SqliteExprIndex_Priority")} " +
+			$"ON {qTable} ({qPriority})");
+
+		try
+		{
+			using var conn = await OpenAsync(provider, CancellationToken);
+
+			IReadOnlyList<DbIndexInfo> indexes = null;
+
+			// The defect throws here; the correct behaviour is a clean read.
+			try
+			{
+				indexes = await dialect.ReadDbIndexesAsync(conn, cancellationToken: CancellationToken);
+			}
+			catch (Exception ex)
+			{
+				Fail($"ReadDbIndexesAsync must tolerate an expression index (NULL column name) " +
+					$"and not throw, but it threw {ex.GetType().Name}: {ex.Message}");
+			}
+
+			var tableIxs = indexes
+				.Where(i => i.TableName.EqualsIgnoreCase(table) && !i.IsPrimaryKey)
+				.ToArray();
+
+			var dump = string.Join(", ",
+				tableIxs.Select(i => $"{i.IndexName}({i.ColumnName})"));
+
+			// The ordinary single-column index must survive the expression-index row.
+			tableIxs.Any(i => i.ColumnName.EqualsIgnoreCase("Priority")).AssertTrue(
+				$"Expected the plain Priority index to be surfaced alongside the expression index; got: [{dump}]");
+		}
+		finally
+		{
+			DbTestHelper.DropTable(provider, table);
+		}
+	}
+
+	#endregion
+
+	#region SqlServer schema-read robustness
+
+	/// <summary>
+	/// BUG: <c>ReadDbSchemaAsync</c> probes IsComputed via
+	/// <c>COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), ...)</c>. OBJECT_ID parses
+	/// its argument as a multi-part name, so a table whose name itself contains a dot (e.g.
+	/// <c>[Order.Items]</c>) resolves to NULL, COLUMNPROPERTY returns NULL and a genuinely computed
+	/// column is silently reported as <c>IsComputed=false</c>. Such names are creatable because all
+	/// DDL goes through the bracket-quoting <see cref="SqlServerDialect.QuoteIdentifier"/>. The probe
+	/// must quote each name part (e.g. QUOTENAME) so the OBJECT_ID resolves.
+	/// Expected: a computed column on a dotted/quote-requiring table name is read back as IsComputed=true.
+	/// Actual: it is silently read back as IsComputed=false.
+	/// File: Data.SqlServer\SqlServerDialect.cs:203.
+	/// </summary>
+	[TestMethod]
+	[TestCategory("Integration")]
+	[TestCategory("Database")]
+	public async Task ReadDbSchemaAsync_DetectsComputedColumn_OnQuoteRequiringTableName()
+	{
+		const string provider = DatabaseProviderRegistry.SqlServer;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		// Dotted name: needs bracket quoting and breaks the unquoted OBJECT_ID concatenation.
+		const string tableName = "Ecng.SqlComputedProbe";
+		var quoted = "[" + tableName.Replace("]", "]]") + "]";
+
+		DropTableRaw(provider, tableName);
+
+		// Base + Total, where Total is a persisted computed column (Base * 2).
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE {quoted} (" +
+			$"[Base] INT NOT NULL, " +
+			$"[Total] AS ([Base] * 2))");
+
+		try
+		{
+			using var conn = await OpenAsync(provider, CancellationToken);
+
+			var cols = await SqlServerDialect.Instance.ReadDbSchemaAsync(conn, cancellationToken: CancellationToken);
+
+			var total = cols.FirstOrDefault(c =>
+				c.TableName.EqualsIgnoreCase(tableName) && c.ColumnName.EqualsIgnoreCase("Total"));
+
+			total.AssertNotNull($"Expected the '{tableName}'.'Total' column to be read back.");
+
+			total.IsComputed.AssertTrue(
+				"A persisted computed column on a quote-requiring (dotted) table name must be read " +
+				"back as IsComputed=true; the OBJECT_ID probe must quote the name parts instead of " +
+				"silently resolving to NULL.");
+		}
+		finally
+		{
+			DropTableRaw(provider, tableName);
+		}
+	}
+
+	/// <summary>
+	/// BUG: <c>ReadDbSchemaAsync</c> reads <c>INFORMATION_SCHEMA.COLUMNS</c> filtered only by
+	/// <c>TABLE_SCHEMA</c>. That view also exposes view columns, so every view in the schema surfaces
+	/// as a "table" in the returned <see cref="DbColumnInfo"/> list. The migrator then mis-reports
+	/// views as ExtraTable, or — when a view name collides with an entity table — compares the entity
+	/// against the view's columns instead of reporting the real table missing. The read must be
+	/// restricted to base tables (TABLE_TYPE = 'BASE TABLE'), like the SQLite dialect's
+	/// <c>type = 'table'</c> filter.
+	/// Expected: a view's columns are NOT present in the schema read; only base-table columns are.
+	/// Actual: the view's columns are returned as if they were table columns.
+	/// File: Data.SqlServer\SqlServerDialect.cs:204.
+	/// </summary>
+	[TestMethod]
+	[TestCategory("Integration")]
+	[TestCategory("Database")]
+	public async Task ReadDbSchemaAsync_ExcludesViewColumns_OnlyBaseTables()
+	{
+		const string provider = DatabaseProviderRegistry.SqlServer;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		const string tableName = "Ecng_SqlBaseTableForView";
+		const string viewName = "Ecng_SqlViewOverBase";
+
+		DropViewRaw(provider, viewName);
+		DropTableRaw(provider, tableName);
+
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE TABLE [{tableName}] ([Id] INT NOT NULL, [Name] NVARCHAR(50) NULL)");
+
+		DbTestHelper.ExecuteRaw(provider,
+			$"CREATE VIEW [{viewName}] AS SELECT [Id], [Name] FROM [{tableName}]");
+
+		try
+		{
+			using var conn = await OpenAsync(provider, CancellationToken);
+
+			var cols = await SqlServerDialect.Instance.ReadDbSchemaAsync(conn, cancellationToken: CancellationToken);
+
+			var viewCols = cols.Where(c => c.TableName.EqualsIgnoreCase(viewName)).ToArray();
+			var tableCols = cols.Where(c => c.TableName.EqualsIgnoreCase(tableName)).ToArray();
+
+			// Sanity: the base table must be present (proves the read works and the filter
+			// is not over-restrictive).
+			tableCols.Length.AssertGreater(0,
+				$"The base table '{tableName}' columns must be returned by the schema read.");
+
+			viewCols.Length.AssertEqual(0,
+				$"View columns must not surface as table columns; the read must restrict to base " +
+				$"tables (TABLE_TYPE = 'BASE TABLE'). Got {viewCols.Length} column(s) for view '{viewName}'.");
+		}
+		finally
+		{
+			DropViewRaw(provider, viewName);
+			DropTableRaw(provider, tableName);
+		}
+	}
+
+	private static void DropTableRaw(string provider, string tableName)
+	{
+		var dialect = DbTestHelper.GetDialect(provider);
+		DbTestHelper.ExecuteRaw(provider, Query.CreateDropTable(tableName).Render(dialect));
+	}
+
+	private static void DropViewRaw(string provider, string viewName)
+	{
+		var quoted = "[" + viewName.Replace("]", "]]") + "]";
+		var literal = $"[dbo].{quoted}".Replace("'", "''");
+		DbTestHelper.ExecuteRaw(provider,
+			$"IF OBJECT_ID(N'{literal}', N'V') IS NOT NULL DROP VIEW {quoted}");
+	}
+
+	#endregion
+
+#endif
 }

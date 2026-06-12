@@ -1203,7 +1203,7 @@ class IfNullVisitor : SqlFunctionVisitor
 	{
 		var q = translator.Context.Curr;
 
-		q.NullIf();
+		q.IsNull();
 		q.OpenBracket();
 
 		var mce = (MethodCallExpression)expression;

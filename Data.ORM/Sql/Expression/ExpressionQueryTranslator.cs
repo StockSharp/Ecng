@@ -107,7 +107,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 	private Expression VisitWhereCall(MethodCallExpression m)
 	{
-		var c = Curr = new();
+		var c = Curr = new Query { WrapColumn = WrapColumn };
 
 		Visit(m.Arguments[0]);
 
@@ -906,7 +906,20 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 				if (isGroup)
 				{
-					Context = new();
+					// Offset the sub-context parameter counter past the outer
+					// parameters already emitted (e.g. by the SELECT-side
+					// `g.Key` re-visit of the same key body). This makes the
+					// key parameters the sub-context renders into GROUP BY
+					// globally unique, so they can be merged back without
+					// renaming. The old `change:true` merge renamed them to
+					// `{key}_{n}`, producing an orphan parameter in the command
+					// dictionary while the GROUP BY SQL kept referencing the
+					// original name. Mirrors the sub-query parameter handling in
+					// EnumerableAndQueryableVisitor.
+					Context = new()
+					{
+						ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset,
+					};
 
 					// Inherit outer alias bindings so members like `i.Field`
 					// in a GroupBy key-selector resolve to the running table
@@ -945,7 +958,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 					Context = ctx;
 
-					Context.AddParamsFromSubquery(subParams);
+					// Merge without renaming: the sub-context already produced
+					// globally-unique names via ParamCountOffset, and those exact
+					// names are what the GROUP BY SQL above references.
+					Context.AddParamsFromSubquery(subParams, false);
 				}
 				else if (isSelect)
 				{
@@ -1069,10 +1085,15 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		var isLeftBool = b.Left is MemberExpression leftMe && leftMe.Member.GetMemberType() == typeof(bool) && (b.NodeType == ExpressionType.AndAlso || b.NodeType == ExpressionType.OrElse);
 
+		var isDecimalComparison = IsDecimalComparison(b);
+
 		if (isLeftBool)
 			Curr.OpenBracket();
 
-		Visit(b.Left);
+		if (isDecimalComparison)
+			VisitDecimalComparisonOperand(b.Left);
+		else
+			Visit(b.Left);
 
 		switch (b.NodeType)
 		{
@@ -1179,7 +1200,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		if (isRightBool)
 			Curr.OpenBracket();
 
-		Visit(b.Right);
+		if (isDecimalComparison)
+			VisitDecimalComparisonOperand(b.Right);
+		else
+			Visit(b.Right);
 
 		if (isRightBool)
 			Curr.IsTrue().CloseBracket();
@@ -1189,6 +1213,52 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		Curr.CloseBracket();
 		return b;
 	}
+
+	private void VisitDecimalComparisonOperand(Expression expression)
+	{
+		Context.WrapColumn.Enqueue((before, query) =>
+		{
+			query.AddAction((dialect, builder) =>
+			{
+				var castType = dialect.DecimalComparisonCastSqlType;
+
+				if (castType.IsEmpty())
+					return;
+
+				if (before)
+					builder.Append("cast(");
+				else
+					builder.Append(" as ").Append(castType).Append(')');
+			});
+		});
+
+		try
+		{
+			Visit(expression);
+		}
+		finally
+		{
+			Context.WrapColumn.Dequeue();
+		}
+	}
+
+	private static bool IsDecimalComparison(BinaryExpression b)
+	{
+		if (b.Left.IsNullConstant() || b.Right.IsNullConstant())
+			return false;
+
+		return (b.NodeType is
+			ExpressionType.Equal or
+			ExpressionType.NotEqual or
+			ExpressionType.LessThan or
+			ExpressionType.LessThanOrEqual or
+			ExpressionType.GreaterThan or
+			ExpressionType.GreaterThanOrEqual)
+			&& (IsDecimalType(b.Left.Type) || IsDecimalType(b.Right.Type));
+	}
+
+	private static bool IsDecimalType(Type type)
+		=> (Nullable.GetUnderlyingType(type) ?? type) == typeof(decimal);
 
 	private static bool TryRewriteEntityNullComparison(BinaryExpression b, out BinaryExpression rewritten)
 	{

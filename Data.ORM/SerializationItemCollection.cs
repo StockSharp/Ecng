@@ -80,6 +80,13 @@ public class SerializationItemCollection : BaseList<SerializationItem>, ICloneab
 	}
 
 	/// <inheritdoc />
+	protected override void OnRemoveAt(int index)
+	{
+		_innerDictionary.Remove(this[index].Name);
+		base.OnRemoveAt(index);
+	}
+
+	/// <inheritdoc />
 	protected override bool OnInserting(int index, SerializationItem item)
 	{
 		_innerDictionary.Add(item.Name, item);

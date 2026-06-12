@@ -180,7 +180,18 @@ public partial class Database : Disposable, IStorage
 			throw new InvalidOperationException();
 
 		connection.ConnectionString = ConnectionString;
-		await connection.OpenAsync(cancellationToken).NoWait();
+
+		try
+		{
+			await connection.OpenAsync(cancellationToken).NoWait();
+		}
+		catch
+		{
+			// Do not leak the connection if opening fails (server down, bad credentials, timeout).
+			await connection.DisposeAsync().NoWait();
+			throw;
+		}
+
 		return connection;
 	}
 
@@ -441,12 +452,32 @@ public partial class Database : Disposable, IStorage
 			? "{0} {1}".Put(Dialect.QuoteIdentifier(orderByColumn), (direction == ListSortDirection.Ascending) ? "asc" : "desc")
 			: null;
 
-		var sql = Query.CreateSelect(meta.Name, null, orderByClause, startIndex > 0 ? startIndex : null, count < long.MaxValue ? count : null).Render(Dialect);
+		var take = count < long.MaxValue ? count : (long?)null;
+		var skip = startIndex > 0 || take.HasValue ? startIndex : (long?)null;
+		var sql = Query.CreateSelect(meta.Name, null, orderByClause, skip, take).Render(Dialect);
 
 		var command = _commandsByText.SafeAdd(sql, key =>
-			new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text)));
+		{
+			var command = new DatabaseCommand(Factory, Dialect, CreateConnectionAsync, CreateDbCommand(key, CommandType.Text));
 
-		return await ReadAllAsync(command, meta, new SerializationItemCollection(), cancellationToken).NoWait();	}
+			if (skip.HasValue)
+				command.Parameters.Add(Factory.CreateDbParameter(Dialect.ParameterPrefix + Query.SkipParameterName, ParameterDirection.Input, DbType.Int64, skip.Value));
+
+			if (take.HasValue)
+				command.Parameters.Add(Factory.CreateDbParameter(Dialect.ParameterPrefix + Query.TakeParameterName, ParameterDirection.Input, DbType.Int64, take.Value));
+
+			return command;
+		});
+
+		var input = new SerializationItemCollection();
+
+		if (skip.HasValue)
+			input.Add(new(Query.SkipParameterName, typeof(long), skip.Value));
+
+		if (take.HasValue)
+			input.Add(new(Query.TakeParameterName, typeof(long), take.Value));
+
+		return await ReadAllAsync(command, meta, input, cancellationToken).NoWait();	}
 
 	/// <summary>
 	/// Reads all entities matching the specified command and input parameters.
@@ -503,7 +534,7 @@ public partial class Database : Disposable, IStorage
 			{
 				if (storage.TryGetValue(col.Name, out var v))
 					input.Add(new(col.Name, col.ClrType, v));
-				else if (col.Name == "Id")
+				else if (meta.Identity is not null && col.Name == meta.Identity.Name)
 					input.Add(new(col.Name, col.ClrType, entity.GetIdentity()));
 			}
 			foreach (var col in valueColumns)

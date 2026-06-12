@@ -44,7 +44,7 @@ public class SqlServerDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string QuoteIdentifier(string identifier)
-		=> $"[{identifier}]";
+		=> $"[{identifier.Replace("]", "]]")}]";
 
 	/// <inheritdoc />
 	public override string GetSqlTypeName(Type clrType)
@@ -85,9 +85,9 @@ public class SqlServerDialect : SqlDialectBase
 		// document intent ("yes, this column is intentionally unbounded").
 		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = isMax ? "NVARCHAR(MAX)" : $"NVARCHAR({maxLength})";
+			typeName = isMax || maxLength > 4000 ? "NVARCHAR(MAX)" : $"NVARCHAR({maxLength})";
 		else if (underlying == typeof(byte[]))
-			typeName = isMax ? "VARBINARY(MAX)" : $"VARBINARY({maxLength})";
+			typeName = isMax || maxLength > 8000 ? "VARBINARY(MAX)" : $"VARBINARY({maxLength})";
 		else if (underlying == typeof(decimal) && precision > 0)
 			typeName = $"DECIMAL({precision},{scale})";
 		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) && precision > 0)
@@ -151,14 +151,14 @@ public class SqlServerDialect : SqlDialectBase
 	public override void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs)
 	{
 		var literal = tableName.Replace("'", "''");
-		sb.Append($"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{literal}') CREATE TABLE {QuoteIdentifier(tableName)} ({columnDefs})");
+		sb.Append($"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{literal}' AND schema_id = SCHEMA_ID('dbo')) CREATE TABLE {QuoteIdentifier(tableName)} ({columnDefs})");
 	}
 
 	/// <inheritdoc />
 	public override void AppendDropTable(StringBuilder sb, string tableName)
 	{
-		var literal = tableName.Replace("'", "''");
-		sb.Append($"IF OBJECT_ID('{literal}', 'U') IS NOT NULL DROP TABLE {QuoteIdentifier(tableName)}");
+		var objectName = $"{QuoteIdentifier("dbo")}.{QuoteIdentifier(tableName)}".Replace("'", "''");
+		sb.Append($"IF OBJECT_ID(N'{objectName}', N'U') IS NOT NULL DROP TABLE {QuoteIdentifier(tableName)}");
 	}
 
 	/// <inheritdoc />
@@ -200,10 +200,11 @@ public class SqlServerDialect : SqlDialectBase
 				.Column("c", "CHARACTER_MAXIMUM_LENGTH").Comma()
 				.Column("c", "NUMERIC_PRECISION").Comma()
 				.Column("c", "NUMERIC_SCALE").Comma()
-				.Raw("COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed')").NewLine()
+				.Raw("COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.TABLE_SCHEMA) + '.' + QUOTENAME(c.TABLE_NAME)), c.COLUMN_NAME, 'IsComputed')").NewLine()
 			.From().Raw("INFORMATION_SCHEMA.COLUMNS c").NewLine()
 			.Where().NewLine()
 				.Column("c", "TABLE_SCHEMA").Equal().Param("schema").NewLine()
+				.And().Raw("EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_TYPE = 'BASE TABLE')").NewLine()
 			.OrderBy().Column("c", "TABLE_NAME").Comma().Column("c", "ORDINAL_POSITION")
 			.Render(this);
 
@@ -453,7 +454,7 @@ public class SqlServerDialect : SqlDialectBase
 		var insertCols = allColumns.Select(QuoteIdentifier).JoinCommaSpace();
 		var insertVals = allColumns.Select(c => $"source.{QuoteIdentifier(c)}").JoinCommaSpace();
 
-		sb.Append($"MERGE {quotedTable} AS target USING (SELECT {sourceValues}) AS source ON ({matchCondition}) ");
+		sb.Append($"MERGE {quotedTable} WITH (HOLDLOCK) AS target USING (SELECT {sourceValues}) AS source ON ({matchCondition}) ");
 
 		if (nonKeys.Length > 0)
 			sb.Append($"WHEN MATCHED THEN UPDATE SET {nonKeys.Select(c => $"{QuoteIdentifier(c)} = source.{QuoteIdentifier(c)}").JoinCommaSpace()} ");

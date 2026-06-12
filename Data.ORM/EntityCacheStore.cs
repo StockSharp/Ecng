@@ -61,8 +61,11 @@ internal sealed class EntityCacheStore
 	/// </summary>
 	public void Touch((Type, string, object) key)
 	{
-		if (Timeout != TimeSpan.MaxValue)
-			_timestamps[key] = DateTime.UtcNow;
+		// Always record the write moment, even while TTL is disabled: the
+		// timeout can be lowered at runtime, and entries cached earlier must
+		// remain TTL-evictable. Without a timestamp TrimExpiredAsync — which
+		// enumerates only timestamped entries — could never reach them.
+		_timestamps[key] = DateTime.UtcNow;
 
 		if (_lruNodes.TryGetValue(key, out var existing))
 		{
@@ -74,15 +77,24 @@ internal sealed class EntityCacheStore
 			_lruNodes[key] = _lru.AddFirst(key);
 		}
 
-		while (_lru.Count > MaxEntries)
+		// Size-bound eviction: drop the least-recently-touched entries from the
+		// tail until the count fits. Incomplete entries (complete == false) are
+		// still needed by an active BulkScope and must never be chosen as the
+		// victim — skip them and keep walking towards the front.
+		var node = _lru.Last;
+		while (_lru.Count > MaxEntries && node is not null)
 		{
-			var victim = _lru.Last;
-			if (victim is null)
-				break;
-			_lru.RemoveLast();
-			_lruNodes.Remove(victim.Value);
-			_entries.Remove(victim.Value);
-			_timestamps.Remove(victim.Value);
+			var prev = node.Previous;
+
+			if (!_entries.TryGetValue(node.Value, out var entry) || entry.complete)
+			{
+				_lru.Remove(node);
+				_lruNodes.Remove(node.Value);
+				_entries.Remove(node.Value);
+				_timestamps.Remove(node.Value);
+			}
+
+			node = prev;
 		}
 	}
 

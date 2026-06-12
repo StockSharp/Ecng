@@ -23,6 +23,9 @@ public abstract class SqlDialectBase : ISqlDialect
 	public virtual string BooleanCastSqlType => "bit";
 
 	/// <inheritdoc />
+	public virtual string DecimalComparisonCastSqlType => null;
+
+	/// <inheritdoc />
 	public virtual string UnicodePrefix => "N";
 
 	/// <inheritdoc />
@@ -126,7 +129,7 @@ public abstract class SqlDialectBase : ISqlDialect
 			return null;
 
 		// TimeSpan from ticks
-		if (targetType == typeof(TimeSpan) && value is long ticks)
+		if ((targetType.GetUnderlyingType() ?? targetType) == typeof(TimeSpan) && value is long ticks)
 			return new TimeSpan(ticks);
 
 		return value;
@@ -296,6 +299,8 @@ public abstract class SqlDialectBase : ISqlDialect
 			return FalseLiteral;
 		if (clrType == typeof(DateTime) || clrType == typeof(DateTimeOffset))
 			return "'0001-01-01T00:00:00'";
+		if (clrType == typeof(TimeSpan))
+			return "0";
 		if (clrType == typeof(Guid))
 			return "'00000000-0000-0000-0000-000000000000'";
 		if (clrType == typeof(byte[]))

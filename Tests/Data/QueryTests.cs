@@ -1021,7 +1021,7 @@ public class QueryTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer", "getUtcDate()")]
 	[DataRow("SQLite", "datetime('now')")]
-	[DataRow("PostgreSql", "now() AT TIME ZONE 'UTC'")]
+	[DataRow("PostgreSql", "now()")]
 	public void UtcNow_DialectSpecific(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);
@@ -1031,13 +1031,20 @@ public class QueryTests : BaseTestClass
 
 	[TestMethod]
 	[DataRow("SqlServer", "newId()")]
-	[DataRow("SQLite", "lower(hex(randomblob(16)))")]
 	[DataRow("PostgreSql", "gen_random_uuid()")]
 	public void NewId_DialectSpecific(string dialectName, string expected)
 	{
 		var dialect = GetDialect(dialectName);
 		var sql = new Query().NewId().Render(dialect);
 		sql.AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public void NewId_SQLite_DelegatesToDialect()
+	{
+		var sql = new Query().NewId().Render(SQLiteDialect.Instance);
+
+		sql.AssertEqual(SQLiteDialect.Instance.NewId());
 	}
 
 	#endregion

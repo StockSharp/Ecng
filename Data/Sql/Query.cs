@@ -13,6 +13,16 @@ using Ecng.Common;
 [DebuggerDisplay($"{{{nameof(DebuggerString)}}}")]
 public class Query
 {
+	/// <summary>
+	/// Parameter name used for SELECT pagination offset.
+	/// </summary>
+	public const string SkipParameterName = "skip";
+
+	/// <summary>
+	/// Parameter name used for SELECT pagination limit.
+	/// </summary>
+	public const string TakeParameterName = "take";
+
 	private string DebuggerString => $"Query({Actions.Count} actions)";
 
 	/// <summary>
@@ -983,7 +993,21 @@ public class Query
 			if (!orderByClause.IsEmpty())
 				sb.Append($" ORDER BY {orderByClause}");
 
-			dialect.AppendPagination(sb, skip, take, !orderByClause.IsEmpty());
+			if (skip.HasValue || take.HasValue)
+			{
+				if (orderByClause.IsEmpty())
+				{
+					sb.Append(' ');
+					dialect.AppendFallbackOrderBy(sb);
+				}
+				else
+					sb.Append(' ');
+
+				dialect.AppendPaginationParams(
+					sb,
+					skip.HasValue ? dialect.ParameterPrefix + SkipParameterName : null,
+					take.HasValue ? dialect.ParameterPrefix + TakeParameterName : null);
+			}
 		});
 	}
 
@@ -1041,7 +1065,7 @@ public class Query
 	/// <summary>
 	/// Creates a single WHERE condition.
 	/// </summary>
-	public static Query CreateBuildCondition(string column, ComparisonOperator op, string paramName)
+	public static Query CreateBuildCondition(string column, ComparisonOperator op, string paramName, bool castNumericComparison = false)
 	{
 		return new Query().AddAction((dialect, sb) =>
 		{
@@ -1065,6 +1089,15 @@ public class Query
 			}
 
 			var param = dialect.ParameterPrefix + paramName;
+			var decimalCastType = castNumericComparison && IsComparisonOperator(op)
+				? dialect.DecimalComparisonCastSqlType
+				: null;
+
+			if (!decimalCastType.IsEmpty())
+			{
+				quotedCol = $"cast({quotedCol} as {decimalCastType})";
+				param = $"cast({param} as {decimalCastType})";
+			}
 
 			sb.Append(op switch
 			{
@@ -1080,6 +1113,15 @@ public class Query
 			});
 		});
 	}
+
+	private static bool IsComparisonOperator(ComparisonOperator op)
+		=> op is
+			ComparisonOperator.Equal or
+			ComparisonOperator.NotEqual or
+			ComparisonOperator.Greater or
+			ComparisonOperator.GreaterOrEqual or
+			ComparisonOperator.Less or
+			ComparisonOperator.LessOrEqual;
 
 	/// <summary>
 	/// Creates an IN condition.

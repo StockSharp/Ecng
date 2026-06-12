@@ -37,7 +37,10 @@ public static class QueryableAsyncExtensions
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns><see langword="true"/> if the sequence contains any elements; otherwise, <see langword="false"/>.</returns>
 	public static async ValueTask<bool> AnyAsyncEx<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> await source.FirstOrDefaultAsyncEx(cancellationToken).NoWait() is not null;
+		// A FirstOrDefault-based check is wrong for value-type T: an empty sequence yields
+		// default(T), which is never null, so the result would be true. Counting via the
+		// existing bulk-load-aware CountAsyncEx is correct for both reference and value types.
+		=> await source.CountAsyncEx(cancellationToken).NoWait() > 0;
 
 	/// <summary>
 	/// Asynchronously returns the first element of a sequence, or a default value, using bulk-load when available.

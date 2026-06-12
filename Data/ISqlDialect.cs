@@ -50,6 +50,13 @@ public interface ISqlDialect
 	string BooleanCastSqlType { get; }
 
 	/// <summary>
+	/// SQL type name used to cast decimal operands before comparisons when
+	/// the dialect stores decimals in a non-numeric affinity. Return
+	/// <see langword="null"/> when no comparison cast is required.
+	/// </summary>
+	string DecimalComparisonCastSqlType { get; }
+
+	/// <summary>
 	/// Unicode string-literal prefix (e.g. <c>N</c> for SQL Server).
 	/// </summary>
 	string UnicodePrefix { get; }

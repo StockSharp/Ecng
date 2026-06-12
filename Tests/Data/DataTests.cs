@@ -54,14 +54,14 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void GetOrAddIsCaseInsensitive()
+	public void GetOrAddProviderIsCaseInsensitiveButConnectionStringIsCaseSensitive()
 	{
 		var cache = new DatabaseConnectionCache();
 		var first = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "Server=Localhost");
 		var second = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer.ToLower(), "server=localhost");
 
-		AreSame(first, second);
-		cache.Connections.Count().AssertEqual(1);
+		AreNotSame(first, second);
+		cache.Connections.Count().AssertEqual(2);
 	}
 
 	[TestMethod]
@@ -214,6 +214,28 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void LoadMissingConnectionsPreservesEmptyCache()
+	{
+		var cache = new DatabaseConnectionCache();
+
+		((IPersistable)cache).Load(new SettingsStorage());
+
+		cache.Connections.Count().AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void DeleteConnectionAfterPairMutationStillRemovesConnection()
+	{
+		var cache = new DatabaseConnectionCache();
+		var pair = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "Server=A");
+
+		pair.ConnectionString = "Server=B";
+
+		cache.DeleteConnection(pair).AssertTrue();
+		cache.Connections.Count().AssertEqual(0);
+	}
+
+	[TestMethod]
 	public void SaveLoadMultipleConnectionsRoundTrip()
 	{
 		var cache = new DatabaseConnectionCache();
@@ -268,13 +290,17 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void PairEqualsIgnoresCase()
+	public void PairEqualsIgnoresProviderCaseButNotConnectionStringCase()
 	{
 		var a = new DatabaseConnectionPair { Provider = "SqlServer", ConnectionString = "Server=Localhost" };
 		var b = new DatabaseConnectionPair { Provider = "sqlserver", ConnectionString = "server=localhost" };
 
-		a.Equals(b).AssertTrue();
-		a.GetHashCode().AssertEqual(b.GetHashCode());
+		a.Equals(b).AssertFalse();
+		a.GetHashCode().AssertNotEqual(b.GetHashCode());
+
+		var c = new DatabaseConnectionPair { Provider = "sqlserver", ConnectionString = "Server=Localhost" };
+		a.Equals(c).AssertTrue();
+		a.GetHashCode().AssertEqual(c.GetHashCode());
 	}
 
 	[TestMethod]
@@ -382,4 +408,46 @@ public class DataTests : BaseTestClass
 
 		notifications.Contains(nameof(DatabaseConnectionPair.Title)).AssertTrue();
 	}
+
+#if NET10_0_OR_GREATER
+	[TestMethod]
+	public void SerializationItem_HashCodeTracksEqualityAfterMutation()
+	{
+		var first = new SerializationItem("Name", typeof(int), null)
+		{
+			Value = 5,
+		};
+		var second = new SerializationItem("Name", typeof(int), 5);
+
+		first.Equals(second).AssertTrue();
+		first.GetHashCode().AssertEqual(second.GetHashCode());
+	}
+
+	[TestMethod]
+	public void SerializationItem_HashCodeChangesWhenValueChanges()
+	{
+		var item = new SerializationItem("Name", typeof(int), 1);
+		var initialHash = item.GetHashCode();
+
+		item.Value = 2;
+
+		item.GetHashCode().AssertNotEqual(initialHash);
+	}
+
+	[TestMethod]
+	public void SerializationItemCollection_RemoveAtUpdatesNameLookup()
+	{
+		var collection = new SerializationItemCollection
+		{
+			new("First", typeof(int), 1),
+			new("Second", typeof(int), 2),
+		};
+
+		collection.RemoveAt(0);
+
+		collection.TryGetItem("First", out _).AssertFalse();
+		collection.TryGetItem("Second", out var second).AssertTrue();
+		second.Value.AssertEqual(2);
+	}
+#endif
 }

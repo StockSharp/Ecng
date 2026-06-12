@@ -41,7 +41,7 @@ public class SQLiteDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string QuoteIdentifier(string identifier)
-		=> $"\"{identifier}\"";
+		=> $"\"{identifier.Replace("\"", "\"\"")}\"";
 
 	/// <inheritdoc />
 	public override string GetSqlTypeName(Type clrType)
@@ -56,7 +56,7 @@ public class SQLiteDialect : SqlDialectBase
 			_ when underlying == typeof(short) => "INTEGER",
 			_ when underlying == typeof(byte) => "INTEGER",
 			_ when underlying == typeof(bool) => "INTEGER",
-			_ when underlying == typeof(decimal) => "REAL",
+			_ when underlying == typeof(decimal) => "TEXT",
 			_ when underlying == typeof(double) => "REAL",
 			_ when underlying == typeof(float) => "REAL",
 			_ when underlying == typeof(string) => "TEXT",
@@ -85,6 +85,9 @@ public class SQLiteDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string IsNullFunction => "coalesce";
+
+	/// <inheritdoc />
+	public override string DecimalComparisonCastSqlType => "NUMERIC";
 
 	/// <inheritdoc />
 	public override void AppendDatePartOpen(StringBuilder sb, string part)
@@ -193,7 +196,8 @@ public class SQLiteDialect : SqlDialectBase
 	public override string SysUtcNow() => "datetime('now')";
 
 	/// <inheritdoc />
-	public override string NewId() => "lower(hex(randomblob(16)))";
+	public override string NewId()
+		=> "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(6)))";
 
 	/// <inheritdoc />
 	public override string GetIdentityColumnSuffix() => "PRIMARY KEY AUTOINCREMENT";
@@ -231,14 +235,7 @@ public class SQLiteDialect : SqlDialectBase
 	/// aligned with the rest of the dialect's SQL emission.
 	/// </summary>
 	private string BuildListUserTablesSql()
-		=> new Query()
-			.Select().Column("name").NewLine()
-			.From().Raw("sqlite_master").NewLine()
-			.Where().NewLine()
-				.Column("type").Equal().Raw("'table'")
-				.And().Column("name").Not().Like().Raw("'sqlite_%'").NewLine()
-			.OrderBy().Column("name")
-			.Render(this);
+		=> "select \"name\" from sqlite_master where \"type\" = 'table' and \"name\" not like 'sqlite!_%' ESCAPE '!' order by \"name\"";
 
 	/// <inheritdoc />
 	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
@@ -319,7 +316,7 @@ public class SQLiteDialect : SqlDialectBase
 				// id, seq, table, from, to, on_update, on_delete, match
 				var refTable = reader.GetString(2);
 				var fromCol = reader.GetString(3);
-				var toCol = reader.GetString(4);
+				var toCol = reader.IsDBNull(4) ? "Id" : reader.GetString(4);
 
 				// SQLite does not name FK constraints — synthesise a stable
 				// label from the column pair so the diff layer can match
@@ -383,6 +380,9 @@ public class SQLiteDialect : SqlDialectBase
 				using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 				while (await reader.ReadAsync(cancellationToken))
 				{
+					if (reader.IsDBNull(2))
+						continue;
+
 					result.Add(new DbIndexInfo(
 						IndexName: name,
 						TableName: table,
@@ -400,7 +400,13 @@ public class SQLiteDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override string NormalizeDbType(string dbTypeName)
 	{
-		return dbTypeName.Trim().ToUpperInvariant() switch
+		var normalized = dbTypeName.Trim().ToUpperInvariant();
+		var parenIndex = normalized.IndexOf('(');
+
+		if (parenIndex >= 0)
+			normalized = normalized[..parenIndex].Trim();
+
+		return normalized switch
 		{
 			"INTEGER" or "INT" or "BIGINT" or "SMALLINT" or "TINYINT" => "INTEGER",
 			"REAL" or "FLOAT" or "DOUBLE" or "DOUBLE PRECISION" or "NUMERIC" or "DECIMAL" => "REAL",

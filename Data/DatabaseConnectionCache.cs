@@ -52,7 +52,7 @@ public class DatabaseConnectionCache : IPersistable
 
 		using (_connections.EnterScope())
 		{
-			connection = _connections.FirstOrDefault(p => p.Provider.EqualsIgnoreCase(provider) && p.ConnectionString.EqualsIgnoreCase(connectionString));
+			connection = _connections.FirstOrDefault(p => p.Provider.EqualsIgnoreCase(provider) && p.ConnectionString == connectionString);
 
 			if (connection is null)
 			{
@@ -86,10 +86,25 @@ public class DatabaseConnectionCache : IPersistable
 		if (connection is null)
 			throw new ArgumentNullException(nameof(connection));
 
-		if (!_connections.Remove(connection))
-			return false;
+		DatabaseConnectionPair deleted;
 
-		ConnectionDeleted?.Invoke(connection);
+		using (_connections.EnterScope())
+		{
+			deleted = _connections.FirstOrDefault(p => ReferenceEquals(p, connection));
+
+			if (deleted is null)
+				deleted = _connections.FirstOrDefault(p => p.Equals(connection));
+
+			if (deleted is null)
+				return false;
+
+			var remaining = _connections.Where(p => !ReferenceEquals(p, deleted)).ToArray();
+
+			_connections.Clear();
+			_connections.AddRange(remaining);
+		}
+
+		ConnectionDeleted?.Invoke(deleted);
 		Updated?.Invoke();
 		return true;
 	}
@@ -100,8 +115,8 @@ public class DatabaseConnectionCache : IPersistable
 	/// <param name="storage">The settings storage to load from.</param>
 	public void Load(SettingsStorage storage)
 	{
-		_connections.AddRange(storage
-			.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections))
+		_connections.AddRange((storage
+			.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections)) ?? Enumerable.Empty<DatabaseConnectionPair>())
 			.Where(p => !p.Provider.IsEmpty()));
 	}
 

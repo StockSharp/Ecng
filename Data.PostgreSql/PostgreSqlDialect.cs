@@ -41,7 +41,10 @@ public class PostgreSqlDialect : SqlDialectBase
 
 	/// <inheritdoc />
 	public override string QuoteIdentifier(string identifier)
-		=> $"\"{identifier}\"";
+		=> $"\"{identifier.Replace("\"", "\"\"")}\"";
+
+	[ThreadStatic]
+	private static string _datePart;
 
 	/// <inheritdoc />
 	public override string GetSqlTypeName(Type clrType)
@@ -145,7 +148,42 @@ public class PostgreSqlDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override void AppendDatePartOpen(StringBuilder sb, string part)
 	{
-		sb.Append($"EXTRACT({part} FROM ");
+		_datePart = part;
+
+		switch (part)
+		{
+			case "dayofyear":
+				sb.Append("EXTRACT(doy FROM ");
+				break;
+			case "second":
+				sb.Append("FLOOR(EXTRACT(second FROM ");
+				break;
+			case "millisecond":
+				sb.Append("((EXTRACT(milliseconds FROM ");
+				break;
+			default:
+				sb.Append($"EXTRACT({part} FROM ");
+				break;
+		}
+	}
+
+	/// <inheritdoc />
+	public override void AppendDatePartClose(StringBuilder sb)
+	{
+		switch (_datePart)
+		{
+			case "second":
+				sb.Append("))");
+				break;
+			case "millisecond":
+				sb.Append(")::int % 1000))");
+				break;
+			default:
+				sb.Append(')');
+				break;
+		}
+
+		_datePart = null;
 	}
 
 	/// <inheritdoc />
@@ -157,11 +195,13 @@ public class PostgreSqlDialect : SqlDialectBase
 			"month" => "months",
 			"day" => "days",
 			"hour" => "hours",
-			"minute" => "minutes",
-			"second" => "seconds",
+			"minute" => "mins",
+			"second" or "millisecond" => "secs",
 			_ => throw new NotSupportedException($"Date part '{part}' is not supported for DATEADD in PostgreSQL"),
 		};
-		sb.Append($"({sourceSql} + make_interval({pgPart} => {amountSql}))");
+
+		var amount = part == "millisecond" ? $"(({amountSql}) / 1000.0)" : amountSql;
+		sb.Append($"({sourceSql} + make_interval({pgPart} => {amount}))");
 	}
 
 	/// <inheritdoc />
@@ -219,13 +259,13 @@ public class PostgreSqlDialect : SqlDialectBase
 	public override string Now() => "now()";
 
 	/// <inheritdoc />
-	public override string UtcNow() => "now() AT TIME ZONE 'UTC'";
+	public override string UtcNow() => "now()";
 
 	/// <inheritdoc />
 	public override string SysNow() => "now()";
 
 	/// <inheritdoc />
-	public override string SysUtcNow() => "now() AT TIME ZONE 'UTC'";
+	public override string SysUtcNow() => "now()";
 
 	/// <inheritdoc />
 	public override string NewId() => "gen_random_uuid()";
@@ -278,6 +318,9 @@ public class PostgreSqlDialect : SqlDialectBase
 	{
 		if (!skip.HasValue && !take.HasValue)
 			return;
+
+		if (!hasOrderBy)
+			sb.Append(" ORDER BY 1");
 
 		if (take.HasValue)
 			sb.Append($" LIMIT {take.Value}");
@@ -381,12 +424,17 @@ public class PostgreSqlDialect : SqlDialectBase
 
 		// SELECT shape:
 		//   rc.constraint_name, kcu.table_name, kcu.column_name,
-		//   ccu.table_name, ccu.column_name
+		//   ref_kcu.table_name, ref_kcu.column_name
 		// FROM information_schema.referential_constraints rc
 		// JOIN information_schema.key_column_usage kcu
-		//   ON kcu.constraint_name = rc.constraint_name AND kcu.constraint_schema = rc.constraint_schema
-		// JOIN information_schema.constraint_column_usage ccu
-		//   ON ccu.constraint_name = rc.unique_constraint_name AND ccu.constraint_schema = rc.unique_constraint_schema
+		//   ON kcu.constraint_catalog = rc.constraint_catalog
+		//  AND kcu.constraint_schema = rc.constraint_schema
+		//  AND kcu.constraint_name = rc.constraint_name
+		// JOIN information_schema.key_column_usage ref_kcu
+		//   ON ref_kcu.constraint_catalog = rc.unique_constraint_catalog
+		//  AND ref_kcu.constraint_schema = rc.unique_constraint_schema
+		//  AND ref_kcu.constraint_name = rc.unique_constraint_name
+		//  AND ref_kcu.ordinal_position = kcu.position_in_unique_constraint
 		// WHERE kcu.constraint_schema = @schema
 		// ORDER BY rc.constraint_name, kcu.ordinal_position
 		var sql = new Query()
@@ -394,15 +442,18 @@ public class PostgreSqlDialect : SqlDialectBase
 				.Column("rc", "constraint_name").Comma()
 				.Column("kcu", "table_name").Comma()
 				.Column("kcu", "column_name").Comma()
-				.Column("ccu", "table_name").Comma()
-				.Column("ccu", "column_name").NewLine()
+				.Column("ref_kcu", "table_name").Comma()
+				.Column("ref_kcu", "column_name").NewLine()
 			.From().Raw("information_schema.referential_constraints rc").NewLine()
 			.InnerJoin().Raw("information_schema.key_column_usage kcu").On()
-				.Column("kcu", "constraint_name").Equal().Column("rc", "constraint_name")
+				.Column("kcu", "constraint_catalog").Equal().Column("rc", "constraint_catalog")
 				.And().Column("kcu", "constraint_schema").Equal().Column("rc", "constraint_schema").NewLine()
-			.InnerJoin().Raw("information_schema.constraint_column_usage ccu").On()
-				.Column("ccu", "constraint_name").Equal().Column("rc", "unique_constraint_name")
-				.And().Column("ccu", "constraint_schema").Equal().Column("rc", "unique_constraint_schema").NewLine()
+				.And().Column("kcu", "constraint_name").Equal().Column("rc", "constraint_name").NewLine()
+			.InnerJoin().Raw("information_schema.key_column_usage ref_kcu").On()
+				.Column("ref_kcu", "constraint_catalog").Equal().Column("rc", "unique_constraint_catalog")
+				.And().Column("ref_kcu", "constraint_schema").Equal().Column("rc", "unique_constraint_schema").NewLine()
+				.And().Column("ref_kcu", "constraint_name").Equal().Column("rc", "unique_constraint_name")
+				.And().Column("ref_kcu", "ordinal_position").Equal().Column("kcu", "position_in_unique_constraint").NewLine()
 			.Where().NewLine()
 				.Column("kcu", "constraint_schema").Equal().Param("schema").NewLine()
 			.OrderBy().Column("rc", "constraint_name").Comma().Column("kcu", "ordinal_position")

@@ -79,7 +79,7 @@ public class DatabaseConnectionPair : NotifiableObject, IPersistable
 
 		return
 			Provider.EqualsIgnoreCase(other.Provider) &&
-			ConnectionString.EqualsIgnoreCase(other.ConnectionString);
+			ConnectionString == other.ConnectionString;
 	}
 
 	/// <inheritdoc />
@@ -89,7 +89,7 @@ public class DatabaseConnectionPair : NotifiableObject, IPersistable
 		{
 			var hash = 17;
 			hash = hash * 23 + (Provider is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(Provider));
-			hash = hash * 23 + (ConnectionString is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(ConnectionString));
+			hash = hash * 23 + (ConnectionString?.GetHashCode() ?? 0);
 			return hash;
 		}
 	}

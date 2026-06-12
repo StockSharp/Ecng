@@ -3,6 +3,8 @@
 namespace Ecng.Tests.Data;
 
 using System.ComponentModel;
+using System.Data.Common;
+using System.Linq.Expressions;
 
 using Ecng.Data;
 using Ecng.Data.Sql;
@@ -3734,6 +3736,709 @@ public class OrmIntegrationTests : BaseTestClass
 		var rows = await query.OrderBy(t => t.Id).ToArrayAsyncEx(CancellationToken);
 
 		rows.Length.AssertEqual(2);
+	}
+
+	#endregion
+
+	#region Audit regression: translator helpers
+
+	private static IQueryable<T> CreateAuditQueryable<T>()
+		=> new DefaultQueryable<T>(new DefaultQueryProvider<T>(new ThrowingQueryContext()), null);
+
+	/// <summary>
+	/// Minimal <see cref="IQueryContext"/> that throws on every terminal — the
+	/// translation tests only inspect generated SQL/parameters, never execute.
+	/// </summary>
+	private sealed class ThrowingQueryContext : IQueryContext
+	{
+		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+
+		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+
+		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
+			=> throw new NotSupportedException();
+
+		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+
+		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+	}
+
+	private static (string sql, IDictionary<string, (Type, object)> parameters) TranslateAudit<TSource>(IQueryable queryable)
+	{
+		var meta = SchemaRegistry.Get(typeof(TSource));
+		var asm = typeof(Database).Assembly;
+		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
+		var translator = Activator.CreateInstance(translatorType, [meta]);
+		var query = (Ecng.Data.Sql.Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [queryable.Expression]);
+		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
+		return (query.Render(SqlServerDialect.Instance), parameters);
+	}
+
+	#endregion
+
+	#region Audit regression: LINQ translation
+
+	/// <summary>
+	/// BUG: <c>SqlFunctions.IfNull</c> is documented as "SQL IFNULL (COALESCE)" but
+	/// <c>IfNullVisitor</c> emits <c>nullif(...)</c> — the semantic opposite. COALESCE
+	/// returns the first non-null argument; NULLIF returns NULL when the two arguments
+	/// are equal, so <c>.IfNull(x, def)</c> never substitutes the default.
+	/// Expected: the translation emits the dialect's coalesce function (SqlServer
+	/// <c>isnull</c>), like the neighbouring <c>IsNull</c> function does.
+	/// Actual: the translation emits <c>nullif(...)</c>.
+	/// File: Data.ORM\Sql\Expression\MethodVisitors.cs:1206.
+	/// </summary>
+	[TestMethod]
+	public void IfNull_TranslatesToCoalesce_NotNullIf()
+	{
+		var items = CreateAuditQueryable<TestItem>();
+
+		var query = items.Where(i => i.Name.IfNull("default") == "x");
+
+		var (sql, _) = TranslateAudit<TestItem>(query);
+
+		// SqlServerDialect.IsNullFunction == "isnull" (its COALESCE form).
+		sql.ContainsIgnoreCase("isnull(").AssertTrue($"IfNull must emit the dialect coalesce function, got: {sql}");
+		sql.ContainsIgnoreCase("nullif").AssertFalse($"IfNull must NOT emit NULLIF (inverted semantics), got: {sql}");
+	}
+
+	/// <summary>
+	/// BUG: <c>AddParamsFromSubquery(change:true)</c> merges sub-context parameters
+	/// under renamed keys <c>{key}_{n}</c>, but the SQL was already generated against
+	/// the ORIGINAL parameter names — there is no rewrite step. The rendered SQL then
+	/// references <c>@p0</c> while the parameter dictionary holds <c>p0_0</c>: the bind
+	/// silently misses or fails.
+	/// Expected: every <c>@param</c> referenced by the generated SQL has a matching key
+	/// in the parameter dictionary.
+	/// Actual: a parameterised GROUP BY key produces a SQL reference with no matching
+	/// dictionary key (renamed to <c>*_0</c>).
+	/// File: Data.ORM\Sql\Expression\Context.cs:559.
+	/// </summary>
+	[TestMethod]
+	public void GroupByParameterisedKey_SqlReferencesMatchEmittedParameters()
+	{
+		const string captured = "vip";
+
+		var items = CreateAuditQueryable<TestItem>();
+
+		// A new{...} GROUP BY key that captures a closure constant routes through
+		// VisitConstant -> parameterisation -> AddParamsFromSubquery(change:true).
+		var query = items
+			.GroupBy(i => new { Flag = i.Name == captured })
+			.Select(g => new { g.Key, Count = g.Count() });
+
+		var (sql, parameters) = TranslateAudit<TestItem>(query);
+
+		var referenced = ExtractParamRefs(sql);
+		IsTrue(referenced.Count > 0, $"Expected at least one @param reference in SQL, got: {sql}");
+
+		// Every emitted parameter must be referenced by the generated SQL. The bug
+		// renames the sub-context parameter to `{key}_{n}` AFTER the SQL was already
+		// rendered against the original name, so the dictionary carries an orphan
+		// `p0_0` that no `@p0_0` reference in the SQL ever binds — a leaked/duplicated
+		// parameter that the correct (offset-based) merge would never produce.
+		foreach (var key in parameters.Keys)
+		{
+			referenced.Contains(key).AssertTrue(
+				$"Parameter '{key}' is emitted but never referenced by the SQL " +
+				$"(orphan from key rename); referenced: {string.Join(",", referenced)}; sql: {sql}");
+		}
+
+		// And every SQL reference must resolve to an emitted parameter.
+		foreach (var name in referenced)
+		{
+			parameters.ContainsKey(name).AssertTrue(
+				$"SQL references @{name} but the parameter dictionary has no such key " +
+				$"(keys: {string.Join(",", parameters.Keys)}); sql: {sql}");
+		}
+	}
+
+	/// <summary>
+	/// Collects the bare parameter names referenced in <paramref name="sql"/>
+	/// (SqlServer prefix <c>@</c>), e.g. <c>@p0</c> -&gt; <c>p0</c>.
+	/// </summary>
+	private static List<string> ExtractParamRefs(string sql)
+	{
+		var names = new List<string>();
+		for (var i = 0; i < sql.Length; i++)
+		{
+			if (sql[i] != '@')
+				continue;
+
+			var j = i + 1;
+			while (j < sql.Length && (char.IsLetterOrDigit(sql[j]) || sql[j] == '_'))
+				j++;
+
+			if (j > i + 1)
+				names.Add(sql.Substring(i + 1, j - i - 1));
+
+			i = j - 1;
+		}
+		return names;
+	}
+
+	#endregion
+
+	#region Audit regression: query provider routing
+
+	/// <summary>
+	/// BUG: <c>DefaultQueryProvider.ResolveExecuteMethod</c> routes any result type that
+	/// implements <c>IEnumerable&lt;&gt;</c> into the enumerable branch and then calls
+	/// <c>resultType.GetGenericArguments().First()</c>. For a scalar <c>string</c> (which
+	/// implements <c>IEnumerable&lt;char&gt;</c>) <c>GetGenericArguments()</c> is empty,
+	/// so <c>.First()</c> throws InvalidOperationException instead of running the scalar
+	/// <c>ExecuteResult&lt;TSource,string&gt;</c>.
+	/// Expected: a synchronous scalar <c>string</c> terminal dispatches to ExecuteResult.
+	/// Actual: InvalidOperationException ("Sequence contains no elements").
+	/// File: Data.ORM\DefaultQueryProvider.cs:67.
+	/// </summary>
+	[TestMethod]
+	public void Execute_ScalarString_RoutesToExecuteResult_NotEnumerableBranch()
+	{
+		var ctx = new RecordingScalarContext { ResultValue = "the-name" };
+		IQueryProvider provider = new DefaultQueryProvider<TestItem>(ctx);
+
+		// A constant string expression stands in for a scalar terminal whose result
+		// type is string; the routing decision is purely type-driven.
+		var result = provider.Execute<string>(Expression.Constant("the-name"));
+
+		AreEqual("the-name", result);
+		ctx.ExecuteResultCalled.AssertTrue("Scalar string terminal must route to ExecuteResult, not the IEnumerable branch.");
+	}
+
+	/// <summary>
+	/// Records whether the scalar <c>ExecuteResult</c> path was taken and supplies a
+	/// canned string result for it.
+	/// </summary>
+	private sealed class RecordingScalarContext : IQueryContext
+	{
+		public string ResultValue { get; set; }
+		public bool ExecuteResultCalled { get; private set; }
+
+		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
+		{
+			ExecuteResultCalled = true;
+			return (TResult)(object)ResultValue;
+		}
+
+		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+
+		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+
+		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
+			=> throw new NotSupportedException();
+
+		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)
+			=> throw new NotSupportedException();
+	}
+
+	/// <summary>
+	/// BUG: <c>AnyAsyncEx</c> is implemented as
+	/// <c>FirstOrDefaultAsyncEx(...) is not null</c>. <c>T</c> has no <c>class</c>
+	/// constraint, so for a value-type projection (e.g. <c>Select(x =&gt; x.Id)</c>) an
+	/// empty result yields <c>default(long)</c> == 0, and boxed 0 <c>is not null</c> —
+	/// the method reports <see langword="true"/> for an empty sequence.
+	/// Expected: an empty value-type sequence yields <see langword="false"/>.
+	/// Actual: returns <see langword="true"/>.
+	/// File: Data.ORM\QueryableAsyncExtensions.cs:40.
+	/// </summary>
+	[TestMethod]
+	public async Task AnyAsyncEx_EmptyValueTypeSequence_ReturnsFalse()
+	{
+		// A queryable whose underlying provider yields an empty long sequence.
+		var source = new EmptyAsyncQueryable<long>();
+
+		var any = await source.AnyAsyncEx(CancellationToken);
+
+		any.AssertFalse("AnyAsyncEx over an empty value-type sequence must be false, not true.");
+	}
+
+	/// <summary>
+	/// Minimal queryable whose terminal evaluation returns an empty sequence both
+	/// synchronously and asynchronously — drives <c>FirstOrDefaultAsync</c>/<c>FirstOrDefault</c>.
+	/// </summary>
+	private sealed class EmptyAsyncQueryable<T> : IOrderedQueryable<T>, IQueryProvider, IAsyncEnumerable<T>
+	{
+		public EmptyAsyncQueryable()
+		{
+			Expression = Expression.Constant(this);
+		}
+
+		private EmptyAsyncQueryable(Expression expression)
+		{
+			Expression = expression;
+		}
+
+		public Type ElementType => typeof(T);
+		public Expression Expression { get; }
+		public IQueryProvider Provider => this;
+
+		public IEnumerator<T> GetEnumerator() => Enumerable.Empty<T>().GetEnumerator();
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+		{
+			await Task.Yield();
+			yield break;
+		}
+
+		IQueryable IQueryProvider.CreateQuery(Expression expression)
+			=> new EmptyAsyncQueryable<T>(expression);
+
+		IQueryable<TElement> IQueryProvider.CreateQuery<TElement>(Expression expression)
+			=> new EmptyAsyncQueryable<TElement>(expression);
+
+		object IQueryProvider.Execute(Expression expression)
+			=> default(T);
+
+		TResult IQueryProvider.Execute<TResult>(Expression expression)
+		{
+			// First/FirstOrDefault terminal over an empty sequence.
+			return default;
+		}
+	}
+
+	#endregion
+
+	#region Audit regression: RelationManyList cache
+
+	/// <summary>
+	/// BUG: <c>CopyToAsync(array, index)</c> passes <c>index</c> (a destination offset
+	/// per the <c>ICollection.CopyTo</c> contract) as the SOURCE <c>startIndex</c> to
+	/// <c>GetRangeAsync</c>, so the first <c>index</c> source entities are skipped AND
+	/// writing still starts at <c>array[index]</c> — items are simultaneously lost and
+	/// shifted. (On a bulk-load list it additionally InvalidCast-throws on the lazy
+	/// Skip() iterator.)
+	/// Expected: all source entities are copied into the destination starting at
+	/// <c>array[index]</c>, none skipped.
+	/// Actual: the first <c>index</c> entities are dropped.
+	/// File: Data.ORM\RelationManyList.cs:412.
+	/// </summary>
+	[TestMethod]
+	public async Task CopyToAsync_NonZeroIndex_CopiesAllEntitiesWithoutSkipping()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			GroupItems =
+			[
+				new TestItem { Id = 1, Name = "A" },
+				new TestItem { Id = 2, Name = "B" },
+				new TestItem { Id = 3, Name = "C" },
+			],
+		};
+
+		var array = new TestItem[4];
+
+		await list.CopyToAsync(array, 1, CancellationToken);
+
+		// Destination offset 1 must hold the FULL source set [1,2,3]; slot 0 stays null.
+		array[0].AssertNull();
+		array[1].AssertNotNull("First source entity must not be skipped.");
+		array[1].Id.AssertEqual(1L);
+		array[2].AssertNotNull();
+		array[2].Id.AssertEqual(2L);
+		array[3].AssertNotNull();
+		array[3].Id.AssertEqual(3L);
+	}
+
+	/// <summary>
+	/// BUG: <c>AddAsync</c> on a bulk-loaded list calls <c>dict.Add(id, item)</c>. If a
+	/// concurrent (or, here, a pre-populated) cache already holds that id, <c>Add</c>
+	/// throws ArgumentException for a row that was successfully saved. <c>UpdateAsync</c>
+	/// already uses <c>TryAdd</c> for exactly this reason; <c>AddAsync</c> does not.
+	/// Expected: adding an entity whose id is already cached does not throw — the cache
+	/// entry is replaced/kept and the add succeeds.
+	/// Actual: ArgumentException ("An item with the same key has already been added").
+	/// File: Data.ORM\RelationManyList.cs:368.
+	/// </summary>
+	[TestMethod]
+	public async Task AddAsync_BulkLoad_IdAlreadyCached_DoesNotThrow()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			// Bulk cache is initialised with id 7 already present.
+			GroupItems = [new TestItem { Id = 7, Name = "existing" }],
+		};
+
+		// Force bulk init so the cache dictionary already contains id 7.
+		await list.GetRangeAsync(0, long.MaxValue, false, null, ListSortDirection.Ascending, CancellationToken);
+
+		// OnAdd echoes the same id back; the production code then re-adds it to the cache.
+		var added = await list.AddAsync(new TestItem { Id = 7, Name = "again" }, CancellationToken);
+
+		added.AssertNotNull();
+		added.Id.AssertEqual(7L);
+	}
+
+	/// <summary>
+	/// BUG: <c>CountAsync(deleted:true)</c> on a bulk-load list warms the cache via
+	/// <c>GetRangeAsync(..., deleted:true, ...)</c>, but that path does NOT populate the
+	/// bulk dictionary (only <c>!deleted</c> does); the method then returns
+	/// <c>dict.Count</c> — 0 on a fresh list — instead of the storage count of deleted
+	/// rows.
+	/// Expected: the deleted count comes from storage (here, the configured storage count).
+	/// Actual: returns the (empty) bulk-cache size, 0.
+	/// File: Data.ORM\RelationManyList.cs:323.
+	/// </summary>
+	[TestMethod]
+	public async Task CountAsync_BulkLoad_Deleted_ReturnsStorageCount_NotEmptyCache()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GetCountResult = 5,
+			// Non-deleted view is empty so the bulk cache, if (wrongly) consulted, is 0.
+			GroupItems = [],
+		};
+
+		var deletedCount = await list.CountAsync(true, CancellationToken);
+
+		deletedCount.AssertEqual(5);
+	}
+
+	/// <summary>
+	/// BUG: <c>RemoveAsync</c> unconditionally decrements the cached <c>_count</c> even
+	/// when <c>OnRemove</c> returns <see langword="false"/> (storage DELETE affected no
+	/// rows). With <c>CacheCount</c> on, removing a non-existent entity silently skews the
+	/// count downward; repeated failures can drive <c>CountAsync</c> negative.
+	/// Expected: the cached count is only decremented when the storage delete succeeded.
+	/// Actual: the count is decremented despite the failed delete.
+	/// File: Data.ORM\RelationManyList.cs:437.
+	/// </summary>
+	[TestMethod]
+	public async Task RemoveAsync_StorageDeleteFailed_DoesNotDecrementCachedCount()
+	{
+		var list = new RemoveFailsList(new NullStorage())
+		{
+			CacheCount = true,
+			GetCountResult = 3,
+		};
+
+		// Prime the cached count to 3.
+		(await list.CountAsync(CancellationToken)).AssertEqual(3);
+
+		// OnRemove returns false (no rows deleted) — count must stay at 3.
+		var removed = await list.RemoveAsync(new TestItem { Id = 999 }, CancellationToken);
+		removed.AssertFalse();
+
+		(await list.CountAsync(CancellationToken)).AssertEqual(3);
+	}
+
+	/// <summary>
+	/// <see cref="TestRelationManyList"/> variant whose <c>OnRemove</c> reports a failed
+	/// storage delete (no rows affected).
+	/// </summary>
+	private sealed class RemoveFailsList(IStorage storage) : RelationManyList<TestItem, long>(storage)
+	{
+		protected override ValueTask<TestItem> OnAdd(TestItem entity, CancellationToken cancellationToken)
+			=> new(entity);
+
+		protected override ValueTask<TestItem> OnUpdate(TestItem entity, CancellationToken cancellationToken)
+			=> new(entity);
+
+		protected override ValueTask<bool> OnRemove(TestItem entity, CancellationToken cancellationToken)
+			=> new(false);
+
+		protected override ValueTask OnClear(CancellationToken cancellationToken)
+			=> default;
+
+		protected override ValueTask<long> OnGetCount(bool deleted, CancellationToken cancellationToken)
+			=> new(GetCountResult);
+
+		protected override ValueTask<TestItem[]> OnGetGroup(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+			=> new(Array.Empty<TestItem>());
+
+		public override ValueTask<bool> ContainsAsync(TestItem item, CancellationToken cancellationToken)
+			=> new(false);
+
+		protected override ValueTask<bool> IsSaved(TestItem item, CancellationToken cancellationToken)
+			=> new(item.Id > 0);
+
+		public long GetCountResult { get; set; }
+	}
+
+	#endregion
+
+	#region Audit regression: EntityCacheStore (internal, reached via reflection)
+
+	private static object CreateCacheStore()
+	{
+		var type = typeof(Database).Assembly.GetType("Ecng.Data.EntityCacheStore");
+		IsNotNull(type, "EntityCacheStore type must be resolvable from the Data.ORM assembly.");
+		return Activator.CreateInstance(type, nonPublic: true);
+	}
+
+	private static (Type, string, object) CacheKey(string name)
+		=> (typeof(TestItem), name, (object)name);
+
+	private static void StoreAdd(object store, (Type, string, object) key, object entity, bool complete)
+	{
+		var entries = (System.Collections.IDictionary)store.GetType().GetProperty("Entries").GetValue(store);
+		entries[key] = (entity, complete);
+	}
+
+	private static bool StoreContains(object store, (Type, string, object) key)
+	{
+		var entries = (System.Collections.IDictionary)store.GetType().GetProperty("Entries").GetValue(store);
+		return entries.Contains(key);
+	}
+
+	private static void StoreTouch(object store, (Type, string, object) key)
+		=> store.GetType().GetMethod("Touch").Invoke(store, [key]);
+
+	private static void StoreSetTimeout(object store, TimeSpan value)
+		=> store.GetType().GetProperty("Timeout").SetValue(store, value);
+
+	private static void StoreSetMaxEntries(object store, int value)
+		=> store.GetType().GetProperty("MaxEntries").SetValue(store, value);
+
+	private static async Task StoreTrimExpired(object store, CancellationToken token)
+	{
+		var vt = (ValueTask)store.GetType().GetMethod("TrimExpiredAsync").Invoke(store, [token]);
+		await vt;
+	}
+
+	/// <summary>
+	/// BUG: <c>EntityCacheStore.Touch</c> evicts the least-recently-used entry when over
+	/// <c>MaxEntries</c> WITHOUT checking the <c>complete</c> flag, so an incomplete entry
+	/// that an active BulkScope still depends on can be dropped, making the subsequent
+	/// hydration read throw KeyNotFoundException.
+	/// Expected: incomplete (complete == false) entries are never chosen as the LRU victim.
+	/// Actual: the incomplete entry is evicted once the size cap is exceeded.
+	/// File: Data.ORM\EntityCacheStore.cs:77.
+	/// </summary>
+	[TestMethod]
+	public void Touch_DoesNotEvictIncompleteEntries()
+	{
+		var store = CreateCacheStore();
+		StoreSetMaxEntries(store, 1);
+
+		var incomplete = CacheKey("pending");
+		var complete = CacheKey("loaded");
+
+		// The incomplete entry is touched first (becomes the LRU tail).
+		StoreAdd(store, incomplete, new TestItem { Id = 1 }, complete: false);
+		StoreTouch(store, incomplete);
+
+		// A second, complete entry pushes the count over MaxEntries == 1.
+		StoreAdd(store, complete, new TestItem { Id = 2 }, complete: true);
+		StoreTouch(store, complete);
+
+		StoreContains(store, incomplete).AssertTrue(
+			"Incomplete cache entry (still needed by a BulkScope) must not be LRU-evicted.");
+	}
+
+	/// <summary>
+	/// BUG: <c>EntityCacheStore.Touch</c> records a timestamp only while
+	/// <c>Timeout != TimeSpan.MaxValue</c>. If the timeout is lowered at runtime (a
+	/// documented scenario), entries cached earlier carry no timestamp and
+	/// <c>TrimExpiredAsync</c> — which enumerates only timestamped entries — can never
+	/// TTL-evict them, defeating the OOM guard for the oldest part of the cache.
+	/// Expected: after lowering the timeout and trimming, the pre-existing untimestamped
+	/// entry is evicted.
+	/// Actual: the untimestamped entry survives forever.
+	/// File: Data.ORM\EntityCacheStore.cs:64.
+	/// </summary>
+	[TestMethod]
+	public async Task TrimExpired_EvictsEntriesCachedBeforeTimeoutWasLowered()
+	{
+		var store = CreateCacheStore();
+
+		// Cached while TTL is disabled: Touch records no timestamp.
+		var early = CacheKey("early");
+		StoreAdd(store, early, new TestItem { Id = 1 }, complete: true);
+		StoreTouch(store, early);
+
+		// Operator lowers the TTL at runtime.
+		StoreSetTimeout(store, TimeSpan.FromMilliseconds(1));
+
+		// Give the (already old) entry time to exceed the new TTL.
+		await Task.Delay(30, CancellationToken);
+
+		await StoreTrimExpired(store, CancellationToken);
+
+		StoreContains(store, early).AssertFalse(
+			"An entry cached before the timeout was lowered must still be TTL-evictable.");
+	}
+
+	#endregion
+
+	#region Audit regression: pagination SQL cache
+
+	/// <summary>
+	/// BUG: <c>Database.ReadAllAsync</c> renders skip/take through
+	/// <c>Query.CreateSelect</c>, which INLINES the offset/limit as SQL literals
+	/// (OFFSET 20, FETCH NEXT 20). Every distinct page therefore yields a distinct SQL
+	/// string, and each is cached forever as its own DatabaseCommand in
+	/// <c>_commandsByText</c> — an unbounded leak while paging large tables.
+	/// Expected: pagination is parameterised, so the SQL text (the cache key) is the same
+	/// regardless of the page offset.
+	/// Actual: two different offsets render two different SQL strings.
+	/// File: Data.ORM\Database.cs:446.
+	/// </summary>
+	[TestMethod]
+	public void Pagination_RendersOffsetIndependentSql_SoCommandCacheIsBounded()
+	{
+		var dialect = SqlServerDialect.Instance;
+		var orderBy = $"{dialect.QuoteIdentifier("Id")} asc";
+
+		var page0 = Ecng.Data.Sql.Query.CreateSelect("Ecng_TestItem", null, orderBy, 0, 20).Render(dialect);
+		var page1 = Ecng.Data.Sql.Query.CreateSelect("Ecng_TestItem", null, orderBy, 20, 20).Render(dialect);
+		var page2 = Ecng.Data.Sql.Query.CreateSelect("Ecng_TestItem", null, orderBy, 40, 20).Render(dialect);
+
+		AreEqual(page0, page1,
+			$"Paging must not inline the offset as a literal — otherwise every page is a new cache entry.\npage0: {page0}\npage1: {page1}");
+		AreEqual(page1, page2,
+			$"Paging must not inline the offset as a literal.\npage1: {page1}\npage2: {page2}");
+	}
+
+	#endregion
+
+	#region Audit regression: Database.CreateConnectionAsync leak
+
+	/// <summary>
+	/// BUG: <c>Database.CreateConnectionAsync</c> opens a freshly created
+	/// <see cref="DbConnection"/> with <c>await connection.OpenAsync(...)</c> but has no
+	/// try/catch — if OpenAsync faults (server down, bad credentials, timeout) the
+	/// connection object is never disposed and is left to the finalizer, accumulating
+	/// under retry/health-check loops.
+	/// Expected: when OpenAsync throws, the connection is disposed before the exception
+	/// propagates.
+	/// Actual: the connection leaks (Dispose is never called).
+	/// File: Data.ORM\Database.cs:183.
+	/// </summary>
+	[TestMethod]
+	public async Task CreateConnectionAsync_OpenFails_DisposesConnection()
+	{
+		var conn = new ThrowOnOpenConnection();
+		var factory = new SingleConnectionFactory(conn);
+		using var db = new Database("LeakTest", "fake", factory, SqlServerDialect.Instance);
+
+		await ThrowsAsync<InvalidOperationException>(
+			async () => await db.CreateConnectionAsync(CancellationToken));
+
+		conn.WasDisposed.AssertTrue("A connection whose OpenAsync throws must be disposed, not leaked.");
+	}
+
+	private sealed class SingleConnectionFactory(DbConnection connection) : DbProviderFactory
+	{
+		public override DbConnection CreateConnection() => connection;
+	}
+
+	/// <summary>
+	/// <see cref="DbConnection"/> whose async open always faults; records whether it was
+	/// disposed.
+	/// </summary>
+	private sealed class ThrowOnOpenConnection : DbConnection
+	{
+		public bool WasDisposed { get; private set; }
+
+		public override string ConnectionString { get; set; } = string.Empty;
+		public override string Database => "fake";
+		public override string DataSource => "fake";
+		public override string ServerVersion => "0.0";
+		public override System.Data.ConnectionState State => System.Data.ConnectionState.Closed;
+
+		public override void ChangeDatabase(string databaseName) { }
+		public override void Close() { }
+		public override void Open() => throw new InvalidOperationException("open failed");
+
+		public override Task OpenAsync(CancellationToken cancellationToken)
+			=> throw new InvalidOperationException("open failed");
+
+		protected override DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
+			=> throw new NotSupportedException();
+
+		protected override DbCommand CreateDbCommand()
+			=> throw new NotSupportedException();
+
+		protected override void Dispose(bool disposing)
+		{
+			WasDisposed = true;
+			base.Dispose(disposing);
+		}
+	}
+
+	#endregion
+
+	#region Audit regression: Database integration (SQLite)
+
+	/// <summary>
+	/// BUG: <c>Database.UpdateAsync</c> fills the WHERE-key value from the entity only
+	/// when the key column is literally named <c>"Id"</c>
+	/// (<c>else if (col.Name == "Id")</c>). For an entity whose identity is declared via
+	/// <c>[Identity]</c> on a differently named column, the key value is never supplied,
+	/// the parameter binds to <c>DBNull</c>, and the UPDATE runs as
+	/// <c>WHERE [Key] = NULL</c> — matching no rows — yet <c>UpdateAsync</c> reports
+	/// success: silent data loss.
+	/// Expected: the row is actually updated (re-read shows the new value).
+	/// Actual: the UPDATE is a no-op; the row keeps its old value.
+	/// File: Data.ORM\Database.cs:506.
+	/// </summary>
+	[TestMethod]
+	public async Task UpdateAsync_NonIdIdentity_ActuallyUpdatesRow()
+	{
+		const string provider = DatabaseProviderRegistry.SQLite;
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		var meta = SchemaRegistry.Get(typeof(AuditNonIdEntity));
+		DbTestHelper.EnsureTable(provider, meta, autoIncrement: true);
+		DbTestHelper.DeleteAll(provider, meta.TableName);
+
+		using var db = DbTestHelper.CreateDatabase(provider);
+		IStorage storage = db;
+
+		var entity = new AuditNonIdEntity { Title = "before" };
+		await storage.AddAsync(entity, CancellationToken);
+		entity.EntityKey.AssertGreater(0L);
+
+		entity.Title = "after";
+		await storage.UpdateAsync(entity, CancellationToken);
+
+		await storage.ClearCacheAsync(CancellationToken);
+
+		var loaded = await storage.GetByIdAsync<long, AuditNonIdEntity>(entity.EntityKey, CancellationToken);
+		loaded.AssertNotNull();
+		loaded.Title.AssertEqual("after",
+			"UpdateAsync must update an entity whose identity column is not named 'Id'.");
+
+		DbTestHelper.DropTable(provider, meta.TableName);
+	}
+
+	/// <summary>
+	/// Entity whose identity is declared via <see cref="IdentityAttribute"/> on a column
+	/// NOT named <c>Id</c> — the exact shape that defeats the hardcoded <c>"Id"</c>
+	/// fallback in <c>UpdateAsync</c>. <c>Save</c> deliberately does not write the
+	/// identity (the repository convention) so the fallback branch is exercised.
+	/// </summary>
+	[Entity(Name = "Ecng_AuditNonId")]
+	public class AuditNonIdEntity : IDbPersistable
+	{
+		[Identity]
+		public long EntityKey { get; set; }
+
+		public string Title { get; set; }
+
+		object IDbPersistable.GetIdentity() => EntityKey;
+		void IDbPersistable.SetIdentity(object id) => EntityKey = id.To<long>();
+
+		public void Save(SettingsStorage storage)
+		{
+			storage.Set(nameof(Title), Title);
+		}
+
+		public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+		{
+			Title = storage.GetValue<string>(nameof(Title));
+			return default;
+		}
 	}
 
 	#endregion

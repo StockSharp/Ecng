@@ -502,6 +502,101 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Finding #3: generated [RelationSingle] columns must set ReferencedEntityType
+
+	/// <summary>
+	/// BUG: EntityGenerator.EmitMetaColumns emits only Name/ClrType/nullability for
+	/// [RelationSingle] columns and never sets <see cref="SchemaColumn.ReferencedEntityType"/>.
+	/// Expected: the generated FK column references the navigation property's entity type
+	/// (the reflection path sets <c>ReferencedEntityType = prop.PropertyType</c> —
+	/// SchemaRegistry.cs:219). Actual: ReferencedEntityType is null on the generated
+	/// schema, so SchemaMigrator silently drops the FK constraint.
+	/// Citation: Data.Entities.Generator\EntityGenerator.cs:656.
+	/// </summary>
+	[TestMethod]
+	public void Generated_RelationSingle_LongRef_SetsReferencedEntityType()
+	{
+		// GenTestGuidIdEntity.Order is [RelationSingle] -> GenTestOrderEntity.
+		var schema = SchemaRegistry.Get(typeof(GenTestGuidIdEntity));
+		var col = schema.Columns.First(c => c.Name == "Order");
+
+		AreEqual(typeof(GenTestOrderEntity), col.ReferencedEntityType);
+	}
+
+	/// <summary>
+	/// BUG: same root cause as above — the generated FK column for a reference to a
+	/// Guid-identity entity must carry its referenced entity type.
+	/// Expected: ReferencedEntityType == typeof(GenTestGuidIdEntity).
+	/// Actual: null (generator never emits ReferencedEntityType).
+	/// Citation: Data.Entities.Generator\EntityGenerator.cs:656.
+	/// </summary>
+	[TestMethod]
+	public void Generated_RelationSingle_GuidRef_SetsReferencedEntityType()
+	{
+		// GenTestLongRefGuidEntity.GuidRef is [RelationSingle] -> GenTestGuidIdEntity.
+		var schema = SchemaRegistry.Get(typeof(GenTestLongRefGuidEntity));
+		var col = schema.Columns.First(c => c.Name == "GuidRef");
+
+		AreEqual(typeof(GenTestGuidIdEntity), col.ReferencedEntityType);
+	}
+
+	/// <summary>
+	/// BUG: EntityGenerator.EmitMetaColumnsRecursive (the inner-schema path) also never
+	/// emits ReferencedEntityType for a [RelationSingle] living inside a flattened inner
+	/// schema. The reflection path sets it for the flattened FK column
+	/// (FlattenInnerSchema -> SchemaRegistry.cs:451).
+	/// Expected: the flattened "ShippingAddressDeliveredBy" column references
+	/// GenTestOrderEntity. Actual: null.
+	/// Citation: Data.Entities.Generator\EntityGenerator.cs:708.
+	/// </summary>
+	[TestMethod]
+	public void Generated_RelationSingle_InsideInnerSchema_SetsReferencedEntityType()
+	{
+		// GenTestAddressWithFk.DeliveredBy is [RelationSingle] -> GenTestOrderEntity,
+		// flattened into the parent column "ShippingAddressDeliveredBy".
+		var schema = SchemaRegistry.Get(typeof(GenTestEntityWithRelationSingleInsideInnerSchema));
+		var col = schema.Columns.First(c => c.Name == "ShippingAddressDeliveredBy");
+
+		AreEqual(typeof(GenTestOrderEntity), col.ReferencedEntityType);
+	}
+
+	#endregion
+
+	#region Finding #6: null inner-schema object must survive a Save/LoadAsync round-trip
+
+	/// <summary>
+	/// BUG: EntityGenerator.EmitLoadInnerSchema emits <c>prop = new InnerType { ... }</c>
+	/// unconditionally, even for a [Column(IsNullable = true)] inner schema saved as null.
+	/// After saving an entity whose nullable inner property is null (all flattened columns
+	/// written as NULL) and loading it back, the property is reconstructed as a non-null
+	/// instance with default members instead of staying null — a lossy round-trip.
+	/// Expected: a null inner object round-trips back to null.
+	/// Actual: LoadAsync materializes a non-null GenTestAddress with null Street/City.
+	/// Citation: Data.Entities.Generator\EntityGenerator.cs:422.
+	/// </summary>
+	[TestMethod]
+	public async Task Generated_NullableInnerSchema_NullRoundTripsToNull()
+	{
+		var entity = new GenTestNullableInnerEntity
+		{
+			Id = 1,
+			Address = null,
+			Code = "c",
+		};
+
+		var storage = new SettingsStorage();
+		entity.Save(storage);
+
+		var loaded = new GenTestNullableInnerEntity();
+		await loaded.LoadAsync(storage, null, CancellationToken);
+
+		AreEqual("c", loaded.Code);
+		// The nullable inner object was saved as null, so it must load back as null.
+		IsNull(loaded.Address, "A null nullable inner schema must survive the Save/LoadAsync round-trip");
+	}
+
+	#endregion
 }
 
 #endif

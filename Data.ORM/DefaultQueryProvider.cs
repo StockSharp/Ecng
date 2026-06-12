@@ -64,20 +64,27 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 
 	private MethodInfo ResolveExecuteMethod(Type resultType)
 	{
-		if (resultType.GetGenericType(typeof(IEnumerable<>)) is not null)
-			return _execEnum.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+		// Route to the enumerable/async-enumerable branch only when the result type is
+		// itself the constructed IEnumerable<>/IAsyncEnumerable<> sequence terminal. A
+		// scalar result type that merely implements IEnumerable<> (e.g. string, which is
+		// IEnumerable<char>) must fall through to the scalar ExecuteResult path instead.
+		if (IsConstructedGeneric(resultType, typeof(IEnumerable<>)))
+			return _execEnum.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
 
-		if (resultType.GetGenericType(typeof(IAsyncEnumerable<>)) is not null)
-			return _execEnumAsync.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+		if (IsConstructedGeneric(resultType, typeof(IAsyncEnumerable<>)))
+			return _execEnumAsync.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
 
 		if (resultType == typeof(ValueTask))
 			return _execAsync.Make(typeof(TEntity));
 
-		if (resultType.GetGenericType(typeof(ValueTask<>)) is not null)
-			return _execResultAsync.Make(typeof(TEntity), resultType.GetGenericArguments().First());
+		if (IsConstructedGeneric(resultType, typeof(ValueTask<>)))
+			return _execResultAsync.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
 
 		return _execResult.Make(typeof(TEntity), resultType);
 	}
+
+	private static bool IsConstructedGeneric(Type type, Type definition)
+		=> type.IsGenericType && type.GetGenericTypeDefinition() == definition;
 
 	async ValueTask<IQueryable> IDefaultQueryProvider.TryInitBulkLoad(CancellationToken cancellationToken)
 		=> _list is null ? default : await _list.TryInitBulkLoad(cancellationToken).NoWait();}

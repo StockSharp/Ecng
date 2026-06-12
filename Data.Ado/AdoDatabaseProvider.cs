@@ -88,6 +88,13 @@ internal class AdoTable : IDatabaseTable
 	private readonly AdoConnection _connection;
 	private ISqlDialect Dialect => _connection.Dialect;
 
+	// Hard upper bound on the number of row value tuples a single
+	// INSERT ... VALUES statement may carry. SQL Server's table value
+	// constructor rejects more than 1000 rows (error 10738); this is the
+	// lowest common ceiling across supported providers, so it is applied
+	// universally in addition to the per-statement parameter limit.
+	private const int _maxRowsPerValuesStatement = 1000;
+
 	public AdoTable(AdoConnection connection, string name)
 	{
 		_connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -165,8 +172,12 @@ internal class AdoTable : IDatabaseTable
 
 		var columnNames = columns.Select(c => Dialect.QuoteIdentifier(c)).JoinCommaSpace();
 
-		// Calculate batch size based on number of columns to stay within parameter limit
-		var batchSize = 1.Max(Dialect.MaxParameters / columns.Count);
+		// Calculate batch size based on number of columns to stay within parameter limit,
+		// and additionally cap the number of row tuples per statement at the hard
+		// table-value-constructor limit (SQL Server allows at most 1000 row expressions
+		// in a single INSERT ... VALUES; error 10738). 1000 is the lowest common ceiling
+		// across providers, so applying it universally keeps every statement valid.
+		var batchSize = 1.Max(Dialect.MaxParameters / columns.Count).Min(_maxRowsPerValuesStatement);
 
 		using var transaction = _connection.Connection.BeginTransaction();
 
@@ -188,16 +199,26 @@ internal class AdoTable : IDatabaseTable
 					var row = batch[rowIdx];
 					var paramNames = new List<string>(columns.Count);
 
-					foreach (var column in columns)
+					for (var colIdx = 0; colIdx < columns.Count; colIdx++)
 					{
-						var paramName = $"{column}_{rowIdx}";
-						paramNames.Add(Dialect.ParameterPrefix + paramName);
+						var column = columns[colIdx];
+
+						// Build parameter names from positional indices, not from the raw
+						// column text. A column may legally contain characters (spaces,
+						// quotes) that are valid only when quoted as an identifier but are
+						// invalid inside an ADO.NET parameter name (e.g. "order date").
+						var paramName = $"{Dialect.ParameterPrefix}c{colIdx}_{rowIdx}";
+						paramNames.Add(paramName);
 
 						var param = cmd.CreateParameter();
-						param.ParameterName = Dialect.ParameterPrefix + paramName;
+						param.ParameterName = paramName;
 						var value = row.TryGetValue(column, out var val) ? val : null;
 						param.Value = Dialect.ConvertToDbValue(value, value?.GetType() ?? typeof(object));
 						cmd.Parameters.Add(param);
+
+						// Apply dialect-specific parameter massaging (e.g. PostgreSQL
+						// DateTime/timestamptz binding), mirroring the ORM command path.
+						Dialect.PrepareParameter(param);
 					}
 
 					valuesClauses.Add($"({paramNames.JoinCommaSpace()})");
@@ -212,7 +233,16 @@ internal class AdoTable : IDatabaseTable
 		}
 		catch
 		{
-			transaction.Rollback();
+			// Roll back best-effort: a Rollback failure (e.g. the connection is already
+			// dead) must not replace and hide the original fault from the caller.
+			try
+			{
+				transaction.Rollback();
+			}
+			catch
+			{
+			}
+
 			throw;
 		}
 	}
@@ -224,6 +254,12 @@ internal class AdoTable : IDatabaseTable
 		var orderByClause = BuildOrderByClause(orderBy);
 
 		var sql = Query.CreateSelect(Name, whereClause, orderByClause, skip, take).Render(Dialect);
+
+		if (skip.HasValue)
+			parameters[Query.SkipParameterName] = skip.Value;
+
+		if (take.HasValue)
+			parameters[Query.TakeParameterName] = take.Value;
 
 		return await QueryAsync(sql, parameters, cancellationToken).NoWait();
 	}
@@ -271,31 +307,38 @@ internal class AdoTable : IDatabaseTable
 
 	#region Helpers
 
-	private async Task<DbCommand> PrepareCommandAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
+	private DbCommand PrepareCommand(string sql, IDictionary<string, object> parameters)
 	{
-		await _connection.EnsureOpenAsync(cancellationToken).NoWait();
-
 		var cmd = _connection.Connection.CreateCommand();
 		cmd.CommandText = sql;
 		AddParameters(cmd, parameters);
 		return cmd;
 	}
 
-	// Light retry policy for transient driver/network errors. Provider-
-	// specific transient codes (deadlock victim, network reset, broker
-	// timeout) bubble up as DbException with various error codes; we
+	// Light retry policy for transient driver/network errors raised while
+	// establishing the connection (before any statement is sent). Provider-
+	// specific transient codes (network reset, broker timeout, login
+	// throttling) bubble up as DbException with various error codes; we
 	// avoid pinning to one DBMS by retrying on any DbException up to a
 	// small fixed number of times with exponential backoff.
+	//
+	// IMPORTANT: the retry covers only the connection-open phase. The actual
+	// command execution is NOT retried, because a write statement
+	// (INSERT/UPDATE/DELETE) is not idempotent: a transient fault may be
+	// raised after the statement has already reached the server, and blindly
+	// replaying it would duplicate or corrupt data. So once the command is
+	// transmitted it runs exactly once, even if it throws.
 	private const int _retryCount = 3;
 	private static readonly TimeSpan _retryBaseDelay = TimeSpan.FromMilliseconds(100);
 
-	private static async Task<T> WithRetry<T>(Func<Task<T>> op, CancellationToken cancellationToken)
+	private async Task EnsureOpenWithRetryAsync(CancellationToken cancellationToken)
 	{
 		for (var attempt = 0; ; attempt++)
 		{
 			try
 			{
-				return await op().NoWait();
+				await _connection.EnsureOpenAsync(cancellationToken).NoWait();
+				return;
 			}
 			catch (DbException) when (attempt < _retryCount)
 			{
@@ -307,16 +350,20 @@ internal class AdoTable : IDatabaseTable
 
 	private async Task<int> ExecuteAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
-		return await WithRetry(async () =>
-		{
-			using var cmd = await PrepareCommandAsync(sql, parameters, cancellationToken).NoWait();
-			return await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
-		}, cancellationToken).NoWait();
+		// Retry only the pre-send connection-open phase; the write itself
+		// must execute at most once (see _retryCount remarks above).
+		await EnsureOpenWithRetryAsync(cancellationToken).NoWait();
+
+		using var cmd = PrepareCommand(sql, parameters);
+		return await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 	}
 
 	private async Task<IEnumerable<IDictionary<string, object>>> QueryAsync(string sql, IDictionary<string, object> parameters, CancellationToken cancellationToken)
 	{
-		using var cmd = await PrepareCommandAsync(sql, parameters, cancellationToken).NoWait();
+		// SELECT is idempotent; the connection-open phase may still be retried.
+		await EnsureOpenWithRetryAsync(cancellationToken).NoWait();
+
+		using var cmd = PrepareCommand(sql, parameters);
 
 		var results = new List<IDictionary<string, object>>();
 		using var reader = await cmd.ExecuteReaderAsync(cancellationToken).NoWait();
@@ -344,6 +391,23 @@ internal class AdoTable : IDatabaseTable
 		var conditions = new List<string>();
 		var paramIndex = 0;
 
+		// Produces the next free p{n} base name. The parameter dictionary may already
+		// contain SET assignments keyed by raw column name (see UpdateAsync), so a column
+		// literally named like a filter parameter (e.g. "p0") would otherwise be clobbered
+		// by the indexer write below. Skipping names already present keeps SET and WHERE
+		// parameters in disjoint slots without changing the SET parameter naming contract.
+		string NextParamName()
+		{
+			string name;
+			do
+			{
+				name = $"p{paramIndex++}";
+			}
+			while (parameters.ContainsKey(name));
+
+			return name;
+		}
+
 		foreach (var filter in filterList)
 		{
 			// Handle NULL values specially - SQL requires IS NULL / IS NOT NULL syntax
@@ -359,15 +423,12 @@ internal class AdoTable : IDatabaseTable
 				continue;
 			}
 
-			var paramName = $"p{paramIndex++}";
-
 			if (filter.Operator == ComparisonOperator.In && filter.Value is System.Collections.IEnumerable enumerable && filter.Value is not string)
 			{
 				var paramNames = new List<string>();
-				var idx = 0;
 				foreach (var val in enumerable)
 				{
-					var inParamName = $"{paramName}_{idx++}";
+					var inParamName = NextParamName();
 					paramNames.Add(inParamName);
 					parameters[inParamName] = val;
 				}
@@ -376,13 +437,24 @@ internal class AdoTable : IDatabaseTable
 			}
 			else
 			{
-				conditions.Add(Query.CreateBuildCondition(filter.Column, filter.Operator, paramName).Render(Dialect));
+				var paramName = NextParamName();
+				conditions.Add(Query.CreateBuildCondition(filter.Column, filter.Operator, paramName, IsNumericComparison(filter)).Render(Dialect));
 				parameters[paramName] = filter.Value;
 			}
 		}
 
 		return conditions.Join(" AND ");
 	}
+
+	private static bool IsNumericComparison(FilterCondition filter)
+		=> (filter.Operator is
+			ComparisonOperator.Equal or
+			ComparisonOperator.NotEqual or
+			ComparisonOperator.Greater or
+			ComparisonOperator.GreaterOrEqual or
+			ComparisonOperator.Less or
+			ComparisonOperator.LessOrEqual)
+			&& (filter.Value?.GetType().GetUnderlyingType() ?? filter.Value?.GetType())?.IsNumeric() == true;
 
 	private string BuildOrderByClause(IEnumerable<OrderByCondition> orderBy)
 	{
@@ -409,6 +481,10 @@ internal class AdoTable : IDatabaseTable
 			param.ParameterName = Dialect.ParameterPrefix + kv.Key;
 			param.Value = Dialect.ConvertToDbValue(kv.Value, kv.Value?.GetType() ?? typeof(object));
 			cmd.Parameters.Add(param);
+
+			// Apply dialect-specific parameter massaging (e.g. PostgreSQL
+			// DateTime/timestamptz binding), mirroring the ORM command path.
+			Dialect.PrepareParameter(param);
 		}
 	}
 

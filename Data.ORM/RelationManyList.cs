@@ -317,6 +317,13 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// </summary>
 	public async ValueTask<int> CountAsync(bool deleted, CancellationToken cancellationToken)
 	{
+		// The bulk cache and the _count cache both track only the non-deleted view
+		// (the dictionary is populated solely for !deleted, and _count is maintained by
+		// Add/Remove of non-deleted rows). Counting deleted rows must therefore bypass
+		// both caches and query storage directly.
+		if (deleted)
+			return (int)await OnGetCount(deleted, cancellationToken).NoWait();
+
 		if (BulkLoad)
 		{
 			if (!BulkInitialized())
@@ -365,7 +372,10 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
-				dict.Add(GetCacheId(item), item);
+				// Idempotent put: the row was successfully saved, so refresh/keep the cache
+				// entry instead of Add(), which throws if a concurrent (or pre-populated)
+				// bulk cache already holds this id (UpdateAsync uses TryAdd for the same reason).
+				dict[GetCacheId(item)] = item;
 			}
 			else
 				await GetRangeAsync(cancellationToken).NoWait();
@@ -409,7 +419,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	/// Copies entities to the specified array starting at the given index.
 	/// </summary>
 	public async ValueTask CopyToAsync(TEntity[] array, int index, CancellationToken cancellationToken)
-		=> ((ICollection<TEntity>)await GetRangeAsync(index, long.MaxValue, false, default, default, cancellationToken).NoWait()).CopyTo(array, index);
+		=> ((ICollection<TEntity>)await GetRangeAsync(0, long.MaxValue, false, default, default, cancellationToken).NoWait()).CopyTo(array, index);
 
 	/// <summary>
 	/// Removes the specified entity from the list and storage.
@@ -421,7 +431,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 		var retVal = await OnRemove(item, cancellationToken).NoWait();
 
-		if (BulkLoad)
+		if (retVal && BulkLoad)
 		{
 			if (BulkInitialized())
 			{
@@ -432,10 +442,13 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			}
 		}
 
-		using (_cachedEntitiesInitLock.EnterScope())
+		if (retVal)
 		{
-			if (_count != null)
-				_count--;
+			using (_cachedEntitiesInitLock.EnterScope())
+			{
+				if (_count != null)
+					_count--;
+			}
 		}
 
 		return retVal;

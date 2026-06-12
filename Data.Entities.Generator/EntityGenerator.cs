@@ -401,6 +401,37 @@ public class EntityGenerator : IIncrementalGenerator
 		var nameOverrides = GetNameOverrides(prop);
 		var typeName = FullType(innerType);
 
+		if (IsInnerSchemaNullable(prop))
+		{
+			sb.AppendLine($"\t\tif ({BuildInnerColumnsNullCondition(innerProps, prop.Name, nameOverrides)})");
+			sb.AppendLine("\t\t{");
+			sb.AppendLine($"\t\t\t{prop.Name} = null;");
+			sb.AppendLine("\t\t}");
+			sb.AppendLine("\t\telse");
+			sb.AppendLine("\t\t{");
+
+			if (HasRelationSingleDeep(innerProps))
+			{
+				var local = "__" + prop.Name;
+				sb.AppendLine($"\t\t\tvar {local} = new {typeName}");
+				sb.AppendLine("\t\t\t{");
+				EmitInnerInitWithoutRelationSingle(sb, innerProps, prop.Name, nameOverrides, "\t\t\t\t");
+				sb.AppendLine("\t\t\t};");
+				EmitInnerRelationSinglePostInit(sb, innerProps, prop.Name, nameOverrides, local, "\t\t\t");
+				sb.AppendLine($"\t\t\t{prop.Name} = {local};");
+			}
+			else
+			{
+				sb.AppendLine($"\t\t\t{prop.Name} = new {typeName}");
+				sb.AppendLine("\t\t\t{");
+				EmitLoadInnerSchemaRecursive(sb, innerProps, prop.Name, nameOverrides, "\t\t\t\t");
+				sb.AppendLine("\t\t\t};");
+			}
+
+			sb.AppendLine("\t\t}");
+			return;
+		}
+
 		// If the inner schema (or anything nested under it) carries a
 		// [RelationSingle] property, the loader needs to await on the FK
 		// fetch — and `await` is not legal inside an object initializer.
@@ -445,6 +476,38 @@ public class EntityGenerator : IIncrementalGenerator
 
 	// Object-initializer body that intentionally skips [RelationSingle] members —
 	// they are filled in afterwards via EmitInnerRelationSinglePostInit.
+	private static bool IsInnerSchemaNullable(IPropertySymbol prop)
+	{
+		var (colNullable, _) = GetColumnAttribute(prop);
+		return colNullable ?? InferIsNullable(prop);
+	}
+
+	private static string BuildInnerColumnsNullCondition(IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides)
+	{
+		var columns = new List<string>();
+		CollectInnerColumnNames(innerProps, colPrefix, nameOverrides, columns);
+
+		return columns.Count == 0
+			? "true"
+			: string.Join(" && ", columns.Select(c => $"storage.GetValue<object>(\"{c}\") is null"));
+	}
+
+	private static void CollectInnerColumnNames(IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, List<string> columns)
+	{
+		foreach (var inner in innerProps)
+		{
+			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
+
+			if (IsInnerSchemaProperty(inner))
+			{
+				CollectInnerColumnNames(GetInnerTypeProperties(UnwrapNullable(inner.Type)), colName, GetNameOverrides(inner), columns);
+				continue;
+			}
+
+			columns.Add(colName);
+		}
+	}
+
 	private static void EmitInnerInitWithoutRelationSingle(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, string indent)
 	{
 		foreach (var inner in innerProps)
@@ -653,7 +716,10 @@ public class EntityGenerator : IIncrementalGenerator
 			var unwrapped = UnwrapNullable(prop.Type);
 
 			if (IsRelationSingle(prop))
+			{
 				parts.Add($"ClrType = typeof({GetRelationIdentityType(prop)})");
+				parts.Add($"ReferencedEntityType = typeof({FullType(UnwrapNullable(prop.Type))})");
+			}
 			else if (unwrapped.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(prop.Type)})");
 			else if (GetMappedDbType(prop.Type) is { } mappedMetaType)
@@ -705,7 +771,10 @@ public class EntityGenerator : IIncrementalGenerator
 			var unwrappedInner = UnwrapNullable(inner.Type);
 
 			if (IsRelationSingle(inner))
+			{
 				parts.Add($"ClrType = typeof({GetRelationIdentityType(inner)})");
+				parts.Add($"ReferencedEntityType = typeof({FullType(UnwrapNullable(inner.Type))})");
+			}
 			else if (unwrappedInner.TypeKind == TypeKind.Enum)
 				parts.Add($"ClrType = typeof({GetEnumUnderlyingType(inner.Type)})");
 			else if (GetMappedDbType(inner.Type) is { } mappedInnerMetaType)

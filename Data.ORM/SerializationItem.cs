@@ -5,8 +5,6 @@ namespace Ecng.Serialization;
 /// </summary>
 public class SerializationItem : Equatable<SerializationItem>
 {
-	private readonly int _hashCode;
-
 	/// <summary>
 	/// Initializes a new instance with the specified name, type, and value.
 	/// </summary>
@@ -15,8 +13,6 @@ public class SerializationItem : Equatable<SerializationItem>
 		Name = name ?? throw new ArgumentNullException(nameof(name));
 		Type = type ?? throw new ArgumentNullException(nameof(type));
 		Value = value;
-
-		_hashCode = name.GetHashCode() ^ type.GetHashCode() ^ (value?.GetHashCode() ?? 397);
 	}
 
 	/// <summary>
@@ -44,7 +40,17 @@ public class SerializationItem : Equatable<SerializationItem>
 	public override string ToString() => $"Name = '{Name}' Type = '{Type.Name}' Value = '{Value}'";
 
 	/// <inheritdoc />
-	public override int GetHashCode() => _hashCode;
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			var hash = 17;
+			hash = hash * 23 + Name.GetHashCode();
+			hash = hash * 23 + Type.GetHashCode();
+			hash = hash * 23 + (Value?.GetHashCode() ?? 397);
+			return hash;
+		}
+	}
 
 	/// <summary>
 	/// Creates a deep copy of this item.
