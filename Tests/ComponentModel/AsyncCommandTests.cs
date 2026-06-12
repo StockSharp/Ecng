@@ -520,14 +520,11 @@ public class AsyncCommandTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: AsyncCommand.ExecuteAsync (ComponentModel\AsyncCommand.cs:120) mismanages state when
-	/// allowMultipleExecution=true: the finally resets IsExecuting once the FIRST of several
-	/// overlapping executions completes, and Cancel() signals only the latest CTS (the previous
-	/// execution's CTS was disposed at the second start), so older executions stay uncancellable.
-	/// Expected: IsExecuting stays true while any execution is running, and Cancel() cancels ALL
-	/// active executions.
-	/// Actual: IsExecuting flips to false after the first completion, and only the newest token
-	/// observes the cancellation.
+	/// Regression test for AsyncCommand with allowMultipleExecution=true: ensures IsExecuting stays
+	/// true while any overlapping execution is still running and that Cancel() cancels ALL active
+	/// executions. (Was: the finally reset IsExecuting after the first of several overlapping
+	/// executions completed, and Cancel() signalled only the latest CTS, leaving older executions
+	/// uncancellable; ComponentModel\AsyncCommand.cs:117.)
 	/// </summary>
 	[TestMethod]
 	public async Task AsyncCommand_AllowMultipleExecution_TracksStateAndCancelsAllExecutions()

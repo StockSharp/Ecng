@@ -353,13 +353,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <see cref="AdoDatabaseProvider"/>'s retry policy (<c>WithRetry</c>) re-runs the
-	/// whole write lambda on ANY <see cref="DbException"/>, so a non-idempotent write
-	/// (INSERT) that already reached the server is blindly executed again, duplicating data.
-	/// Expected: a non-idempotent INSERT is executed at most once - a transient error after
-	/// the command may have hit the server must NOT silently re-run it.
-	/// Actual: the statement is executed 1 + retryCount = 4 times.
-	/// File: Data.Ado\AdoDatabaseProvider.cs:300 (catch (DbException) when (attempt &lt; _retryCount)).
+	/// Regression test for the retry policy: ensures a non-idempotent INSERT is executed at
+	/// most once - the retry covers only the connection-open phase, never the command
+	/// execution, so a transient fault that may have reached the server is not silently
+	/// replayed. (Was: the whole write lambda was re-run on any <see cref="DbException"/>,
+	/// executing the statement 1 + retryCount times; Data.Ado\AdoDatabaseProvider.cs:334-359.)
 	/// </summary>
 	[TestMethod]
 	public async Task Retry_DoesNotReRunNonIdempotentInsert()
@@ -381,13 +379,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: the Ado parameter-building path sets <c>param.Value</c> via
-	/// <c>Dialect.ConvertToDbValue</c> but never calls <c>Dialect.PrepareParameter</c>, so
-	/// dialect-specific parameter massaging (e.g. PostgreSQL DateTime/timestamptz binding)
-	/// is silently skipped - unlike the ORM path which does call it.
-	/// Expected: <c>PrepareParameter</c> is invoked once per parameter added for a statement.
-	/// Actual: <c>PrepareParameter</c> is never invoked (count stays 0).
-	/// File: Data.Ado\AdoDatabaseProvider.cs:401-413 (AddParameters).
+	/// Regression test for the Ado parameter-building path: ensures <c>Dialect.PrepareParameter</c>
+	/// is invoked once per parameter added for a statement, so dialect-specific parameter massaging
+	/// (e.g. PostgreSQL DateTime/timestamptz binding) is applied, mirroring the ORM path. (Was:
+	/// <c>AddParameters</c> set <c>param.Value</c> but never called <c>PrepareParameter</c>;
+	/// Data.Ado\AdoDatabaseProvider.cs:473-489.)
 	/// </summary>
 	[TestMethod]
 	public async Task AddParameters_InvokesDialectPrepareParameter()
@@ -405,13 +401,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>BulkInsertAsync</c> computes the batch size only from the parameter limit
-	/// (<c>MaxParameters / columns.Count</c>). On SQL Server (MaxParameters = 2000) a
-	/// single-column table yields batches of 2000 rows in one multi-row INSERT ... VALUES,
-	/// breaching SQL Server's hard 1000-row table-value-constructor limit (error 10738).
-	/// Expected: no single INSERT statement carries more than 1000 value tuples.
-	/// Actual: a 1500-row single-column bulk insert emits one statement with 1500 tuples.
-	/// File: Data.Ado\AdoDatabaseProvider.cs:169 (batchSize = 1.Max(Dialect.MaxParameters / columns.Count)).
+	/// Regression test for <c>BulkInsertAsync</c> batching: ensures no single INSERT ... VALUES
+	/// statement carries more than 1000 value tuples, respecting SQL Server's hard
+	/// table-value-constructor limit (error 10738). (Was: the batch size came only from the
+	/// parameter limit <c>MaxParameters / columns.Count</c>, so a single-column table on SQL
+	/// Server emitted statements of up to 2000 tuples; Data.Ado\AdoDatabaseProvider.cs:180.)
 	/// </summary>
 	[TestMethod]
 	public async Task BulkInsert_RespectsSqlServerThousandRowValuesLimit()
@@ -435,15 +429,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>UpdateAsync</c> seeds the parameter dictionary with SET values keyed by raw
-	/// column name, then <c>BuildWhereClause</c> writes filter parameters named p0/p1/...
-	/// via the indexer. A SET column literally named <c>p0</c> is silently overwritten by the
-	/// first filter parameter, so the row's <c>p0</c> column is set to the filter's compare
-	/// value instead of the intended new value - silent data corruption.
-	/// Expected: the SET value for a column named <c>p0</c> survives (filter params live in a
-	/// separate namespace).
-	/// Actual: the SET value is overwritten by the filter value.
-	/// File: Data.Ado\AdoDatabaseProvider.cs:362-380 (parameters[paramName] = filter.Value).
+	/// Regression test for <c>UpdateAsync</c> parameter naming: ensures a SET value for a column
+	/// literally named <c>p0</c> survives even when a filter generates a parameter that would
+	/// otherwise collide, because <c>BuildWhereClause</c> skips parameter names already present.
+	/// (Was: filter parameters p0/p1/... overwrote SET values keyed by the same raw column name,
+	/// silently corrupting data; Data.Ado\AdoDatabaseProvider.cs:399-409.)
 	/// </summary>
 	[TestMethod]
 	public async Task Update_FilterParamsDoNotOverwriteSetColumnNamedP0()
@@ -468,12 +458,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: in <c>BulkInsertAsync</c>'s catch block <c>transaction.Rollback()</c> runs before
-	/// <c>throw;</c>. When the connection is dead the Rollback itself throws, replacing the
-	/// original <see cref="DbException"/> and hiding the root cause from the caller.
-	/// Expected: the original <see cref="DbException"/> propagates even when Rollback throws.
-	/// Actual: the rollback exception (InvalidOperationException) masks the root DbException.
-	/// File: Data.Ado\AdoDatabaseProvider.cs:213-217 (catch { transaction.Rollback(); throw; }).
+	/// Regression test for <c>BulkInsertAsync</c> error handling: ensures the original
+	/// <see cref="DbException"/> propagates even when the best-effort <c>transaction.Rollback()</c>
+	/// itself throws (e.g. the connection is already dead). (Was: a failing Rollback replaced the
+	/// original fault with an InvalidOperationException, hiding the root cause;
+	/// Data.Ado\AdoDatabaseProvider.cs:234-247.)
 	/// </summary>
 	[TestMethod]
 	public async Task BulkInsert_RollbackFailureDoesNotMaskOriginalException()
@@ -496,13 +485,11 @@ public class AdoIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>BulkInsertAsync</c> builds parameter names as <c>{column}_{rowIdx}</c> from the
-	/// raw column name. A legal quoted column like <c>"order date"</c> (accepted everywhere
-	/// else via QuoteIdentifier) produces an invalid ADO.NET parameter name <c>@order date_0</c>.
-	/// Expected: generated parameter names are sanitized/positional and contain no whitespace
-	/// from the raw column text.
-	/// Actual: the parameter name embeds the raw column name including the space.
-	/// File: Data.Ado\AdoDatabaseProvider.cs:193 (var paramName = $"{column}_{rowIdx}").
+	/// Regression test for <c>BulkInsertAsync</c> parameter naming: ensures generated parameter
+	/// names are positional and carry no whitespace from the raw column text, so a legally quoted
+	/// column like <c>"order date"</c> does not yield an invalid ADO.NET parameter name. (Was:
+	/// names were built as <c>{column}_{rowIdx}</c> from the raw column name, producing
+	/// <c>@order date_0</c>; Data.Ado\AdoDatabaseProvider.cs:210.)
 	/// </summary>
 	[TestMethod]
 	public async Task BulkInsert_ParameterNamesAreNotBuiltFromRawColumnNames()

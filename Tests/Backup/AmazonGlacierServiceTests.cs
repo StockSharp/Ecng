@@ -200,8 +200,10 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Verifies that FindAsync returns entries with correct hierarchical Parent chain.
-	/// The current implementation overwrites be.Parent = parent, flattening the hierarchy.
+	/// Regression test for FindAsync hierarchy: ensures returned entries keep the full
+	/// Parent chain (file.txt -&gt; subfolder -&gt; folder). (Was: be.Parent was overwritten
+	/// with the parent parameter, flattening the hierarchy; AmazonGlacierService.cs builds
+	/// the chain via GetPath from the full path.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_ShouldPreserveHierarchy()
@@ -227,16 +229,13 @@ public class AmazonGlacierServiceTests : BaseTestClass
 		// The entry should be "file.txt" with Parent chain: subfolder -> folder
 		entry.Name.AssertEqual("file.txt");
 
-		// Current bug: Parent is overwritten to null (the parent parameter)
-		// After fix: Parent should be a BackupEntry with Name="subfolder"
-		// and its Parent should be Name="folder"
+		// Parent should be a BackupEntry with Name="subfolder",
+		// whose Parent in turn has Name="folder".
 
-		// For now, we test that hierarchy is preserved
-		// If Parent is null, hierarchy is flattened (bug exists)
+		// Guard against a flattened hierarchy (Parent would be null).
 		if (entry.Parent is null)
 		{
-			// Bug exists - hierarchy is flattened
-			Fail("Hierarchy flattening bug exists - Parent is null instead of 'subfolder'");
+			Fail("Hierarchy is flattened - Parent is null instead of 'subfolder'");
 		}
 		else
 		{
@@ -246,8 +245,10 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Verifies that duplicate ArchiveDescription entries in inventory don't overwrite each other.
-	/// Currently dict[desc] overwrites, losing older archives with same path.
+	/// Known issue: inventory keys archives by ArchiveDescription, so two archives sharing
+	/// the same description collapse to one (AmazonGlacierService.cs - dict[desc] = ...).
+	/// This test asserts only the deterministic, non-empty fallback behavior; the duplicate
+	/// collapse is not yet resolved.
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_ShouldHandleDuplicateDescriptions()
@@ -275,21 +276,16 @@ public class AmazonGlacierServiceTests : BaseTestClass
 
 		var entries = await svc.FindAsync(null, null).ToListAsync(CancellationToken);
 
-		// Both archives should be visible, or at least the behavior should be deterministic
-		// Current bug: only one archive survives (the last one added to dict)
-
-		// After fix, we might want to see both, or only the newest
-		// For now, we check that we get at least one entry
+		// Known issue: only one archive survives the description-keyed dictionary,
+		// so we assert only that the lookup remains deterministic and non-empty.
 		(entries.Count >= 1).AssertTrue("Should find at least one entry");
-
-		// Ideally both would be returned, or there would be a clear policy
-		// If only one is returned, it should be documented which one
 	}
 
 	/// <summary>
-	/// Verifies that ResolveArchiveAsync correctly resolves archives by full path,
-	/// not just by filename. Currently it falls back to filename-only matching
-	/// which can return wrong archive if same filename exists in different folders.
+	/// Regression test for ResolveArchiveAsync: ensures archives resolve by full path
+	/// before any filename-only fallback, so the right archive is picked when the same
+	/// filename exists in different folders. (Was: filename-only matching could return the
+	/// wrong archive; AmazonGlacierService.cs - ResolveArchiveAsync.)
 	/// </summary>
 	[TestMethod]
 	public async Task FillInfoAsync_ShouldMatchByFullPath_NotJustFilename()
@@ -321,8 +317,9 @@ public class AmazonGlacierServiceTests : BaseTestClass
 
 		await svc.FillInfoAsync(entryA, CancellationToken);
 
-		// Should get size from folderA/data.txt (100), not folderB/data.txt (200)
-		// Current bug: filename-only fallback may return the newer one (folderB)
+		// Should get size from folderA/data.txt (100), not folderB/data.txt (200);
+		// full-path resolution must win over the filename-only fallback (which would
+		// otherwise return the newer folderB archive).
 		entryA.Size.AssertEqual(100,
 			"FillInfoAsync should resolve by full path 'folderA/data.txt', not by filename 'data.txt'");
 	}
@@ -368,12 +365,11 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: FindAsync(parent, ...) re-attaches the rebuilt hierarchy root to the parent
-	/// parameter, but GetPath already encodes the full path, so the parent prefix is
-	/// duplicated. (AmazonGlacierService.cs:157-166)
-	/// Expected: for parent "folder/subfolder" and archive "folder/subfolder/file.txt",
-	/// the returned entry's full path is "folder/subfolder/file.txt".
-	/// Actual: GetFullPath() yields the doubled "folder/subfolder/folder/subfolder/file.txt".
+	/// Regression test for FindAsync with a non-empty parent: ensures the returned entry's
+	/// full path is the archive's own path ("folder/subfolder/file.txt") and the parent
+	/// prefix is not duplicated. (Was: the rebuilt hierarchy was re-attached to the parent
+	/// parameter on top of the already-encoded full path, yielding a doubled path;
+	/// AmazonGlacierService.cs - GetPath is now built from the full description.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_NonEmptyParent_ShouldNotDoubleParentPath()
@@ -399,11 +395,11 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: Glacier entries return LastModified converted to local time via ToLocalTime().
-	/// (AmazonGlacierService.cs:168)
-	/// Expected: LastModified is kept in UTC (Kind=Utc) and equals the stored UTC instant,
-	/// matching the repository-wide UTC convention and all other IBackupService backends.
-	/// Actual: the value is shifted to local time with Kind=Local.
+	/// Regression test for Glacier entry timestamps: ensures LastModified stays in UTC
+	/// (Kind=Utc) and equals the stored instant, matching the repository-wide UTC
+	/// convention and the other IBackupService backends. (Was: the value was shifted to
+	/// local time via ToLocalTime() with Kind=Local; AmazonGlacierService.cs - LastModified
+	/// is now set via ToUtc.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_LastModified_ShouldBeUtc()
@@ -433,13 +429,11 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: ranged Glacier download computes progress against the full archive size
-	/// (describe.ArchiveSizeInBytes) instead of the requested range length.
-	/// (AmazonGlacierService.cs:229)
-	/// Expected: progress is relative to the downloaded range, so when the whole range
-	/// arrives in a single read the only reported value is the final 100%.
-	/// Actual: an intermediate value far below 100 (range/full * 100) is reported because
-	/// the denominator is the full archive size.
+	/// Regression test for ranged Glacier download progress: ensures progress is computed
+	/// against the requested range length, so when the whole range arrives in a single read
+	/// the only reported value is the final 100%. (Was: progress used the full archive size
+	/// describe.ArchiveSizeInBytes as the denominator, reporting an intermediate value far
+	/// below 100; AmazonGlacierService.cs - objLen now prefers the requested length.)
 	/// </summary>
 	[TestMethod]
 	public async Task DownloadAsync_RangedProgress_ShouldUseRangeLength()
@@ -468,10 +462,10 @@ public class AmazonGlacierServiceTests : BaseTestClass
 		using var output = new MemoryStream();
 		await svc.DownloadAsync(entry, output, offset: 0, length: 10, progress: reported.Add, CancellationToken);
 
-		// The requested 10-byte range arrives in a single buffered read, so a correct
-		// implementation reports only the final 100% (any intermediate 100% is suppressed
-		// by the < 100 guard). The bug reports an intermediate value (~10%) computed from
-		// the full 100-byte archive size.
+		// The requested 10-byte range arrives in a single buffered read, so progress is
+		// reported only as the final 100% (any intermediate 100% is suppressed by the < 100
+		// guard). Using the full 100-byte archive size as the denominator would instead
+		// report an intermediate value (~10%).
 		IsFalse(reported.Any(p => p < 100),
 			$"Ranged progress must be relative to the range length; got [{reported.Select(p => p.To<string>()).Join(", ")}].");
 		IsTrue(reported.Contains(100), "Progress should reach 100%.");

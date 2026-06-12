@@ -820,14 +820,11 @@ public class SitemapTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: SitemapGenerator formats UTC DateTime values with the "zzz" specifier
-	/// (Net.Clients\Sitemap\SitemapGenerator.cs:35,109). For a DateTime value, "zzz"
-	/// always emits the LOCAL machine offset regardless of DateTimeKind, so a UTC instant
-	/// is stamped with the local offset and therefore denotes a different instant
-	/// (e.g. "10:30:00+03:00" for a 10:30 UTC value — actually 07:30 UTC).
-	/// Expected: the emitted lastmod, parsed back as an instant, equals the original UTC
-	/// instant (the value was already normalized via ToUniversalTime), i.e. a zero offset.
-	/// Actual: on a non-UTC machine the lastmod carries the local offset and shifts the instant.
+	/// Regression test for lastmod time-zone handling: ensures the emitted lastmod, parsed
+	/// back as an absolute instant, equals the original UTC instant (zero offset). FormatLastModified
+	/// wraps the UTC-normalized value in a DateTimeOffset so the "zzz" specifier emits a zero offset
+	/// (Net.Clients\Sitemap\SitemapGenerator.cs:37). (Was: formatting a UTC DateTime with "zzz"
+	/// stamped the local machine offset and shifted the instant.)
 	/// </summary>
 	[TestMethod]
 	public void Sitemap_LastMod_UtcInstantPreserved()
@@ -853,13 +850,11 @@ public class SitemapTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: SitemapGenerator formats lastmod via ToString(_timeFormat) without
-	/// CultureInfo.InvariantCulture (Net.Clients\Sitemap\SitemapGenerator.cs:35,53,109).
-	/// In a custom format string ":" is the culture's time separator, so under cultures
-	/// like fi-FI (separator ".") "HH:mm:ss" renders as "HH.mm.ss" — an invalid W3C
-	/// datetime that search engines reject.
-	/// Expected: the time portion always uses the ISO ":" separator regardless of culture.
-	/// Actual: under fi-FI the lastmod time uses "." and is not a valid ISO 8601 timestamp.
+	/// Regression test for culture-invariant lastmod formatting: ensures the time portion always
+	/// uses the ISO ":" separator regardless of the current culture. FormatLastModified passes
+	/// CultureInfo.InvariantCulture to ToString (Net.Clients\Sitemap\SitemapGenerator.cs:38), so the
+	/// custom format's ":" is never replaced by the culture's time separator. (Was: formatting without
+	/// invariant culture rendered "HH:mm:ss" as "HH.mm.ss" under cultures like fi-FI, an invalid W3C datetime.)
 	/// </summary>
 	[TestMethod]
 	public void Sitemap_LastMod_InvariantTimeSeparator()

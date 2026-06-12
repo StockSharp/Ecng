@@ -23,7 +23,7 @@ public class CollectionHelperTests : BaseTestClass
 		// Arrange: two arrays differing only at index31 must produce different hashes
 		var a = Enumerable.Range(0, 40).ToArray();
 		var b = a.ToArray();
-		b[31] = a[31] + 1; // index31 is currently masked out by (31 ^ index) ==0
+		b[31] = a[31] + 1; // index 31 must affect the hash (was masked out by (31 ^ index) == 0)
 
 		// Act
 		var ha = a.GetHashCodeEx();
@@ -1932,11 +1932,10 @@ public class CollectionHelperTests : BaseTestClass
 	#endregion
 
 	/// <summary>
-	/// BUG: SafeAddAsync (AsyncReaderWriterLock overload) runs the handler via a discarded
-	/// Task.Factory.StartNew(async ...) that never completes the TaskCompletionSource on failure.
-	/// Expected: when the handler throws, the returned task faults with that exception (within a timeout).
-	/// Actual: the inner exception is swallowed, source.SetResult is never called, so the task hangs forever.
-	/// See Collections\CollectionHelper.cs:1101.
+	/// Regression test for SafeAddAsync (AsyncReaderWriterLock overload): ensures that when the
+	/// handler throws, the returned task faults with that exception (within a timeout). (Was: the
+	/// handler ran via a discarded Task.Factory.StartNew that swallowed the exception and never
+	/// completed the TaskCompletionSource, hanging forever. See Collections\CollectionHelper.cs:1101.)
 	/// </summary>
 	[TestMethod]
 	public async Task SafeAddAsync_RwLock_HandlerThrows_FaultsTask()
@@ -1956,11 +1955,11 @@ public class CollectionHelperTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: SafeAddAsync (AsyncReaderWriterLock overload) leaves a dead TaskCompletionSource in the dictionary
-	/// after a failing handler (unlike the synchronized overload, it never removes the key).
-	/// Expected: after a failed attempt, a subsequent call for the same key with a good handler succeeds.
-	/// Actual: the poisoned key keeps returning the never-completing task, hanging all later callers.
-	/// See Collections\CollectionHelper.cs:1101.
+	/// Regression test for SafeAddAsync (AsyncReaderWriterLock overload): ensures that after a failing
+	/// handler a subsequent call for the same key with a good handler succeeds (the failed key is not
+	/// poisoned). (Was: a failing handler left a dead TaskCompletionSource in the dictionary and never
+	/// removed the key, so the poisoned key kept returning a never-completing task that hung all later
+	/// callers. See Collections\CollectionHelper.cs:1101.)
 	/// </summary>
 	[TestMethod]
 	public async Task SafeAddAsync_RwLock_HandlerThrows_DoesNotPoisonKey()

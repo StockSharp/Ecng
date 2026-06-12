@@ -240,15 +240,11 @@ public class MegaNativeClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: MegaAesCtrStream.Read fills each 16-byte block with at most two
-	/// Stream.Read calls; a source stream that returns fewer bytes than requested
-	/// more than twice in a row leaves the block partially filled, yet pos still
-	/// advances by 16 and the MAC/keystream only cover the bytes actually read.
-	/// This corrupts every subsequent block. (Backup.Mega\Native\Streams.cs:101-103)
-	/// Expected: uploading from a short-reading source and downloading back yields
-	/// the exact original bytes (a full read loop must drain each block).
-	/// Actual: the encrypted upload is corrupted, so the download either throws
-	/// "Checksum is invalid" or returns mismatching bytes.
+	/// Known issue: MegaAesCtrStream.Read fills each 16-byte block with at most two
+	/// Stream.Read calls instead of a full drain loop (Backup.Mega\Native\Streams.cs:101-103),
+	/// so a source returning fewer bytes than requested more than twice in a row leaves the
+	/// block partially filled and corrupts subsequent blocks. Asserts the intended behavior
+	/// (short-reading upload then download yields the exact original bytes); fails until fixed.
 	/// </summary>
 	[TestMethod]
 	public async Task Streams_ShortReadingSource_RoundtripShouldPreserveData()
@@ -283,13 +279,11 @@ public class MegaNativeClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: Crypto.FromEpochSeconds returns epoch.AddSeconds(seconds).ToLocalTime(),
-	/// so Node.CreationDate / ModificationDate carry machine-local DateTime values
-	/// (Kind=Local), breaking the repository-wide UTC convention and the symmetry
-	/// with ToEpochSeconds (which normalizes via ToUniversalTime).
-	/// (Backup.Mega\Native\Crypto.cs:336)
-	/// Expected: the timestamp is UTC (Kind=Utc).
-	/// Actual: the timestamp is local time (Kind=Local).
+	/// Known issue: Crypto.FromEpochSeconds returns epoch.AddSeconds(seconds).ToLocalTime()
+	/// (Backup.Mega\Native\Crypto.cs:336), so Node.CreationDate / ModificationDate carry
+	/// machine-local DateTime values (Kind=Local), breaking the repository-wide UTC convention
+	/// and the symmetry with ToEpochSeconds. Asserts the intended behavior (timestamp is UTC,
+	/// Kind=Utc); fails until fixed.
 	/// </summary>
 	[TestMethod]
 	public async Task Node_CreationDate_ShouldBeUtc()
@@ -323,15 +317,12 @@ public class MegaNativeClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: Crypto.SerializeToBytes shifts a long via arithmetic ">>= 8"; for a
-	/// negative input x converges to -1 and never reaches 0, so the while loop
-	/// overruns the 9-element buffer and throws IndexOutOfRangeException. This is
-	/// reached through MegaAttributes.Create when Client.UploadAsync is given a
-	/// modificationDate before 1970-01-01 (ToEpochSeconds() is negative).
-	/// (Backup.Mega\Native\Crypto.cs:347)
-	/// Expected: uploading with a pre-1970 modification date serializes the
-	/// fingerprint without overrunning the buffer (no IndexOutOfRangeException).
-	/// Actual: attribute creation throws IndexOutOfRangeException, aborting upload.
+	/// Known issue: Crypto.SerializeToBytes shifts a long via arithmetic ">>= 8"
+	/// (Backup.Mega\Native\Crypto.cs:347); for a negative input x converges to -1 and never
+	/// reaches 0, so the while loop overruns the 9-element buffer and throws
+	/// IndexOutOfRangeException. Reached via MegaAttributes.Create when Client.UploadAsync gets a
+	/// modificationDate before 1970-01-01 (negative epoch seconds). Asserts the intended behavior
+	/// (pre-1970 modification date serializes without overrunning the buffer); fails until fixed.
 	/// </summary>
 	[TestMethod]
 	public async Task Upload_Pre1970ModificationDate_ShouldNotOverrunBuffer()

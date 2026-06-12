@@ -2074,9 +2074,9 @@ public class ExcelWorkerTests : BaseTestClass
 
 	#region Bug Reproduction Tests
 
-	// BUG REPRODUCTION: GetColumnsCount returns unique column count, not span
-	// Expected: If columns A (0) and C (2) have data, count should be 3 (A, B, C span)
-	// Actual: Returns 2 (only counts unique columns with data)
+	// Regression test for GetColumnsCount: returns the column span (max column index + 1),
+	// so columns A (0) and C (2) with data report 3. (Was: returned the unique count of
+	// columns with data, DevExpExcelWorkerProvider.cs:374 / OpenXmlExcelWorkerProvider.cs:415.)
 	[TestMethod]
 	[DataRow(nameof(DevExpExcelWorkerProvider))]
 	[DataRow(nameof(OpenXmlExcelWorkerProvider))]
@@ -2090,8 +2090,7 @@ public class ExcelWorkerTests : BaseTestClass
 			.SetCell(0, 0, "A1")   // Column A (0)
 			.SetCell(2, 0, "C1");  // Column C (2), skip column B
 
-		// BUG: Currently returns 2 (unique columns with data)
-		// Expected: Should return 3 (columns A, B, C span - max column index + 1)
+		// Returns the column span (max column index + 1): A, B, C => 3.
 		worker.GetColumnsCount().AssertEqual(3, "GetColumnsCount should return max column span, not unique count");
 	}
 
@@ -2108,21 +2107,20 @@ public class ExcelWorkerTests : BaseTestClass
 			.SetCell(0, 0, "A1")   // Row 1 (0)
 			.SetCell(0, 4, "A5");  // Row 5 (4), skip rows 2-4
 
-		// BUG: Currently returns 2 (unique rows with data)
-		// Expected: Should return 5 (rows 1-5 span - max row index + 1)
+		// Regression test for GetRowsCount: returns the row span (max row index + 1), so rows
+		// 1 (0) and 5 (4) with data report 5. (Was: returned the unique count of rows with data,
+		// DevExpExcelWorkerProvider.cs:375 / OpenXmlExcelWorkerProvider.cs:435.)
 		worker.GetRowsCount().AssertEqual(5, "GetRowsCount should return max row span, not unique count");
 	}
 
-	// BUG REPRODUCTION: readOnly parameter should prevent any modifications
-	// CreateNew with readOnly=true doesn't make logical sense - you can't create a new file in read-only mode
-	// Expected: CreateNew(readOnly=true) should throw InvalidOperationException immediately
-	// Actual: readOnly parameter is ignored, file is created and saved normally
+	// Regression test for CreateNew(readOnly: true): rejects the contradictory request to create
+	// a new file in read-only mode by throwing InvalidOperationException immediately. (Was: the
+	// readOnly parameter was ignored and the file was created normally, OpenXmlExcelWorkerProvider.cs:38.)
 	[TestMethod]
 	public void OpenXml_CreateNew_ReadOnly_ShouldThrowImmediately()
 	{
 		using var stream = new MemoryStream();
 
-		// BUG: CreateNew with readOnly=true should throw - can't create new file in readOnly mode
 		Throws<InvalidOperationException>(
 			() => CreateProvider(nameof(OpenXmlExcelWorkerProvider)).CreateNew(stream, true),
 			"CreateNew with readOnly=true should throw InvalidOperationException");
@@ -2137,11 +2135,10 @@ public class ExcelWorkerTests : BaseTestClass
 	#region DevExp audit regression tests
 
 	/// <summary>
-	/// Finding #1 (CRITICAL), DevExpExcelWorkerProvider.cs:517.
-	/// BUG: OpenExist creates a brand-new write-only document on top of the caller's stream,
-	/// silently overwriting and corrupting the existing workbook bytes; read-APIs then return empty.
-	/// Expected: OpenExist refuses the unsupported operation with NotSupportedException, leaving the stream untouched.
-	/// Actual: returns a DevExpExcelWorker that destroys the original content.
+	/// Regression test for DevExp OpenExist: the write-only provider refuses the unsupported
+	/// operation with NotSupportedException, leaving the caller's stream untouched.
+	/// (Was: created a brand-new write-only document on top of the stream, corrupting the
+	/// existing workbook bytes, DevExpExcelWorkerProvider.cs:542.)
 	/// </summary>
 	[TestMethod]
 	public void OpenExist_ThrowsNotSupported()
@@ -2159,11 +2156,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #2 (HIGH), DevExpExcelWorkerProvider.cs:193.
-	/// BUG: SetHyperlink stores url/text but the sheet's Hyperlinks collection is never populated,
-	/// so the produced xlsx contains no hyperlink at all; the URL is silently dropped.
-	/// Expected: the written workbook contains a real hyperlink relationship for the cell.
-	/// Actual: no Hyperlinks element is emitted.
+	/// Regression test for DevExp SetHyperlink: the produced xlsx contains a real hyperlink
+	/// for the cell (the sheet's Hyperlinks collection is populated on write).
+	/// (Was: url/text were stored but the Hyperlinks collection was never populated, so the
+	/// URL was silently dropped, DevExpExcelWorkerProvider.cs:228.)
 	/// </summary>
 	[TestMethod]
 	public void SetHyperlink_WritesHyperlinkToOutput()
@@ -2188,12 +2184,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #3 (HIGH), DevExpExcelWorkerProvider.cs:174.
-	/// BUG: SetCellFormat unconditionally sets IsDateTimeFormatString=true and feeds the Excel
-	/// number-format code into NetFormatString, so DevExpress mangles "#,##0.00" as a date-time
-	/// .NET format and the resulting Excel number format is wrong.
-	/// Expected: the produced xlsx stores the literal Excel number format code "#,##0.00".
-	/// Actual: the format code in the output does not match (it is treated as a date-time format).
+	/// Regression test for DevExp SetCellFormat: the produced xlsx stores the literal Excel
+	/// number-format code "#,##0.00" verbatim. (Was: SetCellFormat set IsDateTimeFormatString=true
+	/// and fed the code into NetFormatString, so DevExpress mangled "#,##0.00" as a date-time
+	/// .NET format, DevExpExcelWorkerProvider.cs:182.)
 	/// </summary>
 	[TestMethod]
 	public void SetCellFormat_PreservesNumericFormatCode()
@@ -2227,11 +2221,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #4 (MEDIUM), DevExpExcelWorkerProvider.cs:162.
-	/// BUG: a cell that has only formatting/colors (no value and no hyperlink) is skipped before the
-	/// formatting block, so SetCellColor on a value-less cell produces nothing in the output.
-	/// Expected: the cell is emitted (with its fill) even when it has no value.
-	/// Actual: the cell is dropped and the requested coloring is lost.
+	/// Regression test for DevExp SetCellColor on a value-less cell: a cell that only has
+	/// formatting/colors (no value, no hyperlink) is still emitted with its fill.
+	/// (Was: such a cell was skipped before the formatting block, so the requested coloring
+	/// was lost, DevExpExcelWorkerProvider.cs:171.)
 	/// </summary>
 	[TestMethod]
 	public void SetCellColor_OnValuelessCell_EmitsCell()
@@ -2255,12 +2248,11 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #5 (MEDIUM), DevExpExcelWorkerProvider.cs:66.
-	/// BUG: GetCell uses a type-pattern (Value is T) and returns default(T) for convertible-but-not-exact
-	/// types, so SetCell(int) then GetCell&lt;double&gt; returns 0.0 and GetCell&lt;string&gt; returns null.
-	/// Expected: convertible stored values are converted (42 -> 42.0 / "42"), matching the OpenXml provider
-	/// and the IExcelWorker contract ("the value of the cell cast to type T").
-	/// Actual: default(T) is returned for convertible types.
+	/// Regression test for DevExp GetCell type conversion: convertible stored values are converted
+	/// (SetCell(int 42) then GetCell&lt;double&gt; =&gt; 42.0, GetCell&lt;string&gt; =&gt; "42"), matching the
+	/// OpenXml provider and the IExcelWorker contract ("the value of the cell cast to type T").
+	/// (Was: a type-pattern (Value is T) returned default(T) for convertible-but-not-exact types,
+	/// DevExpExcelWorkerProvider.cs:71.)
 	/// </summary>
 	[TestMethod]
 	public void GetCell_ConvertsCompatibleStoredValue()
@@ -2277,12 +2269,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #7 (LOW), DevExpExcelWorkerProvider.cs:249.
-	/// BUG: ParseColor sends non-'#' strings straight to Color.FromName, which returns a transparent
-	/// ARGB=0 color for an unrecognized name like a bare hex "FF0000"; the fill is then written as an
-	/// empty/transparent color instead of the intended red.
-	/// Expected: a bare 6-digit hex value is parsed as that RGB color (red), so the produced fill is red.
-	/// Actual: the fill comes out as a transparent/empty color (or is not the expected red).
+	/// Regression test for DevExp ParseColor: a bare 6-digit hex value ("FF0000") is parsed as that
+	/// RGB color, so the produced fill is red (FFFF0000). (Was: non-'#' strings went straight to
+	/// Color.FromName, which returned a transparent/black color for an unrecognized bare-hex name,
+	/// DevExpExcelWorkerProvider.cs:259.)
 	/// </summary>
 	[TestMethod]
 	public void SetCellColor_BareHex_ProducesExpectedFill()
@@ -2305,9 +2295,7 @@ public class ExcelWorkerTests : BaseTestClass
 		var fill = stylesheet.Fills.Elements<Fill>().ElementAt((int)(xf.FillId?.Value ?? 0));
 
 		// The fill color is stored in the solid PatternFill ForegroundColor as ARGB.
-		// A correctly parsed bare-hex "FF0000" must yield opaque red (FFFF0000);
-		// the bug routes it through Color.FromName, which returns transparent black,
-		// so DevExpress writes FF000000 (black) instead.
+		// A correctly parsed bare-hex "FF0000" must yield opaque red (FFFF0000).
 		var rgb = fill.PatternFill?.ForegroundColor?.Rgb?.Value;
 		rgb.AssertNotNull("A solid fill color should be written for the bare-hex color input");
 		rgb.AssertEqual("FFFF0000", "The bare hex 'FF0000' should be parsed as red, not a black/empty color");
@@ -2347,13 +2335,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #6 (MEDIUM), OpenXmlExcelWorkerProvider.cs:444.
-	/// BUG: SetColumnWidth inserts the &lt;cols&gt; element at worksheet index 0, and EnsureSheetView
-	/// inserts &lt;sheetViews&gt; at index 0 too. CT_Worksheet requires the order sheetViews &lt; cols.
-	/// Calling FreezeRows() (which creates sheetViews) then SetColumnWidth() yields the order
-	/// [cols, sheetViews, sheetData], which is invalid by schema.
-	/// Expected: &lt;sheetViews&gt; precedes &lt;cols&gt; and the worksheet passes OpenXml validation.
-	/// Actual: &lt;cols&gt; is emitted before &lt;sheetViews&gt;, breaking the CT_Worksheet element order.
+	/// Regression test for CT_Worksheet element order: calling FreezeRows() (creates &lt;sheetViews&gt;)
+	/// then SetColumnWidth() (creates &lt;cols&gt;) keeps &lt;sheetViews&gt; before &lt;cols&gt;, so the worksheet
+	/// passes OpenXml validation. (Was: both elements were inserted at worksheet index 0, yielding
+	/// [cols, sheetViews, sheetData] which violates sheetViews &lt; cols, OpenXmlExcelWorkerProvider.cs:449.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_FreezeRowsThenSetColumnWidth_KeepsValidElementOrder()
@@ -2384,12 +2369,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #6 (MEDIUM), OpenXmlExcelWorkerProvider.cs:444.
-	/// BUG: SetColumnWidth blindly inserts &lt;cols&gt; at index 0. A real xlsx opened via OpenExist
-	/// typically begins with &lt;dimension&gt;; inserting &lt;cols&gt; at index 0 places it before
-	/// &lt;dimension&gt;, violating CT_Worksheet order (dimension &lt; cols).
-	/// Expected: &lt;cols&gt; is inserted after the existing &lt;dimension&gt; element.
-	/// Actual: &lt;cols&gt; is placed at index 0, before &lt;dimension&gt;.
+	/// Regression test for CT_Worksheet element order on OpenExist: SetColumnWidth inserts &lt;cols&gt;
+	/// after the existing &lt;dimension&gt; element of a real xlsx, honouring dimension &lt; cols.
+	/// (Was: &lt;cols&gt; was blindly inserted at index 0, before &lt;dimension&gt;,
+	/// OpenXmlExcelWorkerProvider.cs:449.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_OpenExist_SetColumnWidth_KeepsColsAfterDimension()
@@ -2436,14 +2419,11 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #7 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1582.
-	/// BUG: MergeCells, the conditional-formatting block and Hyperlinks are each inserted directly
-	/// after SheetData, so the last call ends up first. CT_Worksheet mandates the order
-	/// mergeCells &lt; conditionalFormatting &lt; hyperlinks. Calling MergeCells, then
-	/// SetConditionalFormatting, then SetHyperlink therefore yields hyperlinks &lt; conditionalFormatting
-	/// &lt; mergeCells - the exact reverse.
-	/// Expected: the three elements appear in schema order and the worksheet passes validation.
-	/// Actual: they appear reversed (hyperlinks first), violating the CT_Worksheet sequence.
+	/// Regression test for CT_Worksheet element order: calling MergeCells, SetConditionalFormatting,
+	/// then SetHyperlink emits &lt;mergeCells&gt; &lt; &lt;conditionalFormatting&gt; &lt; &lt;hyperlinks&gt; in schema
+	/// order and the worksheet passes validation. (Was: each element was inserted directly after
+	/// SheetData, so the last call ended up first and the three appeared reversed,
+	/// OpenXmlExcelWorkerProvider.cs:1588.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_MergeConditionalHyperlink_KeepValidElementOrder()
@@ -2480,12 +2460,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #10 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1825.
-	/// BUG: Dispose unconditionally calls _targetStream.SetLength(0) and copies the workbook back,
-	/// even when the target stream is not writable. Opening a read-only stream via OpenExist and then
-	/// disposing therefore throws NotSupportedException from SetLength on a non-writable stream.
-	/// Expected: Dispose skips the write-back for a non-writable target and completes without throwing.
-	/// Actual: Dispose throws NotSupportedException.
+	/// Regression test for Dispose on a non-writable target: Dispose skips the write-back when the
+	/// target stream is not writable and completes without throwing. (Was: Dispose unconditionally
+	/// called _targetStream.SetLength(0) and copied the workbook back, throwing NotSupportedException
+	/// from SetLength on a non-writable stream, OpenXmlExcelWorkerProvider.cs:1849.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_Dispose_ReadOnlyTargetStream_DoesNotThrow()
@@ -2503,11 +2481,10 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #10 (MEDIUM), OpenXmlExcelWorkerProvider.cs:1825.
-	/// BUG: Dispose has no idempotency guard, so a second Dispose call invokes _doc.Save() on an
-	/// already-disposed document and throws ObjectDisposedException, violating the IDisposable contract.
-	/// Expected: a second Dispose is a no-op and does not throw.
-	/// Actual: the second Dispose throws ObjectDisposedException.
+	/// Regression test for Dispose idempotency: a second Dispose is a harmless no-op, per the
+	/// IDisposable contract. (Was: Dispose had no idempotency guard, so a second call invoked
+	/// _doc.Save() on an already-disposed document and threw ObjectDisposedException,
+	/// OpenXmlExcelWorkerProvider.cs:1841.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_Dispose_IsIdempotent()
@@ -2526,13 +2503,11 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #11 (LOW), OpenXmlExcelWorkerProvider.cs:1967.
-	/// BUG: When inserting a new row, the sorted-insert lookup dereferences r.RowIndex.Value without
-	/// the null guard used two lines above. The r attribute of &lt;row&gt; is optional per ECMA-376
-	/// and some streaming writers omit it; opening such a file and calling SetCell on a new row throws
-	/// NullReferenceException.
-	/// Expected: SetCell succeeds on a worksheet whose existing rows lack a RowIndex, writing the value.
-	/// Actual: a NullReferenceException is thrown.
+	/// Regression test for inserting a new row when existing rows lack a RowIndex: SetCell succeeds
+	/// and writes the value even when the existing &lt;row&gt; omits the optional r attribute (allowed by
+	/// ECMA-376, emitted by some streaming writers). (Was: the sorted-insert lookup dereferenced
+	/// r.RowIndex.Value without a null guard and threw NullReferenceException,
+	/// OpenXmlExcelWorkerProvider.cs:1999.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_OpenExist_SetCell_WhenExistingRowLacksRowIndex()
@@ -2580,14 +2555,11 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #14 (LOW), OpenXmlExcelWorkerProvider.cs:1643.
-	/// BUG: NextDxfNumberFormatId (dxf path) and GetOrCreateNumberFormatId (cell path) each compute
-	/// the next custom number-format id independently. A dxf numFmt lives in DifferentialFormats, so
-	/// GetOrCreateNumberFormatId (which scans only NumberingFormats) does not see it and hands out the
-	/// same id (e.g. 164) for a different format code. Custom number-format ids must be unique across
-	/// cell numFmts and dxf numFmts.
-	/// Expected: the dxf numFmt id and the cell numFmt id differ.
-	/// Actual: both are assigned the same id (164), a collision.
+	/// Regression test for custom number-format id uniqueness across cell numFmts and dxf numFmts:
+	/// a dxf number format and a cell number format get distinct ids. (Was: the dxf path and the
+	/// cell path computed the next id independently, so a dxf numFmt in DifferentialFormats was
+	/// unseen by the cell path and both got the same id; now a single shared allocator seeded from
+	/// both collections hands out unique ids, OpenXmlExcelWorkerProvider.cs:1418.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_DxfAndCellNumberFormatIds_AreUnique()
@@ -2627,13 +2599,12 @@ public class ExcelWorkerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Finding #15 (LOW), OpenXmlExcelWorkerProvider.cs:925.
-	/// BUG: chart drawing ids come from a per-worker counter that starts at 0 (++_chartId), never seeded
-	/// from the existing drawing content. Reopening a template that already holds a chart with
-	/// NonVisualDrawingProperties.Id=1 and adding another chart assigns Id=1 again, a duplicate that is
-	/// invalid by the drawingML uniqueness requirement.
-	/// Expected: every NonVisualDrawingProperties.Id in the worksheet drawing is unique.
-	/// Actual: the new chart reuses an id already present in the template, producing a duplicate.
+	/// Regression test for unique drawing ids: reopening a template that already holds a chart and
+	/// adding another chart assigns a fresh NonVisualDrawingProperties.Id, so every drawing id in the
+	/// worksheet drawing is unique (required by drawingML). (Was: chart ids came from a per-worker
+	/// counter starting at 0 that was never seeded from existing drawing content, so the new chart
+	/// reused id 1; now NextDrawingId seeds the counter from the existing max,
+	/// OpenXmlExcelWorkerProvider.cs:2098.)
 	/// </summary>
 	[TestMethod]
 	public void OpenXml_AddChartToTemplateWithExistingChart_AssignsUniqueDrawingId()

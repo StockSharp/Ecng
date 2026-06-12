@@ -1664,13 +1664,10 @@ public class FileLogListenerTests : BaseTestClass
 	#region Rotation Recovery Tests
 
 	/// <summary>
-	/// BUG: When MaxLength rotation fails (FileSystem.MoveFile throws after the current writer was already
-	/// disposed), the disposed writer is left in the internal _writers map; the outer finally flushes a
-	/// disposed writer and every later batch reuses that disposed writer, so file logging is permanently dead.
-	/// Expected: after a failed rotation the listener recovers - a subsequent write succeeds and the new
-	/// message is recorded in the log file.
-	/// Actual: the subsequent write throws ObjectDisposedException (or silently loses the message).
-	/// Cite: Logging\FileLogListener.cs:640 (writer.Dispose before MoveFile) and :667 (writers map not restored on failure).
+	/// Regression test for rotation recovery: ensures that after a failed MaxLength rotation (FileSystem.MoveFile
+	/// throws once the current writer has already been disposed) the listener recovers - a subsequent write succeeds
+	/// and the new message is recorded in the log file. (Was: the disposed writer stayed in the internal _writers map
+	/// and every later batch reused it, so file logging died permanently; Logging\FileLogListener.cs:640/667.)
 	/// </summary>
 	[TestMethod]
 	public async Task FileListener_FailedRotation_RecoversOnNextWrite()

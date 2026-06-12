@@ -179,8 +179,9 @@ public class YandexDiskClientTests : BaseTestClass
 	#region Unit tests (with fake)
 
 	/// <summary>
-	/// Verifies that DownloadAsync calls progress callback.
-	/// Currently progress is never called.
+	/// Regression test for download progress reporting: ensures DownloadAsync invokes the
+	/// progress callback and reports a final value of 100. (Was: progress was never called,
+	/// Backup.Yandex\YandexDiskService.cs:167.)
 	/// </summary>
 	[TestMethod]
 	public async Task DownloadAsync_ShouldCallProgress()
@@ -207,8 +208,9 @@ public class YandexDiskClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Verifies that UploadAsync calls progress callback.
-	/// Currently progress is never called.
+	/// Regression test for upload progress reporting: ensures UploadAsync invokes the
+	/// progress callback and reports a final value of 100. (Was: progress was never called,
+	/// Backup.Yandex\YandexDiskService.cs:205.)
 	/// </summary>
 	[TestMethod]
 	public async Task UploadAsync_ShouldCallProgress()
@@ -233,12 +235,10 @@ public class YandexDiskClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: PublishAsync returns link.Href from PublishFolderAsync, which is the
-	/// OAuth-protected cloud-api metadata URL ("URL for requesting resource metadata"),
-	/// not the shareable public link. The real public URL is Resource.PublicUrl,
-	/// obtained from a follow-up GetInfoAsync. (Backup.Yandex\YandexDiskService.cs:232)
-	/// Expected: PublishAsync returns the public "https://yadi.sk/..." URL (PublicUrl).
-	/// Actual: it returns the "https://cloud-api.yandex.net/..." metadata Href.
+	/// Regression test for PublishAsync: ensures it returns the shareable public
+	/// "https://yadi.sk/..." URL (Resource.PublicUrl from a follow-up GetInfoAsync) rather
+	/// than the OAuth-protected cloud-api metadata Href from PublishFolderAsync.
+	/// (Backup.Yandex\YandexDiskService.cs:279.)
 	/// </summary>
 	[TestMethod]
 	public async Task PublishAsync_ShouldReturnPublicUrl_NotMetadataHref()
@@ -269,14 +269,11 @@ public class YandexDiskClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: DeleteAsync forwards the raw Task from Commands.DeleteAsync. Yandex.Disk
-	/// deletes non-empty folders asynchronously, returning 202 Accepted plus an
-	/// operation Link; the service reports completion before the server-side delete
-	/// finishes instead of polling via DeleteAndWaitAsync / GetOperationStatus.
-	/// (Backup.Yandex\YandexDiskService.cs:118)
-	/// Expected: DeleteAsync waits for the operation, so GetOperationStatus is polled
-	/// at least once when the delete returns 202 Accepted.
-	/// Actual: GetOperationStatus is never called; DeleteAsync returns immediately.
+	/// Regression test for asynchronous deletes: ensures DeleteAsync waits for the
+	/// server-side operation (via DeleteAndWaitAsync), polling GetOperationStatus at least
+	/// once when a non-empty-folder delete returns 202 Accepted. (Was: the raw delete Task
+	/// was forwarded and completion reported before the server finished,
+	/// Backup.Yandex\YandexDiskService.cs:159.)
 	/// </summary>
 	[TestMethod]
 	public async Task DeleteAsync_OnAcceptedOperation_ShouldWaitForCompletion()
@@ -297,12 +294,11 @@ public class YandexDiskClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: FindAsyncImpl dereferences info.Embedded.Items unguarded. When the parent
-	/// path resolves to a file, GetInfoAsync succeeds with a Resource whose Embedded is
-	/// null (the API omits "_embedded" for files), so enumeration throws a bare
-	/// NullReferenceException. (Backup.Yandex\YandexDiskService.cs:84)
-	/// Expected: a file parent yields no children (empty sequence) rather than NRE.
-	/// Actual: NullReferenceException is thrown while enumerating.
+	/// Regression test for FindAsync against a file parent: ensures a parent path that
+	/// resolves to a file (whose Resource.Embedded is null, since the API omits "_embedded"
+	/// for files) yields an empty sequence rather than throwing. (Was: info.Embedded.Items
+	/// dereferenced unguarded, causing a NullReferenceException,
+	/// Backup.Yandex\YandexDiskService.cs:124.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_WhenParentIsFile_ShouldNotThrowNullReference()
@@ -333,13 +329,12 @@ public class YandexDiskClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: UploadAsync uses stream.Length as the progress total, ignoring the current
-	/// Position. For a non-rewound seekable stream only (Length - Position) bytes are
-	/// uploaded, so reported percentages are understated for the whole transfer and only
-	/// reach 100 via the final fallback. (Backup.Yandex\YandexDiskService.cs:173)
-	/// Expected: progress reflects the remaining bytes, so values above 50% (and below
-	/// 100) are reported when half the stream has already been consumed.
-	/// Actual: progress tops out around 50% then jumps straight to 100.
+	/// Regression test for upload progress on a non-rewound seekable stream: ensures
+	/// progress accounts for the stream's current Position (only Length - Position bytes are
+	/// uploaded), reporting genuine intermediate values above 50% before completion when half
+	/// the stream has already been consumed. (Was: stream.Length used as the progress total,
+	/// ignoring Position, so progress topped out around 50% then jumped to 100,
+	/// Backup.Yandex\YandexDiskService.cs:205.)
 	/// </summary>
 	[TestMethod]
 	public async Task UploadAsync_NonRewoundStream_ShouldReportProgressFromRemaining()
@@ -361,20 +356,18 @@ public class YandexDiskClientTests : BaseTestClass
 
 		await svc.UploadAsync(entry, stream, progressCalls.Add, CancellationToken);
 
-		// With the bug the only reported values are 0..~50 then the 100 fallback,
-		// so no genuine intermediate value lands in (50, 100).
+		// A genuine intermediate value must land in (50, 100): when Position is ignored only
+		// 0..~50 plus the 100 fallback are reported, with nothing in between.
 		progressCalls.Any(p => p > 50 && p < 100)
 			.AssertTrue("Progress must account for the stream Position, reporting values above 50% before completion.");
 	}
 
 	/// <summary>
-	/// BUG: DisposeManaged unconditionally calls _client.Dispose(), disposing an
-	/// IDiskApi that was injected by the caller via the YandexDiskService(IDiskApi)
-	/// constructor. The shared client (documented as cache-and-reuse) then breaks every
-	/// other consumer. (Backup.Yandex\YandexDiskService.cs:47)
-	/// Expected: an injected client is owned by the caller and is NOT disposed by the
-	/// service.
-	/// Actual: the service disposes the injected client.
+	/// Regression test for client ownership: ensures a client injected via the
+	/// YandexDiskService(IDiskApi) constructor is owned by the caller and is NOT disposed by
+	/// the service, so the shared (cache-and-reuse) client keeps working for other consumers.
+	/// (Was: DisposeManaged unconditionally disposed the injected client,
+	/// Backup.Yandex\YandexDiskService.cs:83.)
 	/// </summary>
 	[TestMethod]
 	public void Dispose_ShouldNotDisposeInjectedClient()

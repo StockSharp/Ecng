@@ -511,8 +511,9 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: NetworkHelper.IsHostPortAddress doesn't handle IPv6 correctly.
-	/// Address "::1" is treated as host ":" with port 1.
+	/// Regression test for NetworkHelper.IsHostPortAddress: ensures bare IPv6 addresses
+	/// are not misclassified as host:port. (Was: "::1" parsed as host ":" with port 1,
+	/// NetworkHelper.cs:1002.)
 	/// </summary>
 	[TestMethod]
 	public void IsHostPortAddress_ShouldHandleIPv6()
@@ -522,9 +523,7 @@ public class NetworkHelperTests : BaseTestClass
 
 		var result = ipv6Localhost.IsHostPortAddress();
 
-		// ::1 is a valid IPv6 address, not a host:port
-		// The bug causes it to be parsed as host=":" port=1 (returns true)
-		// Correct behavior: should return false (it's an IPv6 address, not host:port)
+		// ::1 is a valid IPv6 address, not a host:port - should return false
 		result.AssertFalse($"IPv6 address '::1' should not be considered a host:port address");
 
 		// Additional IPv6 test cases
@@ -727,8 +726,10 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: NetworkHelper.IsLocalhost uses StartsWithIgnoreCase("localhost").
-	/// This means "localhost.evil.com" would be considered localhost - SECURITY BUG!
+	/// Regression test for NetworkHelper.IsLocalhost: ensures only an exact "localhost"
+	/// host matches, so look-alike hosts are not treated as localhost. (Was: a
+	/// StartsWithIgnoreCase("localhost") check that matched "localhost.evil.com",
+	/// NetworkHelper.cs:519.)
 	/// </summary>
 	[TestMethod]
 	public void IsLocalhost_ShouldNotMatchSubdomains()
@@ -742,20 +743,17 @@ public class NetworkHelperTests : BaseTestClass
 		legitimateLocalhost.IsLocalhost().AssertTrue("localhost should be localhost");
 		localhostWithPort.IsLocalhost().AssertTrue("localhost:8080 should be localhost");
 
-		// These should NOT be localhost - if they are, it's a security bug!
+		// These should NOT be localhost
 		maliciousUrl.IsLocalhost().AssertFalse("localhost.evil.com should NOT be considered localhost!");
 		anotherMalicious.IsLocalhost().AssertFalse("localhost-fake.com should NOT be considered localhost!");
 	}
 
 	/// <summary>
-	/// BUG: JoinMulticast (and LeaveMulticast) silently ignore SourceAddress for IPv6 groups
-	/// (Net\NetworkHelper.cs:102 / :143). For IPv4 the source address selects source-specific
-	/// multicast via AddSourceMembership, but the IPv6 branch always performs an any-source join
-	/// (IPv6MulticastOption) and drops the configured SourceAddress without any error.
-	/// Expected: when a SourceAddress is set for an IPv6 group (which the helper cannot honor,
-	/// because GetBytes only supports 4-byte IPv4 addresses), the call must throw
-	/// NotSupportedException instead of quietly degrading to an unfiltered any-source join.
-	/// Actual: no validation is performed; the IPv6 source-specific request is silently ignored.
+	/// Regression test for JoinMulticast/LeaveMulticast: ensures that setting a SourceAddress
+	/// on an IPv6 group throws NotSupportedException instead of silently degrading to an
+	/// unfiltered any-source join (the helper cannot honor it, since GetBytes only supports
+	/// 4-byte IPv4 addresses). (Was: the IPv6 branch dropped the configured SourceAddress
+	/// without any error, Net\NetworkHelper.cs:100 / :144.)
 	/// </summary>
 	[TestMethod]
 	public void JoinMulticast_IPv6WithSourceAddress_ShouldThrowNotSupported()

@@ -49,13 +49,11 @@ public class ConfigManagerTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <see cref="ConfigManager.RaiseServiceRegistered"/> enumerates the live subscriber
-	/// list while a subscriber callback may mutate it via <see cref="ConfigManager.SubscribeOnRegister{T}"/>
-	/// (Configuration\ConfigManager.cs:209,219). A subscriber that re-subscribes for the same type
-	/// during notification adds to the very list being iterated, invalidating the enumerator.
-	/// Expected: re-subscribing during notification is safe (a snapshot is iterated), so registration
-	/// completes without throwing. Actual: the foreach throws InvalidOperationException
-	/// ("Collection was modified"), breaking the documented thread-safe contract.
+	/// Regression test for <see cref="ConfigManager.SubscribeOnRegister{T}"/> reentrancy: ensures a
+	/// subscriber that re-subscribes for the same type during notification is safe and registration
+	/// completes without throwing, because the subscriber list is snapshotted before callbacks run
+	/// (Configuration\ConfigManager.cs:219). (Was: RaiseServiceRegistered enumerated the live
+	/// subscriber list, so re-subscribing during notification threw InvalidOperationException.)
 	/// </summary>
 	[TestMethod]
 	public void SubscribeOnRegister_ReentrantSubscribe_DoesNotThrow()
@@ -64,13 +62,13 @@ public class ConfigManagerTests : BaseTestClass
 		var name = $"{nameof(SubscribeOnRegister_ReentrantSubscribe_DoesNotThrow)}_{Guid.NewGuid():N}";
 
 		// First subscriber re-subscribes for the same type while being notified,
-		// mutating the list that RaiseServiceRegistered is currently enumerating.
+		// adding to the subscriber list during a RaiseServiceRegistered notification.
 		ConfigManager.SubscribeOnRegister<IReentrantService>(_ =>
 			ConfigManager.SubscribeOnRegister<IReentrantService>(__ => { }));
 
 		// Triggers RaiseServiceRegistered for IReentrantService.
-		// With the bug present this throws InvalidOperationException; the fix snapshots
-		// the subscriber list before invoking callbacks, so this must complete cleanly.
+		// RaiseServiceRegistered snapshots the subscriber list before invoking callbacks,
+		// so the reentrant subscribe above is safe and this completes cleanly.
 		ConfigManager.RegisterService<IReentrantService>(name, service);
 
 		ConfigManager.GetService<IReentrantService>(name).AssertSame(service);

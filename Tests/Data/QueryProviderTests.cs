@@ -473,8 +473,10 @@ public class QueryProviderTests : BaseTestClass
 	[TestMethod]
 	public void Create_WithIdentityKey_ReadOnlyNonIdentity_SelectHasWhereCondition()
 	{
-		// After fix: Database.CreateAsync passes [identity] as keyColumns
-		// so the post-insert SELECT has WHERE [e].[Id] = @Id
+		// Regression test for post-insert identity SELECT: when keyColumns is [identity],
+		// the SELECT after INSERT carries WHERE [e].[Id] = @Id.
+		// (Was: Database.CreateAsync passed empty keyColumns, producing a SELECT without
+		// a WHERE condition; Database.cs CreateAsync now passes [identity].)
 		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
 		var columns = new SchemaColumn[]
 		{
@@ -484,7 +486,7 @@ public class QueryProviderTests : BaseTestClass
 
 		var schema = CreateTestSchema("Items", identity, columns);
 
-		// Fixed: pass [identity] as keyColumns (not empty [])
+		// Pass [identity] as keyColumns (matching CreateAsync).
 		var query = _provider.Create(schema, SqlCommandTypes.Create, [identity], schema.AllColumns);
 		var sql = Norm(query.Render(_dialect));
 
@@ -499,7 +501,9 @@ public class QueryProviderTests : BaseTestClass
 	[TestMethod]
 	public void Create_EmptyKeyColumns_ReadOnlyNonIdentity_ProducesInvalidSql()
 	{
-		// Demonstrates the old bug: empty keyColumns → SELECT with no WHERE condition
+		// Documents the generator contract: with empty keyColumns the post-insert SELECT
+		// has no WHERE condition. (Callers such as Database.cs CreateAsync therefore pass
+		// [identity]; the previous defect was passing empty keyColumns here.)
 		var identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true };
 		var columns = new SchemaColumn[]
 		{
@@ -509,7 +513,7 @@ public class QueryProviderTests : BaseTestClass
 
 		var schema = CreateTestSchema("ItemsBug", identity, columns);
 
-		// Old code: empty keyColumns
+		// Empty keyColumns
 		var provider = new QueryProvider();
 		var query = provider.Create(schema, SqlCommandTypes.Create, [], schema.AllColumns);
 		var sql = Norm(query.Render(_dialect));
@@ -517,7 +521,7 @@ public class QueryProviderTests : BaseTestClass
 		var selectIdx = sql.LastIndexOf("select", StringComparison.OrdinalIgnoreCase);
 		var selectPart = sql[selectIdx..];
 
-		// With empty keyColumns, no equality condition exists — this proves the old bug
+		// With empty keyColumns, no equality condition exists in the SELECT
 		selectPart.Contains("= @").AssertFalse(
 			$"Empty keyColumns should produce SELECT without equality condition, got: {selectPart}");
 	}
@@ -529,7 +533,9 @@ public class QueryProviderTests : BaseTestClass
 	[TestMethod]
 	public void UpdateBy_NoIdentity_UsesUniqueColumnsNotIndex()
 	{
-		// Verifies that Database.UpdateAsync uses UniqueColumns, not IndexColumns
+		// Regression test for keyless UPDATE: the WHERE keys come from UniqueColumns,
+		// not IndexColumns. (Was: Database.UpdateAsync keyed off IndexColumns, which can
+		// be non-unique; Database.cs UpdateAsync now uses meta.UniqueColumns.)
 		var uniqueCol = new SchemaColumn { Name = "Code", ClrType = typeof(string), IsUnique = true, IsIndex = true };
 		var indexCol = new SchemaColumn { Name = "Status", ClrType = typeof(int), IsIndex = true };
 		var valueCol = new SchemaColumn { Name = "Name", ClrType = typeof(string) };
@@ -540,10 +546,10 @@ public class QueryProviderTests : BaseTestClass
 		schema.UniqueColumns.Count.AssertEqual(1);
 		schema.UniqueColumns[0].Name.AssertEqual("Code");
 
-		// IndexColumns includes both — this is what old code used (wrong)
+		// IndexColumns includes both Code and Status (not all are unique)
 		schema.IndexColumns.Count.AssertEqual(2);
 
-		// Correct: use UniqueColumns as keyColumns
+		// Use UniqueColumns as keyColumns
 		var query = _provider.Create(schema, SqlCommandTypes.UpdateBy, schema.UniqueColumns,
 			schema.Columns.Where(c => !c.IsReadOnly && !c.IsUnique).ToList());
 		var sql = Norm(query.Render(_dialect));
@@ -576,8 +582,10 @@ public class QueryProviderTests : BaseTestClass
 	[TestMethod]
 	public void UpdateBy_EmptyKeyColumns_Throws()
 	{
-		// Finding #2 (current review): when entity has no identity and no unique columns,
-		// AppendUpdateBy must throw instead of generating SQL with dangling WHERE.
+		// Regression test for keyless UPDATE: with no key columns AppendUpdateBy throws
+		// rather than emitting SQL with a dangling WHERE.
+		// (Was: empty whereColumns produced invalid UPDATE ... WHERE; SqlDialectBase.cs
+		// AppendUpdateBy now throws InvalidOperationException.)
 		Assert.ThrowsExactly<InvalidOperationException>(
 			() => _dialect.AppendUpdateBy(new System.Text.StringBuilder(), "NoKeyTable", ["Name", "Value"], []));
 	}
@@ -585,7 +593,10 @@ public class QueryProviderTests : BaseTestClass
 	[TestMethod]
 	public void DeleteBy_EmptyKeyColumns_Throws()
 	{
-		// Same issue for DELETE — empty whereColumns must throw.
+		// Regression test for keyless DELETE: empty whereColumns throws rather than
+		// emitting a DELETE with a dangling WHERE.
+		// (Was: empty whereColumns produced invalid DELETE ... WHERE; SqlDialectBase.cs
+		// AppendDeleteBy now throws InvalidOperationException.)
 		Assert.ThrowsExactly<InvalidOperationException>(
 			() => _dialect.AppendDeleteBy(new System.Text.StringBuilder(), "NoKeyTable", []));
 	}

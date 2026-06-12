@@ -17,10 +17,9 @@ using Ecng.Backup.Amazon;
 public class AmazonS3ServiceTests : BaseTestClass
 {
 	/// <summary>
-	/// BUG: S3 UploadAsync streams via multipart and calls CompleteMultipartUpload with
-	/// zero parts for an empty stream, which S3 rejects. (AmazonS3Service.cs:200)
-	/// Expected: uploading an empty stream succeeds and the stored object has size 0.
-	/// Actual: the upload throws (MalformedXML / "must specify at least one part").
+	/// Regression test for S3 upload of empty streams: ensures uploading an empty stream
+	/// succeeds and the stored object has size 0. (Was: multipart upload called
+	/// CompleteMultipartUpload with zero parts, which S3 rejects; AmazonS3Service.cs:191.)
 	///
 	/// Integration: AmazonS3Service has no IAmazonS3 injection point, so this is exercised
 	/// against a real bucket gated by BACKUP_AWS_* secrets.
@@ -58,11 +57,11 @@ public class AmazonS3ServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: S3 FindAsync builds the listing prefix from parent.GetFullPath() without a
-	/// trailing '/', so listing parent "data" also returns objects under sibling
-	/// "data2/" etc. (AmazonS3Service.cs:68)
-	/// Expected: FindAsync(parent, null) returns only direct descendants of parent.
-	/// Actual: entries from sibling "folders" sharing the prefix leak into the result.
+	/// Regression test for S3 FindAsync prefixing: ensures FindAsync(parent, null) returns
+	/// only direct descendants of parent and does not leak objects from sibling "folders"
+	/// sharing the prefix. (Was: the listing prefix was built from parent.GetFullPath()
+	/// without a trailing '/', so listing parent "data" also returned "data2/" objects;
+	/// AmazonS3Service.cs:67.)
 	///
 	/// Integration: gated by BACKUP_AWS_* secrets.
 	/// </summary>

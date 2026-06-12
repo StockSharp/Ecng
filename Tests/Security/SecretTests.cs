@@ -464,12 +464,11 @@ public class SecretTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <see cref="X509Cryptographer"/> built from a public-only certificate wraps a null
-	/// private-key algorithm into a non-null <c>AsymmetricAlgorithmWrapper</c>; its
-	/// <c>DisposeManaged</c> calls <c>Value.Clear()</c> on the null algorithm.
-	/// Expected: a public-only certificate supports Encrypt/VerifySignature and disposes cleanly.
-	/// Actual: disposing throws <see cref="NullReferenceException"/>.
-	/// Security\Cryptographers\AsymmetricCryptographer.cs:175 (protected ctor) and :134 (Value.Clear()).
+	/// Regression test for <see cref="X509Cryptographer"/>: ensures a public-only certificate
+	/// supports Encrypt and disposes cleanly. (Was: the missing private key was wrapped into a
+	/// non-null wrapper whose <c>DisposeManaged</c> dereferenced a null algorithm, throwing
+	/// <see cref="NullReferenceException"/>; now the wrapper is left null and <c>Value?.Clear()</c>
+	/// guards the dispose - Security\Cryptographers\AsymmetricCryptographer.cs ctor and DisposeManaged.)
 	/// </summary>
 	[TestMethod]
 	public void X509Cryptographer_PublicOnlyCertificate_EncryptsAndDisposesWithoutNre()
@@ -516,12 +515,11 @@ public class SecretTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <see cref="CryptoHelper.Encrypt(byte[], string, byte[], byte[])"/> derives the AES key with
-	/// PBKDF2-HMAC-SHA1 and only 1000 iterations, far below current recommendations.
-	/// Expected: the derivation is hardened (stronger hash and/or far more iterations), so the helper
-	/// output no longer matches the weak SHA1/1000-iteration derivation.
-	/// Actual: the helper output equals the weak SHA1/1000-iteration AES-CBC ciphertext.
-	/// Security\CryptoHelper.cs:130 (_derivationIterations = 1000) and :163 (HashAlgorithmName.SHA1).
+	/// Regression test for <see cref="CryptoHelper.Encrypt(byte[], string, byte[], byte[])"/>: ensures
+	/// the AES key derivation is hardened, so the helper output no longer matches the weak
+	/// SHA1/1000-iteration derivation. (Was: PBKDF2-HMAC-SHA1 with only 1000 iterations; now
+	/// PBKDF2-HMAC-SHA256 with 100000 iterations - Security\CryptoHelper.cs _derivationIterations and
+	/// _derivationHash, with the old SHA1/1000 values kept only as a decryption fallback.)
 	/// </summary>
 	[TestMethod]
 	public void CryptoHelper_Encrypt_UsesHardenedKeyDerivation()
@@ -554,8 +552,8 @@ public class SecretTests : BaseTestClass
 
 		var weakCipher = memoryStream.ToArray();
 
-		// While the bug is present the helper reproduces the weak ciphertext exactly; once the
-		// derivation is hardened (different hash or iteration count) the two diverge.
+		// With the weak derivation the helper would reproduce this ciphertext exactly; the hardened
+		// derivation (different hash and iteration count) makes the two diverge.
 		actual.SequenceEqual(weakCipher).AssertFalse("CryptoHelper.Encrypt must not use the weak PBKDF2-SHA1/1000 key derivation.");
 	}
 

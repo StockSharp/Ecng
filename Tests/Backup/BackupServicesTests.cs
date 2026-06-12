@@ -301,9 +301,9 @@ public class BackupServicesTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: DeleteAsync calls Find() before EnsureLogin(), so _nodes is empty on fresh service.
-	/// Expected: Should work (login first, then find).
-	/// Actual: InvalidOperationException from GetRoot().First() because _nodes is empty.
+	/// Regression test for MegaService.DeleteAsync: ensures it logs in (and populates _nodes)
+	/// before resolving the entry, so deleting on a fresh service works. (Was: Find() ran before
+	/// EnsureLogin(), so _nodes was empty and GetRoot().First() threw, MegaService.cs:143.)
 	/// </summary>
 	[TestMethod]
 	public async Task Mega_DeleteAsync_OnFreshService_ShouldNotThrow()
@@ -323,17 +323,17 @@ public class BackupServicesTests : BaseTestClass
 			await setupSvc.UploadAsync(testEntry, uploadStream, _ => { }, CancellationToken);
 		}
 
-		// Now create a FRESH service and immediately call DeleteAsync
-		// BUG: This will fail because Find() is called before EnsureLogin()
+		// Now create a FRESH service and immediately call DeleteAsync.
 		using IBackupService freshSvc = new MegaService(email, password.Secure());
 
-		// This should work but will throw InvalidOperationException
-		// because _nodes is empty (EnsureLogin not called yet)
+		// DeleteAsync logs in before resolving the entry, so this succeeds even on a fresh service.
 		await freshSvc.DeleteAsync(testEntry, CancellationToken);
 	}
 
 	/// <summary>
-	/// BUG: DownloadAsync calls Find() before EnsureLogin(), so _nodes is empty on fresh service.
+	/// Regression test for MegaService.DownloadAsync: ensures it logs in (and populates _nodes)
+	/// before resolving the entry, so downloading on a fresh service works. (Was: Find() ran before
+	/// EnsureLogin(), so _nodes was empty, MegaService.cs:156.)
 	/// </summary>
 	[TestMethod]
 	public async Task Mega_DownloadAsync_OnFreshService_ShouldNotThrow()
@@ -356,12 +356,11 @@ public class BackupServicesTests : BaseTestClass
 
 		try
 		{
-			// Now create a FRESH service and immediately call DownloadAsync
-			// BUG: This will fail because Find() is called before EnsureLogin()
+			// Now create a FRESH service and immediately call DownloadAsync.
 			using IBackupService freshSvc = new MegaService(email, password.Secure());
 			using var downloadStream = new MemoryStream();
 
-			// This should work but will throw because _nodes is empty
+			// DownloadAsync logs in before resolving the entry, so this succeeds even on a fresh service.
 			await freshSvc.DownloadAsync(testEntry, downloadStream, null, null, _ => { }, CancellationToken);
 		}
 		finally
@@ -373,9 +372,8 @@ public class BackupServicesTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: CreateFolder doesn't check entry for null.
-	/// Expected: ArgumentNullException.
-	/// Actual: NullReferenceException.
+	/// Regression test for MegaService.CreateFolder: ensures a null entry throws ArgumentNullException.
+	/// (Was: entry was not null-checked, so it threw NullReferenceException, MegaService.cs:98.)
 	/// </summary>
 	[TestMethod]
 	public async Task Mega_CreateFolder_NullEntry_ShouldThrowArgumentNullException()
@@ -385,7 +383,7 @@ public class BackupServicesTests : BaseTestClass
 
 		using IBackupService svc = new MegaService(email, password.Secure());
 
-		// This should throw ArgumentNullException, but throws NullReferenceException
+		// A null entry must throw ArgumentNullException.
 		await ThrowsAsync<ArgumentNullException>(() => svc.CreateFolder(null, CancellationToken));
 	}
 }

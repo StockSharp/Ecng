@@ -506,13 +506,13 @@ public class EntityGeneratorTests : BaseTestClass
 	#region Finding #3: generated [RelationSingle] columns must set ReferencedEntityType
 
 	/// <summary>
-	/// BUG: EntityGenerator.EmitMetaColumns emits only Name/ClrType/nullability for
-	/// [RelationSingle] columns and never sets <see cref="SchemaColumn.ReferencedEntityType"/>.
-	/// Expected: the generated FK column references the navigation property's entity type
-	/// (the reflection path sets <c>ReferencedEntityType = prop.PropertyType</c> —
-	/// SchemaRegistry.cs:219). Actual: ReferencedEntityType is null on the generated
-	/// schema, so SchemaMigrator silently drops the FK constraint.
-	/// Citation: Data.Entities.Generator\EntityGenerator.cs:656.
+	/// Regression test for generated [RelationSingle] columns: ensures the generated FK
+	/// column sets <see cref="SchemaColumn.ReferencedEntityType"/> to the navigation
+	/// property's entity type, matching the reflection path
+	/// (<c>ReferencedEntityType = prop.PropertyType</c>, SchemaRegistry.cs:219) so the
+	/// SchemaMigrator keeps the FK constraint.
+	/// (Was: EntityGenerator.EmitMetaColumns emitted only Name/ClrType/nullability and
+	/// left ReferencedEntityType null, Data.Entities.Generator\EntityGenerator.cs:721.)
 	/// </summary>
 	[TestMethod]
 	public void Generated_RelationSingle_LongRef_SetsReferencedEntityType()
@@ -525,11 +525,11 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: same root cause as above — the generated FK column for a reference to a
-	/// Guid-identity entity must carry its referenced entity type.
-	/// Expected: ReferencedEntityType == typeof(GenTestGuidIdEntity).
-	/// Actual: null (generator never emits ReferencedEntityType).
-	/// Citation: Data.Entities.Generator\EntityGenerator.cs:656.
+	/// Regression test (same area as above): ensures the generated FK column for a
+	/// reference to a Guid-identity entity carries its referenced entity type
+	/// (ReferencedEntityType == typeof(GenTestGuidIdEntity)).
+	/// (Was: generator did not emit ReferencedEntityType,
+	/// Data.Entities.Generator\EntityGenerator.cs:721.)
 	/// </summary>
 	[TestMethod]
 	public void Generated_RelationSingle_GuidRef_SetsReferencedEntityType()
@@ -542,13 +542,12 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: EntityGenerator.EmitMetaColumnsRecursive (the inner-schema path) also never
-	/// emits ReferencedEntityType for a [RelationSingle] living inside a flattened inner
-	/// schema. The reflection path sets it for the flattened FK column
-	/// (FlattenInnerSchema -> SchemaRegistry.cs:451).
-	/// Expected: the flattened "ShippingAddressDeliveredBy" column references
-	/// GenTestOrderEntity. Actual: null.
-	/// Citation: Data.Entities.Generator\EntityGenerator.cs:708.
+	/// Regression test for the inner-schema path: ensures EmitMetaColumnsRecursive emits
+	/// ReferencedEntityType for a [RelationSingle] living inside a flattened inner schema,
+	/// matching the reflection path (FlattenInnerSchema -> SchemaRegistry.cs:219), so the
+	/// flattened "ShippingAddressDeliveredBy" column references GenTestOrderEntity.
+	/// (Was: the inner-schema path did not emit ReferencedEntityType,
+	/// Data.Entities.Generator\EntityGenerator.cs:776.)
 	/// </summary>
 	[TestMethod]
 	public void Generated_RelationSingle_InsideInnerSchema_SetsReferencedEntityType()
@@ -566,14 +565,13 @@ public class EntityGeneratorTests : BaseTestClass
 	#region Finding #6: null inner-schema object must survive a Save/LoadAsync round-trip
 
 	/// <summary>
-	/// BUG: EntityGenerator.EmitLoadInnerSchema emits <c>prop = new InnerType { ... }</c>
-	/// unconditionally, even for a [Column(IsNullable = true)] inner schema saved as null.
-	/// After saving an entity whose nullable inner property is null (all flattened columns
-	/// written as NULL) and loading it back, the property is reconstructed as a non-null
-	/// instance with default members instead of staying null — a lossy round-trip.
-	/// Expected: a null inner object round-trips back to null.
-	/// Actual: LoadAsync materializes a non-null GenTestAddress with null Street/City.
-	/// Citation: Data.Entities.Generator\EntityGenerator.cs:422.
+	/// Regression test for nullable inner-schema round-trip: ensures a null
+	/// [Column(IsNullable = true)] inner property (all flattened columns saved as NULL)
+	/// loads back as null instead of being reconstructed as a non-null instance with
+	/// default members. EmitLoadInnerSchema emits a null-check branch that sets the
+	/// property to null when every flattened column is NULL.
+	/// (Was: EmitLoadInnerSchema emitted <c>prop = new InnerType { ... }</c> unconditionally,
+	/// materializing a non-null instance, Data.Entities.Generator\EntityGenerator.cs:404.)
 	/// </summary>
 	[TestMethod]
 	public async Task Generated_NullableInnerSchema_NullRoundTripsToNull()

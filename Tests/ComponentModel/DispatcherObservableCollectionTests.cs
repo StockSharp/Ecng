@@ -44,11 +44,11 @@ public class DispatcherObservableCollectionTests : BaseTestClass
 	private static readonly TimeSpan _flushWait = TimeSpan.FromMilliseconds(800);
 
 	/// <summary>
-	/// BUG: DispatcherObservableCollection.Clear() (ComponentModel\DispatcherObservableCollection.cs:181)
-	/// takes the immediate dispatcher-thread path even while background actions are still queued,
-	/// so the deferred Add is replayed onto Items after the immediate Clear.
-	/// Expected: after everything settles, Items and the collection (_syncCopy) agree (both empty).
-	/// Actual: the queued Add re-appears in Items as a ghost element absent from the collection.
+	/// Regression test for DispatcherObservableCollection ordering: ensures a dispatcher-thread
+	/// Clear does not race ahead of still-queued background actions, so Items and the collection
+	/// (_syncCopy) end up consistent (both empty) once everything settles. (Was: Clear() took the
+	/// immediate dispatcher-thread path while a background Add was queued, letting the deferred Add
+	/// replay onto Items after the Clear as a ghost element, ComponentModel\DispatcherObservableCollection.cs:181.)
 	/// </summary>
 	[TestMethod]
 	public async Task DispatcherClear_AfterQueuedBackgroundAdd_KeepsItemsConsistent()
@@ -74,12 +74,12 @@ public class DispatcherObservableCollectionTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: DispatcherObservableCollection dispatcher-thread mutations bypass the pending-action
-	/// queue (ComponentModel\DispatcherObservableCollection.cs:92), breaking operation order and
-	/// indices. A background AddRange is still queued (Items empty) when a dispatcher-thread
-	/// RemoveAt(0) runs Items.RemoveAt(0) against the empty Items.
-	/// Expected: no exception, and after settling Items and the collection agree (both empty).
-	/// Actual: Items.RemoveAt(0) throws ArgumentOutOfRangeException / desyncs Items from _syncCopy.
+	/// Regression test for DispatcherObservableCollection ordering: ensures dispatcher-thread
+	/// mutations stay ordered behind still-queued background actions, so a RemoveAt(0) following a
+	/// queued background AddRange does not run against an empty Items, completes without exception,
+	/// and leaves Items and the collection consistent (both empty). (Was: dispatcher-thread mutations
+	/// bypassed the pending-action queue and ran Items.RemoveAt(0) against the empty Items, throwing
+	/// ArgumentOutOfRangeException / desyncing Items from _syncCopy, ComponentModel\DispatcherObservableCollection.cs:92.)
 	/// </summary>
 	[TestMethod]
 	public async Task DispatcherRemoveAt_AfterQueuedBackgroundAddRange_KeepsOrderConsistent()

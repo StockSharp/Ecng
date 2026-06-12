@@ -622,16 +622,11 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>UtcNow()</c>/<c>SysUtcNow()</c> emit <c>now() AT TIME ZONE 'UTC'</c>, which
-	/// yields a <c>timestamp WITHOUT time zone</c>. But this dialect maps every
-	/// <c>DateTime</c> column to <c>TIMESTAMPTZ</c> (GetSqlTypeName), so comparing/writing
-	/// the without-tz value against a <c>TIMESTAMPTZ</c> column makes PostgreSQL reinterpret
-	/// it in the session time zone — shifting the moment by the session UTC offset on any
-	/// server whose <c>TimeZone</c> is not UTC. The expression should produce a
-	/// <c>timestamptz</c> "now".
-	/// Expected: both return <c>"now()"</c> (a <c>timestamptz</c>, matching the TIMESTAMPTZ schema).
-	/// Actual: both return <c>"now() AT TIME ZONE 'UTC'"</c> (timestamp without tz).
-	/// File: Data.PostgreSql\PostgreSqlDialect.cs:222,228.
+	/// Regression test for PostgreSQL UTC time functions: ensures <c>UtcNow()</c>/<c>SysUtcNow()</c>
+	/// return <c>"now()"</c> (a <c>timestamptz</c>) so the moment matches the dialect's TIMESTAMPTZ
+	/// DateTime columns and is not reinterpreted in the session time zone. (Was: both emitted
+	/// <c>now() AT TIME ZONE 'UTC'</c>, a timestamp-without-tz shifted by the session UTC offset,
+	/// Data.PostgreSql\PostgreSqlDialect.cs:262,268.)
 	/// </summary>
 	[TestMethod]
 	public void UtcNow_SysUtcNow_ReturnTimestampTz_NotWithoutTimeZone()
@@ -1346,16 +1341,12 @@ public class SqlDialectTests : BaseTestClass
 	#region SqlServer DDL shape regressions
 
 	/// <summary>
-	/// BUG: <c>AppendUpsert</c> emits a bare <c>MERGE {table} AS target USING ...</c> with no
-	/// locking hint. Under the default READ COMMITTED isolation a SQL Server MERGE takes no
-	/// key-range locks, so two concurrent upserts of the same fresh key can both evaluate the
-	/// ON predicate as "not matched" and both run the INSERT branch — either a duplicate-key
-	/// exception (burned as a transient retry) or silent duplicate rows. The standard race-free
-	/// form pins the target with <c>WITH (HOLDLOCK)</c> (a SERIALIZABLE range lock for the
-	/// statement), matching the atomic <c>INSERT ... ON CONFLICT</c> the other dialects use.
-	/// Expected: the generated MERGE locks the target via <c>WITH (HOLDLOCK)</c>.
-	/// Actual: no HOLDLOCK / SERIALIZABLE hint is present — the upsert is racy.
-	/// File: Data.SqlServer\SqlServerDialect.cs:456.
+	/// Regression test for SQL Server MERGE upsert concurrency: ensures <c>AppendUpsert</c> pins the
+	/// target with <c>WITH (HOLDLOCK)</c> (a SERIALIZABLE range lock) so two concurrent upserts of
+	/// the same fresh key cannot both run the INSERT branch, matching the atomic
+	/// <c>INSERT ... ON CONFLICT</c> the other dialects use. (Was: a bare
+	/// <c>MERGE {table} AS target USING ...</c> with no locking hint, making the upsert racy,
+	/// Data.SqlServer\SqlServerDialect.cs:457.)
 	/// </summary>
 	[TestMethod]
 	public void AppendUpsert_LocksTargetWithHoldlock_ToPreventUpsertRace()
@@ -1375,16 +1366,11 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>AppendCreateTable</c> guards creation with
-	/// <c>IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{name}')</c> — no schema filter.
-	/// <c>sys.tables</c> spans every schema, so when a same-named table exists in another schema
-	/// (e.g. <c>history.Orders</c>) the guard is satisfied and the <c>dbo</c> table is silently
-	/// never created, while the migrator's ReadDb* methods (which default to <c>dbo</c>) keep
-	/// reporting it missing. The check must be scoped to the schema the table is created in.
-	/// Expected: the existence guard is schema-scoped (SCHEMA_ID/schema_id or an OBJECT_ID over
-	/// a schema-qualified name), not a bare name match across all schemas.
-	/// Actual: the guard matches by name only, ignoring the schema.
-	/// File: Data.SqlServer\SqlServerDialect.cs:154.
+	/// Regression test for SQL Server CREATE TABLE existence guard: ensures the
+	/// <c>IF NOT EXISTS (... sys.tables ...)</c> check is schema-scoped (via <c>SCHEMA_ID</c>/
+	/// <c>schema_id</c> or an <c>OBJECT_ID</c> over a schema-qualified name), so a same-named table
+	/// in another schema does not suppress creation in the target schema. (Was: a bare
+	/// <c>WHERE name = '{name}'</c> match across all schemas, Data.SqlServer\SqlServerDialect.cs:154.)
 	/// </summary>
 	[TestMethod]
 	public void AppendCreateTable_ExistenceGuard_IsSchemaScoped()
@@ -1429,17 +1415,11 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>ReadDbForeignKeysAsync</c> joins <c>information_schema.key_column_usage</c>
-	/// (one row per FK column, ordered) to <c>information_schema.constraint_column_usage</c>
-	/// (one row per referenced column, unordered) by constraint name only. For an N-column
-	/// composite FK this is a Cartesian product: N*N rows where each referencing column is
-	/// paired with every referenced column, so <c>RefColumnName</c> is wrong for most rows
-	/// and the rows are duplicated. The contract (<see cref="DbForeignKeyInfo"/>) promises
-	/// exactly one row per referencing/referenced column pair, position-aligned.
-	/// Expected: a 2-column composite FK yields exactly 2 rows, each pairing the referencing
-	/// column with its correctly positioned referenced column.
-	/// Actual: 4 rows (2*2) with mis-paired/duplicated referenced columns.
-	/// File: Data.PostgreSql\PostgreSqlDialect.cs:403.
+	/// Regression test for PostgreSQL composite FK reads: ensures <c>ReadDbForeignKeysAsync</c> pairs
+	/// referencing and referenced columns by position (one row per pair, as <see cref="DbForeignKeyInfo"/>
+	/// promises), so a 2-column composite FK yields exactly 2 correctly aligned rows. (Was: a
+	/// constraint-name-only join to <c>constraint_column_usage</c> produced an N*N Cartesian product
+	/// with mis-paired/duplicated referenced columns, Data.PostgreSql\PostgreSqlDialect.cs:418.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -1520,18 +1500,12 @@ public class SqlDialectTests : BaseTestClass
 	#region SQLite schema-read robustness
 
 	/// <summary>
-	/// BUG: <c>ReadDbForeignKeysAsync</c> reads the referenced column with
-	/// <c>reader.GetString(4)</c> from <c>PRAGMA foreign_key_list</c>. SQLite returns NULL in
-	/// the "to" column when the FK references the parent's implicit primary key — the common
-	/// shorthand <c>REFERENCES Parent</c> without an explicit column list. Microsoft.Data.Sqlite
-	/// throws on <c>GetString</c> over a NULL ordinal, so the whole schema read (and therefore
-	/// <c>SchemaMigrator.CompareAsync</c>) blows up for any externally created DB that uses this
-	/// perfectly legal FK syntax.
-	/// Expected: the read completes without throwing and surfaces the FK row for the child
-	/// column (RefTableName resolved to the parent; RefColumnName resolved to the parent PK or
-	/// left null/empty so the diff layer can cope).
-	/// Actual: <c>InvalidOperationException</c> is thrown on the NULL "to" ordinal.
-	/// File: Data.SQLite\SQLiteDialect.cs:322.
+	/// Regression test for SQLite FK reads with implicit-PK references: ensures
+	/// <c>ReadDbForeignKeysAsync</c> tolerates a NULL "to" column from <c>PRAGMA foreign_key_list</c>
+	/// (emitted for the <c>REFERENCES Parent</c> shorthand with no explicit column list), completing
+	/// without throwing and surfacing the child FK row. (Was: a bare <c>reader.GetString(4)</c> over
+	/// the NULL ordinal threw <c>InvalidOperationException</c>, breaking the whole schema read,
+	/// Data.SQLite\SQLiteDialect.cs:319.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -1600,18 +1574,12 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>ReadDbIndexesAsync</c> reads the column name with <c>reader.GetString(2)</c> from
-	/// <c>PRAGMA index_info</c>. For an expression index (e.g. <c>CREATE INDEX i ON t(lower(Name))</c>,
-	/// cid = -2) or a rowid key (cid = -1) SQLite returns NULL there, and Microsoft.Data.Sqlite
-	/// throws on <c>GetString</c> over the NULL ordinal. Because every index from
-	/// <c>index_list</c> is enumerated unconditionally, a single expression index makes the whole
-	/// schema read — and thus <c>SchemaMigrator.CompareAsync</c> — fail for any DB that legitimately
-	/// uses one.
-	/// Expected: the read completes without throwing; expression-key rows are simply skipped
-	/// (they cannot be matched to a single-column entity index anyway), while ordinary
-	/// single-column indexes on the same table are still surfaced.
-	/// Actual: <c>InvalidOperationException</c> is thrown on the NULL column-name ordinal.
-	/// File: Data.SQLite\SQLiteDialect.cs:389.
+	/// Regression test for SQLite index reads with expression indexes: ensures
+	/// <c>ReadDbIndexesAsync</c> tolerates a NULL column name from <c>PRAGMA index_info</c> (emitted
+	/// for expression keys, cid = -2, or rowid keys, cid = -1), skipping those rows while still
+	/// surfacing ordinary single-column indexes on the same table. (Was: a bare
+	/// <c>reader.GetString(2)</c> over the NULL ordinal threw <c>InvalidOperationException</c>,
+	/// failing the whole schema read, Data.SQLite\SQLiteDialect.cs:389.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -1682,16 +1650,12 @@ public class SqlDialectTests : BaseTestClass
 	#region SqlServer schema-read robustness
 
 	/// <summary>
-	/// BUG: <c>ReadDbSchemaAsync</c> probes IsComputed via
-	/// <c>COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), ...)</c>. OBJECT_ID parses
-	/// its argument as a multi-part name, so a table whose name itself contains a dot (e.g.
-	/// <c>[Order.Items]</c>) resolves to NULL, COLUMNPROPERTY returns NULL and a genuinely computed
-	/// column is silently reported as <c>IsComputed=false</c>. Such names are creatable because all
-	/// DDL goes through the bracket-quoting <see cref="SqlServerDialect.QuoteIdentifier"/>. The probe
-	/// must quote each name part (e.g. QUOTENAME) so the OBJECT_ID resolves.
-	/// Expected: a computed column on a dotted/quote-requiring table name is read back as IsComputed=true.
-	/// Actual: it is silently read back as IsComputed=false.
-	/// File: Data.SqlServer\SqlServerDialect.cs:203.
+	/// Regression test for SQL Server computed-column detection on quote-requiring table names: ensures
+	/// <c>ReadDbSchemaAsync</c> quotes each name part (QUOTENAME) in the
+	/// <c>COLUMNPROPERTY(OBJECT_ID(...), ..., 'IsComputed')</c> probe, so a computed column on a
+	/// dotted table name (e.g. <c>[Order.Items]</c>) is read back as <c>IsComputed=true</c>. (Was:
+	/// an unquoted <c>OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME)</c> resolved a dotted name to
+	/// NULL and silently reported <c>IsComputed=false</c>, Data.SqlServer\SqlServerDialect.cs:203.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -1736,16 +1700,11 @@ public class SqlDialectTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>ReadDbSchemaAsync</c> reads <c>INFORMATION_SCHEMA.COLUMNS</c> filtered only by
-	/// <c>TABLE_SCHEMA</c>. That view also exposes view columns, so every view in the schema surfaces
-	/// as a "table" in the returned <see cref="DbColumnInfo"/> list. The migrator then mis-reports
-	/// views as ExtraTable, or — when a view name collides with an entity table — compares the entity
-	/// against the view's columns instead of reporting the real table missing. The read must be
-	/// restricted to base tables (TABLE_TYPE = 'BASE TABLE'), like the SQLite dialect's
-	/// <c>type = 'table'</c> filter.
-	/// Expected: a view's columns are NOT present in the schema read; only base-table columns are.
-	/// Actual: the view's columns are returned as if they were table columns.
-	/// File: Data.SqlServer\SqlServerDialect.cs:204.
+	/// Regression test for SQL Server schema reads excluding views: ensures <c>ReadDbSchemaAsync</c>
+	/// restricts <c>INFORMATION_SCHEMA.COLUMNS</c> to base tables (<c>TABLE_TYPE = 'BASE TABLE'</c>),
+	/// so view columns do not surface as table columns in the returned <see cref="DbColumnInfo"/>
+	/// list. (Was: filtering only by <c>TABLE_SCHEMA</c>, which also exposed view columns and made the
+	/// migrator mis-report views, Data.SqlServer\SqlServerDialect.cs:204.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]

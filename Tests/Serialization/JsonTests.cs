@@ -1424,15 +1424,12 @@ public class JsonTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: in FillMode=false, after IPersistable.Load the reader desync is validated only by
-	/// reader.CheckExpectedToken(JsonToken.EndObject), which is [Conditional("DEBUG")] and is fully
-	/// removed in Release. When a serialized object carries a property the Load did not consume
-	/// (e.g. a file written by a newer version with extra fields), the reader is left mid-object and
-	/// every subsequent token is parsed from the wrong position. See JsonSerializer.cs:238.
-	/// Expected: unconsumed/extra properties are tolerated deterministically in all build configs —
-	/// the remaining tokens are skipped to the matching EndObject, so a following element still
-	/// deserializes correctly.
-	/// Actual: DEBUG throws on the first element; Release silently desyncs and corrupts the second.
+	/// Regression test for FillMode=false deserialization: ensures unconsumed/extra properties left
+	/// by IPersistable.Load are skipped deterministically to the matching EndObject in all build
+	/// configurations, so a following element still deserializes correctly.
+	/// (Was: the reader was only validated by the [Conditional("DEBUG")] CheckExpectedToken, so in
+	/// Release an extra property left the reader mid-object and desynced subsequent tokens; now
+	/// handled by SkipToEndObjectAsync, JsonSerializer.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task FillModeFalse_ExtraProperty_DoesNotDesyncReader()

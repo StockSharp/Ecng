@@ -39,11 +39,10 @@ public class AzureBlobServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: FindAsync uses parent.GetFullPath() as a raw blob name prefix without a
-	/// trailing '/' separator, so listing parent "data" also returns blobs from sibling
-	/// folders whose name shares the prefix (e.g. "data-old/x"). Backup.Azure\AzureBlobService.cs:58.
-	/// Expected: FindAsync(parent="data") returns only blobs actually inside the "data" virtual folder.
-	/// Actual: it also returns "data-old/..." blobs because the prefix lacks a folder boundary.
+	/// Regression test for FindAsync prefix matching: ensures listing a parent returns only blobs
+	/// actually inside that virtual folder and not sibling folders sharing the name prefix
+	/// (e.g. "data" vs "data-old"). (Was: the blob name prefix lacked a trailing '/' folder
+	/// boundary, Backup.Azure\AzureBlobService.cs:58.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_ParentPrefix_DoesNotLeakSiblingFolders()
@@ -85,12 +84,10 @@ public class AzureBlobServiceTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: FindAsync matches the criteria against item.Name, which in Azure is the full blob
-	/// key including the virtual folder segments, instead of the leaf entry name.
-	/// Backup.Azure\AzureBlobService.cs:62.
-	/// Expected: criteria filters by the leaf file name only, so a file whose name does not
-	/// contain the criteria is excluded even when a parent folder segment does contain it.
-	/// Actual: the file is returned because the criteria matched a folder segment of the full path.
+	/// Regression test for FindAsync criteria filtering: ensures the criteria matches the leaf
+	/// file name only, so a file whose leaf name lacks the criteria is excluded even when a parent
+	/// folder segment contains it. (Was: criteria matched against the full blob key including
+	/// folder segments, Backup.Azure\AzureBlobService.cs:62.)
 	/// </summary>
 	[TestMethod]
 	public async Task FindAsync_Criteria_MatchesLeafNameNotFolderSegment()

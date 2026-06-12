@@ -190,8 +190,8 @@ public class BitArrayTest : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: BitArrayWriter.WriteInt doesn't handle int.MinValue.
-	/// Negating int.MinValue overflows back to int.MinValue (negative).
+	/// Regression test for BitArrayWriter.WriteInt: ensures int.MinValue round-trips correctly.
+	/// (Was: negating int.MinValue overflowed back to int.MinValue; now widened to long, BitArrayWriter.cs:66-72.)
 	/// </summary>
 	[TestMethod]
 	public void WriteInt_ShouldHandleMinValue()

@@ -209,10 +209,10 @@ public class SynchronizedDictionaryTests
 	}
 
 	/// <summary>
-	/// BUG: SynchronizedDictionary.Contains(KeyValuePair) delegates to ContainsKey(item.Key), ignoring the value.
-	/// Expected: per the ICollection&lt;KeyValuePair&gt; contract, a pair is contained only when the stored value matches.
-	/// Actual: it returns true for any pair whose key exists, regardless of the value.
-	/// See Collections\SynchronizedDictionary.cs:112.
+	/// Regression test for SynchronizedDictionary.Contains(KeyValuePair): ensures a pair is reported as contained
+	/// only when the stored value matches, per the ICollection&lt;KeyValuePair&gt; contract.
+	/// (Was: delegated to ContainsKey(item.Key) and returned true for any existing key regardless of value,
+	/// Collections\SynchronizedDictionary.cs:112.)
 	/// </summary>
 	[TestMethod]
 	public void SynchronizedDictionary_ContainsKvp_ChecksValue()
@@ -226,11 +226,11 @@ public class SynchronizedDictionaryTests
 	}
 
 	/// <summary>
-	/// BUG: SynchronizedDictionary.Remove(KeyValuePair) delegates to Remove(item.Key), ignoring the value.
-	/// Expected: per the ICollection&lt;KeyValuePair&gt; contract, the pair is removed only when the stored value matches;
-	/// a mismatched value must leave the entry intact (avoids a silent lost update).
-	/// Actual: it removes the entry by key regardless of the value.
-	/// See Collections\SynchronizedDictionary.cs:133.
+	/// Regression test for SynchronizedDictionary.Remove(KeyValuePair): ensures the pair is removed only when the
+	/// stored value matches, per the ICollection&lt;KeyValuePair&gt; contract; a mismatched value leaves the entry
+	/// intact (avoids a silent lost update).
+	/// (Was: delegated to Remove(item.Key) and removed the entry by key regardless of value,
+	/// Collections\SynchronizedDictionary.cs:137.)
 	/// </summary>
 	[TestMethod]
 	public void SynchronizedDictionary_RemoveKvp_ChecksValue()

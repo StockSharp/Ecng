@@ -197,7 +197,10 @@ public class CompilerTests : BaseTestClass
 	[TestMethod]
 	public async Task PythonCompileParallel_SharedEngine_ShouldFail()
 	{
-		// This test reproduces threading issues with shared ScriptEngine
+		// Regression test for PythonCompiler shared-engine concurrency: parallel compilations
+		// on one PythonCompiler instance must all succeed. (Was: the shared IronPython
+		// ScriptEngine was accessed without synchronization, so concurrent Compile calls
+		// corrupted each other; Compile now serializes engine access, PythonCompiler.cs:91.)
 		// Scripts that each define and use their own helper function
 		var userScripts = Enumerable.Range(1, 20).Select(i => $@"
 def helper_func_{i}(x):
@@ -240,7 +243,7 @@ class Script{i}:
 			}
 		}));
 
-		// If there are any errors, the test exposes the threading issue
+		// Report any failures for diagnostics; with serialized engine access there should be none.
 		if (errors.Any())
 		{
 			Console.WriteLine($"Threading issues detected ({errors.Count} errors, {successCount} successes):");
@@ -248,15 +251,18 @@ class Script{i}:
 				Console.WriteLine($"  {err}");
 		}
 
-		// This assertion will likely fail due to threading issues
+		// All parallel compilations must succeed.
 		successCount.AssertEqual(userScripts.Length);
 	}
 
 	[TestMethod]
 	public async Task PythonCompileParallel_SharedScope_ShouldFail()
 	{
-		// This test simulates the real scenario: utility script loaded first,
-		// then user scripts executed in parallel that reference utility functions
+		// Regression test for PythonCompiler shared-engine concurrency: a utility script is
+		// loaded first, then user scripts referencing its functions are compiled in parallel on
+		// one shared engine; all must succeed. (Was: unsynchronized concurrent access to the
+		// shared ScriptEngine corrupted compilations; Compile now serializes engine access,
+		// PythonCompiler.cs:91.)
 		var utilityScript = @"
 def utility_add(a, b):
     return a + b
@@ -424,8 +430,11 @@ class Script_{iter}_{i}:
 	[TestMethod]
 	public async Task PythonCompileParallel_WithFileImports_ShouldFail()
 	{
-		// This test reproduces the real issue: scripts that import from external .py files
-		// When compiled in parallel, module imports can interfere with each other
+		// Regression test for PythonCompiler shared-engine concurrency with file imports: scripts
+		// that import from external .py files via a shared engine's search paths are compiled in
+		// parallel and must all succeed. (Was: unsynchronized concurrent access to the shared
+		// ScriptEngine let parallel module imports interfere; Compile now serializes engine access,
+		// PythonCompiler.cs:91.)
 
 		// Create temp directory for Python modules
 		var tempDir = Path.Combine(Path.GetTempPath(), $"python_test_{Guid.NewGuid():N}");
@@ -579,8 +588,9 @@ class AnalyticsScript_{i}:
 	[TestMethod]
 	public void AssemblyReference_Location_WithFullPath_ShouldPreservePath()
 	{
-		// Bug: When FileName is set to a full path, Location should return that path,
-		// not just the filename. Currently Path.GetFileName() strips the directory.
+		// Regression test for AssemblyReference.Location: ensures a full path supplied via
+		// FileName is preserved as-is. (Was: Path.GetFileName() stripped the directory and
+		// returned just "MyLibrary.dll", AssemblyReference.cs:42.)
 		var fullPath = Path.Combine(Path.GetTempPath(), "CustomLibs", "MyLibrary.dll");
 
 		var asmRef = new AssemblyReference
@@ -588,15 +598,16 @@ class AnalyticsScript_{i}:
 			FileName = fullPath
 		};
 
-		// Location should preserve the full path when it's provided
-		// Currently this fails because Location returns just "MyLibrary.dll"
+		// Location must preserve the full path when it's provided.
 		asmRef.Location.AssertEqual(fullPath);
 	}
 
 	[TestMethod]
 	public void AssemblyReference_Location_WithRelativePath_ShouldPreservePath()
 	{
-		// Bug: When FileName is a relative path, Location should preserve it
+		// Regression test for AssemblyReference.Location: ensures a relative path supplied via
+		// FileName is preserved as-is. (Was: Location returned just "MyLibrary.dll",
+		// AssemblyReference.cs:42.)
 		var relativePath = Path.Combine("libs", "subdir", "MyLibrary.dll");
 
 		var asmRef = new AssemblyReference
@@ -604,8 +615,7 @@ class AnalyticsScript_{i}:
 			FileName = relativePath
 		};
 
-		// Location should preserve the relative path
-		// Currently this fails because Location returns just "MyLibrary.dll"
+		// Location must preserve the relative path.
 		asmRef.Location.AssertEqual(relativePath);
 	}
 
@@ -632,12 +642,11 @@ class AnalyticsScript_{i}:
 	private static bool FSharpAvailable => OperatingSystemEx.IsWindows();
 
 	/// <summary>
-	/// BUG: FSharpCompiler.Analyse deconstructs ParseAndCheckFileInProject into (results, answer)
-	/// but only collects results.Diagnostics (parse-stage only); the type-check answer carrying the
-	/// semantic diagnostics is never inspected (FSharpCompiler.cs:145,147).
-	/// Expected: source that parses cleanly but fails type checking (here an undefined identifier)
-	/// reports at least one error, like RoslynCompiler.Analyse does.
-	/// Actual: Analyse returns an empty error list, so broken F# is treated as valid.
+	/// Regression test for FSharpCompiler.Analyse: ensures source that parses cleanly but fails
+	/// type checking (here an undefined identifier) reports at least one error, like
+	/// RoslynCompiler.Analyse does. (Was: only parse-stage results.Diagnostics were collected and
+	/// the type-check answer carrying semantic diagnostics was never inspected, so broken F# was
+	/// treated as valid, FSharpCompiler.cs:167.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -666,14 +675,11 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: FSharpCompiler.Analyse builds its project options with an empty source list and an empty
-	/// in-memory file system (CreateOptions(name, [], refs) and new FileSystemContext([], new()) at
-	/// FSharpCompiler.cs:134,140), so reference bodies are never readable and the supplied sources are
-	/// not registered. Any source consuming a type from a passed reference yields false
-	/// "assembly not found" / "identifier not defined" diagnostics once the dropped type-check
-	/// diagnostics (finding 1) are restored.
-	/// Expected: valid F# that uses a type from a supplied reference analyses without errors.
-	/// Actual: references cannot resolve, so the code is reported as broken (false positives).
+	/// Regression test for FSharpCompiler.Analyse: ensures valid F# that uses a type from a supplied
+	/// reference analyses without errors. (Was: project options were built with an empty source list
+	/// and an empty in-memory file system, so reference bodies were unreadable and sources were not
+	/// registered, producing false "assembly not found" / "identifier not defined" diagnostics;
+	/// sources and references are now registered in the file system, FSharpCompiler.cs:153.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -702,12 +708,12 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: ToError maps the 1-based FSharpDiagnostic.StartLine straight into CompilationError.Line
-	/// (FSharpCompiler.cs:201), whereas the Roslyn implementation fills Line from the 0-based
-	/// Location line position. The same UI maps CompilationError.Line onto editor lines for every
-	/// ICompiler, so F# errors are highlighted one line below the actual location.
-	/// Expected: an error on the 3rd physical source line (0-based index 2) is reported with Line == 2.
-	/// Actual: Line == 3 (FCS 1-based value passed through unchanged).
+	/// Regression test for FSharpCompiler error reporting: ensures an error on the 3rd physical
+	/// source line (0-based index 2) is reported with Line == 2, matching the 0-based Line the
+	/// Roslyn implementation produces (the shared UI maps CompilationError.Line onto editor lines for
+	/// every ICompiler). (Was: ToError passed the 1-based FSharpDiagnostic.StartLine straight through,
+	/// so F# errors were highlighted one line below the actual location; ToError now subtracts one,
+	/// FSharpCompiler.cs:225.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -735,12 +741,11 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: FSharpCompiler.Compile inserts reference bodies into a Dictionary via Add()
-	/// (FSharpCompiler.cs:168-169); a refs sequence with a repeated file name (realistic when merging
-	/// default and user references) throws ArgumentException "An item with the same key has already
-	/// been added", crashing the whole compilation. RoslynCompiler tolerates duplicate references.
-	/// Expected: Compile tolerates duplicate reference names and returns a CompilationResult.
-	/// Actual: Add() throws ArgumentException and the call fails outright.
+	/// Regression test for FSharpCompiler.Compile: ensures it tolerates duplicate reference names
+	/// (realistic when merging default and user references) and returns a CompilationResult, like
+	/// RoslynCompiler does. (Was: reference bodies were inserted via Dictionary.Add(), so a repeated
+	/// file name threw ArgumentException "An item with the same key has already been added" and
+	/// crashed the whole compilation; the reference map now uses TryAdd, FSharpCompiler.cs:119.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -767,15 +772,12 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: every reference is presented to FCS under a constant synthetic path
-	/// Path.Combine(Path.GetTempPath(), r.name) and InMemoryFileSystem overrides only
-	/// FileExistsShim/OpenFileForReadShim/OpenFileForWriteShim, never GetLastWriteTimeShim
-	/// (FSharpCompiler.cs:115). The FCS IL-module-reader cache keys assembly metadata by
-	/// (path, last-write-time); the missing-on-disk synthetic path makes GetLastWriteTimeShim
-	/// fall back to a constant timestamp, so a second Compile reusing the same reference name but a
-	/// rebuilt body keeps the stale metadata of the first body.
-	/// Expected: recompiling against a reference of the same name but new content sees the new types.
-	/// Actual: the stale cached metadata is reused, so the freshly added type fails to resolve.
+	/// Regression test for FSharpCompiler reference caching: ensures recompiling against a reference
+	/// of the same name but new content sees the new types. (Was: every reference was presented to
+	/// FCS under a constant synthetic path Path.Combine(Path.GetTempPath(), r.name); the FCS
+	/// IL-module-reader cache keys assembly metadata by (path, last-write-time), so a second Compile
+	/// reusing the same reference name with a rebuilt body kept the stale metadata of the first body.
+	/// The synthetic path is now content-addressed via the body hash, FSharpCompiler.cs:112.)
 	/// </summary>
 	[TestMethod]
 	[TestCategory("Integration")]
@@ -861,11 +863,11 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: GetMethodImpl evaluates m.GetParameters().Select(p =&gt; p.ParameterType).SequenceEqual(types)
-	/// unconditionally, but Type.GetMethod(string) passes types == null, so SequenceEqual throws
-	/// ArgumentNullException as soon as a name match is found (PythonContext.cs:675).
-	/// Expected: type.GetMethod("run") resolves the Python method by name without throwing.
-	/// Actual: ArgumentNullException ("Value cannot be null. (Parameter 'second')") is thrown.
+	/// Regression test for PythonContext GetMethodImpl: ensures type.GetMethod("run") resolves the
+	/// Python method by name without throwing. (Was: GetMethodImpl evaluated SequenceEqual(types)
+	/// unconditionally, but Type.GetMethod(string) passes types == null, so it threw
+	/// ArgumentNullException as soon as a name match was found; a "types is null" guard now
+	/// short-circuits, PythonContext.cs:696.)
 	/// </summary>
 	[TestMethod]
 	public void GetMethodByName_DoesNotThrowAndResolves()
@@ -880,11 +882,11 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: MethodImpl.Invoke spreads parameters via [obj, .. parameters], which throws
-	/// NullReferenceException when parameters is null - yet MethodInfo.Invoke(obj, null) is the
-	/// canonical way to call a parameterless method (PythonContext.cs:266).
-	/// Expected: invoking a no-argument Python method with null parameters returns its value.
-	/// Actual: NullReferenceException is thrown while spreading the null parameters array.
+	/// Regression test for PythonContext MethodImpl.Invoke: ensures invoking a no-argument Python
+	/// method with null parameters (MethodInfo.Invoke(obj, null) is the canonical parameterless call)
+	/// returns its value. (Was: parameters were spread via [obj, .. parameters], throwing
+	/// NullReferenceException when parameters was null; the spread now coalesces to an empty array,
+	/// PythonContext.cs:269.)
 	/// </summary>
 	[TestMethod]
 	public void Invoke_NullParameters_DoesNotThrow()
@@ -905,13 +907,12 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: GetEvents materializes a Select that yields null for an add_-prefixed function lacking a
-	/// matching remove_ pair, caches those nulls in _events, then dereferences them via
-	/// e.GetAddMethod(), so GetEvents/GetEvent/GetMembers throw NullReferenceException forever once the
-	/// poisoned cache is built (PythonContext.cs:627,634,637).
-	/// Expected: a class exposing an ordinary add_item method (no remove_item) reflects its events
-	/// without throwing, and the add_item method stays reachable through GetMethods.
-	/// Actual: GetEvents throws NullReferenceException because of the cached null event.
+	/// Regression test for PythonContext GetEvents: ensures a class exposing an ordinary add_item
+	/// method (no remove_item) reflects its events without throwing, and the add_item method stays
+	/// reachable through GetMethods. (Was: the Select yielded null for an add_-prefixed function with
+	/// no matching remove_ pair, cached those nulls in _events, then dereferenced them via
+	/// e.GetAddMethod(), so GetEvents/GetEvent/GetMembers threw NullReferenceException forever once the
+	/// poisoned cache was built; nulls are now filtered before caching, PythonContext.cs:635.)
 	/// </summary>
 	[TestMethod]
 	public void GetEvents_UnpairedAddMethod_DoesNotThrow()
@@ -928,13 +929,11 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: GetInterfaces returns _dotNetBaseType.GetInterfaces(); _dotNetBaseType walks the BaseType
-	/// chain to System.Object, so interfaces implemented directly by the Python class are lost, even
-	/// though IsAssignableFrom (via UnderlyingSystemType) reports them as implemented
-	/// (PythonContext.cs:555).
-	/// Expected: a Python class declaring class C(System.IDisposable) lists IDisposable in
-	/// GetInterfaces().
-	/// Actual: GetInterfaces() returns an empty array and IDisposable is missing.
+	/// Regression test for PythonContext GetInterfaces: ensures a Python class declaring
+	/// class C(System.IDisposable) lists IDisposable in GetInterfaces(). (Was: GetInterfaces returned
+	/// only _dotNetBaseType.GetInterfaces(), which walks the BaseType chain to System.Object, so
+	/// interfaces implemented directly by the Python class were lost even though IsAssignableFrom
+	/// reported them; it now also unions _underlyingType.GetInterfaces(), PythonContext.cs:558.)
 	/// </summary>
 	[TestMethod]
 	public void GetInterfaces_DirectlyImplementedDotNetInterface_IsListed()
@@ -954,13 +953,12 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: the event name is extracted with StringHelper.Remove(_eventAddPrefix, true), which strips
-	/// every occurrence of "add_" anywhere in the name rather than only the leading prefix; an
-	/// add_pre_add_check function becomes event "pre_check", the remove_pre_check lookup fails, the
-	/// event is silently dropped (and a null is cached, see finding 4) (PythonContext.cs:624).
-	/// Expected: only the leading prefix is removed, yielding event "pre_add_check" resolvable via
-	/// GetEvent with its matching remove_pre_add_check pair.
-	/// Actual: the name collapses to "pre_check", the pair is not found and GetEvent throws/returns null.
+	/// Regression test for PythonContext event name extraction: ensures only the leading "add_" prefix
+	/// is removed, yielding event "pre_add_check" resolvable via GetEvent with its matching
+	/// remove_pre_add_check pair. (Was: the name was extracted with Remove("add_", true), stripping
+	/// every occurrence of "add_" anywhere in the name, so add_pre_add_check collapsed to "pre_check",
+	/// the remove_pre_check lookup failed and the event was silently dropped; the name is now taken as
+	/// the substring after the leading prefix, PythonContext.cs:627.)
 	/// </summary>
 	[TestMethod]
 	public void EventName_StripsOnlyLeadingPrefix()
@@ -981,14 +979,13 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: in the typed GetCustomAttributes overload, the else-if branch matched for
-	/// typeof(DisplayAttribute) returns nothing when display_name/__doc__ are absent and never falls
-	/// through to the __dict__ scan, so a real DisplayAttribute stored in the class __dict__ is
-	/// unreachable via GetCustomAttributes(typeof(DisplayAttribute)) even though the untyped overload
-	/// returns it (PythonContext.cs:88).
-	/// Expected: GetCustomAttributes(typeof(DisplayAttribute), false) returns the DisplayAttribute
-	/// present in __dict__.
-	/// Actual: an empty array is returned because the dictionary fallback is skipped.
+	/// Regression test for PythonContext typed GetCustomAttributes: ensures
+	/// GetCustomAttributes(typeof(DisplayAttribute), false) returns the DisplayAttribute present in
+	/// __dict__. (Was: the typeof(DisplayAttribute) branch returned nothing when display_name/__doc__
+	/// were absent and never fell through to the __dict__ scan, so a real DisplayAttribute stored in
+	/// the class __dict__ was unreachable via the typed overload even though the untyped overload
+	/// returned it; the branch now only returns when it actually has a value, then falls through to the
+	/// __dict__ scan, PythonContext.cs:89.)
 	/// </summary>
 	[TestMethod]
 	public void TypedGetCustomAttributes_DisplayAttributeFromDict_IsFound()
@@ -1019,14 +1016,12 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
-	/// BUG: TypeImpl.InvokeMember resolves a PythonFunction member and calls
-	/// pythonFunction.__call__(DefaultContext.Default, target, args). Because __call__ is declared
-	/// __call__(CodeContext, params object[] args), the args array is NOT spread - it is wrapped as a
-	/// single positional argument, so the Python function receives (target, args[]) instead of
-	/// (target, arg0, arg1, ...) (PythonContext.cs:575).
-	/// Expected: invoking a member with one argument forwards that argument as a scalar value.
-	/// Actual: the function receives the raw object[] array as the argument (e.g. an Object[] instead
-	/// of the string "only").
+	/// Regression test for PythonContext TypeImpl.InvokeMember: ensures invoking a member with one
+	/// argument forwards that argument as a scalar value. (Was: InvokeMember called
+	/// pythonFunction.__call__(DefaultContext.Default, target, args); since __call__ is declared
+	/// __call__(CodeContext, params object[] args), the args array was wrapped as a single positional
+	/// argument instead of being spread, so the function received (target, args[]) rather than
+	/// (target, arg0, arg1, ...); args are now spread via [target, .. args], PythonContext.cs:578.)
 	/// </summary>
 	[TestMethod]
 	public void InvokeMember_SpreadsArgsNotAsSingleArray()

@@ -787,16 +787,12 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: RunThread (Net.Udp\IPacketReceiver.cs:107) logs non-cancellation exceptions
-	/// but does NOT rethrow them; only OperationCanceledException raised while the token is
-	/// cancelled propagates. A fatal startup failure (e.g. socket.Bind throwing
-	/// "address already in use", or JoinMulticast failing) therefore gets swallowed: the
-	/// receive thread ends, the channel writer completes, ProcessPackets drains and ends,
-	/// and the Task returned by RunAsync completes SUCCESSFULLY - so a receiver that never
-	/// started is indistinguishable from an orderly shutdown.
-	/// Expected: when a fatal (non-cancellation) error kills the receiver, the Task returned
-	/// by RunAsync must FAULT so the caller can observe the failure.
-	/// Actual: RunAsync completes without faulting.
+	/// Regression test for fatal startup errors: ensures that when a non-cancellation error
+	/// kills the receiver (e.g. socket.Bind throwing "address already in use", or JoinMulticast
+	/// failing), the Task returned by RunAsync faults so the caller can observe the failure.
+	/// (Was: RunThread logged non-cancellation exceptions but did not rethrow them, so a
+	/// receiver that never started was indistinguishable from an orderly shutdown,
+	/// Net.Udp\IPacketReceiver.cs:107.)
 	/// </summary>
 	[TestMethod]
 	public async Task RunAsync_FatalStartupError_ShouldFaultTask()
@@ -821,14 +817,12 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: ReceivePackets (Net.Udp\IPacketReceiver.cs:204) treats len &lt;= 0 from
-	/// socket.ReceiveAsync as fatal: it logs an error and breaks out of the receive loop,
-	/// which completes the channel writer and tears the whole receiver down. A zero-length
-	/// UDP datagram is a perfectly legal packet (recv returning 0 bytes for UDP means an empty
-	/// datagram, NOT a closed connection), so a single empty datagram permanently stops the feed.
-	/// Expected: an empty datagram must be tolerated - the receiver keeps running and continues
+	/// Regression test for empty datagrams: ensures a zero-length UDP datagram (a legal empty
+	/// packet, not a closed connection) is tolerated so the receiver keeps running and continues
 	/// processing subsequent packets.
-	/// Actual: the receiver stops on the empty datagram and never processes the following packet.
+	/// (Was: ReceivePackets treated len &lt;= 0 from socket.ReceiveAsync as fatal and tore the
+	/// whole receiver down, so a single empty datagram permanently stopped the feed,
+	/// Net.Udp\IPacketReceiver.cs:204.)
 	/// </summary>
 	[TestMethod]
 	public async Task ReceivePackets_EmptyDatagram_ShouldNotStopReceiver()
@@ -868,13 +862,11 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: ProcessPackets (Net.Udp\IPacketReceiver.cs:134) wraps ProcessNewPacket in a
-	/// try/catch that only calls ErrorHandler. When ProcessNewPacket throws (e.g. a parse error
-	/// before the processor takes ownership of the buffer), the rented IMemoryOwner&lt;byte&gt;
-	/// is never released - it is neither processed nor disposed, so the pooled buffer leaks.
-	/// Every other failure path in the class disposes the packet; this one does not.
-	/// Expected: the buffer is released on the exception path - allocated buffers == disposed buffers.
-	/// Actual: each throwing packet leaks one rented buffer (allocated &gt; disposed).
+	/// Regression test for the processing-exception path: ensures that when ProcessNewPacket
+	/// throws (e.g. a parse error before the processor takes ownership of the buffer), the rented
+	/// IMemoryOwner&lt;byte&gt; is released - allocated buffers == disposed buffers, no pooled-buffer leak.
+	/// (Was: ProcessPackets' catch only called ErrorHandler and never disposed the throwing
+	/// packet, so each throwing packet leaked one rented buffer, Net.Udp\IPacketReceiver.cs:134.)
 	/// </summary>
 	[TestMethod]
 	public async Task ProcessPackets_ProcessorThrows_ShouldNotLeakBuffer()
@@ -915,15 +907,12 @@ public class UdpPacketProcessorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: DisposeManaged (Net.Udp\IPacketReceiver.cs:167) only completes the channel writer;
-	/// it does not interrupt a receive that is currently blocked in socket.ReceiveAsync. The
-	/// receive loop only checks reader.Completion.IsCompleted BETWEEN receives, so on a quiet
-	/// network the loop stays blocked forever after Dispose: the socket remains open and
-	/// group-joined, and the Task returned by RunAsync never completes unless the caller also
-	/// cancels the token.
-	/// Expected: Dispose() (without cancelling the token) interrupts the blocked receive so the
-	/// receiver shuts down and RunAsync completes promptly.
-	/// Actual: RunAsync stays pending after Dispose because the blocked ReceiveAsync is never cancelled.
+	/// Regression test for Dispose-driven shutdown: ensures Dispose() (without cancelling the
+	/// token) interrupts a receive blocked in socket.ReceiveAsync so the receiver shuts down and
+	/// RunAsync completes promptly, even on a quiet network.
+	/// (Was: DisposeManaged only completed the channel writer and never cancelled the in-progress
+	/// receive, so RunAsync stayed pending after Dispose until the caller also cancelled the token,
+	/// Net.Udp\IPacketReceiver.cs:167.)
 	/// </summary>
 	[TestMethod]
 	public async Task Dispose_WithoutCancel_ShouldCompleteRunAsync()

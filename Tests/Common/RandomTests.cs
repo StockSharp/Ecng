@@ -306,10 +306,10 @@ public class RandomTests : BaseTestClass
 		ThrowsExactly<InvalidOperationException>(() => RandomGen.GetEnum(empty));
 	}
 
-	// Test enums that surface the GetEnum<T>(IEnumerable<T>) bug:
-	// the current impl does GetLong(0, max).To<T>() which only works
-	// for 0-based contiguous enums. It returns invalid values for
-	// 1-based (no zero member), non-contiguous, and [Flags] layouts.
+	// Regression test enums for GetEnum<T>: ensure only declared values are
+	// returned for 1-based (no zero member), non-contiguous, and [Flags] layouts.
+	// (Was: GetEnum picked via GetLong(0, max).To<T>(), valid only for 0-based
+	// contiguous enums; RandomGen.cs:391,409 now select from the values array.)
 
 	private enum OneBased
 	{
@@ -394,8 +394,10 @@ public class RandomTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: RandomGen.GetInt(min, max) - int.MaxValue is unreachable.
-	/// Random.Next uses exclusive upper bound, but GetInt claims inclusive.
+	/// Regression test for RandomGen.GetInt(min, max): ensures the inclusive upper
+	/// bound is reachable, so int.MaxValue can be returned when it is the maximum.
+	/// (Was: Random.Next has an exclusive upper bound, making int.MaxValue
+	/// unreachable; RandomGen.cs:151 now routes that case through GetLong.)
 	/// </summary>
 	[TestMethod]
 	public void GetInt_MaxValueShouldBeReachable()

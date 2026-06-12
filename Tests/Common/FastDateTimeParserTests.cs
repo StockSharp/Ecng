@@ -160,9 +160,9 @@ public class FastDateTimeParserTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: FastDateTimeParser:280 - Sign only applied to hours, not minutes.
-	/// For "-05:30" timezone, minutes should also be negative.
-	/// TimeSpan(-5, 30, 0) = -4:30, but should be -5:30.
+	/// Regression test for timezone offset parsing: ensures the sign of a negative
+	/// offset applies to both hours and minutes (e.g. "-05:30" yields -5:30).
+	/// (Was: sign only applied to hours, so TimeSpan(-5, 30, 0) gave -4:30, FastDateTimeParser:280.)
 	/// </summary>
 	[TestMethod]
 	public void NegativeTimezone_ShouldApplySignToMinutes()

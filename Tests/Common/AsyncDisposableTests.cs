@@ -13,15 +13,11 @@ public class AsyncDisposableTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: AsyncDisposable.Dispose() bridges to the async path via
-	/// DisposeAsync().AsTask().Wait(), so any exception thrown by DisposeManaged()
-	/// is wrapped in an AggregateException — the synchronous and asynchronous
-	/// dispose of the same object surface different exception types.
-	/// Expected: synchronous Dispose() surfaces the same bare exception that
-	/// DisposeAsync() surfaces (InvalidOperationException here), matching the
-	/// GetAwaiter().GetResult() unwrapping recommended by the audit.
-	/// Actual: Dispose() throws AggregateException wrapping InvalidOperationException.
-	/// Common\AsyncDisposable.cs:53.
+	/// Regression test for AsyncDisposable synchronous dispose: ensures Dispose()
+	/// surfaces the same bare exception as DisposeAsync() (InvalidOperationException
+	/// here) instead of wrapping it in an AggregateException. (Was: Dispose() bridged
+	/// to the async path via DisposeAsync().AsTask().Wait(), wrapping the exception,
+	/// Common\AsyncDisposable.cs:53.)
 	/// </summary>
 	[TestMethod]
 	public void AsyncDisposable_SyncDispose_SurfacesBareException()
@@ -32,10 +28,9 @@ public class AsyncDisposableTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Documents the asynchronous side of finding 24: DisposeAsync() already
-	/// surfaces the bare InvalidOperationException. The synchronous Dispose()
-	/// path (asserted above) must match this behaviour rather than wrapping it
-	/// in an AggregateException. Common\AsyncDisposable.cs:41,53.
+	/// Regression test for AsyncDisposable asynchronous dispose: ensures DisposeAsync()
+	/// surfaces the bare InvalidOperationException, matching the synchronous Dispose()
+	/// path asserted above. Common\AsyncDisposable.cs:41,53.
 	/// </summary>
 	[TestMethod]
 	public async Task AsyncDisposable_AsyncDispose_SurfacesBareException()

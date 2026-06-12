@@ -336,15 +336,15 @@ public class ObservableCollectionExTests : BaseTestClass
 	[TestMethod]
 	public void ICollection_CopyTo_ObjectArray_CopiesElements()
 	{
-		// This test verifies the bug fix where CopyTo with object[] array
-		// was creating a new array instead of copying to the provided one.
+		// Regression test for ICollection.CopyTo into a non-TItem[] array
+		// (ObservableCollectionEx.cs:227-233): ensures an object[] destination is
+		// populated in place. (Was: copied into a new array instead of the provided one.)
 		var collection = new ObservableCollectionEx<int>();
 		collection.AddRange([1, 2, 3]);
 		var array = new object[5];
 
 		((System.Collections.ICollection)collection).CopyTo(array, 1);
 
-		// Before the fix, this would fail because the original array was not modified
 		array[0].AssertNull();
 		array[1].AssertEqual(1);
 		array[2].AssertEqual(2);
@@ -494,9 +494,10 @@ public class ObservableCollectionExTests : BaseTestClass
 	#region Bug Tests from Audit
 
 	/// <summary>
-	/// BUG: RemoveRange behaves differently for large/small sets:
-	/// HashSet path ignores duplicate items in input, while small path Remove(item) removes repeatedly.
-	/// This breaks semantics when input has duplicates.
+	/// Known issue: RemoveRange duplicate-in-input handling diverges between paths
+	/// (ObservableCollectionEx.cs:70-101) - the HashSet path collapses duplicate
+	/// inputs while the small-set path calls Remove per input item - asserts only that
+	/// each path reports some removal; the semantic divergence is not yet reconciled.
 	/// </summary>
 	[TestMethod]
 	public void RemoveRange_WithDuplicatesInInput_ShouldBehaveConsistently()

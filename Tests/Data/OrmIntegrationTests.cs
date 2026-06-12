@@ -1299,8 +1299,8 @@ public class OrmIntegrationTests : BaseTestClass
 
 		// Projecting a non-Id member through the NULLABLE Person navigation must keep
 		// the orphan row (with PersonName == null), i.e. the nav hop has to resolve to
-		// a LEFT JOIN. The translator currently hard-codes an INNER JOIN for every
-		// relation hop, which silently drops the null-FK row; this asserts the fix.
+		// a LEFT JOIN. (Was: every relation hop was an INNER JOIN, which silently dropped
+		// the null-FK row; the translator now emits a LEFT OUTER join for nav hops.)
 		var rows = await Query<TestTask>()
 			.Select(t => new { t.Id, t.Title, PersonName = t.Person.Name })
 			.ToArrayAsyncEx(CancellationToken);
@@ -3313,15 +3313,12 @@ public class OrmIntegrationTests : BaseTestClass
 	/// <summary>
 	/// View-processor shape: GroupJoin + DefaultIfEmpty followed by a
 	/// projection that contains a sub-query referencing the outer source
-	/// (`i.Id`). The sub-query's reference to `i.Id` must resolve to the
-	/// original outer FROM alias — without the fix the translator leaks
-	/// the compiler-generated transparent identifier and SQL Server reports
-	///   "The multi-part identifier &lt;&gt;h__TransparentIdentifier2.Id could not be bound."
-	///
-	/// Generated SQL fragment (faulty):
-	///   ... ([b1].[File] = [&lt;&gt;h__TransparentIdentifier2].[Id]) ...
-	/// Should be:
-	///   ... ([b1].[File] = [e].[Id]) ...
+	/// (`i.Id`). Ensures the sub-query's reference to `i.Id` resolves to the
+	/// original outer FROM alias, emitting `... ([b1].[File] = [e].[Id]) ...`.
+	/// (Was: the translator leaked the compiler-generated transparent identifier,
+	/// emitting `... ([b1].[File] = [&lt;&gt;h__TransparentIdentifier2].[Id]) ...`, so
+	/// SQL Server reported "The multi-part identifier
+	/// &lt;&gt;h__TransparentIdentifier2.Id could not be bound".)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3368,11 +3365,11 @@ public class OrmIntegrationTests : BaseTestClass
 	/// <summary>
 	/// Mirrors VTopicViewProcessor: projection wraps single-`from` correlated
 	/// sub-queries (.Any() / .Count() / .Max()) referencing the outer source
-	/// via `x.Y.Id == outer.Id`. The translator must resolve `outer.Id` to the
-	/// outer FROM alias [e]; currently it leaks the sub-query's own alias and
-	/// emits e.g. `[x].[Item] = [x].[Id]` instead of `[x].[Item] = [e].[Id]`,
-	/// producing wrong per-row results (or, on PostgreSQL, a bool→bit cast
-	/// failure downstream of the broken SQL).
+	/// via `x.Y.Id == outer.Id`. Ensures the translator resolves `outer.Id` to
+	/// the outer FROM alias [e], emitting `[x].[Item] = [e].[Id]`. (Was: the
+	/// sub-query's own alias leaked, emitting `[x].[Item] = [x].[Id]` and
+	/// producing wrong per-row results — or, on PostgreSQL, a bool→bit cast
+	/// failure downstream of the broken SQL.)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3412,9 +3409,9 @@ public class OrmIntegrationTests : BaseTestClass
 	/// Mirrors StockSharp.Web's DbTests.CountWithPaging:
 	///   view.ToQueryable().SkipLong(N).Take(M).CountAsyncEx()
 	/// where the view is itself a GROUP BY query that projects to a non-table
-	/// shape via `g.Key.X` / `g.Count()`. Currently the translator emits a
-	/// stray `[<>h__TransparentIdentifier0].[Id]` reference and SQL Server
-	/// fails to bind it.
+	/// shape via `g.Key.X` / `g.Count()`. Ensures the paged-then-counted grouped
+	/// view binds correctly. (Was: the translator emitted a stray
+	/// `[<>h__TransparentIdentifier0].[Id]` reference that SQL Server failed to bind.)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3452,11 +3449,11 @@ public class OrmIntegrationTests : BaseTestClass
 	/// <summary>
 	/// Mirrors StockSharp.Web's GetPaged path: the LINQ tree applies
 	/// <c>.OrderBy(x =&gt; x.Id).Skip().Take()</c> on top of a GROUP BY view.
-	/// The translator wraps the grouped query in a CTE for paging, but
-	/// currently leaks the inner table alias into the outer ORDER BY,
-	/// producing <c>order by [e].[Id]</c> against <c>from [cteresults] [p]</c>
-	/// (SQL Server: "The multi-part identifier '[e].[Id]' could not be bound").
-	/// After the fix the outer ORDER BY must reference the CTE alias [p].
+	/// The translator wraps the grouped query in a CTE for paging; ensures the
+	/// outer ORDER BY references the CTE alias [p]. (Was: the inner table alias
+	/// leaked into the outer ORDER BY, producing <c>order by [e].[Id]</c> against
+	/// <c>from [cteresults] [p]</c> — SQL Server: "The multi-part identifier
+	/// '[e].[Id]' could not be bound".)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3492,12 +3489,12 @@ public class OrmIntegrationTests : BaseTestClass
 	/// <summary>
 	/// Mirrors VProductBugReportCount: group by composite key and project a
 	/// MEMBER whose value is a CASE expression that references both
-	/// <c>g.Key.X</c> AND <c>g.Count()</c>. The translator wraps the
-	/// conditional in a fresh sub-query Context with TableAlias=null (because
-	/// <c>AnalyseSubqueryShape</c> only handles MethodCallExpression). With
-	/// TableAlias missing, <c>GetAlias("Priority")</c> returns the member
-	/// name verbatim, which trips the <c>owner == m.Member.Name</c> branch
-	/// and emits invalid <c>[Priority].*</c> instead of <c>[e].[Priority]</c>.
+	/// <c>g.Key.X</c> AND <c>g.Count()</c>. Ensures the conditional's
+	/// <c>g.Key.Priority</c> resolves to <c>[e].[Priority]</c>. (Was: the
+	/// conditional sub-query Context had TableAlias=null — <c>AnalyseSubqueryShape</c>
+	/// only handled MethodCallExpression — so <c>GetAlias("Priority")</c> returned the
+	/// member name verbatim and emitted invalid <c>[Priority].*</c>; the Context now
+	/// falls back to the outer TableAlias for bare ConditionalExpression sub-queries.)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3577,10 +3574,10 @@ public class OrmIntegrationTests : BaseTestClass
 	/// Mirrors StockSharp.Web's TopicTagService.FindAsync chain:
 	/// <c>(from a in T1 join b in T2 ... select new { A=a, B=b }).Where(p =&gt; p.B.Field == X)</c>
 	/// — a Where layered on top of an anonymous projection that includes
-	/// a joined entity. The Where lambda's `p.B.Field` must resolve to the
-	/// JOIN alias `[b]`, not the main FROM alias `[a]`. Currently the
-	/// translator emits <c>[a].[Field]</c> and SQL Server fails with
-	/// "Invalid column name 'Field'".
+	/// a joined entity. Ensures the Where lambda's `p.B.Field` resolves to the
+	/// JOIN alias `[b]`, not the main FROM alias `[a]`. (Was: the translator
+	/// emitted <c>[a].[Field]</c> and SQL Server failed with "Invalid column
+	/// name 'Field'".)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3654,11 +3651,11 @@ public class OrmIntegrationTests : BaseTestClass
 
 	/// <summary>
 	/// Mirrors StockSharp.Web's DbTests.EnumerateTopics:
-	/// <c>view.OrderBy(t =&gt; t.ProjectedComputedField).Take(N)</c>. The
-	/// translator currently qualifies the order-by with the source-table
-	/// alias (<c>[e].[ProjectedField]</c>) but the column is a computed
-	/// SELECT-list output, not a physical column on the source. ORDER BY
-	/// must reference the bare alias instead.
+	/// <c>view.OrderBy(t =&gt; t.ProjectedComputedField).Take(N)</c>. Ensures
+	/// ORDER BY over a computed SELECT-list output references the bare alias.
+	/// (Was: the translator qualified the order-by with the source-table alias
+	/// — <c>[e].[ProjectedField]</c> — but the column is a SELECT-list output,
+	/// not a physical column on the source.)
 	/// </summary>
 	[TestMethod]
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
@@ -3783,14 +3780,11 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: LINQ translation
 
 	/// <summary>
-	/// BUG: <c>SqlFunctions.IfNull</c> is documented as "SQL IFNULL (COALESCE)" but
-	/// <c>IfNullVisitor</c> emits <c>nullif(...)</c> — the semantic opposite. COALESCE
-	/// returns the first non-null argument; NULLIF returns NULL when the two arguments
-	/// are equal, so <c>.IfNull(x, def)</c> never substitutes the default.
-	/// Expected: the translation emits the dialect's coalesce function (SqlServer
-	/// <c>isnull</c>), like the neighbouring <c>IsNull</c> function does.
-	/// Actual: the translation emits <c>nullif(...)</c>.
-	/// File: Data.ORM\Sql\Expression\MethodVisitors.cs:1206.
+	/// Regression test for <c>SqlFunctions.IfNull</c> translation: ensures
+	/// <c>.IfNull(x, def)</c> emits the dialect's coalesce function (SqlServer
+	/// <c>isnull</c>), like the neighbouring <c>IsNull</c> function, so the default is
+	/// substituted for NULL. (Was: <c>IfNullVisitor</c> emitted <c>nullif(...)</c> — the
+	/// semantic opposite of COALESCE; Data.ORM\Sql\Expression\MethodVisitors.cs.)
 	/// </summary>
 	[TestMethod]
 	public void IfNull_TranslatesToCoalesce_NotNullIf()
@@ -3807,16 +3801,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>AddParamsFromSubquery(change:true)</c> merges sub-context parameters
-	/// under renamed keys <c>{key}_{n}</c>, but the SQL was already generated against
-	/// the ORIGINAL parameter names — there is no rewrite step. The rendered SQL then
-	/// references <c>@p0</c> while the parameter dictionary holds <c>p0_0</c>: the bind
-	/// silently misses or fails.
-	/// Expected: every <c>@param</c> referenced by the generated SQL has a matching key
-	/// in the parameter dictionary.
-	/// Actual: a parameterised GROUP BY key produces a SQL reference with no matching
-	/// dictionary key (renamed to <c>*_0</c>).
-	/// File: Data.ORM\Sql\Expression\Context.cs:559.
+	/// Regression test for sub-query parameter merging: ensures every <c>@param</c>
+	/// referenced by the generated SQL has a matching key in the parameter dictionary
+	/// (and vice versa) when a parameterised GROUP BY key routes through
+	/// <c>AddParamsFromSubquery</c>. (Was: the merge renamed sub-context parameters to
+	/// <c>{key}_{n}</c> after the SQL had already been rendered against the original
+	/// names, leaving orphan keys the SQL never bound; Data.ORM\Sql\Expression\Context.cs.)
 	/// </summary>
 	[TestMethod]
 	public void GroupByParameterisedKey_SqlReferencesMatchEmittedParameters()
@@ -3836,11 +3826,10 @@ public class OrmIntegrationTests : BaseTestClass
 		var referenced = ExtractParamRefs(sql);
 		IsTrue(referenced.Count > 0, $"Expected at least one @param reference in SQL, got: {sql}");
 
-		// Every emitted parameter must be referenced by the generated SQL. The bug
-		// renames the sub-context parameter to `{key}_{n}` AFTER the SQL was already
-		// rendered against the original name, so the dictionary carries an orphan
-		// `p0_0` that no `@p0_0` reference in the SQL ever binds — a leaked/duplicated
-		// parameter that the correct (offset-based) merge would never produce.
+		// Every emitted parameter must be referenced by the generated SQL. The earlier
+		// defect renamed the sub-context parameter to `{key}_{n}` AFTER the SQL had been
+		// rendered against the original name, leaving an orphan `p0_0` that no `@p0_0`
+		// reference ever bound; the correct merge keeps the names in sync.
 		foreach (var key in parameters.Keys)
 		{
 			referenced.Contains(key).AssertTrue(
@@ -3886,15 +3875,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: query provider routing
 
 	/// <summary>
-	/// BUG: <c>DefaultQueryProvider.ResolveExecuteMethod</c> routes any result type that
-	/// implements <c>IEnumerable&lt;&gt;</c> into the enumerable branch and then calls
-	/// <c>resultType.GetGenericArguments().First()</c>. For a scalar <c>string</c> (which
-	/// implements <c>IEnumerable&lt;char&gt;</c>) <c>GetGenericArguments()</c> is empty,
-	/// so <c>.First()</c> throws InvalidOperationException instead of running the scalar
-	/// <c>ExecuteResult&lt;TSource,string&gt;</c>.
-	/// Expected: a synchronous scalar <c>string</c> terminal dispatches to ExecuteResult.
-	/// Actual: InvalidOperationException ("Sequence contains no elements").
-	/// File: Data.ORM\DefaultQueryProvider.cs:67.
+	/// Regression test for <c>DefaultQueryProvider.ResolveExecuteMethod</c> routing:
+	/// ensures a synchronous scalar <c>string</c> terminal dispatches to the scalar
+	/// <c>ExecuteResult&lt;TSource,string&gt;</c> path. (Was: any result type that merely
+	/// implemented <c>IEnumerable&lt;&gt;</c> — including <c>string</c>, an
+	/// <c>IEnumerable&lt;char&gt;</c> — was routed into the enumerable branch and threw
+	/// InvalidOperationException; Data.ORM\DefaultQueryProvider.cs.)
 	/// </summary>
 	[TestMethod]
 	public void Execute_ScalarString_RoutesToExecuteResult_NotEnumerableBranch()
@@ -3939,14 +3925,11 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>AnyAsyncEx</c> is implemented as
-	/// <c>FirstOrDefaultAsyncEx(...) is not null</c>. <c>T</c> has no <c>class</c>
-	/// constraint, so for a value-type projection (e.g. <c>Select(x =&gt; x.Id)</c>) an
-	/// empty result yields <c>default(long)</c> == 0, and boxed 0 <c>is not null</c> —
-	/// the method reports <see langword="true"/> for an empty sequence.
-	/// Expected: an empty value-type sequence yields <see langword="false"/>.
-	/// Actual: returns <see langword="true"/>.
-	/// File: Data.ORM\QueryableAsyncExtensions.cs:40.
+	/// Regression test for <c>AnyAsyncEx</c>: ensures an empty value-type sequence (e.g.
+	/// <c>Select(x =&gt; x.Id)</c>) yields <see langword="false"/>. (Was: implemented as
+	/// <c>FirstOrDefaultAsyncEx(...) is not null</c>, which for a value type returned
+	/// <c>default(long)</c> == 0 — boxed and never null — so an empty sequence wrongly
+	/// reported <see langword="true"/>; Data.ORM\QueryableAsyncExtensions.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task AnyAsyncEx_EmptyValueTypeSequence_ReturnsFalse()
@@ -4009,16 +3992,11 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: RelationManyList cache
 
 	/// <summary>
-	/// BUG: <c>CopyToAsync(array, index)</c> passes <c>index</c> (a destination offset
-	/// per the <c>ICollection.CopyTo</c> contract) as the SOURCE <c>startIndex</c> to
-	/// <c>GetRangeAsync</c>, so the first <c>index</c> source entities are skipped AND
-	/// writing still starts at <c>array[index]</c> — items are simultaneously lost and
-	/// shifted. (On a bulk-load list it additionally InvalidCast-throws on the lazy
-	/// Skip() iterator.)
-	/// Expected: all source entities are copied into the destination starting at
-	/// <c>array[index]</c>, none skipped.
-	/// Actual: the first <c>index</c> entities are dropped.
-	/// File: Data.ORM\RelationManyList.cs:412.
+	/// Regression test for <c>CopyToAsync(array, index)</c>: ensures all source entities
+	/// are copied into the destination starting at <c>array[index]</c>, none skipped.
+	/// (Was: <c>index</c> — a destination offset per the <c>ICollection.CopyTo</c>
+	/// contract — was passed as the SOURCE <c>startIndex</c> to <c>GetRangeAsync</c>, so
+	/// the first <c>index</c> source entities were dropped; Data.ORM\RelationManyList.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task CopyToAsync_NonZeroIndex_CopiesAllEntitiesWithoutSkipping()
@@ -4048,14 +4026,11 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>AddAsync</c> on a bulk-loaded list calls <c>dict.Add(id, item)</c>. If a
-	/// concurrent (or, here, a pre-populated) cache already holds that id, <c>Add</c>
-	/// throws ArgumentException for a row that was successfully saved. <c>UpdateAsync</c>
-	/// already uses <c>TryAdd</c> for exactly this reason; <c>AddAsync</c> does not.
-	/// Expected: adding an entity whose id is already cached does not throw — the cache
-	/// entry is replaced/kept and the add succeeds.
-	/// Actual: ArgumentException ("An item with the same key has already been added").
-	/// File: Data.ORM\RelationManyList.cs:368.
+	/// Regression test for <c>AddAsync</c> on a bulk-loaded list: ensures adding an entity
+	/// whose id is already cached does not throw — the cache entry is replaced/kept and
+	/// the add succeeds. (Was: <c>AddAsync</c> called <c>dict.Add(id, item)</c>, which
+	/// threw ArgumentException when a concurrent or pre-populated cache already held the
+	/// id, despite the row having been saved; Data.ORM\RelationManyList.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task AddAsync_BulkLoad_IdAlreadyCached_DoesNotThrow()
@@ -4078,14 +4053,11 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>CountAsync(deleted:true)</c> on a bulk-load list warms the cache via
-	/// <c>GetRangeAsync(..., deleted:true, ...)</c>, but that path does NOT populate the
-	/// bulk dictionary (only <c>!deleted</c> does); the method then returns
-	/// <c>dict.Count</c> — 0 on a fresh list — instead of the storage count of deleted
-	/// rows.
-	/// Expected: the deleted count comes from storage (here, the configured storage count).
-	/// Actual: returns the (empty) bulk-cache size, 0.
-	/// File: Data.ORM\RelationManyList.cs:323.
+	/// Regression test for <c>CountAsync(deleted:true)</c> on a bulk-load list: ensures
+	/// the deleted count comes from storage (here, the configured storage count) rather
+	/// than the non-deleted bulk cache. (Was: it warmed the cache via
+	/// <c>GetRangeAsync(..., deleted:true, ...)</c>, which never populates the dictionary,
+	/// then returned the empty <c>dict.Count</c> of 0; Data.ORM\RelationManyList.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task CountAsync_BulkLoad_Deleted_ReturnsStorageCount_NotEmptyCache()
@@ -4104,13 +4076,11 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>RemoveAsync</c> unconditionally decrements the cached <c>_count</c> even
-	/// when <c>OnRemove</c> returns <see langword="false"/> (storage DELETE affected no
-	/// rows). With <c>CacheCount</c> on, removing a non-existent entity silently skews the
-	/// count downward; repeated failures can drive <c>CountAsync</c> negative.
-	/// Expected: the cached count is only decremented when the storage delete succeeded.
-	/// Actual: the count is decremented despite the failed delete.
-	/// File: Data.ORM\RelationManyList.cs:437.
+	/// Regression test for <c>RemoveAsync</c> count maintenance: ensures the cached
+	/// <c>_count</c> is decremented only when the storage delete actually succeeded.
+	/// (Was: it decremented unconditionally even when <c>OnRemove</c> returned
+	/// <see langword="false"/>, so with <c>CacheCount</c> on a no-op delete skewed the
+	/// count downward and could drive it negative; Data.ORM\RelationManyList.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task RemoveAsync_StorageDeleteFailed_DoesNotDecrementCachedCount()
@@ -4206,13 +4176,11 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>EntityCacheStore.Touch</c> evicts the least-recently-used entry when over
-	/// <c>MaxEntries</c> WITHOUT checking the <c>complete</c> flag, so an incomplete entry
-	/// that an active BulkScope still depends on can be dropped, making the subsequent
-	/// hydration read throw KeyNotFoundException.
-	/// Expected: incomplete (complete == false) entries are never chosen as the LRU victim.
-	/// Actual: the incomplete entry is evicted once the size cap is exceeded.
-	/// File: Data.ORM\EntityCacheStore.cs:77.
+	/// Regression test for <c>EntityCacheStore.Touch</c> size-bound eviction: ensures
+	/// incomplete (complete == false) entries are never chosen as the LRU victim. (Was:
+	/// the LRU eviction over <c>MaxEntries</c> ignored the <c>complete</c> flag and could
+	/// drop an incomplete entry that an active BulkScope still depended on, so the
+	/// subsequent hydration read threw KeyNotFoundException; Data.ORM\EntityCacheStore.cs.)
 	/// </summary>
 	[TestMethod]
 	public void Touch_DoesNotEvictIncompleteEntries()
@@ -4236,15 +4204,12 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: <c>EntityCacheStore.Touch</c> records a timestamp only while
-	/// <c>Timeout != TimeSpan.MaxValue</c>. If the timeout is lowered at runtime (a
-	/// documented scenario), entries cached earlier carry no timestamp and
-	/// <c>TrimExpiredAsync</c> — which enumerates only timestamped entries — can never
-	/// TTL-evict them, defeating the OOM guard for the oldest part of the cache.
-	/// Expected: after lowering the timeout and trimming, the pre-existing untimestamped
-	/// entry is evicted.
-	/// Actual: the untimestamped entry survives forever.
-	/// File: Data.ORM\EntityCacheStore.cs:64.
+	/// Regression test for <c>EntityCacheStore.Touch</c> timestamping: ensures an entry
+	/// cached before the timeout was lowered at runtime is still TTL-evictable by a
+	/// subsequent <c>TrimExpiredAsync</c>. (Was: <c>Touch</c> recorded a timestamp only
+	/// while <c>Timeout != TimeSpan.MaxValue</c>, so earlier entries carried none and the
+	/// trim — which enumerates only timestamped entries — never reached them;
+	/// Data.ORM\EntityCacheStore.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task TrimExpired_EvictsEntriesCachedBeforeTimeoutWasLowered()
@@ -4273,15 +4238,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: pagination SQL cache
 
 	/// <summary>
-	/// BUG: <c>Database.ReadAllAsync</c> renders skip/take through
-	/// <c>Query.CreateSelect</c>, which INLINES the offset/limit as SQL literals
-	/// (OFFSET 20, FETCH NEXT 20). Every distinct page therefore yields a distinct SQL
-	/// string, and each is cached forever as its own DatabaseCommand in
-	/// <c>_commandsByText</c> — an unbounded leak while paging large tables.
-	/// Expected: pagination is parameterised, so the SQL text (the cache key) is the same
-	/// regardless of the page offset.
-	/// Actual: two different offsets render two different SQL strings.
-	/// File: Data.ORM\Database.cs:446.
+	/// Regression test for paginated SELECT rendering: ensures pagination is
+	/// parameterised, so the SQL text (the command-cache key) is the same regardless of
+	/// the page offset. (Was: <c>Query.CreateSelect</c> inlined the offset/limit as SQL
+	/// literals, so every distinct page produced a distinct SQL string that was cached
+	/// forever as its own DatabaseCommand — an unbounded leak while paging large tables;
+	/// Data.ORM\Database.cs.)
 	/// </summary>
 	[TestMethod]
 	public void Pagination_RendersOffsetIndependentSql_SoCommandCacheIsBounded()
@@ -4304,15 +4266,11 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: Database.CreateConnectionAsync leak
 
 	/// <summary>
-	/// BUG: <c>Database.CreateConnectionAsync</c> opens a freshly created
-	/// <see cref="DbConnection"/> with <c>await connection.OpenAsync(...)</c> but has no
-	/// try/catch — if OpenAsync faults (server down, bad credentials, timeout) the
-	/// connection object is never disposed and is left to the finalizer, accumulating
-	/// under retry/health-check loops.
-	/// Expected: when OpenAsync throws, the connection is disposed before the exception
-	/// propagates.
-	/// Actual: the connection leaks (Dispose is never called).
-	/// File: Data.ORM\Database.cs:183.
+	/// Regression test for <c>Database.CreateConnectionAsync</c>: ensures that when
+	/// <c>OpenAsync</c> faults (server down, bad credentials, timeout) the freshly created
+	/// <see cref="DbConnection"/> is disposed before the exception propagates. (Was: the
+	/// open had no try/catch, so a faulting connection was never disposed and accumulated
+	/// under retry/health-check loops; Data.ORM\Database.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task CreateConnectionAsync_OpenFails_DisposesConnection()
@@ -4371,16 +4329,12 @@ public class OrmIntegrationTests : BaseTestClass
 	#region Audit regression: Database integration (SQLite)
 
 	/// <summary>
-	/// BUG: <c>Database.UpdateAsync</c> fills the WHERE-key value from the entity only
-	/// when the key column is literally named <c>"Id"</c>
-	/// (<c>else if (col.Name == "Id")</c>). For an entity whose identity is declared via
-	/// <c>[Identity]</c> on a differently named column, the key value is never supplied,
-	/// the parameter binds to <c>DBNull</c>, and the UPDATE runs as
-	/// <c>WHERE [Key] = NULL</c> — matching no rows — yet <c>UpdateAsync</c> reports
-	/// success: silent data loss.
-	/// Expected: the row is actually updated (re-read shows the new value).
-	/// Actual: the UPDATE is a no-op; the row keeps its old value.
-	/// File: Data.ORM\Database.cs:506.
+	/// Regression test for <c>Database.UpdateAsync</c> with a non-<c>Id</c> identity:
+	/// ensures the row is actually updated (re-read shows the new value) when the identity
+	/// column is declared via <c>[Identity]</c> on a differently named column. (Was: the
+	/// WHERE-key value was filled from the entity only when the key column was literally
+	/// named <c>"Id"</c>, so otherwise it bound to <c>DBNull</c> and the UPDATE matched no
+	/// rows while reporting success — silent data loss; Data.ORM\Database.cs.)
 	/// </summary>
 	[TestMethod]
 	public async Task UpdateAsync_NonIdIdentity_ActuallyUpdatesRow()

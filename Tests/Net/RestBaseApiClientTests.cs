@@ -345,14 +345,11 @@ public class RestBaseApiClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: RestBaseApiClient.FormatQueryValue HTML-encodes GET/DELETE query values
-	/// (Net.Clients\RestBaseApiClient.cs:557 — value?.ToString().EncodeToHtml()).
-	/// QueryString.RefreshUri then URL-encodes the already-HTML-encoded text, so the
-	/// server receives a corrupted value: "a&amp;b" instead of "a&b" (and "é" becomes
-	/// "&#233;").
-	/// Expected: after URL-decoding the wire value, it equals the original raw value exactly,
-	/// with no HTML entity escaping.
-	/// Actual: the decoded wire value is the HTML-encoded "a&amp;b".
+	/// Regression test for query-value encoding: ensures GET/DELETE query values are passed
+	/// through verbatim (no HTML entity escaping), so the server receives the original raw
+	/// value after URL-decoding. (Was: FormatQueryValue HTML-encoded values via
+	/// value?.ToString().EncodeToHtml(), corrupting "a&b" into "a&amp;b",
+	/// Net.Clients\RestBaseApiClient.cs:557.)
 	/// </summary>
 	[TestMethod]
 	public async Task FormatQueryValue_SpecialChars_NotHtmlEncoded()
@@ -371,11 +368,10 @@ public class RestBaseApiClientTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: RestBaseApiClient.FormatQueryValue uses value?.ToString() with the current
-	/// thread culture (Net.Clients\RestBaseApiClient.cs:557), so a decimal/double GET arg
-	/// is formatted culture-dependently (e.g. "1,5" on ru-RU) and silently sent wrong.
-	/// Expected: numeric query values are formatted invariantly ("1.5").
-	/// Actual: on ru-RU the wire value is "1,5".
+	/// Regression test for numeric query formatting: ensures decimal/double GET args are
+	/// formatted with the invariant culture ("1.5"), independent of the current thread
+	/// culture. (Was: FormatQueryValue used value?.ToString() with the current thread culture,
+	/// producing "1,5" on ru-RU, Net.Clients\RestBaseApiClient.cs:557.)
 	/// </summary>
 	[TestMethod]
 	public async Task FormatQueryValue_Decimal_InvariantCulture()

@@ -276,11 +276,10 @@ public class BaseOrderedChannelTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: DequeueAsync busy-polls forever (await Task.Delay(1); continue;) when the channel is null
-	/// because the queue was closed before ever being opened; _isClosed is ignored in that branch.
-	/// Expected: DequeueAsync on a closed-but-never-opened queue throws ChannelClosedException.
-	/// Actual: it spins on a 1ms timer indefinitely (here surfaced as a TimeoutException via WaitAsync).
-	/// See Collections\BaseOrderedChannel.cs:192.
+	/// Regression test for DequeueAsync on a closed-but-never-opened queue: ensures it throws
+	/// ChannelClosedException instead of busy-polling. (Was: when the channel was null because the
+	/// queue was closed before ever being opened, _isClosed was ignored and DequeueAsync spun on a
+	/// 1ms timer indefinitely; Collections\BaseOrderedChannel.cs:209.)
 	/// </summary>
 	[TestMethod]
 	public async Task DequeueAsync_ClosedBeforeOpened_Throws()

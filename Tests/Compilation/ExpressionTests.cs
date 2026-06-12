@@ -703,13 +703,11 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: CompilerCache.Clear() recursively deletes the whole _path directory, and when the
-	/// constructor is given an empty path it defaults _path to Directory.GetCurrentDirectory()
-	/// (ICompilerCache.cs:74, :205). A plain Clear() then wipes every unrelated file in the
-	/// process working directory.
-	/// Expected: Clear() empties the cache without destroying arbitrary user files living in the
-	/// working directory.
-	/// Actual: the unrelated user file is recursively deleted together with the whole directory.
+	/// Regression test for CompilerCache.Clear(): ensures clearing an empty-path cache does not
+	/// destroy unrelated files in the working directory. An empty path now defaults to a dedicated
+	/// CompilerCache subdirectory (ICompilerCache.cs:74), so Clear() only removes the cache folder.
+	/// (Was: empty path defaulted _path to the bare working directory, and Clear() recursively
+	/// deleted every unrelated file in it.)
 	/// </summary>
 	[TestMethod]
 	public void Clear_DoesNotDeleteUnrelatedFilesInWorkingDirectory()
@@ -732,12 +730,10 @@ public class ExpressionTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: the expression parser only treats known operators, digits and identifier chars as
-	/// terminators; an unsupported character such as '%' is silently appended to a variable name
-	/// (ExpressionHelper.cs:129). GetVariables("x % 2") returns a phantom variable named "%"
-	/// instead of reporting the malformed input.
-	/// Expected: an unsupported operator character raises a descriptive parsing exception.
-	/// Actual: parsing succeeds and yields a bogus "%" variable, no error is reported.
+	/// Regression test for the expression parser: ensures an unsupported operator character such as
+	/// '%' raises a descriptive parsing exception instead of being swallowed into a variable name
+	/// (ExpressionHelper.cs:104, :172). (Was: '%' was silently appended to a variable name, so
+	/// GetVariables("x % 2") returned a phantom "%" variable with no error reported.)
 	/// </summary>
 	[TestMethod]
 	public void GetVariables_UnsupportedOperatorThrows()

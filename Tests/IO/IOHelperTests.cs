@@ -576,8 +576,9 @@ public class IOHelperTests : BaseTestClass
 	#region NormalizePath Bug Tests
 
 	/// <summary>
-	/// BUG: IOHelper.NormalizePath uses culture-dependent ToLower (InstalledUICulture).
-	/// In Turkish culture, I/i comparison fails due to dotted/dotless I.
+	/// Regression test for path normalization: ensures NormalizePath is culture-invariant
+	/// so I/i comparison stays correct under Turkish culture (dotted/dotless I).
+	/// (Was: culture-dependent ToLower, IOHelper.NormalizePath in IO\IOHelper.cs.)
 	/// </summary>
 	[TestMethod]
 	public void NormalizePath_ShouldBeCultureInvariant()
@@ -593,13 +594,13 @@ public class IOHelperTests : BaseTestClass
 			var path1 = @"C:\Users\Test\FILE.txt";
 			var path2 = @"C:\Users\Test\file.txt";
 
-			// These paths should be equal on Windows (case-insensitive)
-			// but Turkish ToLower turns I into ı (dotless i), not i
+			// These paths should be equal on Windows (case-insensitive);
+			// a culture-dependent ToLower would turn I into ı (dotless i) under Turkish culture
 			var normalized1 = IOHelper.NormalizePath(path1, turkishCulture);
 			var normalized2 = IOHelper.NormalizePath(path2, turkishCulture);
 
-			// On Windows, paths are case-insensitive, so these should match
-			// The bug causes them to mismatch in Turkish culture
+			// On Windows, paths are case-insensitive, so these must match
+			// regardless of the current culture
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			{
 				normalized1.EqualsIgnoreCase(normalized2).AssertTrue(

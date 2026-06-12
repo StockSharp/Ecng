@@ -270,14 +270,11 @@ public class JsonConvertersTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: JsonDateTimeConverter.WriteJson (via TryWriteSentinel / ToUnix) normalizes an
-	/// Unspecified-Kind DateTime through ToUniversalTime, which .NET treats AS LOCAL — the
-	/// opposite of the read side (NormalizeUtc), which takes Unspecified AS UTC.
-	/// Expected: the write side treats Unspecified AS UTC (no local-offset shift), so the wire
-	/// value equals the same wall-clock taken as UTC and round-trips back unchanged.
-	/// Actual: on a non-UTC machine the value is shifted by the local offset (and near-epoch
-	/// values can collapse to the "0" sentinel). See JsonDateTimeConverter.cs:109 (TryWriteSentinel)
-	/// and :148 (ToUnix).
+	/// Regression test for the DateTime write side: ensures an Unspecified-Kind DateTime is treated
+	/// AS UTC (no local-offset shift), so its wire value equals the explicit-UTC equivalent and
+	/// round-trips back unchanged — consistent with the read side. (Was: WriteJson normalized
+	/// Unspecified through ToUniversalTime, shifting it by the machine local offset; see
+	/// JsonDateTimeConverter.cs:109 (TryWriteSentinel) and :148 (ToUnix), both now via NormalizeUtc.)
 	/// </summary>
 	[TestMethod]
 	public void WriteJson_UnspecifiedDateTime_TreatedAsUtc_RoundTrips()
@@ -300,12 +297,10 @@ public class JsonConvertersTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: JsonDateTimeNanoConverter.WriteJson shifts an Unspecified-Kind DateTime by the
-	/// machine local offset (dt.ToUniversalTime() at JsonDateTimeConverter.cs:250) while the read
-	/// side takes Unspecified AS UTC.
-	/// Expected: the nano write side treats Unspecified AS UTC, so it produces the same wire value
-	/// as the explicit-UTC equivalent and round-trips unchanged.
-	/// Actual: on a non-UTC machine the Unspecified value is shifted by the local offset.
+	/// Regression test for the nano DateTime write side: ensures JsonDateTimeNanoConverter.WriteJson
+	/// treats an Unspecified-Kind DateTime AS UTC, producing the same wire value as the explicit-UTC
+	/// equivalent and round-tripping unchanged. (Was: it shifted Unspecified by the machine local
+	/// offset via dt.ToUniversalTime() at JsonDateTimeConverter.cs:250, now via NormalizeUtc.)
 	/// </summary>
 	[TestMethod]
 	public void WriteJson_NanoUnspecifiedDateTime_TreatedAsUtc_RoundTrips()

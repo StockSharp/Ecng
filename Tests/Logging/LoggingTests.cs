@@ -98,11 +98,10 @@ public class LoggingTests : BaseTestClass
 		a.Parent = b;
 		b.Parent = c;
 
-		// Act: close the cycle C -> A (should be blocked by proper cycle detection)
-		// Current implementation allows this and does not throw.
+		// Act: closing the cycle C -> A must be blocked by cycle detection and throw.
 		ThrowsExactly<ArgumentException>(() => c.Parent = a);
 
-		// Assert: cycle is created (reproduces the bug)
+		// Assert: the cycle was rejected; the original chain is intact and C has no parent.
 		a.Parent.AssertSame(b);
 		b.Parent.AssertSame(c);
 		c.Parent.AssertSame(null);
@@ -111,7 +110,7 @@ public class LoggingTests : BaseTestClass
 	[TestMethod]
 	public void OverflowsRecursion()
 	{
-		// Use guarded receivers to avoid real StackOverflow and still show unbounded propagation.
+		// Guarded receivers cap recursion so a regression (cycle accepted) would not crash the runner with a real StackOverflow.
 		var a = new GuardedReceiver("A");
 		var b = new GuardedReceiver("B");
 		var c = new GuardedReceiver("C");
@@ -119,7 +118,7 @@ public class LoggingTests : BaseTestClass
 		a.Parent = b;
 		b.Parent = c;
 
-		// create cycle
+		// closing the cycle is rejected, so propagation stays bounded
 		ThrowsExactly<ArgumentException>(() => c.Parent = a);
 
 		var msg = new LogMessage(a, DateTime.UtcNow, LogLevels.Info, "x");
@@ -402,12 +401,11 @@ public class LoggingTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: LogManager creates an <see cref="UnhandledExceptionSource"/> in its ctor but never disposes it
-	/// (DisposeManaged only clears Sources, which unsubscribes Log but does not Dispose owned sources).
-	/// Expected: after the manager is disposed, the UnhandledExceptionSource it created is disposed too,
-	/// releasing its static AppDomain/TaskScheduler event subscriptions.
-	/// Actual: the source stays alive and subscribed forever (permanent leak).
-	/// Cite: Logging\LogManager.cs:108 (ctor adds the source) and :303 (DisposeManaged only Sources.Clear()).
+	/// Regression test for <see cref="LogManager"/> disposal: ensures the <see cref="UnhandledExceptionSource"/>
+	/// the manager creates in its ctor is itself disposed when the manager is disposed, releasing its static
+	/// AppDomain/TaskScheduler event subscriptions.
+	/// (Was: DisposeManaged only cleared Sources and left the owned source subscribed forever -
+	/// Logging\LogManager.cs:303 now calls _unhandledExceptionSource.Dispose().)
 	/// </summary>
 	[TestMethod]
 	[DoNotParallelize]
@@ -440,13 +438,11 @@ public class LoggingTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// BUG: TraceSource re-raises every Trace event as a LogMessage, and DebugLogListener writes every flushed
-	/// message back into Trace (Trace.TraceInformation). With both wired together a single Trace.TraceInformation
-	/// feeds back into TraceSource and re-amplifies without any reentrancy guard - an unbounded loop.
-	/// Expected: a single seed Trace write is processed once; the pipeline-generated Trace output is not
-	/// swallowed back into TraceSource, so the source raises the message exactly once.
-	/// Actual: the message re-feeds itself indefinitely (here bounded by a test guard) - more than one raise.
-	/// Cite: Logging\TraceSource.cs:22 (TraceEvent re-raises) and Logging\DebugLogListener.cs:53 (Dump -> Trace.TraceInformation).
+	/// Regression test for the TraceSource/DebugLogListener pipeline: a single seed Trace write is raised on the
+	/// source exactly once, and the listener's own Trace output does not feed back into TraceSource (no infinite loop).
+	/// (Was: DebugLogListener wrote flushed messages back into Trace, re-feeding TraceSource without any reentrancy
+	/// guard - now Logging\DebugLogListener.cs:48 wraps the write in TraceSource.Suppress and Logging\TraceSource.cs:8
+	/// short-circuits re-raises while suppressed.)
 	/// </summary>
 	[TestMethod]
 	[DoNotParallelize]
@@ -462,7 +458,7 @@ public class LoggingTests : BaseTestClass
 		{
 			raised++;
 
-			// Bounded recursion guard so the bug does not crash the runner with a StackOverflow.
+			// Bounded recursion guard so a regression (feedback loop) would not crash the runner with a StackOverflow.
 			if (raised >= guard)
 				return;
 
