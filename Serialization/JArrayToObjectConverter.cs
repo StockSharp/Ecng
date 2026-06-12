@@ -26,6 +26,9 @@ public class JArrayToObjectConverter : JsonConverter
 	/// <returns>The deserialized object with fields set from the JSON array.</returns>
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
+		if (reader.TokenType == JsonToken.Null)
+			return null;
+
 		existingValue ??= Activator.CreateInstance(objectType);
 		
 		var array = JArray.Load(reader);
@@ -143,6 +146,9 @@ public class JArrayToObjectConverter<T> : JsonConverter
 	/// <returns>The deserialized object of type <typeparamref name="T"/>.</returns>
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
+		if (reader.TokenType == JsonToken.Null)
+			return null;
+
 		existingValue ??= new T();
 
 		var typed = (T)existingValue;

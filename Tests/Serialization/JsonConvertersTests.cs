@@ -49,6 +49,20 @@ public class JsonConvertersTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[DataRow(0.001)]
+	[DataRow(0.5)]
+	[DataRow(0.999)]
+	public void DateTimeSecConverter_ReadFractionalUnixTimestamp(double seconds)
+	{
+		var settings = new JsonSerializerSettings();
+		settings.Converters.Add(new JsonDateTimeConverter());
+
+		var value = JsonConvert.DeserializeObject<DateTime>(seconds.ToString(CultureInfo.InvariantCulture), settings);
+
+		value.AssertEqual(seconds.FromUnix());
+	}
+
+	[TestMethod]
 	public void DateTimeMlsConverter_ReadWrite()
 	{
 		var converter = new JsonDateTimeMlsConverter();
@@ -255,6 +269,60 @@ public class JsonConvertersTests : BaseTestClass
 		ReadToken(unspecified).AssertEqual(DateTime.SpecifyKind(unspecified, DateTimeKind.Utc));
 	}
 
+	/// <summary>
+	/// BUG: JsonDateTimeConverter.WriteJson (via TryWriteSentinel / ToUnix) normalizes an
+	/// Unspecified-Kind DateTime through ToUniversalTime, which .NET treats AS LOCAL — the
+	/// opposite of the read side (NormalizeUtc), which takes Unspecified AS UTC.
+	/// Expected: the write side treats Unspecified AS UTC (no local-offset shift), so the wire
+	/// value equals the same wall-clock taken as UTC and round-trips back unchanged.
+	/// Actual: on a non-UTC machine the value is shifted by the local offset (and near-epoch
+	/// values can collapse to the "0" sentinel). See JsonDateTimeConverter.cs:109 (TryWriteSentinel)
+	/// and :148 (ToUnix).
+	/// </summary>
+	[TestMethod]
+	public void WriteJson_UnspecifiedDateTime_TreatedAsUtc_RoundTrips()
+	{
+		var converter = new JsonDateTimeMcsConverter();
+
+		// Unspecified wall-clock that, taken AS UTC, is the intended instant.
+		var unspecified = new DateTime(2025, 2, 1, 12, 30, 0, DateTimeKind.Unspecified);
+		var asUtc = DateTime.SpecifyKind(unspecified, DateTimeKind.Utc);
+
+		// The wire value for the Unspecified token must equal the wire value for the explicit-UTC
+		// equivalent (machine-independent identity); the buggy code shifts the Unspecified one.
+		Write(converter, unspecified).AssertEqual(Write(converter, asUtc));
+
+		// And it must round-trip back to the same UTC instant.
+		var reader = new JsonTextReader(new StringReader(Write(converter, unspecified)));
+		reader.Read();
+		var back = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, JsonSerializer.CreateDefault());
+		back.AssertEqual(asUtc);
+	}
+
+	/// <summary>
+	/// BUG: JsonDateTimeNanoConverter.WriteJson shifts an Unspecified-Kind DateTime by the
+	/// machine local offset (dt.ToUniversalTime() at JsonDateTimeConverter.cs:250) while the read
+	/// side takes Unspecified AS UTC.
+	/// Expected: the nano write side treats Unspecified AS UTC, so it produces the same wire value
+	/// as the explicit-UTC equivalent and round-trips unchanged.
+	/// Actual: on a non-UTC machine the Unspecified value is shifted by the local offset.
+	/// </summary>
+	[TestMethod]
+	public void WriteJson_NanoUnspecifiedDateTime_TreatedAsUtc_RoundTrips()
+	{
+		var converter = new JsonDateTimeNanoConverter();
+
+		var unspecified = new DateTime(2025, 2, 1, 12, 30, 0, DateTimeKind.Unspecified);
+		var asUtc = DateTime.SpecifyKind(unspecified, DateTimeKind.Utc);
+
+		Write(converter, unspecified).AssertEqual(Write(converter, asUtc));
+
+		var reader = new JsonTextReader(new StringReader(Write(converter, unspecified)));
+		reader.Read();
+		var back = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, JsonSerializer.CreateDefault());
+		back.AssertEqual(asUtc);
+	}
+
 	[TestMethod]
 	public void JArrayConverter_WriteRead_Object()
 	{
@@ -291,6 +359,26 @@ public class JsonConvertersTests : BaseTestClass
 		var obj2 = (JArrayConvTest)converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer);
 		obj2.X.AssertEqual(obj.X);
 		obj2.Y.AssertEqual(obj.Y);
+	}
+
+	[TestMethod]
+	public void JArrayConverter_ReadNull_ReturnsNull()
+	{
+		var converter = new JArrayToObjectConverter();
+		var reader = new JsonTextReader(new StringReader("null"));
+		reader.Read();
+
+		converter.ReadJson(reader, typeof(JArrayConvTest), null, JsonSerializer.CreateDefault()).AssertNull();
+	}
+
+	[TestMethod]
+	public void JArrayConverter_Generic_ReadNull_ReturnsNull()
+	{
+		var converter = new JArrayToObjectConverter<JArrayConvTest>();
+		var reader = new JsonTextReader(new StringReader("null"));
+		reader.Read();
+
+		converter.ReadJson(reader, typeof(JArrayConvTest), null, JsonSerializer.CreateDefault()).AssertNull();
 	}
 
 	[TestMethod]

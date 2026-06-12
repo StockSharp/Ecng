@@ -78,7 +78,7 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 
 	private object FromNumber(double? value, Type objectType)
 	{
-		if (value is not double d || (int)d == 0)
+		if (value is not double d || d == 0)
 			return NoValue(objectType);
 
 		return Convert(d);
@@ -94,7 +94,7 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	// string with no zone designator) is taken AS UTC rather than assumed local — consistent
 	// with the textual-date path's AssumeUniversal, so a no-zone timestamp is not shifted by the
 	// server's local offset.
-	private static DateTime NormalizeUtc(DateTime dt)
+	private protected static DateTime NormalizeUtc(DateTime dt)
 		=> dt.Kind switch
 		{
 			DateTimeKind.Utc => dt,
@@ -106,7 +106,7 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	// to "no value". This keeps the wire format numeric and avoids the GetUnixDiff pre-epoch throw.
 	private protected static bool TryWriteSentinel(JsonWriter writer, DateTime dt)
 	{
-		if (dt.ToUniversalTime() < TimeHelper.GregorianStart)
+		if (NormalizeUtc(dt) < TimeHelper.GregorianStart)
 		{
 			writer.WriteRawValue("0");
 			return true;
@@ -145,7 +145,7 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 		if (TryWriteSentinel(writer, dt))
 			return;
 
-		writer.WriteRawValue(dt.ToUnix(_isSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
+		writer.WriteRawValue(NormalizeUtc(dt).ToUnix(_isSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }
 
@@ -203,7 +203,7 @@ public class JsonDateTimeMcsConverter : JsonDateTimeConverter
 		if (TryWriteSentinel(writer, dt))
 			return;
 
-		writer.WriteRawValue(dt.ToUnixMcs().ToString(System.Globalization.CultureInfo.InvariantCulture));
+		writer.WriteRawValue(NormalizeUtc(dt).ToUnixMcs().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }
 
@@ -247,6 +247,6 @@ public class JsonDateTimeNanoConverter : JsonDateTimeConverter
 		if (TryWriteSentinel(writer, dt))
 			return;
 
-		writer.WriteRawValue((dt.ToUniversalTime() - TimeHelper.GregorianStart).ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
+		writer.WriteRawValue((NormalizeUtc(dt) - TimeHelper.GregorianStart).ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }

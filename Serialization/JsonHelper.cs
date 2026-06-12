@@ -126,9 +126,6 @@ public static class JsonHelper
 
 		try
 		{
-			if (token.Type == JTokenType.String && (string)token == "null")
-				return null;
-
 			return token.ToObject(type);
 		}
 		catch (Exception ex)

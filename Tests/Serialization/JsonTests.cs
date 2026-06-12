@@ -9,6 +9,21 @@ using Newtonsoft.Json;
 [TestClass]
 public class JsonTests : BaseTestClass
 {
+	private sealed class AsyncOnlyStream : MemoryStream
+	{
+		public override void Flush()
+			=> throw new InvalidOperationException("Synchronous flush is not allowed.");
+
+		public override void Write(byte[] buffer, int offset, int count)
+			=> throw new InvalidOperationException("Synchronous write is not allowed.");
+
+		public override void Write(ReadOnlySpan<byte> buffer)
+			=> throw new InvalidOperationException("Synchronous write is not allowed.");
+
+		public override void WriteByte(byte value)
+			=> throw new InvalidOperationException("Synchronous write is not allowed.");
+	}
+
 	private async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include, Action<string> jsonInspector = null)
 	{
 		var ser = new JsonSerializer<T>
@@ -201,6 +216,34 @@ public class JsonTests : BaseTestClass
 		await Do(new string[] { null, null });
 		await Do(new SecureString[] { null, null });
 		await Do(new Type[] { null, typeof(GCKind) });
+	}
+
+	[TestMethod]
+	public async Task JsonSerializer_ListRoundTripsAsList()
+	{
+		var serializer = new JsonSerializer<List<int>>();
+		await using var stream = new MemoryStream();
+
+		await serializer.SerializeAsync([1, 2, 3], stream, CancellationToken);
+		stream.Position = 0;
+
+		var result = await serializer.DeserializeAsync(stream, CancellationToken);
+
+		result.SequenceEqual([1, 2, 3]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task JsonSerializer_StringListRoundTripsAsList()
+	{
+		var serializer = new JsonSerializer<List<string>>();
+		await using var stream = new MemoryStream();
+
+		await serializer.SerializeAsync(["a", "b", "c"], stream, CancellationToken);
+		stream.Position = 0;
+
+		var result = await serializer.DeserializeAsync(stream, CancellationToken);
+
+		result.SequenceEqual(["a", "b", "c"]).AssertTrue();
 	}
 
 	[TestMethod]
@@ -1087,6 +1130,20 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void JTokenStringNullStaysString()
+	{
+		const string value = "null";
+
+		new JValue(value).DeserializeObject<string>().AssertEqual(value);
+	}
+
+	[TestMethod]
+	public void JTokenObjectStringNullStaysString()
+	{
+		new JValue("null").DeserializeObject<object>().AssertEqual((object)"null");
+	}
+
+	[TestMethod]
 	public void NullDeserializeError1()
 	{
 		ThrowsExactly<ArgumentNullException>(() => ((string)null).DeserializeObject<CurrencyTypes>());
@@ -1118,12 +1175,58 @@ public class JsonTests : BaseTestClass
 		Do(new Uri("https://google.com"));
 	}
 
+	private sealed class NestedTypeStorageMarker
+	{
+	}
+
+	[TestMethod]
+	public void MemberStorage_NestedTypeRoundTripsAsType()
+	{
+		var type = typeof(NestedTypeStorageMarker);
+
+		type.ToStorage().ToMember<Type>().AssertEqual(type);
+		type.ToStorage().ToMember().AssertEqual(type);
+	}
+
+	[TestMethod]
+	[DataRow("2024-01-01T12:00:00.0000000Z")]
+	[DataRow("2024-06-15T23:59:59.0000000Z")]
+	public void Object2Storage_UtcDateTimeDoesNotShift(string text)
+	{
+		var value = DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+
+		var restored = (DateTime)value.ToStorage().FromStorage();
+
+		restored.AssertEqual(value);
+		restored.Kind.AssertEqual(DateTimeKind.Utc);
+	}
+
+	[TestMethod]
+	public void Object2Storage_UnspecifiedDateTimeDoesNotShift()
+	{
+		var value = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Unspecified);
+
+		var restored = (DateTime)value.ToStorage().FromStorage();
+
+		restored.AssertEqual(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+		restored.Kind.AssertEqual(DateTimeKind.Utc);
+	}
+
 	[TestMethod]
 	public async Task Bom()
 	{
 		var requestBody = new MemoryStream();
 		await new JsonSerializer<TestClass> { Encoding = JsonHelper.UTF8NoBom }.SerializeAsync(new(), requestBody, CancellationToken);
 		requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
+	}
+
+	[TestMethod]
+	public async Task SerializeAsync_DoesNotUseSynchronousStreamWrites()
+	{
+		var serializer = new JsonSerializer<SettingsStorage>();
+		await using var stream = new AsyncOnlyStream();
+
+		await serializer.SerializeAsync(new SettingsStorage().Set("Name", "Value"), stream, CancellationToken);
 	}
 
 	[TestMethod]
@@ -1304,4 +1407,56 @@ public class JsonTests : BaseTestClass
 	}
 
 	#endregion
+
+	private class ExtraPropClass : IPersistable
+	{
+		public int IntProp { get; set; }
+
+		void IPersistable.Load(SettingsStorage storage)
+		{
+			IntProp = storage.GetValue<int>(nameof(IntProp));
+		}
+
+		void IPersistable.Save(SettingsStorage storage)
+		{
+			storage.Set(nameof(IntProp), IntProp);
+		}
+	}
+
+	/// <summary>
+	/// BUG: in FillMode=false, after IPersistable.Load the reader desync is validated only by
+	/// reader.CheckExpectedToken(JsonToken.EndObject), which is [Conditional("DEBUG")] and is fully
+	/// removed in Release. When a serialized object carries a property the Load did not consume
+	/// (e.g. a file written by a newer version with extra fields), the reader is left mid-object and
+	/// every subsequent token is parsed from the wrong position. See JsonSerializer.cs:238.
+	/// Expected: unconsumed/extra properties are tolerated deterministically in all build configs —
+	/// the remaining tokens are skipped to the matching EndObject, so a following element still
+	/// deserializes correctly.
+	/// Actual: DEBUG throws on the first element; Release silently desyncs and corrupts the second.
+	/// </summary>
+	[TestMethod]
+	public async Task FillModeFalse_ExtraProperty_DoesNotDesyncReader()
+	{
+		var ser = new JsonSerializer<ExtraPropClass[]>
+		{
+			FillMode = false,
+		};
+
+		// An array of two objects; the FIRST carries an extra, unconsumed property ("Extra").
+		// A correct reader skips it to the object's EndObject so the SECOND object still parses.
+		var json =
+			"[" +
+			"{\"IntProp\":11,\"Extra\":\"unconsumed\"}," +
+			"{\"IntProp\":22}" +
+			"]";
+
+		using var stream = new MemoryStream(json.UTF8());
+
+		var arr = await ser.DeserializeAsync(stream, CancellationToken);
+
+		arr.AssertNotNull();
+		arr.Length.AssertEqual(2);
+		arr[0].IntProp.AssertEqual(11);
+		arr[1].IntProp.AssertEqual(22);
+	}
 }

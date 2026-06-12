@@ -2,6 +2,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 /// <summary>
 /// Contains custom JSON conversion logic.
@@ -145,18 +146,27 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		var isPrimitive = IsJsonPrimitive();
 
-		using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, BufferSize, true))
+		using var buffer = new MemoryStream();
+		using (var streamWriter = new StreamWriter(buffer, Encoding, BufferSize, true))
+		using (var writer = new JsonTextWriter(streamWriter)
 		{
-			Formatting = Indent ? Formatting.Indented : Formatting.None
-		};
+			Formatting = Indent ? Formatting.Indented : Formatting.None,
+			CloseOutput = false
+		})
+		{
+			if (isPrimitive)
+				await writer.WriteStartArrayAsync(cancellationToken).NoWait();
 
-		if (isPrimitive)
-			await writer.WriteStartArrayAsync(cancellationToken).NoWait();
+			await WriteAsync(writer, graph, cancellationToken).NoWait();
 
-		await WriteAsync(writer, graph, cancellationToken).NoWait();
+			if (isPrimitive)
+				await writer.WriteEndArrayAsync(cancellationToken).NoWait();
 
-		if (isPrimitive)
-			await writer.WriteEndArrayAsync(cancellationToken).NoWait();
+			await writer.FlushAsync(cancellationToken).NoWait();
+			await streamWriter.FlushAsync(cancellationToken).NoWait();
+		}
+
+		await WriteBufferedAsync(stream, buffer, cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -173,6 +183,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true))
 		{
+			DateParseHandling = DateParseHandling.None,
 			FloatParseHandling = FloatParseHandling.Decimal
 		};
 
@@ -192,6 +203,54 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 	private Scope<ISecureStringEncryptor> CreateSecureStringEncryptorScope()
 		=> SecureStringEncryptor is null ? null : new Scope<ISecureStringEncryptor>(SecureStringEncryptor, false);
+
+	private static async ValueTask WriteBufferedAsync(Stream stream, MemoryStream buffer, CancellationToken cancellationToken)
+	{
+		if (!buffer.TryGetBuffer(out var source))
+			source = new ArraySegment<byte>(buffer.ToArray());
+
+		if (source.Count == 0)
+			return;
+
+		if (stream is MemoryStream memoryStream && TryWriteToMemoryStream(memoryStream, source))
+			return;
+
+		await stream.WriteAsync(source.Array.AsMemory(source.Offset, source.Count), cancellationToken).NoWait();
+	}
+
+	private static bool TryWriteToMemoryStream(MemoryStream stream, ArraySegment<byte> source)
+	{
+		if (!stream.TryGetBuffer(out _))
+			return false;
+
+		var position = stream.Position;
+		var end = position + source.Count;
+
+		if (position < 0 || end > int.MaxValue)
+			return false;
+
+		var newLength = Math.Max(stream.Length, end);
+		stream.SetLength(newLength);
+
+		if (!stream.TryGetBuffer(out var destination))
+			return false;
+
+		Buffer.BlockCopy(source.Array, source.Offset, destination.Array, destination.Offset + (int)position, source.Count);
+		stream.Position = end;
+
+		return true;
+	}
+
+	private static DateTime ParseDateTime(string value)
+	{
+		if (value is null)
+			return default;
+
+		return DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+	}
+
+	private static DateTimeOffset ParseDateTimeOffset(string value)
+		=> value is null ? default : DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 
 	private async ValueTask<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 	{
@@ -233,9 +292,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 				await TryClearDeepLevel(reader, storage, cancellationToken).NoWait();
 
-				await reader.ReadWithCheckAsync(cancellationToken).NoWait();
-
-				reader.CheckExpectedToken(JsonToken.EndObject);
+				await SkipToEndObjectAsync(reader, cancellationToken).NoWait();
 
 				return per;
 			}
@@ -269,7 +326,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			var itemType = type.GetItemType();
 
-			var col = new List<object>();
+			var col = (IList)Activator.CreateInstance(typeof(List<>).Make(itemType));
 
 			while (true)
 			{
@@ -283,7 +340,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			reader.CheckExpectedToken(JsonToken.EndArray);
 
-			if (!type.IsArray && type != typeof(IEnumerable<>).Make(itemType))
+			if (!type.IsArray)
 				return col;
 
 			var arr = Array.CreateInstance(itemType, col.Count);
@@ -301,9 +358,15 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			object value;
 
 			if (type == typeof(DateTime))
-				value = await reader.ReadAsDateTimeAsync(cancellationToken).NoWait();
+			{
+				var str = await reader.ReadAsStringAsync(cancellationToken).NoWait();
+				value = str is null ? null : ParseDateTime(str);
+			}
 			else if (type == typeof(DateTimeOffset))
-				value = await reader.ReadAsDateTimeOffsetAsync(cancellationToken).NoWait();
+			{
+				var str = await reader.ReadAsStringAsync(cancellationToken).NoWait();
+				value = str is null ? null : ParseDateTimeOffset(str);
+			}
 			else if (type == typeof(byte[]))
 				value = await reader.ReadAsBytesAsync(cancellationToken).NoWait();
 			else if (type == typeof(SecureString))
@@ -482,6 +545,20 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
 
 		storage.DeepLevel = 0;
+	}
+
+	private static async ValueTask SkipToEndObjectAsync(JsonReader reader, CancellationToken cancellationToken)
+	{
+		while (reader.TokenType != JsonToken.EndObject)
+		{
+			await reader.ReadWithCheckAsync(cancellationToken).NoWait();
+
+			if (reader.TokenType == JsonToken.PropertyName)
+			{
+				await reader.ReadWithCheckAsync(cancellationToken).NoWait();
+				await reader.SkipAsync(cancellationToken).NoWait();
+			}
+		}
 	}
 
 	private async ValueTask<object> GetValueFromReaderAsync(JsonReader reader, SettingsStorage storage, string name, Type type, CancellationToken cancellationToken)

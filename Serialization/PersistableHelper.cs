@@ -481,7 +481,7 @@ public static class PersistableHelper
 
 		storage.Set(_typeKey, (member as Type ?? member.ReflectedType).GetTypeAsString(isAssemblyQualifiedName));
 
-		if (member.ReflectedType != null)
+		if (member is not Type && member.ReflectedType != null)
 			storage.Set(_valueKey, member.Name);
 		
 		return storage;
@@ -545,7 +545,7 @@ public static class PersistableHelper
 	/// <returns>A settings storage representing the object.</returns>
 	public static SettingsStorage ToStorage(this object value, bool isAssemblyQualifiedName = default)
 		=> new SettingsStorage()
-			.Set(_typeKey, value.CheckOnNull().GetType().GetTypeAsString(isAssemblyQualifiedName))
+			.Set(_typeKey, value.CheckOnNull() is Type ? typeof(Type).GetTypeAsString(isAssemblyQualifiedName) : value.GetType().GetTypeAsString(isAssemblyQualifiedName))
 			.Set(_valueKey, value is IPersistable pv ? (object)pv.Save() : value.To<string>())
 		;
 
@@ -572,7 +572,14 @@ public static class PersistableHelper
 			var value = storage.GetValue<string>(_valueKey).To(valueType);
 
 			if (value is DateTime dt)
-				value = dt.ToUniversalTime();
+			{
+				value = dt.Kind switch
+				{
+					DateTimeKind.Utc => dt,
+					DateTimeKind.Local => dt.ToUniversalTime(),
+					_ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+				};
+			}
 
 			return value;
 		}
