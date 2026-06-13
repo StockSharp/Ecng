@@ -589,6 +589,39 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
+	/// Determines whether the specified <see cref="IPAddress"/> is an internal (non-public) address:
+	/// loopback, private (RFC 1918), link-local (incl. the 169.254.169.254 cloud-metadata endpoint),
+	/// CGNAT (100.64.0.0/10), the 0.0.0.0/8 "this network" range, or the IPv6 unique-local / link-local
+	/// ranges. IPv4-mapped IPv6 addresses are evaluated as their IPv4 form. Useful for SSRF deny-lists.
+	/// </summary>
+	/// <param name="address">The IP address to check.</param>
+	/// <returns><c>true</c> if the address is internal/non-public; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="address"/> is <c>null</c>.</exception>
+	public static bool IsInternal(this IPAddress address)
+	{
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
+		// An IPv4-mapped IPv6 address (e.g. ::ffff:169.254.169.254) must be checked as its IPv4 form,
+		// otherwise the IPv4 subnet tests below silently miss it.
+		if (address.IsIPv4MappedToIPv6)
+			address = address.MapToIPv4();
+
+		if (address.AddressFamily == AddressFamily.InterNetwork)
+			return address.IsLoopback()                  // 127.0.0.0/8
+				|| address.IsInSubnet("10.0.0.0/8")
+				|| address.IsInSubnet("172.16.0.0/12")
+				|| address.IsInSubnet("192.168.0.0/16")
+				|| address.IsInSubnet("169.254.0.0/16")  // link-local incl. cloud metadata 169.254.169.254
+				|| address.IsInSubnet("100.64.0.0/10")   // CGNAT
+				|| address.IsInSubnet("0.0.0.0/8");
+
+		return address.IsLoopback()                      // ::1
+			|| address.IsInSubnet("fc00::/7")            // IPv6 unique-local
+			|| address.IsInSubnet("fe80::/10");          // IPv6 link-local
+	}
+
+	/// <summary>
 	/// Computes the Gravatar token for the specified email.
 	/// </summary>
 	/// <param name="email">The email address.</param>

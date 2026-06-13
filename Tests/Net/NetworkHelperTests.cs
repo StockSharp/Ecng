@@ -94,6 +94,33 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void IsInternal()
+	{
+		static bool Internal(string addr) => addr.To<IPAddress>().IsInternal();
+
+		// internal / non-public
+		Internal("127.0.0.1").AssertTrue();
+		Internal("10.0.0.5").AssertTrue();
+		Internal("172.16.0.1").AssertTrue();
+		Internal("172.31.255.255").AssertTrue();
+		Internal("192.168.1.1").AssertTrue();
+		Internal("169.254.169.254").AssertTrue();   // cloud metadata
+		Internal("100.64.0.1").AssertTrue();         // CGNAT
+		Internal("0.0.0.0").AssertTrue();
+		Internal("::1").AssertTrue();
+		Internal("fc00::1").AssertTrue();
+		Internal("fd12::1").AssertTrue();
+		Internal("fe80::1").AssertTrue();
+		Internal("::ffff:169.254.169.254").AssertTrue();  // IPv4-mapped metadata
+
+		// public
+		Internal("8.8.8.8").AssertFalse();
+		Internal("172.32.0.1").AssertFalse();
+		Internal("100.128.0.1").AssertFalse();
+		Internal("2001:4860:4860::8888").AssertFalse();
+	}
+
+	[TestMethod]
 	public void ContentType2Encoding()
 	{
 		var result = ((string)null).TryExtractEncoding();
