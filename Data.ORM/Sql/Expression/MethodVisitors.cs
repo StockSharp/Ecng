@@ -1421,6 +1421,13 @@ abstract class BaseGroupFuncVisitor(Func<Query, Query> func)
 		{
 			translator.WrapColumn.Enqueue((b, q) =>
 			{
+				// The aggregate must wrap only the projected column of the sub-query. Columns
+				// referenced in the sub-query's WHERE predicate must stay un-aggregated: wrapping
+				// e.g. a bit predicate column in MAX produces invalid SQL ("Operand data type bit
+				// is invalid for max operator" on SQL Server). Skip the wrap while visiting WHERE.
+				if (translator.Context.IsWhere)
+					return;
+
 				if (b)
 					_func(q).OpenBracket();
 				else

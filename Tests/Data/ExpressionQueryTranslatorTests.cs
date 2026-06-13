@@ -115,6 +115,45 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// A projection that mixes a correlated <c>.Any()</c> (bit) column with a real aggregate
+	/// (<c>.Count()</c> / <c>.Max()</c>) over a correlated subquery must keep the <c>.Any()</c>
+	/// column as a scalar EXISTS/CASE subquery. It must never be folded through an aggregate as
+	/// <c>MAX(&lt;bit&gt;)</c>, which SQL Server rejects with
+	/// "Operand data type bit is invalid for max operator". Repro of the VTopic view shape.
+	/// </summary>
+	[TestMethod]
+	public void SubqueryAny_WithAggregateSiblings_DoesNotWrapBitInMax()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+		var items = CreateQueryable<TestItem>();
+
+		// Mirrors the VTopic view exactly: a bit .Any() column over one relation, plus .Count() and
+		// .Max() aggregate subqueries over another relation whose WHERE filters on a bit column and a
+		// correlated FK (here "!t.IsDone && t.Person.Id == p.Id", like VTopic's "!m.Deleted && m.Topic.Id == e.Id").
+		var query = from p in persons
+					select new VTestPersonWithTasks
+					{
+						AllColumns = p.AllColumns,
+						HasTasks = (from i in items where i.Id == p.Id select i).Any(),
+						TaskCount = (from t in tasks where !t.IsDone && t.Person.Id == p.Id select t).Count(),
+						MaxSubTaskId = (from t in tasks where !t.IsDone && t.Person.Id == p.Id select t.Id).Max(),
+					};
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		// The aggregate must apply ONLY to the projected column (max([t].[Id])). Every column referenced
+		// in the subquery's WHERE predicate — the bit [IsDone], the correlated FK [Person], the outer key
+		// [e].[Id] — must remain un-aggregated. Wrapping the bit in MAX makes SQL Server fail with
+		// "Operand data type bit is invalid for max operator"; wrapping any of them is also an illegal
+		// aggregate in a WHERE clause.
+		sql.ContainsIgnoreCase("max([t].[IsDone]").AssertFalse($"bit predicate column wrapped in MAX, got: {sql}");
+		sql.ContainsIgnoreCase("max([t].[Person]").AssertFalse($"correlated FK wrapped in MAX, got: {sql}");
+		sql.ContainsIgnoreCase("max([e].[Id])").AssertFalse($"outer key wrapped in MAX, got: {sql}");
+		sql.ContainsIgnoreCase("max([t].[Id])").AssertTrue($"projected column must be aggregated, got: {sql}");
+	}
+
+	/// <summary>
 	/// Two-level navigation in a Where clause (<c>s.Task.Person.Id == X</c>)
 	/// must register a LEFT JOIN to the intermediate <c>Task</c> table so
 	/// the FK column <c>[Task].[Person]</c> becomes reachable, and then use
@@ -1292,6 +1331,7 @@ public class VTestPersonWithTasks : IDbPersistable
 
 	public bool HasTasks { get; set; }
 	public int TaskCount { get; set; }
+	public long MaxSubTaskId { get; set; }
 
 	object IDbPersistable.GetIdentity() => default;
 	void IDbPersistable.SetIdentity(object id) { }

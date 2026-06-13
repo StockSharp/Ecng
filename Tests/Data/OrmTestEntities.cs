@@ -232,6 +232,7 @@ public class TestTask : IDbPersistable
 	public long Id { get; set; }
 	public string Title { get; set; }
 	public int Priority { get; set; }
+	public bool IsDone { get; set; }
 
 	[RelationSingle]
 	public TestPerson Person { get; set; }
@@ -244,6 +245,7 @@ public class TestTask : IDbPersistable
 		storage
 			.Set(nameof(Title), Title)
 			.Set(nameof(Priority), Priority)
+			.Set(nameof(IsDone), IsDone)
 			.SetFk(nameof(Person), Person?.Id);
 	}
 
@@ -251,6 +253,7 @@ public class TestTask : IDbPersistable
 	{
 		Title = storage.GetValue<string>(nameof(Title));
 		Priority = storage.GetValue<int>(nameof(Priority));
+		IsDone = storage.GetValue<bool>(nameof(IsDone));
 		Person = await storage.LoadFkAsync<TestPerson>(nameof(Person), db, cancellationToken);
 	}
 }
