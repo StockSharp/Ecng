@@ -405,7 +405,7 @@ public class LoggingTests : BaseTestClass
 	/// the manager creates in its ctor is itself disposed when the manager is disposed, releasing its static
 	/// AppDomain/TaskScheduler event subscriptions.
 	/// (Was: DisposeManaged only cleared Sources and left the owned source subscribed forever -
-	/// Logging\LogManager.cs:303 now calls _unhandledExceptionSource.Dispose().)
+	/// Logging\LogManager.cs:306 now calls _unhandledExceptionSource.Dispose().)
 	/// </summary>
 	[TestMethod]
 	[DoNotParallelize]
@@ -441,7 +441,7 @@ public class LoggingTests : BaseTestClass
 	/// Regression test for the TraceSource/DebugLogListener pipeline: a single seed Trace write is raised on the
 	/// source exactly once, and the listener's own Trace output does not feed back into TraceSource (no infinite loop).
 	/// (Was: DebugLogListener wrote flushed messages back into Trace, re-feeding TraceSource without any reentrancy
-	/// guard - now Logging\DebugLogListener.cs:48 wraps the write in TraceSource.Suppress and Logging\TraceSource.cs:8
+	/// guard - now Logging\DebugLogListener.cs:48 wraps the write in TraceSource.Suppress and Logging\TraceSource.cs:16
 	/// short-circuits re-raises while suppressed.)
 	/// </summary>
 	[TestMethod]

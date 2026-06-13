@@ -1704,7 +1704,7 @@ public class FileLogListenerTests : BaseTestClass
 			}
 			catch (ObjectDisposedException)
 			{
-				// current buggy behavior masks the IO error with a disposed-writer error
+				// defensive: tolerate a disposed-writer error should one surface during the failing rotation
 			}
 
 			if (fs.MoveFileCalls > 0)

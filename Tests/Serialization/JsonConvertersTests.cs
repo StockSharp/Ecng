@@ -286,7 +286,7 @@ public class JsonConvertersTests : BaseTestClass
 		var asUtc = DateTime.SpecifyKind(unspecified, DateTimeKind.Utc);
 
 		// The wire value for the Unspecified token must equal the wire value for the explicit-UTC
-		// equivalent (machine-independent identity); the buggy code shifts the Unspecified one.
+		// equivalent (machine-independent identity); the formerly buggy code shifted the Unspecified one.
 		Write(converter, unspecified).AssertEqual(Write(converter, asUtc));
 
 		// And it must round-trip back to the same UTC instant.
