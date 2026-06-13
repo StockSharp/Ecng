@@ -558,4 +558,21 @@ public class SecretTests : BaseTestClass
 	}
 
 	#endregion
+
+	[TestMethod]
+	public void PasswordPbkdf2()
+	{
+		var secret = _correctPwd.CreatePasswordSecret();
+
+		// PBKDF2-SHA256 derivation is 32 bytes (vs SHA1's 20) — a deliberately slow, salted password hash.
+		secret.Hash.Length.AssertEqual(32);
+
+		secret.IsPasswordValid(_correctPwd).AssertTrue();
+		secret.IsPasswordValid(_incorrectPwd).AssertFalse();
+
+		// Same password, different random salt => different secret, both valid.
+		var secret2 = _correctPwd.CreatePasswordSecret();
+		secret.Equals(secret2).AssertFalse();
+		secret2.IsPasswordValid(_correctPwd).AssertTrue();
+	}
 }

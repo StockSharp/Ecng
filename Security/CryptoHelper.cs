@@ -468,4 +468,52 @@ public static class CryptoHelper
 			Hash = algo.Encrypt(buffer),
 		};
 	}
+
+	/// <summary>
+	/// Number of PBKDF2 iterations used to hash passwords (key stretching).
+	/// </summary>
+	public const int PasswordIterations = 100_000;
+
+	private const int _passwordHashSize = 32;
+	private static readonly HashAlgorithmName _passwordHash = HashAlgorithmName.SHA256;
+
+	/// <summary>
+	/// Creates a password <see cref="Secret"/> using PBKDF2 (slow, salted key stretching) — the recommended
+	/// way to store passwords, unlike the fast single-pass <see cref="CreateSecret(string, CryptoAlgorithm)"/>.
+	/// </summary>
+	/// <param name="password">The plain-text password.</param>
+	/// <param name="salt">Optional salt; a random one is generated when omitted.</param>
+	/// <returns><see cref="Secret"/> whose <see cref="Secret.Hash"/> is the PBKDF2 derivation.</returns>
+	public static Secret CreatePasswordSecret(this string password, byte[] salt = null)
+	{
+		if (password.IsEmpty())
+			throw new ArgumentNullException(nameof(password));
+
+		salt ??= TypeHelper.GenerateSalt(DefaultSaltSize);
+
+		return new()
+		{
+			Salt = [.. salt],
+			Hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordIterations, _passwordHash, _passwordHashSize),
+		};
+	}
+
+	/// <summary>
+	/// Validates a password against a PBKDF2 <see cref="Secret"/> created by <see cref="CreatePasswordSecret"/>,
+	/// in constant time.
+	/// </summary>
+	/// <param name="secret"><see cref="Secret"/>.</param>
+	/// <param name="password">The password to check.</param>
+	/// <returns><see langword="true"/> if the password matches.</returns>
+	public static bool IsPasswordValid(this Secret secret, string password)
+	{
+		if (secret is null)
+			throw new ArgumentNullException(nameof(secret));
+
+		if (secret.Salt is null || secret.Hash is null)
+			return false;
+
+		var computed = Rfc2898DeriveBytes.Pbkdf2(password ?? string.Empty, secret.Salt, PasswordIterations, _passwordHash, _passwordHashSize);
+		return CryptographicOperations.FixedTimeEquals(computed, secret.Hash);
+	}
 }
