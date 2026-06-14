@@ -274,6 +274,17 @@ public static class SchemaMigrator
 		foreach (var fk in dbForeignKeys)
 			dbFkByPair[(fk.TableName, fk.ColumnName)] = fk;
 
+		// Columns that physically exist in the database. A FK column that is NOT
+		// here is brand-new: the MissingColumn branch of GenerateMigrationSql
+		// creates it together with its FOREIGN KEY constraint. Emitting a
+		// MissingForeignKey diff for it as well would duplicate the
+		// ALTER TABLE … ADD CONSTRAINT, so such columns are left to that branch
+		// and this backfill only repairs FKs on columns that already exist.
+		var dbColumnPairs = new HashSet<(string Table, string Column)>(new TableColumnComparer());
+
+		foreach (var c in dbColumns)
+			dbColumnPairs.Add((c.TableName, c.ColumnName));
+
 		var entityFkPairs = new HashSet<(string Table, string Column)>(new TableColumnComparer());
 
 		foreach (var schema in entities)
@@ -291,10 +302,19 @@ public static class SchemaMigrator
 				if (col.ReferencedEntityType is null)
 					continue;
 
+				// A column carries at most one FK constraint, yet the same
+				// (table, column) pair can be reached more than once (e.g. a
+				// column duplicated through an inner-schema flatten). Collapse
+				// duplicates so the constraint is emitted only once.
+				if (!entityFkPairs.Add((schema.TableName, col.Name)))
+					continue;
+
+				// New column — its FK is created by the MissingColumn branch.
+				if (!dbColumnPairs.Contains((schema.TableName, col.Name)))
+					continue;
+
 				var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 				var refCol = refSchema.Identity?.Name ?? "Id";
-
-				entityFkPairs.Add((schema.TableName, col.Name));
 
 				if (!dbFkByPair.TryGetValue((schema.TableName, col.Name), out var existing) ||
 					!existing.RefTableName.EqualsIgnoreCase(refSchema.TableName) ||
