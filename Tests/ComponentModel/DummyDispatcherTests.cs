@@ -163,11 +163,13 @@ public class DummyDispatcherTests : BaseTestClass
 
 		// Unsubscribe fast action
 		var ticksBefore = timerTickCount;
+		var slowBefore = slowCounter;
 		fastSub.Dispose();
 
-		// Wait for slow action to fire at least once after fast unsubscription
-		// Use WaitForAsync to avoid flaky timing issues
-		await WaitForAsync(() => slowCounter >= 1, TimeSpan.FromSeconds(2), $"Expected slowCounter >= 1, but was {slowCounter}");
+		// Wait for a NEW slow tick after the fast action was unsubscribed. Waiting for the
+		// absolute slowCounter >= 1 races a slow tick that may already have fired before the
+		// snapshot (more likely under load), returning immediately and leaving ticksAfter at 0.
+		await WaitForAsync(() => slowCounter > slowBefore, TimeSpan.FromSeconds(3), $"Expected a new slow tick after unsubscribe; slowCounter was {slowCounter}");
 
 		var ticksAfter = timerTickCount - ticksBefore;
 
