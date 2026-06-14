@@ -1,3 +1,5 @@
+#if NET10_0_OR_GREATER
+
 namespace Ecng.Tests.Data;
 
 using System.Text.RegularExpressions;
@@ -107,3 +109,5 @@ public class SchemaMigratorSqlTests : BaseTestClass
 			$"Expected the FK constraint on DnsProvider.Picture, got: {sql}");
 	}
 }
+
+#endif
