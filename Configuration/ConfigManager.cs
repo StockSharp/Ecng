@@ -298,7 +298,31 @@ public static class ConfigManager
 	/// <typeparam name="T">The type of the service.</typeparam>
 	/// <returns>The service instance, or default if not registered.</returns>
 	public static T TryGetService<T>()
-		=> IsServiceRegistered<T>() ? GetService<T>() : default;
+	{
+		if (IsServiceRegistered<T>())
+			return GetService<T>();
+
+		// Consult the fallback like GetService does, but never throw: a service the
+		// fallback cannot construct yields default. This keeps TryGetService a safe
+		// query while letting a fallback-backed container satisfy it transparently.
+		var fallback = ServiceFallback;
+
+		if (fallback is null)
+			return default;
+
+		var name = typeof(T).AssemblyQualifiedName;
+
+		foreach (Func<Type, string, object> handler in fallback.GetInvocationList())
+		{
+			if (handler(typeof(T), name) is T service)
+			{
+				RegisterService(name, service);
+				return service;
+			}
+		}
+
+		return default;
+	}
 
 	/// <summary>
 	/// Registers the service of type T if it is not already registered.

@@ -41,6 +41,48 @@ public class ConfigManagerTests : BaseTestClass
 		}
 	}
 
+	private interface ITryFallbackService
+	{
+	}
+
+	private sealed class TryFallbackService : ITryFallbackService
+	{
+	}
+
+	private interface ITryMissingService
+	{
+	}
+
+	[TestMethod]
+	public void TryGetService_ServiceFallback_ResolvesViaFallback()
+	{
+		var expected = new TryFallbackService();
+
+		Func<Type, string, object> handler = (type, _) =>
+			type == typeof(ITryFallbackService) ? expected : null;
+
+		ConfigManager.ServiceFallback += handler;
+
+		try
+		{
+			// TryGetService must consult the fallback like GetService does, so a
+			// service available only through the fallback is returned (not default).
+			ConfigManager.TryGetService<ITryFallbackService>().AssertSame(expected);
+		}
+		finally
+		{
+			ConfigManager.ServiceFallback -= handler;
+		}
+	}
+
+	[TestMethod]
+	public void TryGetService_NoFallback_ReturnsDefault()
+	{
+		// With no fallback able to construct it, an unregistered service stays default
+		// (backward-compatible: TryGetService never throws and never invents a service).
+		ConfigManager.TryGetService<ITryMissingService>().AssertNull();
+	}
+
 	// Per-test marker types keep ConfigManager's static, type-keyed registries
 	// isolated from other tests (the registry is process-wide static state).
 	private interface IReentrantService
