@@ -1,5 +1,12 @@
 # Ecng.Configuration
 
+> **Deprecated.** `ConfigManager` is obsolete. Its legacy `System.Configuration`
+> access (sections, groups, app settings) is superseded by
+> [`Microsoft.Extensions.Configuration`](https://learn.microsoft.com/dotnet/core/extensions/configuration)
+> (`IConfiguration` / appsettings.json), and its global service registry is superseded
+> by [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+> (`IServiceProvider`). The documentation below is retained for existing consumers only.
+
 A lightweight and efficient configuration management library for .NET applications, providing typed access to configuration sections, application settings, and a flexible service registry.
 
 ## Overview

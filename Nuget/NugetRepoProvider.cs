@@ -14,33 +14,30 @@ public class NugetRepoProvider : CachingSourceProvider
 	private class PrivatePackageSource : PackageSource
 	{
 		private static TaskCompletionSource<PrivatePackageSource> _tcs;
-		private static readonly LogReceiver _log = new(nameof(PrivatePackageSource));
 		private static readonly Lock _tcsLock = new();
-
-		static PrivatePackageSource() => _log.Parent = LogManager.Instance.Application;
 
 		public static Task<PrivatePackageSource> GetInstance()
 			=> _tcs?.Task ?? throw new InvalidOperationException("Private package source is not initialized. Call GetAsync method first.");
 
-		private static async Task<PrivatePackageSource> GetImplAsync(string src, CancellationToken token)
+		private static async Task<PrivatePackageSource> GetImplAsync(string src, ILogReceiver logs, CancellationToken token)
 		{
 			var sourceRepository = Repository.Factory.GetCoreV3(src);
-			_log.AddInfoLog("trying to resolve nuget v3 service index at {0}", src);
+			logs?.AddInfoLog("trying to resolve nuget v3 service index at {0}", src);
 
 			try
 			{
 				await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(token).NoWait();
-				_log.AddInfoLog("nuget v3 success!");
+				logs?.AddInfoLog("nuget v3 success!");
 				return new PrivatePackageSource(src);
 			}
 			catch (Exception e)
 			{
-				_log.AddWarningLog("nuget v3 service index is not available: {0}", e);
+				logs?.AddWarningLog("nuget v3 service index is not available: {0}", e);
 				throw new InvalidOperationException($"Failed to initialize private NuGet source at {src}. Check connection and credentials.", e);
 			}
 		}
 
-		public static async Task GetAsync(string privateUrl, CancellationToken token)
+		public static async Task GetAsync(string privateUrl, ILogReceiver logs, CancellationToken token)
 		{
 			if (privateUrl.IsEmpty())
 				throw new ArgumentNullException(nameof(privateUrl));
@@ -56,7 +53,7 @@ public class NugetRepoProvider : CachingSourceProvider
 			{
 				try
 				{
-					_tcs.SetResult(await GetImplAsync(privateUrl, token).NoWait());
+					_tcs.SetResult(await GetImplAsync(privateUrl, logs, token).NoWait());
 				}
 				catch (Exception ex)
 				{
@@ -71,16 +68,19 @@ public class NugetRepoProvider : CachingSourceProvider
 	private static readonly AsyncLock _instanceLock = new();
 	private static NugetRepoProvider _instance;
 
+	private const string _defaultPrivateUrl = "https://nuget.stocksharp.com/x/v3/index.json";
+
 	/// <summary>
 	/// Get instance.
 	/// </summary>
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
+	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. May be <see langword="null"/>.</param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
-		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", authToken, packagesFolder, retryPolicy, token);
+	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, ILogReceiver logs, CancellationToken token)
+		=> GetInstanceAsync(_defaultPrivateUrl, authToken, packagesFolder, retryPolicy, logs, token);
 
 	/// <summary>
 	/// Get instance.
@@ -89,11 +89,12 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
+	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. May be <see langword="null"/>.</param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
+	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, ILogReceiver logs, CancellationToken token)
 	{
-		await PrivatePackageSource.GetAsync(privateUrl, token).NoWait();
+		await PrivatePackageSource.GetAsync(privateUrl, logs, token).NoWait();
 
 		if (!packagesFolder.IsEmpty())
 			Directory.CreateDirectory(packagesFolder);
@@ -109,6 +110,31 @@ public class NugetRepoProvider : CachingSourceProvider
 
 		return _instance;
 	}
+
+	/// <summary>
+	/// Get instance.
+	/// </summary>
+	/// <param name="authToken">Auth token.</param>
+	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>Task.</returns>
+	[Obsolete("Use the overload that accepts an ILogReceiver; this one routes diagnostics to the deprecated ambient LogManager.Instance.")]
+	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
+		=> GetInstanceAsync(_defaultPrivateUrl, authToken, packagesFolder, retryPolicy, token);
+
+	/// <summary>
+	/// Get instance.
+	/// </summary>
+	/// <param name="privateUrl">Private url.</param>
+	/// <param name="authToken">Auth token.</param>
+	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>Task.</returns>
+	[Obsolete("Use the overload that accepts an ILogReceiver; this one routes diagnostics to the deprecated ambient LogManager.Instance.")]
+	public static Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
+		=> GetInstanceAsync(privateUrl, authToken, packagesFolder, retryPolicy, LogManager.Instance?.Application, token);
 
 	/// <summary>
 	/// Private nuget repository.

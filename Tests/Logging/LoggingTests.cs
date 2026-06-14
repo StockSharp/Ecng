@@ -3,6 +3,9 @@ namespace Ecng.Tests.Logging;
 using Ecng.Logging;
 using Ecng.Serialization;
 
+// LogManager.Instance is deprecated, but these tests still cover the ambient singleton's behaviour.
+#pragma warning disable CS0618
+
 [TestClass]
 public class LoggingTests : BaseTestClass
 {
@@ -213,7 +216,7 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void LogManager_AfterDispose_NewInstanceBecomesCurrent()
 	{
-		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		instanceField.AssertNotNull();
 
 		var original = LogManager.Instance;
@@ -247,7 +250,7 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void LogManager_LoadWithoutFlushInterval_KeepsDefault()
 	{
-		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		instanceField.AssertNotNull();
 
 		var original = LogManager.Instance;
@@ -411,7 +414,7 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void Manager_Dispose_DisposesOwnedUnhandledExceptionSource()
 	{
-		var instanceField = typeof(LogManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		instanceField.AssertNotNull();
 
 		var original = LogManager.Instance;

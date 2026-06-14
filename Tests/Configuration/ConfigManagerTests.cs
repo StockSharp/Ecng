@@ -2,6 +2,9 @@ namespace Ecng.Tests.Configuration;
 
 using Ecng.Configuration;
 
+// ConfigManager is deprecated, but these tests still cover its runtime behaviour.
+#pragma warning disable CS0618
+
 [TestClass]
 public class ConfigManagerTests : BaseTestClass
 {

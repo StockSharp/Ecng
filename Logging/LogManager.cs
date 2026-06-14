@@ -82,10 +82,18 @@ public class LogManager : Disposable, IPersistable
 	private readonly bool _asyncMode;
 	private readonly UnhandledExceptionSource _unhandledExceptionSource;
 
+	private static LogManager _instance;
+
 	/// <summary>
-	/// Instance.
+	/// The ambient <see cref="LogManager"/> singleton — the first instance constructed.
 	/// </summary>
-	public static LogManager Instance { get; private set; }
+	/// <remarks>
+	/// Deprecated. Relying on an ambient process-wide singleton hides dependencies and
+	/// breaks isolation; resolve <see cref="LogManager"/> through dependency injection
+	/// (<c>Microsoft.Extensions.DependencyInjection</c>) and pass it explicitly instead.
+	/// </remarks>
+	[Obsolete("The ambient LogManager.Instance singleton is deprecated. Resolve LogManager through dependency injection (Microsoft.Extensions.DependencyInjection) and pass it explicitly instead.")]
+	public static LogManager Instance => _instance;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="LogManager"/>.
@@ -101,7 +109,7 @@ public class LogManager : Disposable, IPersistable
 	/// <param name="asyncMode">Asynchronous mode.</param>
 	public LogManager(bool asyncMode)
 	{
-		Instance ??= this;
+		_instance ??= this;
 		_unhandledExceptionSource = new();
 
 		Sources = new LogSourceList(this)
@@ -323,8 +331,8 @@ public class LogManager : Disposable, IPersistable
 			_flushTimer.Dispose();
 		}
 
-		if (ReferenceEquals(Instance, this))
-			Instance = null;
+		if (ReferenceEquals(_instance, this))
+			_instance = null;
 
 		base.DisposeManaged();
 	}

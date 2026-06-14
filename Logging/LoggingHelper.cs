@@ -162,16 +162,33 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// To record an error to the <see cref="LogManager.Application"/>.
+	/// To record an error to the ambient <see cref="LogManager.Application"/>.
 	/// </summary>
 	/// <param name="error">Error.</param>
 	/// <param name="format">A format string.</param>
+	/// <remarks>
+	/// Deprecated. This logs to the process-wide ambient <see cref="LogManager.Instance"/>,
+	/// which hides the logging dependency. Log through an explicit <see cref="ILogReceiver"/>
+	/// instead — <c>receiver.AddErrorLog(exception)</c> / <c>receiver.AddErrorLog(exception, format)</c>.
+	/// </remarks>
+	[Obsolete("Logging to the ambient LogManager.Instance is deprecated. Log through an explicit ILogReceiver instead: receiver.AddErrorLog(exception) / receiver.AddErrorLog(exception, format).")]
 	public static void LogError(this Exception error, string format = null)
 	{
 		if (error == null)
 			throw new ArgumentNullException(nameof(error));
 
+		LogErrorToAmbient(error, format);
+	}
+
+	// Single funnel for the legacy ambient error logging used by the convenience
+	// wrappers below. Kept private and non-obsolete so those wrappers route through
+	// it without each suppressing the warning; the public Exception.LogError surface
+	// is what carries the [Obsolete] marker.
+	private static void LogErrorToAmbient(Exception error, string format)
+	{
+#pragma warning disable CS0618 // ambient singleton: this is the deprecated fall-back logging path
 		LogManager.Instance?.Application.AddErrorLog(error, format);
+#pragma warning restore CS0618
 	}
 
 	/// <summary>
@@ -214,7 +231,7 @@ public static class LoggingHelper
 		}
 		catch (Exception ex)
 		{
-			ex.LogError();
+			LogErrorToAmbient(ex, null);
 		}
 	}
 
@@ -235,7 +252,7 @@ public static class LoggingHelper
 		}
 		catch (Exception ex)
 		{
-			ex.LogError();
+			LogErrorToAmbient(ex, null);
 			return default;
 		}
 	}
@@ -257,7 +274,7 @@ public static class LoggingHelper
 		catch (Exception ex)
 		{
 			if (!cancellationToken.IsCancellationRequested)
-				ex.LogError();
+				LogErrorToAmbient(ex, null);
 		}
 	}
 
@@ -280,7 +297,7 @@ public static class LoggingHelper
 		catch (Exception ex)
 		{
 			if (!cancellationToken.IsCancellationRequested)
-				ex.LogError();
+				LogErrorToAmbient(ex, null);
 
 			return default;
 		}
@@ -303,7 +320,7 @@ public static class LoggingHelper
 		catch (Exception ex)
 		{
 			if (!cancellationToken.IsCancellationRequested)
-				ex.LogError();
+				LogErrorToAmbient(ex, null);
 		}
 	}
 
@@ -326,7 +343,7 @@ public static class LoggingHelper
 		catch (Exception ex)
 		{
 			if (!cancellationToken.IsCancellationRequested)
-				ex.LogError();
+				LogErrorToAmbient(ex, null);
 
 			return default;
 		}
@@ -348,12 +365,12 @@ public static class LoggingHelper
 
 			foreach (var pair in dict)
 			{
-				new InvalidOperationException(pair.Key.ToString(), pair.Value).LogError("Corrupted file.");
+				LogErrorToAmbient(new InvalidOperationException(pair.Key.ToString(), pair.Value), "Corrupted file.");
 			}
 		}
 		catch (Exception ex)
 		{
-			ex.LogError();
+			LogErrorToAmbient(ex, null);
 		}
 	}
 
@@ -440,7 +457,7 @@ public static class LoggingHelper
 	/// <param name="task">The task to observe.</param>
 	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveErrorAndLog(this Task task)
-		=> task.ObserveError(ex => ex.LogError());
+		=> task.ObserveError(ex => LogErrorToAmbient(ex, null));
 
 	/// <summary>
 	/// Observes errors from the task and traces them using <see cref="Trace.WriteLine(object)"/>.
