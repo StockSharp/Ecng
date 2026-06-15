@@ -108,6 +108,104 @@ public class SchemaMigratorSqlTests : BaseTestClass
 		sql.Contains("FK_DnsProvider_Picture").AssertTrue(
 			$"Expected the FK constraint on DnsProvider.Picture, got: {sql}");
 	}
+
+	private sealed class DropOrderSocial
+	{
+		public long Id { get; set; }
+	}
+
+	/// <summary>
+	/// Regression: the commented-out drop script must be runnable as-is. A column
+	/// carrying a foreign key cannot be dropped while the constraint still binds
+	/// it, so the <c>DROP CONSTRAINT</c> must be emitted before the matching
+	/// <c>DROP COLUMN</c> (the diff order produced ExtraColumn before
+	/// ExtraForeignKey, yielding the wrong order).
+	/// </summary>
+	[TestMethod]
+	public void ExtraForeignKeyColumn_DropsConstraintBeforeColumn()
+	{
+		var dialect = SqlServerDialect.Instance;
+
+		var social = new Schema
+		{
+			TableName = "Social",
+			EntityType = typeof(DropOrderSocial),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [],
+			Factory = () => new DropOrderSocial(),
+		};
+
+		// DB has two extra FK columns the model no longer declares, each backed by a constraint.
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Social", "Id", "bigint", false, null, null, null),
+			new("Social", "AuthDomainOnly", "bigint", true, null, null, null),
+			new("Social", "MainPageDomain", "bigint", true, null, null, null),
+		};
+
+		var dbForeignKeys = new List<DbForeignKeyInfo>
+		{
+			new("FK_Social_AuthDomainOnly", "Social", "AuthDomainOnly", "Domain", "Id"),
+			new("FK_Social_MainPageDomain", "Social", "MainPageDomain", "Domain", "Id"),
+		};
+
+		var diffs = SchemaMigrator.Compare([social], dbColumns, dialect, skipComputed: false, dbForeignKeys: dbForeignKeys);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [social]);
+
+		var firstConstraint = sql.IndexOf("DROP CONSTRAINT", StringComparison.OrdinalIgnoreCase);
+		var firstColumn = sql.IndexOf("DROP COLUMN", StringComparison.OrdinalIgnoreCase);
+
+		(firstConstraint >= 0).AssertTrue($"Expected a DROP CONSTRAINT, got: {sql}");
+		(firstColumn >= 0).AssertTrue($"Expected a DROP COLUMN, got: {sql}");
+		(firstConstraint < firstColumn).AssertTrue(
+			$"A column's FK constraint must be dropped before the column itself. Got: {sql}");
+	}
+
+	/// <summary>
+	/// Regression: an extra table cannot be dropped while a foreign key still
+	/// references it, so every <c>DROP CONSTRAINT</c> must precede the
+	/// <c>DROP TABLE</c> (the diff order produced ExtraTable before
+	/// ExtraForeignKey, yielding the wrong order).
+	/// </summary>
+	[TestMethod]
+	public void ExtraTableWithForeignKey_DropsConstraintBeforeTable()
+	{
+		var dialect = SqlServerDialect.Instance;
+
+		var social = new Schema
+		{
+			TableName = "Social",
+			EntityType = typeof(DropOrderSocial),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [],
+			Factory = () => new DropOrderSocial(),
+		};
+
+		// 'Orphan' is a DB-only table with a FK referencing 'Social'.
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Social", "Id", "bigint", false, null, null, null),
+			new("Orphan", "Id", "bigint", false, null, null, null),
+			new("Orphan", "SocialId", "bigint", true, null, null, null),
+		};
+
+		var dbForeignKeys = new List<DbForeignKeyInfo>
+		{
+			new("FK_Orphan_SocialId", "Orphan", "SocialId", "Social", "Id"),
+		};
+
+		var diffs = SchemaMigrator.Compare([social], dbColumns, dialect, skipComputed: false,
+			dbForeignKeys: dbForeignKeys, detectExtraTables: true);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [social]);
+
+		var firstConstraint = sql.IndexOf("DROP CONSTRAINT", StringComparison.OrdinalIgnoreCase);
+		var firstTable = sql.IndexOf("DROP TABLE", StringComparison.OrdinalIgnoreCase);
+
+		(firstConstraint >= 0).AssertTrue($"Expected a DROP CONSTRAINT, got: {sql}");
+		(firstTable >= 0).AssertTrue($"Expected a DROP TABLE, got: {sql}");
+		(firstConstraint < firstTable).AssertTrue(
+			$"Foreign keys must be dropped before the table they belong to. Got: {sql}");
+	}
 }
 
 #endif

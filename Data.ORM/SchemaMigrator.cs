@@ -726,7 +726,22 @@ public static class SchemaMigrator
 
 		var sb = new StringBuilder();
 
-		foreach (var diff in diffs)
+		// Emit additive/corrective statements first, then the commented-out drops in a
+		// dependency-safe order so the script can be uncommented and run as-is: a
+		// foreign key before the column it binds and before its table, an index before
+		// its column, columns before the table they belong to. OrderBy is a stable
+		// sort, so statements keep their original relative order within each phase
+		// (this only moves the drops to the end — additive output is unchanged).
+		static int DropPhase(SchemaDiffKind kind) => kind switch
+		{
+			SchemaDiffKind.ExtraForeignKey => 1,
+			SchemaDiffKind.ExtraIndex => 2,
+			SchemaDiffKind.ExtraColumn => 3,
+			SchemaDiffKind.ExtraTable => 4,
+			_ => 0,
+		};
+
+		foreach (var diff in diffs.OrderBy(d => DropPhase(d.Kind)))
 		{
 			switch (diff.Kind)
 			{
