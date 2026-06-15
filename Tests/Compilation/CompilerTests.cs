@@ -17,6 +17,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public class CompilerTests : BaseTestClass
 {
 	private static readonly string _coreLibPath = typeof(object).Assembly.Location;
+	private static readonly string _ecngCommonPath = typeof(OperatingSystemEx).Assembly.Location;
 	private static readonly IFileSystem _fs = LocalFileSystem.Instance;
 
 #pragma warning disable RS1001, RS2008
@@ -583,6 +584,118 @@ class AnalyticsScript_{i}:
 		var res = await compiler.Compile("test", [code], [_coreLibPath], _fs, CancellationToken);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
+	}
+
+	/// <summary>
+	/// Regression test: dynamically compiling F# that uses the <c>task { }</c> builder must resolve
+	/// <see cref="System.IAsyncDisposable"/>. (Was: under --noframework the compiler adopted the
+	/// transitive netstandard 2.0 surface as the primary System provider, which has no
+	/// IAsyncDisposable, so any task/async code failed to compile.)
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_TaskBuilder_ResolvesAsyncTypes()
+	{
+		// TODO: F# compiler is not available on non-Windows platforms.
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		ICompiler compiler = new FSharpCompiler();
+
+		// task { } pulls in System.IAsyncDisposable — exactly what fails before the fix.
+		var code = "module Foo\nopen System.Threading.Tasks\nlet bar () : Task = task { do! Task.CompletedTask }";
+
+		var res = await compiler.Compile("test", [code], [_coreLibPath], _fs, CancellationToken);
+
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
+
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+	}
+
+	// Compiles the F# source against the given reference paths (core lib if none) and asserts it
+	// produces a loadable assembly with no errors.
+	private async Task AssertFSharpCompiles(string code, params string[] refs)
+	{
+		ICompiler compiler = new FSharpCompiler();
+
+		var res = await compiler.Compile("test", [code], refs.Length == 0 ? [_coreLibPath] : refs, _fs, CancellationToken);
+
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
+
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+	}
+
+	/// <summary>
+	/// Regression test: F# referencing <see cref="System.Collections.Generic.IAsyncEnumerable{T}"/>
+	/// (and <c>IAsyncEnumerator</c>, which is <see cref="System.IAsyncDisposable"/>) must resolve the
+	/// async BCL surface.
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_AsyncEnumerable_ResolvesAsyncTypes()
+	{
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		await AssertFSharpCompiles(
+			"module Foo\n" +
+			"open System.Collections.Generic\n" +
+			"let enumerator (xs: IAsyncEnumerable<int>) : IAsyncEnumerator<int> = xs.GetAsyncEnumerator(System.Threading.CancellationToken.None)");
+	}
+
+	/// <summary>
+	/// Regression test: the <c>async { }</c> builder with <c>Async.AwaitTask</c> must compile — it
+	/// pulls in <see cref="System.Threading.Tasks.Task"/>, whose identity used to split between
+	/// netstandard and System.Runtime.
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_AsyncBuilder_AwaitsTask()
+	{
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		await AssertFSharpCompiles(
+			"module Foo\n" +
+			"open System.Threading.Tasks\n" +
+			"let bar () : Async<unit> = async { do! Async.AwaitTask Task.CompletedTask }");
+	}
+
+	/// <summary>
+	/// Regression test: F# can compile against a real referenced Ecng assembly (here
+	/// <c>Ecng.Common</c>) and call into it.
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_UsesEcngReference()
+	{
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		await AssertFSharpCompiles(
+			"module Foo\n" +
+			"let isWindows : bool = Ecng.Common.OperatingSystemEx.IsWindows()",
+			_coreLibPath, _ecngCommonPath);
+	}
+
+	/// <summary>
+	/// Regression test: async code (<c>task { }</c>) and a real Ecng reference together.
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_TaskUsingEcngReference()
+	{
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		await AssertFSharpCompiles(
+			"module Foo\n" +
+			"open System.Threading.Tasks\n" +
+			"let bar () : Task<bool> = task { return Ecng.Common.OperatingSystemEx.IsWindows() }",
+			_coreLibPath, _ecngCommonPath);
 	}
 
 	[TestMethod]

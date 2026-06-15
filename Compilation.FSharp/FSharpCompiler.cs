@@ -111,14 +111,87 @@ public class FSharpCompiler : ICompiler
 	private static string GetReferencePath((string name, byte[] body) reference)
 		=> Path.Combine(Path.GetTempPath(), $"{reference.body.Sha512()}_{Path.GetFileName(reference.name)}");
 
-	private static Dictionary<string, byte[]> CreateReferenceMap(IEnumerable<(string name, byte[] body)> refs)
+	// Shared-framework runtime BCL assemblies for the running runtime, file name -> full path on disk.
+	// They are referenced straight from disk (not staged into the in-memory file system) and under
+	// their real assembly names, so the compiler follows netstandard 2.1's type forwards by name and
+	// the async types (IAsyncDisposable / IAsyncEnumerable, used by the task { } builder) resolve.
+	// Using the runtime framework (not the reference pack) keeps the BCL identity the same as caller
+	// libraries, which are built against the runtime, so the task builder's awaiter constraints unify.
+	// mscorlib is excluded: it is a forward-only facade the compiler would otherwise adopt as the
+	// primary System provider, breaking System.Array/Object resolution.
+	private static readonly Lazy<Dictionary<string, string>> _frameworkBcl = new(LoadFrameworkBcl);
+
+	private static Dictionary<string, string> LoadFrameworkBcl()
 	{
-		var retVal = new Dictionary<string, byte[]>(StringComparer.InvariantCultureIgnoreCase);
+		var map = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+		try
+		{
+			var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
+			if (runtimeDir.IsEmpty())
+				return map;
+
+			foreach (var dll in Directory.GetFiles(runtimeDir, "*.dll"))
+			{
+				var fileName = Path.GetFileName(dll);
+
+				if (fileName.EqualsIgnoreCase("mscorlib.dll"))
+					continue;
+
+				try
+				{
+					// Only managed assemblies are valid references — skip native images.
+					_ = System.Reflection.AssemblyName.GetAssemblyName(dll);
+					map[fileName] = dll;
+				}
+				catch
+				{
+				}
+			}
+		}
+		catch
+		{
+			// Best effort — fall back to the caller's references only.
+		}
+
+		return map;
+	}
+
+	// Splits references into the --reference list and the in-memory bodies the file system must serve.
+	// Framework BCL is referenced by its real on-disk path; the caller's own (non-framework) references
+	// are kept in memory under a content-hash path (so distinct rebuilds get fresh metadata). Caller
+	// references the framework already supplies are dropped to keep one consistent BCL surface.
+	private static (Dictionary<string, byte[]> inMemory, List<string> referencePaths) BuildReferences(IEnumerable<(string name, byte[] body)> refs)
+	{
+		var inMemory = new Dictionary<string, byte[]>(StringComparer.InvariantCultureIgnoreCase);
+		var referencePaths = new List<string>();
+		var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+
+		var framework = _frameworkBcl.Value;
+
+		foreach (var (fileName, diskPath) in framework)
+		{
+			if (seen.Add(fileName))
+				referencePaths.Add(diskPath);
+		}
 
 		foreach (var reference in refs)
-			retVal.TryAdd(GetReferencePath(reference), reference.body);
+		{
+			var fileName = Path.GetFileName(reference.name);
 
-		return retVal;
+			if (framework.Count > 0 && framework.ContainsKey(fileName))
+				continue;
+
+			if (!seen.Add(fileName))
+				continue;
+
+			var path = GetReferencePath(reference);
+			inMemory[path] = reference.body;
+			referencePaths.Add(path);
+		}
+
+		return (inMemory, referencePaths);
 	}
 
 	private static string[] CreateOptions(string name, IEnumerable<string> sources, IEnumerable<string> refs)
@@ -127,14 +200,18 @@ public class FSharpCompiler : ICompiler
 		if (refs == null)		throw new ArgumentNullException(nameof(refs));
 
 		var referencePaths = refs.Select(r => $"--reference:{r}").ToList();
+		var profile = _frameworkBcl.Value.Count > 0 ? "--targetprofile:netcore" : null;
 
 		return
 		[
 			"--target:library",
 			$"--out:{name}.dll",
 			"--nologo",
-			"--target:library",
 			"--noframework",
+			// A library needs no win32 manifest; the default one ships with the SDK, not the runtime,
+			// so skip it to avoid a "default.win32manifest not found" failure.
+			"--nowin32manifest",
+			.. profile is null ? Array.Empty<string>() : [profile],
 			.. sources,
 			.. referencePaths,
 		];
@@ -149,11 +226,11 @@ public class FSharpCompiler : ICompiler
 		var sourcesArr = sources.ToArray();
 		var sourceNames = sourcesArr.Select(_ => $"{name}_{index++}.fs").ToArray();
 		var sourcesDict = sourceNames.Zip(sourcesArr).ToDictionary(p => p.First, p => p.Second.UTF8(), StringComparer.InvariantCultureIgnoreCase);
-		var referenceDict = CreateReferenceMap(refs);
-		var projectDict = new Dictionary<string, byte[]>(referenceDict, StringComparer.InvariantCultureIgnoreCase);
+		var (inMemoryRefs, referencePaths) = BuildReferences(refs);
+		var projectDict = new Dictionary<string, byte[]>(inMemoryRefs, StringComparer.InvariantCultureIgnoreCase);
 		projectDict.AddRange(sourcesDict);
 
-		var options = CreateOptions(name, sourceNames, referenceDict.Keys);
+		var options = CreateOptions(name, sourceNames, referencePaths);
 		var projectOptions = _checker.GetProjectOptionsFromCommandLineArgs(name, options, default, default, default);
 
 		var diagnostics = new List<CompilationError>();
@@ -185,12 +262,12 @@ public class FSharpCompiler : ICompiler
 		var index = 0;
 		var sourcesDict = sources.ToDictionary(s => $"file{index++}.fs", s => s.UTF8());
 
-		var referenceDict = CreateReferenceMap(refs);
-		var projectOptions = CreateOptions(name, sourcesDict.Keys, referenceDict.Keys);
+		var (inMemoryRefs, referencePaths) = BuildReferences(refs);
+		var projectOptions = CreateOptions(name, sourcesDict.Keys, referencePaths);
 
 		var projectDict = new Dictionary<string, byte[]>(StringComparer.InvariantCultureIgnoreCase);
 		projectDict.AddRange(sourcesDict);
-		projectDict.AddRange(referenceDict);
+		projectDict.AddRange(inMemoryRefs);
 
 		using var stream = new MemoryStream();
 		using var _ = await _lock.LockAsync(cancellationToken);
