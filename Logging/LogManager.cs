@@ -87,12 +87,6 @@ public class LogManager : Disposable, IPersistable
 	/// <summary>
 	/// The ambient <see cref="LogManager"/> singleton — the first instance constructed.
 	/// </summary>
-	/// <remarks>
-	/// Deprecated. Relying on an ambient process-wide singleton hides dependencies and
-	/// breaks isolation; resolve <see cref="LogManager"/> through dependency injection
-	/// (<c>Microsoft.Extensions.DependencyInjection</c>) and pass it explicitly instead.
-	/// </remarks>
-	[Obsolete("The ambient LogManager.Instance singleton is deprecated. Resolve LogManager through dependency injection (Microsoft.Extensions.DependencyInjection) and pass it explicitly instead.")]
 	public static LogManager Instance => _instance;
 
 	/// <summary>

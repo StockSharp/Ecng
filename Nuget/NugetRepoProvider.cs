@@ -122,7 +122,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	[Obsolete("Use the overload that accepts an ILogReceiver; this one routes diagnostics to the deprecated ambient LogManager.Instance.")]
+	[Obsolete("Use the overload that accepts an ILogReceiver and pass the logger explicitly.")]
 	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
 		=> GetInstanceAsync(_defaultPrivateUrl, authToken, packagesFolder, retryPolicy, token);
 
@@ -135,7 +135,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	[Obsolete("Use the overload that accepts an ILogReceiver; this one routes diagnostics to the deprecated ambient LogManager.Instance.")]
+	[Obsolete("Use the overload that accepts an ILogReceiver and pass the logger explicitly.")]
 	public static Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
 		=> GetInstanceAsync(privateUrl, authToken, packagesFolder, retryPolicy,
 			LogManager.Instance?.Application ?? throw new InvalidOperationException("No ambient LogManager.Instance is available; use the GetInstanceAsync overload that accepts an ILogReceiver."),

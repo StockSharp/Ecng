@@ -13,13 +13,6 @@ using Ecng.Common;
 /// <summary>
 /// Provides access to application configuration sections, groups, and services.
 /// </summary>
-/// <remarks>
-/// Deprecated. The legacy <see cref="System.Configuration"/> access (sections,
-/// groups, app settings) is superseded by <c>Microsoft.Extensions.Configuration</c>
-/// (<c>IConfiguration</c> / appsettings.json), and the global service registry is
-/// superseded by <c>Microsoft.Extensions.DependencyInjection</c> (<c>IServiceProvider</c>).
-/// </remarks>
-[Obsolete("ConfigManager is deprecated. Use Microsoft.Extensions.DependencyInjection (IServiceProvider) for service resolution and Microsoft.Extensions.Configuration (IConfiguration) for application settings and configuration sections.")]
 public static class ConfigManager
 {
 	private static readonly Dictionary<Type, ConfigurationSection> _sections = [];

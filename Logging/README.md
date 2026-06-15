@@ -253,11 +253,6 @@ logManager.ClearPendingOnDispose = true; // Clear pending messages
 
 #### Global Instance
 
-> **Deprecated.** `LogManager.Instance` is an ambient process-wide singleton and is
-> obsolete. Resolve `LogManager` through
-> [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
-> and pass it explicitly instead of relying on the ambient instance.
-
 ```csharp
 // LogManager.Instance is automatically set to the first instance created
 var logManager = new LogManager();
