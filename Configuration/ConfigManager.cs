@@ -298,31 +298,7 @@ public static class ConfigManager
 	/// <typeparam name="T">The type of the service.</typeparam>
 	/// <returns>The service instance, or default if not registered.</returns>
 	public static T TryGetService<T>()
-	{
-		if (IsServiceRegistered<T>())
-			return GetService<T>();
-
-		// Consult the fallback like GetService does, but never throw: a service the
-		// fallback cannot construct yields default. This keeps TryGetService a safe
-		// query while letting a fallback-backed container satisfy it transparently.
-		var fallback = ServiceFallback;
-
-		if (fallback is null)
-			return default;
-
-		var name = typeof(T).AssemblyQualifiedName;
-
-		foreach (Func<Type, string, object> handler in fallback.GetInvocationList())
-		{
-			if (handler(typeof(T), name) is T service)
-			{
-				RegisterService(name, service);
-				return service;
-			}
-		}
-
-		return default;
-	}
+		=> TryResolve<T>(typeof(T).AssemblyQualifiedName, out var service) ? service : default;
 
 	/// <summary>
 	/// Registers the service of type T if it is not already registered.
@@ -358,32 +334,50 @@ public static class ConfigManager
 	/// <returns>The service instance.</returns>
 	public static T GetService<T>(string name)
 	{
+		if (TryResolve<T>(name, out var service))
+			return service;
+
+		// Preserve the two distinct diagnostics: no fallback registered at all vs a
+		// fallback that ran but produced nothing for this type.
+		throw ServiceFallback is null
+			? new InvalidOperationException($"Service '{name}' not registered.")
+			: new InvalidOperationException($"Service '{name}' not constructed.");
+	}
+
+	// Shared resolution core for GetService/TryGetService. Returns an already-registered
+	// service, otherwise constructs one via the first fallback handler that can and caches
+	// it. Returns false when neither the registry nor any fallback can supply the service,
+	// letting callers choose between throwing (GetService) and returning default
+	// (TryGetService). The lock is held only around the registry read — never while a
+	// fallback handler runs, since handlers may re-enter the registry.
+	private static bool TryResolve<T>(string name, out T service)
+	{
 		using (_sync.EnterScope())
 		{
-			var dict = GetDict<T>();
-
-			if (dict.TryGetValue(name, out var service))
-				return (T)service;
-		}
-
-		var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
-		T typed = default;
-
-		foreach (Func<Type, string, object> handler in fallback.GetInvocationList())
-		{
-			if (handler(typeof(T), name) is T service)
+			if (GetDict<T>().TryGetValue(name, out var existing))
 			{
-				typed = service;
-				break;
+				service = (T)existing;
+				return true;
 			}
 		}
 
-		if (typed is null)
-			throw new InvalidOperationException($"Service '{name}' not constructed.");
+		var fallback = ServiceFallback;
 
-		RegisterService(name, typed);
+		if (fallback is not null)
+		{
+			foreach (Func<Type, string, object> handler in fallback.GetInvocationList())
+			{
+				if (handler(typeof(T), name) is T resolved)
+				{
+					RegisterService(name, resolved);
+					service = resolved;
+					return true;
+				}
+			}
+		}
 
-		return typed;
+		service = default;
+		return false;
 	}
 
 	/// <summary>
