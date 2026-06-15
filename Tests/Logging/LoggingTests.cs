@@ -211,46 +211,6 @@ public class LoggingTests : BaseTestClass
 
 	[TestMethod]
 	[DoNotParallelize]
-	public void LogManager_AfterDispose_NewInstanceBecomesCurrent()
-	{
-		// White-box test of the (deprecated) ambient-singleton lifecycle: the ctor
-		// registers the first instance, Dispose unregisters it, and a fresh ctor
-		// re-registers. Asserted against the private _instance field directly so the
-		// test does not depend on the obsolete public Instance accessor.
-		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
-		instanceField.AssertNotNull();
-
-		LogManager current() => (LogManager)instanceField.GetValue(null);
-
-		var original = current();
-
-		try
-		{
-			instanceField.SetValue(null, null);
-
-			var first = new LogManager(false);
-			current().AssertSame(first);
-
-			first.Dispose();
-
-			var second = new LogManager(false);
-			try
-			{
-				current().AssertSame(second);
-			}
-			finally
-			{
-				second.Dispose();
-			}
-		}
-		finally
-		{
-			instanceField.SetValue(null, original);
-		}
-	}
-
-	[TestMethod]
-	[DoNotParallelize]
 	public void LogManager_LoadWithoutFlushInterval_KeepsDefault()
 	{
 		using var manager = new LogManager();

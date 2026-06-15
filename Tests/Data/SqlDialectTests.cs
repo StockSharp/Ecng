@@ -1135,9 +1135,7 @@ public class SqlDialectTests : BaseTestClass
 	[TestMethod]
 	public void SQLiteDialect_ListUserTablesSql_EscapesInternalTablePrefixUnderscore()
 	{
-		var method = typeof(SQLiteDialect).GetMethod("BuildListUserTablesSql", BindingFlags.Instance | BindingFlags.NonPublic);
-
-		var sql = (string)method.Invoke(SQLiteDialect.Instance, []);
+		var sql = SQLiteDialect.Instance.BuildListUserTablesSql();
 
 		sql.Contains("sqlite!_%").AssertTrue($"Expected escaped sqlite_ prefix, got: {sql}");
 		sql.ContainsIgnoreCase("ESCAPE").AssertTrue($"Expected LIKE escape clause, got: {sql}");

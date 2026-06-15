@@ -70,10 +70,8 @@ public class VisitorTranslationTests : BaseTestClass
 	private static string Translate<TSource>(IQueryable queryable, ISqlDialect dialect)
 	{
 		var meta = SchemaRegistry.Get(typeof(TSource));
-		var asm = typeof(Database).Assembly;
-		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
-		var translator = Activator.CreateInstance(translatorType, [meta]);
-		var query = (Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [queryable.Expression]);
+		var translator = new ExpressionQueryTranslator(meta);
+		var query = translator.GenerateSql(queryable.Expression);
 		return query.Render(dialect);
 	}
 

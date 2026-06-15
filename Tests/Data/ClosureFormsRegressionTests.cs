@@ -44,11 +44,9 @@ public class ClosureFormsRegressionTests : BaseTestClass
 	private static (string sql, IDictionary<string, (Type, object)> parameters) Translate<TSource>(IQueryable queryable)
 	{
 		var meta = SchemaRegistry.Get(typeof(TSource));
-		var asm = typeof(Database).Assembly;
-		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
-		var translator = Activator.CreateInstance(translatorType, [meta]);
-		var query = (Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [queryable.Expression]);
-		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
+		var translator = new ExpressionQueryTranslator(meta);
+		var query = translator.GenerateSql(queryable.Expression);
+		var parameters = translator.Parameters;
 		return (query.Render(SqlServerDialect.Instance), parameters);
 	}
 

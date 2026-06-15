@@ -45,12 +45,9 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var expression = queryable.Expression;
 		var meta = SchemaRegistry.Get(typeof(TSource));
 
-		// ExpressionQueryTranslator is internal — use reflection
-		var asm = typeof(Database).Assembly;
-		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
-		var translator = Activator.CreateInstance(translatorType, [meta]);
-		var query = (Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [expression]);
-		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
+		var translator = new ExpressionQueryTranslator(meta);
+		var query = translator.GenerateSql(expression);
+		var parameters = translator.Parameters;
 
 		return (query.Render(dialect ?? _dialect), parameters);
 	}

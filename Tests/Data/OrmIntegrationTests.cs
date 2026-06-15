@@ -3767,11 +3767,9 @@ public class OrmIntegrationTests : BaseTestClass
 	private static (string sql, IDictionary<string, (Type, object)> parameters) TranslateAudit<TSource>(IQueryable queryable)
 	{
 		var meta = SchemaRegistry.Get(typeof(TSource));
-		var asm = typeof(Database).Assembly;
-		var translatorType = asm.GetType("Ecng.Data.Sql.ExpressionQueryTranslator");
-		var translator = Activator.CreateInstance(translatorType, [meta]);
-		var query = (Ecng.Data.Sql.Query)translatorType.GetMethod("GenerateSql").Invoke(translator, [queryable.Expression]);
-		var parameters = (IDictionary<string, (Type, object)>)translatorType.GetProperty("Parameters").GetValue(translator);
+		var translator = new ExpressionQueryTranslator(meta);
+		var query = translator.GenerateSql(queryable.Expression);
+		var parameters = translator.Parameters;
 		return (query.Render(SqlServerDialect.Instance), parameters);
 	}
 
@@ -4138,42 +4136,29 @@ public class OrmIntegrationTests : BaseTestClass
 
 	#region Audit regression: EntityCacheStore (internal, reached via reflection)
 
-	private static object CreateCacheStore()
-	{
-		var type = typeof(Database).Assembly.GetType("Ecng.Data.EntityCacheStore");
-		IsNotNull(type, "EntityCacheStore type must be resolvable from the Data.ORM assembly.");
-		return Activator.CreateInstance(type, nonPublic: true);
-	}
+	private static EntityCacheStore CreateCacheStore()
+		=> new();
 
 	private static (Type, string, object) CacheKey(string name)
 		=> (typeof(TestItem), name, (object)name);
 
-	private static void StoreAdd(object store, (Type, string, object) key, object entity, bool complete)
-	{
-		var entries = (System.Collections.IDictionary)store.GetType().GetProperty("Entries").GetValue(store);
-		entries[key] = (entity, complete);
-	}
+	private static void StoreAdd(EntityCacheStore store, (Type, string, object) key, object entity, bool complete)
+		=> store.Entries[key] = (entity, complete);
 
-	private static bool StoreContains(object store, (Type, string, object) key)
-	{
-		var entries = (System.Collections.IDictionary)store.GetType().GetProperty("Entries").GetValue(store);
-		return entries.Contains(key);
-	}
+	private static bool StoreContains(EntityCacheStore store, (Type, string, object) key)
+		=> store.Entries.ContainsKey(key);
 
-	private static void StoreTouch(object store, (Type, string, object) key)
-		=> store.GetType().GetMethod("Touch").Invoke(store, [key]);
+	private static void StoreTouch(EntityCacheStore store, (Type, string, object) key)
+		=> store.Touch(key);
 
-	private static void StoreSetTimeout(object store, TimeSpan value)
-		=> store.GetType().GetProperty("Timeout").SetValue(store, value);
+	private static void StoreSetTimeout(EntityCacheStore store, TimeSpan value)
+		=> store.Timeout = value;
 
-	private static void StoreSetMaxEntries(object store, int value)
-		=> store.GetType().GetProperty("MaxEntries").SetValue(store, value);
+	private static void StoreSetMaxEntries(EntityCacheStore store, int value)
+		=> store.MaxEntries = value;
 
-	private static async Task StoreTrimExpired(object store, CancellationToken token)
-	{
-		var vt = (ValueTask)store.GetType().GetMethod("TrimExpiredAsync").Invoke(store, [token]);
-		await vt;
-	}
+	private static Task StoreTrimExpired(EntityCacheStore store, CancellationToken token)
+		=> store.TrimExpiredAsync(token).AsTask();
 
 	/// <summary>
 	/// Regression test for <c>EntityCacheStore.Touch</c> size-bound eviction: ensures

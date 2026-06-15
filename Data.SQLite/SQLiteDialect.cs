@@ -234,7 +234,7 @@ public class SQLiteDialect : SqlDialectBase
 	/// Routed through <see cref="Query"/> so the catalogue probe stays
 	/// aligned with the rest of the dialect's SQL emission.
 	/// </summary>
-	private string BuildListUserTablesSql()
+	internal string BuildListUserTablesSql()
 		=> "select \"name\" from sqlite_master where \"type\" = 'table' and \"name\" not like 'sqlite!_%' ESCAPE '!' order by \"name\"";
 
 	/// <inheritdoc />

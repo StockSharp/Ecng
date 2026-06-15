@@ -3,4 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ecng.Tests" />
+  </ItemGroup>
 </Project>
