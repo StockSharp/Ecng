@@ -3,9 +3,6 @@ namespace Ecng.Tests.Logging;
 using Ecng.Logging;
 using Ecng.Serialization;
 
-// LogManager.Instance is deprecated, but these tests still cover the ambient singleton's behaviour.
-#pragma warning disable CS0618
-
 [TestClass]
 public class LoggingTests : BaseTestClass
 {
@@ -216,24 +213,30 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void LogManager_AfterDispose_NewInstanceBecomesCurrent()
 	{
+		// White-box test of the (deprecated) ambient-singleton lifecycle: the ctor
+		// registers the first instance, Dispose unregisters it, and a fresh ctor
+		// re-registers. Asserted against the private _instance field directly so the
+		// test does not depend on the obsolete public Instance accessor.
 		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		instanceField.AssertNotNull();
 
-		var original = LogManager.Instance;
+		LogManager current() => (LogManager)instanceField.GetValue(null);
+
+		var original = current();
 
 		try
 		{
 			instanceField.SetValue(null, null);
 
 			var first = new LogManager(false);
-			LogManager.Instance.AssertSame(first);
+			current().AssertSame(first);
 
 			first.Dispose();
 
 			var second = new LogManager(false);
 			try
 			{
-				LogManager.Instance.AssertSame(second);
+				current().AssertSame(second);
 			}
 			finally
 			{
@@ -250,28 +253,14 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void LogManager_LoadWithoutFlushInterval_KeepsDefault()
 	{
-		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
-		instanceField.AssertNotNull();
+		using var manager = new LogManager();
+		var before = manager.FlushInterval;
+		var storage = new SettingsStorage()
+			.Set(nameof(LogManager.Listeners), Array.Empty<SettingsStorage>());
 
-		var original = LogManager.Instance;
+		manager.Load(storage);
 
-		try
-		{
-			instanceField.SetValue(null, null);
-
-			using var manager = new LogManager();
-			var before = manager.FlushInterval;
-			var storage = new SettingsStorage()
-				.Set(nameof(LogManager.Listeners), Array.Empty<SettingsStorage>());
-
-			manager.Load(storage);
-
-			manager.FlushInterval.AssertEqual(before);
-		}
-		finally
-		{
-			instanceField.SetValue(null, original);
-		}
+		manager.FlushInterval.AssertEqual(before);
 	}
 
 	private static LogMessage Msg(ILogSource src, LogLevels level, string text)
@@ -414,30 +403,16 @@ public class LoggingTests : BaseTestClass
 	[DoNotParallelize]
 	public void Manager_Dispose_DisposesOwnedUnhandledExceptionSource()
 	{
-		var instanceField = typeof(LogManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
-		instanceField.AssertNotNull();
+		// sync mode avoids the flush-timer dispose path entirely
+		var manager = new LogManager(false);
 
-		var original = LogManager.Instance;
+		var unhandled = manager.Sources.OfType<UnhandledExceptionSource>().FirstOrDefault();
+		unhandled.AssertNotNull("LogManager should own an UnhandledExceptionSource.");
+		unhandled.IsDisposed.AssertFalse();
 
-		try
-		{
-			instanceField.SetValue(null, null);
+		manager.Dispose();
 
-			// sync mode avoids the flush-timer dispose path entirely
-			var manager = new LogManager(false);
-
-			var unhandled = manager.Sources.OfType<UnhandledExceptionSource>().FirstOrDefault();
-			unhandled.AssertNotNull("LogManager should own an UnhandledExceptionSource.");
-			unhandled.IsDisposed.AssertFalse();
-
-			manager.Dispose();
-
-			unhandled.IsDisposed.AssertTrue("UnhandledExceptionSource owned by the manager must be disposed on manager dispose.");
-		}
-		finally
-		{
-			instanceField.SetValue(null, original);
-		}
+		unhandled.IsDisposed.AssertTrue("UnhandledExceptionSource owned by the manager must be disposed on manager dispose.");
 	}
 
 	/// <summary>

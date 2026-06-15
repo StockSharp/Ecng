@@ -22,17 +22,17 @@ public class NugetRepoProvider : CachingSourceProvider
 		private static async Task<PrivatePackageSource> GetImplAsync(string src, ILogReceiver logs, CancellationToken token)
 		{
 			var sourceRepository = Repository.Factory.GetCoreV3(src);
-			logs?.AddInfoLog("trying to resolve nuget v3 service index at {0}", src);
+			logs.AddInfoLog("trying to resolve nuget v3 service index at {0}", src);
 
 			try
 			{
 				await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(token).NoWait();
-				logs?.AddInfoLog("nuget v3 success!");
+				logs.AddInfoLog("nuget v3 success!");
 				return new PrivatePackageSource(src);
 			}
 			catch (Exception e)
 			{
-				logs?.AddWarningLog("nuget v3 service index is not available: {0}", e);
+				logs.AddWarningLog("nuget v3 service index is not available: {0}", e);
 				throw new InvalidOperationException($"Failed to initialize private NuGet source at {src}. Check connection and credentials.", e);
 			}
 		}
@@ -76,7 +76,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
-	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. May be <see langword="null"/>.</param>
+	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. Required.</param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
 	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, ILogReceiver logs, CancellationToken token)
@@ -89,11 +89,14 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
-	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. May be <see langword="null"/>.</param>
+	/// <param name="logs">Receiver for diagnostic messages emitted while resolving the private source. Required.</param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
 	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, ILogReceiver logs, CancellationToken token)
 	{
+		if (logs is null)
+			throw new ArgumentNullException(nameof(logs));
+
 		await PrivatePackageSource.GetAsync(privateUrl, logs, token).NoWait();
 
 		if (!packagesFolder.IsEmpty())
@@ -134,7 +137,9 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <returns>Task.</returns>
 	[Obsolete("Use the overload that accepts an ILogReceiver; this one routes diagnostics to the deprecated ambient LogManager.Instance.")]
 	public static Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
-		=> GetInstanceAsync(privateUrl, authToken, packagesFolder, retryPolicy, LogManager.Instance?.Application, token);
+		=> GetInstanceAsync(privateUrl, authToken, packagesFolder, retryPolicy,
+			LogManager.Instance?.Application ?? throw new InvalidOperationException("No ambient LogManager.Instance is available; use the GetInstanceAsync overload that accepts an ILogReceiver."),
+			token);
 
 	/// <summary>
 	/// Private nuget repository.
