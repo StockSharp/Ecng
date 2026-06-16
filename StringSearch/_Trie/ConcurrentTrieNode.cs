@@ -38,7 +38,10 @@ namespace Gma.DataStructures.StringSearch
 
         protected override TrieNodeBase<TValue> GetOrCreateChild(char key)
         {
-            return m_Children.GetOrAdd(key, new ConcurrentTrieNode<TValue>());
+            // Use the factory overload so a new node is allocated only on an actual miss; the eager
+            // 'new ...' argument was constructed on every call and thrown away whenever the child
+            // already existed, which is a lot of garbage during bulk suffix insertion.
+            return m_Children.GetOrAdd(key, _ => new ConcurrentTrieNode<TValue>());
         }
 
         protected override TrieNodeBase<TValue> GetChildOrNull(string query, int position)
