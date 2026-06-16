@@ -50,9 +50,10 @@ public class Secret : Equatable<Secret>
 	/// <inheritdoc />
 	protected override bool OnEquals(Secret other)
 	{
-		if (EnsureGetHashCode() != other.EnsureGetHashCode())
-			return false;
-
+		// Intentionally no GetHashCode() fast-path here: it would short-circuit before the
+		// FixedTimeEquals comparisons below and reintroduce a data-dependent timing channel
+		// (hash mismatch returns immediately, hash match runs the constant-time path). Hash
+		// inequality already implies content inequality, so correctness is unchanged.
 		if (Hash is null)
 		{
 			if (other.Hash != null)
