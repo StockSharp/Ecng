@@ -215,16 +215,36 @@ public static class NetworkHelper
 		RemoteCertificateValidationCallback certificateValidationCallback = null,
 		LocalCertificateSelectionCallback certificateSelectionCallback = null)
 	{
-		var ssl = validateRemoteCertificates
-			? new SslStream(stream, true, certificateValidationCallback, certificateSelectionCallback)
-			: new SslStream(stream);
+		// A bare SslStream still performs default chain validation, so validateRemoteCertificates=false
+		// must install an accept-all callback (unless the caller supplied its own), not just omit it.
+		// leaveInnerStreamOpen stays true regardless of the flag so disposal behaviour is consistent.
+		var validation = certificateValidationCallback;
 
-		if (sslCertificate.IsEmpty())
-			ssl.AuthenticateAsClient(targetHost);
-		else
+		if (validation is null && !validateRemoteCertificates)
+			validation = (s, c, ch, e) => true;
+
+		var ssl = new SslStream(stream, true, validation, certificateSelectionCallback);
+
+		X509Certificate2 cert = null;
+
+		try
 		{
-			var cert = LoadCertificate(sslCertificate, sslCertificatePassword?.UnSecure());
-			ssl.AuthenticateAsClient(targetHost, [cert], sslProtocol, checkCertificateRevocation);
+			X509CertificateCollection certs = null;
+
+			if (!sslCertificate.IsEmpty())
+			{
+				cert = LoadCertificate(sslCertificate, sslCertificatePassword?.UnSecure());
+				certs = [cert];
+			}
+
+			// Always the full overload so sslProtocol and checkCertificateRevocation are honoured
+			// even on the no-client-certificate path (the old single-arg call dropped both, silently
+			// disabling revocation checks and protocol pinning).
+			ssl.AuthenticateAsClient(targetHost, certs, sslProtocol, checkCertificateRevocation);
+		}
+		finally
+		{
+			cert?.Dispose();
 		}
 
 		return ssl;
