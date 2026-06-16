@@ -116,21 +116,33 @@ public class NugetRepoProvider : CachingSourceProvider
 
 	private static async Task<NugetRepoProvider> CreateInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
 	{
+		NugetRepoProvider instance = null;
+
 		try
 		{
-			var instance = new NugetRepoProvider(authToken, await GetPackageSources(packagesFolder).NoWait(), retryPolicy);
+			instance = new(authToken, await GetPackageSources(packagesFolder).NoWait(), retryPolicy);
 			await instance.InitBaseUrls(default).NoWait();
 			_instance = instance;
 			return instance;
 		}
 		catch
 		{
+			// The partially built instance is discarded on a failed init; dispose its HttpClients
+			// so a retry loop doesn't leak two of them per failed attempt.
+			instance?.DisposeHttp();
+
 			// Drop the faulted task so a later caller can retry instead of caching the failure.
 			using (_instanceGate.EnterScope())
 				_instanceTask = null;
 
 			throw;
 		}
+	}
+
+	private void DisposeHttp()
+	{
+		_publicHttp.Dispose();
+		_privateHttp?.Dispose();
 	}
 
 	/// <summary>
