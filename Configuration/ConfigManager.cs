@@ -57,13 +57,25 @@ public static class ConfigManager
 
 			void InitSectionGroups(ConfigurationSectionGroupCollection groups)
 			{
-				foreach (ConfigurationSectionGroup sectionGroup in groups)
+				// Guarded like InitSections: enumerating the groups and touching
+				// sectionGroup.Sections/.SectionGroups evaluates the config lazily and can throw
+				// ConfigurationErrorsException on a malformed .config. Without this the exception
+				// escapes the static constructor as TypeInitializationException, permanently
+				// bricking ConfigManager (including the service registry, which doesn't need the file).
+				try
 				{
-					if (!_sectionGroups.ContainsKey(sectionGroup.GetType()))
-						_sectionGroups.Add(sectionGroup.GetType(), sectionGroup);
+					foreach (ConfigurationSectionGroup sectionGroup in groups)
+					{
+						if (!_sectionGroups.ContainsKey(sectionGroup.GetType()))
+							_sectionGroups.Add(sectionGroup.GetType(), sectionGroup);
 
-					InitSections(sectionGroup.Sections);
-					InitSectionGroups(sectionGroup.SectionGroups);
+						InitSections(sectionGroup.Sections);
+						InitSectionGroups(sectionGroup.SectionGroups);
+					}
+				}
+				catch (Exception ex)
+				{
+					Trace.WriteLine(ex);
 				}
 			}
 
