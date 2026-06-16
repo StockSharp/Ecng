@@ -98,9 +98,19 @@ internal abstract class MegaAesCtrStream : Stream
 			var block = new byte[16];
 			var outBlock = new byte[16];
 
-			var read = _stream.Read(block, 0, block.Length);
-			if (read != block.Length)
-				read += _stream.Read(block, read, block.Length - read);
+			// Drain until the block is full or the stream ends - a single (or double) Read can
+			// return fewer bytes than requested on network/wrapping streams, which would otherwise
+			// leave the block partially filled and corrupt the keystream/MAC of every later block.
+			var read = 0;
+			while (read < block.Length)
+			{
+				var r = _stream.Read(block, read, block.Length - read);
+
+				if (r == 0)
+					break;
+
+				read += r;
+			}
 
 			var ivBlock = new byte[16];
 			Array.Copy(Iv, ivBlock, 8);

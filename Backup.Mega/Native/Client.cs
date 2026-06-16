@@ -235,6 +235,13 @@ public sealed class Client : IDisposable
 				sent += read;
 
 				completionHandle = await PostRawAsync(url, ms, cancellationToken).NoWait();
+
+				// A storage server answers a failed chunk POST with HTTP 200 whose body is a negative
+				// error code; treat a short negative number as an error rather than a completion handle
+				// (a real handle is a non-numeric token), otherwise the failure surfaces much later.
+				if (long.TryParse(completionHandle, out var chunkError) && chunkError < 0)
+					throw new MegaApiException((int)chunkError);
+
 				progress?.Report((double)sent / total * 100d);
 			}
 
@@ -420,7 +427,9 @@ public sealed class Client : IDisposable
 
 		var payload = JsonSerializer.Serialize(new object[] { request });
 		var attempt = 0;
+		var hashcashAttempts = 0;
 		const int maxAttempts = 10;
+		const int maxHashcashAttempts = 3;
 
 		while (true)
 		{
@@ -489,6 +498,11 @@ public sealed class Client : IDisposable
 					// Hashcash required: [-27, "<challenge>"]
 					if (errorCode == MegaErrorCode.HashcashRequired && root.GetArrayLength() >= 2)
 					{
+						// Cap hashcash challenges separately: the server can keep returning fresh
+						// ones, and resetting 'attempt' to 0 each time would spin the loop forever.
+						if (++hashcashAttempts > maxHashcashAttempts)
+							throw new MegaApiException(rawCode);
+
 						var challenge = root[1].GetString();
 						hashcash = Crypto.GenerateHashcashToken(challenge);
 						attempt = 0;

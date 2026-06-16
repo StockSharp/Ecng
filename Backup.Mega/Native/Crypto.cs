@@ -232,7 +232,21 @@ internal static class Crypto
 	{
 		var n = p * q;
 		var x = BigInteger.ModPow(data, d, n);
-		return ToBigEndianUnsigned(x);
+		var bytes = ToBigEndianUnsigned(x);
+
+		// Left-pad to the modulus byte length. The BigInteger representation drops leading zero
+		// bytes, so when the decrypted block starts with 0x00 the caller's fixed-offset session-id
+		// slice would shift and produce an invalid sid (intermittent login failures).
+		var modLen = ToBigEndianUnsigned(n).Length;
+
+		if (bytes.Length < modLen)
+		{
+			var padded = new byte[modLen];
+			Array.Copy(bytes, 0, padded, modLen - bytes.Length, bytes.Length);
+			bytes = padded;
+		}
+
+		return bytes;
 	}
 
 	public static BigInteger FromMpiNumber(byte[] data)
@@ -333,7 +347,8 @@ internal static class Crypto
 	public static DateTime FromEpochSeconds(this long seconds)
 	{
 		var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-		return epoch.AddSeconds(seconds).ToLocalTime();
+		// Keep UTC (Kind=Utc), matching ToEpochSeconds which normalises via ToUniversalTime.
+		return epoch.AddSeconds(seconds);
 	}
 
 	public static byte[] SerializeToBytes(this long value)
@@ -345,7 +360,9 @@ internal static class Crypto
 		while (x != 0)
 		{
 			buf[++len] = (byte)x;
-			x >>= 8;
+			// Unsigned shift: an arithmetic >> on a negative value (a pre-1970 epoch) converges to
+			// -1 and never reaches 0, overrunning the 9-byte buffer.
+			x = (long)((ulong)x >> 8);
 		}
 
 		buf[0] = len;
@@ -404,6 +421,13 @@ internal sealed class MegaAttributes
 			return;
 
 		var bytes = SerializedFingerprint.FromBase64Url();
+
+		// A valid fingerprint is 16 CRC bytes plus at least the 1-byte length prefix of the epoch;
+		// a shorter (corrupt / third-party) 'c' attribute must degrade to null, not throw and abort
+		// parsing of the whole node tree.
+		if (bytes.Length < 17)
+			return;
+
 		ModificationDate = bytes.DeserializeToLong(16, bytes.Length - 16).FromEpochSeconds();
 	}
 }

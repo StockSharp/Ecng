@@ -28,6 +28,22 @@ public class MegaService(string email, SecureString password) : AsyncDisposable,
 	private readonly string _email = email.ThrowIfEmpty(nameof(email));
 	private readonly SecureString _password = password ?? throw new ArgumentNullException(nameof(password));
 	private readonly CachedSynchronizedList<Node> _nodes = [];
+	private readonly Lock _loginGate = new();
+	// Single-flight login: the first caller starts LoginCoreAsync, the rest await the SAME task, so
+	// concurrent IBackupService calls cannot double-login or duplicate the node cache - and no lock
+	// is held across the LoginAsync/GetNodesAsync network round-trips.
+	private Task _loginTask;
+
+	// Atomically replaces the node cache so a concurrent Find never observes the empty window
+	// between Clear() and AddRange() (which lock SyncRoot independently).
+	private void ResetNodes(IEnumerable<Node> nodes)
+	{
+		using (_nodes.SyncRoot.EnterScope())
+		{
+			_nodes.Clear();
+			_nodes.AddRange(nodes);
+		}
+	}
 
 	/// <inheritdoc />
 	protected override async ValueTask DisposeManaged()
@@ -39,16 +55,41 @@ public class MegaService(string email, SecureString password) : AsyncDisposable,
 		await base.DisposeManaged().NoWait();
 	}
 
-	private async Task<Client> EnsureLogin(CancellationToken cancellationToken)
+	private ValueTask<Client> EnsureLogin(CancellationToken cancellationToken)
 	{
-		if (!_client.IsLoggedIn)
-		{
-			await _client.LoginAsync(_email, _password.UnSecure(), cancellationToken).NoWait();
+		if (_client.IsLoggedIn)
+			return new(_client);
 
-			_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
-		}
+		Task task;
 
+		// The gate is held only to publish the shared login task - not across the network below.
+		using (_loginGate.EnterScope())
+			task = _loginTask ??= LoginCoreAsync();
+
+		return new(AwaitLogin(task, cancellationToken));
+	}
+
+	private async Task<Client> AwaitLogin(Task task, CancellationToken cancellationToken)
+	{
+		await task.WaitAsync(cancellationToken).NoWait();
 		return _client;
+	}
+
+	private async Task LoginCoreAsync()
+	{
+		try
+		{
+			await _client.LoginAsync(_email, _password.UnSecure(), default).NoWait();
+
+			ResetNodes(await _client.GetNodesAsync(default).NoWait());
+		}
+		finally
+		{
+			// In-flight dedup only: clear so a later re-login (e.g. after a logout) is not blocked
+			// by a stale completed task.
+			using (_loginGate.EnterScope())
+				_loginTask = null;
+		}
 	}
 
 	bool IBackupService.CanFolders => true;
@@ -234,8 +275,7 @@ public class MegaService(string email, SecureString password) : AsyncDisposable,
 
 		var url = await client.PublishAsync(node, cancellationToken).NoWait();
 
-		_nodes.Clear();
-		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
+		ResetNodes(await _client.GetNodesAsync(cancellationToken).NoWait());
 
 		return url;
 	}
@@ -251,7 +291,6 @@ public class MegaService(string email, SecureString password) : AsyncDisposable,
 
 		await client.UnpublishAsync(node.Id, cancellationToken).NoWait();
 
-		_nodes.Clear();
-		_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
+		ResetNodes(await _client.GetNodesAsync(cancellationToken).NoWait());
 	}
 }

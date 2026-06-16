@@ -51,7 +51,9 @@ internal static class Crc32
 			{
 				var start = (int)(i * stream.Length / 4);
 				var end = (int)((i + 1) * stream.Length / 4);
-				var value = Compute(buffer.AsSpan(start, end - start), uint.MaxValue);
+				// seed 0 makes the internal register start at the standard 0xFFFFFFFF (Compute does
+				// crc = ~seed), matching CryptoPP/MEGA's CRC32.
+				var value = Compute(buffer.AsSpan(start, end - start), 0);
 				crc[i] = value;
 			}
 		}
@@ -63,7 +65,7 @@ internal static class Crc32
 
 			for (uint part = 0; part < 4; part++)
 			{
-				var seed = uint.MaxValue;
+				var seed = 0u;
 				byte[] lastHash = null;
 
 				for (uint n = 0; n < count; n++)
@@ -75,9 +77,11 @@ internal static class Crc32
 					var r = stream.Read(buf, 0, buf.Length);
 					pos += r;
 
-					seed = ~Compute(buf.AsSpan(0, r), seed);
+					// Chain without the extra inversion: passing Compute's return as the next seed
+					// re-inverts it back to the running register, keeping the CRC continuous.
+					seed = Compute(buf.AsSpan(0, r), seed);
 
-					lastHash = BitConverter.GetBytes(~seed);
+					lastHash = BitConverter.GetBytes(seed);
 				}
 
 				crc[part] = BitConverter.ToUInt32(lastHash, 0);
