@@ -417,6 +417,9 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override bool SupportsAddForeignKeyViaAlter => false;
+
+	/// <inheritdoc />
 	public override void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
 	{
 		// SQLite does not support ALTER TABLE ADD CONSTRAINT for foreign keys —

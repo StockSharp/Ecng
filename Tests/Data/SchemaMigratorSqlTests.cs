@@ -109,6 +109,121 @@ public class SchemaMigratorSqlTests : BaseTestClass
 			$"Expected the FK constraint on DnsProvider.Picture, got: {sql}");
 	}
 
+	private sealed class FkParent
+	{
+		public long Id { get; set; }
+	}
+
+	private sealed class FkChild
+	{
+		public long Id { get; set; }
+		public long ParentId { get; set; }
+	}
+
+	// Two brand-new tables where FkChild has a FOREIGN KEY to FkParent. Returned
+	// child-first on purpose so the migrator cannot rely on caller ordering.
+	private static (Schema child, Schema parent) BuildNewFkSchemas()
+	{
+		var parent = new Schema
+		{
+			TableName = "FkParent",
+			EntityType = typeof(FkParent),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [],
+			Factory = () => new FkParent(),
+		};
+
+		var child = new Schema
+		{
+			TableName = "FkChild",
+			EntityType = typeof(FkChild),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "ParentId",
+					ClrType = typeof(long),
+					IsNullable = false,
+					ReferencedEntityType = typeof(FkParent),
+				},
+			],
+			Factory = () => new FkChild(),
+		};
+
+		SchemaRegistry.Register(parent);
+		SchemaRegistry.Register(child);
+
+		return (child, parent);
+	}
+
+	/// <summary>
+	/// For dialects that support ALTER TABLE ADD CONSTRAINT (SQL Server, PostgreSQL),
+	/// a new table's foreign keys must be emitted as a separate statement AFTER every
+	/// CREATE TABLE, not inline. That makes the script independent of table-creation
+	/// order (and removes the need for callers to topologically pre-sort the tables).
+	/// </summary>
+	[DataRow("sqlserver")]
+	[DataRow("postgres")]
+	[TestMethod]
+	public void NewTables_ForeignKey_DeferredAfterCreate_ForAlterDialects(string provider)
+	{
+		var dialect = provider == "postgres"
+			? (ISqlDialect)PostgreSqlDialect.Instance
+			: SqlServerDialect.Instance;
+
+		var (child, parent) = BuildNewFkSchemas();
+
+		// Both tables are missing from the DB.
+		var diffs = SchemaMigrator.Compare([child, parent], [], dialect, skipComputed: false, dbForeignKeys: []);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [child, parent]);
+
+		Regex.Matches(sql, "CREATE TABLE", RegexOptions.IgnoreCase).Count.AssertEqual(2,
+			$"Both new tables must be created. SQL: {sql}");
+
+		sql.Contains("ALTER TABLE", StringComparison.OrdinalIgnoreCase).AssertTrue(
+			$"FK on a new table must be a deferred ALTER TABLE ADD CONSTRAINT. SQL: {sql}");
+
+		var lastCreate = sql.LastIndexOf("CREATE TABLE", StringComparison.OrdinalIgnoreCase);
+		var fk = sql.IndexOf("FOREIGN KEY", StringComparison.OrdinalIgnoreCase);
+
+		(fk > lastCreate).AssertTrue(
+			$"The FOREIGN KEY must be added after both CREATE TABLE statements, not inline. SQL: {sql}");
+
+		Regex.Matches(sql, "FOREIGN KEY", RegexOptions.IgnoreCase).Count.AssertEqual(1,
+			$"Exactly one FK constraint expected. SQL: {sql}");
+	}
+
+	/// <summary>
+	/// SQLite cannot ALTER TABLE ADD CONSTRAINT a foreign key, so the FK must stay
+	/// inline inside CREATE TABLE. That forces a topological order: the referenced
+	/// table (FkParent) has to be created before the referencing one (FkChild), even
+	/// when the schemas are supplied child-first.
+	/// </summary>
+	[TestMethod]
+	public void NewTables_ForeignKey_InlineAndOrdered_ForSqlite()
+	{
+		var dialect = SQLiteDialect.Instance;
+
+		var (child, parent) = BuildNewFkSchemas();
+
+		var diffs = SchemaMigrator.Compare([child, parent], [], dialect, skipComputed: false, dbForeignKeys: []);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [child, parent]);
+
+		sql.Contains("ALTER TABLE", StringComparison.OrdinalIgnoreCase).AssertFalse(
+			$"SQLite must not emit ALTER TABLE ADD CONSTRAINT for a FK. SQL: {sql}");
+
+		sql.Contains("FOREIGN KEY", StringComparison.OrdinalIgnoreCase).AssertTrue(
+			$"SQLite must keep the FK inline in CREATE TABLE. SQL: {sql}");
+
+		var parentPos = sql.IndexOf(dialect.QuoteIdentifier("FkParent"), StringComparison.Ordinal);
+		var childPos = sql.IndexOf(dialect.QuoteIdentifier("FkChild"), StringComparison.Ordinal);
+
+		(parentPos >= 0 && childPos >= 0).AssertTrue($"Both tables must be present. SQL: {sql}");
+		(parentPos < childPos).AssertTrue(
+			$"The referenced table FkParent must be created before FkChild. SQL: {sql}");
+	}
+
 	private sealed class DropOrderSocial
 	{
 		public long Id { get; set; }

@@ -238,6 +238,14 @@ public interface ISqlDialect
 	bool SupportsInsertReturning { get; }
 
 	/// <summary>
+	/// True when this dialect can add a foreign key to an existing table via
+	/// <see cref="AppendAddForeignKey"/>. When false (SQLite), a foreign key can
+	/// only be declared inline inside CREATE TABLE, so the migrator keeps new-table
+	/// FKs inline and creates the referenced tables first.
+	/// </summary>
+	bool SupportsAddForeignKeyViaAlter { get; }
+
+	/// <summary>
 	/// Appends an ALTER TABLE ADD CONSTRAINT for a new foreign key.
 	/// </summary>
 	void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName);

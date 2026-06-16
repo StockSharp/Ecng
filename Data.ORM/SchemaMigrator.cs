@@ -354,6 +354,77 @@ public static class SchemaMigrator
 	}
 
 	/// <summary>
+	/// Assigns each new (<see cref="SchemaDiffKind.MissingTable"/>) table a creation
+	/// rank such that a table is created after every other new table it references via
+	/// a foreign key. Dependencies on already-existing tables are ignored (those are
+	/// satisfied). Independent tables keep their original diff order; an FK cycle among
+	/// new tables (only constructible on ALTER-capable dialects, where FKs are deferred
+	/// anyway) is broken by falling back to the original order so the method always
+	/// terminates.
+	/// </summary>
+	private static Dictionary<string, int> OrderNewTablesForCreate(
+		IReadOnlyList<SchemaDiff> diffs,
+		Dictionary<string, Schema> schemaMap)
+	{
+		var newTables = new List<string>();
+		var newTableSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var d in diffs)
+		{
+			if (d.Kind == SchemaDiffKind.MissingTable && newTableSet.Add(d.TableName))
+				newTables.Add(d.TableName);
+		}
+
+		// Referenced new tables that must be created before the key table.
+		var deps = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var table in newTables)
+		{
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+			if (schemaMap.TryGetValue(table, out var schema))
+			{
+				foreach (var col in schema.Columns)
+				{
+					if (col.ReferencedEntityType is null)
+						continue;
+
+					var refTable = ResolveForeignKeyTarget(col.ReferencedEntityType).TableName;
+
+					// Only other new tables constrain the order; a self-reference is fine
+					// inline and an existing table already exists.
+					if (newTableSet.Contains(refTable) && !refTable.EqualsIgnoreCase(table))
+						set.Add(refTable);
+				}
+			}
+
+			deps[table] = set;
+		}
+
+		var order = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+		var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var remaining = new List<string>(newTables);
+		var rank = 0;
+
+		while (remaining.Count > 0)
+		{
+			// First table (in original order) whose new-table deps are all emitted.
+			var idx = remaining.FindIndex(t => deps[t].All(emitted.Contains));
+
+			// None ready => a cycle; break it by taking the next in original order.
+			if (idx < 0)
+				idx = 0;
+
+			var table = remaining[idx];
+			remaining.RemoveAt(idx);
+			emitted.Add(table);
+			order[table] = rank++;
+		}
+
+		return order;
+	}
+
+	/// <summary>
 	/// Emits CREATE INDEX statements declared on <paramref name="schema"/>.
 	/// One column may carry several <c>[Index]</c> attributes (its own
 	/// single-column index plus participation in any number of named
@@ -726,22 +797,45 @@ public static class SchemaMigrator
 
 		var sb = new StringBuilder();
 
-		// Emit additive/corrective statements first, then the commented-out drops in a
-		// dependency-safe order so the script can be uncommented and run as-is: a
-		// foreign key before the column it binds and before its table, an index before
-		// its column, columns before the table they belong to. OrderBy is a stable
-		// sort, so statements keep their original relative order within each phase
-		// (this only moves the drops to the end — additive output is unchanged).
-		static int DropPhase(SchemaDiffKind kind) => kind switch
+		// New tables are created topologically (a referenced new table before the new
+		// table that references it). This keeps an inline foreign key valid on dialects
+		// that cannot ALTER TABLE ADD CONSTRAINT (SQLite), and it also guarantees that
+		// any later ALTER TABLE ADD CONSTRAINT / new FK column targets a table that
+		// already exists.
+		var newTableOrder = OrderNewTablesForCreate(diffs, schemaMap);
+
+		// Foreign keys for new tables on dialects that support ALTER TABLE ADD
+		// CONSTRAINT are deferred here and flushed after every CREATE TABLE, so the
+		// create order of the tables themselves is irrelevant. SQLite keeps them inline
+		// (see the MissingTable branch) and this stays empty.
+		var deferredForeignKeys = new StringBuilder();
+
+		// Commented-out drop statements are collected separately so the deferred new-table
+		// FKs (additive) can be flushed before them, keeping the runnable part of the
+		// script contiguous and the review-only drops at the very end.
+		var drops = new StringBuilder();
+
+		// Emit phases so the script can be uncommented and run as-is in a dependency-safe
+		// order: new tables first (topologically), then the remaining additive/corrective
+		// statements, then deferred new-table FKs (appended after the loop), then the
+		// commented-out drops. OrderBy is a stable sort, so statements keep their original
+		// relative order within each phase.
+		static int EmitPhase(SchemaDiffKind kind) => kind switch
 		{
-			SchemaDiffKind.ExtraForeignKey => 1,
-			SchemaDiffKind.ExtraIndex => 2,
-			SchemaDiffKind.ExtraColumn => 3,
-			SchemaDiffKind.ExtraTable => 4,
-			_ => 0,
+			SchemaDiffKind.MissingTable => 0,
+			SchemaDiffKind.ExtraForeignKey => 10,
+			SchemaDiffKind.ExtraIndex => 11,
+			SchemaDiffKind.ExtraColumn => 12,
+			SchemaDiffKind.ExtraTable => 13,
+			_ => 5,
 		};
 
-		foreach (var diff in diffs.OrderBy(d => DropPhase(d.Kind)))
+		int CreateRank(SchemaDiff d)
+			=> d.Kind == SchemaDiffKind.MissingTable && newTableOrder.TryGetValue(d.TableName, out var r) ? r : 0;
+
+		foreach (var diff in diffs
+			.OrderBy(d => EmitPhase(d.Kind))
+			.ThenBy(CreateRank))
 		{
 			switch (diff.Kind)
 			{
@@ -763,7 +857,11 @@ public static class SchemaMigrator
 						colDefs.Add($"{dialect.QuoteIdentifier(col.Name)} {cd}");
 					}
 
-					// inline FOREIGN KEY constraints for columns marked as FK
+					// Foreign keys for the new table. Dialects that support ALTER TABLE ADD
+					// CONSTRAINT get them deferred (flushed after every CREATE TABLE) so the
+					// table-creation order is irrelevant; SQLite, which cannot ALTER in a FK,
+					// keeps them inline in CREATE TABLE (the topological order created the
+					// referenced table first).
 					foreach (var col in schema.Columns)
 					{
 						if (col.ReferencedEntityType is null)
@@ -771,7 +869,16 @@ public static class SchemaMigrator
 
 						var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 						var refCol = refSchema.Identity?.Name ?? "Id";
-						colDefs.Add(dialect.GetForeignKeyConstraint(diff.TableName, col.Name, refSchema.TableName, refCol));
+
+						if (dialect.SupportsAddForeignKeyViaAlter)
+						{
+							dialect.AppendAddForeignKey(deferredForeignKeys, diff.TableName, col.Name, refSchema.TableName, refCol);
+							deferredForeignKeys.AppendLine(";");
+						}
+						else
+						{
+							colDefs.Add(dialect.GetForeignKeyConstraint(diff.TableName, col.Name, refSchema.TableName, refCol));
+						}
 					}
 
 					dialect.AppendCreateTable(sb, diff.TableName, colDefs.JoinCommaSpace());
@@ -869,7 +976,7 @@ public static class SchemaMigrator
 					// Extra FKs are never auto-dropped — emit the DROP CONSTRAINT commented
 					// out, ready for a human to review and uncomment. diff.Expected carries
 					// the constraint name; diff.Actual the referenced table.column for context.
-					sb.AppendLine($"-- ALTER TABLE {dialect.QuoteIdentifier(diff.TableName)} DROP CONSTRAINT {dialect.QuoteIdentifier(diff.Expected)};   -- {dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
+					drops.AppendLine($"-- ALTER TABLE {dialect.QuoteIdentifier(diff.TableName)} DROP CONSTRAINT {dialect.QuoteIdentifier(diff.Expected)};   -- {dialect.QuoteIdentifier(diff.ColumnName)} -> {diff.Actual}");
 					break;
 
 				case SchemaDiffKind.MissingIndex:
@@ -889,7 +996,7 @@ public static class SchemaMigrator
 					// Extra indexes are never auto-dropped — emit the DROP INDEX commented
 					// out, ready for a human to review and uncomment. diff.ColumnName carries
 					// the index name; diff.Actual the column list for context.
-					sb.AppendLine($"-- DROP INDEX {dialect.QuoteIdentifier(diff.ColumnName)} ON {dialect.QuoteIdentifier(diff.TableName)};   -- {diff.Actual}");
+					drops.AppendLine($"-- DROP INDEX {dialect.QuoteIdentifier(diff.ColumnName)} ON {dialect.QuoteIdentifier(diff.TableName)};   -- {diff.Actual}");
 					break;
 
 				case SchemaDiffKind.ExtraColumn:
@@ -901,11 +1008,11 @@ public static class SchemaMigrator
 					{
 						var drop = new StringBuilder();
 						dialect.AppendDropColumn(drop, diff.TableName, diff.ColumnName);
-						sb.Append("-- ").Append(drop).AppendLine(";");
+						drops.Append("-- ").Append(drop).AppendLine(";");
 					}
 					catch (NotSupportedException)
 					{
-						sb.AppendLine($"-- Extra column: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} (DROP COLUMN not supported by this dialect)");
+						drops.AppendLine($"-- Extra column: {dialect.QuoteIdentifier(diff.TableName)}.{dialect.QuoteIdentifier(diff.ColumnName)} (DROP COLUMN not supported by this dialect)");
 					}
 
 					break;
@@ -913,10 +1020,15 @@ public static class SchemaMigrator
 
 				case SchemaDiffKind.ExtraTable:
 					// Extra tables are never auto-dropped — emit a commented-out DROP TABLE.
-					sb.AppendLine($"-- DROP TABLE {dialect.QuoteIdentifier(diff.TableName)};");
+					drops.AppendLine($"-- DROP TABLE {dialect.QuoteIdentifier(diff.TableName)};");
 					break;
 			}
 		}
+
+		// Additive new-table FKs (ALTER-capable dialects) after all CREATE TABLEs, then the
+		// review-only commented drops.
+		sb.Append(deferredForeignKeys);
+		sb.Append(drops);
 
 		return sb.ToString();
 	}

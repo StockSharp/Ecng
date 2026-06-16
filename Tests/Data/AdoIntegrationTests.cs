@@ -746,6 +746,7 @@ public class AdoIntegrationTests : BaseTestClass
 		public string IsNullFunction => inner.IsNullFunction;
 		public string BatchSeparator => inner.BatchSeparator;
 		public bool SupportsInsertReturning => inner.SupportsInsertReturning;
+		public bool SupportsAddForeignKeyViaAlter => inner.SupportsAddForeignKeyViaAlter;
 
 		public string QuoteIdentifier(string identifier) => inner.QuoteIdentifier(identifier);
 		public string GetSqlTypeName(Type clrType) => inner.GetSqlTypeName(clrType);

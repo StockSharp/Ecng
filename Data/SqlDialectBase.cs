@@ -143,6 +143,9 @@ public abstract class SqlDialectBase : ISqlDialect
 		=> $"CONSTRAINT {QuoteIdentifier($"FK_{tableName}_{columnName}")} FOREIGN KEY ({QuoteIdentifier(columnName)}) REFERENCES {QuoteIdentifier(refTableName)} ({QuoteIdentifier(refColumnName)})";
 
 	/// <inheritdoc />
+	public virtual bool SupportsAddForeignKeyViaAlter => true;
+
+	/// <inheritdoc />
 	public virtual void AppendAddForeignKey(StringBuilder sb, string tableName, string columnName, string refTableName, string refColumnName)
 	{
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ADD {GetForeignKeyConstraint(tableName, columnName, refTableName, refColumnName)}");
