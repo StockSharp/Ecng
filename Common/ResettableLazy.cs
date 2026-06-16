@@ -48,12 +48,22 @@ public class ResettableLazy<T>
 	{
 		get
 		{
-			if (!_isValueCreated)
+			if (_isValueCreated)
 			{
-				return CreateValue();
+				if (_mode == LazyThreadSafetyMode.None)
+					return _value;
+
+				// Read under the lock so a concurrent Reset/SetValue cannot make us observe a
+				// half-updated state - e.g. the flag still set while _value has been cleared back
+				// to default. Re-check the flag inside the lock; if it was reset, fall through.
+				using (_lock.EnterScope())
+				{
+					if (_isValueCreated)
+						return _value;
+				}
 			}
 
-			return _value;
+			return CreateValue();
 		}
 	}
 
@@ -77,9 +87,11 @@ public class ResettableLazy<T>
 						_value = value;
 						_isValueCreated = true;
 					}
-				}
 
-				return _value;
+					// Return the winning value from inside the lock so a Reset racing the
+					// lock release can't turn this into a default(T).
+					return _value;
+				}
 			}
 
 			case LazyThreadSafetyMode.ExecutionAndPublication:
@@ -92,9 +104,9 @@ public class ResettableLazy<T>
 						_value = _valueFactory();
 						_isValueCreated = true;
 					}
-				}
 
-				return _value;
+					return _value;
+				}
 			}
 		}
 	}

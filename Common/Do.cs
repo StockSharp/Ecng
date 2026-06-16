@@ -48,11 +48,13 @@ public static class Do
 
 		try
 		{
+			// WaitOne acquires ownership for the current thread on success - just keep this
+			// instance. The old dispose-and-recreate released that ownership and reacquired
+			// via new Mutex(true, name), opening a window where another process could grab the
+			// named mutex; the recreated handle would then not own it and a later ReleaseMutex
+			// would throw, while this method still reported the instance as unique.
 			if (!mutex.WaitOne(1))
 				return false;
-
-			mutex.Dispose();
-			mutex = new Mutex(true, name);
 		}
 		catch (AbandonedMutexException)
 		{

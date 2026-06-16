@@ -38,8 +38,10 @@ public class IncrementalIdGenerator : IdGenerator
 	/// </summary>
 	public long Current
 	{
-		get => _current;
-		set => _current = value;
+		// Interlocked so the 64-bit read/write stays atomic on 32-bit platforms and is ordered
+		// with the Interlocked.Increment in GetNextId; a plain long access could tear there.
+		get => Interlocked.Read(ref _current);
+		set => Interlocked.Exchange(ref _current, value);
 	}
 
 	/// <summary>

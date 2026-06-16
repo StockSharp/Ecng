@@ -1,11 +1,16 @@
 namespace Ecng.Common;
 
+using System.Collections.Concurrent;
+
 /// <summary>
 /// Provides helper methods for working with custom attributes including caching support.
 /// </summary>
 public static class AttributeHelper
 {
-	private static readonly Dictionary<(Type, ICustomAttributeProvider, bool), Attribute> _attrCache = [];
+	// Read on a hot path from many threads (GetAttribute is called widely, incl. from Converter)
+	// while ProxyTypes-style registration / ClearCache mutate it; a plain Dictionary is not safe
+	// for concurrent read-during-write, so use a ConcurrentDictionary.
+	private static readonly ConcurrentDictionary<(Type, ICustomAttributeProvider, bool), Attribute> _attrCache = [];
 
 	/// <summary>
 	/// Gets or sets a value indicating whether attribute caching is enabled.
@@ -39,8 +44,8 @@ public static class AttributeHelper
 		if (!CacheEnabled)
 			return GetAttribute();
 
-		return (TAttribute)_attrCache.SafeAdd(new(typeof(TAttribute), provider, inherit),
-			key => GetAttribute());
+		return (TAttribute)_attrCache.GetOrAdd(new(typeof(TAttribute), provider, inherit),
+			_ => GetAttribute());
 	}
 
 	/// <summary>
@@ -71,30 +76,6 @@ public static class AttributeHelper
 			throw new ArgumentNullException(nameof(provider));
 
 		return provider.GetCustomAttributes(inherit).Cast<Attribute>();
-	}
-
-	// Note: This private method does not require XML documentation.
-	private static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler)
-	{
-		if (dictionary is null)
-			throw new ArgumentNullException(nameof(dictionary));
-
-		if (handler is null)
-			throw new ArgumentNullException(nameof(handler));
-
-		if (!dictionary.TryGetValue(key, out var value))
-		{
-			lock (dictionary)
-			{
-				if (!dictionary.TryGetValue(key, out value))
-				{
-					value = handler(key);
-					dictionary.Add(key, value);
-				}
-			}
-		}
-
-		return value;
 	}
 
 	/// <summary>
