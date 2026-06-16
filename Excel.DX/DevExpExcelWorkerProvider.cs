@@ -291,12 +291,20 @@ public class DevExpExcelWorkerProvider : IExcelWorkerProvider
 
 		void IDisposable.Dispose()
 		{
-			_sheets.ForEach(s => s.Dispose());
-			_sheets.Clear();
+			// Always dispose the underlying document (releasing its file/stream handle) even if a
+			// sheet flush throws - otherwise a single bad sheet leaks the document and truncates
+			// the output stream.
+			try
+			{
+				_sheets.ForEach(s => s.Dispose());
+				_sheets.Clear();
+			}
+			finally
+			{
+				_document.Dispose();
 
-			_document.Dispose();
-
-			GC.SuppressFinalize(this);
+				GC.SuppressFinalize(this);
+			}
 		}
 
 		IExcelWorker IExcelWorker.SetCell<T>(int col, int row, T value)
