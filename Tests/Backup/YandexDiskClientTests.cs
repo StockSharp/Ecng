@@ -383,6 +383,24 @@ public class YandexDiskClientTests : BaseTestClass
 		AreEqual(0, fakeApi.DisposeCount);
 	}
 
+	/// <summary>
+	/// Regression test for WaitOperationAsync: a server-side operation that settles with
+	/// OperationStatus.Failure must surface as an error rather than being reported as success.
+	/// (YandexDisk.Client\Clients\CommandsClientExtensions.cs.)
+	/// </summary>
+	[TestMethod]
+	public async Task DeleteAndWait_OnOperationFailure_ShouldThrow()
+	{
+		var commands = new FakeCommandsClient
+		{
+			DeleteStatusCode = HttpStatusCode.Accepted,
+		};
+		commands.OperationStatuses.Enqueue(OperationStatus.Failure);
+
+		await ThrowsAsync<InvalidOperationException>(() =>
+			commands.DeleteAndWaitAsync(new DeleteFileRequest { Path = "/folder" }, CancellationToken, TimeSpan.Zero));
+	}
+
 	#endregion
 
 	#region Integration tests (require token)

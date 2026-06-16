@@ -25,8 +25,13 @@ namespace YandexDisk.Client.Clients
             {
                 await Task.Delay(pullPeriod.Value, cancellationToken).ConfigureAwait(false);
                 operation = await client.GetOperationStatus(operationLink, cancellationToken).ConfigureAwait(false);
-            } while (operation.Status == OperationStatus.InProgress &&
-                     !cancellationToken.IsCancellationRequested);
+            } while (operation.Status == OperationStatus.InProgress);
+
+            // The loop only exits once the server-side operation has settled. A Failure status was
+            // previously discarded, so a failed copy/move/delete/trash operation was reported to the
+            // caller as success; surface it as an error instead.
+            if (operation.Status == OperationStatus.Failure)
+                throw new InvalidOperationException("Yandex.Disk operation failed.");
         }
 
         /// <summary>
