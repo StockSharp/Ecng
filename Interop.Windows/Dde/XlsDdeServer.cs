@@ -122,7 +122,10 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 				}
 			}, TaskCreationOptions.LongRunning);
 
-			Monitor.Wait(regLock);
+			// Bound the wait so a DDE Register() that never returns/pulses cannot hang Start()
+			// forever; the background task is signalled to finish on Pulse, otherwise we time out.
+			if (!Monitor.Wait(regLock, TimeSpan.FromSeconds(30)))
+				throw new InvalidOperationException("DDE server registration timed out.");
 		}
 
 		if (error != null)
