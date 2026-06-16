@@ -65,6 +65,16 @@ public static class DrawingExtensions
 		{
 			c = Color.LightGray;
 		}
+		// Named colors (Red, Blue, White, ...). ToHtml emits color.Name for these, so without
+		// this they would round-trip to Color.Empty - silent data loss vs the other TFMs, which
+		// use ColorTranslator.FromHtml.
+		else if (c.IsEmpty && htmlColor[0] != '#')
+		{
+			var named = Color.FromName(htmlColor);
+
+			if (named.IsKnownColor)
+				c = named;
+		}
 
 		return c;
 #else
@@ -92,9 +102,9 @@ public static class DrawingExtensions
 			return color.Name;
 		}
 
-		if (color.A < 255)
-			return $"#{color.R:X2}{color.G:X2}{color.B:X2}{color.A:X2}";
-
+		// Emit #RRGGBB without the alpha: ColorTranslator.ToHtml on the other TFMs drops alpha,
+		// and the netstandard ToColor only parses #RRGGBB/#RGB - a #RRGGBBAA string would be
+		// unparseable here and divergent across TFMs.
 		return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 #else
 		return ColorTranslator.ToHtml(color);

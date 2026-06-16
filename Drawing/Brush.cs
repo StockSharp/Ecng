@@ -45,7 +45,12 @@ public class LinearGradientBrush(Color[] linearColors, Rectangle rectangle) : Br
 	/// <param name="color0">The color at the first point.</param>
 	/// <param name="color1">The color at the second point.</param>
 	public LinearGradientBrush(Point stop0, Point stop1, Color color0, Color color1)
-		: this([color0, color1], new(stop0, new((stop1.X - stop0.X).Abs(), (stop1.Y - stop0.Y).Abs())))
+		// Anchor the rectangle at the top-left of the two stops, not at stop0: when stop1 is left
+		// of or above stop0 the old rectangle was offset into the wrong quadrant and didn't even
+		// contain stop1.
+		: this([color0, color1], new(
+			new(stop0.X.Min(stop1.X), stop0.Y.Min(stop1.Y)),
+			new((stop1.X - stop0.X).Abs(), (stop1.Y - stop0.Y).Abs())))
 	{
 	}
 

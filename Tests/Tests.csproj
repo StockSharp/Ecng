@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Compilation.FSharp\Compilation.FSharp.csproj" />
     <ProjectReference Include="..\Compilation.Python\Compilation.Python.csproj" />
     <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
+    <ProjectReference Include="..\Drawing\Drawing.csproj" />
     <ProjectReference Include="..\Backup\Backup.csproj" />
     <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
     <ProjectReference Include="..\Backup.Azure\Backup.Azure.csproj" />
