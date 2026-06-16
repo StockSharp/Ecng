@@ -72,6 +72,7 @@ public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 	private readonly TimeSpan _flushInterval;
 	private Task _processingTask;
 	private CancellationTokenSource _internalCts;
+	private readonly Lock _runLock = new();
 	private int _pendingCount;
 
 	/// <summary>
@@ -108,13 +109,19 @@ public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 	/// <returns>Task that completes when processing is stopped.</returns>
 	public Task RunAsync(CancellationToken cancellationToken = default)
 	{
-		if (_processingTask != null)
-			throw new InvalidOperationException("Already running");
+		// Guard the check-and-start atomically: two concurrent RunAsync calls could otherwise both
+		// pass the null check and start two ProcessOperationsAsync loops on the same single-reader
+		// channel, leaking one CTS/Task and violating the single-reader contract.
+		using (_runLock.EnterScope())
+		{
+			if (_processingTask != null)
+				throw new InvalidOperationException("Already running");
 
-		_internalCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-		_processingTask = Task.Run(() => ProcessOperationsAsync(_internalCts.Token), _internalCts.Token);
+			_internalCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			_processingTask = Task.Run(() => ProcessOperationsAsync(_internalCts.Token), _internalCts.Token);
 
-		return _processingTask;
+			return _processingTask;
+		}
 	}
 
 	private async Task ProcessOperationsAsync(CancellationToken cancellationToken)
@@ -319,7 +326,10 @@ public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
-		var tcs = new TaskCompletionSource<bool>();
+		// RunContinuationsAsynchronously so the awaiter's continuation does not run inline on the
+		// single processing loop when the operation completes - an inline continuation that blocks
+		// on this executor would deadlock it, and any continuation stalls the next queued operation.
+		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		await EnqueueAsync(new Operation
 		{
@@ -337,7 +347,10 @@ public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 	/// <returns>Task.</returns>
 	public async Task WaitFlushAsync(CancellationToken cancellationToken = default)
 	{
-		var tcs = new TaskCompletionSource<bool>();
+		// RunContinuationsAsynchronously so the awaiter's continuation does not run inline on the
+		// single processing loop when the operation completes - an inline continuation that blocks
+		// on this executor would deadlock it, and any continuation stalls the next queued operation.
+		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		await EnqueueAsync(new Operation
 		{
