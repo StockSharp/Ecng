@@ -144,6 +144,11 @@ public class FastTimeSpanParser
 			};
 		}
 
+		// Append any trailing literal after the last placeholder, otherwise ToString drops it
+		// and its output no longer matches the template (mirrors FastDateTimeParser).
+		if (prevIndex < template.Length)
+			parts2.Add((Parts.String, template.Substring(prevIndex)));
+
 		_parts = [.. parts2];
 	}
 
