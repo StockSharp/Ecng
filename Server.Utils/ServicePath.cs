@@ -2,7 +2,6 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 
 using Ecng.Serialization;
 using Ecng.Logging;
@@ -18,7 +17,10 @@ public static class ServicePath
 	/// <summary>
 	/// Current service directory.
 	/// </summary>
-	public static string ServiceDir => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
+	// AppContext.BaseDirectory is correct even for single-file published apps, where
+	// Assembly.GetExecutingAssembly().Location returns an empty string and would make
+	// ServiceDir empty and DataDir resolve relative to the current working directory.
+	public static string ServiceDir => AppContext.BaseDirectory;
 
 	/// <summary>
 	/// Get path to Data directory.
