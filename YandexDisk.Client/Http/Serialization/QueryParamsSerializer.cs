@@ -26,8 +26,6 @@ namespace YandexDisk.Client.Http.Serialization
 
             //Сериализатор для строки
             RegisterSerializer(typeof(string), DefaultSerializer);
-            //Сериализатор для времени
-            RegisterSerializer(typeof(DateTime), new DateTimeSerializer());
             //Сериализатор для TimeSpan
             RegisterSerializer(typeof(TimeSpan), new FunctionSerializer((obj, type) =>
             {
