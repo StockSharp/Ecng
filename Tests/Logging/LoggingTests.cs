@@ -227,6 +227,33 @@ public class LoggingTests : BaseTestClass
 		=> new(src, DateTime.UtcNow, level, text);
 
 	[TestMethod]
+	[DoNotParallelize]
+	public async Task SyncMode_Dispose_DeliversDisposeMessageToListeners()
+	{
+		var listener = new MockLogListener();
+
+		using (var manager = new LogManager(false))
+		{
+			manager.Listeners.Add(listener);
+
+			var src = new LogReceiver("S") { LogLevel = LogLevels.Debug };
+			manager.Sources.Add(src);
+
+			((ILogReceiver)src).AddLog(Msg(src, LogLevels.Error, "boom"));
+
+			// Sync mode flushes fire-and-forget on each log; let it settle.
+			await Task.Delay(200, CancellationToken);
+		}
+
+		listener.SyncMessages.Any(m => m.Message == "boom")
+			.AssertTrue("Sync-mode message must reach the listener.");
+
+		// Was previously skipped entirely in sync mode (dispose only flushed in async mode).
+		listener.SyncMessages.Any(m => m.IsDispose)
+			.AssertTrue("Sync-mode dispose must deliver the dispose marker to listeners.");
+	}
+
+	[TestMethod]
 	public void Filter_EmptyCollection()
 	{
 		var src = new LogReceiver("S");

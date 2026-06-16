@@ -52,12 +52,14 @@ public class LogManager : Disposable, IPersistable
 			IsDispose = true;
 		}
 
-		public void Wait()
+		public void Wait(TimeSpan timeout)
 		{
 			lock (_syncRoot)
 			{
+				// Bounded wait so a missed Pulse (e.g. an exception before the message was
+				// delivered) degrades to a delayed dispose instead of a permanent hang.
 				if (!_processed)
-					Monitor.Wait(_syncRoot);
+					Monitor.Wait(_syncRoot, timeout);
 
 				_processed = false;
 			}
@@ -124,77 +126,92 @@ public class LogManager : Disposable, IPersistable
 
 	private async Task FlushAsync()
 	{
-		LogMessage[] temp;
-
-		using (_syncRoot.EnterScope())
+		// Loop so messages added while a flush is in progress (and the dispose marker) are drained
+		// by this same call rather than waiting for the next timer tick - in sync mode there is no
+		// timer, and the >1M overflow safeguard relies on a flush actually emptying the backlog.
+		while (true)
 		{
-			if (_isFlushing)
-				return;
+			LogMessage[] temp;
 
-			temp = _pendingMessages.CopyAndClear();
+			using (_syncRoot.EnterScope())
+			{
+				if (_isFlushing)
+					return;
 
-			if (temp.Length == 0)
-				return;
+				temp = _pendingMessages.CopyAndClear();
 
-			_isFlushing = true;
-		}
+				if (temp.Length == 0)
+					return;
 
-		try
-		{
-			var messages = new List<LogMessage>();
+				_isFlushing = true;
+			}
 
+			// Capture the dispose marker up-front so DisposeManaged's Wait is always released, even
+			// if building or delivering the messages throws below.
 			DisposeLogMessage disposeMessage = null;
-			ILogSource prevSource = null;
-			var level = default(LogLevels);
 
 			foreach (var message in temp)
 			{
-				if (prevSource == null || prevSource != message.Source)
+				if (message.IsDispose)
 				{
-					prevSource = message.Source;
-					level = prevSource.GetLogLevel();
+					disposeMessage = (DisposeLogMessage)message;
+					break;
+				}
+			}
+
+			try
+			{
+				var messages = new List<LogMessage>();
+
+				ILogSource prevSource = null;
+				var level = default(LogLevels);
+
+				foreach (var message in temp)
+				{
+					if (prevSource == null || prevSource != message.Source)
+					{
+						prevSource = message.Source;
+						level = prevSource.GetLogLevel();
+					}
+
+					if (level == LogLevels.Inherit)
+						level = Application.LogLevel;
+
+					if (level <= message.Level)
+						messages.Add(message);
 				}
 
-				if (level == LogLevels.Inherit)
-					level = Application.LogLevel;
-
-				if (level <= message.Level)
-					messages.Add(message);
-
-				if (message.IsDispose)
-					disposeMessage = (DisposeLogMessage)message;
-			}
-
-			if (messages.Count > 0)
-			{
-				var listeners = _listeners.Cache;
-
-				await listeners.Select(async listener =>
+				if (messages.Count > 0)
 				{
-					try
-					{
-						if (listener is IAsyncLogListener all)
-							await all.WriteMessagesAsync(messages);
-						else
-							listener.WriteMessages(messages);
-					}
-					catch (Exception ex)
-					{
-						Trace.WriteLine(ex);
-					}
-				}).WhenAll();
-			}
+					var listeners = _listeners.Cache;
 
-			disposeMessage?.Pulse();
-		}
-		catch (Exception ex)
-		{
-			Trace.WriteLine(ex);
-		}
-		finally
-		{
-			using (_syncRoot.EnterScope())
-				_isFlushing = false;
+					await listeners.Select(async listener =>
+					{
+						try
+						{
+							if (listener is IAsyncLogListener all)
+								await all.WriteMessagesAsync(messages);
+							else
+								listener.WriteMessages(messages);
+						}
+						catch (Exception ex)
+						{
+							Trace.WriteLine(ex);
+						}
+					}).WhenAll();
+				}
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
+			finally
+			{
+				disposeMessage?.Pulse();
+
+				using (_syncRoot.EnterScope())
+					_isFlushing = false;
+			}
 		}
 	}
 
@@ -246,6 +263,13 @@ public class LogManager : Disposable, IPersistable
 			if (value < TimeSpan.FromMilliseconds(1))
 				throw new ArgumentOutOfRangeException(nameof(value), value, "Cannot be less than 1 millisecond.");
 
+			// PeriodicTimer's period maxes out near uint.MaxValue ms; clamp so a persisted
+			// TimeSpan.MaxValue (the value the getter returns in sync mode) loaded into an async
+			// manager can't throw inside the timer task and kill periodic flushing.
+			var maxInterval = TimeSpan.FromMilliseconds(int.MaxValue);
+			if (value > maxInterval)
+				value = maxInterval;
+
 			if (_flushTimer.IsRunning)
 				_flushTimer.ChangeInterval(value);
 			else
@@ -290,8 +314,11 @@ public class LogManager : Disposable, IPersistable
 
 	private void ImmediateFlush()
 	{
-		_flushTimer.Stop();
-		_flushTimer.Start(FlushInterval, TimeSpan.Zero);
+		// Actually flush now. FlushAsync drains its whole backlog and is serialized by _isFlushing,
+		// and it works in sync mode (no timer). The old timer restart only reset the countdown and
+		// did not flush until a full interval elapsed, defeating the overflow safeguard and delaying
+		// dispose.
+		_ = FlushAsync();
 	}
 
 	/// <summary>
@@ -307,23 +334,21 @@ public class LogManager : Disposable, IPersistable
 		Sources.Clear();
 		_unhandledExceptionSource.Dispose();
 
-		if (_asyncMode)
+		using (_syncRoot.EnterScope())
 		{
-			using (_syncRoot.EnterScope())
-			{
-				if (ClearPendingOnDispose)
-					_pendingMessages.Clear();
+			if (ClearPendingOnDispose)
+				_pendingMessages.Clear();
 
-				_pendingMessages.Add(_disposeMessage);
-			}
-
-			// flushing accumulated messages and closing the timer
-
-			ImmediateFlush();
-
-			_disposeMessage.Wait();
-			_flushTimer.Dispose();
+			_pendingMessages.Add(_disposeMessage);
 		}
+
+		// Drain pending (incl. the dispose marker) and wait for listeners to be notified in both
+		// async and sync modes - sync mode has no timer but FlushAsync still delivers and pulses,
+		// so listeners that act on the dispose message (e.g. FileLogListener) are notified.
+		ImmediateFlush();
+
+		_disposeMessage.Wait(TimeSpan.FromSeconds(10));
+		_flushTimer?.Dispose();
 
 		if (ReferenceEquals(_instance, this))
 			_instance = null;
