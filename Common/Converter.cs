@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Common;
 
+using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
 using System.Net.Sockets;
@@ -16,7 +17,11 @@ public static class Converter
 	private static readonly Dictionary<Type, DbType> _dbTypes = [];
 	private static readonly Dictionary<string, Type> _sharpAliases = [];
 	private static readonly Dictionary<Type, string> _sharpAliasesByValue = [];
-	private static readonly Dictionary<string, Type> _typeCache = [];
+	// Read lock-free on a hot path (string->Type conversion) while inserts happen under
+	// _typeCacheLock; a plain Dictionary read concurrent with an Add/resize is undefined
+	// behaviour, so the cache itself must be concurrent. The lock is kept only to serialize the
+	// expensive Type.GetType resolution so two threads don't both resolve the same name.
+	private static readonly ConcurrentDictionary<string, Type> _typeCache = [];
 	private static readonly Lock _typeCacheLock = new();
 
 	private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = [];
@@ -238,13 +243,13 @@ public static class Converter
 				}
 
 				if (type != null)
-					_typeCache.Add(key, type);
+					_typeCache[key] = type;
 				else
 				{
 					var result = TypeFallback?.Invoke(input);
 					if (result != null)
 					{
-						_typeCache.Add(key, result);
+						_typeCache[key] = result;
 						return result;
 					}
 
@@ -729,9 +734,12 @@ public static class Converter
 				}
 			}
 			else if (value is DateTime dt && destinationType == typeof(string))
-				return (dt.Ticks % TimeSpan.TicksPerSecond) != 0 ? dt.ToString("o") : value.ToString();
+				// Always round-trippable ISO 8601: the read-back parses with InvariantCulture +
+				// RoundtripKind, so the old whole-second value.ToString() (current culture) failed
+				// to round-trip on non-invariant machines.
+				return dt.ToString("o");
 			else if (value is DateTimeOffset dto && destinationType == typeof(string))
-				return (dto.Ticks % TimeSpan.TicksPerSecond) != 0 ? dto.ToString("o") : value.ToString();
+				return dto.ToString("o");
 			else if (value is string str4 && destinationType == typeof(DateTime))
 				return DateTime.Parse(str4, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 			else if (value is string str5 && destinationType == typeof(DateTimeOffset))

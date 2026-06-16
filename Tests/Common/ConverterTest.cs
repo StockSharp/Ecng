@@ -20,6 +20,22 @@ public class ConverterTest : BaseTestClass
 	}
 
 	[TestMethod]
+	public void DateTime_WholeSeconds_RoundTripsAcrossCulture()
+	{
+		// Whole-second values used to serialize via the current-culture ToString(), but are
+		// always parsed back with InvariantCulture + RoundtripKind - so on a non-invariant
+		// machine the round-trip was broken. Verify it holds under de-DE.
+		using (Do.WithCulture(System.Globalization.CultureInfo.GetCultureInfo("de-DE")))
+		{
+			var dt = new DateTime(2026, 6, 17, 15, 30, 0, DateTimeKind.Utc); // whole seconds
+			dt.To<string>().To<DateTime>().AssertEqual(dt);
+
+			var dto = new DateTimeOffset(2026, 6, 17, 15, 30, 0, TimeSpan.FromHours(3));
+			dto.To<string>().To<DateTimeOffset>().AssertEqual(dto);
+		}
+	}
+
+	[TestMethod]
 	public void String2Bool()
 	{
 		1.To<bool>().AssertTrue();
