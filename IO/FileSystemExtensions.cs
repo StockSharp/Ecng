@@ -530,8 +530,16 @@ public static class FileSystemExtensions
 
 		var b = new byte[2048];
 
+		// Read up to the header window, not exactly 2048 bytes: the PE header lives near the start,
+		// and requiring a full 2048-byte read would throw for any file shorter than that.
 		using (var s = fs.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-			s.ReadBytes(b, b.Length);
+		{
+			var offset = 0;
+			int read;
+
+			while (offset < b.Length && (read = s.Read(b, offset, b.Length - offset)) > 0)
+				offset += read;
+		}
 
 		const int peHeaderOffset = 60;
 		const int linkerTimestampOffset = 8;
@@ -648,13 +656,11 @@ public static class FileSystemExtensions
 		{
 			fileSystem.DeleteDirectory(dir, false);
 		}
-		catch (IOException)
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
-			fileSystem.DeleteDirectory(dir, false);
-		}
-		catch (UnauthorizedAccessException)
-		{
-			fileSystem.DeleteDirectory(dir, false);
+			// Best effort: a transient lock may clear on its own. Swallow it and let the wait loop
+			// and the return value below report whether the directory actually disappears, instead
+			// of an immediate (delay-less) retry that just re-throws the same exception.
 		}
 
 		var limit = iterCount;

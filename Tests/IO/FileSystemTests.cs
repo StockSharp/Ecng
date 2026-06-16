@@ -1360,6 +1360,28 @@ public class FileSystemTests : BaseTestClass
 			"CopyFile exceeding MaxSize should throw IOException");
 	}
 
+	[TestMethod]
+	public void GetTimestamp_ShortFile_DoesNotThrow()
+	{
+		var fs = new MemoryFileSystem();
+		const string path = "small.bin";
+
+		// A file far shorter than the 2048-byte PE header window. The old code read
+		// exactly 2048 bytes (ReadBytes) and threw for anything smaller; reading up to
+		// the window must succeed and decode the PE fields from the zero-padded buffer.
+		using (var s = fs.OpenWrite(path))
+		{
+			var data = new byte[64];
+			s.Write(data, 0, data.Length);
+		}
+
+		var ts = fs.GetTimestamp(path);
+
+		// ToLocalTime always yields a Local-kind value — proof the method returned
+		// rather than throwing.
+		ts.Kind.AssertEqual(DateTimeKind.Local);
+	}
+
 	#endregion
 
 }
