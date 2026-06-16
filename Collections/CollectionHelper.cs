@@ -975,20 +975,28 @@ public static class CollectionHelper
 
 		isNew = false;
 
-		if (!dictionary.TryGetValue(key, out var value))
+		var sync = dictionary as ISynchronizedCollection;
+
+		// A synchronized dictionary locks inside its own TryGetValue, so a lock-free fast read is
+		// safe. A plain Dictionary is not: the slow path below only takes the instance lock, so an
+		// unlocked TryGetValue racing the Add (and its resize) is undefined behaviour - for it the
+		// lookup must happen under the lock too.
+		if (sync is not null && dictionary.TryGetValue(key, out var existing))
+			return existing;
+
+		var l = sync?.SyncRoot;
+		SyncScope syncObj = l is null ? new(dictionary) : new(l);
+
+		TValue value;
+
+		using (syncObj)
 		{
-			var l = (dictionary as ISynchronizedCollection)?.SyncRoot;
-			SyncScope syncObj = l is null ? new(dictionary) : new(l);
-
-			using (syncObj)
+			if (!dictionary.TryGetValue(key, out value))
 			{
-				if (!dictionary.TryGetValue(key, out value))
-				{
-					value = handler(key);
-					dictionary.Add(key, value);
+				value = handler(key);
+				dictionary.Add(key, value);
 
-					isNew = true;
-				}
+				isNew = true;
 			}
 		}
 
