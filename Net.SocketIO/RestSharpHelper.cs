@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Net;
 
+using System.Reflection;
 using System.Security;
 
 using Nito.AsyncEx;
@@ -57,16 +58,21 @@ public static class RestSharpHelper
 			=> _authenticators.TryGetValue(request, out var auth) && auth != null ? auth.Authenticate(client, request) : default;
 	}
 
-	private static readonly SynchronizedDictionary<object, RestClient> _clients = [];
+	// Keyed by the originating assembly, not the caller instance: the client only depends on the
+	// assembly (its UserAgent), and keying by the caller object pinned every caller in this static
+	// dictionary forever (a memory + socket-handle leak). One client per assembly is the natural
+	// granularity and bounds the cache to the set of loaded assemblies.
+	private static readonly SynchronizedDictionary<Assembly, RestClient> _clients = [];
 
-	// Gets a RestClient instance based on a key.
+	// Gets a RestClient instance for the assembly the key belongs to.
 	private static RestClient GetClient(object key)
 	{
-		return _clients.SafeAdd(key, _ =>
+		var asm = (key is string ? typeof(RestSharpHelper) : key.GetType()).Assembly;
+
+		return _clients.SafeAdd(asm, a =>
 		{
-			var asm = (key is string ? typeof(RestSharpHelper) : key.GetType()).Assembly;
-			var prod = asm.GetAttribute<AssemblyProductAttribute>()?.Product;
-			var ver = asm.GetName().Version;
+			var prod = a.GetAttribute<AssemblyProductAttribute>()?.Product;
+			var ver = a.GetName().Version;
 
 			return new(new RestClientOptions
 			{

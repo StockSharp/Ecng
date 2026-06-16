@@ -6,6 +6,8 @@ using System.Buffers;
 using Ecng.Reflection;
 using Ecng.Localization;
 
+using Nito.AsyncEx;
+
 /// <summary>
 /// Represents a client for WebSocket connections.
 /// </summary>
@@ -374,7 +376,10 @@ public class WebSocketClient : Disposable, IConnection
 			var preProcess2 = PreProcess2;
 			var preProcess2Mem = preProcess2 != null ? new byte[BufferSizeUncompress] : Memory<byte>.Empty;
 
-			var errorCount = 0;
+			// Separate counters: a parsing error must not count against the network-error budget
+			// (or vice versa), and a successful read resets both.
+			var parsingErrors = 0;
+			var networkErrors = 0;
 
 			const int maxParsingErrors = 100;
 			const int maxNetworkErrors = 10;
@@ -451,7 +456,8 @@ public class WebSocketClient : Disposable, IConnection
 
 						await _process(this, new(Encoding, roMem), token).NoWait();
 
-						errorCount = 0;
+						parsingErrors = 0;
+						networkErrors = 0;
 					}
 					catch (Exception ex)
 					{
@@ -460,10 +466,11 @@ public class WebSocketClient : Disposable, IConnection
 
 						await RaiseErrorAsync(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex), token).NoWait();
 
-						if (++errorCount < maxParsingErrors)
+						if (++parsingErrors < maxParsingErrors)
 							continue;
 
 						_errorLog("Max parsing error {0} limit reached.", maxParsingErrors);
+						break;
 					}
 					finally
 					{
@@ -478,10 +485,10 @@ public class WebSocketClient : Disposable, IConnection
 					if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
 						break;
 
-					if (++errorCount < maxNetworkErrors)
+					if (++networkErrors < maxNetworkErrors)
 					{
 						if (!token.IsCancellationRequested)
-							_errorLog("{0} errors", $"{errorCount}/{maxNetworkErrors}");
+							_errorLog("{0} errors", $"{networkErrors}/{maxNetworkErrors}");
 
 						continue;
 					}
@@ -523,7 +530,9 @@ public class WebSocketClient : Disposable, IConnection
 
 			if (expected == true)
 			{
-				await RaiseStateChangedAsync(ConnectionStates.Disconnected, token).NoWait();
+				// Terminal transition: the connection token is already cancelled here, so deliver
+				// the final state with None — otherwise a clean disconnect looks like a cancellation.
+				await RaiseStateChangedAsync(ConnectionStates.Disconnected, default).NoWait();
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -554,7 +563,9 @@ public class WebSocketClient : Disposable, IConnection
 					}
 				}
 
-				await RaiseStateChangedAsync(ConnectionStates.Failed, token).NoWait();
+				// Terminal transition: raise with None so the dead connection token does not mask
+				// the Failed notification.
+				await RaiseStateChangedAsync(ConnectionStates.Failed, default).NoWait();
 
 				if (ReferenceEquals(_source, source))
 					_source = null;
@@ -650,7 +661,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="subId">The subscription identifier.</param>
 	/// <param name="pre">A pre-send callback function.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
-	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
+	public async ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 	{
 		if (_ws is not ClientWebSocket ws)
 			throw new InvalidOperationException("WebSocket is not connected.");
@@ -663,7 +674,10 @@ public class WebSocketClient : Disposable, IConnection
 		else if (subId < 0) // unsubscribe
 			RemoveResend(subId);
 
-		return ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
+		// Hold the send lock across the write so a concurrent SendOpCode cannot splice a raw frame
+		// into the middle of this message.
+		using (await _sendLock.LockAsync(cancellationToken).ConfigureAwait(false))
+			await ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -738,6 +752,11 @@ public class WebSocketClient : Disposable, IConnection
 
 	// The following members are internal or private and hence not documented with XML comments for public API.
 
+	// Serialises all frame writes (normal SendAsync and the raw SendOpCode below) so they cannot
+	// interleave on the wire - SendOpCode writes through SendFrameLockAcquiredNonCancelableAsync,
+	// which bypasses the socket's own internal send lock.
+	private readonly AsyncLock _sendLock = new();
+
 	private FieldInfo _innerSocketField;
 	private PropertyInfo _socketProp;
 	private Type _opCodeEnum;
@@ -748,7 +767,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// </summary>
 	/// <param name="code">The operation code to send (default is 0x9 for ping).</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public ValueTask SendOpCode(byte code = 0x9 /* ping */)
+	public async ValueTask SendOpCode(byte code = 0x9 /* ping */)
 	{
 		if (_ws is not ClientWebSocket ws || ws.State != WebSocketState.Open)
 			throw new InvalidOperationException("WebSocket is not connected.");
@@ -777,7 +796,11 @@ public class WebSocketClient : Disposable, IConnection
 			if (_sendMethod is null)
 				throw new NotSupportedException("SendFrameLockAcquiredNonCancelableAsync method not found.");
 
-			return (ValueTask)_sendMethod.Invoke(socket, [opCode, true, true, ReadOnlyMemory<byte>.Empty]);
+			// SendFrameLockAcquiredNonCancelableAsync assumes the caller already holds the socket's
+			// send lock, which we cannot take; hold our own _sendLock instead (the normal SendAsync
+			// path takes it too) so this raw frame never interleaves with a normal send.
+			using (await _sendLock.LockAsync().ConfigureAwait(false))
+				await ((ValueTask)_sendMethod.Invoke(socket, [opCode, true, true, ReadOnlyMemory<byte>.Empty])).NoWait();
 		}
 		catch (NotSupportedException)
 		{
