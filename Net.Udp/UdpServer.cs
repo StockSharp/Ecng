@@ -123,24 +123,36 @@ public class UdpServer : Disposable
 
 	private UdpClient GetOrCreateClient(IPEndPoint endpoint, List<IPEndPoint> trackNewEndpoints)
 	{
-		return _clients.GetOrAdd(endpoint, ep =>
+		// Fast path: avoid constructing a socket when one already exists.
+		if (_clients.TryGetValue(endpoint, out var existing))
+			return existing;
+
+		var client = new UdpClient(endpoint.AddressFamily);
+
+		try
 		{
-			var client = new UdpClient(ep.AddressFamily);
+			if (endpoint.Address.IsMulticastAddress())
+				client.JoinMulticastGroup(endpoint.Address);
+		}
+		catch
+		{
+			client.Dispose();
+			throw;
+		}
 
-			try
-			{
-				if (ep.Address.IsMulticastAddress())
-					client.JoinMulticastGroup(ep.Address);
-			}
-			catch
-			{
-				client.Dispose();
-				throw;
-			}
+		// GetOrAdd's factory can run several times under contention and discard all but one
+		// result without disposing it; build the client here and add the ready value instead,
+		// disposing our own (and skipping the side effects) if another thread won the race.
+		var actual = _clients.GetOrAdd(endpoint, client);
 
-			trackNewEndpoints?.Add(ep);
-			return client;
-		});
+		if (!ReferenceEquals(actual, client))
+		{
+			client.Dispose();
+			return actual;
+		}
+
+		trackNewEndpoints?.Add(endpoint);
+		return client;
 	}
 
 	/// <inheritdoc />

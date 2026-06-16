@@ -247,7 +247,11 @@ public class RealPacketReceiver(
 						if (_fullMode == PacketQueueFullModes.DropOldest && reader.TryRead(out var oldest))
 						{
 							_processor.DisposePacket(oldest.packet, "queue overflow (oldest)");
-							writer.TryWrite((packet, len));
+
+							// Dispose the new packet too if it still can't be queued (another writer
+							// may have refilled the slot), otherwise it leaks.
+							if (!writer.TryWrite((packet, len)))
+								_processor.DisposePacket(packet, "queue overflow (new)");
 						}
 						else
 						{
