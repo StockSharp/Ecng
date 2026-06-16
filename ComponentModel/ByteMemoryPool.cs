@@ -144,7 +144,9 @@ public class ByteMemoryPool : MemoryPool<byte>
 	/// </summary>
 	public int TotalCount => _totalCount;
 
-	private int _totalBytes;
+	// long-backed so the running total can exceed int.MaxValue without overflowing
+	// (the public TotalBytes is long; large pools of 64KB+ buffers can pass 2GB).
+	private long _totalBytes;
 
 	/// <summary>
 	/// Gets the total number of bytes currently stored in the pool across all sizes.
