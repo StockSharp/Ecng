@@ -698,6 +698,41 @@ class AnalyticsScript_{i}:
 			_coreLibPath, _ecngCommonPath);
 	}
 
+	/// <summary>
+	/// Regression test: the F# compiler routes its in-memory file system through an AsyncLocal
+	/// scope instead of a process-wide lock, so distinct compilations running concurrently must not
+	/// see each other's sources. If the scope did not flow into the compiler the in-memory sources
+	/// would not be found and every compilation would error.
+	/// </summary>
+	[TestMethod]
+	public async Task FSharpCompile_Concurrent_IsolatedFileSystems()
+	{
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
+		ICompiler compiler = new FSharpCompiler();
+
+		var codeA = "module Foo\nlet bar () : int = 42";
+		var codeB = "module Foo\nlet bar () : string = \"hello\"";
+
+		var tasks = Enumerable.Range(0, 8)
+			.Select(i => compiler.Compile("test", [i % 2 == 0 ? codeA : codeB], [_coreLibPath], _fs, CancellationToken))
+			.ToArray();
+
+		var results = await Task.WhenAll(tasks);
+
+		foreach (var res in results)
+		{
+			if (res.HasErrors())
+			{
+				var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+				Fail($"Compilation errors:\n{errors.JoinNL()}");
+			}
+
+			res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		}
+	}
+
 	[TestMethod]
 	public void AssemblyReference_Location_WithFullPath_ShouldPreservePath()
 	{

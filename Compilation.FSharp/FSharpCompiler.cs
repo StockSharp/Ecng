@@ -14,8 +14,6 @@ using Ecng.Security;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 
-using Nito.AsyncEx;
-
 using global::FSharp.Compiler.Text;
 using global::FSharp.Compiler.CodeAnalysis;
 using global::FSharp.Compiler.Diagnostics;
@@ -26,55 +24,66 @@ using global::FSharp.Compiler.IO;
 /// </summary>
 public class FSharpCompiler : ICompiler
 {
-	private class FileSystemContext : Disposable
+	private sealed record FileSystemScope(Dictionary<string, byte[]> Input, Stream Output);
+
+	// Per-execution-flow file set. The single global FCS file-system shim (installed once below)
+	// routes reads/writes to the scope active on the current async flow, so concurrent compilations
+	// stay isolated without a process-wide lock - each Compile/Analyse runs on its own flow, and the
+	// shim falls back to the real disk when no scope is active.
+	private static readonly AsyncLocal<FileSystemScope> _scope = new();
+
+	private sealed class RoutingFileSystem : DefaultFileSystem
 	{
-		private class InMemoryFileSystem(Dictionary<string, byte[]> input, Stream output) : DefaultFileSystem
+		public override bool FileExistsShim(string fileName)
 		{
-			private readonly Dictionary<string, byte[]> _input = input ?? throw new ArgumentNullException(nameof(input));
-			private readonly Stream _output = output ?? throw new ArgumentNullException(nameof(output));
+			var scope = _scope.Value;
 
-			public override bool FileExistsShim(string fileName)
-			{
-				if (_input.ContainsKey(fileName) || _input.ContainsKey(Path.GetFileName(fileName)))
-					return true;
+			if (scope is not null && (scope.Input.ContainsKey(fileName) || scope.Input.ContainsKey(Path.GetFileName(fileName))))
+				return true;
 
-				return base.FileExistsShim(fileName);
-			}
-
-			public override Stream OpenFileForReadShim(string filePath, FSharpOption<bool> useMemoryMappedFile, FSharpOption<bool> shouldShadowCopy)
-			{
-				if (_input.TryGetValue(filePath, out var body) || _input.TryGetValue(Path.GetFileName(filePath), out body))
-					return new MemoryStream(body);
-
-				return base.OpenFileForReadShim(filePath, useMemoryMappedFile, shouldShadowCopy);
-			}
-
-			public override Stream OpenFileForWriteShim(string filePath,
-				FSharpOption<FileMode> fileMode,
-				FSharpOption<FileAccess> fileAccess,
-				FSharpOption<FileShare> fileShare)
-			{
-				return _output;
-			}
+			return base.FileExistsShim(fileName);
 		}
 
-		private readonly global::FSharp.Compiler.IO.IFileSystem _prev;
-
-		public FileSystemContext(Dictionary<string, byte[]> input, MemoryStream output)
+		public override Stream OpenFileForReadShim(string filePath, FSharpOption<bool> useMemoryMappedFile, FSharpOption<bool> shouldShadowCopy)
 		{
-			_prev = FileSystemAutoOpens.FileSystem;
+			var scope = _scope.Value;
 
-			FileSystemAutoOpens.FileSystem = new InMemoryFileSystem(input, output);
+			if (scope is not null && (scope.Input.TryGetValue(filePath, out var body) || scope.Input.TryGetValue(Path.GetFileName(filePath), out body)))
+				return new MemoryStream(body);
+
+			return base.OpenFileForReadShim(filePath, useMemoryMappedFile, shouldShadowCopy);
 		}
+
+		public override Stream OpenFileForWriteShim(string filePath,
+			FSharpOption<FileMode> fileMode,
+			FSharpOption<FileAccess> fileAccess,
+			FSharpOption<FileShare> fileShare)
+		{
+			var scope = _scope.Value;
+
+			if (scope?.Output is not null)
+				return scope.Output;
+
+			return base.OpenFileForWriteShim(filePath, fileMode, fileAccess, fileShare);
+		}
+	}
+
+	private sealed class FileSystemContext : Disposable
+	{
+		public FileSystemContext(Dictionary<string, byte[]> input, Stream output)
+			=> _scope.Value = new(input, output);
 
 		protected override void DisposeManaged()
 		{
-			FileSystemAutoOpens.FileSystem = _prev;
+			_scope.Value = null;
 			base.DisposeManaged();
 		}
 	}
 
-	private static readonly AsyncLock _lock = new();
+	static FSharpCompiler()
+	{
+		FileSystemAutoOpens.FileSystem = new RoutingFileSystem();
+	}
 
 	bool ICompiler.IsAssemblyPersistable { get; } = true;
 	string ICompiler.Extension { get; } = FileExts.FSharp;
@@ -235,8 +244,7 @@ public class FSharpCompiler : ICompiler
 
 		var diagnostics = new List<CompilationError>();
 
-		using var _ = await _lock.LockAsync(cancellationToken);
-		using var __ = new FileSystemContext(projectDict, new());
+		using var __ = new FileSystemContext(projectDict, new MemoryStream());
 
 		foreach (var (sourceName, source) in sourceNames.Zip(sourcesArr))
 		{
@@ -270,7 +278,6 @@ public class FSharpCompiler : ICompiler
 		projectDict.AddRange(inMemoryRefs);
 
 		using var stream = new MemoryStream();
-		using var _ = await _lock.LockAsync(cancellationToken);
 		using var __ = new FileSystemContext(projectDict, stream);
 
 		var (diagnostic, errorCode) = await FSharpAsync.StartAsTask(_checker.Compile(projectOptions, default), default, cancellationToken);
