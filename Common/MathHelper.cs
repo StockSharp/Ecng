@@ -1507,13 +1507,11 @@ public static class MathHelper
 
 		using (_syncObject.EnterScope())
 		{
-			if (!_decimalsCache.ContainsKey(value))
-			{
+			// Bounded cache: once the cap is reached, stop caching and just return the computed
+			// result. A workload with millions of distinct decimals then degrades to uncached
+			// lookups instead of throwing an InvalidOperationException.
+			if (_decimalsCache.Count < 10000000 && !_decimalsCache.ContainsKey(value))
 				_decimalsCache.Add(value, decimals);
-
-				if (_decimalsCache.Count > 10000000)
-					throw new InvalidOperationException();
-			}
 		}
 
 		return decimals;
