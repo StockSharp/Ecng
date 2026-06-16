@@ -105,24 +105,38 @@ namespace YandexDisk.Client.Http
 
             HttpResponseMessage responseMessage = await SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-            TResponse response = await ReadResponse<TResponse>(responseMessage, cancellationToken).ConfigureAwait(false);
-
-            //If response body is null but ProtocolObjectResponse was requested, 
-            //create empty object
-            if (response == null &&
-                typeof (ProtocolObjectResponse).IsAssignableFrom(typeof (TResponse)))
+            try
             {
-                response = new TResponse();
-            }
+                TResponse response = await ReadResponse<TResponse>(responseMessage, cancellationToken).ConfigureAwait(false);
 
-            //If response is ProtocolObjectResponse, 
-            //add HttpStatusCode to response
-            if (response is ProtocolObjectResponse protocolObject)
+                //If response body is null but ProtocolObjectResponse was requested,
+                //create empty object
+                if (response == null &&
+                    typeof (ProtocolObjectResponse).IsAssignableFrom(typeof (TResponse)))
+                {
+                    response = new TResponse();
+                }
+
+                //If response is ProtocolObjectResponse,
+                //add HttpStatusCode to response
+                if (response is ProtocolObjectResponse protocolObject)
+                {
+                    protocolObject.HttpStatusCode = responseMessage.StatusCode;
+                }
+
+                return response;
+            }
+            finally
             {
-                protocolObject.HttpStatusCode = responseMessage.StatusCode;
+                //For a Stream response the caller consumes the content stream, whose lifetime is tied
+                //to the message, so it must stay alive. Every other response type is fully buffered by
+                //ReadResponse, so dispose the message to release the response/content promptly instead
+                //of leaving it to the finalizer.
+                if (!typeof(Stream).IsAssignableFrom(typeof(TResponse)))
+                {
+                    responseMessage.Dispose();
+                }
             }
-
-            return response;
         }
 
         [ItemNotNull]
