@@ -119,6 +119,13 @@ public static class ProcessExtensions
 
 				return jobHandle;
 			}
+			catch
+			{
+				// The job handle is only handed to the caller on success; dispose it on failure so
+				// the job object isn't leaked.
+				jobHandle.Dispose();
+				throw;
+			}
 			finally
 			{
 				extendedInfoPtr.FreeHGlobal();
@@ -176,6 +183,13 @@ public static class ProcessExtensions
 				}
 
 				return jobHandle;
+			}
+			catch
+			{
+				// The job handle is only handed to the caller on success; dispose it on failure so
+				// the job object isn't leaked.
+				jobHandle.Dispose();
+				throw;
 			}
 			finally
 			{
@@ -295,12 +309,30 @@ public static class ProcessExtensions
 		var task1 = ReadProcessOutput(process.StandardOutput, output);
 		var task2 = ReadProcessOutput(process.StandardError, error);
 
-		await task1;
-		await task2;
+		try
+		{
+			await task1;
+			await task2;
 
-		await process.WaitForExitAsync(cancellationToken);
+			await process.WaitForExitAsync(cancellationToken);
 
-		return process.ExitCode;
+			return process.ExitCode;
+		}
+		catch
+		{
+			// On cancellation/timeout the child process would otherwise keep running - disposing the
+			// Process object does not kill it. Terminate it and its whole tree.
+			try
+			{
+				if (!process.HasExited)
+					process.Kill(entireProcessTree: true);
+			}
+			catch
+			{
+			}
+
+			throw;
+		}
 	}
 
 	/// <summary>
