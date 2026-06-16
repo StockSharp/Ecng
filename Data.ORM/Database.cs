@@ -302,7 +302,9 @@ public partial class Database : Disposable, IStorage
 			if (_bulkLoad.TryGetValue(meta.EntityType, out var info))
 			{
 				var dict = await info.EnsureInit(cancellationToken).NoWait();
-				dict.Add(id, entity);
+				// Indexer, not Add: a prior ReadAsync miss for this id cached a null here, and the
+				// INSERT already succeeded — overwrite the stale miss instead of throwing.
+				dict[id] = entity;
 			}
 
 			return (object)entity;

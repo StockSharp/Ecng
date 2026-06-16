@@ -17,6 +17,11 @@ public partial class Database
 	private class BulkLoadInfo
 	{
 		private readonly Database _database;
+		private readonly Lock _initGate = new();
+		// Single-flight: the first caller starts the full-table load and every other caller awaits
+		// the SAME task, so the expensive ReadAllAsync runs once and no lock is ever held across the
+		// DB round-trip (callers wait on the shared task, not on a mutex).
+		private Task<CachedSynchronizedDictionary<object, object>> _initTask;
 		private CachedSynchronizedDictionary<object, object> _cachedEntities;
 
 		public BulkLoadInfo(Database database, Schema meta)
@@ -30,23 +35,48 @@ public partial class Database
 
 		public Schema Meta { get; }
 
-		public async ValueTask<CachedSynchronizedDictionary<object, object>> EnsureInit(CancellationToken cancellationToken)
+		public ValueTask<CachedSynchronizedDictionary<object, object>> EnsureInit(CancellationToken cancellationToken)
 		{
-			if (_cachedEntities is null)
+			var cached = _cachedEntities;
+
+			if (cached is not null)
+				return new(cached);
+
+			Task<CachedSynchronizedDictionary<object, object>> task;
+
+			// The gate is held only to publish the shared task — never across the DB read below.
+			using (_initGate.EnterScope())
+				task = _initTask ??= LoadAllAsync();
+
+			// Each caller honours its own cancellation without cancelling the shared load for others.
+			return new(task.WaitAsync(cancellationToken));
+		}
+
+		private async Task<CachedSynchronizedDictionary<object, object>> LoadAllAsync()
+		{
+			try
 			{
 				object[] cachedEntities;
 
 				using (new Scope<BulkLoadInfo>(this))
-					cachedEntities = await _database.ReadAllAsync(Meta, 0, _database.MaxBulkLoadRows, default, Meta.Identity.Name, ListSortDirection.Ascending, cancellationToken).NoWait();
+					cachedEntities = await _database.ReadAllAsync(Meta, 0, _database.MaxBulkLoadRows, default, Meta.Identity.Name, ListSortDirection.Ascending, default).NoWait();
+
 				var dict = new CachedSynchronizedDictionary<object, object>();
 
 				foreach (var e in cachedEntities)
 					dict.Add(((IDbPersistable)e).GetIdentity(), e);
 
 				_cachedEntities = dict;
+				return dict;
 			}
+			catch
+			{
+				// Drop the faulted task so a later caller can retry instead of caching the failure.
+				using (_initGate.EnterScope())
+					_initTask = null;
 
-			return _cachedEntities;
+				throw;
+			}
 		}
 	}
 
@@ -83,6 +113,20 @@ public partial class Database
 		}
 
 		async ValueTask IAsyncDisposable.DisposeAsync()
+		{
+			// Always pop the ambient Scope even if dependency flushing throws, otherwise the
+			// AsyncLocal scope leaks into unrelated continuations on this execution context.
+			try
+			{
+				await FlushDepsAsync();
+			}
+			finally
+			{
+				_scope.Dispose();
+			}
+		}
+
+		private async ValueTask FlushDepsAsync()
 		{
 			var token = _token;
 
@@ -157,7 +201,8 @@ public partial class Database
 					var key = pair.Key;
 					var entity = pair.Value;
 
-					var t = cache[key];
+					if (!cache.TryGetValue(key, out var t))
+						continue;
 
 					if (entity is null)
 					{
@@ -175,8 +220,6 @@ public partial class Database
 					cacheStore.Touch(key);
 				}
 			}
-
-			_scope.Dispose();
 		}
 	}
 }

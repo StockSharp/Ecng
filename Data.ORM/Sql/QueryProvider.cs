@@ -1,13 +1,17 @@
 namespace Ecng.Data.Sql;
 
 using Ecng.Common;
+using Ecng.Collections;
 
 /// <summary>
 /// Builds and caches SQL <see cref="Query"/> objects for standard CRUD operations.
 /// </summary>
 public class QueryProvider
 {
-	private readonly Dictionary<(Schema, SqlCommandTypes, string, bool), Query> _queries = [];
+	// Concurrent reads race with writes on a plain Dictionary; SafeAdd's first TryGetValue is
+	// unsynchronized, so the cache must be a SynchronizedDictionary (its members lock SyncRoot)
+	// to make the get-or-add safe under concurrent Create calls.
+	private readonly SynchronizedDictionary<(Schema, SqlCommandTypes, string, bool), Query> _queries = [];
 
 	/// <summary>
 	/// Creates or retrieves a cached SQL query for the specified schema, command type, and columns.

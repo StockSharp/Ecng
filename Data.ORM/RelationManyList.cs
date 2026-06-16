@@ -87,7 +87,11 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 				var (sync, dict) = CachedEntitiesPair;
 
 				using var _ = sync.ReaderLock();
-				return dict.Values.ToArray().AsQueryable();
+				// Re-check under the lock: a concurrent ResetCache can clear the dictionary and
+				// reset the flag between the check above and this snapshot, which would otherwise
+				// yield an empty queryable for a populated table.
+				if (_bulkInitialized)
+					return dict.Values.ToArray().AsQueryable();
 			}
 		}
 
@@ -185,6 +189,11 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 	private DateTime? _cacheExpire;
 	private bool _bulkInitialized;
+	private readonly Lock _bulkInitGate = new();
+	// Single-flight for the first-time bulk load: the table is paged in OUTSIDE any lock and only
+	// published into the dictionary under a short writer lock, so the writer lock is never held
+	// across the DB round-trips. The shared task de-duplicates concurrent initialisers.
+	private Task _bulkInitTask;
 
 	private bool BulkInitialized()
 	{
@@ -326,13 +335,26 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 		if (BulkLoad)
 		{
-			if (!BulkInitialized())
-				await GetRangeAsync(0, long.MaxValue, deleted, default, default, cancellationToken).NoWait();
-
 			var (sync, dict) = CachedEntitiesPair;
 
-			using var _ = await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false);
-			return dict.Count;
+			if (BulkInitialized())
+			{
+				using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
+				{
+					// Re-check under the lock: a concurrent ResetCache can clear the dictionary
+					// between the check above and this snapshot, which would otherwise count an
+					// emptied table. If it was reset, fall through to re-initialise.
+					if (_bulkInitialized)
+						return dict.Count;
+				}
+			}
+
+			// Not initialised (or just expired): load once via GetRangeAsync, then count. Done once
+			// per call - no re-check loop, otherwise a tiny CacheTimeOut would re-expire and spin.
+			await GetRangeAsync(0, long.MaxValue, deleted, default, default, cancellationToken).NoWait();
+
+			using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
+				return dict.Count;
 		}
 		else
 		{
@@ -513,54 +535,24 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 			if (BulkInitialized())
 			{
-				TEntity[] cached;
-
 				using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
-					cached = [.. dict.Values];
-
-				return OrderAndPage(cached);
-			}
-
-			// First-time bulk init. Serialise concurrent initialisers under
-			// the writer lock so OnGetGroup is called once; re-check inside
-			// to handle the race where another caller populated the cache
-			// while we were waiting for the lock.
-			using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
-			{
-				if (!_bulkInitialized)
 				{
-					List<TEntity> loaded = [];
-					long offset = 0;
-
-					while (true)
-					{
-						var buffer = await OnGetGroup(offset, BufferSize, deleted, orderByColumn, direction, cancellationToken).NoWait();
-						loaded.AddRange(buffer);
-
-						if (buffer.Length < BufferSize)
-							break;
-
-						offset += BufferSize;
-					}
-
-					dict.Clear();
-
-					foreach (var entity in loaded)
-						dict.Add(GetCacheId(entity), entity);
-
-					_bulkInitialized = true;
-
-					if (CacheTimeOut < TimeSpan.MaxValue)
-						_cacheExpire = DateTime.UtcNow + CacheTimeOut;
+					// Re-check under the lock: a concurrent ResetCache (manual or CacheTimeOut
+					// expiry) can clear the dictionary and reset _bulkInitialized between the
+					// check above and this snapshot, which would otherwise return an empty result
+					// for a populated table. If it was reset, fall through to re-initialise.
+					if (_bulkInitialized)
+						return OrderAndPage([.. dict.Values]);
 				}
 			}
 
-			TEntity[] postInit;
+			// Not initialised (or just expired): page the table in OUTSIDE any lock (single-flight)
+			// and publish it under a short writer lock, then snapshot. Done once per call - no
+			// re-check loop, otherwise a tiny CacheTimeOut would re-expire and spin forever.
+			await EnsureBulkLoadedAsync(orderByColumn, direction, cancellationToken).NoWait();
 
 			using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
-				postInit = [.. dict.Values];
-
-			return OrderAndPage(postInit);
+				return OrderAndPage([.. dict.Values]);
 		}
 
 		List<TEntity> entities = [];
@@ -581,6 +573,62 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		}
 
 		return entities;
+	}
+
+	private Task EnsureBulkLoadedAsync(string orderByColumn, ListSortDirection direction, CancellationToken cancellationToken)
+	{
+		Task task;
+
+		// The gate is held only to publish the shared load task - never across the DB read below.
+		// Start a fresh load when none is in flight: a completed task is a previous load that a
+		// ResetCache / CacheTimeOut expiry has since invalidated (and a faulted one must be retried).
+		// Self-clearing the field inside the load is unsafe because OnGetGroup can complete
+		// synchronously, running the whole load (and the clear) before the ??= assignment lands.
+		using (_bulkInitGate.EnterScope())
+		{
+			if (_bulkInitTask is null || _bulkInitTask.IsCompleted)
+				_bulkInitTask = LoadBulkAsync(orderByColumn, direction);
+
+			task = _bulkInitTask;
+		}
+
+		// Each caller honours its own cancellation without cancelling the shared load for others.
+		return task.WaitAsync(cancellationToken);
+	}
+
+	private async Task LoadBulkAsync(string orderByColumn, ListSortDirection direction)
+	{
+		// Page the whole table in WITHOUT holding any lock, until a short page signals the end.
+		List<TEntity> loaded = [];
+		long offset = 0;
+		TEntity[] buffer;
+
+		do
+		{
+			buffer = await OnGetGroup(offset, BufferSize, false, orderByColumn, direction, default).NoWait();
+			loaded.AddRange(buffer);
+			offset += BufferSize;
+		}
+		while (buffer.Length == BufferSize);
+
+		var (sync, dict) = CachedEntitiesPair;
+
+		// Publish under a short writer lock - no I/O inside.
+		using (await sync.WriterLockAsync(default).ConfigureAwait(false))
+		{
+			if (!_bulkInitialized)
+			{
+				dict.Clear();
+
+				foreach (var entity in loaded)
+					dict.Add(GetCacheId(entity), entity);
+
+				_bulkInitialized = true;
+
+				if (CacheTimeOut < TimeSpan.MaxValue)
+					_cacheExpire = DateTime.UtcNow + CacheTimeOut;
+			}
+		}
 	}
 
 	private int _bufferSize = 20;
