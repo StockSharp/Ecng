@@ -15,6 +15,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 {
 	private readonly JsonReader _reader;
 	private readonly Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> _readJson;
+	private readonly CancellationToken _readToken;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SettingsStorage"/> class.
@@ -29,11 +30,12 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// </summary>
 	/// <param name="reader">The JSON reader used for deserialization.</param>
 	/// <param name="readJson">The delegate to read JSON values.</param>
-	internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> readJson)
+	internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> readJson, CancellationToken cancellationToken)
 		: this()
 	{
 		_reader = reader ?? throw new ArgumentNullException(nameof(reader));
 		_readJson = readJson ?? throw new ArgumentNullException(nameof(readJson));
+		_readToken = cancellationToken;
 	}
 
 	/// <summary>
@@ -130,7 +132,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 
 		if (_reader != null)
 		{
-			var res = AsyncHelper.Run(() => GetValueFromReaderAsync(type, name, default));
+			var res = AsyncHelper.Run(() => GetValueFromReaderAsync(type, name, _readToken));
 
 			if (res is null)
 				return defaultValue;

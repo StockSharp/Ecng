@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
+using Ecng.Collections;
+
 /// <summary>
 /// Contains custom JSON conversion logic.
 /// </summary>
@@ -283,7 +285,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 				var per = type.CreateInstance();
 
-				var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
+				var storage = new SettingsStorage(reader, GetValueFromReaderAsync, cancellationToken);
 
 				if (per is IAsyncPersistable asyncPer)
 					await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
@@ -397,7 +399,10 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		{
 			await writer.WriteStartObjectAsync(cancellationToken).NoWait();
 
-			foreach (var pair in storage)
+			// Snapshot under the lock: SettingsStorage is a SynchronizedDictionary whose enumerator
+			// is not held under the lock, so iterating it live across the awaits below would throw
+			// if another thread mutated the same storage mid-serialization.
+			foreach (var pair in storage.SyncGet(d => d.ToArray()))
 			{
 				if (pair.Value is null && NullValueHandling == NullValueHandling.Ignore)
 					continue;
