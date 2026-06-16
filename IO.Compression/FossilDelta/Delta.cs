@@ -234,7 +234,10 @@ namespace Ecng.IO.Fossil
 					total += cnt;
 					if (total > limit)
 						throw new Exception("insert command gives an output larger than predicted");
-					if (cnt > lenDelta)
+					// The bytes are read starting at the current position, so the count must fit in the
+					// remaining delta, not in the whole delta. Comparing against lenDelta alone let a
+					// malformed delta with pos+cnt past the end read out of bounds through the raw byte*.
+					if (cnt > lenDelta - zDelta.pos)
 						throw new Exception("insert count exceeds size of delta");
 					zOut.PutArray(zDelta.a, (int) zDelta.pos, (int) (zDelta.pos+cnt));
 					zDelta.pos += cnt;
