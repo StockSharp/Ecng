@@ -595,6 +595,104 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Finding #3: [ForeignKey] id column must set ReferencedEntityType
+
+	/// <summary>
+	/// Regression test: a plain id column annotated with [ForeignKey(typeof(X))] must produce a
+	/// generated schema column whose ReferencedEntityType is X, matching the reflection path
+	/// (ReferencedEntityType = fkAttr.ReferencedType, SchemaRegistry.cs:473) so the SchemaMigrator
+	/// keeps the FK constraint.
+	/// (Was: EmitMetaColumns never read [ForeignKey], Data.Entities.Generator\EntityGenerator.cs:656.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_ForeignKeyColumn_SetsReferencedEntityType()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestForeignKeyColumnEntity));
+		var col = schema.Columns.First(c => c.Name == "OrderId");
+
+		AreEqual(typeof(GenTestOrderEntity), col.ReferencedEntityType);
+	}
+
+	#endregion
+
+	#region Finding #4: [Index]/[Unique] must populate SchemaColumn.Indexes
+
+	/// <summary>
+	/// Regression test: a property-level [Index] must populate SchemaColumn.Indexes, matching the
+	/// reflection path (CollectIndexes, SchemaRegistry.cs:272), not only the IsIndex boolean.
+	/// (Was: generator emitted only IsUnique/IsIndex, Data.Entities.Generator\EntityGenerator.cs:664.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_IndexProperty_PopulatesIndexes()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestIndexEntity));
+		var col = schema.Columns.First(c => c.Name == "Email");
+
+		(col.Indexes.Count > 0).AssertTrue("A [Index] property must carry a SchemaColumnIndex");
+	}
+
+	/// <summary>
+	/// Regression test: a type-level composite [Unique(nameof(A), nameof(B))] must populate
+	/// SchemaColumn.Indexes with a unique participation on every named column, matching the
+	/// reflection path's type-level index expansion (SchemaRegistry.cs:355).
+	/// (Was: generator never read the type-level [Index]/[Unique],
+	/// Data.Entities.Generator\EntityGenerator.cs:664.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_CompositeUnique_PopulatesIndexesOnAllColumns()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestIndexEntity));
+
+		var login = schema.Columns.First(c => c.Name == "Login");
+		var tenant = schema.Columns.First(c => c.Name == "Tenant");
+
+		login.Indexes.Any(i => i.IsUnique).AssertTrue("Composite [Unique] must mark Login as a unique-index participant");
+		tenant.Indexes.Any(i => i.IsUnique).AssertTrue("Composite [Unique] must mark Tenant as a unique-index participant");
+	}
+
+	#endregion
+
+	#region Finding #5: overridden property must yield a single column
+
+	/// <summary>
+	/// Regression test: a property overridden in a derived entity must produce exactly one schema
+	/// column, mirroring the reflection path's name-based dedup
+	/// (SchemaRegistry.GetOrderedProperties, base wins, SchemaRegistry.cs:298).
+	/// (Was: GetAllHierarchyProperties collected overrides twice,
+	/// Data.Entities.Generator\EntityGenerator.cs:830.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_OverriddenProperty_ProducesSingleColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestOverrideEntity));
+
+		schema.Columns.Count(c => c.Name == "Shared").AssertEqual(1,
+			"An overridden property must not be emitted once per hierarchy declaration");
+	}
+
+	#endregion
+
+	#region Finding #7: [Column(Precision/Scale)] must reach the generated schema
+
+	/// <summary>
+	/// Regression test: [Column(Precision = N, Scale = M)] on a decimal property must be carried
+	/// into the generated schema column (SchemaColumn.Precision/Scale), or the DB column silently
+	/// falls back to the dialect default precision.
+	/// (Was: GetColumnAttribute read only IsNullable/MaxLength,
+	/// Data.Entities.Generator\EntityGenerator.cs:1098.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_ColumnPrecisionScale_AreEmitted()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestPrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "Amount");
+
+		col.Precision.AssertEqual(18);
+		col.Scale.AssertEqual(8);
+	}
+
+	#endregion
 }
 
 #endif

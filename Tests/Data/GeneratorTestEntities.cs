@@ -357,4 +357,76 @@ public partial class GenTestGuidFkJoin : GenTestBaseJoinEntity
 	public GenTestOrderEntity LongRef { get; set; }
 }
 
+// ===== Finding #3: plain id column with [ForeignKey] =====
+
+/// <summary>
+/// A plain scalar id column declaring its FK target via [ForeignKey(typeof(X))].
+/// The generated schema column must carry ReferencedEntityType (reflection path:
+/// SchemaRegistry.cs:473), or the SchemaMigrator drops the FK constraint.
+/// </summary>
+[Entity(Name = "Ecng_GenFkColumn")]
+public partial class GenTestForeignKeyColumnEntity : GenTestBaseEntity
+{
+	[ForeignKey(typeof(GenTestOrderEntity))]
+	public long OrderId { get; set; }
+
+	public string Note { get; set; }
+}
+
+// ===== Finding #4: index metadata =====
+
+/// <summary>
+/// Property-level [Index] plus a type-level composite [Unique]. The generated schema must
+/// populate SchemaColumn.Indexes for the participating columns (reflection path: CollectIndexes
+/// + type-level expansion, SchemaRegistry.cs:272/355), not only the IsUnique/IsIndex booleans.
+/// </summary>
+[Entity(Name = "Ecng_GenIndexes")]
+[Unique(nameof(Login), nameof(Tenant))]
+public partial class GenTestIndexEntity : GenTestBaseEntity
+{
+	[Index]
+	public string Email { get; set; }
+
+	public string Login { get; set; }
+
+	public string Tenant { get; set; }
+}
+
+// ===== Finding #5: overridden property must not duplicate columns =====
+
+/// <summary>
+/// Base entity declaring a virtual persistent property that a derived entity overrides.
+/// Inherits the identity/IDbPersistable plumbing from <see cref="GenTestBaseEntity"/> so the
+/// generator emits its Save/Load as overrides (no hand-written stub to collide with).
+/// </summary>
+public abstract partial class GenTestOverrideBase : GenTestBaseEntity
+{
+	public virtual string Shared { get; set; }
+}
+
+/// <summary>
+/// Overrides the base's virtual property — the generated schema must contain a single "Shared"
+/// column, mirroring the reflection path's name-based dedup (SchemaRegistry.GetOrderedProperties).
+/// </summary>
+[Entity(Name = "Ecng_GenOverride")]
+public partial class GenTestOverrideEntity : GenTestOverrideBase
+{
+	public override string Shared { get; set; }
+
+	public string Own { get; set; }
+}
+
+// ===== Finding #7: [Column(Precision/Scale)] =====
+
+/// <summary>
+/// A decimal column declaring Precision/Scale. The generated schema column must carry them
+/// (SchemaColumn.Precision/Scale), or the database column falls back to the dialect default.
+/// </summary>
+[Entity(Name = "Ecng_GenPrecision")]
+public partial class GenTestPrecisionEntity : GenTestBaseEntity
+{
+	[Column(Precision = 18, Scale = 8)]
+	public decimal Amount { get; set; }
+}
+
 #endif

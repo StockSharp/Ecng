@@ -478,7 +478,7 @@ public class EntityGenerator : IIncrementalGenerator
 	// they are filled in afterwards via EmitInnerRelationSinglePostInit.
 	private static bool IsInnerSchemaNullable(IPropertySymbol prop)
 	{
-		var (colNullable, _) = GetColumnAttribute(prop);
+		var (colNullable, _, _, _) = GetColumnAttribute(prop);
 		return colNullable ?? InferIsNullable(prop);
 	}
 
@@ -656,19 +656,21 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine($"\tprivate static Schema CreateSchema()");
 		sb.AppendLine("\t{");
 
+		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
+		var tableName = entityAttrName ?? entityName;
+		var typeIndexLookup = BuildTypeIndexLookup(entityType, tableName);
+
 		sb.AppendLine("\t\tvar columns = new List<SchemaColumn>()");
 		sb.AppendLine("\t\t{");
 
 		foreach (var prop in allProps)
-			EmitMetaColumns(sb, prop);
+			EmitMetaColumns(sb, prop, typeIndexLookup);
 
 		sb.AppendLine("\t\t};");
 		sb.AppendLine();
 		sb.AppendLine($"\t\tvar meta = new Schema");
 		sb.AppendLine("\t\t{");
 
-		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
-		var tableName = entityAttrName ?? entityName;
 		var isView = IsViewEntity(entityType);
 		var identityProp = FindIdentityProperty(entityType);
 		var idName = identityProp?.Name ?? "Id";
@@ -696,7 +698,7 @@ public class EntityGenerator : IIncrementalGenerator
 		return sb;
 	}
 
-	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop)
+	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup)
 	{
 		if (IsInnerSchema(prop))
 		{
@@ -704,10 +706,10 @@ public class EntityGenerator : IIncrementalGenerator
 			var innerProps = GetInnerTypeProperties(innerType);
 			var nameOverrides = GetNameOverrides(prop);
 			var columnOverrides = GetColumnOverrides(prop);
-			var (colNullable, _) = GetColumnAttribute(prop);
+			var (colNullable, _, _, _) = GetColumnAttribute(prop);
 			var outerNullable = colNullable ?? InferIsNullable(prop);
 
-			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, columnOverrides, outerNullable);
+			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, columnOverrides, outerNullable, typeIndexLookup);
 		}
 		else
 		{
@@ -727,28 +729,40 @@ public class EntityGenerator : IIncrementalGenerator
 			else
 				parts.Add($"ClrType = typeof({FullType(prop.Type)})");
 
+			// A plain id column may declare its FK target via [ForeignKey(typeof(X))].
+			if (!IsRelationSingle(prop) && GetForeignKeyType(prop) is { } fkType)
+				parts.Add($"ReferencedEntityType = typeof({fkType})");
+
 			if (IsUnique(prop))
 				parts.Add("IsUnique = true");
 			if (IsIndex(prop))
 				parts.Add("IsIndex = true");
 
-			var (colNullable, colMaxLen) = GetColumnAttribute(prop);
+			var indexes = GetColumnIndexes(prop.Name, prop, typeIndexLookup);
+			if (indexes is not null)
+				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes} }}");
+
+			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(prop);
 			var nullable = colNullable ?? InferIsNullable(prop);
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
 				parts.Add($"MaxLength = {colMaxLen}");
+			if (colPrecision > 0)
+				parts.Add($"Precision = {colPrecision}");
+			if (colScale > 0)
+				parts.Add($"Scale = {colScale}");
 
 			sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
 		}
 	}
 
-	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable)
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable, Dictionary<string, string> typeIndexLookup)
 	{
 		foreach (var inner in innerProps)
 		{
 			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
-			var (colNullable, colMaxLen) = GetColumnAttribute(inner);
+			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(inner);
 
 			bool nullable;
 
@@ -763,7 +777,7 @@ public class EntityGenerator : IIncrementalGenerator
 				var nestedProps = GetInnerTypeProperties(nestedType);
 				var nestedOverrides = GetNameOverrides(inner);
 				var nestedColumnOverrides = GetColumnOverrides(inner);
-				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides, nestedColumnOverrides, nullable);
+				EmitMetaColumnsRecursive(sb, nestedProps, colName, nestedOverrides, nestedColumnOverrides, nullable, typeIndexLookup);
 				continue;
 			}
 
@@ -782,10 +796,21 @@ public class EntityGenerator : IIncrementalGenerator
 			else
 				parts.Add($"ClrType = typeof({FullType(inner.Type)})");
 
+			if (!IsRelationSingle(inner) && GetForeignKeyType(inner) is { } fkType)
+				parts.Add($"ReferencedEntityType = typeof({fkType})");
+
+			var indexes = GetColumnIndexes(colName, inner, typeIndexLookup);
+			if (indexes is not null)
+				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes} }}");
+
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
 				parts.Add($"MaxLength = {colMaxLen}");
+			if (colPrecision > 0)
+				parts.Add($"Precision = {colPrecision}");
+			if (colScale > 0)
+				parts.Add($"Scale = {colScale}");
 
 			sb.AppendLine($"\t\t\tnew() {{ {string.Join(", ", parts)} }},");
 		}
@@ -838,7 +863,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 		sb.AppendLine("}");
 
-		spc.AddSource($"{entityName}_DbPersistable.cs", sb.ToString());
+		spc.AddSource($"{entityNs.Replace('.', '_')}_{entityName}_DbPersistable.cs", sb.ToString());
 	}
 
 	private static void EmitSchemaInitializer(SourceProductionContext spc, string entityNs, List<string> concreteNames)
@@ -861,7 +886,7 @@ public class EntityGenerator : IIncrementalGenerator
 		sb.AppendLine("\t}");
 		sb.AppendLine("}");
 
-		spc.AddSource("SchemaInitializer.cs", sb.ToString());
+		spc.AddSource($"{entityNs.Replace('.', '_')}_SchemaInitializer.cs", sb.ToString());
 	}
 
 	#endregion
@@ -873,6 +898,7 @@ public class EntityGenerator : IIncrementalGenerator
 		return type.GetMembers().OfType<IPropertySymbol>()
 			.Where(p => !p.IsReadOnly
 				&& !p.IsStatic
+				&& !p.IsIndexer
 				&& p.ExplicitInterfaceImplementations.Length == 0
 				&& !HasAttribute(p, "IgnoreAttribute")
 				&& !HasAttribute(p, "IdentityAttribute")
@@ -884,6 +910,7 @@ public class EntityGenerator : IIncrementalGenerator
 	{
 		return type.GetMembers().OfType<IPropertySymbol>()
 			.Where(p => !p.IsStatic
+				&& !p.IsIndexer
 				&& p.ExplicitInterfaceImplementations.Length == 0
 				&& IsRelationMany(p))
 			.ToArray();
@@ -892,17 +919,31 @@ public class EntityGenerator : IIncrementalGenerator
 	private static IPropertySymbol[] GetAllHierarchyProperties(INamedTypeSymbol type)
 	{
 		var identityType = FindIdentityDeclaringType(type);
-		var props = new List<IPropertySymbol>();
+
+		var chain = new List<INamedTypeSymbol>();
 		var current = type;
 		while (current is not null)
 		{
-			props.InsertRange(0, GetOwnProperties(current));
+			chain.Add(current);
 
 			if (SymbolEqualityComparer.Default.Equals(current, identityType))
 				break;
 
 			current = current.BaseType;
 		}
+
+		// Walk base -> derived so base columns come first, and keep the first (base) declaration of
+		// any name so a property overridden in a derived entity yields a single column.
+		chain.Reverse();
+
+		var seen = new HashSet<string>();
+		var props = new List<IPropertySymbol>();
+
+		foreach (var t in chain)
+			foreach (var p in GetOwnProperties(t))
+				if (seen.Add(p.Name))
+					props.Add(p);
+
 		return props.ToArray();
 	}
 
@@ -917,7 +958,7 @@ public class EntityGenerator : IIncrementalGenerator
 		while (current is not null && current.SpecialType == SpecialType.None)
 		{
 			props.InsertRange(0, current.GetMembers().OfType<IPropertySymbol>()
-				.Where(p => !p.IsReadOnly && !p.IsStatic
+				.Where(p => !p.IsReadOnly && !p.IsStatic && !p.IsIndexer
 					&& !HasAttribute(p, "IgnoreAttribute")
 					&& !IsRelationMany(p)));
 			current = current.BaseType;
@@ -1066,42 +1107,57 @@ public class EntityGenerator : IIncrementalGenerator
 	/// Recursively checks nested inner types.
 	/// </summary>
 	private static bool CanFlattenInnerType(ITypeSymbol type)
+		=> CanFlattenInnerType(type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+
+	private static bool CanFlattenInnerType(ITypeSymbol type, HashSet<ITypeSymbol> visiting)
 	{
-		var innerProps = GetInnerTypeProperties(type);
-		if (innerProps.Length == 0)
+		// Guard against self- or mutually-referential property types, which would otherwise recurse
+		// forever and StackOverflow the compiler (SchemaRegistry.IsInnerSchemaType does the same).
+		if (!visiting.Add(type))
 			return false;
 
-		foreach (var inner in innerProps)
+		try
 		{
-			if (IsRelationSingle(inner)) continue;
-			if (GetMappedDbType(inner.Type) is not null) continue;
-
-			var t = UnwrapNullable(inner.Type);
-
-			// byte[] is OK
-			if (t is IArrayTypeSymbol arr)
-			{
-				if (arr.ElementType.SpecialType == SpecialType.System_Byte)
-					continue;
+			var innerProps = GetInnerTypeProperties(type);
+			if (innerProps.Length == 0)
 				return false;
+
+			foreach (var inner in innerProps)
+			{
+				if (IsRelationSingle(inner)) continue;
+				if (GetMappedDbType(inner.Type) is not null) continue;
+
+				var t = UnwrapNullable(inner.Type);
+
+				// byte[] is OK
+				if (t is IArrayTypeSymbol arr)
+				{
+					if (arr.ElementType.SpecialType == SpecialType.System_Byte)
+						continue;
+					return false;
+				}
+
+				if (t.TypeKind == TypeKind.Enum) continue;
+				if (t.SpecialType != SpecialType.None) continue;
+
+				var fullName = FullType(t);
+				if (fullName is "global::System.DateTime" or "global::System.DateTimeOffset"
+					or "global::System.TimeSpan" or "global::System.Guid"
+					or "global::System.DateOnly" or "global::System.TimeOnly")
+					continue;
+
+				// recursively check nested inner types
+				if (CanFlattenInnerType(t, visiting))
+					continue;
+
+				return false; // unknown complex inner type
 			}
-
-			if (t.TypeKind == TypeKind.Enum) continue;
-			if (t.SpecialType != SpecialType.None) continue;
-
-			var fullName = FullType(t);
-			if (fullName is "global::System.DateTime" or "global::System.DateTimeOffset"
-				or "global::System.TimeSpan" or "global::System.Guid"
-				or "global::System.DateOnly" or "global::System.TimeOnly")
-				continue;
-
-			// recursively check nested inner types
-			if (CanFlattenInnerType(t))
-				continue;
-
-			return false; // unknown complex inner type
+			return true;
 		}
-		return true;
+		finally
+		{
+			visiting.Remove(type);
+		}
 	}
 
 	/// <summary>
@@ -1155,14 +1211,97 @@ public class EntityGenerator : IIncrementalGenerator
 	private static bool HasAttribute(ISymbol symbol, string attrName)
 		=> symbol.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
 
-	private static (bool? isNullable, int maxLength) GetColumnAttribute(IPropertySymbol prop)
+	private static string GetForeignKeyType(IPropertySymbol prop)
+	{
+		var attr = prop.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "ForeignKeyAttribute");
+
+		if (attr is null || attr.ConstructorArguments.Length == 0)
+			return null;
+
+		return attr.ConstructorArguments[0].Value is INamedTypeSymbol t ? FullType(t) : null;
+	}
+
+	// Builds a column-name -> emitted "new SchemaColumnIndex(...)" list from type-level [Index]/[Unique]
+	// declarations, mirroring SchemaRegistry's type-level index expansion.
+	private static Dictionary<string, string> BuildTypeIndexLookup(INamedTypeSymbol entityType, string tableName)
+	{
+		var lookup = new Dictionary<string, List<string>>();
+
+		foreach (var attr in entityType.GetAttributes())
+		{
+			var name = attr.AttributeClass?.Name;
+
+			if (name != "IndexAttribute" && name != "UniqueAttribute")
+				continue;
+
+			if (attr.ConstructorArguments.Length == 0 || attr.ConstructorArguments[0].Kind != TypedConstantKind.Array)
+				continue;
+
+			var cols = attr.ConstructorArguments[0].Values
+				.Select(v => v.Value as string)
+				.Where(s => !string.IsNullOrEmpty(s))
+				.ToArray();
+
+			if (cols.Length == 0)
+				continue;
+
+			var isUnique = name == "UniqueAttribute";
+			var explicitName = attr.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value as string;
+			var indexName = !string.IsNullOrEmpty(explicitName)
+				? $"\"{explicitName}\""
+				: (cols.Length == 1 ? "null" : $"\"IX_{tableName}_{string.Join("_", cols)}\"");
+
+			for (var i = 0; i < cols.Length; i++)
+			{
+				var entry = $"new SchemaColumnIndex({indexName}, {i}, {(isUnique ? "true" : "false")})";
+
+				if (!lookup.TryGetValue(cols[i], out var list))
+					lookup[cols[i]] = list = new List<string>();
+
+				list.Add(entry);
+			}
+		}
+
+		return lookup.ToDictionary(kv => kv.Key, kv => string.Join(", ", kv.Value));
+	}
+
+	// Combines property-level [Index]/[Unique] with the type-level entries for the column; returns the
+	// comma-joined "new SchemaColumnIndex(...)" list or null when the column has no indexes.
+	private static string GetColumnIndexes(string columnName, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup)
+	{
+		var entries = new List<string>();
+
+		foreach (var attr in prop.GetAttributes())
+		{
+			var name = attr.AttributeClass?.Name;
+
+			if (name != "IndexAttribute" && name != "UniqueAttribute")
+				continue;
+
+			var isUnique = name == "UniqueAttribute";
+			var explicitName = attr.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value as string;
+			var order = attr.NamedArguments.FirstOrDefault(a => a.Key == "Order").Value.Value is int o ? o : 0;
+			var nameStr = string.IsNullOrEmpty(explicitName) ? "null" : $"\"{explicitName}\"";
+
+			entries.Add($"new SchemaColumnIndex({nameStr}, {order}, {(isUnique ? "true" : "false")})");
+		}
+
+		if (typeIndexLookup.TryGetValue(columnName, out var typeEntries))
+			entries.Add(typeEntries);
+
+		return entries.Count > 0 ? string.Join(", ", entries) : null;
+	}
+
+	private static (bool? isNullable, int maxLength, int precision, int scale) GetColumnAttribute(IPropertySymbol prop)
 	{
 		var attr = prop.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "ColumnAttribute");
 		if (attr is null)
-			return (null, 0);
+			return (null, 0, 0, 0);
 
 		bool? isNullable = null;
 		var maxLength = 0;
+		var precision = 0;
+		var scale = 0;
 
 		foreach (var arg in attr.NamedArguments)
 		{
@@ -1174,10 +1313,16 @@ public class EntityGenerator : IIncrementalGenerator
 				case "MaxLength":
 					maxLength = arg.Value.Value is int v ? v : 0;
 					break;
+				case "Precision":
+					precision = arg.Value.Value is int p ? p : 0;
+					break;
+				case "Scale":
+					scale = arg.Value.Value is int s ? s : 0;
+					break;
 			}
 		}
 
-		return (isNullable, maxLength);
+		return (isNullable, maxLength, precision, scale);
 	}
 
 	private static bool InferIsNullable(IPropertySymbol prop)
