@@ -30,14 +30,18 @@ public static class AsyncEnumerableCompat
 			var enumerator = source.GetAsyncEnumerator(cancellationToken);
 			try
 			{
-				while (AsyncHelper.Run(() => enumerator.MoveNextAsync()))
+				// Block without installing a per-call SynchronizationContext (as .NET 7+'s
+				// ToBlockingEnumerable does): AsyncHelper.Run/AsyncContext.Run gives each
+				// MoveNextAsync its own single-pump context, so an iterator that prefetches across
+				// a yield can have its continuation posted to an already-finished context and hang.
+				while (enumerator.MoveNextAsync().AsTask().GetAwaiter().GetResult())
 				{
 					yield return enumerator.Current;
 				}
 			}
 			finally
 			{
-				AsyncHelper.Run(() => enumerator.DisposeAsync());
+				enumerator.DisposeAsync().AsTask().GetAwaiter().GetResult();
 			}
 		}
 	}

@@ -420,4 +420,51 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Audit regressions (BCL-consistent behaviour)
+
+	[TestMethod]
+	public async Task OrderBy_IsStable()
+	{
+		var token = CancellationToken;
+		var items = new[] { (k: 1, i: 0), (k: 1, i: 1), (k: 0, i: 2), (k: 1, i: 3) };
+
+		var ordered = await items.ToAsyncEnumerable().OrderBy(x => x.k).ToArrayAsync(token);
+
+		// Equal-key (k == 1) elements must keep their original relative order.
+		ordered.Where(x => x.k == 1).Select(x => x.i).ToArray().AssertEqual([0, 1, 3]);
+	}
+
+	[TestMethod]
+	public async Task SumAsync_Overflow_Throws()
+	{
+		var token = CancellationToken;
+
+		await ThrowsAsync<OverflowException>(async ()
+			=> await new[] { int.MaxValue, 1 }.ToAsyncEnumerable().SumAsync(token));
+	}
+
+	[TestMethod]
+	public async Task MinAsync_SkipsNullsAndAllowsEmptyForNullable()
+	{
+		var token = CancellationToken;
+
+		(await new int?[] { null, 5, 3 }.ToAsyncEnumerable().MinAsync(cancellationToken: token)).AssertEqual((int?)3);
+		(await Array.Empty<int?>().ToAsyncEnumerable().MinAsync(cancellationToken: token)).AssertNull();
+
+		// A non-nullable value type still throws on an empty sequence.
+		await ThrowsAsync<InvalidOperationException>(async ()
+			=> await Array.Empty<int>().ToAsyncEnumerable().MinAsync(cancellationToken: token));
+	}
+
+	[TestMethod]
+	public async Task Range_Overflow_Throws()
+	{
+		var token = CancellationToken;
+
+		await ThrowsAsync<ArgumentOutOfRangeException>(async ()
+			=> await AsyncEnumerable.Range(int.MaxValue, 2).ToArrayAsync(token));
+	}
+
+	#endregion
 }

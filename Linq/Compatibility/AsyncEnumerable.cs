@@ -464,8 +464,10 @@ public static class AsyncEnumerable
 
 		var sum = 0;
 
+		// checked to match Enumerable.Sum / AsyncEnumerable.SumAsync, which throw on overflow
+		// instead of silently wrapping.
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
-			sum += item;
+			checked { sum += item; }
 
 		return sum;
 	}
@@ -483,8 +485,9 @@ public static class AsyncEnumerable
 
 		long sum = 0;
 
+		// checked to match Enumerable.Sum / AsyncEnumerable.SumAsync, which throw on overflow.
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
-			sum += item;
+			checked { sum += item; }
 
 		return sum;
 	}
@@ -543,7 +546,8 @@ public static class AsyncEnumerable
 
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
-			sum += item;
+			// checked to match Enumerable.Average, which throws on sum overflow.
+			checked { sum += item; }
 			count++;
 		}
 
@@ -569,7 +573,8 @@ public static class AsyncEnumerable
 
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
-			sum += item;
+			// checked to match Enumerable.Average, which throws on sum overflow.
+			checked { sum += item; }
 			count++;
 		}
 
@@ -644,11 +649,19 @@ public static class AsyncEnumerable
 			throw new ArgumentNullException(nameof(source));
 
 		var comparer = Comparer<T>.Default;
+
+		// BCL Min/Max skip null elements for a nullable/reference T and return null on an
+		// all-null or empty sequence; only a non-nullable value type throws when empty.
+		var nullsAreSkipped = default(T) is null;
+
 		T min = default;
 		var found = false;
 
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
+			if (nullsAreSkipped && item is null)
+				continue;
+
 			if (!found || comparer.Compare(item, min) < 0)
 			{
 				min = item;
@@ -656,7 +669,7 @@ public static class AsyncEnumerable
 			}
 		}
 
-		if (!found)
+		if (!found && !nullsAreSkipped)
 			throw new InvalidOperationException("Sequence contains no elements");
 
 		return min;
@@ -675,11 +688,19 @@ public static class AsyncEnumerable
 			throw new ArgumentNullException(nameof(source));
 
 		var comparer = Comparer<T>.Default;
+
+		// See MinAsync: skip nulls for nullable/reference T, return null on empty/all-null,
+		// throw only for a non-nullable value type.
+		var nullsAreSkipped = default(T) is null;
+
 		T max = default;
 		var found = false;
 
 		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
+			if (nullsAreSkipped && item is null)
+				continue;
+
 			if (!found || comparer.Compare(item, max) > 0)
 			{
 				max = item;
@@ -687,7 +708,7 @@ public static class AsyncEnumerable
 			}
 		}
 
-		if (!found)
+		if (!found && !nullsAreSkipped)
 			throw new InvalidOperationException("Sequence contains no elements");
 
 		return max;
@@ -735,7 +756,9 @@ public static class AsyncEnumerable
 			throw new ArgumentNullException(nameof(selector));
 
 		return
-			source == EmptyAsyncEnumerable<TResult>.Instance ? Empty<TResult>() :
+			// Compare against the source-typed empty singleton; the result-typed one can only
+			// match when TSource == TResult, so the fast-path was dead for any real projection.
+			source == EmptyAsyncEnumerable<TSource>.Instance ? Empty<TResult>() :
 			Impl(source, selector, default);
 
 		static async IAsyncEnumerable<TResult> Impl(
@@ -1333,9 +1356,10 @@ public static class AsyncEnumerable
 		static async IAsyncEnumerable<TSource> Impl(IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 		{
 			var list = await source.ToListAsync(cancellationToken);
-			list.Sort((x, y) => Comparer<TKey>.Default.Compare(keySelector(x), keySelector(y)));
 
-			foreach (var item in list)
+			// LINQ OrderBy is a stable sort (matching .NET's AsyncEnumerable.OrderBy); List.Sort is
+			// an unstable introsort and would reorder equal-key elements.
+			foreach (var item in list.OrderBy(keySelector))
 				yield return item;
 		}
 	}
@@ -1360,9 +1384,9 @@ public static class AsyncEnumerable
 		static async IAsyncEnumerable<TSource> Impl(IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 		{
 			var list = await source.ToListAsync(cancellationToken);
-			list.Sort((x, y) => Comparer<TKey>.Default.Compare(keySelector(y), keySelector(x)));
 
-			foreach (var item in list)
+			// Stable, matching .NET's AsyncEnumerable.OrderByDescending; List.Sort is unstable.
+			foreach (var item in list.OrderByDescending(keySelector))
 				yield return item;
 		}
 	}
@@ -1750,15 +1774,22 @@ public static class AsyncEnumerable
 	/// <param name="start">The value of the first integer in the sequence.</param>
 	/// <param name="count">The number of sequential integers to generate.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains a range of sequential integral numbers.</returns>
-	public static async IAsyncEnumerable<int> Range(int start, int count)
+	public static IAsyncEnumerable<int> Range(int start, int count)
 	{
-		if (count < 0)
+		// Validate eagerly (not deferred to the first MoveNextAsync) and reject a range whose last
+		// value would overflow int, matching Enumerable.Range.
+		if (count < 0 || (long)start + count - 1 > int.MaxValue)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
-		for (var i = 0; i < count; i++)
-			yield return start + i;
+		return Impl(start, count);
 
-		await Task.CompletedTask;
+		static async IAsyncEnumerable<int> Impl(int start, int count, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+		{
+			for (var i = 0; i < count; i++)
+				yield return start + i;
+
+			await Task.CompletedTask;
+		}
 	}
 
 	/// <summary>
