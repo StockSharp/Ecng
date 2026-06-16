@@ -65,7 +65,10 @@ public class NugetRepoProvider : CachingSourceProvider
 		private PrivatePackageSource(string addr) : base(addr, PrivateRepoKey) {}
 	}
 
-	private static readonly AsyncLock _instanceLock = new();
+	private static readonly Lock _instanceGate = new();
+	// Single-flight singleton init: the gate is held only to publish the shared task, so the
+	// one-time InitBaseUrls HTTP call is never made while a lock is held.
+	private static Task<NugetRepoProvider> _instanceTask;
 	private static NugetRepoProvider _instance;
 
 	private const string _defaultPrivateUrl = "https://nuget.stocksharp.com/x/v3/index.json";
@@ -102,16 +105,32 @@ public class NugetRepoProvider : CachingSourceProvider
 		if (!packagesFolder.IsEmpty())
 			Directory.CreateDirectory(packagesFolder);
 
-		using (await _instanceLock.LockAsync(token).ConfigureAwait(false))
-		{
-			if (_instance is null)
-			{
-				_instance = new(authToken, await GetPackageSources(packagesFolder).NoWait(), retryPolicy);
-				await _instance.InitBaseUrls(token).NoWait();
-			}
-		}
+		Task<NugetRepoProvider> task;
 
-		return _instance;
+		// Gate held only to publish the shared init task - never across the HTTP call below.
+		using (_instanceGate.EnterScope())
+			task = _instanceTask ??= CreateInstanceAsync(authToken, packagesFolder, retryPolicy);
+
+		return await task.WaitAsync(token).ConfigureAwait(false);
+	}
+
+	private static async Task<NugetRepoProvider> CreateInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
+	{
+		try
+		{
+			var instance = new NugetRepoProvider(authToken, await GetPackageSources(packagesFolder).NoWait(), retryPolicy);
+			await instance.InitBaseUrls(default).NoWait();
+			_instance = instance;
+			return instance;
+		}
+		catch
+		{
+			// Drop the faulted task so a later caller can retry instead of caching the failure.
+			using (_instanceGate.EnterScope())
+				_instanceTask = null;
+
+			throw;
+		}
 	}
 
 	/// <summary>
