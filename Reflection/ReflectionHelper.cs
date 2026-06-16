@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 using Ecng.Collections;
 using Ecng.Common;
@@ -55,7 +56,9 @@ public static class ReflectionHelper
 
 	#region ProxyTypes
 
-	private static readonly Dictionary<Type, Type> _proxyTypes = [];
+	// Publicly mutable (callers register proxies at runtime) and read on every GetMembers
+	// lookup, so it must tolerate concurrent reads during writes - a plain Dictionary does not.
+	private static readonly ConcurrentDictionary<Type, Type> _proxyTypes = [];
 
 	/// <summary>
 	/// Gets the proxy types.
@@ -1085,7 +1088,10 @@ public static class ReflectionHelper
 			throw new ArgumentNullException(nameof(required));
 
 		return !type.IsAbstract &&
-			type.IsPublic &&
+			// IsPublic is false for nested types; accept public nested ones too (mirrors
+			// FindImplementations), otherwise public implementations declared as nested
+			// classes are silently rejected.
+			(type.IsPublic || type.IsNestedPublic) &&
 			!type.IsGenericTypeDefinition &&
 			type.Is(required) &&
 			type.GetConstructor([]) is not null;
@@ -1267,7 +1273,11 @@ public static class ReflectionHelper
 		if (stateField is null || valueField is null)
 			throw new PlatformNotSupportedException("Lazy<T> internal layout is not supported.");
 
-		stateField.SetValue(lazy, null);
+		// Write the value before publishing the "created" state: Lazy<T>.Value treats
+		// _state == null as "value produced" and returns _value. Clearing _state first would
+		// let a concurrent reader observe the created state with _value still default(T).
 		valueField.SetValue(lazy, value);
+		Thread.MemoryBarrier();
+		stateField.SetValue(lazy, null);
 	}
 }

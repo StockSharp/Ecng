@@ -1226,6 +1226,18 @@ public class ReflectionTests : BaseTestClass
 		typeof(List<>).IsRequiredType<IList<int>>().AssertFalse();
 	}
 
+	public interface IReqMarker;
+
+	public class PublicNestedReqImpl : IReqMarker;
+
+	[TestMethod]
+	public void IsRequiredType_PublicNestedType()
+	{
+		// A public nested type is externally visible and must qualify; Type.IsPublic is
+		// false for any nested type, so the check has to allow IsNestedPublic as well.
+		typeof(PublicNestedReqImpl).IsRequiredType<IReqMarker>().AssertTrue();
+	}
+
 	#endregion
 
 	#region TryFindType Tests
