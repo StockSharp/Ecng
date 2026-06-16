@@ -179,7 +179,7 @@ internal class AdoTable : IDatabaseTable
 		// across providers, so applying it universally keeps every statement valid.
 		var batchSize = 1.Max(Dialect.MaxParameters / columns.Count).Min(_maxRowsPerValuesStatement);
 
-		using var transaction = _connection.Connection.BeginTransaction();
+		await using var transaction = await _connection.Connection.BeginTransactionAsync(cancellationToken).NoWait();
 
 		try
 		{
@@ -229,15 +229,16 @@ internal class AdoTable : IDatabaseTable
 				await cmd.ExecuteNonQueryAsync(cancellationToken).NoWait();
 			}
 
-			transaction.Commit();
+			await transaction.CommitAsync(cancellationToken).NoWait();
 		}
 		catch
 		{
 			// Roll back best-effort: a Rollback failure (e.g. the connection is already
-			// dead) must not replace and hide the original fault from the caller.
+			// dead) must not replace and hide the original fault from the caller. Use no
+			// token so a cancellation that triggered this catch doesn't abort the rollback.
 			try
 			{
-				transaction.Rollback();
+				await transaction.RollbackAsync().NoWait();
 			}
 			catch
 			{
