@@ -33,7 +33,11 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 		if (_assembly is null)
 		{
 			var pythonContext = (PythonContext)context;
-			_assembly = pythonContext.LoadFromCode(code);
+
+			// The engine is not thread-safe; serialise the one-time load under the context lock and
+			// double-check so concurrent callers don't load the assembly twice.
+			using (pythonContext.SyncRoot.EnterScope())
+				_assembly ??= pythonContext.LoadFromCode(code);
 		}
 
 		return _assembly;

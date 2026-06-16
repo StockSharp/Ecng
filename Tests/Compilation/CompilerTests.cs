@@ -1020,6 +1020,30 @@ class AnalyticsScript_{i}:
 	}
 
 	/// <summary>
+	/// Regression test for PythonContext MethodImpl.Invoke: a static Python method (@staticmethod)
+	/// must be callable through reflection with exactly its declared arguments. Invoke
+	/// unconditionally prepends the instance (obj) as the first argument, so a two-parameter static
+	/// method is called with three arguments and the call fails. (Was:
+	/// <c>_function.__call__(ctx, [obj, .. parameters])</c> ignored whether the function is static,
+	/// PythonContext.cs:269.)
+	/// </summary>
+	[TestMethod]
+	public void Invoke_StaticMethod_DoesNotPrependSelf()
+	{
+		var type = CompilePythonType("class C9:\n    @staticmethod\n    def add(a, b):\n        return a + b\n", "C9");
+
+		var method = type
+			.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+			.First(m => m.Name == "add");
+
+		// Canonical static invocation: null instance, the two declared args only. The bug prepends
+		// obj, turning this into add(null, 2, 3) - a three-argument call to a two-parameter function.
+		var result = method.Invoke(null, [2, 3]);
+
+		AreEqual(5, result.To<int>());
+	}
+
+	/// <summary>
 	/// Regression test for PythonContext GetEvents: ensures a class exposing an ordinary add_item
 	/// method (no remove_item) reflects its events without throwing, and the add_item method stays
 	/// reachable through GetMethods. (Was: the Select yielded null for an add_-prefixed function with

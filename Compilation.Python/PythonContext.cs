@@ -266,7 +266,8 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 
 				public override ParameterInfo[] GetParameters() => _parameters;
 				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
-					=> _function.__call__(DefaultContext.Default, [obj, .. (parameters ?? [])]);
+					// A static invocation passes a null instance; only instance methods take the leading self.
+					=> _function.__call__(DefaultContext.Default, obj is null ? [.. (parameters ?? [])] : [obj, .. (parameters ?? [])]);
 
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
@@ -444,14 +445,19 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			private readonly PythonType _pythonType;
 			private readonly ScriptEngine _engine;
 			private readonly ObjectOperations _ops;
+			// The ScriptEngine/ObjectOperations are not thread-safe and are shared across all
+			// TypeImpls of an assembly; serialise the lazy member caches under the context lock so
+			// concurrent reflection does not call into the engine from two threads at once.
+			private readonly Lock _syncRoot;
 			private readonly Type _underlyingType;
 			private readonly Type _dotNetBaseType;
 
-			public TypeImpl(Assembly assembly, PythonType pythonType, ScriptEngine engine)
+			public TypeImpl(Assembly assembly, PythonType pythonType, ScriptEngine engine, Lock syncRoot)
 			{
 				_assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 				_pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 				_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+				_syncRoot = syncRoot ?? throw new ArgumentNullException(nameof(syncRoot));
 				_ops = _engine.Operations;
 				_underlyingType = pythonType.GetUnderlyingSystemType() ?? throw new ArgumentException(nameof(pythonType));
 				_dotNetBaseType = pythonType.GetDotNetType();
@@ -490,12 +496,18 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			{
 				if (_ctors is null)
 				{
-					var init = _ops.GetMemberNames(_pythonType)
-						.Select(name => _ops.GetMember(_pythonType, name))
-						.OfType<PythonFunction>()
-						.FirstOrDefault(f => f.__name__ == "__init__");
+					using (_syncRoot.EnterScope())
+					{
+						if (_ctors is null)
+						{
+							var init = _ops.GetMemberNames(_pythonType)
+								.Select(name => _ops.GetMember(_pythonType, name))
+								.OfType<PythonFunction>()
+								.FirstOrDefault(f => f.__name__ == "__init__");
 
-					_ctors = [new ConstructorImpl(init, this)];
+							_ctors = [new ConstructorImpl(init, this)];
+						}
+					}
 				}
 
 				return [.. _ctors.Where(c => c.IsMatch(bindingAttr))];
@@ -510,31 +522,37 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			{
 				if (_props is null)
 				{
-					var dotNetProps = _dotNetBaseType.GetProperties(ReflectionHelper.AllMembers).GroupBy(p => p.Name).ToDictionary();
-
-					var pythonProps = new List<PropertyInfo>();
-
-					foreach (var prop in _ops
-						.GetMemberNames(_pythonType)
-						.Select(p => _ops.GetMember(_pythonType, p)))
-					{
-						if (prop is PythonProperty pythonProp)
-						{
-							pythonProps.Add(new PythonPropertyImpl(pythonProp, this));
-						}
-						else if (prop is ReflectedProperty reflectedProp)
-						{
-							if (dotNetProps.ContainsKey(reflectedProp.__name__))
-								continue;
-
-							pythonProps.Add(new ReflectedPropertyImpl(reflectedProp, this));
-						}
-					}
-
-					_props = [.. pythonProps.Concat(dotNetProps.Values.SelectMany())];
+					using (_syncRoot.EnterScope())
+						_props ??= BuildProperties();
 				}
 
 				return [.. _props.Where(p => p.IsMatch(bindingAttr))];
+			}
+
+			private PropertyInfo[] BuildProperties()
+			{
+				var dotNetProps = _dotNetBaseType.GetProperties(ReflectionHelper.AllMembers).GroupBy(p => p.Name).ToDictionary();
+
+				var pythonProps = new List<PropertyInfo>();
+
+				foreach (var prop in _ops
+					.GetMemberNames(_pythonType)
+					.Select(p => _ops.GetMember(_pythonType, p)))
+				{
+					if (prop is PythonProperty pythonProp)
+					{
+						pythonProps.Add(new PythonPropertyImpl(pythonProp, this));
+					}
+					else if (prop is ReflectedProperty reflectedProp)
+					{
+						if (dotNetProps.ContainsKey(reflectedProp.__name__))
+							continue;
+
+						pythonProps.Add(new ReflectedPropertyImpl(reflectedProp, this));
+					}
+				}
+
+				return [.. pythonProps.Concat(dotNetProps.Values.SelectMany())];
 			}
 
 			protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
@@ -615,30 +633,36 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			{
 				if (_events is null)
 				{
-					var dotNetEvents = _dotNetBaseType.GetEvents(ReflectionHelper.AllMembers);
-
-					var pythonEvents = _ops
-						.GetMemberNames(_pythonType)
-						.Where(name => name.StartsWithIgnoreCase(_eventAddPrefix))
-						.Select(name => _ops.GetMember(_pythonType, name))
-						.OfType<PythonFunction>()
-						.Select(addFunc =>
-						{
-							var name = addFunc.__name__[_eventAddPrefix.Length..];
-
-							if (!_ops.TryGetMember(_pythonType, _eventRemovePrefix + name, true, out var r) || r is not PythonFunction removeFunc)
-								return null;
-
-							var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
-							return new EventImpl(name, eventType, addFunc, removeFunc, this);
-						})
-						.Where(e => e is not null)
-						;
-
-					_events = [.. dotNetEvents, .. pythonEvents];
+					using (_syncRoot.EnterScope())
+						_events ??= BuildEvents();
 				}
 
 				return [.. _events.Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true)];
+			}
+
+			private EventInfo[] BuildEvents()
+			{
+				var dotNetEvents = _dotNetBaseType.GetEvents(ReflectionHelper.AllMembers);
+
+				var pythonEvents = _ops
+					.GetMemberNames(_pythonType)
+					.Where(name => name.StartsWithIgnoreCase(_eventAddPrefix))
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>()
+					.Select(addFunc =>
+					{
+						var name = addFunc.__name__[_eventAddPrefix.Length..];
+
+						if (!_ops.TryGetMember(_pythonType, _eventRemovePrefix + name, true, out var r) || r is not PythonFunction removeFunc)
+							return null;
+
+						var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
+						return new EventImpl(name, eventType, addFunc, removeFunc, this);
+					})
+					.Where(e => e is not null)
+					;
+
+				return [.. dotNetEvents, .. pythonEvents];
 			}
 
 			private MethodInfo[] _methods;
@@ -664,32 +688,38 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			{
 				if (_methods is null)
 				{
-					var dotNetMethods = _dotNetBaseType.GetMethods(ReflectionHelper.AllMembers).GroupBy(m => m.Name).ToDictionary();
-
-					var methods = new List<MethodInfo>();
-
-					var pythonMethods = _ops
-						.GetMemberNames(_pythonType)
-						.Where(n => !IsEventAccessorName(n))
-						.Select(name => _ops.GetMember(_pythonType, name))
-						.OfType<PythonFunction>();
-
-					foreach (var pythonMethod in pythonMethods)
-					{
-						var impl = new MethodImpl(pythonMethod, this);
-
-						if (dotNetMethods.TryGetValue(impl.Name, out var existing) && existing.Any(m => m.IsStatic == impl.IsStatic && m.GetParameters().Length == impl.GetParameters().Length))
-							continue;
-
-						methods.Add(impl);
-					}
-
-					methods.AddRange(dotNetMethods.Values.SelectMany());
-
-					_methods = [.. methods];
+					using (_syncRoot.EnterScope())
+						_methods ??= BuildMethods();
 				}
-				
+
 				return [.. _methods.Where(m => m.IsMatch(bindingAttr))];
+			}
+
+			private MethodInfo[] BuildMethods()
+			{
+				var dotNetMethods = _dotNetBaseType.GetMethods(ReflectionHelper.AllMembers).GroupBy(m => m.Name).ToDictionary();
+
+				var methods = new List<MethodInfo>();
+
+				var pythonMethods = _ops
+					.GetMemberNames(_pythonType)
+					.Where(n => !IsEventAccessorName(n))
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>();
+
+				foreach (var pythonMethod in pythonMethods)
+				{
+					var impl = new MethodImpl(pythonMethod, this);
+
+					if (dotNetMethods.TryGetValue(impl.Name, out var existing) && existing.Any(m => m.IsStatic == impl.IsStatic && m.GetParameters().Length == impl.GetParameters().Length))
+						continue;
+
+					methods.Add(impl);
+				}
+
+				methods.AddRange(dotNetMethods.Values.SelectMany());
+
+				return [.. methods];
 			}
 
 			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
@@ -701,11 +731,11 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 
 		private readonly Type[] _types;
 
-		public AssemblyImpl(ScriptEngine engine, IEnumerable<PythonType> types)
+		public AssemblyImpl(ScriptEngine engine, Lock syncRoot, IEnumerable<PythonType> types)
 		{
 			_types = [.. types
 				.Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true)
-				.Select(t => new TypeImpl(this, t, engine))];
+				.Select(t => new TypeImpl(this, t, engine, syncRoot))];
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();
@@ -724,7 +754,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 		{
 			code.Execute();
 
-			return new AssemblyImpl(_engine, code.DefaultScope.GetTypes());
+			return new AssemblyImpl(_engine, _syncRoot, code.DefaultScope.GetTypes());
 		}
 	}
 
