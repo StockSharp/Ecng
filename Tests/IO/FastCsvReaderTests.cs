@@ -48,6 +48,33 @@ public class FastCsvReaderTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task NextLine_TrailingPartialLineSeparator_KeptAsData()
+	{
+		// Multi-char line separator; the content ends with its first char, never completing the
+		// separator, so that char is data and must survive in the last cell.
+		using var reader = new FastCsvReader("ab\r", "\r\n");
+
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		reader.ReadString().AssertEqual("ab\r");
+	}
+
+	[TestMethod]
+	public async Task ReadString_PastLastColumn_Throws()
+	{
+		using var reader = new FastCsvReader("a;b;c", "\n");
+
+		(await reader.NextLineAsync(CancellationToken)).AssertTrue();
+		reader.ColumnCount.AssertEqual(3);
+
+		reader.ReadString().AssertEqual("a");
+		reader.ReadString().AssertEqual("b");
+		reader.ReadString().AssertEqual("c");
+
+		// Reading past the last column must throw, not return a stale spare slot.
+		Throws<InvalidOperationException>(() => reader.ReadString());
+	}
+
+	[TestMethod]
 	public async Task DoubleQuotes()
 	{
 		await AssertAsync(@"AFKS@TQBR;""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;

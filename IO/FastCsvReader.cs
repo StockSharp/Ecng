@@ -253,6 +253,19 @@ public class FastCsvReader : Disposable
 			_line[_lineLen++] = c;
 		}
 
+		// A partial multi-char line-separator match left over at EOF is data, not a separator
+		// (the full separator never completed), so flush it into the line before finalising.
+		if (_lineSeparatorCharPos > 0)
+		{
+			if ((_lineLen + _lineSeparatorCharPos) >= _line.Length)
+				Array.Resize(ref _line, _line.Length + _buffSize);
+
+			Array.Copy(_lineSeparatorChars, 0, _line, _lineLen, _lineSeparatorCharPos);
+
+			_lineLen += _lineSeparatorCharPos;
+			_lineSeparatorCharPos = 0;
+		}
+
 		if (_columnCount > 0)
 		{
 			var pair = GetColumnPos();
@@ -647,7 +660,9 @@ public class FastCsvReader : Disposable
 	{
 		ThrowIfDisposed();
 
-		if (_columnCurr >= _columnCount)
+		// _columnCurr starts at -1 and the next read advances it; guard against advancing past the
+		// last filled column (index _columnCount-1) into the spare slot, which would return stale data.
+		if (_columnCurr + 1 >= _columnCount)
 			throw new InvalidOperationException();
 
 		return _columnPos[++_columnCurr];
