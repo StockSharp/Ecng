@@ -237,19 +237,26 @@ public unsafe static class Marshaler
 	}
 
 	/// <summary>
-	/// Decodes an unmanaged ANSI string from a pointer into a managed string using the specified encoding.
+	/// Decodes a NUL-terminated unmanaged string from a pointer into a managed string using the specified encoding.
 	/// </summary>
 	/// <param name="encoding">The encoding to use for decoding the string.</param>
-	/// <param name="pData">The pointer to the ANSI string in unmanaged memory.</param>
-	/// <returns>The decoded managed string.</returns>
+	/// <param name="pData">The pointer to the NUL-terminated string in unmanaged memory.</param>
+	/// <returns>The decoded managed string, or <c>null</c> if <paramref name="pData"/> is zero.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
 	public static string ToString(this Encoding encoding, IntPtr pData)
 	{
 		if (encoding is null)
 			throw new ArgumentNullException(nameof(encoding));
 
-		var errStr = pData.ToAnsi();
-		var length = errStr.Length;
+		if (pData == IntPtr.Zero)
+			return null;
+
+		// Measure the real byte length up to the NUL terminator and decode with the requested
+		// encoding. The previous code used the ANSI char count as a byte count, which is wrong for
+		// any multibyte encoding (e.g. UTF-8) and truncated at the first byte ANSI mapped to NUL.
+		var length = 0;
+		while (Marshal.ReadByte(pData, length) != 0)
+			length++;
 
 		var data = new byte[length];
 		Marshal.Copy(pData, data, 0, length);
@@ -390,8 +397,11 @@ public unsafe static class Marshaler
 
 		fixed (byte* ptr8 = &srcChar)
 		{
-			encoding.GetChars(ptr8, maxBytes, charBuffer, maxBytes);
-			return new string(charBuffer);
+			// GetChars returns the actual number of decoded chars. The stackalloc buffer is not
+			// zero-initialized, so building the string from the whole buffer would append garbage
+			// past the decoded content; trim the trailing NUL produced by a terminated source.
+			var charCount = encoding.GetChars(ptr8, maxBytes, charBuffer, maxBytes);
+			return new string(charBuffer, 0, charCount).TrimEnd('\0');
 		}
 	}
 
