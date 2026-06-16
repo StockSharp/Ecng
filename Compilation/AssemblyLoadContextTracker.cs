@@ -28,6 +28,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		}
 
 		Exception error = null;
+		Assembly result;
 
 		using (_lock.EnterScope())
 		{
@@ -48,13 +49,17 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 
 				init();
 			}
+
+			// Load inside the same scope: releasing the lock before the load opened a window where
+			// a concurrent Unload could null _context (NullReferenceException here) or another
+			// LoadFromBinary could replace it, loading this assembly into the wrong context.
+			result = _context.LoadFromBinary(assembly);
 		}
 
 		if (error is not null && _uploadingError is not null)
 			_uploadingError(error);
 
-		using (_lock.EnterScope())
-			return _context.LoadFromBinary(assembly);
+		return result;
 	}
 
 	/// <summary>
