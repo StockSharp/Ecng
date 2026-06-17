@@ -30,6 +30,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// </summary>
 	/// <param name="reader">The JSON reader used for deserialization.</param>
 	/// <param name="readJson">The delegate to read JSON values.</param>
+	/// <param name="cancellationToken">The cancellation token captured for the synchronous reader-mode value reads.</param>
 	internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> readJson, CancellationToken cancellationToken)
 		: this()
 	{
