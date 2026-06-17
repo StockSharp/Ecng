@@ -135,6 +135,12 @@ public class AzureBlobService : Disposable, IBackupService
 			}
 		}
 
+		// The loop breaks on a premature EOF (actual == 0 with read < total); without this guard the
+		// method would then report progress(100) and return, handing the caller a truncated file
+		// indistinguishable from a complete one.
+		if (read < total)
+			throw new IOException($"Unexpected end of stream: received {read} of {total} bytes for '{entry.GetFullPath()}'.");
+
 		if (prevProgress < 100)
 			progress(100);
 	}
