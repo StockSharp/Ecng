@@ -86,6 +86,11 @@ public class AmazonS3Service : Disposable, IBackupService
 
 				var be = GetPath(entry.Key);
 
+				// Folder-marker objects (key ends with '/') have a real Size of 0, so the guard
+				// above doesn't skip them; GetPath returns null for such keys - skip them.
+				if (be is null)
+					continue;
+
 				be.LastModified = entry.LastModified.Value;
 				be.Size = entry.Size.Value;
 
@@ -207,51 +212,81 @@ public class AmazonS3Service : Disposable, IBackupService
 			Key = key,
 		}, cancellationToken).NoWait();
 
-		var filePosition = 0L;
-		var prevProgress = -1;
-
-		var etags = new List<PartETag>();
-
-		var partNum = 1;
-
-		while (filePosition < stream.Length)
+		try
 		{
-			var response = await _client.UploadPartAsync(new()
+			// S3 allows at most 10000 parts, so a fixed 10 MB part capped uploads at ~100 GB and
+			// failed (after transferring ~100 GB) for anything larger. Scale the part size up for
+			// big streams while keeping the default for small ones.
+			var partSize = (stream.Length + 9999) / 10000;
+
+			if (partSize < _bufferSize)
+				partSize = _bufferSize;
+
+			var filePosition = 0L;
+			var prevProgress = -1;
+
+			var etags = new List<PartETag>();
+
+			var partNum = 1;
+
+			while (filePosition < stream.Length)
+			{
+				var response = await _client.UploadPartAsync(new()
+				{
+					BucketName = _bucket,
+					UploadId = initResponse.UploadId,
+					PartNumber = partNum,
+					PartSize = partSize,
+					//FilePosition = filePosition,
+					InputStream = stream,
+					Key = key
+				}, cancellationToken).NoWait();
+
+				etags.Add(new(partNum, response.ETag));
+
+				filePosition += partSize;
+
+				var currProgress = (int)(filePosition.Min(stream.Length) * 100 / stream.Length);
+
+				if (currProgress > prevProgress)
+				{
+					progress(currProgress);
+					prevProgress = currProgress;
+				}
+
+				partNum++;
+			}
+
+			await _client.CompleteMultipartUploadAsync(new()
 			{
 				BucketName = _bucket,
 				UploadId = initResponse.UploadId,
-				PartNumber = partNum,
-				PartSize = _bufferSize,
-				//FilePosition = filePosition,
-				InputStream = stream,
-				Key = key
+				Key = key,
+				PartETags = etags
 			}, cancellationToken).NoWait();
 
-			etags.Add(new(partNum, response.ETag));
-
-			filePosition += _bufferSize;
-
-			var currProgress = (int)(filePosition.Min(stream.Length) * 100 / stream.Length);
-
-			if (currProgress > prevProgress)
+			if (prevProgress < 100)
+				progress(100);
+		}
+		catch
+		{
+			// Abort so already-uploaded parts don't linger (invisible to ListObjects but still
+			// billed). Use no token so a cancellation that triggered this still cleans up.
+			try
 			{
-				progress(currProgress);
-				prevProgress = currProgress;
+				await _client.AbortMultipartUploadAsync(new()
+				{
+					BucketName = _bucket,
+					Key = key,
+					UploadId = initResponse.UploadId,
+				}, CancellationToken.None).NoWait();
+			}
+			catch
+			{
 			}
 
-			partNum++;
+			throw;
 		}
-
-		await _client.CompleteMultipartUploadAsync(new()
-		{
-			BucketName = _bucket,
-			UploadId = initResponse.UploadId,
-			Key = key,
-			PartETags = etags
-		}, cancellationToken).NoWait();
-
-		if (prevProgress < 100)
-			progress(100);
 	}
 
 	Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
@@ -350,7 +385,12 @@ public class AmazonS3Service : Disposable, IBackupService
 
 	private static BackupEntry GetPath(string key)
 	{
-		var entities = key.Split('/').Select(p => new BackupEntry { Name = p }).ToArray();
+		// RemoveEmptyEntries: a key ending in '/' (AWS-console folder marker) or containing '//'
+		// would otherwise yield a BackupEntry with an empty Name, which throws on any later use.
+		var entities = key.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(p => new BackupEntry { Name = p }).ToArray();
+
+		if (entities.Length == 0)
+			return null;
 
 		BackupEntry parent = null;
 
