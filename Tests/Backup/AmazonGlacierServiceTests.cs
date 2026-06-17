@@ -365,6 +365,37 @@ public class AmazonGlacierServiceTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// When the requested archive is absent from the inventory, a same-named archive in another
+	/// folder must NOT be resolved and deleted (the old filename-only fallback silently deleted
+	/// the wrong archive - irreversible cross-folder data loss).
+	/// </summary>
+	[TestMethod]
+	public async Task DeleteAsync_WhenRequestedArchiveAbsent_DoesNotDeleteSameNamedSibling()
+	{
+		var client = new FakeGlacierClient();
+
+		client.Archives.Add(new FakeGlacierClient.ArchiveData
+		{
+			ArchiveId = "archive-b",
+			Description = "folderB/file.txt",
+			Size = 200,
+			CreationDate = DateTime.UtcNow
+		});
+
+		using var service = CreateService(client);
+		var svc = (IBackupService)service;
+
+		// folderA/file.txt is not in the inventory; only the folderB sibling is.
+		var entryA = new BackupEntry { Name = "file.txt", Parent = new BackupEntry { Name = "folderA" } };
+
+		await ThrowsAsync<ArgumentOutOfRangeException>(async ()
+			=> await svc.DeleteAsync(entryA, CancellationToken));
+
+		client.Archives.Any(a => a.Description == "folderB/file.txt")
+			.AssertTrue("A same-named sibling must not be deleted when the requested archive is absent.");
+	}
+
+	/// <summary>
 	/// Regression test for FindAsync with a non-empty parent: ensures the returned entry's
 	/// full path is the archive's own path ("folder/subfolder/file.txt") and the parent
 	/// prefix is not duplicated. (Was: the rebuilt hierarchy was re-attached to the parent

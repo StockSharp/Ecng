@@ -464,19 +464,12 @@ public class AmazonGlacierService : Disposable, IBackupService
 		if (inventory.Archives.TryGetValue(desc, out var fromInventory))
 			return fromInventory;
 
-		// Fallback: try match by file name only.
-		var name = entry.Name;
-		if (!name.IsEmpty())
-		{
-			var candidate = inventory.Archives.Values
-				.Where(a => a.Description?.EndsWith("/" + name, StringComparison.OrdinalIgnoreCase) == true || a.Description.Equals(name, StringComparison.OrdinalIgnoreCase))
-				.OrderByDescending(a => a.CreationDate ?? DateTime.MinValue)
-				.FirstOrDefault();
-
-			if (candidate is not null)
-				return candidate;
-		}
-
+		// No filename-only fallback: matching an archive by its leaf name alone could resolve a
+		// request for folderA/file to folderB/file (a same-named sibling), which on the delete path
+		// is an irreversible wrong-archive deletion and on the download path returns the wrong
+		// content. The full-path lookups above are authoritative; a miss here means the archive is
+		// not (yet) in the inventory (which lags up to ~24h) - fail loudly so the caller retries
+		// rather than silently acting on a different archive.
 		throw new ArgumentOutOfRangeException(nameof(entry), $"Archive not found in vault inventory: {desc}.");
 	}
 
