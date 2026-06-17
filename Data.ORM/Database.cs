@@ -789,8 +789,26 @@ public partial class Database : Disposable, IStorage
 
 		{
 			var storage = input.ToStorage();
-			await entity.LoadAsync(storage, this, cancellationToken).NoWait();
-			entity.InitLists(this);
+
+			try
+			{
+				await entity.LoadAsync(storage, this, cancellationToken).NoWait();
+				entity.InitLists(this);
+			}
+			catch
+			{
+				// Hydration failed: drop the still-incomplete cache entry so the bulk-scope flush
+				// can't later promote this never-loaded entity to "complete" and cache it
+				// permanently empty. A retry recreates and reloads it. Use no token so a
+				// cancellation that caused the failure doesn't also abort the cleanup.
+				using (await _cacheLock.LockAsync(CancellationToken.None).ConfigureAwait(false))
+				{
+					if (_cache.TryGetValue(key, out var cur) && !cur.complete)
+						_cache.Remove(key);
+				}
+
+				throw;
+			}
 		}
 
 		return entity;
