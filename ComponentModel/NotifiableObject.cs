@@ -44,4 +44,38 @@ public abstract class NotifiableObject : INotifyPropertyChangedEx, INotifyProper
 	{
 		PropertyChanging?.Invoke(this, propertyName);
 	}
+
+	/// <summary>
+	/// Raises <see cref="PropertyChanged"/> for the given property. Alias for <see cref="NotifyChanged"/>.
+	/// </summary>
+	/// <param name="propertyName">The property name. This value is optional and can be provided automatically by the compiler.</param>
+	protected void OnPropertyChanged([CallerMemberName]string propertyName = null)
+		=> NotifyChanged(propertyName);
+
+	/// <summary>
+	/// Raises <see cref="PropertyChanging"/> for the given property. Alias for <see cref="NotifyChanging"/>.
+	/// </summary>
+	/// <param name="propertyName">The property name. This value is optional and can be provided automatically by the compiler.</param>
+	protected void OnPropertyChanging([CallerMemberName]string propertyName = null)
+		=> NotifyChanging(propertyName);
+
+	/// <summary>
+	/// Assigns <paramref name="value"/> to <paramref name="field"/> and raises the changing/changed notifications,
+	/// but only when the value actually differs.
+	/// </summary>
+	/// <typeparam name="T">Property type.</typeparam>
+	/// <param name="field">Reference to the backing field.</param>
+	/// <param name="value">The new value.</param>
+	/// <param name="propertyName">The property name. This value is optional and can be provided automatically by the compiler.</param>
+	/// <returns><see langword="true"/> if the value changed; otherwise <see langword="false"/>.</returns>
+	protected bool SetProperty<T>(ref T field, T value, [CallerMemberName]string propertyName = null)
+	{
+		if (EqualityComparer<T>.Default.Equals(field, value))
+			return false;
+
+		NotifyChanging(propertyName);
+		field = value;
+		NotifyChanged(propertyName);
+		return true;
+	}
 }
