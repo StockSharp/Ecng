@@ -17,6 +17,7 @@
   <Project Path="Compilation.Python/Compilation.Python.csproj" />
   <Project Path="Compilation.Roslyn/Compilation.Roslyn.csproj" />
   <Project Path="ComponentModel/ComponentModel.csproj" />
+  <Project Path="ComponentModel.Generator/ComponentModel.Generator.csproj" />
   <Project Path="Configuration/Configuration.csproj" />
   <Project Path="Data/Data.csproj" />
   <Project Path="Data.Ado/Data.Ado.csproj" />

@@ -59,6 +59,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
     <ProjectReference Include="..\Data.ORM\Data.ORM.csproj" />
     <ProjectReference Include="..\Data.Entities.Generator\Data.Entities.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\ComponentModel.Generator\ComponentModel.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net10.0' ">
     <Compile Remove="Nuget\**" />
