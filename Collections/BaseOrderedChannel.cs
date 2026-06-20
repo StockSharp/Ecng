@@ -24,7 +24,17 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		get
 		{
 			using (_sync.EnterScope())
-				return _collection.Count;
+			{
+				var count = _collection.Count;
+
+				// Items enqueued but not yet dequeued live in the channel buffer until DequeueAsync pulls
+				// them into the sorted collection. Include them so the count reflects every pending item,
+				// not only the ones already moved into the sorted buffer.
+				if (_channel is not null && _channel.Reader.CanCount)
+					count += _channel.Reader.Count;
+
+				return count;
+			}
 		}
 	}
 
@@ -87,7 +97,12 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 			{
 				var options = new UnboundedChannelOptions
 				{
-					SingleReader = true,
+					// Keep the single-reader optimization off for two reasons. First, it selects a channel
+					// implementation whose reader supports Count, which this type's Count uses to report
+					// items still buffered in the channel. Second, the awaiting ReadAsync in DequeueAsync
+					// runs outside _sync, so overlapping DequeueAsync calls can read concurrently; a
+					// single-reader channel would make those concurrent reads undefined.
+					SingleReader = false,
 					SingleWriter = false
 				};
 

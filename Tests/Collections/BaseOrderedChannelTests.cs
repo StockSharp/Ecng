@@ -275,6 +275,29 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Count.AssertEqual(0);
 	}
 
+	[TestMethod]
+	public async Task Count_IncludesPendingEnqueuedItems()
+	{
+		var token = CancellationToken;
+
+		var queue = CreateQueue();
+		queue.Open();
+
+		queue.Count.AssertEqual(0);
+
+		// An enqueued item that has not been dequeued yet must still be counted, even though it is
+		// buffered in the underlying channel and not yet pulled into the sorted collection.
+		await queue.Add(1, "first", token);
+		queue.Count.AssertEqual(1);
+
+		await queue.Add(2, "second", token);
+		queue.Count.AssertEqual(2);
+
+		// Consuming one item moves the rest into the sorted collection and leaves the remaining pending.
+		await queue.DequeueAsync(token);
+		queue.Count.AssertEqual(1);
+	}
+
 	/// <summary>
 	/// Regression test for DequeueAsync on a closed-but-never-opened queue: ensures it throws
 	/// ChannelClosedException instead of busy-polling. (Was: when the channel was null because the
