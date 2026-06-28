@@ -48,12 +48,32 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 		}
 	}
 
+	private IPAddress _interfaceAddress;
+
+	/// <summary>
+	/// Gets or sets the local network interface address on which to join the multicast group.
+	/// When unset, the OS default interface is used — on a multi-homed host that can make the
+	/// group be received on several interfaces (duplicate delivery). Set this to bind the
+	/// membership to a single NIC.
+	/// </summary>
+	[Display(Name = "Interface Address", Description = "Local interface address for multicast membership.", Order = 2)]
+	public IPAddress InterfaceAddress
+	{
+		get => _interfaceAddress;
+		set
+		{
+			NotifyChanging();
+			_interfaceAddress = value;
+			NotifyChanged();
+		}
+	}
+
 	private int _port;
 
 	/// <summary>
 	/// Gets or sets the local port.
 	/// </summary>
-	[Display(Name = "Port", Description = "Local port.", Order = 2)]
+	[Display(Name = "Port", Description = "Local port.", Order = 3)]
 	public int Port
 	{
 		get => _port;
@@ -98,6 +118,7 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 		Port = storage.GetValue<int>(nameof(Port));
 		GroupAddress = storage.GetValue<IPAddress>(nameof(GroupAddress));
 		IsEnabled = storage.GetValue(nameof(IsEnabled), IsEnabled);
+		InterfaceAddress = storage.GetValue(nameof(InterfaceAddress), default(IPAddress));
 	}
 
 	/// <summary>
@@ -110,7 +131,8 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 			.Set(nameof(SourceAddress), SourceAddress.To<string>())
 			.Set(nameof(Port), Port)
 			.Set(nameof(GroupAddress), GroupAddress.To<string>())
-			.Set(nameof(IsEnabled), IsEnabled);
+			.Set(nameof(IsEnabled), IsEnabled)
+			.Set(nameof(InterfaceAddress), InterfaceAddress.To<string>());
 	}
 
 	/// <summary>

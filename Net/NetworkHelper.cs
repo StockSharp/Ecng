@@ -109,7 +109,15 @@ public static class NetworkHelper
 		{
 			// IPv4 multicast
 			if (address.SourceAddress is null)
-				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
+			{
+				// Bind the membership to a specific local interface when given. Without it the
+				// default interface is used, which on a multi-homed host can join the group on
+				// several NICs and deliver every datagram more than once.
+				var option = address.InterfaceAddress is null
+					? new MulticastOption(address.GroupAddress)
+					: new MulticastOption(address.GroupAddress, address.InterfaceAddress);
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, option);
+			}
 			else
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
 		}
