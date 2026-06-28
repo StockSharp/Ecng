@@ -465,4 +465,39 @@ public static class CompressionHelper
 		using var compress = (TCompressStream)Activator.CreateInstance(typeof(TCompressStream), input, CompressionMode.Decompress, leaveOpen);
 		await compress.CopyToAsync(output, bufferSize, cancellationToken);
 	}
+
+	/// <summary>Compresses the data with GZip.</summary>
+	/// <param name="data">The data to compress.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <returns>The GZip-compressed bytes.</returns>
+	public static async Task<byte[]> GZipAsync(this byte[] data, CancellationToken cancellationToken = default)
+	{
+		if (data is null)
+			throw new ArgumentNullException(nameof(data));
+
+		using var output = new MemoryStream();
+
+		await using (var gzip = new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true))
+			await gzip.WriteAsync(data, cancellationToken);
+
+		return output.ToArray();
+	}
+
+	/// <summary>Decompresses GZip-compressed data to bytes.</summary>
+	/// <param name="data">The GZip-compressed data.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <returns>The decompressed bytes.</returns>
+	public static async Task<byte[]> UnGZipAsync(this byte[] data, CancellationToken cancellationToken = default)
+	{
+		if (data is null)
+			throw new ArgumentNullException(nameof(data));
+
+		using var input = new MemoryStream(data);
+		await using var gzip = new GZipStream(input, CompressionMode.Decompress);
+		using var output = new MemoryStream();
+
+		await gzip.CopyToAsync(output, cancellationToken);
+
+		return output.ToArray();
+	}
 }
