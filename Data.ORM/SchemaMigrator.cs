@@ -460,6 +460,13 @@ public static class SchemaMigrator
 				tableName: tableName,
 				columnName: col.Name,
 				unique: ix.IsUnique);
+
+			if (!ix.Condition.IsEmpty())
+			{
+				sb.Append(" WHERE ");
+				sb.Append(RenderIndexCondition(ix.Condition, dialect));
+			}
+
 			sb.AppendLine(";");
 		}
 
@@ -510,9 +517,25 @@ public static class SchemaMigrator
 			sb.Append(dialect.QuoteIdentifier(tableName));
 			sb.Append(" (");
 			sb.Append(cols);
-			sb.AppendLine(");");
+			sb.Append(")");
+
+			// Any one member may carry the partial-index predicate; render it as a trailing WHERE.
+			var condition = ordered.Select(p => p.Index.Condition).FirstOrDefault(c => !c.IsEmpty());
+			if (!condition.IsEmpty())
+			{
+				sb.Append(" WHERE ");
+				sb.Append(RenderIndexCondition(condition, dialect));
+			}
+
+			sb.AppendLine(";");
 		}
 	}
+
+	// Render a partial-index predicate: brace-wrapped column tokens ({Col}) become the dialect-quoted
+	// identifier, so a single Condition string is portable across SQL Server / PostgreSQL / SQLite.
+	private static string RenderIndexCondition(string condition, ISqlDialect dialect)
+		=> System.Text.RegularExpressions.Regex.Replace(condition, @"\{(\w+)\}",
+			m => dialect.QuoteIdentifier(m.Groups[1].Value));
 
 	private static void AppendIndexDiffs(
 		IEnumerable<Schema> entities,

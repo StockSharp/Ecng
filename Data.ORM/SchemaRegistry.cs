@@ -281,7 +281,7 @@ public static class SchemaRegistry
 			return ([], false);
 
 		var indexes = attrs
-			.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute))
+			.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute, a.Condition))
 			.ToArray();
 
 		return (indexes, attrs.Any(a => a is UniqueAttribute));
@@ -388,7 +388,7 @@ public static class SchemaRegistry
 				if (!typeIndexLookup.TryGetValue(cols[i], out var entry))
 					entry = (new(), false);
 
-				entry.Indexes.Add(new SchemaColumnIndex(indexName, order, isUnique));
+				entry.Indexes.Add(new SchemaColumnIndex(indexName, order, isUnique, attr.Condition));
 				typeIndexLookup[cols[i]] = (entry.Indexes, entry.HasUnique || isUnique);
 			}
 		}

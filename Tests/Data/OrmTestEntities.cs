@@ -198,6 +198,31 @@ public class TestCompositeIx : IDbPersistable
 	}
 }
 
+// Type-level partial (filtered) unique composite: (TenantId, IdempotencyKey) is unique only over
+// rows with a non-empty key, so many "no key" rows coexist while real keys stay unique per tenant.
+[Entity(Name = "Ecng_TestFilteredUniqueIx")]
+[Unique(nameof(TenantId), nameof(IdempotencyKey), Name = "UX_FilteredUnique_Tenant_Key", Condition = "{IdempotencyKey} <> ''")]
+public class TestFilteredUniqueIx : IDbPersistable
+{
+	public long Id { get; set; }
+	public long TenantId { get; set; }
+	[Column(MaxLength = 128)]
+	public string IdempotencyKey { get; set; } = string.Empty;
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+		=> storage.Set(nameof(TenantId), TenantId).Set(nameof(IdempotencyKey), IdempotencyKey);
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		TenantId = storage.GetValue<long>(nameof(TenantId));
+		IdempotencyKey = storage.GetValue<string>(nameof(IdempotencyKey));
+		return default;
+	}
+}
+
 [Entity(Name = "Ecng_TestIndexed")]
 public class TestIndexed : IDbPersistable
 {

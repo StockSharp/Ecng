@@ -59,6 +59,18 @@ public class IndexAttribute : Attribute
 	/// Ignored when <see cref="Name"/> is <see langword="null"/>.
 	/// </summary>
 	public int Order { get; set; }
+
+	/// <summary>
+	/// Optional predicate turning this into a partial (filtered) index — emitted as a trailing
+	/// <c>WHERE</c> on the <c>CREATE INDEX</c>. Column names must be wrapped in braces so they are
+	/// quoted per dialect, e.g. <c>Condition = "{IdempotencyKey} &lt;&gt; ''"</c> becomes
+	/// <c>WHERE [IdempotencyKey] &lt;&gt; ''</c> (SQL Server) / <c>WHERE "IdempotencyKey" &lt;&gt; ''</c>
+	/// (PostgreSQL / SQLite). The chief use is a unique index that must ignore rows carrying the
+	/// "unset" value of a key (empty string, sentinel), which a plain unique index would wrongly
+	/// collapse. For a composite index set it on any one participating member. <see langword="null"/>
+	/// emits an ordinary, non-filtered index.
+	/// </summary>
+	public string Condition { get; set; }
 }
 
 /// <summary>
@@ -80,6 +92,31 @@ public class UniqueAttribute : IndexAttribute
 	public UniqueAttribute(params string[] fieldNames)
 		: base(fieldNames)
 	{
+	}
+}
+
+/// <summary>
+/// A partial unique index that ignores rows whose LAST key column holds the empty string — the
+/// common "unique per scope, but only for rows that actually carry a key" case (e.g. an idempotency
+/// key defaulting to empty). Equivalent to <c>[Unique(fields…)]</c> with
+/// <see cref="IndexAttribute.Condition"/> = <c>"{lastField} &lt;&gt; ''"</c>, but typed and named so
+/// the raw predicate lives here once instead of as a string literal on every entity. For any other
+/// filter use the general <see cref="IndexAttribute.Condition"/> directly.
+/// </summary>
+public sealed class NonEmptyUniqueAttribute : UniqueAttribute
+{
+	/// <summary>
+	/// Declares the unique index over <paramref name="fieldNames"/>, filtered to rows whose last
+	/// column is non-empty. Scope columns come first, the value-carrying key last.
+	/// </summary>
+	public NonEmptyUniqueAttribute(params string[] fieldNames)
+		: base(fieldNames)
+	{
+		if (fieldNames is not { Length: > 0 })
+			throw new ArgumentException("NonEmptyUnique requires at least one field.", nameof(fieldNames));
+
+		// Braces are quoted per dialect by the migrator; only the last column is filtered.
+		Condition = $"{{{fieldNames[^1]}}} <> ''";
 	}
 }
 

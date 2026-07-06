@@ -139,6 +139,45 @@ public class SchemaMigratorIndexTests : BaseTestClass
 	[DataRow(DatabaseProviderRegistry.SqlServer)]
 	[DataRow(DatabaseProviderRegistry.PostgreSql)]
 	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public void CreateTable_FilteredUniqueIndex_EmitsWhereClauseWithQuotedColumn(string provider)
+	{
+		// A type-level [Unique(nameof(TenantId), nameof(IdempotencyKey)) { Condition = "{IdempotencyKey} <> ''" }]
+		// must emit a partial UNIQUE index: the WHERE predicate carries the dialect-quoted column so
+		// the same Condition string is portable, and rows with an empty key are excluded (many may
+		// coexist) while non-empty keys stay unique.
+		DbTestHelper.RegisterAll();
+		var dialect = DbTestHelper.GetDialect(provider);
+		var schema = SchemaRegistry.Get(typeof(TestFilteredUniqueIx));
+
+		var diff = new SchemaDiff("Ecng_TestFilteredUniqueIx", string.Empty, SchemaDiffKind.MissingTable, "expected", "missing");
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, [diff], [schema]);
+
+		// One composite UNIQUE index over both columns, filtered to non-empty keys. Column quoting is
+		// dialect-specific ([x] for SQL Server, "x" elsewhere), so accept either around each token.
+		var match = System.Text.RegularExpressions.Regex.Match(sql,
+			@"CREATE\s+UNIQUE\s+INDEX\s+[""\[]?UX_FilteredUnique_Tenant_Key[""\]]?\s+ON\s+[""\[]?Ecng_TestFilteredUniqueIx[""\]]?\s*\(\s*[""\[]?TenantId[""\]]?\s*,\s*[""\[]?IdempotencyKey[""\]]?\s*\)\s+WHERE\s+[""\[]?IdempotencyKey[""\]]?\s*<>\s*''",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		match.Success.AssertTrue(
+			$"Expected a partial UNIQUE INDEX on (TenantId, IdempotencyKey) WHERE IdempotencyKey <> '', got: {sql}");
+	}
+
+	[TestMethod]
+	public void NonEmptyUnique_IsAUniqueIndexFilteredOnItsLastColumn()
+	{
+		// The typed convenience must produce the same partial-unique semantics as the raw
+		// Condition string — filtering the last (value-carrying) column of the composite key —
+		// so entities can declare it by name instead of embedding SQL.
+		var attr = new NonEmptyUniqueAttribute("Tenant", "IdempotencyKey");
+
+		(attr is UniqueAttribute).AssertTrue("NonEmptyUnique must be a unique index");
+		attr.Condition.AssertEqual("{IdempotencyKey} <> ''");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
 	public async Task Backfill_MultipleAttributes_AddsAllMissingIndexes(string provider)
 	{
 		DbTestHelper.SkipIfUnavailable(provider);

@@ -75,8 +75,10 @@ public record SchemaColumn
 /// <see cref="IsUnique"/> is per index: a column may take part in a unique
 /// composite and a non-unique single index at the same time, so uniqueness
 /// belongs to the participation, not to the column.
+/// <see cref="Condition"/>, when set, makes it a partial (filtered) index — a
+/// trailing <c>WHERE</c> whose braced column tokens are quoted per dialect.
 /// </summary>
-public sealed record SchemaColumnIndex(string Name, int Order, bool IsUnique = false);
+public sealed record SchemaColumnIndex(string Name, int Order, bool IsUnique = false, string Condition = null);
 
 /// <summary>
 /// Describes the database schema for an entity type.
