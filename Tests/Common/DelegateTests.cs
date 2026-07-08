@@ -223,7 +223,7 @@ public class DelegateTests : BaseTestClass
 		Action<int> action = x => { };
 
 		// Act
-		var list = action.GetInvocationList();
+		var list = DelegateHelper.GetInvocationList(action);
 
 		// Assert
 		var count = 0;
@@ -242,7 +242,7 @@ public class DelegateTests : BaseTestClass
 		var combined = action1.AddDelegate(action2).AddDelegate(action3);
 
 		// Act
-		var list = combined.GetInvocationList();
+		var list = DelegateHelper.GetInvocationList(combined);
 
 		// Assert
 		var count = 0;
@@ -252,13 +252,16 @@ public class DelegateTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void GetInvocationList_ThrowsForNull()
+	public void GetInvocationList_Null_ReturnsEmpty()
 	{
 		// Arrange
 		Action<int> action = null;
 
-		// Act & Assert
-		ThrowsExactly<NullReferenceException>(() => action.GetInvocationList());
+		// Act
+		var list = DelegateHelper.GetInvocationList(action);
+
+		// Assert
+		list.Any().AssertFalse();
 	}
 
 	[TestMethod]
@@ -271,7 +274,7 @@ public class DelegateTests : BaseTestClass
 		var combined = first.AddDelegate(second);
 
 		// Act
-		var list = combined.GetInvocationList();
+		var list = DelegateHelper.GetInvocationList(combined);
 		foreach (var d in list)
 			d.DynamicInvoke(0);
 
@@ -290,7 +293,7 @@ public class DelegateTests : BaseTestClass
 		var combined = increment.AddDelegate(increment);
 
 		// Act
-		var list = combined.GetInvocationList();
+		var list = DelegateHelper.GetInvocationList(combined);
 		var items = 0;
 		foreach (var d in list)
 		{
@@ -315,7 +318,7 @@ public class DelegateTests : BaseTestClass
 		var combined = a1.AddDelegate(a2);
 
 		// Act
-		var list = combined.GetInvocationList();
+		var list = DelegateHelper.GetInvocationList(combined);
 		foreach (var d in list)
 			d.DynamicInvoke(3);
 
