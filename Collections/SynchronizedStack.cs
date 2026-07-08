@@ -62,6 +62,17 @@ public class SynchronizedStack<T> : SynchronizedCollection<T, StackEx<T>>
 	/// <param name="index">The index at which the item should be inserted.</param>
 	/// <param name="item">The item to insert.</param>
 	/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
+	public override void Insert(int index, T item)
+	{
+		throw new NotSupportedException();
+	}
+
+	/// <summary>
+	/// Throws a <see cref="NotSupportedException"/> as this operation is not supported for a stack.
+	/// </summary>
+	/// <param name="index">The index at which the item should be inserted.</param>
+	/// <param name="item">The item to insert.</param>
+	/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
 	protected override void OnInsert(int index, T item)
 	{
 		throw new NotSupportedException();

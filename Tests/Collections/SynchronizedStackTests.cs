@@ -35,7 +35,10 @@ public class SynchronizedStackTests : BaseTestClass
 		var list = (IList<int>)st;
 		ThrowsExactly<NotSupportedException>(() => _ = list[0]);
 		ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
+		ThrowsExactly<NotSupportedException>(() => list.Insert(list.Count, 1));
 		ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
+		ThrowsExactly<NotSupportedException>(() => list.IndexOf(1));
+		ThrowsExactly<NotSupportedException>(() => ((ICollection<int>)st).Remove(1));
 	}
 
 	#endregion
@@ -175,6 +178,9 @@ public class SynchronizedStackTests : BaseTestClass
 		var array = st.CopyAndClear();
 
 		array.Length.AssertEqual(3);
+		array[0].AssertEqual(3);
+		array[1].AssertEqual(2);
+		array[2].AssertEqual(1);
 		st.Count.AssertEqual(0);
 	}
 
