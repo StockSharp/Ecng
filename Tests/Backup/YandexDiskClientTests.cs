@@ -280,6 +280,7 @@ public class YandexDiskClientTests : BaseTestClass
 	{
 		var fakeApi = new FakeDiskApi();
 		fakeApi.CommandsClient.DeleteStatusCode = HttpStatusCode.Accepted;
+		fakeApi.CommandsClient.OperationStatuses.Enqueue(OperationStatus.InProgress);
 		fakeApi.CommandsClient.OperationStatuses.Enqueue(OperationStatus.Success);
 
 		var entry = new BackupEntry { Name = "non-empty-folder" };
@@ -289,8 +290,7 @@ public class YandexDiskClientTests : BaseTestClass
 
 		await svc.DeleteAsync(entry, CancellationToken);
 
-		(fakeApi.CommandsClient.GetOperationStatusCalls > 0)
-			.AssertTrue("DeleteAsync must poll the operation status for a 202 Accepted delete.");
+		fakeApi.CommandsClient.GetOperationStatusCalls.AssertEqual(2);
 	}
 
 	/// <summary>
@@ -487,7 +487,8 @@ public class YandexDiskClientTests : BaseTestClass
 				await api.Files.UploadAsync(link, uploadStream, CancellationToken);
 
 			var published = await api.MetaInfo.PublishFolderAsync(filePath, CancellationToken);
-			published?.Href.IsEmpty().AssertFalse();
+			published.AssertNotNull();
+			published.Href.IsEmpty().AssertFalse();
 
 			await api.MetaInfo.UnpublishFolderAsync(filePath, CancellationToken);
 		}
