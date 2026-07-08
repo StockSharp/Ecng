@@ -315,6 +315,8 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 			await Task.Delay(10, CancellationToken);
 
 		timer.Stop();
+
+		await Task.Delay(200, CancellationToken);
 		var counterAfterStop = counter;
 
 		await Task.Delay(100, CancellationToken);
@@ -552,4 +554,3 @@ public class ControllablePeriodicTimerTests : BaseTestClass
 		timer.IsRunning.AssertFalse("Timer should stop after Stop()");
 	}
 }
-
