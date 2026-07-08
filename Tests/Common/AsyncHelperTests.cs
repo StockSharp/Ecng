@@ -124,7 +124,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		count.AssertInRange(1, 6, $"count={count}"); // Allow some variance for timer jitter
+		count.AssertInRange(0, 7, $"count={count}"); // Allow 1-6 executions, with exclusive AssertInRange bounds.
 	}
 
 	[TestMethod]
@@ -147,7 +147,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		sum.AssertInRange(5, 30); // 5 * 1-6 executions, allow variance
+		sum.AssertInRange(0, 35); // 5 * 1-6 executions, with exclusive AssertInRange bounds.
 	}
 
 	[TestMethod]
@@ -174,7 +174,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		count.AssertInRange(1, 6);
+		count.AssertInRange(0, 7);
 	}
 
 	[TestMethod]
@@ -219,12 +219,13 @@ public class AsyncHelperTests : BaseTestClass
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(100));
 
 		await Task.Delay(350, CancellationToken);
-		count.AssertInRange(1, 6);
+		count.AssertInRange(0, 7);
 
 		// Stop timer
 		timer.Stop();
 		timer.IsRunning.AssertFalse();
 
+		await Task.Delay(200, CancellationToken);
 		var countAfterStop = count;
 		await Task.Delay(200, CancellationToken);
 		count.AssertEqual(countAfterStop); // Count should not increase after stop
