@@ -49,6 +49,7 @@ public class NtpClientTests : BaseTestClass
 		server.Dispose();
 		await task;
 		actual.AssertEqual(expected);
+		actual.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
@@ -101,6 +102,7 @@ public class NtpClientTests : BaseTestClass
 		var client = new NtpClient($"127.0.0.1:{ep.Port}");
 		var actual = await client.GetUtcTimeAsync(cancellationToken: token);
 		((actual - expected).TotalSeconds.Abs() < 1).AssertTrue();
+		actual.Kind.AssertEqual(DateTimeKind.Utc);
 		server.Dispose();
 		await task;
 	}

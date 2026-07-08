@@ -85,7 +85,7 @@ public class NtpClient(EndPoint ntpServer)
 
 		var timeSpan = TimeSpan.FromMilliseconds(milliseconds);
 
-		var dateTime = new DateTime(1900, 1, 1);
+		var dateTime = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		dateTime += timeSpan;
 
 		return dateTime;
