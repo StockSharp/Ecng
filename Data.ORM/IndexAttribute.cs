@@ -106,6 +106,15 @@ public class UniqueAttribute : IndexAttribute
 public sealed class NonEmptyUniqueAttribute : UniqueAttribute
 {
 	/// <summary>
+	/// Declares the unique index over <paramref name="fieldName"/>, filtered to rows whose
+	/// column is non-empty.
+	/// </summary>
+	public NonEmptyUniqueAttribute(string fieldName)
+		: this(fieldName is null ? null : new[] { fieldName })
+	{
+	}
+
+	/// <summary>
 	/// Declares the unique index over <paramref name="fieldNames"/>, filtered to rows whose last
 	/// column is non-empty. Scope columns come first, the value-carrying key last.
 	/// </summary>
