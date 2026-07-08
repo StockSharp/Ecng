@@ -14,6 +14,9 @@ public class DictTests : BaseTestClass
 		(string name, int value) t = ("123", 123);
 		dict.Add(t);
 
+		dict.Count.AssertEqual(1);
+		dict[t.name].AssertEqual(t.value);
+
 		foreach (var (name, value) in dict)
 		{
 			name.AssertEqual(t.name);
