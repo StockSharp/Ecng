@@ -67,7 +67,7 @@ public class BaseOrderedChannelTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task Enqueue_WhenClosed_DropsValue()
+	public async Task Enqueue_WhenNeverOpened_DropsValue()
 	{
 		// Arrange
 		var queue = CreateQueue();
@@ -76,6 +76,18 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.Add(1, "test", CancellationToken);
 
 		// Assert - value should be dropped
+		queue.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task Enqueue_WhenClosed_DropsValue()
+	{
+		var queue = CreateQueue();
+		queue.Open();
+		queue.Close();
+
+		await queue.Add(1, "test", CancellationToken);
+
 		queue.Count.AssertEqual(0);
 	}
 
@@ -111,8 +123,6 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.Add(1, "first", token);
 		await queue.Add(2, "second", token);
 
-		await Task.Delay(100, token); // Allow time for sorting
-
 		// Assert - should dequeue in sorted order by priority
 		var first = await queue.DequeueAsync(token);
 		var second = await queue.DequeueAsync(token);
@@ -136,11 +146,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.Add(2, "second", token);
 		await queue.Add(3, "third", token);
 
-		await Task.Delay(100, token); // Allow time for items to be queued
-
 		// Act
 		var items = new List<string>();
-		var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+		using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
 		var readTask = Task.Run(async () =>
 		{
@@ -152,7 +160,7 @@ public class BaseOrderedChannelTests : BaseTestClass
 			}
 		}, token);
 
-		await Task.WhenAny(readTask, Task.Delay(2000, token));
+		await readTask.WaitAsync(TimeSpan.FromSeconds(2), token);
 
 		// Assert
 		items.Count.AssertEqual(3);
@@ -174,8 +182,6 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.Add(2, "second", token);
 		await queue.Add(3, "third", token);
 
-		await Task.Delay(100, token); // Allow time for items to be queued
-
 		// Act
 		queue.Clear();
 
@@ -192,16 +198,19 @@ public class BaseOrderedChannelTests : BaseTestClass
 		var queue = CreateQueue();
 		queue.Open();
 		await queue.Add(1, "first", token);
+		await queue.Add(2, "second", token);
+		(await queue.DequeueAsync(token)).AssertEqual("first");
+		queue.Count.AssertEqual(1);
 		queue.Close();
 
 		// Act
 		queue.Open();
-		await queue.Add(2, "second", token);
+		queue.Count.AssertEqual(0);
+		await queue.Add(3, "third", token);
 		var result = await queue.DequeueAsync(token);
 
 		// Assert
-		result.AssertEqual("second");
-		// Old items should be cleared when reopening
+		result.AssertEqual("third");
 	}
 
 	[TestMethod]
@@ -217,10 +226,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await queue.Add(1, "first", token);
 		await queue.Add(2, "second", token);
 
-		var writeTask = Task.Run(async () => await queue.Add(3, "third", token), token); // This should block
-
-		// Wait a bit to see if it completes (it shouldn't)
-		var completed = await Task.WhenAny(writeTask, Task.Delay(500, token)) == writeTask;
+		var writeTask = queue.Add(3, "third", token).AsTask();
+		writeTask.IsCompleted.AssertFalse("Third write should wait while the bounded queue is full.");
+		queue.Count.AssertEqual(2);
 
 		// Dequeue one item to make space
 		await queue.DequeueAsync(token);
@@ -229,7 +237,7 @@ public class BaseOrderedChannelTests : BaseTestClass
 		await writeTask.WaitAsync(TimeSpan.FromSeconds(2), token);
 
 		// Assert
-		completed.AssertFalse(); // Should have blocked initially
+		queue.Count.AssertEqual(2);
 	}
 
 	[TestMethod]
@@ -246,6 +254,7 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Close();
 
 		await writeTask.WaitAsync(TimeSpan.FromSeconds(2), token);
+		queue.Count.AssertEqual(1);
 	}
 
 	[TestMethod]
@@ -261,11 +270,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Count.AssertEqual(0);
 
 		await queue.Add(1, "first", token);
-		await Task.Delay(50, token);
 
 		await queue.Add(2, "second", token);
 		await queue.Add(3, "third", token);
-		await Task.Delay(100, token);
 
 		// Dequeue all
 		await queue.DequeueAsync(token);
