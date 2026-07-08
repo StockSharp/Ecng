@@ -3,7 +3,7 @@ namespace Ecng.Tests.ComponentModel;
 using Ecng.ComponentModel;
 
 [TestClass]
-public class FileSizeFormatProviderTests
+public class FileSizeFormatProviderTests : BaseTestClass
 {
 	[TestMethod]
 	public void GetFormat()

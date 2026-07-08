@@ -4,7 +4,7 @@ using System.Xml;
 using System.Xml.Linq;
 
 [TestClass]
-public class XmlHelperTests
+public class XmlHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void ElementAttribute()
