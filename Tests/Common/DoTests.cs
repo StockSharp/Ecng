@@ -25,10 +25,11 @@ public class DoTests : BaseTestClass
 		var originalCulture = Thread.CurrentThread.CurrentCulture;
 		var testCulture = new CultureInfo("de-DE");
 
-		var holder = Do.WithCulture(testCulture);
-		Thread.CurrentThread.CurrentCulture.AssertEqual(testCulture);
+		using (Do.WithCulture(testCulture))
+		{
+			Thread.CurrentThread.CurrentCulture.AssertEqual(testCulture);
+		}
 
-		holder.Dispose();
 		Thread.CurrentThread.CurrentCulture.AssertEqual(originalCulture);
 	}
 
@@ -256,7 +257,9 @@ public class DoTests : BaseTestClass
 		}
 		finally
 		{
-			mutex?.ReleaseMutex();
+			if (result)
+				mutex?.ReleaseMutex();
+
 			mutex?.Dispose();
 		}
 	}
@@ -295,7 +298,9 @@ public class DoTests : BaseTestClass
 		}
 		finally
 		{
-			mutex1?.ReleaseMutex();
+			if (result1)
+				mutex1?.ReleaseMutex();
+
 			mutex1?.Dispose();
 		}
 	}
@@ -319,7 +324,9 @@ public class DoTests : BaseTestClass
 		}
 		finally
 		{
-			mutex2?.ReleaseMutex();
+			if (result2)
+				mutex2?.ReleaseMutex();
+
 			mutex2?.Dispose();
 		}
 	}
@@ -340,9 +347,14 @@ public class DoTests : BaseTestClass
 		}
 		finally
 		{
-			mutex1?.ReleaseMutex();
+			if (result1)
+				mutex1?.ReleaseMutex();
+
 			mutex1?.Dispose();
-			mutex2?.ReleaseMutex();
+
+			if (result2)
+				mutex2?.ReleaseMutex();
+
 			mutex2?.Dispose();
 		}
 	}
