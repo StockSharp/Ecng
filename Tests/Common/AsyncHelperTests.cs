@@ -4,12 +4,14 @@ namespace Ecng.Tests.Common;
 public class AsyncHelperTests : BaseTestClass
 {
 	[TestMethod]
-	public Task WithCancellationCancel()
+	public async Task WithCancellationCancel()
 	{
 		using var cts = new CancellationTokenSource();
-		var task = TimeSpan.FromSeconds(1).Delay(CancellationToken).WithCancellation(cts.Token);
+		var task = Task.Delay(Timeout.InfiniteTimeSpan, CancellationToken.None);
+
 		cts.Cancel();
-		return ThrowsExactlyAsync<OperationCanceledException>(() => task);
+
+		await ThrowsExactlyAsync<OperationCanceledException>(() => task.WithCancellation(cts.Token));
 	}
 
 	[TestMethod]
