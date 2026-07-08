@@ -502,9 +502,10 @@ public class ConverterTest : BaseTestClass
 		// Test that ChangeOrder does not modify the array for little-endian
 		var bytes = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 		var le = bytes.ChangeOrder(4, true);
-		le.AssertEqual(bytes);
+		le.AssertEqual([0x01, 0x02, 0x03, 0x04]);
 
 		// Test that ChangeOrder reverses the array for big-endian
+		bytes = [0x01, 0x02, 0x03, 0x04];
 		var be = bytes.ChangeOrder(4, false);
 		be.AssertEqual([0x04, 0x03, 0x02, 0x01]);
 	}
