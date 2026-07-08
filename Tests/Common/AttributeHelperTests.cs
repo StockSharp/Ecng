@@ -22,19 +22,31 @@ public class AttributeHelperTests : BaseTestClass
 	private class DerivedClass : BaseClass { }
 
 	[TestMethod]
+	[DoNotParallelize]
 	public void GetAttributeCaching()
 	{
+		var previous = AttributeHelper.CacheEnabled;
 		AttributeHelper.ClearCache();
-		AttributeHelper.CacheEnabled = true;
-		var type = typeof(AttrClass);
-		var a1 = type.GetAttribute<ObsoleteAttribute>();
-		var a2 = type.GetAttribute<ObsoleteAttribute>();
-		a1.AssertNotNull();
-		a1.AssertSame(a2);
-		AttributeHelper.CacheEnabled = false;
-		a1 = type.GetAttribute<ObsoleteAttribute>();
-		a2 = type.GetAttribute<ObsoleteAttribute>();
-		a1.AssertNotSame(a2);
+
+		try
+		{
+			AttributeHelper.CacheEnabled = true;
+			var type = typeof(AttrClass);
+			var a1 = type.GetAttribute<ObsoleteAttribute>();
+			var a2 = type.GetAttribute<ObsoleteAttribute>();
+			a1.AssertNotNull();
+			a1.AssertSame(a2);
+			AttributeHelper.CacheEnabled = false;
+			AttributeHelper.ClearCache();
+			a1 = type.GetAttribute<ObsoleteAttribute>();
+			a2 = type.GetAttribute<ObsoleteAttribute>();
+			a1.AssertNotSame(a2);
+		}
+		finally
+		{
+			AttributeHelper.CacheEnabled = previous;
+			AttributeHelper.ClearCache();
+		}
 	}
 
 	[TestMethod]
