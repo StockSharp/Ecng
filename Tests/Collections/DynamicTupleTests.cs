@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class DynamicTupleTests
+public class DynamicTupleTests : BaseTestClass
 {
 	[TestMethod]
 	public void EqualsAndHashCode()
@@ -30,8 +30,12 @@ public class DynamicTupleTests
 		a.Equals(b).AssertFalse();
 		a.AssertNotEqual(b);
 
-		// CompareTo should return -1 for non-equal
-		((IComparable)a).CompareTo(b).AssertEqual(-1);
+		var aToB = ((IComparable)a).CompareTo(b);
+		var bToA = ((IComparable)b).CompareTo(a);
+
+		aToB.AssertNotEqual(0);
+		bToA.AssertNotEqual(0);
+		Math.Sign(aToB).AssertEqual(-Math.Sign(bToA));
 	}
 
 	[TestMethod]
