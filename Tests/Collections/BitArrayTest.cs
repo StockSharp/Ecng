@@ -58,7 +58,7 @@ public class BitArrayTest : BaseTestClass
 		var longs = new List<long>();
 
 		for (var i = 0; i < 1000; i++)
-			longs.Add(RandomGen.GetInt());
+			longs.Add(RandomGen.GetLong(long.MinValue + 1, long.MaxValue));
 
 		var decs = new List<decimal>();
 
@@ -87,7 +87,7 @@ public class BitArrayTest : BaseTestClass
 
 		count = RandomGen.GetInt(1000, 10000);
 		for (var i = 0; i < count; i++)
-			longs.Add(RandomGen.GetInt());
+			longs.Add(RandomGen.GetLong(long.MinValue + 1, long.MaxValue));
 
 		var decs = new List<decimal>();
 
@@ -125,6 +125,40 @@ public class BitArrayTest : BaseTestClass
 	}
 
 	[TestMethod]
+	public void WriteInt_Boundaries_Roundtrip()
+	{
+		Check(
+			[],
+			[
+				0,
+				1,
+				-1,
+				15,
+				-15,
+				16,
+				-16,
+				byte.MaxValue,
+				-byte.MaxValue,
+				byte.MaxValue + 1,
+				-(byte.MaxValue + 1),
+				ushort.MaxValue,
+				-ushort.MaxValue,
+				ushort.MaxValue + 1,
+				-(ushort.MaxValue + 1),
+				16777215,
+				-16777215,
+				16777216,
+				-16777216,
+				16777217,
+				-16777217,
+				int.MaxValue,
+				int.MinValue
+			],
+			[],
+			[]);
+	}
+
+	[TestMethod]
 	public void RandomMixedTypes()
 	{
 		var actions = new List<Action<BitArrayWriter, object>>
@@ -152,7 +186,7 @@ public class BitArrayTest : BaseTestClass
 			{
 				0 => RandomGen.GetBool(),
 				1 => RandomGen.GetInt(),
-				2 => (long)RandomGen.GetInt(),
+				2 => RandomGen.GetLong(long.MinValue + 1, long.MaxValue),
 				3 => RandomGen.GetDecimal(),
 				_ => throw new InvalidOperationException()
 			};

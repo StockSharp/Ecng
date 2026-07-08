@@ -109,7 +109,7 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 						{
 							Write(true);
 
-							if (absValue <= 16777216) // 24 bits
+							if (absValue < 16777216) // 24 bits
 							{
 								Write(false);
 								WriteBits(absValue, 24);
