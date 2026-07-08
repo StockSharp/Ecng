@@ -3,7 +3,7 @@ namespace Ecng.Tests.ComponentModel;
 using Ecng.ComponentModel;
 
 [TestClass]
-public class ServerCredentialsTests
+public class ServerCredentialsTests : BaseTestClass
 {
 	[TestMethod]
 	public void IsValidLogin_Static()
@@ -14,7 +14,8 @@ public class ServerCredentialsTests
 		"not-email".IsValidLogin(true).AssertFalse();
 		"user@domain".IsValidLogin(true).AssertFalse();
 		"user@domain.com".IsValidLogin(true).AssertTrue();
-		"first.last+tag@sub.domain.co".IsValidLogin(true).AssertFalse();
+		"first.last+tag@sub.domain.co".IsValidLogin(true).AssertTrue();
+		"user@domain.online".IsValidLogin(true).AssertTrue();
 	}
 
 	[TestMethod]

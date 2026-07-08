@@ -13,7 +13,7 @@ using SmartFormat.Utilities;
 #if NET7_0_OR_GREATER
 public static partial class StringHelper
 {
-	[GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
+	[GeneratedRegex(@"^[\w.+-]+@([\w-]+\.)+[\w-]{2,63}$")]
 	private static partial Regex EmailValidationRegex();
 
 	[GeneratedRegex(@"^(https?://)"
@@ -36,7 +36,7 @@ public static partial class StringHelper
 #else
 public static class StringHelper
 {
-	private static readonly Regex _emailValidationRegex = new(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$", RegexOptions.Compiled);
+	private static readonly Regex _emailValidationRegex = new(@"^[\w.+-]+@([\w-]+\.)+[\w-]{2,63}$", RegexOptions.Compiled);
 	private static Regex EmailValidationRegex() => _emailValidationRegex;
 
 	private static readonly Regex _urlValidationRegex = new(@"^(https?://)"
