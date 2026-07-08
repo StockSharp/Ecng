@@ -384,7 +384,7 @@ public class CollectionHelperTests : BaseTestClass
 
 		// Assert
 		list.AssertNotNull();
-		dict[1].AssertEqual(list);
+		dict[1].AssertSame(list);
 	}
 
 	[TestMethod]
@@ -398,7 +398,7 @@ public class CollectionHelperTests : BaseTestClass
 		var list = dict.SafeAdd(1);
 
 		// Assert
-		list.AssertEqual(existing);
+		list.AssertSame(existing);
 	}
 
 	[TestMethod]
@@ -1214,8 +1214,7 @@ public class CollectionHelperTests : BaseTestClass
 		var distance = CollectionHelper.DamerauLevenshteinDistance(source, target, 10);
 
 		// Assert
-		distance.AssertGreater(0);
-		distance.AssertLess(10);
+		distance.AssertEqual(1);
 	}
 
 	[TestMethod]
@@ -1238,13 +1237,15 @@ public class CollectionHelperTests : BaseTestClass
 	public void FromBits2_ConvertsBitsToLong()
 	{
 		// Arrange
-		var bits = new[] { true, false, true };
+		var bits = new bool[36];
+		bits[31] = true;
+		bits[35] = true;
 
 		// Act
 		var value = bits.FromBits2();
 
 		// Assert
-		value.AssertEqual(5L);
+		value.AssertEqual((1L << 31) | (1L << 35));
 	}
 
 	[TestMethod]
@@ -1554,11 +1555,14 @@ public class CollectionHelperTests : BaseTestClass
 		float value = 5.0f;
 
 		// Act
-		var bits = value.ToBits(8);
+		var bits = value.ToBits();
 
 		// Assert
-		bits.Length.AssertEqual(8);
 		bits.AssertNotNull();
+		bits.Length.AssertEqual(32);
+
+		for (var i = 0; i < bits.Length; i++)
+			bits[i].AssertEqual(i is 21 or 23 or 30);
 	}
 
 	[TestMethod]
@@ -1568,11 +1572,14 @@ public class CollectionHelperTests : BaseTestClass
 		double value = 5.0;
 
 		// Act
-		var bits = value.ToBits(8);
+		var bits = value.ToBits();
 
 		// Assert
-		bits.Length.AssertEqual(8);
 		bits.AssertNotNull();
+		bits.Length.AssertEqual(64);
+
+		for (var i = 0; i < bits.Length; i++)
+			bits[i].AssertEqual(i is 50 or 52 or 62);
 	}
 
 	[TestMethod]
@@ -1601,7 +1608,7 @@ public class CollectionHelperTests : BaseTestClass
 		var value = bits.FromBits(1);
 
 		// Assert
-		value.AssertGreater(0); // Verify it works and returns a value
+		value.AssertEqual(42);
 	}
 
 	[TestMethod]
@@ -1614,7 +1621,7 @@ public class CollectionHelperTests : BaseTestClass
 		var value = bits.FromBits2(1);
 
 		// Assert
-		value.AssertGreater(0L); // Verify it works and returns a value
+		value.AssertEqual(42L);
 	}
 
 	[TestMethod]

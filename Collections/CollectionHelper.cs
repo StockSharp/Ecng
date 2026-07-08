@@ -1795,7 +1795,7 @@ public static class CollectionHelper
 	/// <returns>The long integer value represented by the bits.</returns>
 	public static long FromBits2(this bool[] bits)
 	{
-		return bits.FromBits(0);
+		return bits.FromBits2(0);
 	}
 
 	/// <summary>
