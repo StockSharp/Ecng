@@ -117,6 +117,12 @@ public class SynchronizedListTests : BaseTestClass
 		}
 	}
 
+	private static void JoinAll(params Thread[] threads)
+	{
+		foreach (var thread in threads)
+			thread.Join(TimeSpan.FromSeconds(5)).AssertTrue($"Thread {thread.ManagedThreadId} did not finish.");
+	}
+
 	[TestMethod]
 	public void ConcurrentAdd()
 	{
@@ -146,8 +152,7 @@ public class SynchronizedListTests : BaseTestClass
 
 		foreach (var t in threads)
 			t.Start();
-		foreach (var t in threads)
-			t.Join();
+		JoinAll(threads);
 
 		exceptions.Count.AssertEqual(0);
 		list.Count.AssertEqual(threadCount * itemsPerThread);
@@ -194,8 +199,7 @@ public class SynchronizedListTests : BaseTestClass
 
 		addThread.Start();
 		removeThread.Start();
-		addThread.Join();
-		removeThread.Join();
+		JoinAll(addThread, removeThread);
 
 		exceptions.Count.AssertEqual(0);
 	}
@@ -245,8 +249,7 @@ public class SynchronizedListTests : BaseTestClass
 
 		modifyThread.Start();
 		enumerateThread.Start();
-		modifyThread.Join();
-		enumerateThread.Join();
+		JoinAll(modifyThread, enumerateThread);
 
 		exceptions.Count.AssertEqual(0);
 	}
@@ -282,8 +285,7 @@ public class SynchronizedListTests : BaseTestClass
 
 		foreach (var t in threads)
 			t.Start();
-		foreach (var t in threads)
-			t.Join();
+		JoinAll(threads);
 
 		exceptions.Count.AssertEqual(0);
 	}

@@ -1,8 +1,14 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class SynchronizedDictionaryTests
+public class SynchronizedDictionaryTests : BaseTestClass
 {
+	private static void JoinAll(params Thread[] threads)
+	{
+		foreach (var thread in threads)
+			thread.Join(TimeSpan.FromSeconds(5)).AssertTrue($"Thread {thread.ManagedThreadId} did not finish.");
+	}
+
 	[TestMethod]
 	public void BasicOperations()
 	{
@@ -75,7 +81,7 @@ public class SynchronizedDictionaryTests
 		}
 
 		foreach (var t in threads) t.Start();
-		foreach (var t in threads) t.Join();
+		JoinAll(threads);
 
 		exceptions.Count.AssertEqual(0);
 		dict.Count.AssertEqual(threadCount * itemsPerThread);
@@ -116,8 +122,7 @@ public class SynchronizedDictionaryTests
 
 		addThread.Start();
 		removeThread.Start();
-		addThread.Join();
-		removeThread.Join();
+		JoinAll(addThread, removeThread);
 
 		exceptions.Count.AssertEqual(0);
 	}
@@ -153,7 +158,7 @@ public class SynchronizedDictionaryTests
 		}
 
 		foreach (var t in threads) t.Start();
-		foreach (var t in threads) t.Join();
+		JoinAll(threads);
 
 		exceptions.Count.AssertEqual(0);
 	}
@@ -202,8 +207,7 @@ public class SynchronizedDictionaryTests
 
 		modifyThread.Start();
 		enumerateThread.Start();
-		modifyThread.Join();
-		enumerateThread.Join();
+		JoinAll(modifyThread, enumerateThread);
 
 		exceptions.Count.AssertEqual(0);
 	}
