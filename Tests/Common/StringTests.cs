@@ -352,8 +352,10 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void GetDeterministicHashCode_And_TryToLong()
 	{
-		var s = "test";
-		s.GetDeterministicHashCode().AssertEqual(StringHelper.GetDeterministicHashCode(s));
+		"test".GetDeterministicHashCode().AssertEqual(-871206010);
+		"secret".GetDeterministicHashCode().AssertEqual(-600681010);
+		"StockSharp".GetDeterministicHashCode().AssertEqual(1668635384);
+
 		"12345".TryToLong().AssertEqual(12345L);
 		"notanumber".TryToLong().AssertNull();
 	}
