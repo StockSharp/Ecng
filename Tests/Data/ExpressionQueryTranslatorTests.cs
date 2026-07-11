@@ -151,6 +151,196 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// A correlated aggregate sub-query projected into an ANONYMOUS type
+	/// (<see cref="NewExpression"/>, e.g. <c>select new { p.Id, Max = (from t ... ).Max() }</c>)
+	/// must emit a scalar sub-query that keeps its OWN FROM/alias, exactly like the
+	/// entity <c>MemberInit</c> path. (Was: <c>VisitNew</c> visited the aggregate
+	/// directly instead of wrapping it, so the sub-query collapsed into the outer
+	/// query — <c>select max([e].[Priority]) from [Ecng_TestPerson] [e] where
+	/// ([e].[Person] = [e].[Id])</c> — dropping the inner FROM and the outer key
+	/// column. The scalar then came back NULL and materialised as <c>default(T)</c>
+	/// for every row.)
+	/// </summary>
+	[TestMethod]
+	public void CorrelatedAggregate_AnonymousProjection_EmitsScalarSubquery()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = persons.Select(p => new
+		{
+			p.Id,
+			MaxPri = (from t in tasks where t.Person.Id == p.Id select t.Priority).Max(),
+		});
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		// The outer key column must still be projected alongside the sub-query.
+		sql.Contains("[e].[Id]").AssertTrue($"outer key column dropped, got: {sql}");
+		// The aggregate must run over the INNER task alias, not the outer person alias.
+		sql.ContainsIgnoreCase("max([t].[Priority])").AssertTrue($"aggregate not over inner alias, got: {sql}");
+		sql.ContainsIgnoreCase("max([e].[Priority])").AssertFalse($"aggregate flattened onto outer alias, got: {sql}");
+		// The sub-query keeps its own FROM and correlates inner FK to the outer key.
+		sql.ContainsIgnoreCase("from [Ecng_TestTask]").AssertTrue($"inner FROM lost, got: {sql}");
+		sql.Contains("[t].[Person] = [e].[Id]").AssertTrue($"correlation not bound to outer key, got: {sql}");
+	}
+
+	/// <summary>
+	/// Same correlated-aggregate shape as
+	/// <see cref="CorrelatedAggregate_AnonymousProjection_EmitsScalarSubquery"/> but
+	/// projected through a POSITIONAL constructor / record (also a
+	/// <see cref="NewExpression"/>, with <c>Members == null</c>). Must likewise emit a
+	/// proper scalar sub-query rather than flattening the aggregate onto the outer alias.
+	/// </summary>
+	[TestMethod]
+	public void CorrelatedAggregate_PositionalCtorProjection_EmitsScalarSubquery()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = persons.Select(p => new PersonMaxPriority(
+			p.Id,
+			(from t in tasks where t.Person.Id == p.Id select t.Priority).Max()));
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.ContainsIgnoreCase("max([t].[Priority])").AssertTrue($"aggregate not over inner alias, got: {sql}");
+		sql.ContainsIgnoreCase("max([e].[Priority])").AssertFalse($"aggregate flattened onto outer alias, got: {sql}");
+		sql.ContainsIgnoreCase("from [Ecng_TestTask]").AssertTrue($"inner FROM lost, got: {sql}");
+		sql.Contains("[t].[Person] = [e].[Id]").AssertTrue($"correlation not bound to outer key, got: {sql}");
+	}
+
+	/// <summary>
+	/// Only a genuine correlated sub-query in an anonymous/ctor projection may be
+	/// routed through the sub-query-wrapping path. A NESTED SCALAR FUNCTION call
+	/// whose first argument is itself a call — e.g. <c>Math.Round(Math.Abs(col))</c>
+	/// — must stay on the plain visit path and emit nested scalar SQL, not be
+	/// mistaken for a sub-query. (Guards against an over-broad routing that sent
+	/// every projection arg through the sub-query path, whose <c>isSubquery</c>
+	/// heuristic over-matches such calls and then throws in <c>AnalyseSubqueryShape</c>.)
+	/// </summary>
+	[TestMethod]
+	public void AnonymousProjection_NestedScalarCall_NotTreatedAsSubquery()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Select(e => new { e.Id, R = Math.Round(Math.Abs(e.Price)) });
+
+		// Must translate without throwing and emit the nested scalar functions.
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.ContainsIgnoreCase("round(").AssertTrue($"expected round(...) scalar function, got: {sql}");
+		sql.ContainsIgnoreCase("abs([e].[Price])").AssertTrue($"expected abs over the column, got: {sql}");
+	}
+
+	/// <summary>
+	/// A Convert-wrapped column projected into a CHAINED anonymous projection
+	/// (<c>Select(e =&gt; new { P = (long)e.Priority }).Select(x =&gt; new { Q = x.P })</c>)
+	/// must keep resolving to the underlying column and emit a valid
+	/// <c>[e].[Priority] AS [Q]</c>. (Guards against an over-broad routing that
+	/// stripped the leading Convert and re-routed the member through the rename-map
+	/// branch, corrupting the projected column in a nested layer.)
+	/// </summary>
+	[TestMethod]
+	public void ChainedAnonymousProjection_ConvertWrappedColumn_KeepsColumn()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items
+			.Select(e => new { P = (long)e.Priority })
+			.Select(x => new { Q = x.P });
+
+		var sql = GenerateSql<TestItem>(query);
+
+		sql.Contains("[Priority]").AssertTrue($"projected column lost, got: {sql}");
+		sql.ContainsIgnoreCase("as [Q]").AssertTrue($"result alias lost, got: {sql}");
+	}
+
+	/// <summary>
+	/// A correlated aggregate combined with a BINARY operator in a projection
+	/// member — <c>(from t ...).Count() + 1</c> — must wrap the aggregate as a
+	/// scalar sub-query and then apply the operator: <c>((select count(*) ...) + 1)</c>.
+	/// (Was: the aggregate was a <see cref="BinaryExpression"/> operand, not a
+	/// top-level call, so it was never wrapped — the correlation flattened to
+	/// <c>[e].[Fk] = [e].[Id]</c> and the SQL was malformed.)
+	/// </summary>
+	[TestMethod]
+	public void CorrelatedAggregate_BinaryWrapped_EmitsScalarSubquery()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = persons.Select(p => new
+		{
+			p.Id,
+			C = (from t in tasks where t.Person.Id == p.Id select t).Count() + 1,
+		});
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.ContainsIgnoreCase("count(*)").AssertTrue($"aggregate lost, got: {sql}");
+		sql.ContainsIgnoreCase("from [Ecng_TestTask]").AssertTrue($"inner FROM lost, got: {sql}");
+		sql.Contains("[t].[Person] = [e].[Id]").AssertTrue($"correlation not bound to outer key, got: {sql}");
+		sql.Contains(") + 1").AssertTrue($"operator not applied to the wrapped sub-query, got: {sql}");
+	}
+
+	/// <summary>
+	/// The idiomatic empty-set guard <c>(from t ...).Max() ?? 0</c> (a
+	/// <see cref="ExpressionType.Coalesce"/> <see cref="BinaryExpression"/> over a
+	/// nullable-select aggregate) must emit <c>isnull((select max(...) ...), 0)</c>
+	/// with the aggregate correctly correlated and the source table resolved to the
+	/// real entity (not <c>[Nullable`1]</c>).
+	/// </summary>
+	[TestMethod]
+	public void CorrelatedAggregate_CoalesceGuard_EmitsScalarSubquery()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = persons.Select(p => new
+		{
+			p.Id,
+			M = (from t in tasks where t.Person.Id == p.Id select (int?)t.Priority).Max() ?? 0,
+		});
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.ContainsIgnoreCase("isnull(").AssertTrue($"coalesce not emitted, got: {sql}");
+		sql.ContainsIgnoreCase("max([t].[Priority])").AssertTrue($"aggregate lost, got: {sql}");
+		sql.ContainsIgnoreCase("from [Ecng_TestTask]").AssertTrue($"source table not resolved (Nullable leaked?), got: {sql}");
+		sql.ContainsIgnoreCase("[Nullable").AssertFalse($"source degenerated to the CLR nullable type, got: {sql}");
+		sql.Contains("[t].[Person] = [e].[Id]").AssertTrue($"correlation not bound to outer key, got: {sql}");
+	}
+
+	/// <summary>
+	/// A correlated aggregate inside a CONDITIONAL (ternary) branch —
+	/// <c>cond ? (from t ...).Max() : 0</c> — must render the aggregate as a scalar
+	/// sub-query inside the CASE THEN branch, keeping the ELSE/END intact. (Was: the
+	/// nested aggregate flattened and collapsed the CASE body to
+	/// <c>(case when ... then )</c>.)
+	/// </summary>
+	[TestMethod]
+	public void CorrelatedAggregate_InConditionalBranch_EmitsScalarSubquery()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = persons.Select(p => new
+		{
+			p.Id,
+			X = p.Name != null ? (from t in tasks where t.Person.Id == p.Id select t.Priority).Max() : 0,
+		});
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.ContainsIgnoreCase("case").AssertTrue($"CASE not emitted, got: {sql}");
+		sql.ContainsIgnoreCase("max([t].[Priority])").AssertTrue($"aggregate lost from THEN branch, got: {sql}");
+		sql.ContainsIgnoreCase("from [Ecng_TestTask]").AssertTrue($"inner FROM lost, got: {sql}");
+		sql.ContainsIgnoreCase("end").AssertTrue($"CASE END missing (body collapsed?), got: {sql}");
+		sql.Contains("[t].[Person] = [e].[Id]").AssertTrue($"correlation not bound to outer key, got: {sql}");
+	}
+
+	/// <summary>
 	/// Two-level navigation in a Where clause (<c>s.Task.Person.Id == X</c>)
 	/// must register a LEFT JOIN to the intermediate <c>Task</c> table so
 	/// the FK column <c>[Task].[Person]</c> becomes reachable, and then use
@@ -1320,6 +1510,12 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	#endregion
 
 }
+
+/// <summary>
+/// Positional record projection target — a <see cref="NewExpression"/> with
+/// <c>Members == null</c> — used to exercise the ctor-based projection path.
+/// </summary>
+public record PersonMaxPriority(long Id, int MaxPri);
 
 public class VTestPersonWithTasks : IDbPersistable
 {

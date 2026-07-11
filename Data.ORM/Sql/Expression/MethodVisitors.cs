@@ -1734,7 +1734,14 @@ class ContainsVisitor<T> : MethodVisitor
 				firstArg = mce.Arguments[0];
 			}
 
-			var type = mce.Method.ReturnType.GenericTypeArguments[0];
+			// Resolve the sub-query's source entity from the deepest source
+			// expression (an IQueryable<Entity>), not the innermost method's
+			// return type: a scalar projection like `select ic.Item.Id` makes
+			// that return IQueryable<long>, so the FROM would degenerate to the
+			// CLR type name (`[Int64]`) instead of the real table.
+			var type = firstArg.Type.IsGenericType
+				? firstArg.Type.GetGenericArguments()[0]
+				: mce.Method.ReturnType.GenericTypeArguments[0];
 
 			translator.Context.Build(SchemaRegistry.Get(type)).CopyTo(q);
 
@@ -1841,10 +1848,102 @@ class AnyVisitor<T> : EnumerableAndQueryableVisitor<T>
 
 	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
 	{
-		translator.Context.Exists = true;
-
 		var mce = (MethodCallExpression)expression;
-		translator.Visit(mce.Arguments[0]);
+		var ctx = translator.Context;
+
+		// Normalise the `Any(predicate)` overload to `Where(predicate).Any()`: the
+		// two are semantically identical, and folding the predicate into a Where lets
+		// the existing (well-tested) Where machinery emit it as part of the
+		// sub-query's WHERE. Without this the predicate lambda was silently dropped.
+		var firstArg = mce.Arguments[0].TryHandleImplicit();
+
+		if (mce.Arguments.Count > 1)
+		{
+			var elementType = mce.Method.GetGenericArguments()[0];
+
+			var whereMethod = typeof(Queryable).GetMethods()
+				.First(m => m.Name == nameof(Queryable.Where)
+					&& m.GetParameters().Length == 2
+					// Func<T,bool>, not the indexed Func<T,int,bool> overload.
+					&& m.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2)
+				.MakeGenericMethod(elementType);
+
+			firstArg = Expression.Call(whereMethod, firstArg, mce.Arguments[1]);
+		}
+
+		// In a PREDICATE position (a WHERE root, an operand of `&&`/`||`, a `!`
+		// operand, or a conditional test) a correlated `.Any()` must render as a
+		// bare `exists(<sub-query>)` with the sub-query's own alias. The scalar
+		// `cast(case when exists(...) as bit)` form (Context.Exists, built by the
+		// query builder) is correct only when Any's result is a VALUE — a projection
+		// member or a comparison operand — which reaches this visitor already inside
+		// its own sub-context (VisitNew / VisitOperand wrap it via
+		// ProcessInitExpression). In a value position the sub-context is set up for
+		// us, so the old Exists path is kept.
+		if (ctx.PredicatePosition)
+		{
+			var q = ctx.Curr;
+
+			q.Exists().OpenBracket();
+
+			// Walk to the deepest source so the sub-query alias is set BEFORE the
+			// body is visited (mirrors ContainsVisitor) — otherwise inner references
+			// resolve through the outer alias. A bare (non-chain) source — e.g.
+			// `Query<T>()` — has no lambda, so the alias falls back to the default.
+			string subAlias = null;
+			if (firstArg is MethodCallExpression chain)
+			{
+				var deepest = chain;
+				while (deepest.Arguments.Count > 0 && deepest.Arguments[0] is MethodCallExpression deeper)
+					deepest = deeper;
+
+				if (deepest.Arguments.Count > 1 && deepest.Arguments[1].StripQuotes() is LambdaExpression lambda && lambda.Parameters.Count > 0)
+					subAlias = lambda.Parameters[0].Name;
+			}
+
+			translator.Context = new()
+			{
+				Curr = new(),
+				ParamCountOffset = ctx.Parameters.Count + ctx.ParamCountOffset,
+				TableAlias = subAlias,
+			};
+
+			foreach (var kv in ctx.Aliases)
+				translator.Context.Aliases[kv.Key] = kv.Value;
+
+			foreach (var jp in ctx.JoinParts)
+				translator.Context.JoinParts.Add(jp);
+
+			foreach (var preName in ctx.PreknownJoinAliases)
+				translator.Context.PreknownJoinAliases.Add(preName);
+
+			// A method-chain source (Where/Select) must be visited to build its
+			// FROM/WHERE; a bare queryable source contributes only its table, which
+			// Build emits from the resolved schema, so nothing needs visiting.
+			if (firstArg is MethodCallExpression)
+				translator.Visit(firstArg);
+
+			var deepestSource = firstArg;
+			while (deepestSource is MethodCallExpression m)
+				deepestSource = m.Arguments[0];
+
+			var type = deepestSource.Type.IsGenericType
+				? deepestSource.Type.GetGenericArguments()[0]
+				: firstArg.Type.GetGenericArguments()[0];
+
+			translator.Context.Build(SchemaRegistry.Get(type)).CopyTo(q);
+
+			ctx.AddParamsFromSubquery(translator.Context.Parameters, false);
+
+			translator.Context = ctx;
+
+			q.CloseBracket();
+
+			return;
+		}
+
+		ctx.Exists = true;
+		translator.Visit(firstArg);
 	}
 }
 

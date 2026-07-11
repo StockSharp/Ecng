@@ -1314,6 +1314,13 @@ public partial class Database : Disposable, IStorage
 				leftover.Add((k, prop));
 		}
 
+		// A NULL cell (e.g. a correlated aggregate — MAX/MIN/SUM/AVG — over an empty
+		// related set comes back as SQL NULL) must materialize as default(T), not throw.
+		// This mirrors the entity path (SettingsStorage.GetValue coerces NULL to default);
+		// a bare To() would raise ArgumentNullException for a non-nullable value type.
+		static object Convert(object raw, Type type)
+			=> raw is null or DBNull ? type.GetDefaultValue() : raw.To(type);
+
 		var result = new TResult[rowCount];
 
 		for (var r = 0; r < rowCount; r++)
@@ -1323,7 +1330,7 @@ public partial class Database : Disposable, IStorage
 			for (var j = 0; j < parameters.Length; j++)
 			{
 				var raw = ((IList)table[colIndices[j]].Value)[r];
-				args[j] = raw.To(parameters[j].ParameterType);
+				args[j] = Convert(raw, parameters[j].ParameterType);
 			}
 
 			var instance = (TResult)ctor.Invoke(args);
@@ -1331,7 +1338,7 @@ public partial class Database : Disposable, IStorage
 			foreach (var (colIndex, prop) in leftover)
 			{
 				var raw = ((IList)table[colIndex].Value)[r];
-				prop.SetValue(instance, raw.To(prop.PropertyType));
+				prop.SetValue(instance, Convert(raw, prop.PropertyType));
 			}
 
 			result[r] = instance;

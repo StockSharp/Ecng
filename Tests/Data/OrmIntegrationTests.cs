@@ -3406,6 +3406,224 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// A correlated aggregate sub-query (<c>Max/Min/Sum/Average/Count/Any</c> whose
+	/// WHERE references the OUTER row) projected into an ANONYMOUS type must return the
+	/// right per-outer-row value. Mirrors SiteMapGenerator / VTopicViewProcessor's
+	/// <c>LastMessageTime = (from m in messages where m.Topic.Id == e.Id select ...).Max()</c>.
+	/// (Was: the anonymous/ctor projection path — <c>VisitNew</c> — flattened the
+	/// aggregate into the outer query, so every row's correlation degenerated to
+	/// <c>[e].[Person] = [e].[Id]</c> (false for all), the scalar came back NULL, and it
+	/// silently materialised as <c>default(T)</c> — even for rows with matching inner data.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedAggregateInProjection_AnonymousType_ReturnsPerRowValues(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+		var carol = await InsertPerson("Carol"); // no tasks -> empty correlated set
+
+		await InsertTask("a1", alice, priority: 10);
+		await InsertTask("a2", alice, priority: 30);
+		await InsertTask("a3", alice, priority: 20);
+		await InsertTask("b1", bob, priority: 5);
+		await InsertTask("b2", bob, priority: 15);
+
+		await ClearCache();
+
+		var tasks = Query<TestTask>();
+
+		var rows = (await Query<TestPerson>()
+			.Select(p => new
+			{
+				p.Id,
+				Max = (from t in tasks where t.Person.Id == p.Id select t.Priority).Max(),
+				Min = (from t in tasks where t.Person.Id == p.Id select t.Priority).Min(),
+				Sum = (from t in tasks where t.Person.Id == p.Id select t.Priority).Sum(),
+				Avg = (from t in tasks where t.Person.Id == p.Id select t.Priority).Average(),
+				Count = (from t in tasks where t.Person.Id == p.Id select t).Count(),
+				Any = (from t in tasks where t.Person.Id == p.Id select t).Any(),
+			})
+			.ToArrayAsyncEx(CancellationToken))
+			.ToDictionary(r => r.Id);
+
+		var a = rows[alice.Id];
+		a.Max.AssertEqual(30);
+		a.Min.AssertEqual(10);
+		a.Sum.AssertEqual(60);
+		a.Avg.AssertEqual(20d);
+		a.Count.AssertEqual(3);
+		a.Any.AssertTrue();
+
+		var b = rows[bob.Id];
+		b.Max.AssertEqual(15);
+		b.Min.AssertEqual(5);
+		b.Sum.AssertEqual(20);
+		b.Avg.AssertEqual(10d);
+		b.Count.AssertEqual(2);
+		b.Any.AssertTrue();
+
+		// Empty correlated set: SQL NULL for Max/Min/Sum/Average must materialise as
+		// default(T); Count is 0 and Any is false.
+		var c = rows[carol.Id];
+		c.Max.AssertEqual(0);
+		c.Min.AssertEqual(0);
+		c.Sum.AssertEqual(0);
+		c.Avg.AssertEqual(0d);
+		c.Count.AssertEqual(0);
+		c.Any.AssertFalse();
+	}
+
+	/// <summary>
+	/// A correlated aggregate combined with an operator/guard in a projection member:
+	/// a BINARY expression (<c>(...).Count() + 1</c>), the idiomatic empty-set
+	/// COALESCE guard (<c>(...).Max() ?? 0</c>), and a CONDITIONAL branch
+	/// (<c>cond ? (...).Max() : 0</c>). Each must wrap the aggregate as a scalar
+	/// sub-query and return the right per-outer-row value, including the empty-set
+	/// row. (Was: the aggregate — being an operand of a binary/conditional rather
+	/// than the whole member — was never wrapped, so it flattened into the outer
+	/// query and produced malformed or silently wrong SQL.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedAggregateInProjection_BinaryAndConditional_ReturnsPerRowValues(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+		var carol = await InsertPerson("Carol"); // no tasks -> empty correlated set
+
+		await InsertTask("a1", alice, priority: 10);
+		await InsertTask("a2", alice, priority: 30);
+		await InsertTask("a3", alice, priority: 20);
+		await InsertTask("b1", bob, priority: 5);
+		await InsertTask("b2", bob, priority: 15);
+
+		await ClearCache();
+
+		var tasks = Query<TestTask>();
+
+		var rows = (await Query<TestPerson>()
+			.Select(p => new
+			{
+				p.Id,
+				// Binary: count of related rows + 1.
+				CountPlus1 = (from t in tasks where t.Person.Id == p.Id select t).Count() + 1,
+				// Coalesce guard: max priority, 0 when there are no related rows.
+				MaxOrZero = (from t in tasks where t.Person.Id == p.Id select (int?)t.Priority).Max() ?? 0,
+				// Conditional: max priority inside a CASE THEN branch.
+				MaxWhenNamed = p.Name != null
+					? (from t in tasks where t.Person.Id == p.Id select t.Priority).Max()
+					: -1,
+			})
+			.ToArrayAsyncEx(CancellationToken))
+			.ToDictionary(r => r.Id);
+
+		var a = rows[alice.Id];
+		a.CountPlus1.AssertEqual(4);
+		a.MaxOrZero.AssertEqual(30);
+		a.MaxWhenNamed.AssertEqual(30);
+
+		var b = rows[bob.Id];
+		b.CountPlus1.AssertEqual(3);
+		b.MaxOrZero.AssertEqual(15);
+		b.MaxWhenNamed.AssertEqual(15);
+
+		// Empty correlated set.
+		var c = rows[carol.Id];
+		c.CountPlus1.AssertEqual(1);           // count(*) = 0, + 1
+		c.MaxOrZero.AssertEqual(0);            // MAX over empty is NULL -> ?? 0
+		c.MaxWhenNamed.AssertEqual(0);         // name != null -> THEN NULL -> default(int)
+	}
+
+	/// <summary>
+	/// Same correlated-aggregate shape but projected through a POSITIONAL record
+	/// (<c>NewExpression</c> with <c>Members == null</c>, materialised by matching
+	/// ctor parameter names to columns). Guards the constructor-projection path.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedAggregateInProjection_PositionalRecord_ReturnsPerRowValues(string provider)
+	{
+		SetUp(provider);
+
+		var alice = await InsertPerson("Alice");
+		var bob = await InsertPerson("Bob");
+
+		await InsertTask("a1", alice, priority: 10);
+		await InsertTask("a2", alice, priority: 30);
+		await InsertTask("b1", bob, priority: 15);
+
+		await ClearCache();
+
+		var tasks = Query<TestTask>();
+
+		var rows = (await Query<TestPerson>()
+			.Select(p => new PersonAgg(
+				p.Id,
+				(from t in tasks where t.Person.Id == p.Id select t.Priority).Max(),
+				(from t in tasks where t.Person.Id == p.Id select t.Priority).Min()))
+			.ToArrayAsyncEx(CancellationToken))
+			.ToDictionary(r => r.Id);
+
+		rows[alice.Id].Max.AssertEqual(30);
+		rows[alice.Id].Min.AssertEqual(10);
+		rows[bob.Id].Max.AssertEqual(15);
+		rows[bob.Id].Min.AssertEqual(15);
+	}
+
+	/// <summary>
+	/// The exact reported symptom type: a correlated <c>Max</c> over a DateTime column,
+	/// projected into an anonymous type. Populated rows must return the real per-row
+	/// maximum date, NOT <c>default(DateTime)</c> (<c>0001-01-01</c>). Self-correlates
+	/// <see cref="TestItem"/> by Priority so no extra entity/join is needed.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedMaxDateInProjection_ReturnsPerRowDate(string provider)
+	{
+		SetUp(provider);
+
+		var early = new DateTime(2019, 3, 3, 0, 0, 0, DateTimeKind.Utc);
+		var mid = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		var late = new DateTime(2020, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+
+		var a = await InsertItem("A", priority: 1, createdAt: mid);
+		var b = await InsertItem("B", priority: 1, createdAt: late);
+		var c = await InsertItem("C", priority: 2, createdAt: early);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+
+		var rows = (await Query<TestItem>()
+			.Select(i => new
+			{
+				i.Id,
+				LastCreated = (from j in items where j.Priority == i.Priority select j.CreatedAt).Max(),
+			})
+			.ToArrayAsyncEx(CancellationToken))
+			.ToDictionary(r => r.Id, r => r.LastCreated);
+
+		// Priority-1 rows share the max date; priority-2 row is its own.
+		(rows[a.Id] != default).AssertTrue($"populated row must not be default(DateTime), got {rows[a.Id]:o}");
+		rows[a.Id].Date.AssertEqual(late.Date);
+		rows[b.Id].Date.AssertEqual(late.Date);
+		rows[c.Id].Date.AssertEqual(early.Date);
+	}
+
+	/// <summary>
 	/// Mirrors StockSharp.Web's DbTests.CountWithPaging:
 	///   view.ToQueryable().SkipLong(N).Take(M).CountAsyncEx()
 	/// where the view is itself a GROUP BY query that projects to a non-table
@@ -3733,6 +3951,298 @@ public class OrmIntegrationTests : BaseTestClass
 		var rows = await query.OrderBy(t => t.Id).ToArrayAsyncEx(CancellationToken);
 
 		rows.Length.AssertEqual(2);
+	}
+
+	/// <summary>
+	/// A correlated IQueryable-subquery <c>.Contains(...)</c> ANDed with another
+	/// predicate in a WHERE must stay a set predicate (<c>IN (...)</c>), NOT be
+	/// wrapped as a scalar sub-query. (Regression guard: making binary operands
+	/// route through the sub-query-wrapping path — added for correlated aggregates
+	/// like <c>(...).Count() + 1</c> — must not catch this self-managing boolean
+	/// operator, which threw <c>NullReferenceException</c> when wrapped. The
+	/// single-predicate form goes through a different visitor and always worked; the
+	/// ANDed form exercises the binary path.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryContainsAndedWithPredicate_StaysInPredicate(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("Match", priority: 1, isActive: true);
+		var i2 = await InsertItem("MatchInactive", priority: 2, isActive: false);
+		var i3 = await InsertItem("NoCat", priority: 3, isActive: true);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+		await InsertItemCategory(i2, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+		var catIds = new[] { cat.Id };
+
+		// Contains(sub-query) AND another predicate — the binary operand must stay `IN (...)`.
+		var containsRows = await items
+			.Where(e =>
+				(from pgp in itemCategories
+				 where catIds.Contains(pgp.Category.Id)
+				 group pgp by pgp.Item into g
+				 where g.Count() > 0
+				 select g.Key.Id).Contains(e.Id)
+				&& e.IsActive)
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		// Both i1 and i2 have a category, but only i1 is active.
+		containsRows.Length.AssertEqual(1);
+		containsRows[0].Id.AssertEqual(i1.Id);
+	}
+
+	/// <summary>
+	/// A correlated scalar aggregate compared as DECIMAL in a WHERE
+	/// (<c>(from j ...).Sum() &gt; 100m</c>) must be wrapped as a scalar sub-query
+	/// and correlated, not flattened into the outer statement. (Was: the decimal
+	/// comparison path visited the operand directly, so the aggregate collapsed and
+	/// the correlation degenerated to <c>[e].[X] = [e].[X]</c>.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedDecimalAggregateComparison_InWhere_Correlates(string provider)
+	{
+		SetUp(provider);
+		// Two priority groups: group 1 sums to 130 (> 100), group 2 sums to 30.
+		var a = await InsertItem("A", priority: 1, price: 50m);
+		var b = await InsertItem("B", priority: 1, price: 80m);
+		var c = await InsertItem("C", priority: 2, price: 30m);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+
+		var rows = (await items
+			.Where(e => (from j in items where j.Priority == e.Priority select j.Price).Sum() > 100m)
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		// Only the priority-1 rows (group sum 130) qualify.
+		rows.Length.AssertEqual(2);
+		rows.AssertContains(a.Id);
+		rows.AssertContains(b.Id);
+	}
+
+	/// <summary>
+	/// A correlated sub-query <c>.Contains(...)</c> whose inner <c>select</c>
+	/// projects a scalar (<c>select ic.Item.Id</c>) must resolve the sub-query FROM
+	/// to the real source table, not the CLR type of the projected scalar. (Was: the
+	/// FROM degenerated to <c>[Int64]</c> because the element type came from the
+	/// innermost method's return type <c>IQueryable&lt;long&gt;</c>.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryContainsScalarSelect_ResolvesSourceTable(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("WithCat", priority: 1);
+		var i2 = await InsertItem("NoCat", priority: 2);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+
+		var rows = (await items
+			.Where(e => (from ic in itemCategories select ic.Item.Id).Contains(e.Id))
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		rows.Length.AssertEqual(1);
+		rows[0].AssertEqual(i1.Id);
+	}
+
+	/// <summary>
+	/// A correlated <c>.Any()</c> used as a WHERE predicate — standalone, ANDed with
+	/// another predicate, or negated — must render as a bare <c>exists(...)</c> with
+	/// the sub-query's own alias, not the scalar <c>cast(case when exists(...) as
+	/// bit)</c> form (which is invalid as a predicate) and not with the inner alias
+	/// collapsed onto the outer row.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryAnyInWhere_EmitsExistsPredicate(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("WithCat", isActive: true);
+		var i2 = await InsertItem("WithCatInactive", isActive: false);
+		var i3 = await InsertItem("NoCat", isActive: true);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+		await InsertItemCategory(i2, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+
+		// Any(sub) AND predicate: only i1 has a category AND is active.
+		var andRows = (await items
+			.Where(e => (from ic in itemCategories where ic.Item.Id == e.Id select ic).Any() && e.IsActive)
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		andRows.Length.AssertEqual(1);
+		andRows[0].AssertEqual(i1.Id);
+
+		// NOT Any(sub): only i3 has no category.
+		var notRows = (await items
+			.Where(e => !(from ic in itemCategories where ic.Item.Id == e.Id select ic).Any())
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		notRows.Length.AssertEqual(1);
+		notRows[0].AssertEqual(i3.Id);
+	}
+
+	/// <summary>
+	/// The <c>Any(predicate)</c> overload (both over a bare source and over a
+	/// filtered chain) must fold the predicate into the sub-query WHERE, not drop
+	/// it. (Was: AnyVisitor visited only the source and ignored the predicate lambda,
+	/// so <c>source.Any(x =&gt; cond)</c> silently degenerated to "source is non-empty".)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryAnyWithPredicate_FoldsPredicate(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("HasCat", priority: 1);
+		var i2 = await InsertItem("NoCat", priority: 2);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+
+		// Any(predicate) over a bare source, correlated to the outer row.
+		var barePredRows = (await items
+			.Where(e => itemCategories.Any(ic => ic.Item.Id == e.Id))
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		barePredRows.Length.AssertEqual(1);
+		barePredRows[0].AssertEqual(i1.Id);
+
+		// Any(predicate) over an already-filtered chain: BOTH predicates must apply.
+		// i1's only category has a real id (> 0), so the chain matches i1 only.
+		var chainPredRows = (await items
+			.Where(e => itemCategories.Where(ic => ic.Item.Id == e.Id).Any(ic => ic.Category.Id > 0))
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		chainPredRows.Length.AssertEqual(1);
+		chainPredRows[0].AssertEqual(i1.Id);
+	}
+
+	/// <summary>
+	/// A correlated <c>Any()</c> compared as a VALUE (<c>(...).Any() == flag</c>) —
+	/// not used directly as a predicate — must render as a scalar
+	/// <c>cast(case when exists(...) as bit)</c> sub-query with its own alias, so the
+	/// comparison is valid and correctly correlated. (Was: it flattened onto the
+	/// outer row and wrapped the whole statement, producing invalid SQL.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryAnyComparedAsValue_EmitsScalarExists(string provider)
+	{
+		SetUp(provider);
+		// i1: has a category, active -> Any()==IsActive is true==true -> match.
+		var i1 = await InsertItem("HasCatActive", isActive: true);
+		// i2: no category, inactive -> Any()==IsActive is false==false -> match.
+		var i2 = await InsertItem("NoCatInactive", isActive: false);
+		// i3: has a category, inactive -> true==false -> no match.
+		var i3 = await InsertItem("HasCatInactive", isActive: false);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+		await InsertItemCategory(i3, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+
+		var rows = (await items
+			.Where(e => (from ic in itemCategories where ic.Item.Id == e.Id select ic).Any() == e.IsActive)
+			.OrderBy(t => t.Id)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		rows.Length.AssertEqual(2);
+		rows.AssertContains(i1.Id);
+		rows.AssertContains(i2.Id);
+	}
+
+	/// <summary>
+	/// A correlated <c>Any()</c> used as the TEST of a conditional in a projection
+	/// (<c>(...).Any() ? a : b</c>) must render as a bare <c>exists(...)</c> inside
+	/// the CASE WHEN, keeping the CASE body intact. (Was: the conditional test was
+	/// not treated as a predicate position, so the Any() took the scalar cast/case
+	/// path and collapsed the enclosing CASE to <c>case when ) </c>.)
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task SubqueryAnyAsConditionalTest_InProjection_EmitsExists(string provider)
+	{
+		SetUp(provider);
+		var i1 = await InsertItem("HasCat", priority: 1);
+		var i2 = await InsertItem("NoCat", priority: 2);
+		var cat = await InsertCategory("CatA");
+		await InsertItemCategory(i1, cat);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var itemCategories = Query<TestItemCategory>();
+
+		var rows = (await items
+			.Select(e => new
+			{
+				e.Id,
+				HasCat = (from ic in itemCategories where ic.Item.Id == e.Id select ic).Any() ? 1 : 0,
+			})
+			.ToArrayAsyncEx(CancellationToken))
+			.ToDictionary(r => r.Id, r => r.HasCat);
+
+		rows[i1.Id].AssertEqual(1);
+		rows[i2.Id].AssertEqual(0);
 	}
 
 	#endregion
@@ -4379,6 +4889,13 @@ public class OrmIntegrationTests : BaseTestClass
 			return default;
 		}
 	}
+
+	/// <summary>
+	/// Positional record projection target (a <see cref="NewExpression"/> with
+	/// <c>Members == null</c>) used by the correlated-aggregate projection tests to
+	/// exercise the constructor-based materialization path.
+	/// </summary>
+	private sealed record PersonAgg(long Id, int Max, int Min);
 
 	#endregion
 }

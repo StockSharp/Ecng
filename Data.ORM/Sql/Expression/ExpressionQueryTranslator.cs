@@ -122,9 +122,12 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			Curr.OpenBracket();
 
 		var isWhere = Context.IsWhere;
+		var predicate = Context.PredicatePosition;
 		Context.IsWhere = true;
+		Context.PredicatePosition = true;
 		Visit(lambda.Body);
 		Context.IsWhere = isWhere;
+		Context.PredicatePosition = predicate;
 
 		if (isBoolEqual)
 		{
@@ -648,16 +651,25 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			.Case()
 			.NewLine();
 
+		// The test is a predicate (so a correlated Any() there emits a bare
+		// exists(...)); the THEN/ELSE branches are values.
+		var savedPredicate = Context.PredicatePosition;
+
 		Curr.When();
+		Context.PredicatePosition = true;
 		Visit(node.Test);
 
+		Context.PredicatePosition = false;
+
 		Curr.Then();
-		Visit(node.IfTrue);
+		VisitOperand(node.IfTrue);
 
 		Curr.NewLine();
 
 		Curr.Else();
-		Visit(node.IfFalse);
+		VisitOperand(node.IfFalse);
+
+		Context.PredicatePosition = savedPredicate;
 
 		Curr.NewLine().End();
 
@@ -756,6 +768,137 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 	}
 
 	/// <summary>
+	/// True when <paramref name="expr"/> — the value of a projection member in a
+	/// <c>new { ... }</c> / positional-ctor / record projection — is a genuine
+	/// correlated sub-query that must be wrapped as a scalar sub-query. A real
+	/// sub-query's LINQ operator chain bottoms out at an <see cref="IQueryable"/>
+	/// source (a captured queryable / <c>Query&lt;T&gt;()</c>); a scalar helper
+	/// such as <c>Math.Round(Math.Abs(col))</c> bottoms out at a column, and a
+	/// grouping aggregate (<c>g.Count()</c>) at an <see cref="IGrouping{TKey,TElement}"/>
+	/// parameter — neither is <see cref="IQueryable"/>. Only sub-queries are routed
+	/// through <see cref="ProcessInitExpression"/> in <see cref="VisitNew"/>; every
+	/// other arg stays on the plain visit path so its emission is unchanged (a
+	/// blanket route mis-fired on nested scalar calls and stripped Convert casts).
+	/// </summary>
+	private static bool IsSubqueryProjectionArg(Expression expr)
+	{
+		if (expr.NodeType == ExpressionType.Convert)
+			expr = ((UnaryExpression)expr).Operand;
+
+		while (expr is MethodCallExpression mca && mca.Arguments.Count > 0)
+		{
+			if (typeof(IQueryable).IsAssignableFrom(mca.Arguments[0].Type))
+				return true;
+
+			expr = mca.Arguments[0];
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// True when <paramref name="expr"/> is a scalar aggregate over a correlated
+	/// sub-query (<c>Max/Min/Sum/Average/Count/LongCount</c>). These visitors
+	/// (<see cref="BaseGroupFuncVisitor"/> / <c>CountVisitor</c>) produce a scalar
+	/// value but do NOT establish their own sub-query <see cref="Context"/> — they
+	/// recurse into the sub-query source in the CURRENT context — so they must be
+	/// wrapped by <see cref="ProcessInitExpression"/> wherever the aggregate yields
+	/// a value (projection member, binary operand, conditional branch). The
+	/// existence/set operators (<c>Any/All/Contains</c>) are deliberately excluded:
+	/// their visitors emit self-contained <c>EXISTS</c>/<c>IN</c> and manage the
+	/// current query themselves, so wrapping them re-enters their visitor with a
+	/// fresh (empty) context and throws.
+	/// </summary>
+	private static bool IsScalarAggregateOverSubquery(Expression expr)
+	{
+		var inner = expr.NodeType == ExpressionType.Convert ? ((UnaryExpression)expr).Operand : expr;
+
+		if (inner is not MethodCallExpression mca)
+			return false;
+
+		var name = mca.Method.Name;
+
+		if (name is not (nameof(Enumerable.Max) or nameof(Enumerable.Min)
+			or nameof(Enumerable.Sum) or nameof(Enumerable.Average)
+			or nameof(Enumerable.Count) or nameof(Enumerable.LongCount)))
+			return false;
+
+		return IsSubqueryProjectionArg(expr);
+	}
+
+	/// <summary>
+	/// Gate for a PROJECTION MEMBER (<see cref="VisitNew"/>): any correlated
+	/// sub-query (<see cref="IsSubqueryProjectionArg"/>) or a conditional must be
+	/// wrapped as a scalar sub-query, because a SELECT-list member has to be a
+	/// self-contained scalar column. This is broader than
+	/// <see cref="NeedsSubqueryContext"/> on purpose: here even a boolean
+	/// existence/set operator (<c>Any/Contains</c>) has to become a scalar
+	/// <c>(select case when exists(...) ...)</c> column, so it is wrapped too.
+	/// </summary>
+	private static bool IsProjectionSubqueryMember(Expression expr)
+	{
+		var inner = expr.NodeType == ExpressionType.Convert ? ((UnaryExpression)expr).Operand : expr;
+		return inner is ConditionalExpression || IsSubqueryProjectionArg(expr);
+	}
+
+	/// <summary>
+	/// Gate for a binary OPERAND / conditional BRANCH (<see cref="VisitOperand"/>):
+	/// only a scalar aggregate over a correlated sub-query
+	/// (<see cref="IsScalarAggregateOverSubquery"/>) or a conditional needs its own
+	/// sub-context here. A conditional builds its CASE into the context's
+	/// <c>SwitchPart</c>, and <see cref="Context.Build"/> returns the SwitchPart
+	/// verbatim when it is non-empty — so a conditional emitted into the OUTER
+	/// context would hijack the whole query and discard its SELECT/FROM. Giving it
+	/// a fresh sub-context turns the CASE into a self-contained scalar column. The
+	/// existence/set operators (<c>Any/All/Contains</c>) are NOT wrapped here: as a
+	/// boolean operand of <c>&amp;&amp;</c>/<c>||</c> they must stay predicates
+	/// (<c>EXISTS</c>/<c>IN</c>), and wrapping re-enters their visitor with a fresh
+	/// (empty) context and throws.
+	/// </summary>
+	private static bool NeedsSubqueryContext(Expression expr)
+	{
+		var inner = expr.NodeType == ExpressionType.Convert ? ((UnaryExpression)expr).Operand : expr;
+		return inner is ConditionalExpression || IsScalarAggregateOverSubquery(expr);
+	}
+
+	/// <summary>
+	/// True when <paramref name="expr"/> is a correlated <c>Any()</c> over a
+	/// sub-query. Used only in a VALUE position (a comparison/arithmetic operand),
+	/// where the <c>Any()</c> result is a boolean value and must render as a scalar
+	/// <c>cast(case when exists(...) as bit)</c> sub-query. In a predicate position
+	/// (<see cref="Context.PredicatePosition"/>) it stays a bare <c>exists(...)</c>
+	/// and must NOT be wrapped.
+	/// </summary>
+	private static bool IsAnyOverSubquery(Expression expr)
+	{
+		var inner = expr.NodeType == ExpressionType.Convert ? ((UnaryExpression)expr).Operand : expr;
+		return inner is MethodCallExpression { Method.Name: nameof(Enumerable.Any) } && IsSubqueryProjectionArg(expr);
+	}
+
+	/// <summary>
+	/// Visits a sub-expression that may itself need its own sub-context — a
+	/// binary operand (<c>(from t ...).Count() + 1</c>, <c>(...).Max() ?? 0</c>) or
+	/// a conditional branch (<c>cond ? (...).Max() : 0</c>). A correlated sub-query
+	/// or conditional is wrapped via <see cref="ProcessInitExpression"/> so it keeps
+	/// its own FROM/alias / CASE scope; every other operand is visited as before.
+	/// Without this a nested aggregate flattened into the outer statement — the
+	/// correlation degenerated to <c>[e].[Fk] = [e].[Id]</c> and the inner FROM was
+	/// lost — producing malformed or silently wrong SQL.
+	/// </summary>
+	private void VisitOperand(Expression expr)
+	{
+		// A correlated Any() in a VALUE position (e.g. `(...).Any() == flag`) must
+		// become a scalar sub-query, not a bare exists() predicate. Only wrap it here
+		// where PredicatePosition is already cleared (a comparison/arithmetic operand);
+		// in a boolean `&&`/`||` operand PredicatePosition stays set and the Any()
+		// visitor emits the bare exists() form itself.
+		if (NeedsSubqueryContext(expr) || (!Context.PredicatePosition && IsAnyOverSubquery(expr)))
+			ProcessInitExpression(expr);
+		else
+			Visit(expr);
+	}
+
+	/// <summary>
 	/// Walks the outermost LINQ chain in <paramref name="maExp"/> to extract
 	/// (a) the element type of the sub-query result and (b) the lambda
 	/// parameter name of the deepest source. Both are needed to set up the
@@ -780,7 +923,13 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			: mca.Arguments[1])
 			.GetOperand().Parameters[0].Name;
 
-		if (itemType.IsSerializablePrimitive())
+		// When the aggregate projects a scalar (e.g. `select t.Priority` or
+		// `select (int?)t.Priority`), its element type is that scalar, not the
+		// source entity — resolve the real source table from the deepest source
+		// expression instead. A nullable-primitive select (needed for the
+		// `(...).Max() ?? 0` empty-set guard) must be handled too, otherwise the
+		// FROM degenerated to the CLR type name (`[Nullable`1]`).
+		if (itemType.IsSerializablePrimitive() || (itemType.IsNullable() && itemType.GetUnderlyingType().IsSerializablePrimitive()))
 			itemType = ((MemberExpression)mca.Arguments[0]).Member.GetMemberType().GetGenericArguments()[0];
 	}
 
@@ -944,7 +1093,24 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				else if (isSelect)
 					Context.Curr = new();
 
-				Visit(n.Arguments[i]);
+				if (!isGroup && IsProjectionSubqueryMember(arg))
+					// isSelect + an arg that needs its own sub-context (a genuine
+					// correlated sub-query or a conditional): route through
+					// ProcessInitExpression — the same path VisitMemberInit uses — so
+					// e.g. `(from t in tasks where t.Fk == p.Id select t.X).Max()`
+					// projected into an anonymous type or a positional
+					// constructor/record gets wrapped as a scalar sub-query. A bare
+					// Visit let the aggregate flatten into the outer query, emitting
+					// `select max([e].[X]) ... where [e].[Fk] = [e].[Id]` — the
+					// sub-query's own FROM/alias were lost and the scalar came back
+					// NULL (materialising as default(T)) or failed to bind. Every
+					// other arg (plain column, scalar helper like
+					// Math.Round(Math.Abs(col)), grouping aggregate g.Count(),
+					// Convert-wrapped column) stays on the bare Visit path below so
+					// its emission is unchanged.
+					arg = ProcessInitExpression(arg);
+				else
+					Visit(n.Arguments[i]);
 
 				if (isGroup)
 				{
@@ -1076,6 +1242,13 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		Curr.OpenBracket();
 
+		// Only `&&`/`||` keep their operands in a boolean predicate position; a
+		// comparison/arithmetic/coalesce operand is a VALUE, so a correlated Any()
+		// there must be a scalar sub-query, not a bare exists() predicate.
+		var savedPredicate = Context.PredicatePosition;
+		if (b.NodeType is not (ExpressionType.AndAlso or ExpressionType.OrElse))
+			Context.PredicatePosition = false;
+
 		if (b.NodeType == ExpressionType.Coalesce)
 		{
 			Curr
@@ -1093,7 +1266,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		if (isDecimalComparison)
 			VisitDecimalComparisonOperand(b.Left);
 		else
-			Visit(b.Left);
+			VisitOperand(b.Left);
 
 		switch (b.NodeType)
 		{
@@ -1203,12 +1376,14 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		if (isDecimalComparison)
 			VisitDecimalComparisonOperand(b.Right);
 		else
-			Visit(b.Right);
+			VisitOperand(b.Right);
 
 		if (isRightBool)
 			Curr.IsTrue().CloseBracket();
 		else if (b.NodeType == ExpressionType.Coalesce)
 			Curr.CloseBracket();
+
+		Context.PredicatePosition = savedPredicate;
 
 		Curr.CloseBracket();
 		return b;
@@ -1234,7 +1409,14 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		try
 		{
-			Visit(expression);
+			// A correlated scalar aggregate compared as decimal (e.g.
+			// `(from o ...).Sum() > 1000m`) must still be wrapped as a scalar
+			// sub-query, otherwise it flattens into the outer statement like any
+			// other un-wrapped aggregate.
+			if (NeedsSubqueryContext(expression))
+				ProcessInitExpression(expression);
+			else
+				Visit(expression);
 		}
 		finally
 		{

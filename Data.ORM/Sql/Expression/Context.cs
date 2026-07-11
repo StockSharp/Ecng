@@ -57,6 +57,16 @@ class Context
 	public bool IsWhere;
 
 	/// <summary>
+	/// True while visiting a boolean PREDICATE position — the root of a WHERE
+	/// body, an operand of <c>&amp;&amp;</c>/<c>||</c>, the operand of <c>!</c>, or a
+	/// conditional (CASE) test. It is cleared when descending into a value context
+	/// (a comparison/arithmetic operand, a conditional THEN/ELSE, a projection).
+	/// A correlated <c>Any()</c> renders as a bare <c>exists(...)</c> predicate only
+	/// here; in a value position it must be a scalar sub-query instead.
+	/// </summary>
+	public bool PredicatePosition;
+
+	/// <summary>
 	/// Body of the most recent GroupBy key selector lambda. Used by
 	/// <c>VisitNew</c> to project <c>g.Key</c> back into the resolved
 	/// grouping column when rendering the Select that follows GroupBy.
