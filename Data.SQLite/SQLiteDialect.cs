@@ -72,7 +72,7 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + idCol;
+	public override string GetIdentitySelect(string idCol) => "last_insert_rowid() as " + QuoteIdentifier(idCol);
 
 	/// <inheritdoc />
 	public override string ConcatOperator => "||";

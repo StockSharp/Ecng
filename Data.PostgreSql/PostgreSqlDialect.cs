@@ -115,7 +115,7 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetIdentitySelect(string idCol) => "lastval() as " + idCol;
+	public override string GetIdentitySelect(string idCol) => "lastval() as " + QuoteIdentifier(idCol);
 
 	/// <inheritdoc />
 	public override string ConcatOperator => "||";

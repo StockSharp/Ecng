@@ -551,12 +551,15 @@ public class SqlDialectTests : BaseTestClass
 	#region GetIdentitySelect Tests
 
 	[TestMethod]
-	[DataRow("SqlServer", "scope_identity() as Id")]
-	[DataRow("SQLite", "last_insert_rowid() as Id")]
-	[DataRow("PostgreSql", "lastval() as Id")]
-	public void GetIdentitySelect(string dialectName, string expected)
+	[DataRow("SqlServer", "scope_identity()")]
+	[DataRow("SQLite", "last_insert_rowid()")]
+	[DataRow("PostgreSql", "lastval()")]
+	public void GetIdentitySelect(string dialectName, string func)
 	{
-		GetDialect(dialectName).GetIdentitySelect("Id").AssertEqual(expected);
+		var dialect = GetDialect(dialectName);
+
+		// The alias must be quoted like every other identifier (see DATA-01).
+		dialect.GetIdentitySelect("Id").AssertEqual($"{func} as {dialect.QuoteIdentifier("Id")}");
 	}
 
 	#endregion
@@ -1185,6 +1188,27 @@ public class SqlDialectTests : BaseTestClass
 
 		sql.Contains("OBJECT_ID(N'[dbo].[evil''name]', N'U')").AssertTrue($"Expected escaped object name literal, got: {sql}");
 		sql.Contains("OBJECT_ID(N'[dbo].[evil'name]', N'U')").AssertFalse($"Single quote leaked unescaped, got: {sql}");
+	}
+
+	// DATA-01: the identity-select alias is concatenated after "as" without
+	// QuoteIdentifier, so an identity column whose name is a reserved word or
+	// contains a space/quote produces invalid SQL (and is a latent injection
+	// sink for any non-literal column name). The alias must be quoted like every
+	// other identifier the dialects emit.
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	[DataRow("SQLite")]
+	public void Dialect_GetIdentitySelect_QuotesAlias(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+
+		// "Order" is a reserved word in every dialect; an unquoted "as Order"
+		// alias is a syntax error.
+		var sql = dialect.GetIdentitySelect("Order");
+
+		sql.Contains(dialect.QuoteIdentifier("Order")).AssertTrue(
+			$"Identity-select alias must be quoted, got: {sql}");
 	}
 
 	#endregion

@@ -102,7 +102,7 @@ public class SqlServerDialect : SqlDialectBase
 	public override string EmptyBinaryLiteral => "0x";
 
 	/// <inheritdoc />
-	public override string GetIdentitySelect(string idCol) => "scope_identity() as " + idCol;
+	public override string GetIdentitySelect(string idCol) => "scope_identity() as " + QuoteIdentifier(idCol);
 
 	/// <inheritdoc />
 	public override string FormatSkip(string skip) => $"offset {skip} rows";

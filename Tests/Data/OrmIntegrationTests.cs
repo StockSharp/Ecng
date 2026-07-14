@@ -4862,6 +4862,48 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// End-to-end regression for DATA-01 across every backend: inserting an entity
+	/// whose identity column is a SQL reserved word (<c>Order</c>) must return the
+	/// generated identity. The insert's identity-select emits
+	/// <c>... as &lt;alias&gt;</c>; before the alias was quoted this was a syntax
+	/// error and <c>AddAsync</c> threw. This runs the real database, not just the
+	/// SQL string, so it proves the defect and the fix rather than asserting on text.
+	/// Confirmed by running with the fix reverted: SqlServer and SQLite failed
+	/// (<c>Incorrect syntax near 'Order'</c> on <c>scope_identity()/last_insert_rowid()
+	/// as Order</c>); PostgreSQL passed regardless because its insert path returns the
+	/// identity via <c>RETURNING "Order"</c> (already quoted), not GetIdentitySelect.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Insert_ReservedWordIdentityColumn_ReturnsGeneratedIdentity(string provider)
+	{
+		DbTestHelper.SkipIfUnavailable(provider);
+
+		var meta = SchemaRegistry.Get(typeof(AuditReservedIdentity));
+		DbTestHelper.EnsureTable(provider, meta, autoIncrement: true);
+		DbTestHelper.DeleteAll(provider, meta.TableName);
+
+		using var db = DbTestHelper.CreateDatabase(provider);
+		IStorage storage = db;
+
+		var entity = new AuditReservedIdentity { Title = "x" };
+		await storage.AddAsync(entity, CancellationToken);
+
+		// A generated identity means the `... as <alias>` select parsed and executed.
+		entity.Order.AssertGreater(0L);
+
+		// And the value round-trips back by name.
+		await storage.ClearCacheAsync(CancellationToken);
+		var loaded = await storage.GetByIdAsync<long, AuditReservedIdentity>(entity.Order, CancellationToken);
+		loaded.AssertNotNull();
+		loaded.Title.AssertEqual("x");
+
+		DbTestHelper.DropTable(provider, meta.TableName);
+	}
+
+	/// <summary>
 	/// Entity whose identity is declared via <see cref="IdentityAttribute"/> on a column
 	/// NOT named <c>Id</c> — the exact shape that defeats the hardcoded <c>"Id"</c>
 	/// fallback in <c>UpdateAsync</c>. <c>Save</c> deliberately does not write the
@@ -4877,6 +4919,35 @@ public class OrmIntegrationTests : BaseTestClass
 
 		object IDbPersistable.GetIdentity() => EntityKey;
 		void IDbPersistable.SetIdentity(object id) => EntityKey = id.To<long>();
+
+		public void Save(SettingsStorage storage)
+		{
+			storage.Set(nameof(Title), Title);
+		}
+
+		public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+		{
+			Title = storage.GetValue<string>(nameof(Title));
+			return default;
+		}
+	}
+
+	/// <summary>
+	/// Entity whose identity column is named after the SQL reserved word
+	/// <c>Order</c> — the shape that exercises DATA-01. The identity round-trip
+	/// issues <c>select scope_identity() as &lt;alias&gt;</c> (and dialect
+	/// equivalents); an unquoted alias is a syntax error on every backend.
+	/// </summary>
+	[Entity(Name = "Ecng_AuditReservedId")]
+	public class AuditReservedIdentity : IDbPersistable
+	{
+		[Identity]
+		public long Order { get; set; }
+
+		public string Title { get; set; }
+
+		object IDbPersistable.GetIdentity() => Order;
+		void IDbPersistable.SetIdentity(object id) => Order = id.To<long>();
 
 		public void Save(SettingsStorage storage)
 		{
