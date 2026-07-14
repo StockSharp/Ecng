@@ -44,7 +44,10 @@
     <NuGetApiVer>7.6.0</NuGetApiVer>
     <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>7.*</MsSqlClientVer>
-    <MsDataSqliteVer>10.*</MsDataSqliteVer>
+    <!-- 11.0 preview: pulls SQLitePCLRaw.bundle_e_sqlite3 3.0.3 (SQLite >= 3.50.2)
+         transitively, clearing NU1903/CVE-2025-6965. The 10.* line still ships the
+         vulnerable native lib 2.1.11. Move back to a stable 11.* once it releases. -->
+    <MsDataSqliteVer>11.0.0-preview.5.26302.115</MsDataSqliteVer>
     <OpenXmlVer>3.*</OpenXmlVer>
     <SharpCompressVer>1.*</SharpCompressVer>
     <NpgsqlVer>10.*</NpgsqlVer>
