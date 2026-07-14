@@ -44,7 +44,10 @@ ROOT = Path(__file__).resolve().parent.parent
 NON_PUBLISHED = {"Tests"}
 NOISE_PATTERNS = (
     re.compile(r"^Microsoft\.NET\.Test"),
-    re.compile(r"^MSTest"),
+    # Only the build/runner MSTest packages are noise. MSTest.TestFramework is a
+    # real shipping dependency of Ecng.UnitTesting (it appears in the published
+    # nuspec), so it must be checked for staleness like any other third-party dep.
+    re.compile(r"^MSTest\.(TestAdapter|Sdk|Analyzers)"),
     re.compile(r"^coverlet"),
     re.compile(r"^GitVersion"),
     re.compile(r"^System\."),
