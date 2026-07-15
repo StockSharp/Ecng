@@ -988,19 +988,20 @@ public class QueryTests : BaseTestClass
 	[TestMethod]
 	public void Identity_SqlServer()
 	{
+		// The identity-select alias is quoted like every other identifier (DATA-01).
 		var sql = new Query().Identity("Id").Render(_ss);
-		sql.AssertEqual("scope_identity() as Id");
+		sql.AssertEqual($"scope_identity() as {Q("SqlServer", "Id")}");
 	}
 
 	[TestMethod]
-	[DataRow("SqlServer", "scope_identity() as Id")]
-	[DataRow("SQLite", "last_insert_rowid() as Id")]
-	[DataRow("PostgreSql", "lastval() as Id")]
-	public void Identity_AllDialects(string dialectName, string expected)
+	[DataRow("SqlServer", "scope_identity()")]
+	[DataRow("SQLite", "last_insert_rowid()")]
+	[DataRow("PostgreSql", "lastval()")]
+	public void Identity_AllDialects(string dialectName, string func)
 	{
 		var dialect = GetDialect(dialectName);
 		var sql = new Query().Identity("Id").Render(dialect);
-		sql.AssertEqual(expected);
+		sql.AssertEqual($"{func} as {Q(dialectName, "Id")}");
 	}
 
 	#endregion
