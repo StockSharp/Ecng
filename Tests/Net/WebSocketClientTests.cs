@@ -14,8 +14,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+// This suite intentionally exercises the Obsolete synchronous Disconnect wrapper.
 [TestClass]
 [DoNotParallelize]
+[Obsolete("Exercises the Obsolete synchronous Disconnect wrapper")]
 public class WebSocketClientTests : BaseTestClass
 {
 	private static Action<string, object> Log(string tag)

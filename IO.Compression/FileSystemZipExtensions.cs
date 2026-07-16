@@ -239,6 +239,7 @@ public static class FileSystemZipExtensions
 	/// <param name="zipPath">Path for the output ZIP file.</param>
 	/// <param name="entries">The entries to include in the archive.</param>
 	/// <param name="level">Compression level.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use ZipAsync instead.")]
 	public static void Zip(this IFileSystem fs, string zipPath, IEnumerable<(string name, Stream body)> entries, CompressionLevel level = CompressionLevel.Optimal)
 	{
 		if (fs is null) throw new ArgumentNullException(nameof(fs));
@@ -257,6 +258,7 @@ public static class FileSystemZipExtensions
 	/// <param name="entries">The entries to include in the archive.</param>
 	/// <param name="level">Compression level.</param>
 	/// <param name="leaveOpen">Whether to leave the stream open after creating the archive.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use ZipAsync instead.")]
 	public static void Zip(this IFileSystem fs, Stream zipStream, IEnumerable<(string name, Stream body)> entries, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true)
 	{
 		if (fs is null) throw new ArgumentNullException(nameof(fs));

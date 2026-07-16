@@ -2,7 +2,9 @@ namespace Ecng.Tests.IO;
 
 using Ecng.IO;
 
+// This suite intentionally exercises the Obsolete synchronous Commit wrapper.
 [TestClass]
+[Obsolete("Exercises the Obsolete synchronous Commit wrapper")]
 public class TransactionFileStreamTests : BaseTestClass
 {
 	#region Helper Methods

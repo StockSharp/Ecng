@@ -222,6 +222,7 @@ public static class ProcessExtensions
 	/// <param name="stdInput">Standard input to write to the process.</param>
 	/// <param name="priority">Optional process priority.</param>
 	/// <returns>The process exit code.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use ExecuteAsync instead.")]
 	public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null, ProcessPriorityClass? priority = null)
 	{
 		var source = new CancellationTokenSource();

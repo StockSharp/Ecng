@@ -177,6 +177,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// Connects to the server synchronously.
 	/// </summary>
 	/// <remarks>This method runs the asynchronous connection method synchronously.</remarks>
+	[Obsolete("Blocking sync-over-async wrapper. Use ConnectAsync instead.")]
 	public void Connect()
 		=> AsyncHelper.Run(() => ConnectAsync(default));
 
@@ -304,6 +305,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// Disconnects from the server.
 	/// </summary>
 	/// <exception cref="InvalidOperationException">Thrown if the client is not connected.</exception>
+	[Obsolete("Blocking sync-over-async wrapper. Use DisconnectAsync instead.")]
 	public void Disconnect()
 		=> AsyncHelper.Run(() => DisconnectAsync(default));
 
@@ -598,6 +600,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="obj">The object to send. If not a byte array, it is converted to JSON.</param>
 	/// <param name="subId">The subscription identifier.</param>
 	/// <param name="pre">A pre-send callback function.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use SendAsync instead.")]
 	public void Send(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> AsyncHelper.Run(() => SendAsync(obj, subId, pre));
 
@@ -638,6 +641,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="type">The type of WebSocket message.</param>
 	/// <param name="subId">The subscription identifier.</param>
 	/// <param name="pre">A pre-send callback function.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use SendAsync instead.")]
 	public void Send(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> AsyncHelper.Run(() => SendAsync(sendBuf, type, subId, pre));
 

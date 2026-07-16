@@ -65,6 +65,7 @@ public static class CompressionHelper
 	/// <param name="output">The output stream to write the ZIP archive to.</param>
 	/// <param name="level">The compression level to use.</param>
 	/// <param name="leaveOpen">Whether to leave the output stream open after creating the archive.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use ZipAsync instead.")]
 	public static void Zip(this IEnumerable<(string name, Stream body)> entries, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true)
 		=> AsyncContext.Run(() => entries.ZipAsync(output, level, leaveOpen));
 
@@ -133,6 +134,7 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The byte array containing GZip-compressed data.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnGZip(this byte[] input)
 		=> input.UnGZip(0, input.Length);
 
@@ -142,6 +144,7 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The span containing GZip-compressed data.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnGZip(this ReadOnlySpan<byte> input)
 		=> input.ToArray().UnGZip(0, input.Length);
 #endif
@@ -153,6 +156,7 @@ public static class CompressionHelper
 	/// <param name="index">The starting index from which to begin decompression.</param>
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnGZip(this byte[] input, int index, int count)
 		=> input.Uncompress<GZipStream>(index, count).UTF8();
 
@@ -163,6 +167,7 @@ public static class CompressionHelper
 	/// <param name="input">The span containing GZip-compressed data.</param>
 	/// <param name="destination">The span to store decompressed data.</param>
 	/// <returns>The number of bytes written into the destination span.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static int UnGZip(this ReadOnlySpan<byte> input, Span<byte> destination)
 	{
 		var tempDest = new byte[destination.Length];
@@ -180,6 +185,7 @@ public static class CompressionHelper
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <param name="destination">The buffer to store decompressed data.</param>
 	/// <returns>The number of bytes written into the destination buffer.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static int UnGZip(this byte[] input, int index, int count, byte[] destination)
 	{
 		using var inputStream = new MemoryStream(input, index, count);
@@ -193,6 +199,7 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The byte array containing Deflate-compressed data.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnDeflate(this byte[] input)
 		=> input.UnDeflate(0, input.Length);
 
@@ -202,6 +209,7 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The span containing Deflate-compressed data.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnDeflate(this ReadOnlySpan<byte> input)
 		=> input.ToArray().UnDeflate(0, input.Length);
 #endif
@@ -213,6 +221,7 @@ public static class CompressionHelper
 	/// <param name="index">The starting index for decompression.</param>
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <returns>A string resulting from decompression.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static string UnDeflate(this byte[] input, int index, int count)
 		=> input.DeflateFrom(index, count).UTF8();
 
@@ -223,6 +232,7 @@ public static class CompressionHelper
 	/// <param name="input">The span containing Deflate-compressed data.</param>
 	/// <param name="destination">The span to store decompressed data.</param>
 	/// <returns>The number of bytes written into the destination span.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static int UnDeflate(this ReadOnlySpan<byte> input, Span<byte> destination)
 	{
 		var tempDest = new byte[destination.Length];
@@ -240,6 +250,7 @@ public static class CompressionHelper
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <param name="destination">The buffer to store decompressed data.</param>
 	/// <returns>The number of bytes written into the destination buffer.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static int UnDeflate(this byte[] input, int index, int count, byte[] destination)
 	{
 		using var inputStream = new MemoryStream(input, index, count);
@@ -253,6 +264,7 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The byte array to compress.</param>
 	/// <returns>A compressed byte array.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use CompressAsync instead.")]
 	public static byte[] DeflateTo(this byte[] input)
 		=> input.Compress<DeflateStream>();
 
@@ -263,6 +275,7 @@ public static class CompressionHelper
 	/// <param name="input">The span to decompress.</param>
 	/// <param name="bufferSize">The buffer size to use during decompression.</param>
 	/// <returns>A decompressed byte array.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static byte[] DeflateFrom(this ReadOnlySpan<byte> input, int bufferSize = DefaultBufferSize)
 		=> input.ToArray().DeflateFrom(0, input.Length, bufferSize);
 #endif
@@ -275,6 +288,7 @@ public static class CompressionHelper
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <param name="bufferSize">The buffer size to use during decompression.</param>
 	/// <returns>A decompressed byte array.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static byte[] DeflateFrom(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 		=> input.Uncompress<DeflateStream>(index, count, bufferSize);
 
@@ -348,6 +362,7 @@ public static class CompressionHelper
 	/// <param name="level">The compression level to use.</param>
 	/// <param name="bufferSize">The buffer size to use during compression.</param>
 	/// <returns>A compressed byte array.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use CompressAsync instead.")]
 	public static byte[] Compress<TCompressStream>(this byte[] input, int? index = default, int? count = default, CompressionLevel level = CompressionLevel.Optimal, int bufferSize = DefaultBufferSize)
 		where TCompressStream : Stream
 		=> AsyncContext.Run(() => input.CompressAsync<TCompressStream>(index, count, level, bufferSize));
@@ -361,6 +376,7 @@ public static class CompressionHelper
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <param name="bufferSize">The buffer size to use during decompression.</param>
 	/// <returns>A decompressed byte array.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use UncompressAsync instead.")]
 	public static byte[] Uncompress<TCompressStream>(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 		where TCompressStream : Stream
 		=> AsyncContext.Run(() => input.UncompressAsync<TCompressStream>(index, count, bufferSize));

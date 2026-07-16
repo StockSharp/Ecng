@@ -117,6 +117,7 @@ public static class RestSharpHelper
 	/// <param name="contentConverter">An optional function to convert the response content.</param>
 	/// <param name="throwIfEmptyResponse">Indicates whether to throw an exception if the response is empty.</param>
 	/// <returns>The deserialized object response.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use InvokeAsync instead.")]
 	public static object Invoke(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
 		=> request.Invoke<object>(url, caller, logVerbose, contentConverter, throwIfEmptyResponse);
 
@@ -145,6 +146,7 @@ public static class RestSharpHelper
 	/// <param name="contentConverter">An optional function to convert the response content.</param>
 	/// <param name="throwIfEmptyResponse">Indicates whether to throw an exception if the response is empty.</param>
 	/// <returns>The deserialized response of type T.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use InvokeAsync instead.")]
 	public static T Invoke<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
 		=> AsyncContext.Run(() => request.InvokeAsync<T>(url, caller, logVerbose, CancellationToken.None, contentConverter, throwIfEmptyResponse));
 
@@ -159,6 +161,7 @@ public static class RestSharpHelper
 	/// <param name="contentConverter">An optional function to convert the response content.</param>
 	/// <param name="throwIfEmptyResponse">Indicates whether to throw an exception if the response is empty.</param>
 	/// <returns>The full <see cref="RestResponse{T}"/> response.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use InvokeAsync2 instead.")]
 	public static RestResponse<T> Invoke2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
 		=> AsyncContext.Run(() => request.InvokeAsync2<T>(url, caller, logVerbose, CancellationToken.None, contentConverter, null, throwIfEmptyResponse));
 

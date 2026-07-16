@@ -22,6 +22,7 @@ public static class HardwareInfo
 	/// Gets the hardware identifier.
 	/// </summary>
 	/// <returns>A string representing the hardware identifier.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use GetIdAsync instead.")]
 	public static string GetId()
 		=> AsyncContext.Run(() => GetIdAsync());
 

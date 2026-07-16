@@ -149,6 +149,7 @@ public class TransactionFileStream : Stream, ICommitable, IAsyncCommitable
 	/// Can be called multiple times. After commit, stream continues appending.
 	/// </summary>
 	/// <exception cref="ObjectDisposedException">The stream has been disposed.</exception>
+	[Obsolete("Blocking sync-over-async wrapper. Use CommitAsync instead.")]
 	public void Commit()
 		=> AsyncHelper.Run(() => CommitAsync());
 

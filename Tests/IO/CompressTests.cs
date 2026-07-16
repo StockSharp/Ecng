@@ -7,7 +7,9 @@ using Ecng.IO.Compression;
 
 using SharpCompress.Compressors.LZMA;
 
+// This suite intentionally exercises the Obsolete synchronous compression wrappers.
 [TestClass]
+[Obsolete("Exercises the Obsolete synchronous compression wrappers")]
 public class CompressTests : BaseTestClass
 {
 	[TestMethod]
