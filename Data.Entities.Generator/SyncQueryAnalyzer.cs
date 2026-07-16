@@ -1,5 +1,6 @@
 namespace Ecng.Data;
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -16,6 +17,10 @@ using Microsoft.CodeAnalysis.Operations;
 /// every request time out (only a restart clears it). The async terminals
 /// (<c>ToArrayAsyncEx</c>/<c>FirstAsyncEx</c>/<c>CountAsyncEx</c>/…) must be used instead.
 /// </summary>
+// The Roslyn analyzer surface (DiagnosticAnalyzer base, ImmutableArray, AnalysisContext)
+// is not CLS-compliant, and the assembly is [CLSCompliant(true)]; an analyzer must stay
+// public to be discovered, so opt this type out of CLS compliance.
+[CLSCompliant(false)]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SyncQueryAnalyzer : DiagnosticAnalyzer
 {
