@@ -17,6 +17,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 
 		public bool ConnectCalled { get; private set; }
 		public bool DisconnectCalled { get; private set; }
+		public bool DisconnectAwaited { get; private set; }
 
 		public ValueTask ConnectAsync(CancellationToken cancellationToken)
 		{
@@ -25,9 +26,14 @@ public class ConnectionStateTrackerTests : BaseTestClass
 			return ValueTask.CompletedTask;
 		}
 
-		public void Disconnect()
+		public async ValueTask DisconnectAsync(CancellationToken cancellationToken)
 		{
 			DisconnectCalled = true;
+
+			// a real teardown yields, so the tracker has to await it instead of firing and forgetting
+			await Task.Yield();
+
+			DisconnectAwaited = true;
 			SetState(ConnectionStates.Disconnected);
 		}
 
@@ -139,7 +145,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Disconnect_CallsAllConnections()
+	public async Task DisconnectAsync_CallsAllConnections()
 	{
 		var tracker = new ConnectionStateTracker();
 		var conn1 = new MockConnection();
@@ -148,17 +154,20 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn1);
 		tracker.Add(conn2);
 
-		tracker.Disconnect();
+		await tracker.DisconnectAsync(CancellationToken);
 
 		conn1.DisconnectCalled.AssertTrue();
 		conn2.DisconnectCalled.AssertTrue();
+
+		conn1.DisconnectAwaited.AssertTrue();
+		conn2.DisconnectAwaited.AssertTrue();
 	}
 
 	[TestMethod]
-	public void Disconnect_NoConnections_DoesNotThrow()
+	public async Task DisconnectAsync_NoConnections_DoesNotThrow()
 	{
 		var tracker = new ConnectionStateTracker();
-		tracker.Disconnect(); // Should not throw
+		await tracker.DisconnectAsync(CancellationToken); // Should not throw
 	}
 
 	[TestMethod]
@@ -660,7 +669,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Disconnect_AfterDispose_StillWorks()
+	public async Task DisconnectAsync_AfterDispose_StillWorks()
 	{
 		var tracker = new ConnectionStateTracker();
 		var conn = new MockConnection();
@@ -669,7 +678,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Dispose();
 
 		// Should not throw
-		tracker.Disconnect();
+		await tracker.DisconnectAsync(CancellationToken);
 		conn.DisconnectCalled.AssertTrue();
 	}
 

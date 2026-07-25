@@ -77,10 +77,12 @@ public class ConnectionStateTracker : Disposable, IConnection
 	}
 
 	/// <summary>
-	/// Disconnects all tracked connections.
+	/// Disconnects all tracked connections asynchronously.
 	/// </summary>
-	public void Disconnect()
-		=> Connections.ForEach(c => c.Disconnect());
+	/// <param name="cancellationToken">A token to observe for cancellation.</param>
+	/// <returns>A task that represents the asynchronous disconnect operation.</returns>
+	public ValueTask DisconnectAsync(CancellationToken cancellationToken)
+		=> Connections.Select(c => c.DisconnectAsync(cancellationToken)).WhenAll();
 
 	/// <summary>
 	/// Adds a connection to be tracked.

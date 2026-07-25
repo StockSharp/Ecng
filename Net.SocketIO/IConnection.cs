@@ -18,7 +18,9 @@ public interface IConnection
 	ValueTask ConnectAsync(CancellationToken cancellationToken);
 
 	/// <summary>
-	/// Disconnects the current connection.
+	/// Asynchronously disconnects the current connection.
 	/// </summary>
-	void Disconnect();
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <returns>A task representing the asynchronous operation.</returns>
+	ValueTask DisconnectAsync(CancellationToken cancellationToken);
 }
