@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 // This suite intentionally exercises the Obsolete synchronous Disconnect wrapper.
 [TestClass]
 [DoNotParallelize]
-[Obsolete("Exercises the Obsolete synchronous Disconnect wrapper")]
+[Obsolete("Exercises the Obsolete synchronous Disconnect wrapper and PreProcess2 hook")]
 public class WebSocketClientTests : BaseTestClass
 {
 	private static Action<string, object> Log(string tag)
@@ -383,6 +383,171 @@ public class WebSocketClientTests : BaseTestClass
 		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
 		// Echo + PreProcess2 uppercase transform should produce exactly the transformed payload
 		tcs.Task.Result.AssertEqual(transformed, $"Transformed message should exactly match expected.\nActual: {tcs.Task.Result}\nExpected: {transformed}");
+
+		client.Disconnect();
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task PreProcessAsync_Transforms_Incoming_Message()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+		var marker = Guid.NewGuid().ToString("N");
+		var original = $"lower_case_payload:{marker}";
+		var transformed = original.ToUpperInvariant();
+		var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		using var client = new WebSocketClient(
+			url,
+			(_, _) => default,
+			(_, _) => default,
+			async (self, msg, token) =>
+			{
+				var text = msg.AsString();
+				if (text?.Contains(marker.ToUpperInvariant(), StringComparison.Ordinal) == true)
+					tcs.TrySetResult(text);
+				await ValueTask.CompletedTask;
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		var gotToken = false;
+
+		client.PreProcessAsync += async (input, output, token) =>
+		{
+			gotToken = token.CanBeCanceled;
+
+			// an async transform must really be awaited, not run inline
+			await Task.Yield();
+
+			var bytes = input.Span.UTF8().ToUpperInvariant().UTF8();
+			bytes.CopyTo(output.Span);
+			return bytes.Length;
+		};
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		await client.SendAsync(original, cts.Token);
+		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(15).Delay(cts.Token));
+		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
+		tcs.Task.Result.AssertEqual(transformed, $"Transformed message should exactly match expected.\nActual: {tcs.Task.Result}\nExpected: {transformed}");
+		gotToken.AssertTrue("The transform was not given a cancellable token.");
+
+		client.Disconnect();
+	}
+
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task PreProcessAsync_Runs_After_PreProcess2()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+		var marker = Guid.NewGuid().ToString("N");
+		var original = $"payload:{marker}";
+		var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		using var client = new WebSocketClient(
+			url,
+			(_, _) => default,
+			(_, _) => default,
+			async (self, msg, token) =>
+			{
+				var text = msg.AsString();
+				if (text?.Contains(marker, StringComparison.OrdinalIgnoreCase) == true)
+					tcs.TrySetResult(text);
+				await ValueTask.CompletedTask;
+			},
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		// both hooks are chained, so a client can keep a cheap sync step and add an async one
+		client.PreProcess2 += (input, output) =>
+		{
+			var bytes = ("sync|" + input.Span.UTF8()).UTF8();
+			bytes.CopyTo(output.Span);
+			return bytes.Length;
+		};
+
+		client.PreProcessAsync += async (input, output, token) =>
+		{
+			await Task.Yield();
+
+			var bytes = ("async|" + input.Span.UTF8()).UTF8();
+			bytes.CopyTo(output.Span);
+			return bytes.Length;
+		};
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		await client.SendAsync(original, cts.Token);
+		var received = await Task.WhenAny(tcs.Task, TimeSpan.FromSeconds(15).Delay(cts.Token));
+		(received == tcs.Task).AssertTrue("Did not receive transformed message.");
+		tcs.Task.Result.AssertEqual($"async|sync|{original}", "The async hook must see what the sync one produced.");
+
+		client.Disconnect();
+	}
+
+	/// <summary>
+	/// Setting the socket up can need asynchronous work — fetching a token, reading options
+	/// from a store — which the synchronous <c>Init</c> handler could only do by blocking.
+	/// The async handler must receive the same socket, run after the sync one, and be awaited
+	/// to completion before the connection is attempted.
+	/// </summary>
+	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task InitAsync_IsAwaited_BeforeConnect()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+
+		using var client = new WebSocketClient(
+			server.Url,
+			(_, _) => default,
+			(_, _) => default,
+			(_, _, _) => default,
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		var order = new List<string>();
+		ClientWebSocket syncSocket = null;
+		ClientWebSocket asyncSocket = null;
+
+		client.Init += ws =>
+		{
+			syncSocket = ws;
+			order.Add("sync");
+		};
+
+		client.InitAsync += async (ws, token) =>
+		{
+			asyncSocket = ws;
+
+			// a real async setup yields, so the client has to await it rather than fire and forget
+			await Task.Yield();
+
+			order.Add("async");
+		};
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		// Both ran to completion before the socket was connected.
+		order.SequenceEqual(new[] { "sync", "async" }).AssertTrue(
+			$"Expected the sync handler then the awaited async one, got: [{string.Join(", ", order)}]");
+
+		asyncSocket.AssertNotNull("The async handler was not given the socket.");
+		ReferenceEquals(syncSocket, asyncSocket).AssertTrue("Both handlers must see the same socket.");
 
 		client.Disconnect();
 	}

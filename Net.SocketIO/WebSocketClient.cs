@@ -160,7 +160,18 @@ public class WebSocketClient : Disposable, IConnection
 	/// <summary>
 	/// Occurs when the client web socket is initialized.
 	/// </summary>
+	[Obsolete("Synchronous handler cannot await. Use InitAsync instead.")]
 	public event Action<ClientWebSocket> Init;
+
+	/// <summary>
+	/// Occurs when the client web socket is initialized, for a handler that has to be awaited.
+	/// </summary>
+	/// <remarks>
+	/// Runs after <see cref="Init"/>, on the same socket, before it is connected. Use this one
+	/// when setting the socket up needs asynchronous work — fetching a token, reading options
+	/// from a store — which the synchronous handler could only do by blocking.
+	/// </remarks>
+	public event Func<ClientWebSocket, CancellationToken, ValueTask> InitAsync;
 
 	/// <summary>
 	/// Occurs after a successful connection.
@@ -171,7 +182,19 @@ public class WebSocketClient : Disposable, IConnection
 	/// Occurs before processing received data.
 	/// Input: original buffer (<see cref="ReadOnlyMemory{T}"/>), output: destination buffer (<see cref="Memory{T}"/>) returns processed length.
 	/// </summary>
+	[Obsolete("Synchronous transform runs inline on the receive loop. Use PreProcessAsync instead.")]
 	public event Func<ReadOnlyMemory<byte>, Memory<byte>, int> PreProcess2;
+
+	/// <summary>
+	/// Occurs before processing received data, for a transform that has to be awaited.
+	/// Input: original buffer (<see cref="ReadOnlyMemory{T}"/>), output: destination buffer (<see cref="Memory{T}"/>) returns processed length.
+	/// </summary>
+	/// <remarks>
+	/// Runs after <see cref="PreProcess2"/> and receives whatever it produced. Use this one for
+	/// anything with an asynchronous implementation, such as decompression, so the receive loop
+	/// does not have to block on it.
+	/// </remarks>
+	public event Func<ReadOnlyMemory<byte>, Memory<byte>, CancellationToken, ValueTask<int>> PreProcessAsync;
 
 	/// <summary>
 	/// Connects to the server synchronously.
@@ -244,6 +267,9 @@ public class WebSocketClient : Disposable, IConnection
 			_ws = ws;
 
 			Init?.Invoke(ws);
+
+			if (InitAsync is not null)
+				await InitAsync(ws, token).NoWait();
 
 			try
 			{
@@ -378,6 +404,9 @@ public class WebSocketClient : Disposable, IConnection
 			var preProcess2 = PreProcess2;
 			var preProcess2Mem = preProcess2 != null ? new byte[BufferSizeUncompress] : Memory<byte>.Empty;
 
+			var preProcessAsync = PreProcessAsync;
+			var preProcessAsyncMem = preProcessAsync != null ? new byte[BufferSizeUncompress] : Memory<byte>.Empty;
+
 			// Separate counters: a parsing error must not count against the network-error budget
 			// (or vice versa), and a successful read resets both.
 			var parsingErrors = 0;
@@ -451,6 +480,12 @@ public class WebSocketClient : Disposable, IConnection
 						{
 							var count = preProcess2(roMem, preProcess2Mem);
 							roMem = preProcess2Mem.Slice(0, count);
+						}
+
+						if (preProcessAsync != null)
+						{
+							var count = await preProcessAsync(roMem, preProcessAsyncMem, token).NoWait();
+							roMem = preProcessAsyncMem.Slice(0, count);
 						}
 
 						if (_verboseLog is not null)
