@@ -1022,17 +1022,24 @@ public class Query
 	{
 		return new Query().AddAction((dialect, sb) =>
 		{
+			// Name the PRIMARY KEY constraint rather than letting the database invent one.
+			var pkName = SchemaNaming.PrimaryKey(tableName);
+
 			var colDefs = columns.Select(kv =>
 			{
 				var def = $"{dialect.QuoteIdentifier(kv.Key)} {dialect.GetSqlTypeName(kv.Value)}";
 				if (identityColumn is not null && kv.Key.EqualsIgnoreCase(identityColumn))
-					def += " " + (kv.Value.IsNumeric() ? dialect.GetIdentityColumnSuffix() : "PRIMARY KEY");
+				{
+					def += " " + (kv.Value.IsNumeric()
+						? dialect.GetIdentityColumnSuffix(pkName)
+						: $"CONSTRAINT {dialect.QuoteIdentifier(pkName)} PRIMARY KEY");
+				}
 				return def;
 			}).JoinCommaSpace();
 
 			var pkCols = identityColumn is null ? primaryKeyColumns?.ToArray() : null;
 			if (pkCols is not null && pkCols.Length > 0)
-				colDefs += ", PRIMARY KEY (" + pkCols.Select(dialect.QuoteIdentifier).JoinCommaSpace() + ")";
+				colDefs += $", CONSTRAINT {dialect.QuoteIdentifier(pkName)} PRIMARY KEY (" + pkCols.Select(dialect.QuoteIdentifier).JoinCommaSpace() + ")";
 
 			dialect.AppendCreateTable(sb, tableName, colDefs);
 		});

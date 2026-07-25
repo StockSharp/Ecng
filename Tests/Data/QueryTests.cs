@@ -1090,7 +1090,10 @@ public class QueryTests : BaseTestClass
 
 		var sql = Query.CreateCreateTable("Test", columns, identityColumn: "Id").Render(dialect);
 
-		sql.Contains(dialect.GetIdentityColumnSuffix()).AssertTrue($"Expected auto-increment suffix: {sql}");
+		// The suffix now carries the named PRIMARY KEY constraint, so the auto-increment
+		// clauses are checked in that form rather than the anonymous one.
+		sql.Contains(dialect.GetIdentityColumnSuffix(SchemaNaming.PrimaryKey("Test")))
+			.AssertTrue($"Expected auto-increment suffix: {sql}");
 	}
 
 	[TestMethod]

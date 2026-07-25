@@ -139,8 +139,27 @@ public abstract class SqlDialectBase : ISqlDialect
 	public abstract string GetIdentityColumnSuffix();
 
 	/// <inheritdoc />
+	public virtual string GetIdentityColumnSuffix(string pkConstraintName)
+	{
+		var suffix = GetIdentityColumnSuffix();
+
+		// Every dialect spells the identity column as "<auto-increment bits> PRIMARY KEY"
+		// in some order, so naming the constraint means inserting CONSTRAINT <name>
+		// directly before PRIMARY KEY — the one position all of them accept. It matters
+		// for SQLite in particular, where AUTOINCREMENT must stay a column-level clause
+		// trailing PRIMARY KEY, so the constraint cannot be moved to table level.
+		const string primaryKey = "PRIMARY KEY";
+
+		var index = suffix.IndexOf(primaryKey, StringComparison.OrdinalIgnoreCase);
+
+		return index < 0
+			? suffix
+			: suffix.Insert(index, $"CONSTRAINT {QuoteIdentifier(pkConstraintName)} ");
+	}
+
+	/// <inheritdoc />
 	public virtual string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName)
-		=> $"CONSTRAINT {QuoteIdentifier($"FK_{tableName}_{columnName}")} FOREIGN KEY ({QuoteIdentifier(columnName)}) REFERENCES {QuoteIdentifier(refTableName)} ({QuoteIdentifier(refColumnName)})";
+		=> $"CONSTRAINT {QuoteIdentifier(SchemaNaming.ForeignKey(tableName, columnName))} FOREIGN KEY ({QuoteIdentifier(columnName)}) REFERENCES {QuoteIdentifier(refTableName)} ({QuoteIdentifier(refColumnName)})";
 
 	/// <inheritdoc />
 	public virtual bool SupportsAddForeignKeyViaAlter => true;

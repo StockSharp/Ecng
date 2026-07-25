@@ -68,6 +68,44 @@ public enum SchemaDiffKind
 	/// <see cref="ExtraColumn"/>).
 	/// </summary>
 	ExtraTable,
+
+	/// <summary>
+	/// A primary-key constraint in the database is not named per
+	/// <see cref="SchemaNaming.PrimaryKey"/>. Surfaced only when the caller opts in
+	/// (<c>checkNaming</c> on <see cref="SchemaMigrator.Compare"/>). Informational
+	/// only — renaming a constraint is a destructive operation, so it is never applied
+	/// automatically (mirrors <see cref="ExtraColumn"/>).
+	/// </summary>
+	PrimaryKeyNameMismatch,
+
+	/// <summary>
+	/// A foreign-key constraint in the database is not named per
+	/// <see cref="SchemaNaming.ForeignKey"/>. Opt-in and informational only, like
+	/// <see cref="PrimaryKeyNameMismatch"/>.
+	/// </summary>
+	ForeignKeyNameMismatch,
+
+	/// <summary>
+	/// An index in the database is not named per <see cref="SchemaNaming.Index(string, string, bool)"/>.
+	/// Indexes the model names explicitly (a composite <see cref="IndexAttribute.Name"/>) are
+	/// exempt — the author chose that name deliberately. Opt-in and informational only, like
+	/// <see cref="PrimaryKeyNameMismatch"/>.
+	/// </summary>
+	IndexNameMismatch,
+
+	/// <summary>
+	/// A table exists under the expected name but in different letter case than the entity
+	/// declares. Tables are reconciled case-insensitively, so the drift is otherwise
+	/// invisible — yet it breaks case-sensitive collations and quoted SQL. Opt-in and
+	/// informational only, like <see cref="PrimaryKeyNameMismatch"/>.
+	/// </summary>
+	TableNameCaseMismatch,
+
+	/// <summary>
+	/// A column exists under the expected name but in different letter case than the entity
+	/// declares. Opt-in and informational only, like <see cref="TableNameCaseMismatch"/>.
+	/// </summary>
+	ColumnNameCaseMismatch,
 }
 
 /// <summary>
@@ -112,6 +150,16 @@ public static class SchemaMigrator
 	/// entity are surfaced as <see cref="SchemaDiffKind.ExtraTable"/> diffs. Off by default,
 	/// because a partial entity set would otherwise flag every unrelated table.
 	/// </param>
+	/// <param name="checkNaming">
+	/// When <see langword="true"/>, primary keys, foreign keys and indexes whose database
+	/// name does not follow <see cref="SchemaNaming"/> are surfaced as
+	/// <see cref="SchemaDiffKind.PrimaryKeyNameMismatch"/> /
+	/// <see cref="SchemaDiffKind.ForeignKeyNameMismatch"/> /
+	/// <see cref="SchemaDiffKind.IndexNameMismatch"/> diffs. Off by default: a database that
+	/// predates the convention violates it on nearly every object, which would drown the
+	/// diffs a migration actually acts on. Requires the corresponding metadata
+	/// (<paramref name="dbForeignKeys"/> / <paramref name="dbIndexes"/>) to be supplied.
+	/// </param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
@@ -120,12 +168,15 @@ public static class SchemaMigrator
 		bool skipComputed,
 		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null,
 		IReadOnlyList<DbIndexInfo> dbIndexes = null,
-		bool detectExtraTables = false)
+		bool detectExtraTables = false,
+		bool checkNaming = false)
 	{
 		var diffs = new List<SchemaDiff>();
 
 		// group DB columns by table
-		var filtered = skipComputed ? dbColumns.Where(c => !c.IsComputed) : dbColumns;
+		// Materialized because the naming pass needs the database's own spelling of every
+		// column, and the dbTables lookup below is drained as columns are reconciled.
+		var filtered = (skipComputed ? dbColumns.Where(c => !c.IsComputed) : dbColumns).ToArray();
 		var dbTables = filtered
 			.GroupBy(c => c.TableName, StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(g => g.Key, g => g.ToDictionary(c => c.ColumnName, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
@@ -230,12 +281,15 @@ public static class SchemaMigrator
 		if (dbIndexes is not null)
 			AppendIndexDiffs(entities, dbIndexes, dbTables, diffs);
 
+		if (checkNaming)
+			AppendNamingDiffs(entities, dbForeignKeys, dbIndexes, filtered, diffs);
+
 		return diffs;
 	}
 
 	/// <summary>
 	/// Reads columns, foreign keys and indexes via <paramref name="dialect"/>
-	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo},bool)"/>.
+	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo},bool,bool)"/>.
 	/// Convenience for callers that want the full FK + index-aware comparison
 	/// without orchestrating three metadata reads themselves.
 	/// </summary>
@@ -246,6 +300,7 @@ public static class SchemaMigrator
 		bool skipComputed,
 		string tableSchema = null,
 		bool detectExtraTables = false,
+		bool checkNaming = false,
 		CancellationToken cancellationToken = default)
 	{
 		if (entities is null)	throw new ArgumentNullException(nameof(entities));
@@ -258,7 +313,7 @@ public static class SchemaMigrator
 		var dbForeignKeys = await dialect.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
 		var dbIndexes = await dialect.ReadDbIndexesAsync(connection, tableSchema, cancellationToken);
 
-		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes, detectExtraTables);
+		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes, detectExtraTables, checkNaming);
 	}
 
 	private static void AppendForeignKeyDiffs(
@@ -448,15 +503,14 @@ public static class SchemaMigrator
 			.ToArray();
 
 		// Single-column path — one CREATE INDEX per (column, null-named)
-		// participation. Naming sticks to IX_{Table}_{Column} so existing
-		// monitoring / DBA scripts keyed off that pattern keep working.
+		// participation, named per SchemaNaming.
 		foreach (var (col, ix) in participations)
 		{
 			if (ix.Name is not null)
 				continue;
 
 			dialect.AppendCreateIndex(sb,
-				indexName: $"IX_{tableName}_{col.Name}",
+				indexName: SchemaNaming.Index(tableName, col.Name, ix.IsUnique),
 				tableName: tableName,
 				columnName: col.Name,
 				unique: ix.IsUnique);
@@ -474,8 +528,7 @@ public static class SchemaMigrator
 		// IsUnique without populating the Indexes participation list
 		// (most reflection-built schemas go through CollectIndexes and
 		// fill Indexes, but tests and a few production callers construct
-		// SchemaColumn manually). Emit a single-column IX_{Table}_{Column}
-		// for them.
+		// SchemaColumn manually). Emit a single-column index for them.
 		foreach (var col in schema.Columns)
 		{
 			if (col.Indexes.Count > 0)
@@ -485,7 +538,7 @@ public static class SchemaMigrator
 				continue;
 
 			dialect.AppendCreateIndex(sb,
-				indexName: $"IX_{tableName}_{col.Name}",
+				indexName: SchemaNaming.Index(tableName, col.Name, col.IsUnique),
 				tableName: tableName,
 				columnName: col.Name,
 				unique: col.IsUnique);
@@ -600,14 +653,14 @@ public static class SchemaMigrator
 				if (col.Indexes.Count == 0 && col.IsUnique)
 				{
 					// Legacy [Unique] without explicit [Index] — emit a
-					// standalone unique index named IX_{Table}_{Column}.
-					AddDeclared(schema.TableName, $"IX_{schema.TableName}_{col.Name}", col.Name, 0, unique: true);
+					// standalone unique index named per SchemaNaming.
+					AddDeclared(schema.TableName, SchemaNaming.Index(schema.TableName, col.Name, unique: true), col.Name, 0, unique: true);
 					continue;
 				}
 
 				foreach (var ix in col.Indexes)
 				{
-					var name = ix.Name ?? $"IX_{schema.TableName}_{col.Name}";
+					var name = ix.Name ?? SchemaNaming.Index(schema.TableName, col.Name, ix.IsUnique);
 					AddDeclared(schema.TableName, name, col.Name, ix.Order, ix.IsUnique);
 				}
 			}
@@ -696,7 +749,7 @@ public static class SchemaMigrator
 	/// Emits one CREATE INDEX for the index identified by
 	/// <paramref name="indexName"/> on <paramref name="schema"/>. Used by
 	/// the MissingIndex diff branch: the diff carries only the index name
-	/// (composite name or IX_{Table}_{Column} fallback), and the schema
+	/// (composite name or the <see cref="SchemaNaming"/> fallback), and the schema
 	/// supplies the participating columns / uniqueness via
 	/// <see cref="SchemaColumn.Indexes"/> participations or the legacy
 	/// IsUnique fallback.
@@ -707,7 +760,7 @@ public static class SchemaMigrator
 		// SchemaColumnIndex.Name (resolved) equals indexName.
 		var participating = schema.Columns
 			.SelectMany(c => c.Indexes
-				.Where(ix => string.Equals(ix.Name ?? $"IX_{tableName}_{c.Name}", indexName, StringComparison.OrdinalIgnoreCase))
+				.Where(ix => string.Equals(ix.Name ?? SchemaNaming.Index(tableName, c.Name, ix.IsUnique), indexName, StringComparison.OrdinalIgnoreCase))
 				.Select(ix => (Column: c, Order: ix.Order, ix.IsUnique)))
 			.OrderBy(p => p.Order)
 			.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
@@ -716,12 +769,12 @@ public static class SchemaMigrator
 		if (participating.Length == 0)
 		{
 			// No [Index] participation matched — must be a legacy [Unique]
-			// without explicit [Index]. Find the column whose
-			// IX_{Table}_{Column} fallback matches the requested name.
+			// without explicit [Index]. Find the column whose generated
+			// fallback name matches the requested one.
 			var legacy = schema.Columns.FirstOrDefault(c =>
 				c.IsUnique
 				&& c.Indexes.Count == 0
-				&& string.Equals($"IX_{tableName}_{c.Name}", indexName, StringComparison.OrdinalIgnoreCase));
+				&& string.Equals(SchemaNaming.Index(tableName, c.Name, unique: true), indexName, StringComparison.OrdinalIgnoreCase));
 
 			if (legacy is null)
 				return;
@@ -761,6 +814,141 @@ public static class SchemaMigrator
 		sb.Append(" (");
 		sb.Append(cols);
 		sb.AppendLine(");");
+	}
+
+	/// <summary>
+	/// Audits the names of live-database primary keys, foreign keys and indexes against
+	/// <see cref="SchemaNaming"/>. Report-only — renaming a constraint is destructive, so
+	/// none of the diffs produced here is ever turned into DDL by
+	/// <see cref="GenerateMigrationSql"/>.
+	/// </summary>
+	private static void AppendNamingDiffs(
+		IEnumerable<Schema> entities,
+		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys,
+		IReadOnlyList<DbIndexInfo> dbIndexes,
+		IReadOnlyList<DbColumnInfo> dbColumns,
+		List<SchemaDiff> diffs)
+	{
+		// Audit only the tables the caller actually mapped. A partial entity set — the
+		// common case — shares the database with schemas whose naming is none of our
+		// business, and those must not bubble up through a narrow entity list.
+		var entityTables = new HashSet<string>(
+			entities.Where(s => !s.IsView).Select(s => s.TableName),
+			StringComparer.OrdinalIgnoreCase);
+
+		// Tables and columns are reconciled ignoring case, so a database spelling them
+		// differently than the model does still matches and the drift never surfaces —
+		// even though it breaks case-sensitive collations and any quoted SQL. Compare the
+		// database's own spelling against what the entity declares.
+		var dbTableNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		var dbColumnNames = new Dictionary<(string Table, string Column), string>(new TableColumnComparer());
+
+		foreach (var c in dbColumns)
+		{
+			dbTableNames[c.TableName] = c.TableName;
+			dbColumnNames[(c.TableName, c.ColumnName)] = c.ColumnName;
+		}
+
+		foreach (var schema in entities)
+		{
+			if (schema.IsView)
+				continue;
+
+			if (dbTableNames.TryGetValue(schema.TableName, out var dbTableName)
+				&& !StringComparer.Ordinal.Equals(schema.TableName, dbTableName))
+			{
+				diffs.Add(new(schema.TableName, string.Empty, SchemaDiffKind.TableNameCaseMismatch,
+					schema.TableName, dbTableName));
+			}
+
+			foreach (var col in schema.AllColumns)
+			{
+				if (dbColumnNames.TryGetValue((schema.TableName, col.Name), out var dbColumnName)
+					&& !StringComparer.Ordinal.Equals(col.Name, dbColumnName))
+				{
+					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.ColumnNameCaseMismatch,
+						col.Name, dbColumnName));
+				}
+			}
+		}
+
+		// Index names the model states explicitly (a composite [Index(Name = …)]) are
+		// exempt: the author picked that name on purpose, and the generated convention
+		// has nothing to say about it.
+		var explicitIndexNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var schema in entities)
+		{
+			if (schema.IsView)
+				continue;
+
+			foreach (var col in schema.Columns)
+			{
+				foreach (var ix in col.Indexes)
+				{
+					if (!ix.Name.IsEmpty())
+						explicitIndexNames.Add(ix.Name);
+				}
+			}
+		}
+
+		if (dbForeignKeys is not null)
+		{
+			foreach (var fk in dbForeignKeys
+				.OrderBy(f => f.TableName, StringComparer.OrdinalIgnoreCase)
+				.ThenBy(f => f.ColumnName, StringComparer.OrdinalIgnoreCase))
+			{
+				if (!entityTables.Contains(fk.TableName) || SchemaNaming.IsDatabaseGenerated(fk.ConstraintName))
+					continue;
+
+				var expected = SchemaNaming.ForeignKey(fk.TableName, fk.ColumnName);
+
+				if (!expected.EqualsIgnoreCase(fk.ConstraintName))
+				{
+					diffs.Add(new(fk.TableName, fk.ColumnName, SchemaDiffKind.ForeignKeyNameMismatch,
+						expected, fk.ConstraintName));
+				}
+			}
+		}
+
+		if (dbIndexes is null)
+			return;
+
+		// Metadata carries one row per indexed column, so collapse to one entry per
+		// (table, index) before judging the name.
+		foreach (var g in dbIndexes
+			.GroupBy(ix => (ix.TableName, ix.IndexName), TableIndexNameComparer.Instance)
+			.OrderBy(g => g.Key.Item1, StringComparer.OrdinalIgnoreCase)
+			.ThenBy(g => g.Key.Item2, StringComparer.OrdinalIgnoreCase))
+		{
+			var (table, name) = g.Key;
+
+			if (!entityTables.Contains(table) || SchemaNaming.IsDatabaseGenerated(name))
+				continue;
+
+			var first = g.First();
+
+			if (first.IsPrimaryKey)
+			{
+				// The PK spans the identity column, so the name keys off the table alone;
+				// no single column owns the diff.
+				var expectedPk = SchemaNaming.PrimaryKey(table);
+
+				if (!expectedPk.EqualsIgnoreCase(name))
+					diffs.Add(new(table, string.Empty, SchemaDiffKind.PrimaryKeyNameMismatch, expectedPk, name));
+
+				continue;
+			}
+
+			if (explicitIndexNames.Contains(name))
+				continue;
+
+			var columns = g.OrderBy(x => x.ColumnOrdinal).Select(x => x.ColumnName).ToArray();
+			var expectedIx = SchemaNaming.Index(table, columns, first.IsUnique);
+
+			if (!expectedIx.EqualsIgnoreCase(name))
+				diffs.Add(new(table, columns[0], SchemaDiffKind.IndexNameMismatch, expectedIx, name));
+		}
 	}
 
 	private sealed class ExpectedIndexShape
@@ -869,10 +1057,14 @@ public static class SchemaMigrator
 
 					var colDefs = new List<string>();
 
+					// The PRIMARY KEY constraint is named so the database does not invent
+					// one of its own, which the naming audit could never reconcile.
+					var pkName = SchemaNaming.PrimaryKey(diff.TableName);
+
 					if (schema.Identity is not null)
 					colDefs.Add(schema.Identity.ClrType.IsNumeric()
-						? $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} {dialect.GetIdentityColumnSuffix()}"
-						: $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} PRIMARY KEY");
+						? $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} {dialect.GetIdentityColumnSuffix(pkName)}"
+						: $"{dialect.QuoteIdentifier(schema.Identity.Name)} {dialect.GetSqlTypeName(schema.Identity.ClrType)} CONSTRAINT {dialect.QuoteIdentifier(pkName)} PRIMARY KEY");
 
 					foreach (var col in schema.Columns)
 					{

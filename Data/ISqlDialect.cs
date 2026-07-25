@@ -165,6 +165,19 @@ public interface ISqlDialect
 	string GetIdentityColumnSuffix();
 
 	/// <summary>
+	/// Same as <see cref="GetIdentityColumnSuffix()"/>, but names the <c>PRIMARY KEY</c>
+	/// constraint. Without a name the database invents one — <c>PK__Table__hash</c> on
+	/// SQL Server, <c>table_pkey</c> on PostgreSQL — which no naming convention can match.
+	/// </summary>
+	/// <param name="pkConstraintName">Constraint name, normally from <see cref="SchemaNaming.PrimaryKey"/>.</param>
+	/// <returns>The column-definition suffix carrying the named constraint.</returns>
+	/// <remarks>
+	/// Defaults to the unnamed form so implementations outside this assembly keep working;
+	/// <see cref="SqlDialectBase"/> supplies the real behaviour.
+	/// </remarks>
+	string GetIdentityColumnSuffix(string pkConstraintName) => GetIdentityColumnSuffix();
+
+	/// <summary>
 	/// Inline FOREIGN KEY constraint clause for use inside CREATE TABLE.
 	/// </summary>
 	string GetForeignKeyConstraint(string tableName, string columnName, string refTableName, string refColumnName);

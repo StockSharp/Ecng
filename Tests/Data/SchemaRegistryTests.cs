@@ -869,7 +869,13 @@ public class SchemaRegistryTests : BaseTestClass
 		var sql = SchemaMigrator.GenerateMigrationSql(_dialect, diffs, [schema]);
 
 		sql.Contains("FOREIGN KEY").AssertFalse($"Should not emit FOREIGN KEY for non-FK columns, got: {sql}");
-		sql.Contains("CONSTRAINT").AssertFalse($"Should not emit CONSTRAINT for non-FK columns, got: {sql}");
+		sql.Contains("REFERENCES").AssertFalse($"Should not emit REFERENCES for non-FK columns, got: {sql}");
+
+		// A table without foreign keys carries exactly one constraint — its named
+		// primary key — so nothing must remain once that one is taken out.
+		sql.Remove($"CONSTRAINT {_dialect.QuoteIdentifier(SchemaNaming.PrimaryKey("Items"))}")
+			.Contains("CONSTRAINT")
+			.AssertFalse($"Should not emit CONSTRAINT beyond the primary key for non-FK columns, got: {sql}");
 	}
 
 	[TestMethod]
