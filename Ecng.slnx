@@ -3,6 +3,7 @@
     <File Path="common.props" />
     <File Path="EcngAssemblyInfo.cs" />
   </Folder>
+  <Project Path="Analyzers/Analyzers.csproj" />
   <Project Path="Backup/Backup.csproj" />
   <Project Path="Backup.All/Backup.All.csproj" />
   <Project Path="Backup.AWS/Backup.AWS.csproj" />

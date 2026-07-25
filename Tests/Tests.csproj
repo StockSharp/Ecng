@@ -58,6 +58,10 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
     <ProjectReference Include="..\Data.ORM\Data.ORM.csproj" />
+    <!-- Referenced as a plain assembly, NOT as an Analyzer: ECNGASYNC001 is an error by
+         default, and Ecng's own Obsolete wrappers still hold the last AsyncHelper.Run calls,
+         so self-applying it would fail this build. The tests drive the analyzer directly. -->
+    <ProjectReference Include="..\Analyzers\Analyzers.csproj" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\Data.Entities.Generator\Data.Entities.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\ComponentModel.Generator\ComponentModel.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
