@@ -1015,6 +1015,29 @@ public class SchemaRegistryTests : BaseTestClass
 			.AssertEqual("CreatedBy,ModifiedBy,User,Name");
 	}
 
+	[TestMethod]
+	public void EntityLevelColumnOverride_RelaxesAnInheritedColumn()
+	{
+		// The column is declared on the base class, so no property-level attribute on the
+		// derived entity can reach it — the entity-level override names it instead.
+		var schema = SchemaRegistry.Get(typeof(TestBrokerTenant));
+
+		schema.Columns.First(c => c.Name == "CreatedBy").IsNullable.AssertTrue();
+
+		// Only the named column moves; its sibling on the same base keeps what it had.
+		schema.Columns.First(c => c.Name == "ModifiedBy").IsNullable.AssertFalse();
+	}
+
+	[TestMethod]
+	public void EntityLevelColumnOverride_LeavesSiblingEntitiesAlone()
+	{
+		// The whole point of overriding per entity: every other entity over the same base
+		// keeps the base's nullability, so relaxing one bootstrap table is not a blanket change.
+		var schema = SchemaRegistry.Get(typeof(TestBrokerPortfolio));
+
+		schema.Columns.First(c => c.Name == "CreatedBy").IsNullable.AssertFalse();
+	}
+
 	#endregion
 }
 

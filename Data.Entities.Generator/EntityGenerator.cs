@@ -659,12 +659,13 @@ public class EntityGenerator : IIncrementalGenerator
 		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
 		var tableName = entityAttrName ?? entityName;
 		var typeIndexLookup = BuildTypeIndexLookup(entityType, tableName);
+		var typeColumnNullable = BuildTypeColumnNullableLookup(entityType);
 
 		sb.AppendLine("\t\tvar columns = new List<SchemaColumn>()");
 		sb.AppendLine("\t\t{");
 
 		foreach (var prop in allProps)
-			EmitMetaColumns(sb, prop, typeIndexLookup);
+			EmitMetaColumns(sb, prop, typeIndexLookup, typeColumnNullable);
 
 		sb.AppendLine("\t\t};");
 		sb.AppendLine();
@@ -698,8 +699,13 @@ public class EntityGenerator : IIncrementalGenerator
 		return sb;
 	}
 
-	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup)
+	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup, Dictionary<string, bool> typeColumnNullable)
 	{
+		// A type-level [ColumnOverride] names this column from the entity, which is the only
+		// way to reach a column the entity inherits rather than declares. It outranks whatever
+		// the property itself says.
+		bool? typeNullable = typeColumnNullable.TryGetValue(prop.Name, out var overridden) ? overridden : null;
+
 		if (IsInnerSchema(prop))
 		{
 			var innerType = UnwrapNullable(prop.Type);
@@ -707,7 +713,7 @@ public class EntityGenerator : IIncrementalGenerator
 			var nameOverrides = GetNameOverrides(prop);
 			var columnOverrides = GetColumnOverrides(prop);
 			var (colNullable, _, _, _) = GetColumnAttribute(prop);
-			var outerNullable = colNullable ?? InferIsNullable(prop);
+			var outerNullable = typeNullable ?? colNullable ?? InferIsNullable(prop);
 
 			EmitMetaColumnsRecursive(sb, innerProps, prop.Name, nameOverrides, columnOverrides, outerNullable, typeIndexLookup);
 		}
@@ -743,7 +749,7 @@ public class EntityGenerator : IIncrementalGenerator
 				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes} }}");
 
 			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(prop);
-			var nullable = colNullable ?? InferIsNullable(prop);
+			var nullable = typeNullable ?? colNullable ?? InferIsNullable(prop);
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
@@ -1263,6 +1269,31 @@ public class EntityGenerator : IIncrementalGenerator
 		}
 
 		return lookup.ToDictionary(kv => kv.Key, kv => string.Join(", ", kv.Value));
+	}
+
+	// Builds a column-name -> nullability map from type-level [ColumnOverride] declarations, mirroring
+	// SchemaRegistry's type-level override. Naming the column from the entity is what lets an entity
+	// reshape a column it inherits from a base class, where no property-level attribute can reach.
+	private static Dictionary<string, bool> BuildTypeColumnNullableLookup(INamedTypeSymbol entityType)
+	{
+		var lookup = new Dictionary<string, bool>();
+
+		foreach (var attr in entityType.GetAttributes())
+		{
+			if (attr.AttributeClass?.Name != "ColumnOverrideAttribute")
+				continue;
+
+			if (attr.ConstructorArguments.Length == 0 || attr.ConstructorArguments[0].Value is not string propName || propName.Length == 0)
+				continue;
+
+			foreach (var named in attr.NamedArguments)
+			{
+				if (named.Key == "IsNullable")
+					lookup[propName] = named.Value.Value is true;
+			}
+		}
+
+		return lookup;
 	}
 
 	// Combines property-level [Index]/[Unique] with the type-level entries for the column; returns the

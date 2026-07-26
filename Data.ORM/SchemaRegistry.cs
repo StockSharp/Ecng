@@ -354,6 +354,24 @@ public static class SchemaRegistry
 		// property-level [Index].
 		var typeIndexLookup = new Dictionary<string, (List<SchemaColumnIndex> Indexes, bool HasUnique)>(StringComparer.OrdinalIgnoreCase);
 
+		// Type-level [ColumnOverride(nameof(X), IsNullable = …)] names one of this entity's
+		// columns by string, for the same reason the type-level [Index] declarations above do:
+		// the column may be declared on a base class, where no attribute on the derived type
+		// can reach it. It wins over whatever the property itself declares, so a single entity
+		// can relax an inherited column without moving every sibling over the same base.
+		var typeColumnNullable = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var attr in entityType.GetAttributes<ColumnOverrideAttribute>())
+		{
+			if (attr.IsNullableSet)
+				typeColumnNullable[attr.PropertyName] = attr.IsNullable;
+		}
+
+		bool ResolveColumnNullable(PropertyInfo prop, ColumnAttribute colAttr)
+			=> typeColumnNullable.TryGetValue(prop.Name, out var isNullable)
+				? isNullable
+				: ResolveNullable(colAttr, prop.PropertyType);
+
 		foreach (var attr in entityType.GetAttributes<IndexAttribute>())
 		{
 			if (attr is IdentityAttribute)
@@ -447,7 +465,7 @@ public static class SchemaRegistry
 						ClrType = GetRelationIdentityType(prop.PropertyType),
 						IsUnique = hasUnique,
 						IsIndex = indexes.Count > 0,
-						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+						IsNullable = ResolveColumnNullable(prop, colAttr),
 						ReferencedEntityType = prop.PropertyType,
 						Indexes = indexes,
 					});
@@ -469,7 +487,7 @@ public static class SchemaRegistry
 						ClrType = mappedType,
 						IsUnique = hasUnique,
 						IsIndex = indexes.Count > 0,
-						IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+						IsNullable = ResolveColumnNullable(prop, colAttr),
 						ReferencedEntityType = fkAttr?.ReferencedType,
 						Indexes = indexes,
 					});
@@ -483,7 +501,7 @@ public static class SchemaRegistry
 				{
 					var nameOverrides = GetNameOverrides(prop);
 					var columnOverrides = GetColumnOverrides(prop);
-					var outerNullable = ResolveNullable(colAttr, prop.PropertyType);
+					var outerNullable = ResolveColumnNullable(prop, colAttr);
 					FlattenInnerSchema(propType, prop.Name, nameOverrides, columnOverrides, columns, visiting, outerNullable);
 					continue;
 				}
@@ -505,7 +523,7 @@ public static class SchemaRegistry
 					ClrType = clrType,
 					IsUnique = simpleHasUnique,
 					IsIndex = simpleIndexes.Count > 0,
-					IsNullable = ResolveNullable(colAttr, prop.PropertyType),
+					IsNullable = ResolveColumnNullable(prop, colAttr),
 					MaxLength = colAttr?.MaxLength ?? 0,
 					ReferencedEntityType = fkAttr?.ReferencedType,
 					Indexes = simpleIndexes,

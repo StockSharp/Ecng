@@ -538,6 +538,20 @@ public partial class TestBrokerPortfolio : TestBrokerBase
 	public string Name { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// Relaxes an audit FK it inherits: this table's very first row is written before any
+/// user exists, so <see cref="TestBrokerBase.CreatedBy"/> is nullable here and stays
+/// NOT NULL on every other entity over the same base. The column belongs to the base
+/// class, so the override has to name it — the same shape the type-level
+/// <see cref="IndexAttribute"/> declarations use for inherited columns.
+/// </summary>
+[Entity(Name = "Ecng_TestBrokerTenant")]
+[ColumnOverride(nameof(TestBrokerBase.CreatedBy), IsNullable = true)]
+public partial class TestBrokerTenant : TestBrokerBase
+{
+	public string Name { get; set; } = string.Empty;
+}
+
 public class TestNodeChildList(IStorage storage, TestNode parent) : RelationManyList<TestNodeChild, long>(storage)
 {
 	private readonly TestNode _parent = parent ?? throw new ArgumentNullException(nameof(parent));
