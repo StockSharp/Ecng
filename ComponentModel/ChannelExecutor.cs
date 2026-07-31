@@ -152,29 +152,12 @@ public class ChannelExecutor : AsyncDisposable, IChannelExecutorGroup
 					continue;
 				}
 
-				// No operations - wait for data
-				if (_flushInterval > TimeSpan.Zero)
-				{
-					// Interval mode: wait for interval period
-					try
-					{
-						await Task.Delay(_flushInterval, cancellationToken).NoWait();
-					}
-					catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-					{
-						break;
-					}
-
-					// Check if channel is completed
-					if (_channel.Reader.Completion.IsCompleted)
-						break;
-				}
-				else
-				{
-					// Immediate mode: wait for data
-					if (!await _channel.Reader.WaitToReadAsync(cancellationToken).NoWait())
-						break; // Channel closed
-				}
+				// No operations - wait for data. Backing off for the whole flush interval instead
+				// would add that interval as pure latency to every idle-to-busy transition without
+				// batching anything: the read loop above already coalesces everything that is queued
+				// by the time a flush starts.
+				if (!await _channel.Reader.WaitToReadAsync(cancellationToken).NoWait())
+					break; // Channel closed
 			}
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

@@ -718,6 +718,31 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(30000, CooperativeCancellation = true)]
+	public async Task Interval_OperationAddedWhenIdle_RunsWithoutWaitingInterval()
+	{
+		var token = CancellationToken;
+
+		var interval = TimeSpan.FromSeconds(2);
+
+		await using var executor = new ChannelExecutor(ex => { }, interval);
+		_ = executor.RunAsync(token);
+
+		// Drain whatever the loop had, then let it settle into its idle state with an empty queue.
+		await executor.WaitFlushAsync(token);
+		await Task.Delay(200, token);
+
+		var sw = Stopwatch.StartNew();
+		await executor.WaitFlushAsync(token);
+		sw.Stop();
+
+		// An operation enqueued while the loop is idle must be picked up as soon as it arrives.
+		// Backing off for the whole flush interval adds that interval as pure latency to every
+		// idle-to-busy transition without batching anything.
+		(sw.Elapsed < interval / 4).AssertTrue();
+	}
+
+	[TestMethod]
 	[Timeout(10000, CooperativeCancellation = true)]
 	public async Task Group_EmptyGroup_NoBeginEnd()
 	{
