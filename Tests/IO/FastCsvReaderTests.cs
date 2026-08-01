@@ -6,6 +6,27 @@ using Ecng.IO;
 public class FastCsvReaderTests : BaseTestClass
 {
 	[TestMethod]
+	public void Ctor_DoesNotPreallocateForTheWorstCase()
+	{
+		// Warm up so the measurement covers the instance only, not one-time statics and JIT.
+		using (new FastCsvReader("a;b" + StringHelper.N, StringHelper.N))
+		{
+		}
+
+		var before = GC.GetAllocatedBytesForCurrentThread();
+
+		using (new FastCsvReader("a;b" + StringHelper.N, StringHelper.N))
+		{
+		}
+
+		var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+		// Storage reads construct several readers per file, so the fixed cost of one reader has to stay
+		// small: buffers and the column table must grow on demand instead of being sized for the worst case.
+		(allocated < 512 * 1024).AssertTrue($"ctor allocated {allocated} bytes");
+	}
+
+	[TestMethod]
 	public void Dispose_DefaultCtor_DoesNotDisposeTextReader()
 	{
 		var tr = new TrackingTextReader("A" + StringHelper.N);

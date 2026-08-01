@@ -11,13 +11,18 @@ public class FastCsvReader : Disposable
 	private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
 	private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
 
-	private const int _buffSize = FileSizes.MB;
+	// A reader is created several times per file by storage code, so nothing here is sized for the worst
+	// case: every buffer starts small and grows geometrically only as a line actually demands it.
+	private const int _buffSize = 64 * FileSizes.KB;
+	private const int _lineSize = 4 * FileSizes.KB;
+	private const int _columnsSize = 64;
+
 	private readonly char[] _buffer = new char[_buffSize];
 	private int _bufferLen;
 	private int _bufferPos;
-	private char[] _line = new char[_buffSize];
+	private char[] _line = new char[_lineSize];
 	private int _lineLen;
-	private RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
+	private RefPair<int, int>[] _columnPos = new RefPair<int, int>[_columnsSize];
 	private readonly char[] _lineSeparatorChars;
 
 	private int _lineSeparatorCharPos;
@@ -80,9 +85,6 @@ public class FastCsvReader : Disposable
 		Reader = reader ?? throw new ArgumentNullException(nameof(reader));
 		_disposeReader = !leaveOpen;
 		_lineSeparatorChars = [.. lineSeparator];
-
-		for (var i = 0; i < _columnPos.Length; i++)
-			_columnPos[i] = new RefPair<int, int>();
 	}
 
 	/// <summary>
@@ -125,19 +127,24 @@ public class FastCsvReader : Disposable
 
 	private RefPair<int, int> GetColumnPos()
 	{
-		var prevLen = _columnPos.Length;
+		if (_columnPos.Length <= _columnCount)
+			Array.Resize(ref _columnPos, _columnPos.Length * 2);
 
-		if (prevLen <= _columnCount)
-		{
-			Array.Resize(ref _columnPos, prevLen + _buffSize);
+		// Allocated per column actually seen, not for every slot the table could ever hold.
+		return _columnPos[_columnCount] ??= new();
+	}
 
-			for (var i = prevLen; i < prevLen + _buffSize; i++)
-			{
-				_columnPos[i] = new RefPair<int, int>();
-			}
-		}
+	private void EnsureLine(int required)
+	{
+		if (required < _line.Length)
+			return;
 
-		return _columnPos[_columnCount];
+		var newLen = _line.Length;
+
+		while (newLen <= required)
+			newLen *= 2;
+
+		Array.Resize(ref _line, newLen);
 	}
 
 	/// <summary>
@@ -200,8 +207,7 @@ public class FastCsvReader : Disposable
 				}
 				else if (_lineSeparatorCharPos > 0)
 				{
-					if ((_lineLen + _lineSeparatorCharPos) >= _line.Length)
-						Array.Resize(ref _line, _line.Length + _buffSize);
+					EnsureLine(_lineLen + _lineSeparatorCharPos);
 
 					Array.Copy(_lineSeparatorChars, 0, _line, _lineLen, _lineSeparatorCharPos);
 
@@ -231,8 +237,7 @@ public class FastCsvReader : Disposable
 
 				if (inQuote && prevCharWasQuote)
 				{
-					if (_lineLen >= _line.Length)
-						Array.Resize(ref _line, _line.Length + _buffSize);
+					EnsureLine(_lineLen);
 
 					_line[_lineLen++] = c;
 					prevCharWasQuote = false;
@@ -247,8 +252,7 @@ public class FastCsvReader : Disposable
 
 			prevCharWasQuote = false;
 
-			if (_lineLen >= _line.Length)
-				Array.Resize(ref _line, _line.Length + _buffSize);
+			EnsureLine(_lineLen);
 
 			_line[_lineLen++] = c;
 		}
@@ -257,8 +261,7 @@ public class FastCsvReader : Disposable
 		// (the full separator never completed), so flush it into the line before finalising.
 		if (_lineSeparatorCharPos > 0)
 		{
-			if ((_lineLen + _lineSeparatorCharPos) >= _line.Length)
-				Array.Resize(ref _line, _line.Length + _buffSize);
+			EnsureLine(_lineLen + _lineSeparatorCharPos);
 
 			Array.Copy(_lineSeparatorChars, 0, _line, _lineLen, _lineSeparatorCharPos);
 
