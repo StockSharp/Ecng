@@ -38,13 +38,15 @@ public static class AttributeHelper
 		if (provider is null)
 			throw new ArgumentNullException(nameof(provider));
 
-		TAttribute GetAttribute()
-			=> provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>().FirstOrDefault();
+		var attributeType = typeof(TAttribute);
 
-		if (!CacheEnabled)
+		TAttribute GetAttribute()
+			=> provider.GetCustomAttributes(attributeType, inherit).Cast<TAttribute>().FirstOrDefault();
+
+		if (!CacheEnabled || attributeType.Assembly.IsCollectible || IsCollectible(provider))
 			return GetAttribute();
 
-		return (TAttribute)_attrCache.GetOrAdd(new(typeof(TAttribute), provider, inherit),
+		return (TAttribute)_attrCache.GetOrAdd(new(attributeType, provider, inherit),
 			_ => GetAttribute());
 	}
 
@@ -104,5 +106,36 @@ public static class AttributeHelper
 			throw new ArgumentNullException(nameof(provider));
 
 		return provider.GetAttribute<BrowsableAttribute>()?.Browsable != false;
+	}
+
+	private static bool IsCollectible(ICustomAttributeProvider provider)
+	{
+		try
+		{
+			return provider switch
+			{
+				MemberInfo member => IsCollectible(member.Module),
+				ParameterInfo parameter => IsCollectible(parameter.Member),
+				Module module => IsCollectible(module.Assembly),
+				Assembly assembly => assembly.IsCollectible,
+				null => true,
+				_ => false,
+			};
+		}
+		catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
+		{
+			try
+			{
+				return provider switch
+				{
+					MemberInfo member => IsCollectible(member.DeclaringType ?? member.ReflectedType),
+					_ => true,
+				};
+			}
+			catch (Exception fallbackEx) when (fallbackEx is NotImplementedException or NotSupportedException)
+			{
+				return true;
+			}
+		}
 	}
 }
