@@ -48,6 +48,23 @@ public class CompilerTests : BaseTestClass
 	}
 #pragma warning restore RS1001, RS2008
 
+	private sealed class ReferenceRecordingCompiler : CSharpCompiler
+	{
+		public ConcurrentQueue<PortableExecutableReference> References { get; } = new();
+
+		protected override Microsoft.CodeAnalysis.Compilation Create(
+			string assemblyName,
+			IEnumerable<string> sources,
+			PortableExecutableReference[] references,
+			CancellationToken cancellationToken)
+		{
+			foreach (var reference in references)
+				References.Enqueue(reference);
+
+			return base.Create(assemblyName, sources, references, cancellationToken);
+		}
+	}
+
 	[TestMethod]
 	public async Task Compile()
 	{
@@ -62,6 +79,38 @@ public class CompilerTests : BaseTestClass
 			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+	}
+
+	[TestMethod]
+	public async Task CSharpCompile_SameReferenceImage_ReusesMetadataReferenceConcurrently()
+	{
+		var recordingCompiler = new ReferenceRecordingCompiler();
+		ICompiler compiler = recordingCompiler;
+		var referenceImage = _coreLibPath.ToRef(_fs);
+		var referenceImages = new[] { referenceImage };
+
+		using var barrier = new Barrier(2);
+
+		var tasks = Enumerable.Range(0, 2)
+			.Select(i => Task.Run(async () =>
+			{
+				barrier.SignalAndWait(CancellationToken);
+
+				var result = await compiler.Compile(
+					$"test{i}",
+					["public class Class1 { }"],
+					referenceImages,
+					CancellationToken);
+
+				result.HasErrors().AssertFalse();
+			}, CancellationToken))
+			.ToArray();
+
+		await Task.WhenAll(tasks);
+
+		var metadataReferences = recordingCompiler.References.ToArray();
+		metadataReferences.Length.AssertEqual(2);
+		metadataReferences[0].AssertSame(metadataReferences[1]);
 	}
 
 	[TestMethod]

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,6 +24,8 @@ using Microsoft.CodeAnalysis.VisualBasic;
 /// <param name="extension">The file extension of the source files that the compiler supports.</param>
 public abstract class RoslynCompiler(string extension) : ICompiler
 {
+	private static readonly ConditionalWeakTable<byte[], Lazy<PortableExecutableReference>> _metadataReferences = new();
+
 	private static readonly Dictionary<string, string> _redirects = new()
 	{
 		{ "System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Collections.Immutable.dll"},
@@ -53,6 +56,13 @@ public abstract class RoslynCompiler(string extension) : ICompiler
 	/// <inheritdoc />
 	public abstract bool IsReferencesSupported { get; }
 
+	private static PortableExecutableReference GetMetadataReference(byte[] body)
+		=> _metadataReferences.GetValue(
+			body,
+			static body => new(
+				() => MetadataReference.CreateFromImage(body),
+				LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+
 	private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 	{
 		if (sources is null)
@@ -63,7 +73,7 @@ public abstract class RoslynCompiler(string extension) : ICompiler
 
 		var assemblyName = name + Path.GetRandomFileName();
 
-		var references = refs.Select(r => MetadataReference.CreateFromImage(r.body)).ToArray();
+		var references = refs.Select(r => GetMetadataReference(r.body)).ToArray();
 
 		return Create(assemblyName, sources, references, cancellationToken);
 	}
