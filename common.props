@@ -67,11 +67,16 @@
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <!-- Release had none, and without a pdb there is no .snupkg to publish beside the package. -->
+  <PropertyGroup>
     <DebugType>portable</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
+
+  <!-- Keeps the build machine's paths out of the published pdb; sources come from GitHub instead. -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(MSBuildProjectName)' != 'Tests' ">
