@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/Solution Items/">
     <File Path="common.props" />
     <File Path="EcngAssemblyInfo.cs" />
@@ -38,6 +38,7 @@
   <Project Path="Licensing/Licensing.csproj" />
   <Project Path="Linq/Linq.csproj" />
   <Project Path="Localization/Localization.csproj" />
+  <Project Path="Markdown/Markdown.csproj" />
   <Project Path="Logging/Logging.csproj" />
   <Project Path="Net/Net.csproj" />
   <Project Path="Net.Clients/Net.Clients.csproj" />
