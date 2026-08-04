@@ -1245,8 +1245,8 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	/// <summary>
-	/// Reproduction of bug from Data.ORM_OR_Join_Bug.md: a navigation predicate
-	/// combined via OR with Contains over an FK column must still emit the JOIN.
+	/// A navigation predicate combined via OR with Contains over an FK column
+	/// must still emit the JOIN.
 	/// </summary>
 	[TestMethod]
 	public void Where_NavigationProperty_OrContainsFk_EmitsJoin()
