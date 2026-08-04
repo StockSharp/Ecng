@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+﻿namespace Ecng.Common;
 
 /// <summary>
 /// A source of random values.
@@ -52,29 +52,32 @@ public class SeededRandomProvider(int seed) : IRandomProvider
 {
 	private readonly Random _random = new(seed);
 
+	// Random is not thread-safe: concurrent draws corrupt its state and it starts handing out
+	// zeros forever. A seeded source is meant to be held and passed around - by a strategy whose
+	// pipeline spans threads, by an emulator - so the draws are serialised. The order they come
+	// out in across threads is not promised; that they are valid values is.
+	private readonly Lock _sync = new();
+
 	/// <inheritdoc />
 	public virtual int Next(int min, int max)
 	{
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "The lower bound is above the upper one.");
-
-		// Random.Next excludes its upper bound; callers of this interface mean it to be reachable,
-		// so a range of 5 to 7 offers three values rather than two. int.MaxValue as the upper bound
-		// cannot be widened, and is handed to the underlying call as-is.
-		return max == int.MaxValue ? _random.Next(min, max) : _random.Next(min, max + 1);
+		using (_sync.EnterScope())
+			return _random.NextInclusive(min, max);
 	}
 
 	/// <inheritdoc />
 	public virtual long NextLong(long min, long max)
 	{
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "The lower bound is above the upper one.");
-
-		return max == long.MaxValue ? _random.NextInt64(min, max) : _random.NextInt64(min, max + 1);
+		using (_sync.EnterScope())
+			return _random.NextInclusive(min, max);
 	}
 
 	/// <inheritdoc />
-	public virtual double NextDouble() => _random.NextDouble();
+	public virtual double NextDouble()
+	{
+		using (_sync.EnterScope())
+			return _random.NextDouble();
+	}
 
 	/// <inheritdoc />
 	public virtual void NextBytes(byte[] buffer)
@@ -82,7 +85,8 @@ public class SeededRandomProvider(int seed) : IRandomProvider
 		if (buffer is null)
 			throw new ArgumentNullException(nameof(buffer));
 
-		_random.NextBytes(buffer);
+		using (_sync.EnterScope())
+			_random.NextBytes(buffer);
 	}
 }
 
@@ -90,21 +94,39 @@ public class SeededRandomProvider(int seed) : IRandomProvider
 /// The source used where nobody needs the series back.
 /// </summary>
 /// <remarks>
-/// Seeded from the clock, so two of these do not agree - which is the point. Anything that would
-/// want to repeat its run should take <see cref="SeededRandomProvider"/> instead.
+/// Drawn from the same place <see cref="RandomGen"/> draws from, which is thread-safe by
+/// construction: this one is handed to anything with no seed to keep, so the same instance ends
+/// up being drawn from by several threads at once and a plain <see cref="Random"/> would lose
+/// its state. Anything that wants to repeat its run takes <see cref="SeededRandomProvider"/>.
 /// </remarks>
-public class DefaultRandomProvider : SeededRandomProvider
+public class DefaultRandomProvider : IRandomProvider
 {
-	// The clock alone does not separate two instances built in the same tick, and thread id does
-	// not separate two built on the same thread - so a counter carries what neither can.
-	private static int _counter;
+#if NET6_0_OR_GREATER
+	private static Random Random => Random.Shared;
+#else
+	[ThreadStatic]
+	private static Random _threadRandom;
+	private static long _globalSeed = DateTime.UtcNow.Ticks;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="DefaultRandomProvider"/>.
-	/// </summary>
-	public DefaultRandomProvider()
-		: base(Interlocked.Increment(ref _counter) ^ Environment.TickCount ^ Environment.CurrentManagedThreadId ^ (int)(DateTime.UtcNow.Ticks >> 32))
+	private static Random Random => _threadRandom ??= new((int)(Interlocked.Increment(ref _globalSeed) ^ Environment.TickCount ^ Environment.CurrentManagedThreadId ^ (DateTime.UtcNow.Ticks >> 32)));
+#endif
+
+	/// <inheritdoc />
+	public int Next(int min, int max) => Random.NextInclusive(min, max);
+
+	/// <inheritdoc />
+	public long NextLong(long min, long max) => Random.NextInclusive(min, max);
+
+	/// <inheritdoc />
+	public double NextDouble() => Random.NextDouble();
+
+	/// <inheritdoc />
+	public void NextBytes(byte[] buffer)
 	{
+		if (buffer is null)
+			throw new ArgumentNullException(nameof(buffer));
+
+		Random.NextBytes(buffer);
 	}
 
 	/// <summary>

@@ -1,37 +1,22 @@
-namespace Ecng.Common;
+﻿namespace Ecng.Common;
 
 /// <summary>
 /// Provides methods for generating random values of various types.
 /// </summary>
 public static class RandomGen
 {
-#if NET6_0_OR_GREATER
-	private static Random Random => Random.Shared;
-#else
-	[ThreadStatic]
-	private static Random _threadRandom;
-	private static long _globalSeed = DateTime.UtcNow.Ticks;
-
-	private static Random CreateRandom()
-		=> new((int)(Interlocked.Increment(ref _globalSeed) ^ Environment.TickCount ^ Thread.CurrentThread.ManagedThreadId ^ (DateTime.UtcNow.Ticks >> 32)));
-
-	private static Random Random => _threadRandom ??= CreateRandom();
-#endif
-
-	private static ulong NextUInt64()
-	{
-		var rng = Random;
-		return ((ulong)(uint)rng.Next(1 << 22)) |
-			(((ulong)(uint)rng.Next(1 << 22)) << 22) |
-			(((ulong)(uint)rng.Next(1 << 20)) << 44);
-	}
+	// The vocabulary lives on IRandomProvider now; this type is that vocabulary spoken to the
+	// source nobody holds the seed of. Keeping a second copy of the arithmetic here is what let
+	// the two drift apart - one reaching int.MaxValue and the other not, one inclusive at the top
+	// of a ulong range and the other a value short.
+	private static IRandomProvider Provider => DefaultRandomProvider.Instance;
 
 	/// <summary>
 	/// Returns a random double value between 0.0 and 1.0.
 	/// </summary>
 	/// <returns>A random double.</returns>
 	public static double GetDouble()
-		=> Random.NextDouble();
+		=> Provider.GetDouble();
 
 	/// <summary>
 	/// Returns a random double value between 0.0 and the specified maximum value.
@@ -39,7 +24,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random double between 0.0 and max.</returns>
 	public static double GetDouble(double max)
-		=> GetDouble(0.0, max);
+		=> Provider.GetDouble(max);
 
 	/// <summary>
 	/// Returns a random double value between the specified minimum and maximum values.
@@ -48,39 +33,14 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random double between min and max.</returns>
 	public static double GetDouble(double min, double max)
-	{
-		if (double.IsNaN(min))
-			throw new ArgumentOutOfRangeException(nameof(min), min, "Value must be a number.");
-
-		if (double.IsNaN(max))
-			throw new ArgumentOutOfRangeException(nameof(max), max, "Value must be a number.");
-
-		if (double.IsInfinity(min))
-			throw new ArgumentOutOfRangeException(nameof(min), min, "Values must be finite.");
-
-		if (double.IsInfinity(max))
-			throw new ArgumentOutOfRangeException(nameof(max), max, "Values must be finite.");
-
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
-
-		if (min == max)
-			return min;
-
-		var range = max - min;
-
-		if (double.IsInfinity(range))
-			throw new ArgumentOutOfRangeException(nameof(max), max, "Range is too large.");
-
-		return Random.NextDouble() * range + min;
-	}
+		=> Provider.GetDouble(min, max);
 
 	/// <summary>
 	/// Returns a random single-precision floating-point number between 0.0 and 1.0.
 	/// </summary>
 	/// <returns>A random float.</returns>
 	public static float GetFloat()
-		=> (float)GetDouble();
+		=> Provider.GetFloat();
 
 	/// <summary>
 	/// Returns a random single-precision floating-point number between 0.0 and the specified maximum value.
@@ -88,7 +48,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random float between 0.0 and max.</returns>
 	public static float GetFloat(float max)
-		=> GetFloat(0f, max);
+		=> Provider.GetFloat(max);
 
 	/// <summary>
 	/// Returns a random single-precision floating-point number between the specified minimum and maximum values.
@@ -97,7 +57,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random float between min and max.</returns>
 	public static float GetFloat(float min, float max)
-		=> (float)GetDouble((double)min, (double)max);
+		=> Provider.GetFloat(min, max);
 
 	/// <summary>
 	/// Returns an array of random bytes with the specified count.
@@ -105,27 +65,21 @@ public static class RandomGen
 	/// <param name="count">The number of random bytes to generate.</param>
 	/// <returns>An array of random bytes.</returns>
 	public static byte[] GetBytes(int count)
-	{
-		var buffer = new byte[count];
-		GetBytes(buffer);
-		return buffer;
-	}
+		=> Provider.GetBytes(count);
 
 	/// <summary>
 	/// Fills the provided array with random bytes.
 	/// </summary>
 	/// <param name="buffer">The array to fill with random bytes.</param>
 	public static void GetBytes(byte[] buffer)
-	{
-		Random.NextBytes(buffer);
-	}
+		=> Provider.GetBytes(buffer);
 
 	/// <summary>
 	/// Returns a random non-negative integer.
 	/// </summary>
 	/// <returns>A random integer.</returns>
 	public static int GetInt()
-		=> Random.Next();
+		=> Provider.GetInt();
 
 	/// <summary>
 	/// Returns a random integer between 0 and the specified maximum value (inclusive).
@@ -133,7 +87,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random integer between 0 and max (inclusive).</returns>
 	public static int GetInt(int max)
-		=> GetInt(0, max);
+		=> Provider.GetInt(max);
 
 	/// <summary>
 	/// Returns a random integer between the specified minimum and maximum values (inclusive).
@@ -142,18 +96,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random integer between min and max (inclusive).</returns>
 	public static int GetInt(int min, int max)
-	{
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
-
-		// When max == int.MaxValue, we can't use Random.Next because it has exclusive upper bound
-		// and incrementing max would overflow. Use GetLong instead which handles full ranges correctly.
-		if (max == int.MaxValue)
-			return (int)GetLong(min, max);
-
-		// Since max < int.MaxValue, we can safely increment it for inclusive upper bound
-		return Random.Next(min, max + 1);
-	}
+		=> Provider.GetInt(min, max);
 
 	/// <summary>
 	/// Returns a random unsigned integer between 0 and uint.MaxValue.
@@ -161,7 +104,7 @@ public static class RandomGen
 	/// <returns>A random unsigned integer.</returns>
 	[CLSCompliant(false)]
 	public static uint GetUInt()
-		=> GetUInt(uint.MinValue, uint.MaxValue);
+		=> Provider.GetUInt();
 
 	/// <summary>
 	/// Returns a random unsigned integer between 0 and the specified maximum value (inclusive).
@@ -170,7 +113,7 @@ public static class RandomGen
 	/// <returns>A random unsigned integer between 0 and max.</returns>
 	[CLSCompliant(false)]
 	public static uint GetUInt(uint max)
-		=> GetUInt(0u, max);
+		=> Provider.GetUInt(max);
 
 	/// <summary>
 	/// Returns a random unsigned integer between the specified minimum and maximum values (inclusive).
@@ -180,7 +123,7 @@ public static class RandomGen
 	/// <returns>A random unsigned integer between min and max.</returns>
 	[CLSCompliant(false)]
 	public static uint GetUInt(uint min, uint max)
-		=> (uint)GetULong(min, max);
+		=> Provider.GetUInt(min, max);
 
 	/// <summary>
 	/// Returns a random unsigned long value between 0 and ulong.MaxValue.
@@ -188,7 +131,7 @@ public static class RandomGen
 	/// <returns>A random unsigned long value.</returns>
 	[CLSCompliant(false)]
 	public static ulong GetULong()
-		=> GetULong(ulong.MinValue, ulong.MaxValue);
+		=> Provider.GetULong();
 
 	/// <summary>
 	/// Returns a random unsigned long value between 0 and the specified maximum value (inclusive).
@@ -197,7 +140,7 @@ public static class RandomGen
 	/// <returns>A random unsigned long value between 0 and max.</returns>
 	[CLSCompliant(false)]
 	public static ulong GetULong(ulong max)
-		=> GetULong(0UL, max);
+		=> Provider.GetULong(max);
 
 	/// <summary>
 	/// Returns a random unsigned long value between the specified minimum and maximum values (inclusive).
@@ -207,39 +150,14 @@ public static class RandomGen
 	/// <returns>A random unsigned long value between min and max.</returns>
 	[CLSCompliant(false)]
 	public static ulong GetULong(ulong min, ulong max)
-	{
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
-
-		if (min == max)
-			return min;
-
-		var range = max - min;
-
-		if (range == ulong.MaxValue)
-			return NextUInt64();
-
-		range++;
-
-		var limit = ulong.MaxValue - (ulong.MaxValue % range);
-
-		ulong value;
-
-		do
-		{
-			value = NextUInt64();
-		}
-		while (value >= limit);
-
-		return (value % range) + min;
-	}
+		=> Provider.GetULong(min, max);
 
 	/// <summary>
 	/// Returns a random 16-bit signed integer between short.MinValue and short.MaxValue.
 	/// </summary>
 	/// <returns>A random short value.</returns>
 	public static short GetShort()
-		=> GetShort(short.MinValue, short.MaxValue);
+		=> Provider.GetShort();
 
 	/// <summary>
 	/// Returns a random 16-bit signed integer between 0 and the specified maximum value (inclusive).
@@ -247,7 +165,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random short value between 0 and max.</returns>
 	public static short GetShort(short max)
-		=> GetShort(0, max);
+		=> Provider.GetShort(max);
 
 	/// <summary>
 	/// Returns a random 16-bit signed integer between the specified minimum and maximum values (inclusive).
@@ -256,7 +174,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random short value between min and max.</returns>
 	public static short GetShort(short min, short max)
-		=> (short)GetInt(min, max);
+		=> Provider.GetShort(min, max);
 
 	/// <summary>
 	/// Returns a random 16-bit unsigned integer between 0 and ushort.MaxValue.
@@ -264,7 +182,7 @@ public static class RandomGen
 	/// <returns>A random unsigned short value.</returns>
 	[CLSCompliant(false)]
 	public static ushort GetUShort()
-		=> GetUShort(ushort.MinValue, ushort.MaxValue);
+		=> Provider.GetUShort();
 
 	/// <summary>
 	/// Returns a random 16-bit unsigned integer between 0 and the specified maximum value (inclusive).
@@ -273,7 +191,7 @@ public static class RandomGen
 	/// <returns>A random unsigned short value between 0 and max.</returns>
 	[CLSCompliant(false)]
 	public static ushort GetUShort(ushort max)
-		=> GetUShort(ushort.MinValue, max);
+		=> Provider.GetUShort(max);
 
 	/// <summary>
 	/// Returns a random 16-bit unsigned integer between the specified minimum and maximum values (inclusive).
@@ -283,14 +201,14 @@ public static class RandomGen
 	/// <returns>A random unsigned short value between min and max.</returns>
 	[CLSCompliant(false)]
 	public static ushort GetUShort(ushort min, ushort max)
-		=> (ushort)GetInt(min, max);
+		=> Provider.GetUShort(min, max);
 
 	/// <summary>
 	/// Returns a random byte between 0 and byte.MaxValue.
 	/// </summary>
 	/// <returns>A random byte.</returns>
 	public static byte GetByte()
-		=> GetByte(byte.MinValue, byte.MaxValue);
+		=> Provider.GetByte();
 
 	/// <summary>
 	/// Returns a random byte between 0 and the specified maximum value (inclusive).
@@ -298,7 +216,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random byte between 0 and max.</returns>
 	public static byte GetByte(byte max)
-		=> GetByte(byte.MinValue, max);
+		=> Provider.GetByte(max);
 
 	/// <summary>
 	/// Returns a random byte between the specified minimum and maximum values (inclusive).
@@ -307,7 +225,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random byte between min and max.</returns>
 	public static byte GetByte(byte min, byte max)
-		=> (byte)GetInt(min, max);
+		=> Provider.GetByte(min, max);
 
 	/// <summary>
 	/// Returns a random signed byte between sbyte.MinValue and sbyte.MaxValue.
@@ -315,7 +233,7 @@ public static class RandomGen
 	/// <returns>A random signed byte.</returns>
 	[CLSCompliant(false)]
 	public static sbyte GetSByte()
-		=> GetSByte(sbyte.MinValue, sbyte.MaxValue);
+		=> Provider.GetSByte();
 
 	/// <summary>
 	/// Returns a random signed byte between 0 and the specified maximum value (inclusive).
@@ -324,7 +242,7 @@ public static class RandomGen
 	/// <returns>A random signed byte between 0 and max.</returns>
 	[CLSCompliant(false)]
 	public static sbyte GetSByte(sbyte max)
-		=> GetSByte(0, max);
+		=> Provider.GetSByte(max);
 
 	/// <summary>
 	/// Returns a random signed byte between the specified minimum and maximum values (inclusive).
@@ -334,14 +252,14 @@ public static class RandomGen
 	/// <returns>A random signed byte between min and max.</returns>
 	[CLSCompliant(false)]
 	public static sbyte GetSByte(sbyte min, sbyte max)
-		=> (sbyte)GetInt(min, max);
+		=> Provider.GetSByte(min, max);
 
 	/// <summary>
 	/// Returns a random long value between long.MinValue and long.MaxValue.
 	/// </summary>
 	/// <returns>A random long value.</returns>
 	public static long GetLong()
-		=> GetLong(long.MinValue, long.MaxValue);
+		=> Provider.GetLong();
 
 	/// <summary>
 	/// Returns a random long value between the specified minimum and maximum values (inclusive).
@@ -350,38 +268,14 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random long value between min and max (inclusive).</returns>
 	public static long GetLong(long min, long max)
-	{
-		if (min > max)
-			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
-
-		if (min == max)
-			return min;
-
-		var range = (ulong)(max - min);
-
-		if (range == ulong.MaxValue)
-			return unchecked((long)NextUInt64());
-
-		range++;
-
-		var limit = ulong.MaxValue - (ulong.MaxValue % range);
-
-		ulong value;
-
-		do
-		{
-			value = NextUInt64();
-		}
-		while (value >= limit);
-
-		return (long)(value % range) + min;
-	}
+		=> Provider.GetLong(min, max);
 
 	/// <summary>
 	/// Returns a random boolean value.
 	/// </summary>
 	/// <returns>A random boolean.</returns>
-	public static bool GetBool() => GetInt(1) == 1;
+	public static bool GetBool()
+		=> Provider.GetBool();
 
 	/// <summary>
 	/// Returns a random enum value of type T.
@@ -390,7 +284,7 @@ public static class RandomGen
 	/// <returns>A random enum value.</returns>
 	public static T GetEnum<T>()
 		where T : struct
-		=> GetEnum(Enumerator.GetValues<T>());
+		=> Provider.GetEnum<T>();
 
 	/// <summary>
 	/// Returns a random enum value from the specified enum type.
@@ -398,7 +292,7 @@ public static class RandomGen
 	/// <param name="enumType">The enum type.</param>
 	/// <returns>A random enum value.</returns>
 	public static object GetEnum(Type enumType)
-		=> GetElement(Enumerator.GetValues(enumType));
+		=> Provider.GetEnum(enumType);
 
 	/// <summary>
 	/// Returns a random enum value from the specified collection of values.
@@ -408,17 +302,7 @@ public static class RandomGen
 	/// <returns>A random enum value from the collection.</returns>
 	public static T GetEnum<T>(IEnumerable<T> values)
 		where T : struct
-	{
-		if (values is null)
-			throw new ArgumentNullException(nameof(values));
-
-		var arr = values as T[] ?? values.ToArray();
-
-		if (arr.Length == 0)
-			throw new InvalidOperationException("No values to choose from.");
-
-		return arr[GetInt(0, arr.Length - 1)];
-	}
+		=> Provider.GetEnum(values);
 
 	/// <summary>
 	/// Returns a random enum value between the specified minimum and maximum enum values.
@@ -429,7 +313,7 @@ public static class RandomGen
 	/// <returns>A random enum value between min and max.</returns>
 	public static T GetEnum<T>(T min, T max)
 		where T : struct
-		=> GetLong(min.To<long>(), max.To<long>()).To<T>();
+		=> Provider.GetEnum(min, max);
 
 	/// <summary>
 	/// Returns a random element from the specified collection.
@@ -438,10 +322,7 @@ public static class RandomGen
 	/// <param name="array">The collection of elements.</param>
 	/// <returns>A random element from the collection.</returns>
 	public static T GetElement<T>(IEnumerable<T> array)
-	{
-		var tmp = array.ToArray();
-		return tmp[GetInt(0, tmp.Length - 1)];
-	}
+		=> Provider.GetElement(array);
 
 	/// <summary>
 	/// Returns a random Base64 encoded string generated from a random salt.
@@ -450,14 +331,14 @@ public static class RandomGen
 	/// <param name="max">The maximum length for generating the salt.</param>
 	/// <returns>A random Base64 encoded string.</returns>
 	public static string GetString(int min, int max)
-		=> TypeHelper.GenerateSalt(GetInt(min, max)).Base64();
+		=> Provider.GetString(min, max);
 
 	/// <summary>
 	/// Returns a random DateTime value between DateTime.MinValue and DateTime.MaxValue.
 	/// </summary>
 	/// <returns>A random DateTime.</returns>
 	public static DateTime GetDate()
-		=> GetDate(DateTime.MinValue, DateTime.MaxValue);
+		=> Provider.GetDate();
 
 	/// <summary>
 	/// Returns a random DateTime value between the specified minimum and maximum values.
@@ -466,14 +347,14 @@ public static class RandomGen
 	/// <param name="max">The maximum DateTime value.</param>
 	/// <returns>A random DateTime between min and max.</returns>
 	public static DateTime GetDate(DateTime min, DateTime max)
-		=> min + GetTime(default, max - min);
+		=> Provider.GetDate(min, max);
 
 	/// <summary>
 	/// Returns a random TimeSpan value between TimeSpan.MinValue and TimeSpan.MaxValue.
 	/// </summary>
 	/// <returns>A random TimeSpan.</returns>
 	public static TimeSpan GetTime()
-		=> GetTime(TimeSpan.MinValue, TimeSpan.MaxValue);
+		=> Provider.GetTime();
 
 	/// <summary>
 	/// Returns a random TimeSpan value between the specified minimum and maximum values.
@@ -482,7 +363,7 @@ public static class RandomGen
 	/// <param name="max">The maximum TimeSpan value.</param>
 	/// <returns>A random TimeSpan between min and max.</returns>
 	public static TimeSpan GetTime(TimeSpan min, TimeSpan max)
-		=> GetLong(min.Ticks, max.Ticks).To<TimeSpan>();
+		=> Provider.GetTime(min, max);
 
 	/// <summary>
 	/// Returns a random non-zero decimal value with a specified number of integer and fractional digits.
@@ -493,35 +374,7 @@ public static class RandomGen
 	/// <returns>A random decimal value.</returns>
 	/// <exception cref="InvalidOperationException">Thrown when a valid decimal value cannot be generated in 10 attempts.</exception>
 	public static decimal GetDecimal(int integer = 8, int fractional = 8)
-	{
-		if (integer < 1 || integer > 28)
-			throw new ArgumentOutOfRangeException(nameof(integer), integer, "Must be in range 1..28");
-
-		if (fractional < 0 || fractional > 28)
-			throw new ArgumentOutOfRangeException(nameof(fractional), fractional, "Must be in range 0..28");
-
-		var fractionalDigits = fractional == 0 ? 0 : GetInt(0, fractional.Min(27));
-		var integerDigits = GetInt(1, integer.Min(28 - fractionalDigits));
-
-		static string CreateDigits(int count, bool allowLeadingZero)
-		{
-			if (count == 0)
-				return "0";
-
-			var builder = new StringBuilder(count);
-			builder.Append((char)('0' + (allowLeadingZero ? GetInt(9) : GetInt(1, 9))));
-
-			for (var i = 1; i < count; i++)
-				builder.Append((char)('0' + GetInt(9)));
-
-			return builder.ToString();
-		}
-
-		var integerPart = CreateDigits(integerDigits, false);
-		var fractionalPart = CreateDigits(fractionalDigits, true);
-
-		return decimal.Parse($"{integerPart}.{fractionalPart}", CultureInfo.InvariantCulture);
-	}
+		=> Provider.GetDecimal(integer, fractional);
 
 	/// <summary>
 	/// Returns a random decimal value between the specified minimum and maximum values with the given precision.
@@ -531,8 +384,5 @@ public static class RandomGen
 	/// <param name="precision">The number of decimal places to round the value to.</param>
 	/// <returns>A random decimal value between min and max rounded to the specified precision.</returns>
 	public static decimal GetDecimal(decimal min, decimal max, int precision)
-	{
-		var value = GetDouble((double)min, (double)max);
-		return (decimal)value.Round(precision);
-	}
+		=> Provider.GetDecimal(min, max, precision);
 }

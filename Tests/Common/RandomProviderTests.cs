@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Common;
+﻿namespace Ecng.Tests.Common;
 
 using Ecng.Common;
 
@@ -168,6 +168,190 @@ public class RandomProviderTests
 			var value = array.Next();
 			(value is >= 5 and <= 7).AssertTrue($"{value} is outside the range asked for");
 		}
+	}
+
+	[TestMethod]
+	public void Default_SurvivesConcurrentUse()
+	{
+		// The shared source is drawn from by everything that has no seed to keep - generators,
+		// strategies, several tests at once. System.Random is not thread-safe: concurrent draws
+		// corrupt its state and it collapses towards returning zero, which shows up as "random"
+		// values that are suddenly all the same. RandomGen has always guarded against this;
+		// a provider handed round the same way has to as well.
+		var trues = 0;
+		var draws = 0;
+
+		Parallel.For(0, 16, _ =>
+		{
+			var localTrues = 0;
+
+			for (var i = 0; i < 25000; i++)
+			{
+				if (DefaultRandomProvider.Instance.GetBool())
+					localTrues++;
+			}
+
+			Interlocked.Add(ref trues, localTrues);
+			Interlocked.Add(ref draws, 25000);
+		});
+
+		var share = (double)trues / draws;
+		(share is > 0.45 and < 0.55).AssertTrue($"{share:P1} of draws came back true - the shared source lost its state under threads");
+	}
+
+	[TestMethod]
+	public void Seeded_SurvivesConcurrentUse()
+	{
+		// A seeded source shared between threads cannot promise the order draws come out in, but
+		// it must still come out with values: a corrupted Random returns zero forever.
+		var provider = new SeededRandomProvider(11);
+		var zeros = 0;
+		var draws = 0;
+
+		Parallel.For(0, 16, _ =>
+		{
+			var localZeros = 0;
+
+			for (var i = 0; i < 25000; i++)
+			{
+				var value = provider.Next(0, 1000);
+
+				(value is >= 0 and <= 1000).AssertTrue($"{value} is outside the range asked for");
+
+				if (value == 0)
+					localZeros++;
+			}
+
+			Interlocked.Add(ref zeros, localZeros);
+			Interlocked.Add(ref draws, 25000);
+		});
+
+		var share = (double)zeros / draws;
+		(share < 0.01).AssertTrue($"{share:P1} of draws came back zero - the source lost its state under threads");
+	}
+
+	[TestMethod]
+	public void Next_MaxValue_IsReachable()
+	{
+		// "Both ends included" has to hold at the top of the type too, or a caller asking for the
+		// whole range silently never sees its last value. RandomGen has always reached it.
+		var provider = new SeededRandomProvider(5);
+		var reached = false;
+
+		for (var i = 0; i < 10000 && !reached; i++)
+			reached = provider.Next(int.MaxValue - 1, int.MaxValue) == int.MaxValue;
+
+		reached.AssertTrue("int.MaxValue must be reachable");
+	}
+
+	[TestMethod]
+	public void NextLong_MaxValue_IsReachable()
+	{
+		var provider = new SeededRandomProvider(5);
+		var reached = false;
+
+		for (var i = 0; i < 10000 && !reached; i++)
+			reached = provider.NextLong(long.MaxValue - 1, long.MaxValue) == long.MaxValue;
+
+		reached.AssertTrue("long.MaxValue must be reachable");
+	}
+
+	[TestMethod]
+	public void GetULong_ReachesTheTopOfItsRange()
+	{
+		// Scaling by a value below one can never land on the upper bound, so a range of 0 to 9
+		// quietly offered nine values rather than ten.
+		var provider = new SeededRandomProvider(5);
+		var reached = false;
+
+		for (var i = 0; i < 10000 && !reached; i++)
+			reached = provider.GetULong(0, 9) == 9;
+
+		reached.AssertTrue("the upper bound must be reachable");
+	}
+
+	[TestMethod]
+	public void GetULong_UsesTheWholeWidthOfTheType()
+	{
+		// A double carries 53 bits, so scaling one across the whole range leaves the bottom of
+		// every value barely varying - draws that look random and are quietly coarse. Over 2000
+		// values a uniform source shows nearly all 256 low bytes; the scaled one showed 14.
+		var provider = new SeededRandomProvider(5);
+		var lowBytes = new HashSet<byte>();
+
+		for (var i = 0; i < 2000; i++)
+			lowBytes.Add((byte)(provider.GetULong() & 0xFF));
+
+		(lowBytes.Count > 200).AssertTrue($"only {lowBytes.Count} of 256 low bytes ever appeared");
+	}
+
+	[TestMethod]
+	public void GetInt_IsNotNegative()
+	{
+		// The no-argument form means "a non-negative int", as it always has on RandomGen.
+		var provider = new SeededRandomProvider(5);
+
+		for (var i = 0; i < 1000; i++)
+			(provider.GetInt() >= 0).AssertTrue("the no-argument form must not go negative");
+	}
+
+	[TestMethod]
+	public void GetDouble_RejectsValuesThatAreNotNumbers()
+	{
+		var provider = new SeededRandomProvider(5);
+
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => provider.GetDouble(double.NaN, 1));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => provider.GetDouble(0, double.NaN));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => provider.GetDouble(double.NegativeInfinity, 1));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => provider.GetDouble(0, double.PositiveInfinity));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => provider.GetDouble(1, 0));
+	}
+
+	[TestMethod]
+	public void NextInclusive_ReachesBothEnds()
+	{
+		// The extension the providers are built on, exercised directly - it is public, so it is
+		// somebody else's to call too.
+		var random = new Random(9);
+		var sawMin = false;
+		var sawMax = false;
+
+		for (var i = 0; i < 10000; i++)
+		{
+			var value = random.NextInclusive(5, 7);
+
+			(value is >= 5 and <= 7).AssertTrue($"{value} is outside the range asked for");
+
+			sawMin |= value == 5;
+			sawMax |= value == 7;
+		}
+
+		sawMin.AssertTrue("the lower bound must be reachable");
+		sawMax.AssertTrue("the upper bound must be reachable");
+	}
+
+	[TestMethod]
+	public void NextInclusive_ReachesTheTopOfTheType()
+	{
+		var random = new Random(9);
+		var reachedInt = false;
+		var reachedLong = false;
+
+		for (var i = 0; i < 10000 && !(reachedInt && reachedLong); i++)
+		{
+			reachedInt |= random.NextInclusive(int.MaxValue - 1, int.MaxValue) == int.MaxValue;
+			reachedLong |= random.NextInclusive(long.MaxValue - 1, long.MaxValue) == long.MaxValue;
+		}
+
+		reachedInt.AssertTrue("int.MaxValue must be reachable");
+		reachedLong.AssertTrue("long.MaxValue must be reachable");
+	}
+
+	[TestMethod]
+	public void NextInclusive_InvertedRange_Throws()
+	{
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new Random(9).NextInclusive(10, 5));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new Random(9).NextInclusive(10L, 5L));
 	}
 
 	[TestMethod]
