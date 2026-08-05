@@ -968,7 +968,7 @@ public class MarkdownTests : BaseTestClass
 			"<hr />\n" +
 			"<h3 id=\"media-content\">Media Content</h3>\n" +
 			"<p>Here is an image: <img src=\"/file/122179/file.png\" alt=\"Trading Chart\" /></p>\n" +
-			"<p>And a video tutorial: <video src=\"/video/42\"></video></p>\n" +
+			"<p>And a video tutorial: <video width=\"640\" height=\"390\" controls controlsList=\"nodownload\"><source src=\"/video/42\" type=\"video/mp4\"></video></p>\n" +
 			"<h3 id=\"access-control\">Access Control</h3>\n" +
 			"<p>This section is visible to authorized users only.\n" +
 			"\n" +
