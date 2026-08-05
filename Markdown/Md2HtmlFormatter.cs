@@ -1,4 +1,4 @@
-namespace Ecng.Markdown;
+﻿namespace Ecng.Markdown;
 
 using System.Net;
 
@@ -447,7 +447,7 @@ public class Md2HtmlFormatter
 
 	#region Resolve from pre-fetched data
 
-	private static string ResolveImageFiles(string html, Dictionary<long, (string url, string name, string description)> files)
+	private static string ResolveImageFiles(string html, Dictionary<long, MarkdownLink> files)
 	{
 		if (files.Count == 0)
 			return html;
@@ -456,10 +456,10 @@ public class Md2HtmlFormatter
 		{
 			var fileId = match.Groups[2].Value.To<long>();
 
-			if (!files.TryGetValue(fileId, out var data) || data.url.IsEmpty())
+			if (!files.TryGetValue(fileId, out var data) || data.Url.IsEmpty())
 				return match.Value;
 
-			var url = ResolveVirtualPath(data.url);
+			var url = ResolveVirtualPath(data.Url);
 			var before = match.Groups[1].Value;
 			var after = match.Groups[3].Value;
 			var selfClose = match.Groups[4].Value;
@@ -467,7 +467,7 @@ public class Md2HtmlFormatter
 		});
 	}
 
-	private static string ResolveLinkFiles(string html, Dictionary<long, (string url, string name, string description)> files)
+	private static string ResolveLinkFiles(string html, Dictionary<long, MarkdownLink> files)
 	{
 		if (files.Count == 0)
 			return html;
@@ -476,10 +476,10 @@ public class Md2HtmlFormatter
 		{
 			var fileId = match.Groups[2].Value.To<long>();
 
-			if (!files.TryGetValue(fileId, out var data) || data.url.IsEmpty())
+			if (!files.TryGetValue(fileId, out var data) || data.Url.IsEmpty())
 				return match.Value;
 
-			var url = ResolveVirtualPath(data.url);
+			var url = ResolveVirtualPath(data.Url);
 			var before = match.Groups[1].Value;
 			var after = match.Groups[3].Value;
 			return $"<a {before}href=\"{url}\"{after}>";
@@ -497,15 +497,15 @@ public class Md2HtmlFormatter
 	}
 
 	private static string ResolveEntities(string html,
-		Dictionary<(string type, long id), (string url, string name, string description)> entities,
-		Dictionary<long, (string url, string name, string description)> files)
+		Dictionary<string, Dictionary<long, MarkdownLink>> entities,
+		Dictionary<long, MarkdownLink> files)
 	{
 		return _entityPlaceholder.Replace(html, match =>
 		{
 			var entityType = match.Groups[1].Value;
 			var entityId = match.Groups[2].Value.To<long>();
 
-			(string url, string name, string description) data;
+			MarkdownLink data;
 
 			if (entityType == "file")
 			{
@@ -514,19 +514,19 @@ public class Md2HtmlFormatter
 			}
 			else
 			{
-				if (!entities.TryGetValue((entityType, entityId), out data))
+				if (!entities.TryGetValue(entityType, out var byId) || !byId.TryGetValue(entityId, out data))
 					return match.Value;
 			}
 
 			// "@product_name(id)" asks for the name a product goes by in this language, to be read inside a
 			// sentence -- so it is written as text, never as a link, and escaped like any other content.
 			if (entityType == ProductNameEntity)
-				return WebUtility.HtmlEncode(data.name ?? string.Empty);
+				return WebUtility.HtmlEncode(data.Name ?? string.Empty);
 
-			var url = ResolveVirtualPath(data.url);
+			var url = ResolveVirtualPath(data.Url);
 			return url.IsEmpty()
-				? data.name ?? entityType
-				: $"<a href=\"{url}\" title=\"{data.description}\">{data.name}</a>";
+				? data.Name ?? entityType
+				: $"<a href=\"{url}\" title=\"{data.Description}\">{data.Name}</a>";
 		});
 	}
 
@@ -575,7 +575,7 @@ public class Md2HtmlFormatter
 		return _videoPlaceholder.Replace(html, match =>
 		{
 			var fileId = match.Groups[1].Value.To<long>();
-			return videos.TryGetValue(fileId, out var video)
+			return videos.TryGetValue(fileId, out var video) && video is not null
 				? BuildVideo(video)
 				: string.Empty;
 		});

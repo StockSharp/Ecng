@@ -35,8 +35,11 @@ public class MarkdownTests : BaseTestClass
 		[239] = ("/documentation/quick-start/", "Quick Start", "Quick start documentation page"),
 	};
 
-	private static (string url, string name, string description) Resolve(Dictionary<long, (string url, string name, string description)> map, long id, string fallback)
-		=> map.TryGetValue(id, out var v) ? v : ($"/{fallback}/{id}", $"{fallback}{id}", $"{fallback}{id}");
+	private static MarkdownLink Resolve(Dictionary<long, (string url, string name, string description)> map, long id, string fallback)
+	{
+		var (url, name, description) = map.TryGetValue(id, out var v) ? v : ($"/{fallback}/{id}", $"{fallback}{id}", $"{fallback}{id}");
+		return new() { Url = url, Name = name, Description = description };
+	}
 
 	// What the API resolves the site counters to: already formatted for the language being rendered.
 	private static readonly Dictionary<SiteCounters, string> _counters = new()
@@ -56,16 +59,18 @@ public class MarkdownTests : BaseTestClass
 	private static ResolvedMarkdownData ResolveTestData(ParsedMarkdown parsed) => new()
 	{
 		Counters = parsed.CounterRefs.ToDictionary(c => c, c => _counters[c]),
-		Entities = parsed.EntityRefs.ToDictionary(r => r, r => r.type switch
-		{
-			"product" or "product_name" => Resolve(_products, r.id, "product"),
-			"user" => Resolve(_users, r.id, "user"),
-			"topic" => Resolve(_topics, r.id, "topic"),
-			"message" => Resolve(_messages, r.id, "message"),
-			"page" => Resolve(_pages, r.id, "page"),
-			_ => ($"/{r.type}/{r.id}", r.type, r.type),
-		}),
-		Files = parsed.FileIds.ToDictionary(id => id, id => ($"~/file/{id}/file.png", $"File{id}", $"File{id}")),
+		Entities = parsed.EntityRefs
+			.GroupBy(r => r.type)
+			.ToDictionary(g => g.Key, g => g.ToDictionary(r => r.id, r => r.type switch
+			{
+				"product" or "product_name" => Resolve(_products, r.id, "product"),
+				"user" => Resolve(_users, r.id, "user"),
+				"topic" => Resolve(_topics, r.id, "topic"),
+				"message" => Resolve(_messages, r.id, "message"),
+				"page" => Resolve(_pages, r.id, "page"),
+				_ => new MarkdownLink { Url = $"/{r.type}/{r.id}", Name = r.type, Description = r.type },
+			})),
+		Files = parsed.FileIds.ToDictionary(id => id, id => new MarkdownLink { Url = $"~/file/{id}/file.png", Name = $"File{id}", Description = $"File{id}" }),
 		Roles = parsed.RoleIds.ToDictionary(id => id, id => id == 1),
 		// Either an address to play, or the already-localized reason it cannot be played. The markup around
 		// it is the renderer's business. Id 0 stands for a video still being processed.
@@ -1447,7 +1452,7 @@ public class MarkdownTests : BaseTestClass
 
 		var html = _formatter.Render(parsed, new ResolvedMarkdownData
 		{
-			Entities = { [("product_name", 777L)] = (string.Empty, "<b>Bold</b> & co", string.Empty) },
+			Entities = { ["product_name"] = new() { [777L] = new() { Url = string.Empty, Name = "<b>Bold</b> & co", Description = string.Empty } } },
 		});
 
 		IsFalse(html.Contains("<b>Bold</b>"), $"got: {html}");
