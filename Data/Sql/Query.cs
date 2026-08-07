@@ -901,6 +901,66 @@ public class Query
 	}
 
 	/// <summary>
+	/// Appends a whole LIKE predicate tail that matches literally the text
+	/// <paramref name="appendNeedle"/> writes: the LIKE keyword, the requested
+	/// wildcards, the needle wrapped in nested REPLACE calls neutralising every
+	/// <see cref="SqlLike.Metacharacters"/>, and the ESCAPE clause declaring
+	/// <see cref="SqlLike.EscapeChar"/>.
+	/// </summary>
+	/// <param name="appendNeedle">Appends the needle expression — a bound parameter, a column, any expression.</param>
+	/// <param name="wildcardBefore">Match any text before the needle.</param>
+	/// <param name="wildcardAfter">Match any text after the needle.</param>
+	/// <returns>This query.</returns>
+	/// <remarks>
+	/// The counterpart of <see cref="SqlLike.EscapeLike"/> for a needle that is only
+	/// known once the statement runs, which makes the escaping the database's work
+	/// rather than the caller's. REPLACE is standard SQL and behaves alike on SQL
+	/// Server, PostgreSQL, SQLite and MySQL, which keeps this free of dialect
+	/// knowledge.
+	///
+	/// The escapes and the clause that gives them meaning are emitted together on
+	/// purpose. Split apart, forgetting the clause produces no SQL error and no
+	/// failing test — the escape characters simply become part of the pattern and
+	/// the search quietly stops matching.
+	/// </remarks>
+	public Query LikeLiteral(Action appendNeedle, bool wildcardBefore, bool wildcardAfter)
+	{
+		ArgumentNullException.ThrowIfNull(appendNeedle);
+
+		Like();
+
+		if (wildcardBefore)
+		{
+			AppendWildcard();
+			Concat();
+		}
+
+		AddAction((dialect, builder) => builder.Append("replace(".Times(SqlLike.Metacharacters.Length)));
+
+		appendNeedle();
+
+		AddAction((dialect, builder) =>
+		{
+			// Closing in the same order the characters are listed applies them from
+			// the innermost call outwards, so the escape character is substituted
+			// first and the escapes it introduces are not escaped again.
+			foreach (var c in SqlLike.Metacharacters)
+				builder.Append($", {dialect.UnicodePrefix}'{c}', {dialect.UnicodePrefix}'{SqlLike.EscapeChar}{c}')");
+		});
+
+		if (wildcardAfter)
+		{
+			Concat();
+			AppendWildcard();
+		}
+
+		return Escape(SqlLike.EscapeChar);
+	}
+
+	private Query AppendWildcard()
+		=> AddAction((dialect, builder) => builder.Append($"{dialect.UnicodePrefix}'%'"));
+
+	/// <summary>
 	/// Appends AS keyword.
 	/// </summary>
 	public Query As() => AddAction((dialect, builder) => builder.Append(" as "));

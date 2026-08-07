@@ -930,83 +930,62 @@ class StringCompareVisitor : MethodVisitor<string>
 	}
 }
 
-class StringContainsVisitor : MethodVisitor<string>
+/// <summary>
+/// Emits a LIKE predicate anchored by wildcards around the needle. The needle is
+/// text the caller is searching for, not a pattern, so its metacharacters are
+/// neutralised and the predicate declares <see cref="SqlLike.EscapeChar"/>. The
+/// needle is only known once the statement runs — it is a bound parameter or
+/// another column — which is why the escaping is left to the database.
+/// </summary>
+/// <param name="name">Method name. Only the single-string overload is registered: the
+/// StringComparison overloads cannot be honoured by LIKE, and translating them as if
+/// the comparison were absent would silently answer a different question.</param>
+/// <param name="wildcardBefore">Match any text before the needle.</param>
+/// <param name="wildcardAfter">Match any text after the needle.</param>
+abstract class StringLikeVisitor(string name, bool wildcardBefore, bool wildcardAfter)
+	: MethodVisitor(typeof(string).GetMember(name)
+		.OfType<MethodInfo>()
+		.Where(m => m.GetParameters() is [{ ParameterType: var p }] && p == typeof(string)))
+{
+	private readonly bool _wildcardBefore = wildcardBefore;
+	private readonly bool _wildcardAfter = wildcardAfter;
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+	{
+		var q = translator.Context.Curr;
+
+		q.OpenBracket();
+
+		var mce = (MethodCallExpression)expression;
+		translator.Visit(mce.Object);
+
+		q.LikeLiteral(() => translator.Visit(mce.Arguments[0]), _wildcardBefore, _wildcardAfter);
+
+		q.CloseBracket();
+	}
+}
+
+class StringContainsVisitor : StringLikeVisitor
 {
 	public StringContainsVisitor()
-		: base(nameof(string.Contains))
+		: base(nameof(string.Contains), wildcardBefore: true, wildcardAfter: true)
 	{
-	}
-
-	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
-	{
-		var q = translator.Context.Curr;
-
-		q.OpenBracket();
-
-		var mce = (MethodCallExpression)expression;
-		translator.Visit(mce.Object);
-
-		q.Like();
-
-		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
-		q.Concat();
-		translator.Visit(mce.Arguments[0]);
-		q.Concat();
-		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
-
-		q.CloseBracket();
 	}
 }
 
-class StringStartsWithVisitor : MethodVisitor<string>
+class StringStartsWithVisitor : StringLikeVisitor
 {
 	public StringStartsWithVisitor()
-		: base(nameof(string.StartsWith))
+		: base(nameof(string.StartsWith), wildcardBefore: false, wildcardAfter: true)
 	{
-	}
-
-	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
-	{
-		var q = translator.Context.Curr;
-
-		q.OpenBracket();
-
-		var mce = (MethodCallExpression)expression;
-		translator.Visit(mce.Object);
-
-		q.Like();
-
-		translator.Visit(mce.Arguments[0]);
-		q.Concat();
-		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
-
-		q.CloseBracket();
 	}
 }
 
-class StringEndsWithVisitor : MethodVisitor<string>
+class StringEndsWithVisitor : StringLikeVisitor
 {
 	public StringEndsWithVisitor()
-		: base(nameof(string.EndsWith))
+		: base(nameof(string.EndsWith), wildcardBefore: true, wildcardAfter: false)
 	{
-	}
-
-	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
-	{
-		var q = translator.Context.Curr;
-
-		q.OpenBracket();
-
-		var mce = (MethodCallExpression)expression;
-		translator.Visit(mce.Object);
-
-		q.Like();
-
-		q.AddAction((d, sb) => sb.Append($"{d.UnicodePrefix}'%'"));
-		q.Concat();
-		translator.Visit(mce.Arguments[0]);
-
-		q.CloseBracket();
 	}
 }
 

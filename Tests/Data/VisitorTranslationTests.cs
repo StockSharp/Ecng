@@ -3,6 +3,7 @@
 namespace Ecng.Tests.Data;
 
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 using Ecng.Data;
 using Ecng.Data.Sql;
@@ -18,6 +19,19 @@ using Ecng.Serialization;
 [TestClass]
 public class VisitorTranslationTests : BaseTestClass
 {
+	/// <summary>
+	/// A needle carrying every LIKE metacharacter that changes matching:
+	/// <c>%</c> (any run), <c>_</c> (any single char) and <c>[</c>, which opens a
+	/// character class on SQL Server.
+	/// </summary>
+	private const string _metaNeedle = "50%_[a-z]";
+
+	/// <summary>
+	/// The same needle once its metacharacters are neutralised by
+	/// <see cref="SqlLike.EscapeChar"/>.
+	/// </summary>
+	private const string _escapedNeedle = "50!%!_![a-z]";
+
 	[Flags]
 	public enum TestPermissions
 	{
@@ -68,11 +82,173 @@ public class VisitorTranslationTests : BaseTestClass
 	}
 
 	private static string Translate<TSource>(IQueryable queryable, ISqlDialect dialect)
+		=> TranslateWithParams<TSource>(queryable, dialect).sql;
+
+	/// <summary>
+	/// Same translation as <see cref="Translate{TSource}"/>, additionally handing
+	/// back the bound parameters: a needle reaches the statement as a parameter
+	/// value, never as inline SQL text, so the pattern it ends up carrying is only
+	/// observable here.
+	/// </summary>
+	private static (string sql, IDictionary<string, (Type type, object value)> parameters) TranslateWithParams<TSource>(IQueryable queryable, ISqlDialect dialect)
 	{
 		var meta = SchemaRegistry.Get(typeof(TSource));
 		var translator = new ExpressionQueryTranslator(meta);
 		var query = translator.GenerateSql(queryable.Expression);
-		return query.Render(dialect);
+		return (query.Render(dialect), translator.Parameters);
+	}
+
+	private static string DescribeParams(IDictionary<string, (Type type, object value)> parameters)
+		=> parameters.Select(p => $"{p.Key}={p.Value.value}").JoinComma();
+
+	/// <summary>
+	/// One <c>REPLACE(x, from, to)</c> of the escaping chain, as it stands in the
+	/// rendered SQL. The dialect's unicode prefix is optional so one expression
+	/// reads all three.
+	/// </summary>
+	private static readonly Regex _replaceStep = new(@",\s*N?'([^']*)',\s*N?'([^']*)'\)", RegexOptions.Compiled);
+
+	/// <summary>
+	/// Applies the escaping the rendered statement asks the database for, and
+	/// returns what the needle becomes. The steps stand in the SQL innermost-first,
+	/// which is the order the database applies them, so replaying them left to right
+	/// reproduces the pattern the LIKE will actually see.
+	/// </summary>
+	private static string ReplayEscaping(string sql, string needle)
+	{
+		foreach (Match step in _replaceStep.Matches(sql))
+			needle = needle.Replace(step.Groups[1].Value, step.Groups[2].Value);
+
+		return needle;
+	}
+
+	/// <summary>
+	/// Asserts that a translated LIKE predicate matches its needle literally.
+	/// </summary>
+	/// <param name="dialectName">Dialect the statement was rendered for.</param>
+	/// <param name="wildcardBefore">Any text is allowed before the needle.</param>
+	/// <param name="wildcardAfter">Any text is allowed after the needle.</param>
+	/// <param name="translated">Rendered statement and its bound parameters.</param>
+	/// <remarks>
+	/// The needle stays a raw bound parameter — it is the caller's text, and may not
+	/// even be a constant — so what has to be checked is the statement: it must
+	/// declare the escape character, run the needle through an escaping that turns
+	/// it into <see cref="_escapedNeedle"/>, and leave its own wildcards outside that
+	/// escaping, or they would be matched as text instead of anchoring the match.
+	/// Every unmet condition is reported together, so one run says everything the
+	/// translation is missing.
+	/// </remarks>
+	private static void AssertNeedleMatchedLiterally(string dialectName, bool wildcardBefore, bool wildcardAfter, (string sql, IDictionary<string, (Type type, object value)> parameters) translated)
+	{
+		var (sql, parameters) = translated;
+		var dialect = GetDialect(dialectName);
+		var unmet = new List<string>();
+
+		var escapeClause = $" escape '{SqlLike.EscapeChar}'";
+		var likeAt = sql.IndexOf(" like ", StringComparison.OrdinalIgnoreCase);
+		var escapeAt = sql.IndexOf(escapeClause, StringComparison.Ordinal);
+
+		if (likeAt < 0)
+			unmet.Add("no LIKE predicate");
+
+		if (escapeAt < 0)
+			unmet.Add($"no ESCAPE clause declaring '{SqlLike.EscapeChar}'");
+
+		if (likeAt >= 0 && escapeAt > likeAt)
+		{
+			var operand = sql[(likeAt + " like ".Length)..escapeAt];
+
+			var wildcard = $"{dialect.UnicodePrefix}'%'";
+			var lead = $"{wildcard} {dialect.ConcatOperator} ";
+			var trail = $" {dialect.ConcatOperator} {wildcard}";
+
+			if (wildcardBefore != operand.StartsWith(lead))
+				unmet.Add($"the leading wildcard is {(wildcardBefore ? "missing from" : "present in")} the pattern '{operand}'");
+
+			if (wildcardAfter != operand.EndsWith(trail))
+				unmet.Add($"the trailing wildcard is {(wildcardAfter ? "missing from" : "present in")} the pattern '{operand}'");
+
+			var needleOnly = operand;
+
+			if (wildcardBefore)
+				needleOnly = needleOnly[lead.Length..];
+
+			if (wildcardAfter)
+				needleOnly = needleOnly[..^trail.Length];
+
+			var escaped = ReplayEscaping(needleOnly, _metaNeedle);
+
+			if (escaped != _escapedNeedle)
+				unmet.Add($"the statement escapes the needle to '{escaped}' rather than '{_escapedNeedle}'");
+		}
+
+		unmet.Count.AssertEqual(0, $"On {dialectName} the needle is not matched literally - {unmet.JoinCommaSpace()}.{Environment.NewLine}sql: {sql}{Environment.NewLine}params: {DescribeParams(parameters)}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void StringContains_MatchesNeedleLiterally(string dialectName)
+	{
+		// A search box passes user-typed text straight into Contains. The text is
+		// data, not a pattern: "50%" must find the rows spelling out "50%", not
+		// every row, and "[a-z]" must find that literal text, not any single letter.
+		var items = CreateQueryable<TestItem>();
+		var needle = _metaNeedle;
+
+		var query = items.Where(i => i.Name.Contains(needle));
+
+		AssertNeedleMatchedLiterally(dialectName, wildcardBefore: true, wildcardAfter: true, TranslateWithParams<TestItem>(query, GetDialect(dialectName)));
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void StringStartsWith_MatchesNeedleLiterally(string dialectName)
+	{
+		var items = CreateQueryable<TestItem>();
+		var needle = _metaNeedle;
+
+		var query = items.Where(i => i.Name.StartsWith(needle));
+
+		AssertNeedleMatchedLiterally(dialectName, wildcardBefore: false, wildcardAfter: true, TranslateWithParams<TestItem>(query, GetDialect(dialectName)));
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void StringEndsWith_MatchesNeedleLiterally(string dialectName)
+	{
+		var items = CreateQueryable<TestItem>();
+		var needle = _metaNeedle;
+
+		var query = items.Where(i => i.Name.EndsWith(needle));
+
+		AssertNeedleMatchedLiterally(dialectName, wildcardBefore: true, wildcardAfter: false, TranslateWithParams<TestItem>(query, GetDialect(dialectName)));
+	}
+
+	/// <summary>
+	/// The needle is a column here, so no C# code could have escaped it while the
+	/// statement was built — the escaping has to be the database's work, and the
+	/// same escaping must be emitted.
+	/// </summary>
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void StringContains_ColumnNeedle_MatchesLiterally(string dialectName)
+	{
+		var categories = CreateQueryable<TestCategory>();
+
+		var query = categories.Where(c => c.CategoryName.Contains(c.Description));
+
+		var translated = TranslateWithParams<TestCategory>(query, GetDialect(dialectName));
+
+		translated.parameters.Count.AssertEqual(0);
+		AssertNeedleMatchedLiterally(dialectName, wildcardBefore: true, wildcardAfter: true, translated);
 	}
 
 	[TestMethod]

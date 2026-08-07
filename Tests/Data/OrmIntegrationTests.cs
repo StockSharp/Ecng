@@ -478,6 +478,124 @@ public class OrmIntegrationTests : BaseTestClass
 		results.Length.AssertEqual(2);
 	}
 
+	/// <summary>
+	/// Text a user typed into a search box is data, not a pattern: a needle
+	/// carrying <c>%</c>, <c>_</c> or <c>[</c> must find the rows spelling those
+	/// characters out and nothing else.
+	/// </summary>
+	private const string _metaNeedle = "50%_[a-z]";
+
+	/// <summary>
+	/// A row the needle's <c>%</c>/<c>_</c> would reach if they were read as
+	/// wildcards, and whose trailing letter the <c>[a-z]</c> character class would
+	/// reach on SQL Server. It spells out none of the metacharacters, so a literal
+	/// match must not return it.
+	/// </summary>
+	private const string _wildcardDecoy = "50abx";
+
+	/// <summary>
+	/// The same for the dialects that have no character-class syntax: there
+	/// <c>[a-z]</c> is plain text, so the decoy spells it out while still leaving
+	/// the needle's <c>%</c> and <c>_</c> unspelled.
+	/// </summary>
+	private const string _bracketDecoy = "50ab[a-z]";
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Contains_MatchesNeedleLiterally(string provider)
+	{
+		SetUp(provider);
+		await InsertItem($"tag {_metaNeedle} end");
+		await InsertItem($"tag {_wildcardDecoy} end");
+		await InsertItem($"tag {_bracketDecoy} end");
+
+		var needle = _metaNeedle;
+
+		var results = await Query<TestItem>().Where(x => x.Name.Contains(needle)).OrderBy(x => x.Name).ToArrayAsyncEx(CancellationToken);
+		results.Select(r => r.Name).JoinComma().AssertEqual($"tag {_metaNeedle} end");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Contains_NeedleCarryingTheEscapeCharacter(string provider)
+	{
+		// The one case the ordering inside SqlLike.Metacharacters exists to get right,
+		// and the only one where getting it wrong is invisible in the SQL: substitute
+		// the escape character anywhere but first and every escape introduced after it
+		// is escaped again, so the pattern stops matching what the user typed. Every
+		// other test uses a needle without it and would pass either way.
+		SetUp(provider);
+
+		var esc = SqlLike.EscapeChar;
+
+		await InsertItem($"a{esc}b");
+		await InsertItem($"a{esc}{esc}b");
+		await InsertItem("axb");
+
+		var needle = $"a{esc}b";
+
+		var results = await Query<TestItem>().Where(x => x.Name.Contains(needle)).OrderBy(x => x.Name).ToArrayAsyncEx(CancellationToken);
+		results.Select(r => r.Name).JoinComma().AssertEqual($"a{esc}b");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_StartsWith_MatchesNeedleLiterally(string provider)
+	{
+		SetUp(provider);
+		await InsertItem($"{_metaNeedle} end");
+		await InsertItem($"{_wildcardDecoy} end");
+		await InsertItem($"{_bracketDecoy} end");
+
+		var needle = _metaNeedle;
+
+		var results = await Query<TestItem>().Where(x => x.Name.StartsWith(needle)).OrderBy(x => x.Name).ToArrayAsyncEx(CancellationToken);
+		results.Select(r => r.Name).JoinComma().AssertEqual($"{_metaNeedle} end");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_EndsWith_MatchesNeedleLiterally(string provider)
+	{
+		SetUp(provider);
+		await InsertItem($"tag {_metaNeedle}");
+		await InsertItem($"tag {_wildcardDecoy}");
+		await InsertItem($"tag {_bracketDecoy}");
+
+		var needle = _metaNeedle;
+
+		var results = await Query<TestItem>().Where(x => x.Name.EndsWith(needle)).OrderBy(x => x.Name).ToArrayAsyncEx(CancellationToken);
+		results.Select(r => r.Name).JoinComma().AssertEqual($"tag {_metaNeedle}");
+	}
+
+	/// <summary>
+	/// The needle is a column here, so nothing about it is known while the
+	/// statement is built - only the database can neutralise it, and it must do so
+	/// row by row.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task String_Contains_ColumnNeedle_MatchesLiterally(string provider)
+	{
+		SetUp(provider);
+		await InsertCategory($"tag {_metaNeedle} end", _metaNeedle);
+		await InsertCategory($"tag {_wildcardDecoy} end", _metaNeedle);
+		await InsertCategory($"tag {_bracketDecoy} end", _metaNeedle);
+
+		var results = await Query<TestCategory>().Where(c => c.CategoryName.Contains(c.Description)).ToArrayAsyncEx(CancellationToken);
+		results.Select(r => r.CategoryName).JoinComma().AssertEqual($"tag {_metaNeedle} end");
+	}
+
 	#endregion
 
 	#region Aggregation Tests
