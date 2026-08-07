@@ -1192,6 +1192,32 @@ class LikeVisitor : SqlFunctionVisitor
 	}
 }
 
+class LikeEscapedVisitor : SqlFunctionVisitor
+{
+	public LikeEscapedVisitor()
+		: base(nameof(SqlFunctions.LikeEscaped))
+	{
+	}
+
+	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
+	{
+		var q = translator.Context.Curr;
+
+		q.OpenBracket();
+
+		var mce = (MethodCallExpression)expression;
+		translator.Visit(mce.Arguments[0]);
+
+		q.Like();
+
+		translator.Visit(mce.Arguments[1]);
+
+		q.Escape(SqlLike.EscapeChar);
+
+		q.CloseBracket();
+	}
+}
+
 class IfNullVisitor : SqlFunctionVisitor
 {
 	public IfNullVisitor()

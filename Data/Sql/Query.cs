@@ -886,6 +886,21 @@ public class Query
 	public Query Like() => AddAction((dialect, builder) => builder.Append(" like "));
 
 	/// <summary>
+	/// Appends an ESCAPE clause declaring <paramref name="escapeChar"/> as the
+	/// escape character of the preceding LIKE pattern.
+	/// </summary>
+	/// <param name="escapeChar">Escape character, normally <see cref="SqlLike.EscapeChar"/>.</param>
+	/// <returns>This query.</returns>
+	/// <exception cref="ArgumentException">The character cannot be written as a SQL literal.</exception>
+	public Query Escape(char escapeChar)
+	{
+		if (escapeChar == '\'')
+			throw new ArgumentException("Quote cannot be an escape character.", nameof(escapeChar));
+
+		return AddAction((dialect, builder) => builder.Append($" escape '{escapeChar}'"));
+	}
+
+	/// <summary>
 	/// Appends AS keyword.
 	/// </summary>
 	public Query As() => AddAction((dialect, builder) => builder.Append(" as "));

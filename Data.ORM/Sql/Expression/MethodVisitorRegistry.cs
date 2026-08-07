@@ -92,6 +92,7 @@ static class MethodVisitorRegistry
 		AddVisitor(new RandVisitor());
 		AddVisitor(new EnumHasFlagVisitor());
 		AddVisitor(new LikeVisitor());
+		AddVisitor(new LikeEscapedVisitor());
 		AddVisitor(new IfNullVisitor());
 		AddVisitor(new MathVisitor());
 		AddVisitor(new TimeSpanPartVisitor());

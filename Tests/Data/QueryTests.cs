@@ -1116,4 +1116,65 @@ public class QueryTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region LIKE escaping
+
+	[TestMethod]
+	public void EscapeLike_PlainText_Unchanged()
+	{
+		"john doe".EscapeLike().AssertEqual("john doe");
+	}
+
+	[TestMethod]
+	public void EscapeLike_Wildcards_AreNeutralised()
+	{
+		var esc = SqlLike.EscapeChar;
+
+		// Unescaped, "50%" would match anything starting with "50" and "a_b"
+		// anything with one character between a and b.
+		"50%".EscapeLike().AssertEqual($"50{esc}%");
+		"a_b".EscapeLike().AssertEqual($"a{esc}_b");
+	}
+
+	[TestMethod]
+	public void EscapeLike_OpeningBracket_IsNeutralised()
+	{
+		// SQL Server reads [...] as a character class, so an unescaped "[a-z]"
+		// silently matches a single letter instead of the typed text. Other
+		// dialects treat an escaped bracket as the plain character, so escaping
+		// it is portable.
+		var esc = SqlLike.EscapeChar;
+
+		"[a-z]".EscapeLike().AssertEqual($"{esc}[a-z]");
+	}
+
+	[TestMethod]
+	public void EscapeLike_EscapeCharacter_IsDoubled()
+	{
+		// Without this the escape character typed by a user would consume the
+		// character after it.
+		var esc = SqlLike.EscapeChar;
+
+		$"a{esc}b".EscapeLike().AssertEqual($"a{esc}{esc}b");
+		$"{esc}%".EscapeLike().AssertEqual($"{esc}{esc}{esc}%");
+	}
+
+	[TestMethod]
+	public void ToLikeContains_WrapsEscapedTextInWildcards()
+	{
+		var esc = SqlLike.EscapeChar;
+
+		// The only unescaped wildcards are the two the helper itself adds.
+		"plain".ToLikeContains().AssertEqual("%plain%");
+		"50%".ToLikeContains().AssertEqual($"%50{esc}%%");
+	}
+
+	[TestMethod]
+	public void ToLikeContains_EmptyText_MatchesEverything()
+	{
+		"".ToLikeContains().AssertEqual("%%");
+		((string)null).ToLikeContains().AssertEqual("%%");
+	}
+
+	#endregion
 }

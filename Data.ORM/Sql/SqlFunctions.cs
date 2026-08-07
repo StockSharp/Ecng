@@ -12,6 +12,14 @@ public static class SqlFunctions
 		=> throw new NotSupportedException();
 
 	/// <summary>
+	/// SQL LIKE pattern matching operator with an explicit ESCAPE clause, so a
+	/// pattern built by <see cref="SqlLike.ToLikeContains"/> matches the caller's
+	/// text literally. Use this whenever the pattern comes from user input.
+	/// </summary>
+	public static bool LikeEscaped(this string s, string what)
+		=> throw new NotSupportedException();
+
+	/// <summary>
 	/// SQL IFNULL (COALESCE) function for strings.
 	/// </summary>
 	public static string IfNull(this string s, string what)

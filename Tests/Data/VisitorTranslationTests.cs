@@ -221,6 +221,47 @@ public class VisitorTranslationTests : BaseTestClass
 	[DataRow("sqlserver")]
 	[DataRow("postgresql")]
 	[DataRow("sqlite")]
+	public void LikeEscaped_EmitsEscapeClause(string dialectName)
+	{
+		// The ESCAPE clause is SQL-standard and renders identically everywhere,
+		// which is what makes client-side escaping dialect-independent.
+		var items = CreateQueryable<TestItem>();
+		var like = "%abc%";
+
+		var query = items.Where(i => i.Name.LikeEscaped(like));
+
+		var sql = Translate<TestItem>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase(" like ").AssertTrue($"Expected LIKE on {dialectName}, got: {sql}");
+		sql.Contains($" escape '{SqlLike.EscapeChar}'").AssertTrue($"Expected ESCAPE clause on {dialectName}, got: {sql}");
+		sql.Contains("@like").AssertTrue($"Expected the pattern to stay a bound parameter, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
+	public void Like_LeavesEscapeClauseOff(string dialectName)
+	{
+		// Counterpart of LikeEscaped_EmitsEscapeClause, which is this test's
+		// positive control: the same harness does emit "escape" for the escaped
+		// marker, so an empty result here means the plain marker stayed plain
+		// rather than the assertion being unable to fail.
+		var items = CreateQueryable<TestItem>();
+		var like = "%abc%";
+
+		var query = items.Where(i => i.Name.Like(like));
+
+		var sql = Translate<TestItem>(query, GetDialect(dialectName));
+
+		sql.ContainsIgnoreCase(" like ").AssertTrue($"Expected LIKE on {dialectName}, got: {sql}");
+		sql.ContainsIgnoreCase("escape").AssertFalse($"Plain Like must not declare an escape character, got: {sql}");
+	}
+
+	[TestMethod]
+	[DataRow("sqlserver")]
+	[DataRow("postgresql")]
+	[DataRow("sqlite")]
 	public void EnumGroupBy_EmitsColumn(string dialectName)
 	{
 		var items = CreateQueryable<TestPermitted>();
