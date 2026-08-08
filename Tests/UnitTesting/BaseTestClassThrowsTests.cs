@@ -82,11 +82,12 @@ public class BaseTestClassThrowsTests : BaseTestClass
 
 		var thrownName = thrown.GetType().Name;
 
-		// A helper that never ran the delegate would also fail with AssertFailedException; requiring
-		// the failure to quote the exception it actually saw tells the two apart.
+		// A helper that never ran the delegate would also fail with AssertFailedException; naming
+		// the type it caught is what tells the two apart, since a helper that never called the
+		// delegate could not name it. Only the two type names are required - what else MSTest puts
+		// in its failure text differs between its major versions and is not this wrapper's contract.
 		Contains(expected.Name, failure.Message);
 		Contains(thrownName, failure.Message);
-		Contains(thrown.Message, failure.Message);
 
 		// Both names being present would hold just as well for a report that swapped their roles, so
 		// pin the roles down by position: a failure states the type it wanted before the one it got.

@@ -279,4 +279,37 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		Throws<AssertFailedException>(() => IsNotEmpty((ICollection)Array.Empty<int>()));
 		Throws<AssertFailedException>(() => IsNotEmpty((ICollection)null));
 	}
+
+	[TestMethod]
+	public void MissingCollectionOrType_IsAnAssertionFailureNotAnArgumentException()
+	{
+		// Each helper is shown accepting first, so what fails below is the null and nothing else.
+		// Insisting on AssertFailedException is the point: a helper that handed the null straight
+		// to MSTest would let a raw argument exception out instead, which no test can catch as an
+		// assertion and which reads as an error in the helper rather than in the caller.
+		AllItemsAreNotNull((ICollection)new[] { "a" });
+		Throws<AssertFailedException>(() => AllItemsAreNotNull(null));
+
+		AllItemsAreUnique((ICollection)new[] { 1 });
+		Throws<AssertFailedException>(() => AllItemsAreUnique(null));
+
+		AllItemsAreInstancesOfType((ICollection)new[] { "a" }, typeof(string));
+		Throws<AssertFailedException>(() => AllItemsAreInstancesOfType(null, typeof(string)));
+		Throws<AssertFailedException>(() => AllItemsAreInstancesOfType((ICollection)new[] { "a" }, null));
+
+		Contains((ICollection)new[] { 1 }, 1);
+		Throws<AssertFailedException>(() => Contains(null, 1));
+
+		DoesNotContain((ICollection)new[] { 1 }, 2);
+		Throws<AssertFailedException>(() => DoesNotContain(null, 2));
+
+		// Both sides of the subset relation are required, so both are checked.
+		IsSubsetOf((ICollection)new[] { 1 }, (ICollection)new[] { 1, 2 });
+		Throws<AssertFailedException>(() => IsSubsetOf(null, (ICollection)new[] { 1 }));
+		Throws<AssertFailedException>(() => IsSubsetOf((ICollection)new[] { 1 }, null));
+
+		IsNotSubsetOf((ICollection)new[] { 3 }, (ICollection)new[] { 1, 2 });
+		Throws<AssertFailedException>(() => IsNotSubsetOf(null, (ICollection)new[] { 1 }));
+		Throws<AssertFailedException>(() => IsNotSubsetOf((ICollection)new[] { 1 }, null));
+	}
 }

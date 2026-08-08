@@ -242,4 +242,17 @@ public class BaseTestClassBooleanTests : BaseTestClass
 		var ex = Throws<AssertFailedException>(() => IsNotInstanceOfType<string>("abc", "type text"));
 		Contains("type text", ex.Message);
 	}
+
+	[TestMethod]
+	public void TypeChecks_ReportAMissingTypeAsAnAssertionFailure()
+	{
+		// The accepting calls fix the type argument as the only thing wrong below.
+		IsInstanceOfType("abc", typeof(string));
+		IsNotInstanceOfType("abc", typeof(int));
+
+		// Having no type to check against is a bug in the calling test, and it has to read as a
+		// failed assertion like any other - not as an argument exception escaping the helper.
+		Throws<AssertFailedException>(() => IsInstanceOfType("abc", (Type)null));
+		Throws<AssertFailedException>(() => IsNotInstanceOfType("abc", (Type)null));
+	}
 }

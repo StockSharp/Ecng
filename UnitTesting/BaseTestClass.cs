@@ -102,6 +102,56 @@ public abstract class BaseTestClass
 	protected static void Inconclusive(string message = default)
 		=> Assert.Inconclusive(message);
 
+	// A null handed to an assertion is a bug in the calling test, and it has to read as a failed
+	// assertion on every MSTest version. MSTest itself is not uniform about it: some checks guard
+	// the argument and report a failure, others raise an argument exception, and where only one of
+	// a pair is guarded the other is dereferenced outright. The guards below decide it here, before
+	// anything is delegated, so the answer no longer depends on which MSTest is underneath.
+
+	/// <summary>
+	/// Renders a string for a failure message, so that a null reads differently from an empty string.
+	/// </summary>
+	/// <param name="value">Value to render.</param>
+	/// <returns>Rendered value.</returns>
+	private static string Describe(string value)
+		=> value is null ? "null" : $"\"{value}\"";
+
+	/// <summary>
+	/// Fails the assertion when either argument of a substring check is null.
+	/// </summary>
+	/// <param name="substring">Substring argument.</param>
+	/// <param name="value">Value argument.</param>
+	/// <param name="message">Error message.</param>
+	private static void EnsureSubstringArgs(string substring, string value, string message)
+	{
+		if (substring is null || value is null)
+			Assert.Fail(message.IsEmpty() ? $"Expected a non-null substring and value but got substring={Describe(substring)} and value={Describe(value)}." : message);
+	}
+
+	/// <summary>
+	/// Fails the assertion when either argument of a regular expression check is null.
+	/// </summary>
+	/// <param name="pattern">Pattern argument.</param>
+	/// <param name="value">Value argument.</param>
+	/// <param name="message">Error message.</param>
+	private static void EnsureRegexArgs(Regex pattern, string value, string message)
+	{
+		if (pattern is null || value is null)
+			Assert.Fail(message.IsEmpty() ? $"Expected a non-null pattern and value but got pattern={Describe(pattern?.ToString())} and value={Describe(value)}." : message);
+	}
+
+	/// <summary>
+	/// Fails the assertion when a required argument is null, naming it.
+	/// </summary>
+	/// <param name="arg">Argument to check.</param>
+	/// <param name="name">Name of the argument as the caller sees it.</param>
+	/// <param name="message">Error message.</param>
+	private static void EnsureArg(object arg, string name, string message)
+	{
+		if (arg is null)
+			Assert.Fail(message.IsEmpty() ? $"Expected a non-null {name}." : message);
+	}
+
 	/// <summary>
 	/// Tests whether the specified condition is true.
 	/// </summary>
@@ -197,7 +247,11 @@ public abstract class BaseTestClass
 	/// <param name="expectedType">Expected type.</param>
 	/// <param name="message">Error message.</param>
 	protected static void IsInstanceOfType(object value, Type expectedType, string message = "")
-		=> Assert.IsInstanceOfType(value, expectedType, message);
+	{
+		EnsureArg(expectedType, "expected type", message);
+
+		Assert.IsInstanceOfType(value, expectedType, message);
+	}
 
 	/// <summary>
 	/// Tests whether the specified object is not an instance of the expected type.
@@ -206,7 +260,11 @@ public abstract class BaseTestClass
 	/// <param name="wrongType">Wrong type.</param>
 	/// <param name="message">Error message.</param>
 	protected static void IsNotInstanceOfType(object value, Type wrongType, string message = "")
-		=> Assert.IsNotInstanceOfType(value, wrongType, message);
+	{
+		EnsureArg(wrongType, "wrong type", message);
+
+		Assert.IsNotInstanceOfType(value, wrongType, message);
+	}
 
 	/// <summary>
 	/// Tests whether two strings are equal, ignoring case.
@@ -309,7 +367,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
 	protected static void Contains(string substring, string value, string message = "")
-		=> Assert.Contains(substring, value, message);
+	{
+		EnsureSubstringArgs(substring, value, message);
+
+		Assert.Contains(substring, value, message);
+	}
 
 	/// <summary>
 	/// Tests whether a string starts with the specified substring.
@@ -318,7 +380,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
 	protected static void StartsWith(string substring, string value, string message = "")
-		=> Assert.StartsWith(substring, value, message);
+	{
+		EnsureSubstringArgs(substring, value, message);
+
+		Assert.StartsWith(substring, value, message);
+	}
 
 	/// <summary>
 	/// Tests whether a string ends with the specified substring.
@@ -327,7 +393,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
 	protected static void EndsWith(string substring, string value, string message = "")
-		=> Assert.EndsWith(substring, value, message);
+	{
+		EnsureSubstringArgs(substring, value, message);
+
+		Assert.EndsWith(substring, value, message);
+	}
 
 	/// <summary>
 	/// Tests whether a string matches the specified regular expression.
@@ -336,7 +406,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to match.</param>
 	/// <param name="message">Error message.</param>
 	protected static void MatchesRegex(Regex pattern, string value, string message = "")
-		=> Assert.MatchesRegex(pattern, value, message);
+	{
+		EnsureRegexArgs(pattern, value, message);
+
+		Assert.MatchesRegex(pattern, value, message);
+	}
 
 	/// <summary>
 	/// Tests whether a string does not match the specified regular expression.
@@ -345,7 +419,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to test.</param>
 	/// <param name="message">Error message.</param>
 	protected static void DoesNotMatch(Regex pattern, string value, string message = "")
-		=> Assert.DoesNotMatchRegex(pattern, value, message);
+	{
+		EnsureRegexArgs(pattern, value, message);
+
+		Assert.DoesNotMatchRegex(pattern, value, message);
+	}
 
 	/// <summary>
 	/// Asserts that two collections are equal.
@@ -406,7 +484,11 @@ public abstract class BaseTestClass
 	/// <param name="collection">Collection.</param>
 	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreNotNull(ICollection collection, string message = "")
-		=> CollectionAssert.AllItemsAreNotNull(collection, message);
+	{
+		EnsureArg(collection, "collection", message);
+
+		CollectionAssert.AllItemsAreNotNull(collection, message);
+	}
 
 	/// <summary>
 	/// Asserts that all elements are unique.
@@ -414,7 +496,11 @@ public abstract class BaseTestClass
 	/// <param name="collection">Collection.</param>
 	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreUnique(ICollection collection, string message = "")
-		=> CollectionAssert.AllItemsAreUnique(collection, message);
+	{
+		EnsureArg(collection, "collection", message);
+
+		CollectionAssert.AllItemsAreUnique(collection, message);
+	}
 
 	/// <summary>
 	/// Asserts that all elements are instances of the specified type.
@@ -424,21 +510,21 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreInstancesOfType(ICollection collection, Type expectedType, string message = "")
 	{
+		EnsureArg(collection, "collection", message);
+		EnsureArg(expectedType, "expected type", message);
+
 		// CollectionAssert skips nulls, so a collection that failed to fill half its slots still
 		// satisfies a type assertion - the worst shape a bad assertion can take, since it looks
 		// like every element was checked. null is an instance of nothing; reject it, and say which
 		// slot it was in.
-		if (collection is not null)
+		var index = 0;
+
+		foreach (var item in collection)
 		{
-			var index = 0;
+			if (item is null)
+				Assert.Fail(message.IsEmpty() ? $"Element at index {index} is null and so is not an instance of {expectedType.Name}." : message);
 
-			foreach (var item in collection)
-			{
-				if (item is null)
-					Assert.Fail(message.IsEmpty() ? $"Element at index {index} is null and so is not an instance of {expectedType?.Name}." : message);
-
-				index++;
-			}
+			index++;
 		}
 
 		CollectionAssert.AllItemsAreInstancesOfType(collection, expectedType, message);
@@ -451,7 +537,11 @@ public abstract class BaseTestClass
 	/// <param name="element">Element expected to be present.</param>
 	/// <param name="message">Error message.</param>
 	protected static void Contains(ICollection collection, object element, string message = "")
-		=> CollectionAssert.Contains(collection, element, message);
+	{
+		EnsureArg(collection, "collection", message);
+
+		CollectionAssert.Contains(collection, element, message);
+	}
 
 	/// <summary>
 	/// Asserts that the collection does not contain the specified element.
@@ -460,7 +550,11 @@ public abstract class BaseTestClass
 	/// <param name="element">Element expected to be absent.</param>
 	/// <param name="message">Error message.</param>
 	protected static void DoesNotContain(ICollection collection, object element, string message = "")
-		=> CollectionAssert.DoesNotContain(collection, element, message);
+	{
+		EnsureArg(collection, "collection", message);
+
+		CollectionAssert.DoesNotContain(collection, element, message);
+	}
 
 	/// <summary>
 	/// Asserts that one collection is a subset of another.
@@ -469,7 +563,12 @@ public abstract class BaseTestClass
 	/// <param name="superset">Superset.</param>
 	/// <param name="message">Error message.</param>
 	protected static void IsSubsetOf(ICollection subset, ICollection superset, string message = "")
-		=> CollectionAssert.IsSubsetOf(subset, superset, message);
+	{
+		EnsureArg(subset, "subset", message);
+		EnsureArg(superset, "superset", message);
+
+		CollectionAssert.IsSubsetOf(subset, superset, message);
+	}
 
 	/// <summary>
 	/// Asserts that one collection is not a subset of another.
@@ -478,7 +577,12 @@ public abstract class BaseTestClass
 	/// <param name="superset">Superset.</param>
 	/// <param name="message">Error message.</param>
 	protected static void IsNotSubsetOf(ICollection subset, ICollection superset, string message = "")
-		=> CollectionAssert.IsNotSubsetOf(subset, superset, message);
+	{
+		EnsureArg(subset, "subset", message);
+		EnsureArg(superset, "superset", message);
+
+		CollectionAssert.IsNotSubsetOf(subset, superset, message);
+	}
 
 	/// <summary>
 	/// Tests whether the specified object is an instance of the expected type.
@@ -643,7 +747,11 @@ public abstract class BaseTestClass
 	/// <param name="value">The string to search.</param>
 	/// <param name="message">Error message.</param>
 	protected static void DoesNotContain(string substring, string value, string message = "")
-		=> Assert.DoesNotContain(substring, value, message);
+	{
+		EnsureSubstringArgs(substring, value, message);
+
+		Assert.DoesNotContain(substring, value, message);
+	}
 
 	/// <summary>
 	/// Tests whether the value is positive (greater than zero).
