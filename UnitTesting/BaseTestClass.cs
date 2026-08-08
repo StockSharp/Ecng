@@ -141,8 +141,20 @@ public abstract class BaseTestClass
 	/// <param name="expected">Expected value.</param>
 	/// <param name="actual">Actual value.</param>
 	/// <param name="message">Error message.</param>
+	/// <remarks>
+	/// Collections are compared element-wise. The <see cref="ICollection"/> overload cannot
+	/// do this on its own: for a typed argument such as <c>string[]</c> this generic overload
+	/// binds by identity conversion and always wins resolution, so without the dispatch below
+	/// two equal arrays would be compared by reference and fail — reporting an expected and an
+	/// actual value that print identically.
+	/// </remarks>
 	protected static void AreEqual<T>(T expected, T actual, string message = "")
-		=> Assert.AreEqual(expected, actual, message);
+	{
+		if (expected is ICollection e && actual is ICollection a)
+			CollectionAssert.AreEqual(e, a, message);
+		else
+			Assert.AreEqual(expected, actual, message);
+	}
 
 	/// <summary>
 	/// Tests whether two values are not equal.
@@ -151,8 +163,14 @@ public abstract class BaseTestClass
 	/// <param name="notExpected">Not expected value.</param>
 	/// <param name="actual">Actual value.</param>
 	/// <param name="message">Error message.</param>
+	/// <remarks>Collections are compared element-wise, for the reason given on <see cref="AreEqual{T}"/>.</remarks>
 	protected static void AreNotEqual<T>(T notExpected, T actual, string message = "")
-		=> Assert.AreNotEqual(notExpected, actual, message);
+	{
+		if (notExpected is ICollection n && actual is ICollection a)
+			CollectionAssert.AreNotEqual(n, a, message);
+		else
+			Assert.AreNotEqual(notExpected, actual, message);
+	}
 
 	/// <summary>
 	/// Tests whether two objects refer to the same instance.
@@ -372,7 +390,15 @@ public abstract class BaseTestClass
 	/// <param name="collection">Collection to check.</param>
 	/// <param name="message">Error message.</param>
 	protected static void HasCount(int count, ICollection collection, string message = "")
-		=> Assert.HasCount(count, collection, message);
+	{
+		// A null collection is an assertion failure, not an ArgumentException: a test asserting a
+		// count on something that came back null wants to read "it was null", not an argument
+		// error thrown from inside Enumerable.Cast, which names no collection and no count.
+		if (collection is null)
+			Assert.Fail(message.IsEmpty() ? $"Expected a collection of {count} element(s) but it was null." : message);
+
+		Assert.HasCount(count, collection, message);
+	}
 
 	/// <summary>
 	/// Asserts that all elements are non-null.
@@ -397,7 +423,26 @@ public abstract class BaseTestClass
 	/// <param name="expectedType">Expected type.</param>
 	/// <param name="message">Error message.</param>
 	protected static void AllItemsAreInstancesOfType(ICollection collection, Type expectedType, string message = "")
-		=> CollectionAssert.AllItemsAreInstancesOfType(collection, expectedType, message);
+	{
+		// CollectionAssert skips nulls, so a collection that failed to fill half its slots still
+		// satisfies a type assertion - the worst shape a bad assertion can take, since it looks
+		// like every element was checked. null is an instance of nothing; reject it, and say which
+		// slot it was in.
+		if (collection is not null)
+		{
+			var index = 0;
+
+			foreach (var item in collection)
+			{
+				if (item is null)
+					Assert.Fail(message.IsEmpty() ? $"Element at index {index} is null and so is not an instance of {expectedType?.Name}." : message);
+
+				index++;
+			}
+		}
+
+		CollectionAssert.AllItemsAreInstancesOfType(collection, expectedType, message);
+	}
 
 	/// <summary>
 	/// Asserts that the collection contains the specified element.
@@ -629,7 +674,7 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsPositive(double value, string message = "")
 	{
-		if (value <= 0)
+		if (!(value > 0))
 			Assert.Fail(message.IsEmpty() ? $"Expected positive value but was {value}." : message);
 	}
 
@@ -673,7 +718,7 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void IsNegative(double value, string message = "")
 	{
-		if (value >= 0)
+		if (!(value < 0))
 			Assert.Fail(message.IsEmpty() ? $"Expected negative value but was {value}." : message);
 	}
 
