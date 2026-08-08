@@ -2,8 +2,6 @@ namespace Ecng.Tests;
 
 /// <summary>
 /// The boolean, nullity, identity and type-check part of the <see cref="BaseTestClass"/> assertion surface.
-/// Each test drives one helper in both directions - what it must accept and what it must reject - because a
-/// helper whose body was emptied still satisfies every accepting call on its own.
 /// </summary>
 [TestClass]
 public class BaseTestClassBooleanTests : BaseTestClass
@@ -37,16 +35,14 @@ public class BaseTestClassBooleanTests : BaseTestClass
 		var ex = Throws<AssertInconclusiveException>(() => Inconclusive("skipped"));
 		Contains("skipped", ex.Message);
 
-		// Callers routinely write Throws<AssertFailedException>; if the two exceptions were
-		// related by inheritance an inconclusive result would silently read as a failure.
+		// AssertInconclusiveException is not related by inheritance to AssertFailedException.
 		IsNotInstanceOfType<AssertFailedException>(ex);
 	}
 
 	[TestMethod]
 	public void IsTrue_AcceptsTrueRejectsFalse()
 	{
-		// Built at run time so the condition survives constant folding: a folded literal
-		// would test the compiler rather than the helper.
+		// Computed at run time so the compiler does not fold the conditions into literals.
 		var length = new string('a', 2).Length;
 
 		IsTrue(true);
@@ -83,7 +79,7 @@ public class BaseTestClassBooleanTests : BaseTestClass
 
 		Throws<AssertFailedException>(() => IsNull(new object()));
 
-		// The usual traps: an empty string and a zero are values, not absence of one.
+		// An empty string and a zero are values, not absence of one.
 		Throws<AssertFailedException>(() => IsNull(string.Empty));
 		Throws<AssertFailedException>(() => IsNull(0));
 
@@ -113,8 +109,7 @@ public class BaseTestClassBooleanTests : BaseTestClass
 		AreSame(instance, instance);
 		AreSame(null, null);
 
-		// Built at run time so the compiler cannot intern them into one instance:
-		// equal by value, different references, and AreSame is about references.
+		// Built at run time so they are not interned: equal by value, distinct references.
 		var left = new string('a', 2);
 		var right = new string('a', 2);
 		AreEqual(left, right);
@@ -124,8 +119,7 @@ public class BaseTestClassBooleanTests : BaseTestClass
 		Throws<AssertFailedException>(() => AreSame(new Animal(), null));
 		Throws<AssertFailedException>(() => AreSame(null, new Animal()));
 
-		// Numbers reach the helper as two separate boxes, so identity never holds for them -
-		// the trap a caller falls into by reaching for AreSame when they mean AreEqual.
+		// Each number is boxed at the call site, so identity never holds for them.
 		Throws<AssertFailedException>(() => AreSame(1, 1));
 
 		var ex = Throws<AssertFailedException>(() => AreSame(new Animal(), new Animal(), "same text"));
@@ -168,8 +162,7 @@ public class BaseTestClassBooleanTests : BaseTestClass
 		Throws<AssertFailedException>(() => IsInstanceOfType(42, typeof(string)));
 		Throws<AssertFailedException>(() => IsInstanceOfType("abc", typeof(int)));
 
-		// The other side of the derived/interface cases above: the relation is one-way,
-		// so a base instance is not an instance of the derived type.
+		// The relation is one-way: a base instance is not an instance of the derived type.
 		Throws<AssertFailedException>(() => IsInstanceOfType(new Animal(), typeof(Dog)));
 		Throws<AssertFailedException>(() => IsInstanceOfType(new Animal(), typeof(IMarker)));
 
@@ -213,8 +206,7 @@ public class BaseTestClassBooleanTests : BaseTestClass
 
 		Throws<AssertFailedException>(() => IsInstanceOfType<string>(42));
 
-		// Against the accepted IsInstanceOfType<int>(42) above: boxed numbers keep their exact
-		// type, so a widening conversion that the compiler would allow does not apply here.
+		// A boxed int keeps its exact type, so the widening conversion to long does not apply.
 		Throws<AssertFailedException>(() => IsInstanceOfType<long>(42));
 
 		Throws<AssertFailedException>(() => IsInstanceOfType<Dog>(new Animal()));
@@ -246,12 +238,10 @@ public class BaseTestClassBooleanTests : BaseTestClass
 	[TestMethod]
 	public void TypeChecks_ReportAMissingTypeAsAnAssertionFailure()
 	{
-		// The accepting calls fix the type argument as the only thing wrong below.
 		IsInstanceOfType("abc", typeof(string));
 		IsNotInstanceOfType("abc", typeof(int));
 
-		// Having no type to check against is a bug in the calling test, and it has to read as a
-		// failed assertion like any other - not as an argument exception escaping the helper.
+		// A null type argument surfaces as an assertion failure, not as an argument exception.
 		Throws<AssertFailedException>(() => IsInstanceOfType("abc", (Type)null));
 		Throws<AssertFailedException>(() => IsNotInstanceOfType("abc", (Type)null));
 	}

@@ -7,12 +7,7 @@ using Ecng.UnitTesting;
 
 /// <summary>
 /// The string part of the <see cref="BaseTestClass"/> assertion surface: substring, prefix,
-/// suffix, regex and emptiness checks. Each test method drives its helper in both directions -
-/// an input it must accept and an input it must reject - so that emptying the helper body
-/// cannot leave the method green. The two separation tests - whitespace and null - are the
-/// deliberate exception: they hold a single input fixed and record which helpers take it and
-/// which refuse it, so a helper appears there in one direction only and gets its other
-/// direction from its own dedicated test.
+/// suffix, regex and emptiness checks.
 /// </summary>
 [TestClass]
 public class BaseTestClassStringTests : BaseTestClass
@@ -36,9 +31,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void Contains_ArgumentOrderIsSubstringThenValue()
 	{
-		// The signature is Contains(substring, value) - needle first, haystack second, the
-		// opposite of the reading order most callers assume. The same two strings swapped ask
-		// whether the short word contains the long sentence, which must fail.
+		// The signature is Contains(substring, value) - needle first, haystack second.
 		Contains("quick", _sentence);
 		Throws<AssertFailedException>(() => Contains(_sentence, "quick"));
 	}
@@ -54,7 +47,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void Contains_EmptySubstringIsPresentEverywhereButEmptyValueHoldsNothingElse()
 	{
-		// The empty needle is found even in the one haystack where nothing else can be.
+		// An empty needle is present in every value, including the empty string.
 		Contains(string.Empty, _sentence);
 		Contains(string.Empty, string.Empty);
 		Throws<AssertFailedException>(() => Contains("a", string.Empty));
@@ -78,8 +71,6 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void Contains_RejectsNulls()
 	{
-		// The non-null pair passes, which is what pins null as the reason for the failures below
-		// rather than something about these particular strings.
 		Contains("quick", _sentence);
 
 		Throws<AssertFailedException>(() => Contains(null, _sentence));
@@ -103,8 +94,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void DoesNotContain_IsCaseSensitive()
 	{
-		// Differing only in case counts as absent - and the same word in the sentence's own case
-		// is present, which is what makes the accepted call above a case check and not a typo.
+		// Differing only in case counts as absent.
 		DoesNotContain("QUICK", _sentence);
 		Throws<AssertFailedException>(() => DoesNotContain("quick", _sentence));
 	}
@@ -112,9 +102,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void DoesNotContain_ArgumentOrderIsSubstringThenValue()
 	{
-		// Same order as Contains. The rejecting call is what pins the orientation: had the helper
-		// read its arguments the other way it would have looked for the sentence inside "brown",
-		// found nothing and stayed green.
+		// DoesNotContain(substring, value) - needle first, the same order as Contains.
 		Throws<AssertFailedException>(() => DoesNotContain("brown", _sentence));
 		DoesNotContain(_sentence, "brown");
 	}
@@ -144,7 +132,6 @@ public class BaseTestClassStringTests : BaseTestClass
 		StartsWith("T", _sentence);
 		StartsWith(_sentence, _sentence);
 
-		// Present but not at the start, and absent entirely.
 		Throws<AssertFailedException>(() => StartsWith("quick", _sentence));
 		Throws<AssertFailedException>(() => StartsWith("fox", _sentence));
 		Throws<AssertFailedException>(() => StartsWith("slow", _sentence));
@@ -258,8 +245,6 @@ public class BaseTestClassStringTests : BaseTestClass
 	public void MatchesRegex_MatchesAnywhereWhenUnanchored()
 	{
 		// Regex.IsMatch semantics: a partial hit is a match, the pattern need not span the value.
-		// The anchored twin of the same pattern must fail, or the accepted call would prove
-		// nothing beyond "quick appears somewhere".
 		MatchesRegex(new Regex("quick"), _sentence);
 		Throws<AssertFailedException>(() => MatchesRegex(new Regex("^quick$"), _sentence));
 
@@ -409,9 +394,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void WhitespaceSeparatesTheEmptyAndWhiteSpaceHelpers()
 	{
-		// A whitespace-only string is one of the two inputs that split the six emptiness helpers -
-		// null, in the test below, is the other - and the split is the point: empty is about
-		// length, whitespace is about content.
+		// Empty is about length, whitespace about content: the two families split on this input.
 		const string ws = " \t\r\n";
 
 		Throws<AssertFailedException>(() => IsEmpty(ws));
@@ -427,8 +410,8 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void NullSeparatesTheEmptyAndNullOrEmptyHelpers()
 	{
-		// Null is the other dividing input: the IsEmpty pair rejects it outright, the
-		// IsNullOrEmpty and IsNullOrWhiteSpace pairs fold it in with the empty string.
+		// The IsEmpty pair rejects null outright; the IsNullOrEmpty and IsNullOrWhiteSpace pairs
+		// fold it in with the empty string.
 		Throws<AssertFailedException>(() => IsEmpty((string)null));
 		Throws<AssertFailedException>(() => IsNotEmpty((string)null));
 
@@ -442,8 +425,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	[TestMethod]
 	public void SubstringAndRegexHelpers_KeepCustomMessage()
 	{
-		// Passing a message must not disturb the check itself - the same calls on good input
-		// still succeed, so the failures below come from the inputs and not from the overload.
+		// The message overload must leave the check itself unchanged.
 		Contains("quick", _sentence, "contains text");
 		DoesNotContain("slow", _sentence, "does-not-contain text");
 		StartsWith("The", _sentence, "prefix text");
@@ -476,8 +458,7 @@ public class BaseTestClassStringTests : BaseTestClass
 		KeepsMessage(() => IsNullOrWhiteSpace("a", "whitespace text"), "whitespace text");
 		KeepsMessage(() => IsNotNullOrWhiteSpace(" ", "non-whitespace text"), "non-whitespace text");
 
-		// The null input takes a different branch inside IsEmpty/IsNotEmpty than a wrong-length
-		// one, and that branch builds its own default message.
+		// Null takes a different branch inside IsEmpty/IsNotEmpty, with its own default message.
 		KeepsMessage(() => IsEmpty((string)null, "empty null text"), "empty null text");
 		KeepsMessage(() => IsNotEmpty((string)null, "non-empty null text"), "non-empty null text");
 	}
@@ -486,8 +467,7 @@ public class BaseTestClassStringTests : BaseTestClass
 	{
 		var ex = Throws<AssertFailedException>(failing);
 
-		// Raw string search rather than the Contains helper: checking Contains's own failure
-		// message with Contains would make the assertion depend on what it is testing.
+		// Raw string search, not the Contains helper: Contains is one of the helpers under test.
 		IsTrue(ex.Message.Contains(expected), $"Message did not carry the custom text: {ex.Message}");
 	}
 }

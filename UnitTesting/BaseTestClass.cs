@@ -102,11 +102,9 @@ public abstract class BaseTestClass
 	protected static void Inconclusive(string message = default)
 		=> Assert.Inconclusive(message);
 
-	// A null handed to an assertion is a bug in the calling test, and it has to read as a failed
-	// assertion on every MSTest version. MSTest itself is not uniform about it: some checks guard
-	// the argument and report a failure, others raise an argument exception, and where only one of
-	// a pair is guarded the other is dereferenced outright. The guards below decide it here, before
-	// anything is delegated, so the answer no longer depends on which MSTest is underneath.
+	// MSTest is not uniform on a null argument: depending on the check and the version it fails,
+	// raises an argument exception, or dereferences it. The guards below run before anything is
+	// delegated, so a null always reads as a failed assertion.
 
 	/// <summary>
 	/// Renders a string for a failure message, so that a null reads differently from an empty string.
@@ -192,11 +190,8 @@ public abstract class BaseTestClass
 	/// <param name="actual">Actual value.</param>
 	/// <param name="message">Error message.</param>
 	/// <remarks>
-	/// Collections are compared element-wise. The <see cref="ICollection"/> overload cannot
-	/// do this on its own: for a typed argument such as <c>string[]</c> this generic overload
-	/// binds by identity conversion and always wins resolution, so without the dispatch below
-	/// two equal arrays would be compared by reference and fail — reporting an expected and an
-	/// actual value that print identically.
+	/// Collections are compared element-wise. A <see cref="string"/> is not an
+	/// <see cref="ICollection"/> and so is compared by value.
 	/// </remarks>
 	protected static void AreEqual<T>(T expected, T actual, string message = "")
 	{
@@ -213,7 +208,10 @@ public abstract class BaseTestClass
 	/// <param name="notExpected">Not expected value.</param>
 	/// <param name="actual">Actual value.</param>
 	/// <param name="message">Error message.</param>
-	/// <remarks>Collections are compared element-wise, for the reason given on <see cref="AreEqual{T}"/>.</remarks>
+	/// <remarks>
+	/// Collections are compared element-wise. A <see cref="string"/> is not an
+	/// <see cref="ICollection"/> and so is compared by value.
+	/// </remarks>
 	protected static void AreNotEqual<T>(T notExpected, T actual, string message = "")
 	{
 		if (notExpected is ICollection n && actual is ICollection a)
@@ -469,9 +467,8 @@ public abstract class BaseTestClass
 	/// <param name="message">Error message.</param>
 	protected static void HasCount(int count, ICollection collection, string message = "")
 	{
-		// A null collection is an assertion failure, not an ArgumentException: a test asserting a
-		// count on something that came back null wants to read "it was null", not an argument
-		// error thrown from inside Enumerable.Cast, which names no collection and no count.
+		// Assert.HasCount raises ArgumentNullException on a null collection; report it as a
+		// failed assertion instead.
 		if (collection is null)
 			Assert.Fail(message.IsEmpty() ? $"Expected a collection of {count} element(s) but it was null." : message);
 
@@ -513,10 +510,7 @@ public abstract class BaseTestClass
 		EnsureArg(collection, "collection", message);
 		EnsureArg(expectedType, "expected type", message);
 
-		// CollectionAssert skips nulls, so a collection that failed to fill half its slots still
-		// satisfies a type assertion - the worst shape a bad assertion can take, since it looks
-		// like every element was checked. null is an instance of nothing; reject it, and say which
-		// slot it was in.
+		// CollectionAssert skips null elements, so they are rejected here first, naming the index.
 		var index = 0;
 
 		foreach (var item in collection)

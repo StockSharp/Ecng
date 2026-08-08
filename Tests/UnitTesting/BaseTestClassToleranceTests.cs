@@ -4,13 +4,10 @@ namespace Ecng.Tests.UnitTesting;
 /// The tolerance and case-insensitive assertion overloads of <see cref="BaseTestClass"/>.
 /// </summary>
 /// <remarks>
-/// These helpers forward to MSTest, so what is pinned here is the contract every test in the
-/// workspace already relies on, including the parts that are surprising: the delta boundary is
-/// inclusive, NaN equals NaN, an invalid delta is an <see cref="ArgumentOutOfRangeException"/>
-/// rather than an assertion failure, an infinite delta merges any finite distance but still not
-/// NaN, and a pair of like-signed infinities satisfies the equal and the not-equal helper alike.
-/// Every claim below is bracketed: each method shows both the input the helper must accept and
-/// the input it must reject, so none of them would survive an empty helper body.
+/// The delta boundary is inclusive, NaN equals NaN, an invalid delta is an
+/// <see cref="ArgumentOutOfRangeException"/> rather than an assertion failure, an infinite delta
+/// merges any finite distance but not NaN, and a pair of like-signed infinities satisfies the
+/// equal and the not-equal helper alike.
 /// </remarks>
 [TestClass]
 public class BaseTestClassToleranceTests : BaseTestClass
@@ -62,9 +59,8 @@ public class BaseTestClassToleranceTests : BaseTestClass
 		AreEqual(1.0, 1.0004, 0.001);
 		AreEqual(1.0, 0.9996, 0.001);
 
-		// A difference of exactly delta is accepted, and the comparison is symmetric in
-		// expected/actual. 1.5000000000000002 is the next double above 1.5, so the pair below
-		// straddles the boundary by one ulp and fixes which side it falls on.
+		// Exactly delta is accepted, either way round; 1.5000000000000002 is the next double
+		// above 1.5, so the rejected pairs sit one ulp past the boundary.
 		AreEqual(1.0, 1.5, 0.5);
 		AreEqual(1.5, 1.0, 0.5);
 
@@ -78,8 +74,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	{
 		AreEqual(1.0, 1.0, 0.0);
 
-		// The same pair either way round the classic binary representation error: absorbed by a
-		// delta that covers it, rejected by a zero delta.
+		// 0.1 + 0.2 is not exactly 0.3: a covering delta absorbs the difference, a zero one does not.
 		AreEqual(0.1 + 0.2, 0.3, 1e-15);
 		Throws<AssertFailedException>(() => AreEqual(0.1 + 0.2, 0.3, 0.0));
 	}
@@ -87,8 +82,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	[TestMethod]
 	public void AreEqualDouble_InvalidDelta_ThrowsArgumentOutOfRange()
 	{
-		// A nonsensical delta is a caller bug, not a failed assertion - it does not surface as
-		// AssertFailedException even when the values are equal and the assertion would hold.
+		// An invalid delta throws even when the values are equal and the assertion would hold.
 		AreEqual(1.0, 1.0, 0.0);
 
 		var negative = Throws<ArgumentOutOfRangeException>(() => AreEqual(1.0, 1.0, -1.0));
@@ -129,8 +123,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 		AreEqual(double.MinValue, double.MaxValue, double.PositiveInfinity);
 		AreEqual(double.PositiveInfinity, 0.0, double.PositiveInfinity);
 
-		// The NaN check runs ahead of the delta comparison, so an infinite delta does not
-		// swallow a NaN operand the way it swallows any distance between real values.
+		// The NaN check runs ahead of the delta comparison, so no delta swallows a NaN operand.
 		Throws<AssertFailedException>(() => AreEqual(double.NaN, 1.0, double.PositiveInfinity));
 	}
 
@@ -141,8 +134,8 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	{
 		AreEqual(1f, 1.4f, 0.5f);
 
-		// 1.5000001f is the next float above 1.5f, so these two calls sit one ulp either side of
-		// the boundary and pin it to the inclusive side.
+		// Exactly delta is accepted; 1.5000001f is the next float above 1.5f, so the rejected
+		// pairs sit one ulp past the boundary.
 		AreEqual(1f, 1.5f, 0.5f);
 		AreEqual(1.5f, 1f, 0.5f);
 
@@ -156,8 +149,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	{
 		AreEqual(1f, 1f, 0f);
 
-		// 1.0000001f is the next representable float above 1f - the smallest difference the
-		// helper can be asked to notice.
+		// 1.0000001f is the next representable float above 1f.
 		Throws<AssertFailedException>(() => AreEqual(1f, 1.0000001f, 0f));
 	}
 
@@ -201,8 +193,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 		AreNotEqual(2.0, 1.0, 0.5);
 
 		// One ulp past delta already counts as differing, while exactly delta does not, so the
-		// boundary belongs to AreEqual. Both boundary pairs are run through both helpers, which
-		// is what shows they divide the pairs instead of both accepting one.
+		// boundary belongs to AreEqual.
 		AreNotEqual(1.0, 1.5000000000000002, 0.5);
 		Throws<AssertFailedException>(() => AreEqual(1.0, 1.5000000000000002, 0.5));
 
@@ -245,15 +236,14 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	[TestMethod]
 	public void AreNotEqualDouble_LikeSignedInfinitiesSatisfyBothHelpers()
 	{
-		// Controls for the anomaly below: on one and the same huge but finite pair the helpers
-		// still divide the verdict, and AreEqual is live in its rejecting direction too.
+		// A huge but finite pair: the helpers still divide the verdict, and the last line keeps
+		// AreEqual live in its rejecting direction.
 		Throws<AssertFailedException>(() => AreNotEqual(1e300, 1e300, 1.0));
 		AreEqual(1e300, 1e300, 1.0);
 		Throws<AssertFailedException>(() => AreEqual(1e300, -1e300, 1.0));
 
-		// Yet the same shape with like-signed infinities passes both: Inf - Inf is NaN, which
-		// compares false against the delta, so AreNotEqual reports them as differing while
-		// AreEqual reports them as equal. Only AreEqual can be trusted on infinite values.
+		// Inf - Inf is NaN, which compares false against the delta, so like-signed infinities
+		// are reported as differing by AreNotEqual and as equal by AreEqual.
 		AreNotEqual(double.PositiveInfinity, double.PositiveInfinity, 1.0);
 		AreNotEqual(double.NegativeInfinity, double.NegativeInfinity, 1.0);
 		AreEqual(double.PositiveInfinity, double.PositiveInfinity, 1.0);
@@ -280,9 +270,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 	{
 		AreNotEqual(1f, 2f, 0.5f);
 
-		// One ulp past delta separates; exactly delta does not. As in the double overload, both
-		// boundary pairs go through both helpers, so the side the boundary falls on is pinned by
-		// a disagreement rather than by AreNotEqual alone.
+		// One ulp past delta separates; exactly delta does not, so the boundary belongs to AreEqual.
 		AreNotEqual(1f, 1.5000001f, 0.5f);
 		Throws<AssertFailedException>(() => AreEqual(1f, 1.5000001f, 0.5f));
 
@@ -317,7 +305,7 @@ public class BaseTestClassToleranceTests : BaseTestClass
 		AreNotEqual(float.NaN, 1f, 1f);
 		Throws<AssertFailedException>(() => AreNotEqual(float.NaN, float.NaN, 1f));
 
-		// Same infinity behaviour as the double overload, with a finite control to show the
+		// Same infinity behaviour as the double overload, after a finite control showing the
 		// helper does reject identical operands.
 		Throws<AssertFailedException>(() => AreNotEqual(1e30f, 1e30f, 1f));
 		AreNotEqual(float.PositiveInfinity, float.PositiveInfinity, 1f);

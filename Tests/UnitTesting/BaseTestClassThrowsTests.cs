@@ -3,13 +3,6 @@ namespace Ecng.Tests.UnitTesting;
 /// <summary>
 /// The exception-expecting helpers of <see cref="BaseTestClass"/>.
 /// </summary>
-/// <remarks>
-/// Every helper gets one test that drives it in both directions: it must return what it should
-/// accept and it must raise <see cref="AssertFailedException"/> on what it should not. The separate
-/// no-exception tests cover the failing direction alone, there being nothing there to accept. The
-/// failing direction is captured with a plain try/catch rather than with the helpers themselves -
-/// wrapping Throws in Throws would let a broken helper verify itself and still go green.
-/// </remarks>
 [TestClass]
 public class BaseTestClassThrowsTests : BaseTestClass
 {
@@ -40,8 +33,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 
 	/// <summary>
 	/// Runs <paramref name="action"/> and returns the assertion failure it raised, or <see langword="null"/>
-	/// when it raised none. Anything other than <see cref="AssertFailedException"/> escapes, so a helper
-	/// that lets the original exception through is reported as that exception and not as a silent pass.
+	/// when it raised none. Anything other than <see cref="AssertFailedException"/> escapes.
 	/// </summary>
 	private static AssertFailedException CaptureFailure(Action action)
 	{
@@ -82,15 +74,10 @@ public class BaseTestClassThrowsTests : BaseTestClass
 
 		var thrownName = thrown.GetType().Name;
 
-		// A helper that never ran the delegate would also fail with AssertFailedException; naming
-		// the type it caught is what tells the two apart, since a helper that never called the
-		// delegate could not name it. Only the two type names are required - what else MSTest puts
-		// in its failure text differs between its major versions and is not this wrapper's contract.
 		Contains(expected.Name, failure.Message);
 		Contains(thrownName, failure.Message);
 
-		// Both names being present would hold just as well for a report that swapped their roles, so
-		// pin the roles down by position: a failure states the type it wanted before the one it got.
+		// Roles are pinned by position: a failure names the requested type before the caught one.
 		var expectedAt = failure.Message.IndexOf(expected.Name, StringComparison.Ordinal);
 		var thrownAt = failure.Message.IndexOf(thrownName, StringComparison.Ordinal);
 
@@ -104,12 +91,12 @@ public class BaseTestClassThrowsTests : BaseTestClass
 
 		AreSame(exact, Throws<InvalidOperationException>(() => throw exact));
 
-		// The point of Throws over ThrowsExactly: ArgumentNullException is an ArgumentException.
+		// ArgumentNullException derives from ArgumentException.
 		var derived = new ArgumentNullException("param", _msg);
 
 		AreSame(derived, Throws<ArgumentException>(() => throw derived));
 
-		// The relation is one-way - a plain ArgumentException is not an ArgumentNullException.
+		// The relation is one-way: a plain ArgumentException is not an ArgumentNullException.
 		var baseError = new ArgumentException(_msg);
 
 		AssertRejected(CaptureFailure(() => Throws<ArgumentNullException>(() => throw baseError)), typeof(ArgumentNullException), baseError);
@@ -127,7 +114,6 @@ public class BaseTestClassThrowsTests : BaseTestClass
 		var failure = CaptureFailure(() => Throws<InvalidOperationException>(() => invoked = true, _custom));
 
 		IsNotNull(failure);
-		// The helper must run the delegate, not merely fail because it never looked.
 		IsTrue(invoked);
 		Contains(_custom, failure.Message);
 	}
@@ -139,8 +125,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 
 		AreSame(exact, ThrowsExactly<ArgumentNullException>(() => throw exact));
 
-		// The two helpers part ways on this very instance: Throws takes it as an ArgumentException
-		// because it derives from one, ThrowsExactly refuses it for exactly that reason.
+		// ArgumentNullException derives from ArgumentException: Throws takes it as one, ThrowsExactly does not.
 		AreSame(exact, Throws<ArgumentException>(() => throw exact));
 		AssertRejected(CaptureFailure(() => ThrowsExactly<ArgumentException>(() => throw exact)), typeof(ArgumentException), exact);
 
@@ -167,8 +152,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 		var exact = new InvalidOperationException(_msg);
 
 		AreSame(exact, await ThrowsAsync<InvalidOperationException>(() => FaultedTask(exact)));
-		// A delegate that throws on the call itself never produces a Task; the helper must still
-		// report it as the awaited failure.
+		// A delegate that throws on the call itself never returns a Task.
 		AreSame(exact, await ThrowsAsync<InvalidOperationException>(() => ThrowBeforeTask(exact)));
 		AreSame(exact, await ThrowsAsync<InvalidOperationException>(() => ThrowAfterYield(exact)));
 
@@ -196,8 +180,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 	{
 		var completedInvoked = false;
 
-		// An already completed Task never suspends, so the helper takes a different path than the
-		// yielding delegate below.
+		// An already completed Task never suspends, unlike the yielding delegate below.
 		var completedFailure = await CaptureFailureAsync(() => ThrowsAsync<InvalidOperationException>(() =>
 		{
 			completedInvoked = true;
@@ -208,6 +191,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 		IsTrue(completedInvoked);
 		Contains(_custom, completedFailure.Message);
 
+		// The suspending shape, on the default-message path.
 		var yieldedInvoked = false;
 
 		var yieldedFailure = await CaptureFailureAsync(() => ThrowsAsync<InvalidOperationException>(async () =>
@@ -229,8 +213,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 		AreSame(exact, await ThrowsExactlyAsync<ArgumentNullException>(() => ThrowBeforeTask(exact)));
 		AreSame(exact, await ThrowsExactlyAsync<ArgumentNullException>(() => ThrowAfterYield(exact)));
 
-		// The two helpers part ways on this very instance: ThrowsAsync takes it as an ArgumentException
-		// because it derives from one, ThrowsExactlyAsync refuses it for exactly that reason.
+		// ArgumentNullException derives from ArgumentException: ThrowsAsync takes it as one, ThrowsExactlyAsync does not.
 		AreSame(exact, await ThrowsAsync<ArgumentException>(() => FaultedTask(exact)));
 		AssertRejected(await CaptureFailureAsync(() => ThrowsExactlyAsync<ArgumentException>(() => FaultedTask(exact))), typeof(ArgumentException), exact);
 		AssertRejected(await CaptureFailureAsync(() => ThrowsExactlyAsync<ArgumentException>(() => ThrowBeforeTask(exact))), typeof(ArgumentException), exact);
@@ -258,6 +241,7 @@ public class BaseTestClassThrowsTests : BaseTestClass
 		IsTrue(completedInvoked);
 		Contains(_custom, completedFailure.Message);
 
+		// The suspending shape, on the default-message path.
 		var yieldedInvoked = false;
 
 		var yieldedFailure = await CaptureFailureAsync(() => ThrowsExactlyAsync<InvalidOperationException>(async () =>

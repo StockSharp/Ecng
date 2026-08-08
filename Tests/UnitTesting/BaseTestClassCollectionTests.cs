@@ -4,15 +4,10 @@ namespace Ecng.Tests.UnitTesting;
 /// The <see cref="ICollection"/> assertion overloads <see cref="BaseTestClass"/> exposes.
 /// </summary>
 /// <remarks>
-/// Every argument is cast to <see cref="ICollection"/> on purpose. For a typed argument such as
-/// <c>int[]</c> the generic <c>AreEqual&lt;T&gt;(T, T)</c> binds by identity conversion and wins
-/// overload resolution, so a test written with typed arguments would never reach the overloads
-/// under test here. With both arguments already typed as <see cref="ICollection"/> the two
-/// candidates have identical parameter types and the non-generic one is the better member.
-///
-/// Each method asserts both directions of one behaviour: what the helper must accept and what it
-/// must reject. A method that only ever calls the helper with valid input would pass unchanged if
-/// the helper asserted nothing at all.
+/// Arguments are cast to <see cref="ICollection"/> because for a typed argument such as <c>int[]</c>
+/// the generic <c>AreEqual&lt;T&gt;(T, T)</c> binds by identity conversion and wins overload
+/// resolution; with both arguments typed as <see cref="ICollection"/> the candidates have identical
+/// parameter types and the non-generic overload is the better member.
 /// </remarks>
 [TestClass]
 public class BaseTestClassCollectionTests : BaseTestClass
@@ -28,7 +23,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		AreEqual((ICollection)new List<string> { "a", "b" }, (ICollection)new[] { "a", "b" });
 
 		Throws<AssertFailedException>(() => AreEqual((ICollection)new[] { 1, 2 }, (ICollection)new[] { 1, 3 }));
-		// A common prefix is not enough: the trailing element must be accounted for.
+		// A common prefix is not equality: the extra trailing element counts.
 		Throws<AssertFailedException>(() => AreEqual((ICollection)new[] { 1, 2 }, (ICollection)new[] { 1, 2, 3 }));
 	}
 
@@ -63,9 +58,8 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		AreNotEqual((ICollection)new[] { 1, 2 }, (ICollection)new[] { 1, 3 });
 		AreNotEqual((ICollection)new[] { 1 }, (ICollection)new[] { 1, 2 });
 
-		// Two distinct instances holding equal elements are equal here: the comparison is
-		// element-wise, so it must not report them as different just because they are
-		// different objects.
+		// Distinct instances holding equal elements are equal here: the comparison is
+		// element-wise, not by reference.
 		Throws<AssertFailedException>(() => AreNotEqual((ICollection)new[] { 1, 2 }, (ICollection)new[] { 1, 2 }));
 		Throws<AssertFailedException>(() => AreNotEqual((ICollection)Array.Empty<int>(), (ICollection)new List<int>()));
 	}
@@ -83,8 +77,6 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	[TestMethod]
 	public void AreEqual_IsOrderSensitive_AreEquivalent_IsNot()
 	{
-		// The single distinction that matters between the two helpers, proven on one pair
-		// of collections: reordering breaks AreEqual and leaves AreEquivalent satisfied.
 		var forward = (ICollection)new[] { 1, 2, 3 };
 		var reversed = (ICollection)new[] { 3, 2, 1 };
 
@@ -99,8 +91,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	[TestMethod]
 	public void AreEquivalent_CountsMultiplicities()
 	{
-		// Same distinct elements and the same size, different multiplicities - the case a
-		// set-based implementation gets wrong.
+		// Same distinct elements and the same size, different multiplicities.
 		Throws<AssertFailedException>(() => AreEquivalent((ICollection)new[] { 1, 1, 2 }, (ICollection)new[] { 1, 2, 2 }));
 		AreEquivalent((ICollection)new[] { 1, 1, 2 }, (ICollection)new[] { 2, 1, 1 });
 	}
@@ -137,7 +128,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		HasCount(0, (ICollection)Array.Empty<int>());
 		Throws<AssertFailedException>(() => HasCount(1, (ICollection)Array.Empty<int>()));
 
-		// Duplicates are elements too - the count is the size, not the number of distinct values.
+		// The count is the size, not the number of distinct values.
 		HasCount(3, (ICollection)new[] { 1, 1, 1 });
 		Throws<AssertFailedException>(() => HasCount(1, (ICollection)new[] { 1, 1, 1 }));
 	}
@@ -147,9 +138,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	{
 		HasCount(0, (ICollection)Array.Empty<int>());
 
-		// A missing collection has no count to match, not even zero. Insisting on an
-		// AssertFailedException also pins down how that is reported: a raw argument exception
-		// escaping from inside the helper would not satisfy this call.
+		// A missing collection has no count to match, not even zero.
 		Throws<AssertFailedException>(() => HasCount(0, (ICollection)null));
 	}
 
@@ -157,10 +146,9 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	public void AllItemsAreNotNull_RejectsAnyNull()
 	{
 		AllItemsAreNotNull((ICollection)new[] { "a", "b" });
-		// Nothing to violate the rule.
 		AllItemsAreNotNull((ICollection)Array.Empty<string>());
 
-		// One null among valid elements is enough, so the scan cannot stop at the first hit.
+		// One null among valid elements is enough to fail.
 		Throws<AssertFailedException>(() => AllItemsAreNotNull((ICollection)new string[] { "a", null }));
 		Throws<AssertFailedException>(() => AllItemsAreNotNull((ICollection)new string[] { null }));
 	}
@@ -172,12 +160,11 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		AllItemsAreUnique((ICollection)Array.Empty<int>());
 		Throws<AssertFailedException>(() => AllItemsAreUnique((ICollection)new[] { 1, 2, 1 }));
 
-		// One null is a unique item; a second null is a duplicate like any other repeat.
+		// One null is a unique item; a second null is a duplicate.
 		AllItemsAreUnique((ICollection)new string[] { null, "a" });
 		Throws<AssertFailedException>(() => AllItemsAreUnique((ICollection)new string[] { null, null }));
 
-		// Equal by value, not by reference: two distinct string instances with the same
-		// content are a duplicate.
+		// Duplicates are by value, not by reference: two distinct equal strings collide.
 		Throws<AssertFailedException>(() => AllItemsAreUnique((ICollection)new[] { "a", new string(['a']) }));
 	}
 
@@ -192,8 +179,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		AllItemsAreInstancesOfType((ICollection)new object[] { new Derived(), new Derived() }, typeof(Base));
 		Throws<AssertFailedException>(() => AllItemsAreInstancesOfType((ICollection)new object[] { new Base() }, typeof(Derived)));
 
-		// null is an instance of nothing, so a collection that failed to fill half its slots
-		// must not satisfy a type assertion just because the filled slots match.
+		// null is an instance of nothing, so it fails the type assertion.
 		Throws<AssertFailedException>(() => AllItemsAreInstancesOfType((ICollection)new string[] { "a", null }, typeof(string)));
 	}
 
@@ -207,7 +193,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		// Equal by value: the searched instance need not be the stored one.
 		Contains((ICollection)new[] { "a", "b" }, new string(['a']));
 
-		// null is an ordinary element to search for - found when stored, missing otherwise.
+		// null is an ordinary element to search for: found when stored, missing otherwise.
 		Contains((ICollection)new string[] { "a", null }, null);
 		Throws<AssertFailedException>(() => Contains((ICollection)new[] { "a" }, null));
 	}
@@ -227,8 +213,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	public void IsSubsetOf_IsMultisetContainment()
 	{
 		IsSubsetOf((ICollection)new[] { 1, 2 }, (ICollection)new[] { 1, 2, 3 });
-		// Shares an element but is not contained - the case a "collections intersect" check
-		// would wrongly accept.
+		// Sharing an element is not containment.
 		Throws<AssertFailedException>(() => IsSubsetOf((ICollection)new[] { 1, 4 }, (ICollection)new[] { 1, 2, 3 }));
 
 		// The empty collection is a subset of everything, including itself; nothing is a
@@ -240,7 +225,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		// A collection is a subset of itself: the relation is not proper containment.
 		IsSubsetOf((ICollection)new[] { 1, 2 }, (ICollection)new[] { 2, 1 });
 
-		// Multiplicity counts: two occurrences need two on the superset side, one does not do.
+		// Multiplicity counts: two occurrences need two on the superset side.
 		IsSubsetOf((ICollection)new[] { 1, 1 }, (ICollection)new[] { 1, 1, 2 });
 		Throws<AssertFailedException>(() => IsSubsetOf((ICollection)new[] { 1, 1 }, (ICollection)new[] { 1, 2 }));
 	}
@@ -283,10 +268,7 @@ public class BaseTestClassCollectionTests : BaseTestClass
 	[TestMethod]
 	public void MissingCollectionOrType_IsAnAssertionFailureNotAnArgumentException()
 	{
-		// Each helper is shown accepting first, so what fails below is the null and nothing else.
-		// Insisting on AssertFailedException is the point: a helper that handed the null straight
-		// to MSTest would let a raw argument exception out instead, which no test can catch as an
-		// assertion and which reads as an error in the helper rather than in the caller.
+		// Each helper is exercised with valid input first, so only the null argument fails below.
 		AllItemsAreNotNull((ICollection)new[] { "a" });
 		Throws<AssertFailedException>(() => AllItemsAreNotNull(null));
 
@@ -303,7 +285,6 @@ public class BaseTestClassCollectionTests : BaseTestClass
 		DoesNotContain((ICollection)new[] { 1 }, 2);
 		Throws<AssertFailedException>(() => DoesNotContain(null, 2));
 
-		// Both sides of the subset relation are required, so both are checked.
 		IsSubsetOf((ICollection)new[] { 1 }, (ICollection)new[] { 1, 2 });
 		Throws<AssertFailedException>(() => IsSubsetOf(null, (ICollection)new[] { 1 }));
 		Throws<AssertFailedException>(() => IsSubsetOf((ICollection)new[] { 1 }, null));
