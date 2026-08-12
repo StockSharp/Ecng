@@ -2,6 +2,8 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
 using System.Globalization;
 
 using Ecng.Collections;
@@ -254,6 +256,19 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	private static DateTimeOffset ParseDateTimeOffset(string value)
 		=> value is null ? default : DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 
+	private static Color ParseColor(string value)
+		=> (Color)TypeDescriptor.GetConverter(typeof(Color)).ConvertFromInvariantString(value);
+
+	private static string FormatColor(Color value)
+	{
+		if (value.IsEmpty)
+			return string.Empty;
+		if (value.IsNamedColor)
+			return value.Name;
+
+		return $"0x{unchecked((uint)value.ToArgb()):X8}";
+	}
+
 	private async ValueTask<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 	{
 		if (type.IsPersistable())
@@ -369,6 +384,11 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				var str = await reader.ReadAsStringAsync(cancellationToken).NoWait();
 				value = str is null ? null : ParseDateTimeOffset(str);
 			}
+			else if (type == typeof(Color))
+			{
+				var str = await reader.ReadAsStringAsync(cancellationToken).NoWait();
+				value = str is null ? null : ParseColor(str);
+			}
 			else if (type == typeof(byte[]))
 				value = await reader.ReadAsBytesAsync(cancellationToken).NoWait();
 			else if (type == typeof(SecureString))
@@ -444,6 +464,8 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 		{
 			if (value is TimeZoneInfo tz)
 				value = tz.To<string>();
+			else if (value is Color color)
+				value = FormatColor(color);
 			else if (value is Enum && EnumAsString)
 				value = value.To<string>();
 			else if (value is Type t)

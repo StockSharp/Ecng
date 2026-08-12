@@ -1,5 +1,7 @@
 namespace Ecng.Tests.Serialization;
 
+using System.Drawing;
+
 using Ecng.Serialization;
 using Ecng.Reflection;
 
@@ -313,6 +315,32 @@ public class JsonTests : BaseTestClass
 			});
 
 		await Do(storage);
+	}
+
+	[TestMethod]
+	public async Task SettingsStorageColors()
+	{
+		var previousCulture = CultureInfo.CurrentCulture;
+		try
+		{
+			CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+
+			await Do(Color.CornflowerBlue);
+			await Do(Color.FromArgb(17, 23, 42, 91));
+			await Do(Color.Empty);
+
+			var storage = new SettingsStorage()
+				.Set("Known", Color.CornflowerBlue)
+				.Set("Argb", Color.FromArgb(17, 23, 42, 91))
+				.Set("Empty", Color.Empty)
+				.Set<Color?>("Nullable", Color.OrangeRed);
+
+			await Do(storage);
+		}
+		finally
+		{
+			CultureInfo.CurrentCulture = previousCulture;
+		}
 	}
 
 	private class TestClass : Equatable<TestClass>, IPersistable
