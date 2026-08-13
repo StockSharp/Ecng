@@ -651,15 +651,20 @@ public class WebSocketClientTests : BaseTestClass
 		var statesEntered = Task.WhenAll(stateFirstEntered.Task, stateSecondEntered.Task);
 		var stateOrConnect = await Task.WhenAny(statesEntered, connect).WaitAsync(cts.Token);
 
+		// ConnectAsync finishing first means Connected was never raised, so neither subscriber will ever be
+		// entered. Report the connect outcome instead of awaiting entries that cannot arrive.
 		if (ReferenceEquals(stateOrConnect, connect))
+		{
 			await connect;
+			Fail("ConnectAsync completed without raising Connected to both subscribers.");
+		}
 
 		await statesEntered;
 		releaseStateSecond.TrySetResult();
 		await assertDoesNotAdvance(connect, "StateChanged must await the first subscriber after the last one completes.", cts.Token);
 		releaseStateFirst.TrySetResult();
 
-		await connect;
+		await connect.WaitAsync(cts.Token);
 		client.IsConnected.AssertTrue();
 
 		await client.DisconnectAsync(cts.Token);
@@ -1105,6 +1110,16 @@ public class WebSocketClientTests : BaseTestClass
 		client.ResendTimeout = TimeSpan.FromMilliseconds(200);
 		client.ResendInterval = TimeSpan.FromMilliseconds(100);
 
+		var reconnected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		client.PostConnect += (reconnect, token) =>
+		{
+			if (reconnect)
+				reconnected.TrySetResult();
+
+			return default;
+		};
+
 		await client.ConnectAsync(cts.Token);
 		client.IsConnected.AssertTrue();
 
@@ -1119,12 +1134,18 @@ public class WebSocketClientTests : BaseTestClass
 		if (!await TrySoftCloseAsync(client))
 			client.Abort();
 
-		// After reconnect, occurrences should remain the same since auto-resend is disabled
-		var sw = Stopwatch.StartNew();
+		// Wait for the reconnect itself rather than for a fixed span, so the observation below starts at the
+		// moment a resend would have been issued.
+		await reconnected.Task.WaitAsync(cts.Token);
+
+		// A resend rides along with the reconnect, so it lands within ResendTimeout (200ms) and is retried every
+		// ResendInterval (100ms). Watching an order of magnitude longer than that is enough to catch one.
 		var before = Volatile.Read(ref occurrences);
-		while (sw.Elapsed < TimeSpan.FromSeconds(30))
+		var sw = Stopwatch.StartNew();
+
+		while (sw.Elapsed < TimeSpan.FromSeconds(3))
 		{
-			await Task.Delay(200, cts.Token);
+			await Task.Delay(100, cts.Token);
 			(Volatile.Read(ref occurrences) == before).AssertTrue("Unexpected resend happened with DisableAutoResend=true.");
 		}
 
