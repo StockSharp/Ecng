@@ -9,7 +9,7 @@ using Nito.AsyncEx.Synchronous;
 /// <summary>
 /// Provides helper methods for asynchronous operations, including cancellation support, task conversion, and exception handling.
 /// </summary>
-public static class AsyncHelper
+public static partial class AsyncHelper
 {
 	// https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md
 
@@ -189,60 +189,21 @@ public static class AsyncHelper
 	}
 
 	/// <summary>
-	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// Invokes and awaits every handler in a multicast asynchronous delegate by using the specified state and invocation function.
 	/// </summary>
-	/// <typeparam name="T">The type of the handler argument.</typeparam>
-	/// <param name="handler">The multicast asynchronous delegate.</param>
-	/// <param name="arg">The handler argument.</param>
-	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <typeparam name="TDelegate">The asynchronous delegate type.</typeparam>
+	/// <typeparam name="TState">The type of the state passed to the invocation function.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate. A <see langword="null"/> delegate is treated as having no handlers.</param>
+	/// <param name="state">The state passed to the invocation function for every handler.</param>
+	/// <param name="invoke">The function that invokes one handler with the specified state.</param>
 	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="invoke"/> is <see langword="null"/>.</exception>
 	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
-	public static ValueTask InvokeAsync<T>(this Func<T, CancellationToken, ValueTask> handler, T arg, CancellationToken cancellationToken = default)
-		=> InvokeAsyncCore(handler, (arg, cancellationToken), static (h, state) => h(state.arg, state.cancellationToken));
-
-	/// <summary>
-	/// Invokes and awaits every handler in the multicast asynchronous delegate.
-	/// </summary>
-	/// <typeparam name="T">The type of the handler argument.</typeparam>
-	/// <param name="handler">The multicast asynchronous delegate.</param>
-	/// <param name="arg">The handler argument.</param>
-	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
-	/// <returns>A task representing all handler invocations.</returns>
-	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
-	public static Task InvokeAsync<T>(this Func<T, CancellationToken, Task> handler, T arg, CancellationToken cancellationToken = default)
-		=> InvokeAsyncCore(handler, (arg, cancellationToken), static (h, state) => new(h(state.arg, state.cancellationToken))).AsTask();
-
-	/// <summary>
-	/// Invokes and awaits every handler in the multicast asynchronous delegate.
-	/// </summary>
-	/// <typeparam name="T1">The type of the first handler argument.</typeparam>
-	/// <typeparam name="T2">The type of the second handler argument.</typeparam>
-	/// <param name="handler">The multicast asynchronous delegate.</param>
-	/// <param name="arg1">The first handler argument.</param>
-	/// <param name="arg2">The second handler argument.</param>
-	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
-	/// <returns>A task representing all handler invocations.</returns>
-	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
-	public static ValueTask InvokeAsync<T1, T2>(this Func<T1, T2, CancellationToken, ValueTask> handler, T1 arg1, T2 arg2, CancellationToken cancellationToken = default)
-		=> InvokeAsyncCore(handler, (arg1, arg2, cancellationToken), static (h, state) => h(state.arg1, state.arg2, state.cancellationToken));
-
-	/// <summary>
-	/// Invokes and awaits every handler in the multicast asynchronous delegate.
-	/// </summary>
-	/// <typeparam name="T1">The type of the first handler argument.</typeparam>
-	/// <typeparam name="T2">The type of the second handler argument.</typeparam>
-	/// <param name="handler">The multicast asynchronous delegate.</param>
-	/// <param name="arg1">The first handler argument.</param>
-	/// <param name="arg2">The second handler argument.</param>
-	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
-	/// <returns>A task representing all handler invocations.</returns>
-	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
-	public static Task InvokeAsync<T1, T2>(this Func<T1, T2, CancellationToken, Task> handler, T1 arg1, T2 arg2, CancellationToken cancellationToken = default)
-		=> InvokeAsyncCore(handler, (arg1, arg2, cancellationToken), static (h, state) => new(h(state.arg1, state.arg2, state.cancellationToken))).AsTask();
-
-	private static ValueTask InvokeAsyncCore<TDelegate, TState>(TDelegate handler, TState state, Func<TDelegate, TState, ValueTask> invoke)
+	public static ValueTask InvokeAsync<TDelegate, TState>(this TDelegate handler, TState state, Func<TDelegate, TState, ValueTask> invoke)
 		where TDelegate : Delegate
 	{
+		ArgumentNullException.ThrowIfNull(invoke);
+
 		if (handler is null)
 			return default;
 
@@ -263,6 +224,100 @@ public static class AsyncHelper
 
 		return tasks.WhenAll();
 	}
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static ValueTask InvokeAsync(this Func<CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync(cancellationToken, static (h, state) => h(state));
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static Task InvokeAsync(this Func<CancellationToken, Task> handler, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync(cancellationToken, static (h, state) => new(h(state))).AsTask();
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T">The type of the handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg">The handler argument.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static ValueTask InvokeAsync<T>(this Func<T, ValueTask> handler, T arg)
+		=> handler.InvokeAsync(arg, static (h, state) => h(state));
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T">The type of the handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg">The handler argument.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static Task InvokeAsync<T>(this Func<T, Task> handler, T arg)
+		=> handler.InvokeAsync(arg, static (h, state) => new(h(state))).AsTask();
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T">The type of the handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg">The handler argument.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static ValueTask InvokeAsync<T>(this Func<T, CancellationToken, ValueTask> handler, T arg, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync((arg, cancellationToken), static (h, state) => h(state.arg, state.cancellationToken));
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T">The type of the handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg">The handler argument.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static Task InvokeAsync<T>(this Func<T, CancellationToken, Task> handler, T arg, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync((arg, cancellationToken), static (h, state) => new(h(state.arg, state.cancellationToken))).AsTask();
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T1">The type of the first handler argument.</typeparam>
+	/// <typeparam name="T2">The type of the second handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg1">The first handler argument.</param>
+	/// <param name="arg2">The second handler argument.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static ValueTask InvokeAsync<T1, T2>(this Func<T1, T2, CancellationToken, ValueTask> handler, T1 arg1, T2 arg2, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync((arg1, arg2, cancellationToken), static (h, state) => h(state.arg1, state.arg2, state.cancellationToken));
+
+	/// <summary>
+	/// Invokes and awaits every handler in the multicast asynchronous delegate.
+	/// </summary>
+	/// <typeparam name="T1">The type of the first handler argument.</typeparam>
+	/// <typeparam name="T2">The type of the second handler argument.</typeparam>
+	/// <param name="handler">The multicast asynchronous delegate.</param>
+	/// <param name="arg1">The first handler argument.</param>
+	/// <param name="arg2">The second handler argument.</param>
+	/// <param name="cancellationToken">The cancellation token passed to every handler.</param>
+	/// <returns>A task representing all handler invocations.</returns>
+	/// <exception cref="AggregateException">Thrown after all handlers finish if multiple handlers are subscribed and one or more handlers fail.</exception>
+	public static Task InvokeAsync<T1, T2>(this Func<T1, T2, CancellationToken, Task> handler, T1 arg1, T2 arg2, CancellationToken cancellationToken = default)
+		=> handler.InvokeAsync((arg1, arg2, cancellationToken), static (h, state) => new(h(state.arg1, state.arg2, state.cancellationToken))).AsTask();
 
 	private static async ValueTask InvokeHandlerAsync<TDelegate, TState>(TDelegate handler, TState state, Func<TDelegate, TState, ValueTask> invoke)
 		where TDelegate : Delegate

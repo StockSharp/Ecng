@@ -5,6 +5,14 @@ using System.Threading.Tasks.Sources;
 [TestClass]
 public class AsyncHelperTests : BaseTestClass
 {
+	private delegate ValueTask ArbitraryArityHandler(
+		int number,
+		string text,
+		decimal amount,
+		DateTimeOffset time,
+		bool enabled,
+		CancellationToken cancellationToken);
+
 	private sealed class CompletedValueTaskSource : IValueTaskSource
 	{
 		private ManualResetValueTaskSourceCore<bool> _source;
@@ -250,6 +258,187 @@ public class AsyncHelperTests : BaseTestClass
 
 		await handler.InvokeAsync(42, "value", CancellationToken);
 		calls.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncSupportsMaximumFuncArityValueTaskHandlers()
+	{
+		var calls = 0;
+		Func<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, CancellationToken, ValueTask> handler =
+			(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, cancellationToken) =>
+			{
+				new[] { arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15 }
+					.AssertEqual(Enumerable.Range(1, 15));
+				cancellationToken.AssertEqual(CancellationToken);
+				calls++;
+				return default;
+			};
+		handler += (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, cancellationToken) =>
+		{
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+			return default;
+		};
+
+		await handler.InvokeAsync(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, CancellationToken);
+
+		calls.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncSupportsMaximumFuncArityTaskHandlers()
+	{
+		var calls = 0;
+		Func<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, CancellationToken, Task> handler =
+			(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, cancellationToken) =>
+			{
+				new[] { arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15 }
+					.AssertEqual(Enumerable.Range(1, 15));
+				cancellationToken.AssertEqual(CancellationToken);
+				calls++;
+				return Task.CompletedTask;
+			};
+		handler += (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, cancellationToken) =>
+		{
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+			return Task.CompletedTask;
+		};
+
+		Task invocation = handler.InvokeAsync(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, CancellationToken);
+		await invocation;
+
+		calls.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncGeneralSupportsArbitraryDelegateSignature()
+	{
+		var calls = 0;
+		var time = DateTimeOffset.UtcNow;
+
+		ArbitraryArityHandler handler = (number, text, amount, actualTime, enabled, cancellationToken) =>
+		{
+			number.AssertEqual(42);
+			text.AssertEqual("value");
+			amount.AssertEqual(12.5m);
+			actualTime.AssertEqual(time);
+			enabled.AssertTrue();
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+			return default;
+		};
+		handler += async (_, _, _, _, _, cancellationToken) =>
+		{
+			await Task.Yield();
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+		};
+
+		var state = (number: 42, text: "value", amount: 12.5m, time, enabled: true, cancellationToken: CancellationToken);
+
+		await handler.InvokeAsync(state, static (current, args) =>
+			current(args.number, args.text, args.amount, args.time, args.enabled, args.cancellationToken));
+
+		calls.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncGeneralSupportsNullAndSingleHandler()
+	{
+		var state = (number: 42, text: "value", amount: 12.5m, time: DateTimeOffset.UtcNow, enabled: true, cancellationToken: CancellationToken);
+		var invokerCalled = false;
+		ArbitraryArityHandler noHandler = null;
+
+		await noHandler.InvokeAsync(state, (current, args) =>
+		{
+			invokerCalled = true;
+			return current(args.number, args.text, args.amount, args.time, args.enabled, args.cancellationToken);
+		});
+
+		invokerCalled.AssertFalse();
+
+		var handlerCalled = false;
+		ArbitraryArityHandler handler = (_, _, _, _, _, _) =>
+		{
+			handlerCalled = true;
+			return default;
+		};
+
+		await handler.InvokeAsync(state, static (current, args) =>
+			current(args.number, args.text, args.amount, args.time, args.enabled, args.cancellationToken));
+
+		handlerCalled.AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncGeneralAggregatesSynchronousAndAsynchronousFailures()
+	{
+		var firstError = new InvalidOperationException("sync");
+		var secondError = new ArgumentException("async");
+		var remainingHandlerCalled = false;
+		ArbitraryArityHandler first = (_, _, _, _, _, _) => throw firstError;
+		ArbitraryArityHandler second = (_, _, _, _, _, _) => new(Task.FromException(secondError));
+		ArbitraryArityHandler third = (_, _, _, _, _, _) =>
+		{
+			remainingHandlerCalled = true;
+			return default;
+		};
+		var state = (number: 42, text: "value", amount: 12.5m, time: DateTimeOffset.UtcNow, enabled: true, cancellationToken: CancellationToken);
+
+		var error = await ThrowsExactlyAsync<AggregateException>(() =>
+			(first + second + third).InvokeAsync(state, static (current, args) =>
+				current(args.number, args.text, args.amount, args.time, args.enabled, args.cancellationToken)).AsTask());
+
+		remainingHandlerCalled.AssertTrue();
+		error.InnerExceptions.ToArray().AssertEqual([firstError, secondError]);
+	}
+
+	[TestMethod]
+	public async Task InvokeAsyncConvenienceOverloadsDoNotConflict()
+	{
+		var calls = 0;
+		Func<CancellationToken, ValueTask> cancellationOnly = cancellationToken =>
+		{
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+			return default;
+		};
+		Func<int, ValueTask> withoutCancellation = value =>
+		{
+			value.AssertEqual(42);
+			calls++;
+			return default;
+		};
+		Func<int, CancellationToken, ValueTask> valueTaskHandler = (_, _) => default;
+		Func<int, CancellationToken, Task> taskHandler = (_, _) => Task.CompletedTask;
+		Func<CancellationToken, Task> cancellationOnlyTask = cancellationToken =>
+		{
+			cancellationToken.AssertEqual(CancellationToken);
+			calls++;
+			return Task.CompletedTask;
+		};
+		Func<int, Task> withoutCancellationTask = value =>
+		{
+			value.AssertEqual(42);
+			calls++;
+			return Task.CompletedTask;
+		};
+
+		ValueTask cancellationOnlyInvocation = cancellationOnly.InvokeAsync(CancellationToken);
+		ValueTask withoutCancellationInvocation = withoutCancellation.InvokeAsync(42);
+		ValueTask existingValueTaskInvocation = valueTaskHandler.InvokeAsync(42, CancellationToken);
+		Task existingTaskInvocation = taskHandler.InvokeAsync(42, CancellationToken);
+		Task cancellationOnlyTaskInvocation = cancellationOnlyTask.InvokeAsync(CancellationToken);
+		Task withoutCancellationTaskInvocation = withoutCancellationTask.InvokeAsync(42);
+
+		await cancellationOnlyInvocation;
+		await withoutCancellationInvocation;
+		await existingValueTaskInvocation;
+		await existingTaskInvocation;
+		await cancellationOnlyTaskInvocation;
+		await withoutCancellationTaskInvocation;
+		calls.AssertEqual(4);
 	}
 
 	[TestMethod]
