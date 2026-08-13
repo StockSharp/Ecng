@@ -22,8 +22,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		public ValueTask ConnectAsync(CancellationToken cancellationToken)
 		{
 			ConnectCalled = true;
-			SetState(ConnectionStates.Connected);
-			return ValueTask.CompletedTask;
+			return SetStateAsync(ConnectionStates.Connected, cancellationToken);
 		}
 
 		public async ValueTask DisconnectAsync(CancellationToken cancellationToken)
@@ -34,13 +33,16 @@ public class ConnectionStateTrackerTests : BaseTestClass
 			await Task.Yield();
 
 			DisconnectAwaited = true;
-			SetState(ConnectionStates.Disconnected);
+			await SetStateAsync(ConnectionStates.Disconnected, cancellationToken);
 		}
 
 		public void SetState(ConnectionStates state)
+			=> AsyncHelper.Run(() => SetStateAsync(state));
+
+		public ValueTask SetStateAsync(ConnectionStates state, CancellationToken cancellationToken = default)
 		{
 			CurrentState = state;
-			StateChanged?.Invoke(state, default);
+			return StateChanged.InvokeAsync(state, cancellationToken);
 		}
 	}
 
@@ -984,22 +986,41 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void AsyncStateChanged_BothSyncAndAsyncFire()
+	public async Task AsyncStateChanged_AwaitsBothSubscribers()
 	{
 		var tracker = new ConnectionStateTracker();
 		var conn = new MockConnection();
 
 		tracker.Add(conn);
 
-		ConnectionStates? syncState = null;
-		ConnectionStates? asyncState = null;
+		var firstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var secondEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseSecond = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		Subscribe(tracker, state => syncState = state);
-		tracker.StateChanged += (state, _) => { asyncState = state; return default; };
+		tracker.StateChanged += async (state, token) =>
+		{
+			state.AssertEqual(ConnectionStates.Connected);
+			firstEntered.TrySetResult();
+			await releaseFirst.Task.WaitAsync(token);
+		};
+		tracker.StateChanged += async (state, token) =>
+		{
+			state.AssertEqual(ConnectionStates.Connected);
+			secondEntered.TrySetResult();
+			await releaseSecond.Task.WaitAsync(token);
+		};
 
-		conn.SetState(ConnectionStates.Connected);
+		var transition = conn.SetStateAsync(ConnectionStates.Connected, CancellationToken).AsTask();
 
-		syncState.AssertEqual(ConnectionStates.Connected);
-		asyncState.AssertEqual(ConnectionStates.Connected);
+		await Task.WhenAll(firstEntered.Task, secondEntered.Task).WaitAsync(CancellationToken);
+		transition.IsCompleted.AssertFalse("The state transition must await both subscribers.");
+
+		releaseSecond.TrySetResult();
+		await Task.Yield();
+		transition.IsCompleted.AssertFalse("Completing only the last subscriber must not complete the transition.");
+
+		releaseFirst.TrySetResult();
+		await transition;
 	}
 }

@@ -553,6 +553,119 @@ public class WebSocketClientTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[Timeout(60000, CooperativeCancellation = true)]
+	public async Task MulticastAsyncLifecycleHooksAwaitEverySubscriber()
+	{
+		using var cts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+		cts.CancelAfter(TimeSpan.FromSeconds(45));
+
+		await using var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+
+		using var client = new WebSocketClient(
+			server.Url,
+			(_, _) => default,
+			(_, _) => default,
+			(_, _, _) => default,
+			Log("INFO"),
+			Log("ERROR"),
+			null
+		);
+
+		client.ReconnectAttempts = 0;
+
+		var initFirstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var initSecondEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseInitFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseInitSecond = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		var postFirstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var postSecondEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releasePostFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releasePostSecond = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		var stateFirstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var stateSecondEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseStateFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseStateSecond = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		client.InitAsync += async (_, token) =>
+		{
+			initFirstEntered.TrySetResult();
+			await releaseInitFirst.Task.WaitAsync(token);
+		};
+		client.InitAsync += async (_, token) =>
+		{
+			initSecondEntered.TrySetResult();
+			await releaseInitSecond.Task.WaitAsync(token);
+		};
+
+		client.PostConnect += async (reconnect, token) =>
+		{
+			reconnect.AssertFalse();
+			postFirstEntered.TrySetResult();
+			await releasePostFirst.Task.WaitAsync(token);
+		};
+		client.PostConnect += async (reconnect, token) =>
+		{
+			reconnect.AssertFalse();
+			postSecondEntered.TrySetResult();
+			await releasePostSecond.Task.WaitAsync(token);
+		};
+
+		((IConnection)client).StateChanged += async (state, token) =>
+		{
+			if (state != ConnectionStates.Connected)
+				return;
+
+			stateFirstEntered.TrySetResult();
+			await releaseStateFirst.Task.WaitAsync(token);
+		};
+		((IConnection)client).StateChanged += async (state, token) =>
+		{
+			if (state != ConnectionStates.Connected)
+				return;
+
+			stateSecondEntered.TrySetResult();
+			await releaseStateSecond.Task.WaitAsync(token);
+		};
+
+		static async Task assertDoesNotAdvance(Task nextPhase, string message, CancellationToken token)
+		{
+			var delay = TimeSpan.FromSeconds(1).Delay(token);
+			var completed = await Task.WhenAny(nextPhase, delay);
+			ReferenceEquals(completed, delay).AssertTrue(message);
+		}
+
+		var connect = client.ConnectAsync(cts.Token).AsTask();
+
+		await Task.WhenAll(initFirstEntered.Task, initSecondEntered.Task).WaitAsync(cts.Token);
+		releaseInitSecond.TrySetResult();
+		await assertDoesNotAdvance(postFirstEntered.Task, "InitAsync must await the first subscriber after the last one completes.", cts.Token);
+		releaseInitFirst.TrySetResult();
+
+		await Task.WhenAll(postFirstEntered.Task, postSecondEntered.Task).WaitAsync(cts.Token);
+		releasePostSecond.TrySetResult();
+		await assertDoesNotAdvance(stateFirstEntered.Task, "PostConnect must await the first subscriber after the last one completes.", cts.Token);
+		releasePostFirst.TrySetResult();
+
+		var statesEntered = Task.WhenAll(stateFirstEntered.Task, stateSecondEntered.Task);
+		var stateOrConnect = await Task.WhenAny(statesEntered, connect).WaitAsync(cts.Token);
+
+		if (ReferenceEquals(stateOrConnect, connect))
+			await connect;
+
+		await statesEntered;
+		releaseStateSecond.TrySetResult();
+		await assertDoesNotAdvance(connect, "StateChanged must await the first subscriber after the last one completes.", cts.Token);
+		releaseStateFirst.TrySetResult();
+
+		await connect;
+		client.IsConnected.AssertTrue();
+
+		await client.DisconnectAsync(cts.Token);
+	}
+
+	[TestMethod]
 	[Timeout(90000, CooperativeCancellation = true)]
 	public async Task Resend_Timing_Respects_Timeouts()
 	{

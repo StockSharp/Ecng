@@ -244,8 +244,7 @@ public class WebSocketClient : Disposable, IConnection
 
 		State = state;
 
-		if (_stateChanged is { } handler)
-			await handler(state, cancellationToken).NoWait();
+		await _stateChanged.InvokeAsync(state, cancellationToken).NoWait();
 	}
 
 	private ValueTask RaiseErrorAsync(Exception ex, CancellationToken cancellationToken)
@@ -268,16 +267,14 @@ public class WebSocketClient : Disposable, IConnection
 
 			Init?.Invoke(ws);
 
-			if (InitAsync is not null)
-				await InitAsync(ws, token).NoWait();
+			await InitAsync.InvokeAsync(ws, token).NoWait();
 
 			try
 			{
 				_infoLog("Connecting to {0}...", _url);
 				await ws.ConnectAsync(_url, token).NoWait();
 
-				if (PostConnect is not null)
-					await PostConnect(reconnect, token).NoWait();
+				await PostConnect.InvokeAsync(reconnect, token).NoWait();
 
 				break;
 			}

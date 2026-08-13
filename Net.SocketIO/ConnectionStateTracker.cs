@@ -160,6 +160,6 @@ public class ConnectionStateTracker : Disposable, IConnection
 			_currState = newState;
 		}
 
-		if (StateChanged is { } handler)
-			await handler(newState, cancellationToken).NoWait();	}
+		await StateChanged.InvokeAsync(newState, cancellationToken).NoWait();
+	}
 }
