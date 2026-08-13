@@ -13,10 +13,29 @@ using Markdig.Syntax.Inlines;
 /// </summary>
 public class StyledInline : LeafInline
 {
+	/// <summary>
+	/// The styled content, kept as raw markdown.
+	/// </summary>
 	public string Content { get; set; }
+
+	/// <summary>
+	/// CSS color value, or empty when not set.
+	/// </summary>
 	public string Color { get; set; }
+
+	/// <summary>
+	/// CSS font-size value, or empty when not set.
+	/// </summary>
 	public string FontSize { get; set; }
+
+	/// <summary>
+	/// CSS font-family value, or empty when not set.
+	/// </summary>
 	public string FontFamily { get; set; }
+
+	/// <summary>
+	/// CSS float value, or empty when not set.
+	/// </summary>
 	public string Float { get; set; }
 }
 
@@ -25,11 +44,15 @@ public class StyledInline : LeafInline
 /// </summary>
 public class StyledInlineParser : InlineParser
 {
+	/// <summary>
+	/// Initializes a new instance of the <see cref="StyledInlineParser"/> class.
+	/// </summary>
 	public StyledInlineParser()
 	{
 		OpeningCharacters = [':'];
 	}
 
+	/// <inheritdoc />
 	public override bool Match(InlineProcessor processor, ref StringSlice slice)
 	{
 		// Must be :[
@@ -119,9 +142,14 @@ public class StyledInlineHtmlRenderer : HtmlObjectRenderer<StyledInline>
 {
 	private readonly MarkdownPipeline _pipeline;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="StyledInlineHtmlRenderer"/> class.
+	/// </summary>
+	/// <param name="pipeline">The pipeline the inner content is rendered with.</param>
 	public StyledInlineHtmlRenderer(MarkdownPipeline pipeline)
 		=> _pipeline = pipeline;
 
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, StyledInline obj)
 	{
 		var styles = new List<string>();
@@ -154,11 +182,13 @@ public class StyledInlineHtmlRenderer : HtmlObjectRenderer<StyledInline>
 /// </summary>
 public class StyledInlineExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		pipeline.InlineParsers.InsertBefore<LinkInlineParser>(new StyledInlineParser());
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)

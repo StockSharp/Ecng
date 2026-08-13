@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
 
+  <!-- The public API is built on Markdig types, which are not CLS-compliant. -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);CLS_DISABLE</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Markdig" Version="$(MarkdigVer)" />
   </ItemGroup>

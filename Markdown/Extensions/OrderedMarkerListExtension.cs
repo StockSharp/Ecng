@@ -18,11 +18,15 @@ public class OrderedMarkerListItemParser : ListItemParser
 	private static readonly int[] _romanValues = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
 	private static readonly string[] _romanSymbols = ["m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"];
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="OrderedMarkerListItemParser"/> class.
+	/// </summary>
 	public OrderedMarkerListItemParser()
 	{
 		OpeningCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
 	}
 
+	/// <inheritdoc />
 	public override bool TryParse(BlockProcessor state, char pendingBulletType, out ListInfo result)
 	{
 		result = new ListInfo();
@@ -160,6 +164,7 @@ public class OrderedMarkerListItemParser : ListItemParser
 /// </summary>
 public class OrderedMarkerListExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		// Swap in a fresh list block parser (its constructor seeds the default unordered/numbered item
@@ -177,6 +182,7 @@ public class OrderedMarkerListExtension : IMarkdownExtension
 		pipeline.DocumentProcessed += MarkOrderedLists;
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 	}

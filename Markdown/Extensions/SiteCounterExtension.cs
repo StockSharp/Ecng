@@ -8,8 +8,14 @@ using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax.Inlines;
 
+/// <summary>
+/// AST node for a site counter reference such as "@connector_count".
+/// </summary>
 public class SiteCounterInline : LeafInline, IPlaceholderInline
 {
+	/// <summary>
+	/// The referenced counter.
+	/// </summary>
 	public SiteCounters Counter { get; set; }
 
 	string IPlaceholderInline.Token => $"{{{{count:{Counter}}}}}";
@@ -43,11 +49,15 @@ public class SiteCounterParser : InlineParser
 	public static string ToToken(SiteCounters counter)
 		=> $"@{_names.First(p => p.Value == counter).Key}_count";
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="SiteCounterParser"/> class.
+	/// </summary>
 	public SiteCounterParser()
 	{
 		OpeningCharacters = ['@'];
 	}
 
+	/// <inheritdoc />
 	public override bool Match(InlineProcessor processor, ref StringSlice slice)
 	{
 		var start = slice.Start;
@@ -71,8 +81,12 @@ public class SiteCounterParser : InlineParser
 	}
 }
 
+/// <summary>
+/// Renders a <see cref="SiteCounterInline"/> as its placeholder token.
+/// </summary>
 public class SiteCounterRenderer : HtmlObjectRenderer<SiteCounterInline>
 {
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, SiteCounterInline obj)
 	{
 		// Placeholder: the number itself is only known once the data has been fetched (see Md2HtmlFormatter).
@@ -80,13 +94,18 @@ public class SiteCounterRenderer : HtmlObjectRenderer<SiteCounterInline>
 	}
 }
 
+/// <summary>
+/// Markdig extension wiring the site counter syntax: parser plus placeholder renderer.
+/// </summary>
 public class SiteCounterExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		pipeline.InlineParsers.InsertBefore<LinkInlineParser>(new SiteCounterParser());
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)

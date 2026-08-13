@@ -8,6 +8,11 @@ using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
+/// <summary>
+/// Converts markdown with the site's custom directives (entity references, role gates, videos,
+/// diagrams, styled inlines, site counters) into HTML in two phases: <see cref="Parse"/> collects
+/// the external references, <see cref="Render"/> substitutes the data resolved for them.
+/// </summary>
 public class Md2HtmlFormatter
 {
 	private readonly MarkdownPipeline _pipeline;
@@ -63,6 +68,10 @@ public class Md2HtmlFormatter
 	private static readonly Regex _htmlTagName = new(@"^<(/?)([a-zA-Z][a-zA-Z0-9]*)", RegexOptions.Compiled);
 	private static readonly Regex _bareEmail = new(@"(?<![\w.%+/@-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![A-Za-z0-9@.-])", RegexOptions.Compiled);
 
+	/// <summary>
+	/// Initializes both pipelines: one that keeps raw HTML for trusted authors and one that
+	/// strips it for untrusted content.
+	/// </summary>
 	public Md2HtmlFormatter()
 	{
 		static MarkdownPipelineBuilder NewBuilder()
@@ -97,6 +106,12 @@ public class Md2HtmlFormatter
 	private MarkdownPipeline GetPipeline(bool allowHtml)
 		=> allowHtml ? _pipeline : _safePipeline;
 
+	/// <summary>
+	/// Parses the markdown text and collects every external reference it makes.
+	/// </summary>
+	/// <param name="text">Markdown source text.</param>
+	/// <param name="allowHtml">Whether raw HTML embedded in the text is kept (trusted authors) or stripped.</param>
+	/// <returns>The syntax tree together with the collected references.</returns>
 	public ParsedMarkdown Parse(string text, bool allowHtml)
 	{
 		var pipeline = GetPipeline(allowHtml);
@@ -206,6 +221,13 @@ public class Md2HtmlFormatter
 		return result.JoinN();
 	}
 
+	/// <summary>
+	/// Renders a parsed document to HTML, substituting the resolved data for the references
+	/// collected by <see cref="Parse"/>.
+	/// </summary>
+	/// <param name="parsed">The parse result.</param>
+	/// <param name="data">Data resolved for the collected references.</param>
+	/// <returns>The rendered HTML.</returns>
 	public string Render(ParsedMarkdown parsed, ResolvedMarkdownData data)
 	{
 		var html = Markdig.Markdown.ToHtml(parsed.Document, parsed.Pipeline);
@@ -264,6 +286,12 @@ public class Md2HtmlFormatter
 		return sb.ToString();
 	}
 
+	/// <summary>
+	/// Converts the markdown text to plain text: directive syntax, markup and HTML are stripped,
+	/// leaving only the readable content (used for excerpts and search indexing).
+	/// </summary>
+	/// <param name="text">Markdown source text.</param>
+	/// <returns>The plain text.</returns>
 	public string Clean(string text)
 	{
 		if (text.IsEmptyOrWhiteSpace())
@@ -290,6 +318,11 @@ public class Md2HtmlFormatter
 		return plain.RemoveMultipleWhitespace();
 	}
 
+	/// <summary>
+	/// Finds the first image reference in the text (used to pick a preview picture).
+	/// </summary>
+	/// <param name="text">Markdown source text.</param>
+	/// <returns>The file id of the first referenced image, or <see langword="null"/> when there is none.</returns>
 	public long? FindPicture(string text)
 	{
 		if (text.IsEmptyOrWhiteSpace())
@@ -347,6 +380,11 @@ public class Md2HtmlFormatter
 		}
 	}
 
+	/// <summary>
+	/// Collects the role ids of every "@role(id){...}" span in the raw text.
+	/// </summary>
+	/// <param name="text">Markdown source text.</param>
+	/// <returns>The referenced role ids.</returns>
 	public HashSet<long> CollectInlineRoleIds(string text)
 	{
 		var roleIds = new HashSet<long>();
@@ -360,6 +398,13 @@ public class Md2HtmlFormatter
 		return roleIds;
 	}
 
+	/// <summary>
+	/// Resolves "@role(id){...}" spans in the raw text: the content is kept when the reader has the
+	/// role and removed otherwise.
+	/// </summary>
+	/// <param name="text">Markdown source text.</param>
+	/// <param name="roles">Whether the reader has each role, keyed by role id.</param>
+	/// <returns>The text with every role span replaced by its content or removed.</returns>
 	public string ActivateRule(string text, Dictionary<long, bool> roles)
 	{
 		if (text.IsEmptyOrWhiteSpace())

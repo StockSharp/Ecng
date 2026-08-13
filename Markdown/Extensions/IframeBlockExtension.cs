@@ -12,10 +12,25 @@ using Markdig.Syntax;
 /// </summary>
 public class IframeBlock : LeafBlock
 {
+	/// <summary>
+	/// The embedded page address.
+	/// </summary>
 	public string Url { get; set; }
+
+	/// <summary>
+	/// Optional embed width in pixels.
+	/// </summary>
 	public int? Width { get; set; }
+
+	/// <summary>
+	/// Optional embed height in pixels.
+	/// </summary>
 	public int? Height { get; set; }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="IframeBlock"/> class.
+	/// </summary>
+	/// <param name="parser">The parser that created this block.</param>
 	public IframeBlock(BlockParser parser) : base(parser)
 	{
 	}
@@ -30,11 +45,15 @@ public class IframeBlockParser : BlockParser
 		@"^::iframe\{([^}]+)\}\s*$",
 		RegexOptions.Compiled);
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="IframeBlockParser"/> class.
+	/// </summary>
 	public IframeBlockParser()
 	{
 		OpeningCharacters = [':'];
 	}
 
+	/// <inheritdoc />
 	public override BlockState TryOpen(BlockProcessor processor)
 	{
 		if (processor.IsCodeIndent)
@@ -112,6 +131,7 @@ public class IframeBlockRenderer : HtmlObjectRenderer<IframeBlock>
 		@"(?:vk\.com|vkvideo\.ru)/video_ext\.php\?",
 		RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, IframeBlock obj)
 	{
 		var player = TryGetPlayer(obj.Url);
@@ -202,11 +222,13 @@ public class IframeBlockRenderer : HtmlObjectRenderer<IframeBlock>
 /// </summary>
 public class IframeBlockExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		pipeline.BlockParsers.InsertBefore<ThematicBreakParser>(new IframeBlockParser());
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)

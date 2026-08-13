@@ -8,22 +8,35 @@ using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax.Inlines;
 
+/// <summary>
+/// AST node for an "@vss(fileId)" video reference.
+/// </summary>
 public class VideoInline : LeafInline, IPlaceholderInline
 {
+	/// <summary>
+	/// The referenced video file id.
+	/// </summary>
 	public long FileId { get; set; }
 
 	string IPlaceholderInline.Token => $"{{{{video:{FileId}}}}}";
 }
 
+/// <summary>
+/// Parses "@vss(fileId)" into a <see cref="VideoInline"/>.
+/// </summary>
 public class VideoParser : InlineParser
 {
 	private static readonly Regex _regex = new(@"@vss\((\d+)\)", RegexOptions.Compiled);
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="VideoParser"/> class.
+	/// </summary>
 	public VideoParser()
 	{
 		OpeningCharacters = ['@'];
 	}
 
+	/// <inheritdoc />
 	public override bool Match(InlineProcessor processor, ref StringSlice slice)
 	{
 		if (slice.PeekCharExtra(1) != 'v' || slice.PeekCharExtra(2) != 's')
@@ -51,21 +64,30 @@ public class VideoParser : InlineParser
 	}
 }
 
+/// <summary>
+/// Renders a <see cref="VideoInline"/> as its placeholder token.
+/// </summary>
 public class VideoRenderer : HtmlObjectRenderer<VideoInline>
 {
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, VideoInline obj)
 	{
 		renderer.Write(((IPlaceholderInline)obj).Token);
 	}
 }
 
+/// <summary>
+/// Markdig extension wiring the "@vss(fileId)" syntax: parser plus placeholder renderer.
+/// </summary>
 public class VideoExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		pipeline.InlineParsers.InsertBefore<LinkInlineParser>(new VideoParser());
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)

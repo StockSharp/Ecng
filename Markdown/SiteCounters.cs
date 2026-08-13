@@ -6,9 +6,28 @@ namespace Ecng.Markdown;
 /// </summary>
 public enum SiteCounters
 {
+	/// <summary>
+	/// Number of indicators.
+	/// </summary>
 	Indicators,
+
+	/// <summary>
+	/// Number of connectors.
+	/// </summary>
 	Connectors,
+
+	/// <summary>
+	/// Number of users.
+	/// </summary>
 	Users,
+
+	/// <summary>
+	/// Number of strategies.
+	/// </summary>
 	Strategies,
+
+	/// <summary>
+	/// Number of apps.
+	/// </summary>
 	Apps,
 }

@@ -9,24 +9,36 @@ using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
+/// <summary>
+/// AST node for an "@diagram(dg)" reference.
+/// </summary>
 public class DiagramInline : LeafInline, IPlaceholderInline
 {
-	// The raw @diagram argument: either a numeric file id or an http(s) URL.
+	/// <summary>
+	/// The raw @diagram argument: either a numeric file id or an http(s) URL.
+	/// </summary>
 	public string Ref { get; set; }
 
 	string IPlaceholderInline.Token => $"{{{{diagram:{Ref}}}}}";
 }
 
+/// <summary>
+/// Parses "@diagram(dg)" into a <see cref="DiagramInline"/>.
+/// </summary>
 public class DiagramParser : InlineParser
 {
 	// dg is a numeric file id OR an http(s) URL, so capture the whole argument up to the closing paren.
 	private static readonly Regex _regex = new(@"@diagram\(([^)]+)\)", RegexOptions.Compiled);
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="DiagramParser"/> class.
+	/// </summary>
 	public DiagramParser()
 	{
 		OpeningCharacters = ['@'];
 	}
 
+	/// <inheritdoc />
 	public override bool Match(InlineProcessor processor, ref StringSlice slice)
 	{
 		if (slice.PeekCharExtra(1) != 'd' || slice.PeekCharExtra(2) != 'i')
@@ -54,8 +66,12 @@ public class DiagramParser : InlineParser
 	}
 }
 
+/// <summary>
+/// Renders a <see cref="DiagramInline"/> as its placeholder token.
+/// </summary>
 public class DiagramRenderer : HtmlObjectRenderer<DiagramInline>
 {
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, DiagramInline obj)
 	{
 		// Emit a placeholder resolved later (Md2HtmlFormatter.ResolveDiagrams) once the ref is turned into
@@ -64,13 +80,18 @@ public class DiagramRenderer : HtmlObjectRenderer<DiagramInline>
 	}
 }
 
+/// <summary>
+/// Markdig extension wiring the "@diagram(dg)" syntax: parser plus placeholder renderer.
+/// </summary>
 public class DiagramExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		pipeline.InlineParsers.InsertBefore<LinkInlineParser>(new DiagramParser());
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)
@@ -78,18 +99,25 @@ public class DiagramExtension : IMarkdownExtension
 	}
 }
 
-// Renders a ```diagram fenced code block, whose body is a Designer schema JSON pasted straight into the
-// message, as a diagram host carrying that JSON. Every other code block delegates to the renderer this one
-// wraps, so mermaid, syntax-highlighted and indented blocks keep rendering exactly as before.
+/// <summary>
+/// Renders a ```diagram fenced code block, whose body is a Designer schema JSON pasted straight into the
+/// message, as a diagram host carrying that JSON. Every other code block delegates to the renderer this one
+/// wraps, so mermaid, syntax-highlighted and indented blocks keep rendering exactly as before.
+/// </summary>
 public class DiagramCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
 {
 	private readonly IMarkdownObjectRenderer _fallback;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="DiagramCodeBlockRenderer"/> class.
+	/// </summary>
+	/// <param name="fallback">The renderer every non-diagram code block is delegated to.</param>
 	public DiagramCodeBlockRenderer(IMarkdownObjectRenderer fallback)
 	{
 		_fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 	}
 
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, CodeBlock obj)
 	{
 		if (obj is FencedCodeBlock fenced && string.Equals(fenced.Info?.Trim(), DiagramCodeBlockExtension.InfoKeyword, StringComparison.OrdinalIgnoreCase))
@@ -127,17 +155,22 @@ public class DiagramCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
 	}
 }
 
-// Content-manager-only markup: a ```diagram fenced block renders its Designer schema JSON as a diagram.
-// Registered only on the trusted (raw-HTML-allowed) pipeline, so for untrusted authors the block stays an
-// ordinary code block.
+/// <summary>
+/// Markdig extension rendering a ```diagram fenced block's Designer schema JSON as a diagram.
+/// </summary>
 public class DiagramCodeBlockExtension : IMarkdownExtension
 {
+	/// <summary>
+	/// The fence info keyword that marks a code block as a diagram schema.
+	/// </summary>
 	public const string InfoKeyword = "diagram";
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is not HtmlRenderer htmlRenderer)

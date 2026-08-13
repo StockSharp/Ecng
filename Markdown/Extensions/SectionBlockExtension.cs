@@ -33,6 +33,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	// placeholder) also fills the media half.
 	private static readonly Regex _diagramOnly = new(@"^\s*(?:@diagram\([^)]+\)|\{\{diagram:[^}]+\}\})\s*$", RegexOptions.Compiled);
 
+	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, CustomContainer obj)
 	{
 		var info = obj.Info?.Trim();
@@ -444,11 +445,13 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 /// </summary>
 public class SectionBlockExtension : IMarkdownExtension
 {
+	/// <inheritdoc />
 	public void Setup(MarkdownPipelineBuilder pipeline)
 	{
 		// No custom parser needed — Markdig's CustomContainer already handles :::
 	}
 
+	/// <inheritdoc />
 	public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
 	{
 		if (renderer is HtmlRenderer htmlRenderer)
