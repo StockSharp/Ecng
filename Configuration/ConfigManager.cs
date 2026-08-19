@@ -185,15 +185,33 @@ public static class ConfigManager
 	/// <returns>The configuration value, or the default value if not found.</returns>
 	public static T TryGet<T>(string name, T defaultValue = default)
 	{
-		var str = AppSettings.Get(name);
+		var str = AppSettings?.Get(name);
 
 		return str.IsEmpty() ? defaultValue : str.To<T>();
 	}
 
 	/// <summary>
-	/// Gets the application settings.
+	/// Gets the application settings, or <see langword="null"/> where the host has no configuration system
+	/// to read them from.
 	/// </summary>
-	public static NameValueCollection AppSettings => ConfigurationManager.AppSettings;
+	public static NameValueCollection AppSettings
+	{
+		get
+		{
+			// A host without an app config - a native library, a trimmed or NativeAOT image - fails to
+			// initialize the configuration system at all, and an absent setting is not an error worth
+			// poisoning every caller's static constructor with.
+			try
+			{
+				return ConfigurationManager.AppSettings;
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+				return null;
+			}
+		}
+	}
 
 	/// <summary>
 	/// Occurs when a service is registered.
