@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Common;
+﻿namespace Ecng.Tests.Common;
 
 using System.Dynamic;
 
@@ -598,5 +598,26 @@ public class TypeHelperTests : BaseTestClass
 
 		(first.CompareTo(second) < 0).AssertTrue();
 		(second.CompareTo(first) > 0).AssertTrue();
+	}
+
+	[TestMethod]
+	public void SizeOf_AnswersForEveryPrimitiveWithoutInteropMetadata()
+	{
+		typeof(byte).SizeOf().AssertEqual(1);
+		typeof(sbyte).SizeOf().AssertEqual(1);
+		typeof(bool).SizeOf().AssertEqual(1);
+		typeof(short).SizeOf().AssertEqual(2);
+		typeof(ushort).SizeOf().AssertEqual(2);
+		typeof(char).SizeOf().AssertEqual(2);
+		typeof(int).SizeOf().AssertEqual(4);
+		typeof(uint).SizeOf().AssertEqual(4);
+		typeof(float).SizeOf().AssertEqual(4);
+		typeof(long).SizeOf().AssertEqual(8);
+		typeof(ulong).SizeOf().AssertEqual(8);
+		typeof(double).SizeOf().AssertEqual(8);
+		typeof(decimal).SizeOf().AssertEqual(16);
+		typeof(DateTime).SizeOf().AssertEqual(8);
+		typeof(TimeSpan).SizeOf().AssertEqual(8);
+		typeof(DayOfWeek).SizeOf().AssertEqual(4);
 	}
 }

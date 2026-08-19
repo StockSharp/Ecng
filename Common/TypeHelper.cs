@@ -447,7 +447,17 @@ public static class TypeHelper
 		else if (type == typeof(char))
 			type = typeof(short);
 
-		return Marshal.SizeOf(type);
+		// Marshal.SizeOf answers from interop metadata, which a NativeAOT build only carries for types it
+		// saw marshalled; asking it for a primitive throws there. Primitives have a fixed size anyway.
+		return Type.GetTypeCode(type) switch
+		{
+			TypeCode.Byte or TypeCode.SByte => sizeof(byte),
+			TypeCode.Int16 or TypeCode.UInt16 => sizeof(short),
+			TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Single => sizeof(int),
+			TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Double => sizeof(long),
+			TypeCode.Decimal => sizeof(decimal),
+			_ => Marshal.SizeOf(type),
+		};
 	}
 
 	/// <summary>

@@ -74,7 +74,20 @@ public static class Enumerator
 	/// <returns>An enumerable of enum values as objects.</returns>
 	public static IEnumerable<object> GetValues(this Type enumType)
 	{
+#if NET8_0_OR_GREATER
+		// Enum.GetValues(Type) builds an array of the enum type itself, and a NativeAOT image answers that
+		// with 'missing native code or metadata' unless the array type happened to be rooted. Going through
+		// the underlying primitive asks only for an int[] or a long[], which is always there.
+		var values = Enum.GetValuesAsUnderlyingType(enumType);
+		var result = new object[values.Length];
+
+		for (var i = 0; i < values.Length; i++)
+			result[i] = Enum.ToObject(enumType, values.GetValue(i));
+
+		return result;
+#else
 		return Enum.GetValues(enumType).Cast<object>();
+#endif
 	}
 
 	/// <summary>
