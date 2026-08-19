@@ -1,4 +1,4 @@
-namespace Ecng.Tests.IO;
+﻿namespace Ecng.Tests.IO;
 
 using Ecng.IO;
 
@@ -742,6 +742,55 @@ public class IOHelperTests : BaseTestClass
 		var result = relative.MakeFullPath(baseDir);
 
 		result.AssertEqual(Path.Combine(baseDir, relative));
+	}
+
+	#endregion
+
+	#region BuildTimestamp
+
+	[TestMethod]
+	public void TryParseBuildTimestamp_Stamp_Parses()
+	{
+		"20260819213045".TryParseBuildTimestamp(out var timestamp).AssertTrue();
+
+		timestamp.AssertEqual(new DateTime(2026, 8, 19, 21, 30, 45, DateTimeKind.Utc));
+		timestamp.Kind.AssertEqual(DateTimeKind.Utc);
+	}
+
+	[TestMethod]
+	public void TryParseBuildTimestamp_StampWithCommit_Parses()
+	{
+		"20260819213045+9f1c2d3".TryParseBuildTimestamp(out var timestamp).AssertTrue();
+
+		timestamp.AssertEqual(new DateTime(2026, 8, 19, 21, 30, 45, DateTimeKind.Utc));
+	}
+
+	[TestMethod]
+	public void TryParseBuildTimestamp_SemVer_DoesNotParse()
+	{
+		"1.0.9999".TryParseBuildTimestamp(out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TryParseBuildTimestamp_Empty_DoesNotParse()
+	{
+		((string)null).TryParseBuildTimestamp(out _).AssertFalse();
+		string.Empty.TryParseBuildTimestamp(out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void GetBuildTimestamp_Unstamped_FallsBackToTheFile()
+	{
+		var assembly = typeof(IOHelper).Assembly;
+
+		// This assembly carries a semantic version rather than a stamp, so the file is all there is.
+		assembly.GetBuildTimestamp().AssertEqual(assembly.GetTimestamp());
+	}
+
+	[TestMethod]
+	public void GetBuildTimestamp_Null_Throws()
+	{
+		Throws<ArgumentNullException>(() => ((Assembly)null).GetBuildTimestamp());
 	}
 
 	#endregion

@@ -105,6 +105,48 @@ public static class IOHelper
 		return LocalFileSystem.Instance.GetTimestamp(assembly.Location);
 	}
 
+	private const string _buildTimestampFormat = "yyyyMMddHHmmss";
+
+	/// <summary>
+	/// Reads the build moment out of an informational version that carries one.
+	/// </summary>
+	/// <param name="informationalVersion">The informational version, optionally followed by <c>+</c> and the source revision.</param>
+	/// <param name="timestamp">The build moment, in UTC.</param>
+	/// <returns><see langword="true"/> if the version carries a stamp.</returns>
+	public static bool TryParseBuildTimestamp(this string informationalVersion, out DateTime timestamp)
+	{
+		// Source link appends the commit to whatever the build wrote.
+		var stamp = informationalVersion?.Split('+')[0];
+
+		return DateTime.TryParseExact(stamp, _buildTimestampFormat, CultureInfo.InvariantCulture,
+			DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out timestamp);
+	}
+
+	/// <summary>
+	/// Gets the build moment of the specified assembly, from the stamp inside it rather than from the
+	/// file it was loaded from. A single file or NativeAOT build has no such file, so an assembly whose
+	/// build writes the stamp can still be dated there.
+	/// </summary>
+	/// <param name="assembly">The assembly.</param>
+	/// <returns>The build moment, in UTC.</returns>
+	/// <exception cref="InvalidOperationException">The assembly carries neither a stamp nor a file to read it from.</exception>
+	public static DateTime GetBuildTimestamp(this Assembly assembly)
+	{
+		if (assembly is null)
+			throw new ArgumentNullException(nameof(assembly));
+
+		var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+		if (informational.TryParseBuildTimestamp(out var timestamp))
+			return timestamp;
+
+		// An assembly built by someone else carries no stamp of ours, so fall back to its file.
+		if (assembly.Location.IsEmpty())
+			throw new InvalidOperationException($"Assembly '{assembly.FullName}' has no build stamp and no file to date it by.");
+
+		return assembly.GetTimestamp();
+	}
+
 	/// <summary>
 	/// Writes the specified bytes to a stream.
 	/// </summary>
