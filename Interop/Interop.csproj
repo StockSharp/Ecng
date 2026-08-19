@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,6 +13,20 @@
       <!--Tip: Remove the IncludeAssets metadata from the package reference so that you get better code generation by allowing nuget to bring in the System.Memory package as a transitive dependency.-->
       <!--<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
     </PackageReference>
+  </ItemGroup>
+  <!-- net6 has no WmiLight asset of its own and falls back to its netstandard2.0 build, which imports the
+       native entry points from an architecture-suffixed file name. The package lays those names out for
+       .NET Framework consumers only, so they are placed next to the output here as well. -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <WmiLightNativePath>$(NuGetPackageRoot)wmilight\$(WmiLightVer)\runtimes\</WmiLightNativePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <None Include="$(WmiLightNativePath)win-x64\native\WmiLight.Native.dll"
+          Condition="Exists('$(WmiLightNativePath)win-x64\native\WmiLight.Native.dll')"
+          Link="WmiLight.Native.x64.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(WmiLightNativePath)win-x86\native\WmiLight.Native.dll"
+          Condition="Exists('$(WmiLightNativePath)win-x86\native\WmiLight.Native.dll')"
+          Link="WmiLight.Native.x86.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IO\IO.csproj" />
