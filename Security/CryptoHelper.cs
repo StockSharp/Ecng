@@ -328,15 +328,6 @@ public static class CryptoHelper
 	/// <returns>The plain text.</returns>
 	public static byte[] DecryptAes(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv) => TransformAes(false, cipherText, passPhrase, salt, iv);
 
-	private static void ValidateHashInput(byte[] value)
-	{
-		if (value is null)
-			throw new ArgumentNullException(nameof(value));
-
-		if (value.Length == 0)
-			throw new ArgumentOutOfRangeException(nameof(value));
-	}
-
 	/// <summary>
 	/// MD5 hash.
 	/// </summary>
@@ -344,7 +335,7 @@ public static class CryptoHelper
 	/// <returns>The hash.</returns>
 	public static string Md5(this byte[] value)
 	{
-		ValidateHashInput(value);
+		ArgumentNullException.ThrowIfNull(value);
 #if NET6_0_OR_GREATER
 		return MD5.HashData(value).Digest();
 #else
@@ -360,7 +351,7 @@ public static class CryptoHelper
 	/// <returns>The hash.</returns>
 	public static string Sha256(this byte[] value)
 	{
-		ValidateHashInput(value);
+		ArgumentNullException.ThrowIfNull(value);
 #if NET6_0_OR_GREATER
 		return SHA256.HashData(value).Digest();
 #else
@@ -376,7 +367,7 @@ public static class CryptoHelper
 	/// <returns>The hash.</returns>
 	public static string Sha512(this byte[] value)
 	{
-		ValidateHashInput(value);
+		ArgumentNullException.ThrowIfNull(value);
 #if NET6_0_OR_GREATER
 		return SHA512.HashData(value).Digest();
 #else
