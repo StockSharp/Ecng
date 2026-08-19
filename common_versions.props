@@ -38,7 +38,7 @@
     <NitoVer>5.*</NitoVer>
     <MarkdigVer>1.*</MarkdigVer>
     <CsWin32Ver>0.3.106</CsWin32Ver>
-    <WmiLightVer>6.5.2</WmiLightVer>
+    <WmiLightVer>7.2.0</WmiLightVer>
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
