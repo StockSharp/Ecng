@@ -244,6 +244,64 @@ public class CompilerTests : BaseTestClass
 		res.HasErrors().AssertTrue();
 	}
 
+	// Compiles a single-class Python module and returns the reflected type together with the lock the
+	// compiler guards its engine with, so a test can hold that lock while another thread calls in.
+	private async Task<(Type type, Lock syncRoot)> CompilePythonTypeWithLock(string code, string typeName)
+	{
+		ICompiler compiler = new PythonCompiler();
+
+		var res = await compiler.Compile("lock", [code], [], CancellationToken);
+		res.HasErrors().AssertFalse();
+
+		var type = res.GetAssembly(compiler.CreateContext()).GetExportedTypes().First(t => t.Name == typeName);
+
+		return (type, ((ISynchronizable)compiler).SyncRoot);
+	}
+
+	// Runs the call on a dedicated thread while this thread holds the engine lock, and asserts the
+	// call does not get through until the lock is released. A pool thread would not do: the suite runs
+	// its methods in parallel, so a saturated pool makes a call that never started look blocked.
+	private void AssertWaitsForEngineLock(Lock syncRoot, Action call)
+	{
+		var started = new ManualResetEventSlim();
+		var finished = new ManualResetEventSlim();
+		Exception error = null;
+
+		var caller = new Thread(() =>
+		{
+			started.Set();
+
+			try
+			{
+				call();
+			}
+			catch (Exception ex)
+			{
+				error = ex;
+			}
+
+			finished.Set();
+		})
+		{
+			IsBackground = true,
+		};
+
+		using (syncRoot.EnterScope())
+		{
+			caller.Start();
+
+			started.Wait(TimeSpan.FromSeconds(5), CancellationToken).AssertTrue("the calling thread has to start");
+
+			finished.Wait(TimeSpan.FromMilliseconds(500), CancellationToken)
+				.AssertFalse("the call reaches the shared engine, so it must wait for the lock this thread holds");
+		}
+
+		finished.Wait(TimeSpan.FromSeconds(10), CancellationToken).AssertTrue("and go through once the lock is free");
+
+		if (error is not null)
+			Fail($"the call failed once it got the lock: {error}");
+	}
+
 	[TestMethod]
 	public async Task PythonCreateInstanceTakesTheEngineLock()
 	{
@@ -251,37 +309,129 @@ public class CompilerTests : BaseTestClass
 		// runs on is the one every other caller compiles and executes on, and it is not thread-safe,
 		// so this has to wait for the lock the compiler hands out - otherwise an import running on
 		// another thread is observed half-initialized and fails on a member it has not bound yet.
-		ICompiler compiler = new PythonCompiler();
-
 		var code = "class Sample(object):" + Environment.NewLine
 			+ "    def __init__(self):" + Environment.NewLine
 			+ "        self.value = 42";
 
-		var res = await compiler.Compile("test", [code], [], CancellationToken);
-		res.HasErrors().AssertFalse();
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
 
-		var type = res.GetAssembly(compiler.CreateContext()).GetExportedTypes().First(t => t.Name == "Sample");
-		var syncRoot = ((ISynchronizable)compiler).SyncRoot;
+		AssertWaitsForEngineLock(syncRoot, () => type.CreateInstance<object>().AssertNotNull());
+	}
 
-		var started = new ManualResetEventSlim();
-		var created = new ManualResetEventSlim();
+	[TestMethod]
+	public async Task PythonPropertyGetTakesTheEngineLock()
+	{
+		// Reading a property off an instance runs the type's own getter on the shared engine.
+		var code =
+			"class Sample(object):\n" +
+			"    def __init__(self):\n" +
+			"        self._value = 42\n" +
+			"    @property\n" +
+			"    def Value(self):\n" +
+			"        return self._value\n" +
+			"    @Value.setter\n" +
+			"    def Value(self, v):\n" +
+			"        self._value = v\n";
 
-		using (syncRoot.EnterScope())
-		{
-			var creating = Task.Run(() =>
-			{
-				started.Set();
-				type.CreateInstance<object>().AssertNotNull();
-				created.Set();
-			}, CancellationToken);
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
 
-			started.Wait(TimeSpan.FromSeconds(5), CancellationToken).AssertTrue("the creating thread has to start");
+		// Instantiating and resolving the property are engine work of their own; keep them out of the
+		// window the assertion measures.
+		var instance = ((ITypeConstructor)type).CreateInstance([]);
+		var prop = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).First(p => p.Name == "Value");
 
-			created.Wait(TimeSpan.FromMilliseconds(500), CancellationToken)
-				.AssertFalse("creating an instance runs Python on the shared engine, so it must wait for the lock this thread holds");
-		}
+		AssertWaitsForEngineLock(syncRoot, () => prop.GetValue(instance).To<int>().AssertEqual(42));
+	}
 
-		created.Wait(TimeSpan.FromSeconds(10), CancellationToken).AssertTrue("and go through once the lock is free");
+	[TestMethod]
+	public async Task PythonPropertySetTakesTheEngineLock()
+	{
+		// Writing a property runs the type's own setter on the shared engine.
+		var code =
+			"class Sample(object):\n" +
+			"    def __init__(self):\n" +
+			"        self._value = 42\n" +
+			"    @property\n" +
+			"    def Value(self):\n" +
+			"        return self._value\n" +
+			"    @Value.setter\n" +
+			"    def Value(self, v):\n" +
+			"        self._value = v\n";
+
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
+
+		var instance = ((ITypeConstructor)type).CreateInstance([]);
+		var prop = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).First(p => p.Name == "Value");
+
+		AssertWaitsForEngineLock(syncRoot, () => prop.SetValue(instance, 43));
+
+		prop.GetValue(instance).To<int>().AssertEqual(43);
+	}
+
+	[TestMethod]
+	public async Task PythonTypeAttributesTakeTheEngineLock()
+	{
+		// The type's attributes are read off the Python type through the shared engine.
+		var code =
+			"class Sample(object):\n" +
+			"    \"\"\"what it does\"\"\"\n" +
+			"    display_name = 'Sample type'\n" +
+			"    def __init__(self):\n" +
+			"        pass\n";
+
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
+
+		AssertWaitsForEngineLock(syncRoot, () => type
+			.GetCustomAttributes(true)
+			.OfType<DisplayAttribute>()
+			.Any()
+			.AssertTrue("display_name has to come back as a DisplayAttribute"));
+	}
+
+	[TestMethod]
+	public async Task PythonMethodAttributesTakeTheEngineLock()
+	{
+		// A member's attributes are read off its Python function through the shared engine.
+		var code =
+			"class Sample(object):\n" +
+			"    def run(self):\n" +
+			"        \"\"\"what run does\"\"\"\n" +
+			"        return 42\n";
+
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
+
+		var method = type.GetMethods(BindingFlags.Public | BindingFlags.Instance).First(m => m.Name == "run");
+
+		AssertWaitsForEngineLock(syncRoot, () => method
+			.GetCustomAttributes(true)
+			.OfType<DisplayAttribute>()
+			.Any()
+			.AssertTrue("the method docstring has to come back as a DisplayAttribute"));
+	}
+
+	[TestMethod]
+	public async Task PythonMemberEnumerationTakesTheEngineLock()
+	{
+		// Enumerating members walks the Python type on the shared engine.
+		var code =
+			"class Sample(object):\n" +
+			"    def run(self):\n" +
+			"        return 42\n" +
+			"    def add_tick(self, h):\n" +
+			"        pass\n" +
+			"    def remove_tick(self, h):\n" +
+			"        pass\n";
+
+		var (type, syncRoot) = await CompilePythonTypeWithLock(code, "Sample");
+
+		// Fill the lazy member caches first: the guarantee is that the entry point takes the lock on
+		// every call, not only on the call that happens to build the caches.
+		type.GetMembers().AssertNotNull();
+
+		AssertWaitsForEngineLock(syncRoot, () => type
+			.GetMembers()
+			.Any(m => m.Name == "run")
+			.AssertTrue("the member list has to survive the trip"));
 	}
 
 	[TestMethod]

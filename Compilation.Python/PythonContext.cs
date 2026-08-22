@@ -187,12 +187,12 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				public override MethodInfo[] GetOtherMethods(bool nonPublic) => [];
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addFunc, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_addFunc, inherit));
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addFunc, attributeType, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_addFunc, attributeType, inherit));
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_addFunc);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributesData(_addFunc));
 
 				public override string ToString() => Name;
 			}
@@ -267,17 +267,17 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				public override ParameterInfo[] GetParameters() => _parameters;
 				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
 					// A static invocation passes a null instance; only instance methods take the leading self.
-					=> _function.__call__(DefaultContext.Default, obj is null ? [.. (parameters ?? [])] : [obj, .. (parameters ?? [])]);
+					=> _declaringType.Locked(() => _function.__call__(DefaultContext.Default, obj is null ? [.. (parameters ?? [])] : [obj, .. (parameters ?? [])]));
 
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_function, inherit));
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit));
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_function);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributesData(_function));
 
 				public override MethodImplAttributes GetMethodImplementationFlags() => MethodImplAttributes.IL;
 
@@ -327,10 +327,10 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				public override ParameterInfo[] GetIndexParameters() => [];
 
 				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
-					=> _declaringType._ops.GetMember(obj, Name);
+					=> _declaringType.Locked(() => _declaringType._ops.GetMember(obj, Name));
 
 				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
-					=> _declaringType._ops.SetMember(obj, Name, value);
+					=> _declaringType.Locked(() => _declaringType._ops.SetMember(obj, Name, value));
 
 				public override MethodInfo[] GetAccessors(bool nonPublic)
 				{
@@ -341,14 +341,14 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				}
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_accessor, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_accessor, inherit));
 
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_accessor, attributeType, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_accessor, attributeType, inherit));
 
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_accessor);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributesData(_accessor));
 
 				public override string ToString() => Name;
 			}
@@ -372,10 +372,10 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				public override ParameterInfo[] GetIndexParameters() => _propInfo.GetIndexParameters();
 
 				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
-					=> _declaringType._ops.GetMember(obj, Name);
+					=> _declaringType.Locked(() => _declaringType._ops.GetMember(obj, Name));
 
 				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
-					=> _declaringType._ops.SetMember(obj, Name, value);
+					=> _declaringType.Locked(() => _declaringType._ops.SetMember(obj, Name, value));
 
 				public override MethodInfo[] GetAccessors(bool nonPublic) => _propInfo.GetAccessors();
 				public override object[] GetCustomAttributes(bool inherit) => _propInfo.GetCustomAttributes(inherit);
@@ -424,12 +424,12 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				public override ParameterInfo[] GetParameters() => _parameters;
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_function, inherit));
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit));
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_function);
+					=> _declaringType.Locked(() => _declaringType._ops.GetCustomAttributesData(_function));
 
 				public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
 					=> _declaringType.CreateInstance(parameters);
@@ -445,9 +445,8 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			private readonly PythonType _pythonType;
 			private readonly ScriptEngine _engine;
 			private readonly ObjectOperations _ops;
-			// The ScriptEngine/ObjectOperations are not thread-safe and are shared across all
-			// TypeImpls of an assembly; serialise the lazy member caches under the context lock so
-			// concurrent reflection does not call into the engine from two threads at once.
+			// The ScriptEngine/ObjectOperations are not thread-safe and are shared across every
+			// TypeImpl of an assembly, so all engine access goes through Locked below.
 			private readonly Lock _syncRoot;
 			private readonly Type _underlyingType;
 			private readonly Type _dotNetBaseType;
@@ -461,6 +460,20 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				_ops = _engine.Operations;
 				_underlyingType = pythonType.GetUnderlyingSystemType() ?? throw new ArgumentException(nameof(pythonType));
 				_dotNetBaseType = pythonType.GetDotNetType();
+			}
+
+			// Every member that reaches the engine - through ObjectOperations or by running the type's
+			// own Python code - goes through here. The lock is reentrant, so nesting these is safe.
+			private T Locked<T>(Func<T> func)
+			{
+				using (_syncRoot.EnterScope())
+					return func();
+			}
+
+			private void Locked(Action action)
+			{
+				using (_syncRoot.EnterScope())
+					action();
 			}
 
 			public override Assembly Assembly => _assembly;
@@ -493,24 +506,16 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			private ConstructorInfo[] _ctors;
 
 			public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
+				=> Locked<ConstructorInfo[]>(() => [.. (_ctors ??= BuildConstructors()).Where(c => c.IsMatch(bindingAttr))]);
+
+			private ConstructorInfo[] BuildConstructors()
 			{
-				if (_ctors is null)
-				{
-					using (_syncRoot.EnterScope())
-					{
-						if (_ctors is null)
-						{
-							var init = _ops.GetMemberNames(_pythonType)
-								.Select(name => _ops.GetMember(_pythonType, name))
-								.OfType<PythonFunction>()
-								.FirstOrDefault(f => f.__name__ == "__init__");
+				var init = _ops.GetMemberNames(_pythonType)
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>()
+					.FirstOrDefault(f => f.__name__ == "__init__");
 
-							_ctors = [new ConstructorImpl(init, this)];
-						}
-					}
-				}
-
-				return [.. _ctors.Where(c => c.IsMatch(bindingAttr))];
+				return [new ConstructorImpl(init, this)];
 			}
 
 			protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
@@ -519,15 +524,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			private PropertyInfo[] _props;
 
 			public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
-			{
-				if (_props is null)
-				{
-					using (_syncRoot.EnterScope())
-						_props ??= BuildProperties();
-				}
-
-				return [.. _props.Where(p => p.IsMatch(bindingAttr))];
-			}
+				=> Locked<PropertyInfo[]>(() => [.. (_props ??= BuildProperties()).Where(p => p.IsMatch(bindingAttr))]);
 
 			private PropertyInfo[] BuildProperties()
 			{
@@ -575,51 +572,53 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			public override Type GetInterface(string name, bool ignoreCase) => GetInterfaces().FirstOrDefault(i => ignoreCase ? i.Name.EqualsIgnoreCase(name) : i.Name == name);
 			public override Type[] GetInterfaces() => [.. _underlyingType.GetInterfaces().Concat(_dotNetBaseType.GetInterfaces()).Distinct()];
 
+			// One lock over all three lookups, so the caller gets a single consistent view of the type.
 			public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
-				=> [.. GetProperties(bindingAttr), .. GetMethods(bindingAttr), .. GetEvents(bindingAttr)];
+				=> Locked<MemberInfo[]>(() => [.. GetProperties(bindingAttr), .. GetMethods(bindingAttr), .. GetEvents(bindingAttr)]);
 
 			public override Type GetNestedType(string name, BindingFlags bindingAttr) => null;
 			public override Type[] GetNestedTypes(BindingFlags bindingAttr) => [];
 
 			public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
-			{
-				var ops = _engine.Operations;
-
-				if (!ops.ContainsMember(target, name))
-					throw new MissingMemberException($"Member '{name}' doesn't exist.");
-
-				var member = ops.GetMember(target, name);
-
-				switch (member)
+				=> Locked(() =>
 				{
-					case PythonFunction pythonFunction:
-						return pythonFunction.__call__(DefaultContext.Default, [target, .. (args ?? [])]);
+					var ops = _engine.Operations;
 
-					case PythonProperty:
+					if (!ops.ContainsMember(target, name))
+						throw new MissingMemberException($"Member '{name}' doesn't exist.");
 
-						if (args == null || args.Length == 0)
-							return ops.GetMember(target, name);
-						else
-						{
-							ops.SetMember(target, name, args[0]);
-							return null;
-						}
+					var member = ops.GetMember(target, name);
 
-					default:
-						return ops.InvokeMember(target, name, args);
-				}
-			}
+					switch (member)
+					{
+						case PythonFunction pythonFunction:
+							return pythonFunction.__call__(DefaultContext.Default, [target, .. (args ?? [])]);
+
+						case PythonProperty:
+
+							if (args == null || args.Length == 0)
+								return ops.GetMember(target, name);
+							else
+							{
+								ops.SetMember(target, name, args[0]);
+								return null;
+							}
+
+						default:
+							return ops.InvokeMember(target, name, args);
+					}
+				});
 
 			public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 
 			public override object[] GetCustomAttributes(bool inherit)
-				=> _ops.GetCustomAttributes(_pythonType, inherit);
+				=> Locked(() => _ops.GetCustomAttributes(_pythonType, inherit));
 
 			public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-				=> _ops.GetCustomAttributes(_pythonType, attributeType, inherit);
+				=> Locked(() => _ops.GetCustomAttributes(_pythonType, attributeType, inherit));
 
 			public override IList<CustomAttributeData> GetCustomAttributesData()
-				=> _ops.GetCustomAttributesData(_pythonType);
+				=> Locked(() => _ops.GetCustomAttributesData(_pythonType));
 
 			public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
 				=> GetEvents(bindingAttr).FirstOrDefault(e => e.Name == name);
@@ -630,15 +629,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			private const string _eventRemovePrefix = "remove_";
 
 			public override EventInfo[] GetEvents(BindingFlags bindingAttr)
-			{
-				if (_events is null)
-				{
-					using (_syncRoot.EnterScope())
-						_events ??= BuildEvents();
-				}
-
-				return [.. _events.Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true)];
-			}
+				=> Locked<EventInfo[]>(() => [.. (_events ??= BuildEvents()).Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true)]);
 
 			private EventInfo[] BuildEvents()
 			{
@@ -685,15 +676,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 			}
 
 			public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
-			{
-				if (_methods is null)
-				{
-					using (_syncRoot.EnterScope())
-						_methods ??= BuildMethods();
-				}
-
-				return [.. _methods.Where(m => m.IsMatch(bindingAttr))];
-			}
+				=> Locked<MethodInfo[]>(() => [.. (_methods ??= BuildMethods()).Where(m => m.IsMatch(bindingAttr))]);
 
 			private MethodInfo[] BuildMethods()
 			{
@@ -726,11 +709,7 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				=> GetMethods(bindingAttr).FirstOrDefault(m => m.Name == name && (types is null || m.GetParameters().Select(p => p.ParameterType).SequenceEqual(types)));
 
 			public object CreateInstance(params object[] args)
-			{
-				// Constructing the object runs the type's own Python code on the shared engine.
-				using (_syncRoot.EnterScope())
-					return _ops.CreateInstance(_pythonType, args);
-			}
+				=> Locked(() => _ops.CreateInstance(_pythonType, args));
 		}
 
 		private readonly Type[] _types;
