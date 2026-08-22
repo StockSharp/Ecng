@@ -1,4 +1,4 @@
-﻿namespace Ecng.Server.Utils;
+namespace Ecng.Server.Utils;
 
 using System;
 using System.IO;
@@ -46,6 +46,27 @@ public static class ServicePath
 		if (logger is null)
 			throw new ArgumentNullException(nameof(logger));
 
+		var logManager = CreateLogManager(fileSystem, dataDir, defaultLevel);
+
+		logManager.Listeners.Add(new ServiceLogListener(logger));
+
+		return logManager;
+	}
+
+	/// <summary>
+	/// Creates a <see cref="LogManager"/> that keeps to itself, for a service that routes <see cref="ILogger"/>
+	/// into it with a <see cref="LogManagerLoggerProvider"/> instead of the other way round.
+	/// </summary>
+	/// <param name="fileSystem">File system.</param>
+	/// <param name="dataDir">Data directory.</param>
+	/// <param name="defaultLevel">Default log level.</param>
+	/// <returns>Log manager.</returns>
+	/// <remarks>
+	/// Same file and settings as the overload taking a logger; it only leaves out the forwarding into
+	/// <see cref="ILogger"/>, which a service being fed from <see cref="ILogger"/> must not have.
+	/// </remarks>
+	public static LogManager CreateLogManager(IFileSystem fileSystem, string dataDir, LogLevels defaultLevel)
+	{
         if (fileSystem is null)
             throw new ArgumentNullException(nameof(fileSystem));
 
@@ -77,8 +98,6 @@ public static class ServicePath
 
 			serializer.Serialize(logManager.Save(), fileSystem, logSettingsFile);
 		}
-
-		logManager.Listeners.Add(new ServiceLogListener(logger));
 
 		return logManager;
 	}
