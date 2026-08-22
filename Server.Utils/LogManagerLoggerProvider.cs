@@ -71,6 +71,7 @@ public class LogManagerLoggerProvider : ILoggerProvider
 
 	private readonly LogManager _logManager;
 	private readonly SynchronizedDictionary<string, CategorySource> _sources = new(StringComparer.InvariantCultureIgnoreCase);
+	private readonly SynchronizedSet<string> _takenNames = new(StringComparer.InvariantCultureIgnoreCase);
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="LogManagerLoggerProvider"/>.
@@ -103,12 +104,40 @@ public class LogManagerLoggerProvider : ILoggerProvider
 
 		var source = _sources.SafeAdd(categoryName, name =>
 		{
-			var created = new CategorySource(name);
+			var created = new CategorySource(ShortestFreeName(name));
 			_logManager.Sources.Add(created);
 			return created;
 		});
 
 		return new CategoryLogger(source);
+	}
+
+	/// <summary>
+	/// The shortest tail of a category that no other source is already using.
+	/// </summary>
+	/// <remarks>
+	/// A category is the full name of the type that logs, and a name column is not the place for one: what
+	/// a reader wants is which part of the service wrote the line. The tail alone usually says that -- but
+	/// two services can both have a Worker, and a log where two things look like one is worse than a long
+	/// name, so a taken name grows by a segment until it is its own.
+	/// </remarks>
+	private string ShortestFreeName(string categoryName)
+	{
+		var parts = categoryName.Split('.');
+
+		for (var take = 1; take < parts.Length; take++)
+		{
+			var candidate = parts.Skip(parts.Length - take).JoinDot();
+
+			if (!_takenNames.Contains(candidate))
+			{
+				_takenNames.Add(candidate);
+				return candidate;
+			}
+		}
+
+		_takenNames.Add(categoryName);
+		return categoryName;
 	}
 
 	void IDisposable.Dispose()

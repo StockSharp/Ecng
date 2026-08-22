@@ -154,6 +154,43 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		Throws<InvalidOperationException>(() => new LogManagerLoggerProvider(manager));
 	}
 
+	/// <summary>
+	/// A category is a full type name, and a log column is not the place for one: what a reader needs is
+	/// which part of the service wrote the line.
+	/// </summary>
+	[TestMethod]
+	public void ASourceIsNamedAfterTheTypeAloneNotItsNamespace()
+	{
+		var (manager, listener) = CreateManager();
+		using var provider = new LogManagerLoggerProvider(manager);
+
+		provider.CreateLogger("StockSharp.Web.Servers.Mail.CpuMonitorService").LogInformation("shortened");
+
+		WaitFor(listener, () => listener.Messages.Any(m => m.Message == "shortened"));
+
+		AreEqual("CpuMonitorService", listener.Messages.First(m => m.Message == "shortened").Source.Name);
+	}
+
+	/// <summary>Shortening must not make two different things look like one.</summary>
+	[TestMethod]
+	public void TwoTypesOfTheSameNameStaySeparate()
+	{
+		var (manager, listener) = CreateManager();
+		using var provider = new LogManagerLoggerProvider(manager);
+
+		provider.CreateLogger("StockSharp.Web.Servers.Mail.Worker").LogInformation("from mail");
+		provider.CreateLogger("StockSharp.Web.Servers.Video.Worker").LogInformation("from video");
+
+		WaitFor(listener, () => listener.Messages.Count >= 2);
+
+		var mail = listener.Messages.First(m => m.Message == "from mail").Source.Name;
+		var video = listener.Messages.First(m => m.Message == "from video").Source.Name;
+
+		AreEqual("Worker", mail);
+		AreNotEqual(mail, video, "two workers from different services share one name in the log");
+		IsTrue(video.EndsWithIgnoreCase("Worker"), video);
+	}
+
 	/// <summary>One log file, one clock: the rest of it is stamped in UTC.</summary>
 	[TestMethod]
 	public void LinesAreStampedOnTheSameClockAsTheRest()
