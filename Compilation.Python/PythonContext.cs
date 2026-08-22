@@ -726,7 +726,11 @@ class PythonContext(ScriptEngine engine, Lock syncRoot) : Disposable, ICompilerC
 				=> GetMethods(bindingAttr).FirstOrDefault(m => m.Name == name && (types is null || m.GetParameters().Select(p => p.ParameterType).SequenceEqual(types)));
 
 			public object CreateInstance(params object[] args)
-				=> _ops.CreateInstance(_pythonType, args);
+			{
+				// Constructing the object runs the type's own Python code on the shared engine.
+				using (_syncRoot.EnterScope())
+					return _ops.CreateInstance(_pythonType, args);
+			}
 		}
 
 		private readonly Type[] _types;

@@ -245,6 +245,46 @@ public class CompilerTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task PythonCreateInstanceTakesTheEngineLock()
+	{
+		// Creating an instance runs the type's own Python code on the calling thread. The engine it
+		// runs on is the one every other caller compiles and executes on, and it is not thread-safe,
+		// so this has to wait for the lock the compiler hands out - otherwise an import running on
+		// another thread is observed half-initialized and fails on a member it has not bound yet.
+		ICompiler compiler = new PythonCompiler();
+
+		var code = "class Sample(object):" + Environment.NewLine
+			+ "    def __init__(self):" + Environment.NewLine
+			+ "        self.value = 42";
+
+		var res = await compiler.Compile("test", [code], [], CancellationToken);
+		res.HasErrors().AssertFalse();
+
+		var type = res.GetAssembly(compiler.CreateContext()).GetExportedTypes().First(t => t.Name == "Sample");
+		var syncRoot = ((ISynchronizable)compiler).SyncRoot;
+
+		var started = new ManualResetEventSlim();
+		var created = new ManualResetEventSlim();
+
+		using (syncRoot.EnterScope())
+		{
+			var creating = Task.Run(() =>
+			{
+				started.Set();
+				type.CreateInstance<object>().AssertNotNull();
+				created.Set();
+			}, CancellationToken);
+
+			started.Wait(TimeSpan.FromSeconds(5), CancellationToken).AssertTrue("the creating thread has to start");
+
+			created.Wait(TimeSpan.FromMilliseconds(500), CancellationToken)
+				.AssertFalse("creating an instance runs Python on the shared engine, so it must wait for the lock this thread holds");
+		}
+
+		created.Wait(TimeSpan.FromSeconds(10), CancellationToken).AssertTrue("and go through once the lock is free");
+	}
+
+	[TestMethod]
 	public async Task PythonCompileParallel_SharedEngine_ShouldFail()
 	{
 		// Regression test for PythonCompiler shared-engine concurrency: parallel compilations
