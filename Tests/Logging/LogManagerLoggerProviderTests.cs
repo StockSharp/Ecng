@@ -154,6 +154,25 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		Throws<InvalidOperationException>(() => new LogManagerLoggerProvider(manager));
 	}
 
+	/// <summary>One log file, one clock: the rest of it is stamped in UTC.</summary>
+	[TestMethod]
+	public void LinesAreStampedOnTheSameClockAsTheRest()
+	{
+		var (manager, listener) = CreateManager();
+		using var provider = new LogManagerLoggerProvider(manager);
+
+		var before = DateTime.UtcNow.AddSeconds(-5);
+
+		provider.CreateLogger("Worker").LogInformation("stamped");
+
+		WaitFor(listener, () => listener.Messages.Any(m => m.Message == "stamped"));
+
+		var time = listener.Messages.First(m => m.Message == "stamped").Time;
+
+		IsTrue(time >= before && time <= DateTime.UtcNow.AddSeconds(5),
+			$"the line is stamped on another clock: {time:O} against {DateTime.UtcNow:O}");
+	}
+
 	/// <summary>
 	/// Recording an exception that came without a message of its own. Every framework overload that takes an
 	/// exception also demands a message, so a catch block with nothing to add would have to invent one.

@@ -55,7 +55,8 @@ public class LogManagerLoggerProvider : ILoggerProvider
 			if (text.IsEmpty())
 				return;
 
-			_receiver.AddLog(new LogMessage(_receiver, DateTime.Now, ToLevel(logLevel), text));
+			// The rest of the log is stamped in UTC; a line from here must read on the same clock.
+			_receiver.AddLog(new LogMessage(_receiver, DateTime.UtcNow, ToLevel(logLevel), text));
 		}
 
 		private static LogLevels ToLevel(LogLevel level) => level switch

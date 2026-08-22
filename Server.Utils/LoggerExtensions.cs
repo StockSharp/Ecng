@@ -29,4 +29,17 @@ public static class LoggerExtensions
 
 		logger.LogError(exception, string.Empty);
 	}
+
+	/// <summary>
+	/// A log source that passes what it collects into this logger.
+	/// </summary>
+	/// <param name="logger">Logger.</param>
+	/// <param name="name">Source name, shown on the messages it passes on.</param>
+	/// <returns>Log source.</returns>
+	/// <remarks>
+	/// For handing a log to a component built around <see cref="Ecng.Logging.ILogSource"/> without holding
+	/// one: the component gets this as its parent, and everything it logs arrives here.
+	/// </remarks>
+	public static Ecng.Logging.ILogReceiver ToLogReceiver(this ILogger logger, string name)
+		=> new LoggerLogReceiver(logger, name);
 }
