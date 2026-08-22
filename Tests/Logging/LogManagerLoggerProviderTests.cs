@@ -154,6 +154,47 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		Throws<InvalidOperationException>(() => new LogManagerLoggerProvider(manager));
 	}
 
+	/// <summary>
+	/// Recording an exception that came without a message of its own. Every framework overload that takes an
+	/// exception also demands a message, so a catch block with nothing to add would have to invent one.
+	/// </summary>
+	[TestMethod]
+	public void TheExceptionIsRecordedWithoutAnInventedMessage()
+	{
+		var logger = new CapturingLogger();
+		var boom = new InvalidOperationException("boom");
+
+		logger.LogError(boom);
+
+		AreEqual(LogLevel.Error, logger.Level);
+		AreSame(boom, logger.Exception);
+		AreEqual(string.Empty, logger.Text, "a message was invented for an exception that came without one");
+	}
+
+	[TestMethod]
+	public void NothingIsRecordedForNothing()
+	{
+		Throws<ArgumentNullException>(() => new CapturingLogger().LogError((Exception)null));
+		Throws<ArgumentNullException>(() => ((ILogger)null).LogError(new Exception()));
+	}
+
+	private sealed class CapturingLogger : ILogger
+	{
+		public LogLevel Level { get; private set; }
+		public Exception Exception { get; private set; }
+		public string Text { get; private set; }
+
+		IDisposable ILogger.BeginScope<TState>(TState state) => null;
+		bool ILogger.IsEnabled(LogLevel logLevel) => true;
+
+		void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+		{
+			Level = logLevel;
+			Exception = exception;
+			Text = formatter(state, exception);
+		}
+	}
+
 	private sealed class NullLogger : ILogger
 	{
 		IDisposable ILogger.BeginScope<TState>(TState state) => null;
