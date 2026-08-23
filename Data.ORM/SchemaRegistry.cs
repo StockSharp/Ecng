@@ -281,7 +281,7 @@ public static class SchemaRegistry
 			return ([], false);
 
 		var indexes = attrs
-			.Select(a => new SchemaColumnIndex(a.Name, a.Order, a is UniqueAttribute, a.Condition))
+			.Select(a => SchemaColumnIndex.From(a, a.Name, a.Order))
 			.ToArray();
 
 		return (indexes, attrs.Any(a => a is UniqueAttribute));
@@ -318,7 +318,10 @@ public static class SchemaRegistry
 		}
 	}
 
-	private static Schema CreateFromReflection(Type entityType)
+	// Internal rather than private so a test can compare this schema against the one the
+	// entity source generator emits: the generated schema is registered eagerly and always
+	// wins in Get, so a divergence between the two is otherwise invisible at runtime.
+	internal static Schema CreateFromReflection(Type entityType)
 	{
 		var entityAttr = entityType.GetAttribute<EntityAttribute>();
 
@@ -406,7 +409,7 @@ public static class SchemaRegistry
 				if (!typeIndexLookup.TryGetValue(cols[i], out var entry))
 					entry = (new(), false);
 
-				entry.Indexes.Add(new SchemaColumnIndex(indexName, order, isUnique, attr.Condition));
+				entry.Indexes.Add(SchemaColumnIndex.From(attr, indexName, order));
 				typeIndexLookup[cols[i]] = (entry.Indexes, entry.HasUnique || isUnique);
 			}
 		}

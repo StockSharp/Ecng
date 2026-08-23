@@ -2,10 +2,12 @@ namespace Ecng.Data;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 [Generator]
@@ -699,7 +701,7 @@ public class EntityGenerator : IIncrementalGenerator
 		return sb;
 	}
 
-	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup, Dictionary<string, bool> typeColumnNullable)
+	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, ColumnIndexes> typeIndexLookup, Dictionary<string, bool> typeColumnNullable)
 	{
 		// A type-level [ColumnOverride] names this column from the entity, which is the only
 		// way to reach a column the entity inherits rather than declares. It outranks whatever
@@ -739,14 +741,18 @@ public class EntityGenerator : IIncrementalGenerator
 			if (!IsRelationSingle(prop) && GetForeignKeyType(prop) is { } fkType)
 				parts.Add($"ReferencedEntityType = typeof({fkType})");
 
-			if (IsUnique(prop))
-				parts.Add("IsUnique = true");
-			if (IsIndex(prop))
-				parts.Add("IsIndex = true");
-
+			// Uniqueness and indexedness follow every participation the column has, whether it
+			// was declared on the property or on the entity, the way the reflection path merges
+			// them (SchemaRegistry.MergeTypeLevelIndexes).
 			var indexes = GetColumnIndexes(prop.Name, prop, typeIndexLookup);
-			if (indexes is not null)
-				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes} }}");
+
+			if (indexes.HasUnique)
+				parts.Add("IsUnique = true");
+			if (indexes.Entries is not null)
+			{
+				parts.Add("IsIndex = true");
+				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes.Entries} }}");
+			}
 
 			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(prop);
 			var nullable = typeNullable ?? colNullable ?? InferIsNullable(prop);
@@ -763,7 +769,7 @@ public class EntityGenerator : IIncrementalGenerator
 		}
 	}
 
-	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable, Dictionary<string, string> typeIndexLookup)
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable, Dictionary<string, ColumnIndexes> typeIndexLookup)
 	{
 		foreach (var inner in innerProps)
 		{
@@ -806,8 +812,14 @@ public class EntityGenerator : IIncrementalGenerator
 				parts.Add($"ReferencedEntityType = typeof({fkType})");
 
 			var indexes = GetColumnIndexes(colName, inner, typeIndexLookup);
-			if (indexes is not null)
-				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes} }}");
+
+			if (indexes.HasUnique)
+				parts.Add("IsUnique = true");
+			if (indexes.Entries is not null)
+			{
+				parts.Add("IsIndex = true");
+				parts.Add($"Indexes = new SchemaColumnIndex[] {{ {indexes.Entries} }}");
+			}
 
 			if (nullable)
 				parts.Add("IsNullable = true");
@@ -1205,17 +1217,36 @@ public class EntityGenerator : IIncrementalGenerator
 	private static bool IsRelationMany(IPropertySymbol prop)
 		=> HasAttribute(prop, "RelationManyAttribute");
 
-	private static bool IsUnique(IPropertySymbol prop)
-		=> HasAttribute(prop, "UniqueAttribute");
-
-	private static bool IsIndex(IPropertySymbol prop)
-		=> HasAttribute(prop, "IndexAttribute") || IsUnique(prop);
-
 	private static bool IsViewEntity(INamedTypeSymbol type)
 		=> HasAttribute(type, "ViewProcessorAttribute");
 
 	private static bool HasAttribute(ISymbol symbol, string attrName)
 		=> symbol.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
+
+	// Roslyn reports the attribute class exactly as written, so a subclass such as
+	// [NonEmptyUnique] (-> Unique -> Index) does not answer to any of its base names. Walk the
+	// hierarchy, or every derived index attribute is silently skipped.
+	private static bool DerivesFrom(INamedTypeSymbol type, string attrName)
+	{
+		for (var current = type; current is not null; current = current.BaseType)
+		{
+			if (current.Name == attrName)
+				return true;
+		}
+
+		return false;
+	}
+
+	// [Identity] is an IndexAttribute too, but it drives the primary key and is emitted from
+	// there, so it must not also become an ordinary index — the reflection path skips it the
+	// same way (SchemaRegistry.CreateFromReflection).
+	private static bool IsIndexAttribute(AttributeData attr)
+		=> attr.AttributeClass is { } cls
+			&& DerivesFrom(cls, "IndexAttribute")
+			&& !DerivesFrom(cls, "IdentityAttribute");
+
+	private static bool IsUniqueAttribute(AttributeData attr)
+		=> IsIndexAttribute(attr) && DerivesFrom(attr.AttributeClass, "UniqueAttribute");
 
 	private static string GetForeignKeyType(IPropertySymbol prop)
 	{
@@ -1227,48 +1258,72 @@ public class EntityGenerator : IIncrementalGenerator
 		return attr.ConstructorArguments[0].Value is INamedTypeSymbol t ? FullType(t) : null;
 	}
 
-	// Builds a column-name -> emitted "new SchemaColumnIndex(...)" list from type-level [Index]/[Unique]
-	// declarations, mirroring SchemaRegistry's type-level index expansion.
-	private static Dictionary<string, string> BuildTypeIndexLookup(INamedTypeSymbol entityType, string tableName)
+	/// <summary>
+	/// The index participations of one column as emitted source, plus whether any of them is
+	/// unique. Used both for what the type-level declarations contribute and for the merged set.
+	/// </summary>
+	private readonly struct ColumnIndexes(string entries, bool hasUnique)
+	{
+		public string Entries { get; } = entries;
+		public bool HasUnique { get; } = hasUnique;
+	}
+
+	// Builds a column-name -> emitted "SchemaColumnIndex.From(...)" list from type-level
+	// [Index]/[Unique] declarations, mirroring SchemaRegistry's type-level index expansion.
+	private static Dictionary<string, ColumnIndexes> BuildTypeIndexLookup(INamedTypeSymbol entityType, string tableName)
 	{
 		var lookup = new Dictionary<string, List<string>>();
+		var unique = new HashSet<string>();
 
 		foreach (var attr in entityType.GetAttributes())
 		{
-			var name = attr.AttributeClass?.Name;
-
-			if (name != "IndexAttribute" && name != "UniqueAttribute")
+			if (!IsIndexAttribute(attr))
 				continue;
 
-			if (attr.ConstructorArguments.Length == 0 || attr.ConstructorArguments[0].Kind != TypedConstantKind.Array)
-				continue;
-
-			var cols = attr.ConstructorArguments[0].Values
-				.Select(v => v.Value as string)
-				.Where(s => !string.IsNullOrEmpty(s))
-				.ToArray();
+			var cols = GetDeclaredColumns(attr);
 
 			if (cols.Length == 0)
 				continue;
 
-			var isUnique = name == "UniqueAttribute";
 			var explicitName = attr.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value as string;
 			var indexName = !string.IsNullOrEmpty(explicitName)
 				? $"\"{explicitName}\""
 				: (cols.Length == 1 ? "null" : $"\"IX_{tableName}_{string.Join("_", cols)}\"");
 
+			var attrExpr = RenderAttribute(attr);
+			var isUnique = IsUniqueAttribute(attr);
+
 			for (var i = 0; i < cols.Length; i++)
 			{
-				var entry = $"new SchemaColumnIndex({indexName}, {i}, {(isUnique ? "true" : "false")})";
+				var entry = $"SchemaColumnIndex.From({attrExpr}, {indexName}, {i})";
 
 				if (!lookup.TryGetValue(cols[i], out var list))
 					lookup[cols[i]] = list = new List<string>();
 
 				list.Add(entry);
+
+				if (isUnique)
+					unique.Add(cols[i]);
 			}
 		}
 
-		return lookup.ToDictionary(kv => kv.Key, kv => string.Join(", ", kv.Value));
+		return lookup.ToDictionary(kv => kv.Key, kv => new ColumnIndexes(string.Join(", ", kv.Value), unique.Contains(kv.Key)));
+	}
+
+	// The column-list constructor is declared as params, so one column arrives as a bare string
+	// and several as an array; both spellings name the same index.
+	private static string[] GetDeclaredColumns(AttributeData attr)
+	{
+		if (attr.ConstructorArguments.Length == 0)
+			return [];
+
+		var first = attr.ConstructorArguments[0];
+
+		var values = first.Kind == TypedConstantKind.Array
+			? first.Values.Select(v => v.Value as string)
+			: Enumerable.Repeat(first.Value as string, 1);
+
+		return values.Where(s => !string.IsNullOrEmpty(s)).ToArray();
 	}
 
 	// Builds a column-name -> nullability map from type-level [ColumnOverride] declarations, mirroring
@@ -1296,31 +1351,33 @@ public class EntityGenerator : IIncrementalGenerator
 		return lookup;
 	}
 
-	// Combines property-level [Index]/[Unique] with the type-level entries for the column; returns the
-	// comma-joined "new SchemaColumnIndex(...)" list or null when the column has no indexes.
-	private static string GetColumnIndexes(string columnName, IPropertySymbol prop, Dictionary<string, string> typeIndexLookup)
+	// Combines property-level [Index]/[Unique] with the type-level entries for the column. Entries
+	// is the comma-joined "SchemaColumnIndex.From(...)" list, or null when the column has none.
+	private static ColumnIndexes GetColumnIndexes(string columnName, IPropertySymbol prop, Dictionary<string, ColumnIndexes> typeIndexLookup)
 	{
 		var entries = new List<string>();
+		var hasUnique = false;
 
 		foreach (var attr in prop.GetAttributes())
 		{
-			var name = attr.AttributeClass?.Name;
-
-			if (name != "IndexAttribute" && name != "UniqueAttribute")
+			if (!IsIndexAttribute(attr))
 				continue;
 
-			var isUnique = name == "UniqueAttribute";
 			var explicitName = attr.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value as string;
 			var order = attr.NamedArguments.FirstOrDefault(a => a.Key == "Order").Value.Value is int o ? o : 0;
 			var nameStr = string.IsNullOrEmpty(explicitName) ? "null" : $"\"{explicitName}\"";
 
-			entries.Add($"new SchemaColumnIndex({nameStr}, {order}, {(isUnique ? "true" : "false")})");
+			entries.Add($"SchemaColumnIndex.From({RenderAttribute(attr)}, {nameStr}, {order})");
+			hasUnique |= IsUniqueAttribute(attr);
 		}
 
-		if (typeIndexLookup.TryGetValue(columnName, out var typeEntries))
-			entries.Add(typeEntries);
+		if (typeIndexLookup.TryGetValue(columnName, out var typeLevel))
+		{
+			entries.Add(typeLevel.Entries);
+			hasUnique |= typeLevel.HasUnique;
+		}
 
-		return entries.Count > 0 ? string.Join(", ", entries) : null;
+		return new(entries.Count > 0 ? string.Join(", ", entries) : null, hasUnique);
 	}
 
 	private static (bool? isNullable, int maxLength, int precision, int scale) GetColumnAttribute(IPropertySymbol prop)
@@ -1396,6 +1453,55 @@ public class EntityGenerator : IIncrementalGenerator
 
 	private static string FullType(ITypeSymbol type)
 		=> type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+	// Reproduces the attribute declaration as a constructor call instead of interpreting it. A
+	// derived attribute fills part of its state in its own constructor — NonEmptyUnique builds
+	// its Condition there — and a generator cannot run that constructor, so the declaration is
+	// handed to the generated code and evaluated once when the schema is built.
+	private static string RenderAttribute(AttributeData attr)
+	{
+		var args = attr.ConstructorArguments.SelectMany(FlattenArgument);
+		var expr = $"new {FullType(attr.AttributeClass)}({string.Join(", ", args)})";
+
+		var init = attr.NamedArguments
+			.Select(na => $"{na.Key} = {RenderConstant(na.Value)}")
+			.ToArray();
+
+		return init.Length > 0 ? $"{expr} {{ {string.Join(", ", init)} }}" : expr;
+	}
+
+	// A params argument reaches Roslyn as a single array constant; spelling its elements back out
+	// as separate arguments picks the same overload the source did.
+	private static IEnumerable<string> FlattenArgument(TypedConstant arg)
+		=> arg.Kind == TypedConstantKind.Array && !arg.IsNull
+			? arg.Values.Select(RenderConstant)
+			: Enumerable.Repeat(RenderConstant(arg), 1);
+
+	private static string RenderConstant(TypedConstant value)
+	{
+		if (value.IsNull)
+			return "null";
+
+		if (value.Kind == TypedConstantKind.Array)
+		{
+			var elementType = value.Type is IArrayTypeSymbol array ? FullType(array.ElementType) : "object";
+			return $"new {elementType}[] {{ {string.Join(", ", value.Values.Select(RenderConstant))} }}";
+		}
+
+		if (value.Kind == TypedConstantKind.Type)
+			return value.Value is ITypeSymbol type ? $"typeof({FullType(type)})" : "null";
+
+		if (value.Kind == TypedConstantKind.Enum)
+			return $"({FullType(value.Type)}){Convert.ToString(value.Value, CultureInfo.InvariantCulture)}";
+
+		return value.Value switch
+		{
+			string s => SymbolDisplay.FormatLiteral(s, quote: true),
+			char c => SymbolDisplay.FormatLiteral(c, quote: true),
+			bool b => b ? "true" : "false",
+			_ => Convert.ToString(value.Value, CultureInfo.InvariantCulture),
+		};
+	}
 
 	#endregion
 }

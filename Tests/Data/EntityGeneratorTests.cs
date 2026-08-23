@@ -693,6 +693,111 @@ public class EntityGeneratorTests : BaseTestClass
 	}
 
 	#endregion
+
+	#region Finding #8: filtered unique indexes and subclassed [Index] attributes
+
+	/// <summary>
+	/// Regression test: a type-level [NonEmptyUnique] must reach the generated schema as a unique
+	/// participation carrying the Condition its constructor computed. The generator matched
+	/// attributes by exact class name, so every subclass of [Index]/[Unique] was skipped and the
+	/// filtered unique index was never created by SchemaSync.
+	/// (Was: BuildTypeIndexLookup/GetColumnIndexes compared AttributeClass.Name,
+	/// Data.Entities.Generator\EntityGenerator.cs:1240/1309.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_NonEmptyUnique_ReachesTheSchemaWithItsCondition()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestFilteredIndexEntity));
+		var key = schema.Columns.First(c => c.Name == "IdempotencyKey");
+
+		var ix = key.Indexes.FirstOrDefault(i => i.Name == "UX_GenFiltered_Tenant_Key");
+
+		ix.AssertNotNull("[NonEmptyUnique] must reach the generated schema");
+		ix.IsUnique.AssertTrue("[NonEmptyUnique] is a unique index");
+		ix.Condition.AssertEqual("{IdempotencyKey} <> ''");
+	}
+
+	/// <summary>
+	/// Regression test: the scope column of the same composite must carry the participation too,
+	/// so the index spans both columns.
+	/// </summary>
+	[TestMethod]
+	public void Generated_NonEmptyUnique_SpansEveryNamedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestFilteredIndexEntity));
+		var tenant = schema.Columns.First(c => c.Name == "Tenant");
+
+		tenant.Indexes.Count(i => i.Name == "UX_GenFiltered_Tenant_Key").AssertEqual(1,
+			"The scope column must participate in the filtered unique index");
+	}
+
+	/// <summary>
+	/// Regression test: an explicit Condition on a plain [Unique] must be emitted as well. The
+	/// generator recognised the attribute but built SchemaColumnIndex without its fourth argument,
+	/// so the WHERE clause was dropped even for the attributes it did see.
+	/// (Was: three-argument SchemaColumnIndex emission,
+	/// Data.Entities.Generator\EntityGenerator.cs:1262/1317.)
+	/// </summary>
+	[TestMethod]
+	public void Generated_ExplicitCondition_ReachesTheSchema()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestFilteredIndexEntity));
+		var external = schema.Columns.First(c => c.Name == "ExternalId");
+
+		var ix = external.Indexes.FirstOrDefault(i => i.Name == "UX_GenFiltered_Tenant_External");
+
+		ix.AssertNotNull("[Unique(Condition = ...)] must reach the generated schema");
+		ix.Condition.AssertEqual("{ExternalId} <> ''");
+	}
+
+	/// <summary>
+	/// Regression test: the same subclassed attribute declared on a property.
+	/// </summary>
+	[TestMethod]
+	public void Generated_PropertyLevelNonEmptyUnique_ReachesTheSchemaWithItsCondition()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestFilteredColumnEntity));
+		var token = schema.Columns.First(c => c.Name == "Token");
+
+		token.IsUnique.AssertTrue("A property-level [NonEmptyUnique] is a unique column");
+
+		var ix = token.Indexes.FirstOrDefault();
+
+		ix.AssertNotNull("A property-level [NonEmptyUnique] must reach the generated schema");
+		ix.IsUnique.AssertTrue();
+		ix.Condition.AssertEqual("{Token} <> ''");
+	}
+
+	/// <summary>
+	/// The generated schema and the reflection schema are two implementations of the same
+	/// declaration, and only the generated one is served at runtime — a divergence between them is
+	/// invisible until the database is missing an index. Compare the index metadata of both for
+	/// every entity the generator produced here, so any future attribute the generator learns to
+	/// read (or forgets to) is caught by this one test rather than by a per-attribute test.
+	/// </summary>
+	[TestMethod]
+	[DataRow(typeof(GenTestFilteredIndexEntity))]
+	[DataRow(typeof(GenTestFilteredColumnEntity))]
+	[DataRow(typeof(GenTestIndexEntity))]
+	public void GeneratedSchema_IndexMetadata_MatchesReflection(Type entityType)
+	{
+		static string Describe(Schema schema)
+			=> schema.Columns
+				.OrderBy(c => c.Name, StringComparer.Ordinal)
+				.Select(c => $"{c.Name}|{c.IsUnique}|{c.IsIndex}|" + c.Indexes
+					.OrderBy(i => i.Name, StringComparer.Ordinal).ThenBy(i => i.Order)
+					.Select(i => $"({i.Name},{i.Order},{i.IsUnique},{i.Condition})")
+					.JoinComma())
+				.JoinN();
+
+		var generated = SchemaRegistry.Get(entityType);
+		var reflected = SchemaRegistry.CreateFromReflection(entityType);
+
+		Describe(generated).AssertEqual(Describe(reflected),
+			$"Generated and reflected index metadata diverge for {entityType.Name}");
+	}
+
+	#endregion
 }
 
 #endif

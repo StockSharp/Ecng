@@ -78,7 +78,28 @@ public record SchemaColumn
 /// <see cref="Condition"/>, when set, makes it a partial (filtered) index — a
 /// trailing <c>WHERE</c> whose braced column tokens are quoted per dialect.
 /// </summary>
-public sealed record SchemaColumnIndex(string Name, int Order, bool IsUnique = false, string Condition = null);
+public sealed record SchemaColumnIndex(string Name, int Order, bool IsUnique = false, string Condition = null)
+{
+	/// <summary>
+	/// Builds one column's participation in the index declared by <paramref name="attr"/>.
+	/// Uniqueness and <see cref="IndexAttribute.Condition"/> are read off the attribute instance,
+	/// so a subclass that fills them in its constructor — <see cref="NonEmptyUniqueAttribute"/> —
+	/// is honoured without the caller knowing that subclass exists. <paramref name="name"/> and
+	/// <paramref name="order"/> stay with the caller: only it knows the table name the auto-generated
+	/// index name is built from and the column's position in the whole declaration.
+	/// </summary>
+	/// <param name="attr">The declared index attribute.</param>
+	/// <param name="name">Resolved index name, or <see langword="null"/> for the single-column fallback.</param>
+	/// <param name="order">The column's position inside the index.</param>
+	/// <returns>The participation.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="attr"/> is <see langword="null"/>.</exception>
+	public static SchemaColumnIndex From(IndexAttribute attr, string name, int order)
+	{
+		ArgumentNullException.ThrowIfNull(attr);
+
+		return new(name, order, attr is UniqueAttribute, attr.Condition);
+	}
+}
 
 /// <summary>
 /// Describes the database schema for an entity type.

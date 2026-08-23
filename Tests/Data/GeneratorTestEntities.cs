@@ -429,4 +429,44 @@ public partial class GenTestPrecisionEntity : GenTestBaseEntity
 	public decimal Amount { get; set; }
 }
 
+// ===== Finding #8: filtered (partial) unique indexes =====
+
+/// <summary>
+/// A type-level [NonEmptyUnique] — a subclass of [Unique] whose constructor computes the filter —
+/// next to a plain [Unique] carrying an explicit Condition. Both must reach the generated schema
+/// as unique participations with their Condition, the way the reflection path reads them off the
+/// attribute instance (SchemaRegistry.cs:284/409). A generator that matches attributes by exact
+/// class name drops the subclass entirely and the filtered unique index never reaches the database.
+/// </summary>
+[Entity(Name = "Ecng_GenFilteredIx")]
+[NonEmptyUnique(nameof(Tenant), nameof(IdempotencyKey), Name = "UX_GenFiltered_Tenant_Key")]
+[NonEmptyUnique(nameof(SingleKey), Name = "UX_GenFiltered_Single")]
+[Unique(nameof(Tenant), nameof(ExternalId), Name = "UX_GenFiltered_Tenant_External", Condition = "{ExternalId} <> ''")]
+public partial class GenTestFilteredIndexEntity : GenTestBaseEntity
+{
+	public long Tenant { get; set; }
+
+	[Column(MaxLength = 128)]
+	public string IdempotencyKey { get; set; } = string.Empty;
+
+	[Column(MaxLength = 128)]
+	public string ExternalId { get; set; } = string.Empty;
+
+	// Declared through the single-column constructor, which reaches Roslyn as a bare string
+	// rather than the params array the composite declarations above produce.
+	[Column(MaxLength = 128)]
+	public string SingleKey { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// The same subclassed attribute declared on the property instead of the type.
+/// </summary>
+[Entity(Name = "Ecng_GenFilteredCol")]
+public partial class GenTestFilteredColumnEntity : GenTestBaseEntity
+{
+	[NonEmptyUnique(nameof(Token))]
+	[Column(MaxLength = 64)]
+	public string Token { get; set; } = string.Empty;
+}
+
 #endif
