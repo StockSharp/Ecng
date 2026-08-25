@@ -58,6 +58,14 @@ static class MethodVisitorRegistry
 		AddVisitor(new DateTimeOffsetMillisecondVisitor());
 		AddVisitor(new DateTimeDayOfYearVisitor());
 		AddVisitor(new DateTimeOffsetDayOfYearVisitor());
+		AddVisitor(new DateOnlyYearVisitor());
+		AddVisitor(new DateOnlyMonthVisitor());
+		AddVisitor(new DateOnlyDayVisitor());
+		AddVisitor(new DateOnlyDayOfYearVisitor());
+		AddVisitor(new TimeOnlyHourVisitor());
+		AddVisitor(new TimeOnlyMinuteVisitor());
+		AddVisitor(new TimeOnlySecondVisitor());
+		AddVisitor(new TimeOnlyMillisecondVisitor());
 		AddVisitor(new StringEmptyVisitor());
 		AddVisitor(new StringLengthVisitor());
 		AddVisitor(new StringUpperVisitor());

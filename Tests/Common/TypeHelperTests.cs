@@ -137,6 +137,19 @@ public class TypeHelperTests : BaseTestClass
 		result.AssertTrue();
 	}
 
+	/// <summary>
+	/// A date and a time of day are leaves exactly as DateTime and TimeSpan are. Callers
+	/// treat this as "does the value stand on its own", so answering no walks into their
+	/// members: a query projecting one column would be read as a constructor projection,
+	/// and a member path would be flattened into a column name that does not exist.
+	/// </summary>
+	[TestMethod]
+	public void IsPrimitive_DateOnlyAndTimeOnly_ReturnTrue()
+	{
+		typeof(DateOnly).IsPrimitive().AssertTrue();
+		typeof(TimeOnly).IsPrimitive().AssertTrue();
+	}
+
 	[TestMethod]
 	public void IsPrimitive_EnumType_ReturnsTrue()
 	{

@@ -797,6 +797,56 @@ public class EntityGeneratorTests : BaseTestClass
 			$"Generated and reflected index metadata diverge for {entityType.Name}");
 	}
 
+	/// <summary>
+	/// A date or a time of day is a flat column, not something to descend into. The
+	/// generator keeps its own list of the types it may treat that way, so a type missing
+	/// from it is emitted as an inner schema and the column disappears.
+	/// </summary>
+	[TestMethod]
+	public void Generated_DateOnlyAndTimeOnly_AreFlatColumns()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestScheduleEntity));
+
+		var day = schema.Columns.First(c => c.Name == "Day");
+		day.ClrType.AssertEqual(typeof(DateOnly));
+		day.IsNullable.AssertFalse();
+
+		var until = schema.Columns.First(c => c.Name == "Until");
+		until.ClrType.AssertEqual(typeof(DateOnly?));
+		until.IsNullable.AssertTrue();
+
+		var opensAt = schema.Columns.First(c => c.Name == "OpensAt");
+		opensAt.ClrType.AssertEqual(typeof(TimeOnly));
+		opensAt.IsNullable.AssertFalse();
+
+		var closesAt = schema.Columns.First(c => c.Name == "ClosesAt");
+		closesAt.ClrType.AssertEqual(typeof(TimeOnly?));
+		closesAt.IsNullable.AssertTrue();
+	}
+
+	/// <summary>
+	/// The same comparison as the index one, over the column types themselves: the two
+	/// paths must agree on what each property becomes, or the schema depends on which one
+	/// happened to build it.
+	/// </summary>
+	[TestMethod]
+	[DataRow(typeof(GenTestScheduleEntity))]
+	[DataRow(typeof(GenTestColumnAttrEntity))]
+	public void GeneratedSchema_ColumnTypes_MatchReflection(Type entityType)
+	{
+		static string Describe(Schema schema)
+			=> schema.Columns
+				.OrderBy(c => c.Name, StringComparer.Ordinal)
+				.Select(c => $"{c.Name}|{c.ClrType}|{c.IsNullable}")
+				.JoinN();
+
+		var generated = SchemaRegistry.Get(entityType);
+		var reflected = SchemaRegistry.CreateFromReflection(entityType);
+
+		Describe(generated).AssertEqual(Describe(reflected),
+			$"Generated and reflected column types diverge for {entityType.Name}");
+	}
+
 	#endregion
 }
 

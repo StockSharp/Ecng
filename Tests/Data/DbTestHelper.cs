@@ -242,6 +242,23 @@ static class DbTestHelper
 	}
 
 	/// <summary>
+	/// Executes raw SQL and returns the first column of the first row, as the database
+	/// itself stores it - no ORM conversion in the way.
+	/// </summary>
+	public static object ExecuteScalarRaw(string provider, string sql)
+	{
+		var connStr = TryGetConnectionString(provider);
+		var factory = GetFactory(provider);
+
+		using var conn = factory.CreateConnection();
+		conn.ConnectionString = connStr;
+		conn.Open();
+		using var cmd = conn.CreateCommand();
+		cmd.CommandText = sql;
+		return cmd.ExecuteScalar();
+	}
+
+	/// <summary>
 	/// Deletes all rows from a table using dialect-aware quoting.
 	/// </summary>
 	public static void DeleteAll(string provider, string tableName)

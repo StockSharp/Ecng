@@ -321,6 +321,194 @@ public class SchemaMigratorSqlTests : BaseTestClass
 		(firstConstraint < firstTable).AssertTrue(
 			$"Foreign keys must be dropped before the table they belong to. Got: {sql}");
 	}
+
+	#region DateOnly / TimeOnly
+
+	private sealed class Schedule
+	{
+		public long Id { get; set; }
+		public DateOnly Day { get; set; }
+		public TimeOnly OpensAt { get; set; }
+		public DateOnly? Until { get; set; }
+	}
+
+	private static Schema BuildScheduleSchema() => new()
+	{
+		TableName = "Schedule",
+		EntityType = typeof(Schedule),
+		Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+		Columns =
+		[
+			new SchemaColumn { Name = "Day", ClrType = typeof(DateOnly) },
+			new SchemaColumn { Name = "OpensAt", ClrType = typeof(TimeOnly) },
+			new SchemaColumn { Name = "Until", ClrType = typeof(DateOnly?), IsNullable = true },
+		],
+		Factory = () => new Schedule(),
+	};
+
+	/// <summary>
+	/// A new non-nullable column is added in three steps - add as NULL, backfill, then
+	/// tighten to NOT NULL - and the backfill uses the dialect's default literal. For a
+	/// DATE or TIME column an empty string is not merely a poor default: both SQL Server
+	/// and PostgreSQL refuse to convert it, so the whole generated script fails to apply.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	public void MissingNotNullDateOnly_BackfillsWithAValidLiteral(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+		var schedule = BuildScheduleSchema();
+
+		// The table exists but holds nothing except its identity.
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Schedule", "Id", "bigint", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schedule], dbColumns, dialect, skipComputed: false);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schedule]);
+
+		sql.Contains("'0001-01-01'").AssertTrue($"Expected a DATE backfill literal, got: {sql}");
+		sql.Contains("'00:00:00'").AssertTrue($"Expected a TIME backfill literal, got: {sql}");
+		sql.Contains("= N''").AssertFalse($"An empty string cannot be converted to DATE or TIME. Got: {sql}");
+		sql.Contains("= ''").AssertFalse($"An empty string cannot be converted to DATE or TIME. Got: {sql}");
+	}
+
+	/// <summary>
+	/// A nullable date needs no backfill at all, so the three-step path - and its literal -
+	/// must not appear for one.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	public void MissingNullableDateOnly_AddsColumnWithoutBackfill(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var schedule = new Schema
+		{
+			TableName = "Schedule",
+			EntityType = typeof(Schedule),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns = [new SchemaColumn { Name = "Until", ClrType = typeof(DateOnly?), IsNullable = true }],
+			Factory = () => new Schedule(),
+		};
+
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Schedule", "Id", "bigint", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schedule], dbColumns, dialect, skipComputed: false);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schedule]);
+
+		sql.Contains("UPDATE").AssertFalse($"A nullable column needs no backfill. Got: {sql}");
+		sql.Contains("DATE").AssertTrue($"Expected the DATE column to be added, got: {sql}");
+	}
+
+	/// <summary>
+	/// The column the dialect itself emits for a DateOnly/TimeOnly property must read back
+	/// as matching that property. When it does not, every comparison reports the same
+	/// difference forever and the tool keeps proposing a migration that changes nothing.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "date", "time")]
+	[DataRow("PostgreSql", "date", "time without time zone")]
+	[DataRow("SQLite", "DATE", "TIME")]
+	public void LiveDateAndTimeColumns_MatchTheirProperties(string dialectName, string dateType, string timeType)
+	{
+		var dialect = GetDialect(dialectName);
+		var schedule = BuildScheduleSchema();
+
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Schedule", "Id", dialectName == "SQLite" ? "INTEGER" : "bigint", false, null, null, null),
+			new("Schedule", "Day", dateType, false, null, null, null),
+			new("Schedule", "OpensAt", timeType, false, null, null, null),
+			new("Schedule", "Until", dateType, true, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schedule], dbColumns, dialect, skipComputed: false);
+		var mismatches = diffs.Where(d => d.Kind == SchemaDiffKind.TypeMismatch).ToArray();
+
+		mismatches.Length.AssertEqual(0,
+			$"Expected no type differences, got: {mismatches.Select(d => $"{d.ColumnName}").JoinComma()}");
+	}
+
+	/// <summary>
+	/// A table created from scratch has to declare the temporal columns as such - this is
+	/// the path a fresh deployment takes, where nothing exists to compare against.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "DATE", "TIME")]
+	[DataRow("PostgreSql", "DATE", "TIME")]
+	[DataRow("SQLite", "TEXT", "TEXT")]
+	public void MissingTable_CreatesDateAndTimeColumns(string dialectName, string dateType, string timeType)
+	{
+		var dialect = GetDialect(dialectName);
+		var schedule = BuildScheduleSchema();
+
+		var diffs = SchemaMigrator.Compare([schedule], [], dialect, skipComputed: false);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schedule]);
+
+		sql.ContainsIgnoreCase("CREATE TABLE").AssertTrue($"Expected a CREATE TABLE, got: {sql}");
+		sql.Contains($"{dateType} NOT NULL").AssertTrue($"Expected a non-nullable {dateType} column, got: {sql}");
+		sql.Contains($"{timeType} NOT NULL").AssertTrue($"Expected a non-nullable {timeType} column, got: {sql}");
+		sql.Contains($"{dateType} NULL").AssertTrue($"Expected a nullable {dateType} column, got: {sql}");
+	}
+
+	/// <summary>
+	/// A date is a natural thing to index - a period lookup or a per-day uniqueness rule -
+	/// and index emission reads the column through a different path than the definition.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	public void MissingIndexOnDateOnly_IsEmitted(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var schedule = new Schema
+		{
+			TableName = "Schedule",
+			EntityType = typeof(Schedule),
+			Identity = new SchemaColumn { Name = "Id", ClrType = typeof(long), IsReadOnly = true },
+			Columns =
+			[
+				new SchemaColumn
+				{
+					Name = "Day",
+					ClrType = typeof(DateOnly),
+					IsIndex = true,
+					Indexes = [new SchemaColumnIndex(null, 0)],
+				},
+			],
+			Factory = () => new Schedule(),
+		};
+
+		var dbColumns = new List<DbColumnInfo>
+		{
+			new("Schedule", "Id", "bigint", false, null, null, null),
+			new("Schedule", "Day", "date", false, null, null, null),
+		};
+
+		var diffs = SchemaMigrator.Compare([schedule], dbColumns, dialect, skipComputed: false, dbIndexes: []);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schedule]);
+
+		sql.ContainsIgnoreCase("CREATE INDEX").AssertTrue($"Expected an index on the date column, got: {sql}");
+		sql.Contains("Day").AssertTrue($"Expected the index to name the column, got: {sql}");
+	}
+
+	#endregion
+
+	private static ISqlDialect GetDialect(string name) => name switch
+	{
+		"SqlServer" => SqlServerDialect.Instance,
+		"SQLite" => SQLiteDialect.Instance,
+		"PostgreSql" => PostgreSqlDialect.Instance,
+		_ => throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown dialect."),
+	};
 }
 
 #endif

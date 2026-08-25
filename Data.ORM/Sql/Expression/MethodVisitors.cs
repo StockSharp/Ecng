@@ -342,6 +342,74 @@ class DateTimeDayOfYearVisitor : DatePartVisitor<DateTime>
 	}
 }
 
+// DateOnly carries the date parts and TimeOnly the time parts, each on its own type.
+// Without a visitor the member is not recognised as a date part at all and the path
+// resolver folds it into a column name.
+
+class DateOnlyYearVisitor : DatePartVisitor<DateOnly>
+{
+	public DateOnlyYearVisitor()
+		: base(nameof(DateOnly.Year), "year")
+	{
+	}
+}
+
+class DateOnlyMonthVisitor : DatePartVisitor<DateOnly>
+{
+	public DateOnlyMonthVisitor()
+		: base(nameof(DateOnly.Month), "month")
+	{
+	}
+}
+
+class DateOnlyDayVisitor : DatePartVisitor<DateOnly>
+{
+	public DateOnlyDayVisitor()
+		: base(nameof(DateOnly.Day), "day")
+	{
+	}
+}
+
+class DateOnlyDayOfYearVisitor : DatePartVisitor<DateOnly>
+{
+	public DateOnlyDayOfYearVisitor()
+		: base(nameof(DateOnly.DayOfYear), "dayofyear")
+	{
+	}
+}
+
+class TimeOnlyHourVisitor : DatePartVisitor<TimeOnly>
+{
+	public TimeOnlyHourVisitor()
+		: base(nameof(TimeOnly.Hour), "hour")
+	{
+	}
+}
+
+class TimeOnlyMinuteVisitor : DatePartVisitor<TimeOnly>
+{
+	public TimeOnlyMinuteVisitor()
+		: base(nameof(TimeOnly.Minute), "minute")
+	{
+	}
+}
+
+class TimeOnlySecondVisitor : DatePartVisitor<TimeOnly>
+{
+	public TimeOnlySecondVisitor()
+		: base(nameof(TimeOnly.Second), "second")
+	{
+	}
+}
+
+class TimeOnlyMillisecondVisitor : DatePartVisitor<TimeOnly>
+{
+	public TimeOnlyMillisecondVisitor()
+		: base(nameof(TimeOnly.Millisecond), "millisecond")
+	{
+	}
+}
+
 class DateTimeOffsetYearVisitor : DatePartVisitor<DateTimeOffset>
 {
 	public DateTimeOffsetYearVisitor()

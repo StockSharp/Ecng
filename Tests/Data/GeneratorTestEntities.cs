@@ -469,4 +469,21 @@ public partial class GenTestFilteredColumnEntity : GenTestBaseEntity
 	public string Token { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// A calendar date and a time of day, in both their required and optional forms. The
+/// generator decides on its own which property types are flat columns; when it disagrees
+/// with reflection the entity gets a different schema depending on which path built it.
+/// </summary>
+[Entity(Name = "Ecng_GenSchedule")]
+public partial class GenTestScheduleEntity : GenTestBaseEntity
+{
+	public DateOnly Day { get; set; }
+
+	public DateOnly? Until { get; set; }
+
+	public TimeOnly OpensAt { get; set; }
+
+	public TimeOnly? ClosesAt { get; set; }
+}
+
 #endif

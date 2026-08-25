@@ -1319,6 +1319,142 @@ public class OrmIntegrationTests : BaseTestClass
 	}
 
 	/// <summary>
+	/// Projecting one column has to materialize the value itself. A type the primitive
+	/// check does not recognise is taken for a constructor projection instead, and the
+	/// query throws rather than returning the column.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_DateOnlyAndTimeOnly_Materializes(string provider)
+	{
+		SetUp(provider);
+
+		var day = new DateOnly(2024, 3, 1);
+		var opensAt = new TimeOnly(9, 30, 0);
+
+		await Storage.AddAsync(new TestSchedule { Day = day, OpensAt = opensAt }, CancellationToken);
+		await ClearCache();
+
+		var days = await Query<TestSchedule>().Select(s => s.Day).ToArrayAsyncEx(CancellationToken);
+		days.Length.AssertEqual(1);
+		days[0].AssertEqual(day);
+
+		var times = await Query<TestSchedule>().Select(s => s.OpensAt).ToArrayAsyncEx(CancellationToken);
+		times.Length.AssertEqual(1);
+		times[0].AssertEqual(opensAt);
+	}
+
+	/// <summary>
+	/// The nullable form travels the separate underlying-type branch of the same check.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_NullableDateOnly_Materializes(string provider)
+	{
+		SetUp(provider);
+
+		var until = new DateOnly(2024, 3, 31);
+
+		await Storage.AddAsync(new TestSchedule { Day = new(2024, 3, 1), OpensAt = new(9, 30, 0), Until = until }, CancellationToken);
+		await Storage.AddAsync(new TestSchedule { Day = new(2024, 4, 1), OpensAt = new(9, 30, 0), Until = null }, CancellationToken);
+		await ClearCache();
+
+		var values = await Query<TestSchedule>().Select(s => s.Until).ToArrayAsyncEx(CancellationToken);
+
+		values.Length.AssertEqual(2);
+		values.Count(v => v == until).AssertEqual(1);
+		values.Count(v => v is null).AssertEqual(1);
+	}
+
+	/// <summary>
+	/// A predicate over a date column has to translate to a parameter comparison, which is
+	/// the same binding path an insert uses but reached through the expression translator.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_DateOnlyAndTimeOnly_Translates(string provider)
+	{
+		SetUp(provider);
+
+		var wanted = new DateOnly(2024, 3, 1);
+		var opensAt = new TimeOnly(9, 30, 0);
+
+		await Storage.AddAsync(new TestSchedule { Day = wanted, OpensAt = opensAt }, CancellationToken);
+		await Storage.AddAsync(new TestSchedule { Day = new(2024, 4, 1), OpensAt = new(11, 0, 0) }, CancellationToken);
+		await ClearCache();
+
+		var byDay = await Query<TestSchedule>().Where(s => s.Day == wanted).ToArrayAsyncEx(CancellationToken);
+		byDay.Length.AssertEqual(1);
+		byDay[0].Day.AssertEqual(wanted);
+
+		var byTime = await Query<TestSchedule>().Where(s => s.OpensAt == opensAt).ToArrayAsyncEx(CancellationToken);
+		byTime.Length.AssertEqual(1);
+		byTime[0].OpensAt.AssertEqual(opensAt);
+
+		var after = await Query<TestSchedule>().Where(s => s.Day > wanted).ToArrayAsyncEx(CancellationToken);
+		after.Length.AssertEqual(1);
+	}
+
+	/// <summary>
+	/// What lands in the column has to be the date itself. SQLite stores it as text, so
+	/// the stored value is readable directly and shows whether a time component was
+	/// invented on the way in - anything but a bare date makes the column unusable to
+	/// every reader that is not this ORM.
+	/// </summary>
+	[TestMethod]
+	public async Task DateOnly_IsStoredWithoutATimeComponent()
+	{
+		const string provider = DatabaseProviderRegistry.SQLite;
+
+		SetUp(provider);
+
+		await Storage.AddAsync(new TestSchedule
+		{
+			Day = new(2024, 3, 1),
+			OpensAt = new(9, 30, 0),
+		}, CancellationToken);
+
+		var stored = DbTestHelper.ExecuteScalarRaw(provider, "select \"Day\" from \"Ecng_TestSchedule\"");
+
+		stored.To<string>().AssertEqual("2024-03-01");
+	}
+
+	/// <summary>
+	/// A date part has to reach the server as DATEPART/EXTRACT. With no visitor for the
+	/// member it is not recognised as one and the path resolver appends it to the column
+	/// name instead, so the query asks for a column that does not exist.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_DateOnlyAndTimeOnlyParts_Translate(string provider)
+	{
+		SetUp(provider);
+
+		await Storage.AddAsync(new TestSchedule { Day = new(2024, 3, 1), OpensAt = new(9, 30, 0) }, CancellationToken);
+		await Storage.AddAsync(new TestSchedule { Day = new(2025, 3, 1), OpensAt = new(11, 15, 0) }, CancellationToken);
+		await ClearCache();
+
+		var byYear = await Query<TestSchedule>().Where(s => s.Day.Year == 2024).ToArrayAsyncEx(CancellationToken);
+		byYear.Length.AssertEqual(1);
+		byYear[0].Day.AssertEqual(new DateOnly(2024, 3, 1));
+
+		var byMonth = await Query<TestSchedule>().Where(s => s.Day.Month == 3).ToArrayAsyncEx(CancellationToken);
+		byMonth.Length.AssertEqual(2);
+
+		var byHour = await Query<TestSchedule>().Where(s => s.OpensAt.Hour == 9).ToArrayAsyncEx(CancellationToken);
+		byHour.Length.AssertEqual(1);
+		byHour[0].OpensAt.AssertEqual(new TimeOnly(9, 30, 0));
+	}
+
+	/// <summary>
 	/// Regression: projecting <c>(long?)t.Nav.Id</c> over rows that include a
 	/// NULL FK must materialize into <c>long?[]</c> with the matching null
 	/// slots. Before the fix this threw

@@ -2,6 +2,7 @@ namespace Ecng.Data;
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
@@ -93,6 +94,12 @@ public class PostgreSqlDialect : SqlDialectBase
 	/// <inheritdoc />
 	public override void PrepareParameter(DbParameter parameter)
 	{
+		// A DateOnly reaches here as a DateTime too, because the ORM converts the value by
+		// DbType. It targets DATE, and PostgreSQL casts an assigned timestamptz to date in
+		// the session time zone, so re-binding would move the day.
+		if (parameter.DbType == DbType.Date)
+			return;
+
 		// Npgsql 6+ refuses to write a Kind=Utc DateTime to a `timestamp
 		// without time zone` binding, which is what DbType.DateTime /
 		// DbType.DateTime2 resolve to. Re-bind DateTime values as
@@ -110,7 +117,7 @@ public class PostgreSqlDialect : SqlDialectBase
 			};
 
 			parameter.Value = new DateTimeOffset(utc);
-			parameter.DbType = System.Data.DbType.DateTimeOffset;
+			parameter.DbType = DbType.DateTimeOffset;
 		}
 	}
 
@@ -346,7 +353,7 @@ public class PostgreSqlDialect : SqlDialectBase
 			typeName = "BYTEA";
 		else if (underlying == typeof(decimal) && precision > 0)
 			typeName = $"NUMERIC({precision},{scale})";
-		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) && precision > 0)
+		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(TimeOnly)) && precision > 0)
 			typeName = $"{GetSqlTypeName(clrType)}({precision})";
 		else
 			typeName = GetSqlTypeName(clrType);

@@ -89,6 +89,8 @@ public static class TypeHelper
 			type == typeof(Guid) ||
 			type == typeof(byte[]) ||
 			type == typeof(TimeSpan) ||
+			type == typeof(DateOnly) ||
+			type == typeof(TimeOnly) ||
 			type == typeof(TimeZoneInfo)
 		);
 	}

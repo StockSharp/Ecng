@@ -412,6 +412,11 @@ public class SQLiteDialect : SqlDialectBase
 			"REAL" or "FLOAT" or "DOUBLE" or "DOUBLE PRECISION" or "NUMERIC" or "DECIMAL" => "REAL",
 			"TEXT" or "VARCHAR" or "NVARCHAR" or "CHAR" or "NCHAR" or "CLOB" => "TEXT",
 			"BLOB" or "VARBINARY" or "BINARY" or "BYTEA" => "BLOB",
+			// SQLite has no temporal type and GetSqlTypeName emits TEXT for all of them, so a
+			// column declared DATE elsewhere has to fold to the same TEXT. Without this it
+			// differs from its property on every comparison, and SQLite cannot alter a column
+			// type to settle it.
+			"DATE" or "TIME" or "DATETIME" or "TIMESTAMP" => "TEXT",
 			var other => other,
 		};
 	}

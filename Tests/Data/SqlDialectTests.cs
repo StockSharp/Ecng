@@ -1,7 +1,10 @@
 ﻿namespace Ecng.Tests.Data;
 
 #if NET10_0_OR_GREATER
+using System.Data;
 using System.Data.Common;
+
+using Npgsql;
 #endif
 
 using Ecng.Data;
@@ -1165,6 +1168,39 @@ public class SqlDialectTests : BaseTestClass
 		def.StartsWithIgnoreCase(expected).AssertTrue($"Expected '{expected}' prefix, got: {def}");
 	}
 
+	/// <summary>
+	/// TIME takes a fractional-seconds precision on both servers, so a column that declares
+	/// one must get TIME(n). DATE has no time part and takes none.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", 3, "TIME(3)")]
+	[DataRow("SqlServer", 0, "TIME")]
+	[DataRow("PostgreSql", 3, "TIME(3)")]
+	[DataRow("PostgreSql", 0, "TIME")]
+	public void GetColumnDefinition_HonoursTimeOnlyPrecision(string dialectName, int precision, string expected)
+	{
+		var def = GetDialect(dialectName).GetColumnDefinition(typeof(TimeOnly), isNullable: false, precision: precision);
+		def.StartsWithIgnoreCase(expected).AssertTrue($"Expected '{expected}' prefix, got: {def}");
+	}
+
+	/// <summary>
+	/// Nullability is the half of the definition an entity controls directly, and an
+	/// optional date is the shape entities actually declare.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "DATE", "TIME")]
+	[DataRow("PostgreSql", "DATE", "TIME")]
+	[DataRow("SQLite", "TEXT", "TEXT")]
+	public void GetColumnDefinition_DateOnlyAndTimeOnly(string dialectName, string dateType, string timeType)
+	{
+		var dialect = GetDialect(dialectName);
+
+		dialect.GetColumnDefinition(typeof(DateOnly), isNullable: false).AssertEqual($"{dateType} NOT NULL");
+		dialect.GetColumnDefinition(typeof(DateOnly?), isNullable: true).AssertEqual($"{dateType} NULL");
+		dialect.GetColumnDefinition(typeof(TimeOnly), isNullable: false).AssertEqual($"{timeType} NOT NULL");
+		dialect.GetColumnDefinition(typeof(TimeOnly?), isNullable: true).AssertEqual($"{timeType} NULL");
+	}
+
 	#endregion
 
 	#region SQLite type normalization
@@ -1176,6 +1212,71 @@ public class SqlDialectTests : BaseTestClass
 	[DataRow("VARBINARY(16)", "BLOB")]
 	public void SQLiteDialect_NormalizeDbType_StripsLengthAndPrecisionSuffix(string dbType, string expected)
 		=> SQLiteDialect.Instance.NormalizeDbType(dbType).AssertEqual(expected);
+
+	/// <summary>
+	/// SQLite has no temporal type: GetSqlTypeName emits TEXT for every one of them. A
+	/// database declared with DATE or DATETIME columns therefore has to normalize to the
+	/// same TEXT, or every comparison reports a difference that no migration can settle -
+	/// SQLite cannot alter a column type at all.
+	/// </summary>
+	[TestMethod]
+	[DataRow("DATE", "TEXT")]
+	[DataRow("TIME", "TEXT")]
+	[DataRow("DATETIME", "TEXT")]
+	[DataRow("TIMESTAMP", "TEXT")]
+	public void SQLiteDialect_NormalizeDbType_FoldsTemporalTypesIntoText(string dbType, string expected)
+		=> SQLiteDialect.Instance.NormalizeDbType(dbType).AssertEqual(expected);
+
+	/// <summary>
+	/// SQL Server and PostgreSQL do have the types, and the names they report back for a
+	/// DATE/TIME column must round-trip to what GetSqlTypeName emits for DateOnly/TimeOnly.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer", "DATE", "DATE")]
+	[DataRow("SqlServer", "TIME", "TIME")]
+	[DataRow("PostgreSql", "DATE", "DATE")]
+	[DataRow("PostgreSql", "TIME", "TIME")]
+	[DataRow("PostgreSql", "time without time zone", "TIME")]
+	public void NormalizeDbType_TemporalTypesRoundTrip(string dialectName, string dbType, string expected)
+		=> GetDialect(dialectName).NormalizeDbType(dbType).AssertEqual(expected);
+
+#if NET10_0_OR_GREATER
+	/// <summary>
+	/// PrepareParameter re-binds DateTime as DateTimeOffset because Npgsql refuses a
+	/// Kind=Utc DateTime on a `timestamp without time zone` binding. A DateOnly reaches
+	/// the parameter as a DateTime too - the ORM converts by DbType - but it targets a
+	/// DATE column, and PostgreSQL casts an assigned timestamptz to date in the session
+	/// time zone. West of UTC that silently stores the day before.
+	/// </summary>
+	[TestMethod]
+	public void PostgreSqlDialect_PrepareParameter_LeavesADateParameterAlone()
+	{
+		var parameter = NpgsqlFactory.Instance.CreateParameter();
+		parameter.DbType = DbType.Date;
+		parameter.Value = new DateTime(2024, 3, 1);
+
+		PostgreSqlDialect.Instance.PrepareParameter(parameter);
+
+		parameter.DbType.AssertEqual(DbType.Date);
+		parameter.Value.AssertEqual(new DateTime(2024, 3, 1));
+	}
+
+	/// <summary>
+	/// The moment case is why PrepareParameter exists, so it has to keep working.
+	/// </summary>
+	[TestMethod]
+	public void PostgreSqlDialect_PrepareParameter_StillRebindsAMoment()
+	{
+		var parameter = NpgsqlFactory.Instance.CreateParameter();
+		parameter.DbType = DbType.DateTime2;
+		parameter.Value = new DateTime(2024, 3, 1, 13, 45, 0, DateTimeKind.Utc);
+
+		PostgreSqlDialect.Instance.PrepareParameter(parameter);
+
+		parameter.DbType.AssertEqual(DbType.DateTimeOffset);
+		parameter.Value.AssertEqual(new DateTimeOffset(new DateTime(2024, 3, 1, 13, 45, 0, DateTimeKind.Utc)));
+	}
+#endif
 
 	[TestMethod]
 	public void SQLiteDialect_ListUserTablesSql_EscapesInternalTablePrefixUnderscore()
@@ -1399,6 +1500,43 @@ public class SqlDialectTests : BaseTestClass
 	[DataRow("PostgreSql", "''")]
 	public void GetDefaultLiteral_UnknownType_Fallback(string dialectName, string expected)
 		=> GetDialect(dialectName).GetDefaultLiteral(typeof(object)).AssertEqual(expected);
+
+	/// <summary>
+	/// The literal backfills an existing table when a new non-nullable column is added,
+	/// so it has to be a value the target column type accepts. DATE and TIME reject an
+	/// empty string outright - SQL Server with "Conversion failed when converting date
+	/// and/or time from character string", PostgreSQL with 22007 - which makes the whole
+	/// generated migration script unrunnable rather than merely wrong.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_DateOnly(string dialectName)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(DateOnly)).AssertEqual("'0001-01-01'");
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_TimeOnly(string dialectName)
+		=> GetDialect(dialectName).GetDefaultLiteral(typeof(TimeOnly)).AssertEqual("'00:00:00'");
+
+	/// <summary>
+	/// The nullable forms strip to the same underlying type, and it is the nullable form
+	/// an entity actually declares for an optional date.
+	/// </summary>
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("SQLite")]
+	[DataRow("PostgreSql")]
+	public void GetDefaultLiteral_NullableDateOnlyAndTimeOnly(string dialectName)
+	{
+		var dialect = GetDialect(dialectName);
+
+		dialect.GetDefaultLiteral(typeof(DateOnly?)).AssertEqual("'0001-01-01'");
+		dialect.GetDefaultLiteral(typeof(TimeOnly?)).AssertEqual("'00:00:00'");
+	}
 
 	#endregion
 

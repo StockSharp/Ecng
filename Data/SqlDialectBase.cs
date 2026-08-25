@@ -323,6 +323,12 @@ public abstract class SqlDialectBase : ISqlDialect
 			return "'0001-01-01T00:00:00'";
 		if (clrType == typeof(TimeSpan))
 			return "0";
+		// A DATE or TIME column rejects an empty string, so the fallback below would make
+		// the generated migration unrunnable rather than merely oddly defaulted.
+		if (clrType == typeof(DateOnly))
+			return "'0001-01-01'";
+		if (clrType == typeof(TimeOnly))
+			return "'00:00:00'";
 		if (clrType == typeof(Guid))
 			return "'00000000-0000-0000-0000-000000000000'";
 		if (clrType == typeof(byte[]))

@@ -225,7 +225,15 @@ public sealed class DatabaseCommand : Disposable
 			command.Parameters.Add(clone);
 
 			if (dict.TryGetValue(clone.ParameterName, out var value) && value is not null)
-				clone.Value = value.To(clone.DbType.To<Type>());
+			{
+				// The DbType -> CLR map answers DateTime for DATE and TimeSpan for TIME,
+				// which is what a column of those types binds when the value is a moment.
+				// A DateOnly or TimeOnly already IS the column's own type, so converting it
+				// would only add a time component the value never had.
+				clone.Value = value is DateOnly or TimeOnly
+					? value
+					: value.To(clone.DbType.To<Type>());
+			}
 			else
 				clone.Value = DBNull.Value;
 
