@@ -59,6 +59,10 @@ public static class Converter
 		_dbTypes.Add(typeof(DateTime), DbType.DateTime2);
 		_dbTypes.Add(typeof(DateTimeOffset), DbType.DateTimeOffset);
 		_dbTypes.Add(typeof(TimeSpan), DbType.Time);
+		// A calendar date and a wall-clock time are not moments; DATE and TIME are the
+		// columns they bind to.
+		_dbTypes.Add(typeof(DateOnly), DbType.Date);
+		_dbTypes.Add(typeof(TimeOnly), DbType.Time);
 		_dbTypes.Add(typeof(Guid), DbType.Guid);
 		_dbTypes.Add(typeof(byte[]), DbType.Binary);
 		_dbTypes.Add(typeof(byte), DbType.Byte);
@@ -108,8 +112,18 @@ public static class Converter
 			if (input is DbType.DateTime or DbType.DateTime2 or DbType.Date)
 				return typeof(DateTime);
 
+			// TimeSpan and TimeOnly both map to TIME, so the reverse direction is
+			// ambiguous and fixed here rather than left to dictionary order.
+			if (input == DbType.Time)
+				return typeof(TimeSpan);
+
 			return _dbTypes.First(pair => pair.Value == input).Key;
 		});
+		// Providers bind DATE and TIME as DateTime and TimeSpan.
+		AddTypedConverter<DateOnly, DateTime>(input => input.ToDateTime(TimeOnly.MinValue));
+		AddTypedConverter<DateTime, DateOnly>(DateOnly.FromDateTime);
+		AddTypedConverter<TimeOnly, TimeSpan>(input => input.ToTimeSpan());
+		AddTypedConverter<TimeSpan, TimeOnly>(TimeOnly.FromTimeSpan);
 		AddTypedConverter<string, byte[]>(input => input.Unicode());
 		AddTypedConverter<byte[], string>(input => input.Unicode());
 		AddTypedConverter<bool[], BitArray>(input => new BitArray(input));
@@ -468,6 +482,15 @@ public static class Converter
 		AddTypedConverter<TimeSpan, string>(input => input.ToString());
 		AddTypedConverter<string, TimeSpan>(TimeSpan.Parse);
 		AddTypedConverter<string, TimeSpan?>(s => s.IsEmpty() ? null : TimeSpan.Parse(s));
+		// Stores without a date or time type - SQLite, JSON - carry both as text. "O" is
+		// the round-trip format and is culture-independent; parsing goes through
+		// DateTime/TimeSpan, so "2024-03-01 00:00:00" reads back as well as "2024-03-01".
+		AddTypedConverter<DateOnly, string>(input => input.ToString("O", CultureInfo.InvariantCulture));
+		AddTypedConverter<string, DateOnly>(s => DateOnly.FromDateTime(s.To<DateTime>()));
+		AddTypedConverter<string, DateOnly?>(s => s.IsEmpty() ? null : DateOnly.FromDateTime(s.To<DateTime>()));
+		AddTypedConverter<TimeOnly, string>(input => input.ToString("O", CultureInfo.InvariantCulture));
+		AddTypedConverter<string, TimeOnly>(s => TimeOnly.FromTimeSpan(TimeSpan.Parse(s, CultureInfo.InvariantCulture)));
+		AddTypedConverter<string, TimeOnly?>(s => s.IsEmpty() ? null : TimeOnly.FromTimeSpan(TimeSpan.Parse(s, CultureInfo.InvariantCulture)));
 		AddTypedConverter<Guid, string>(input => input.ToString());
 		AddTypedConverter<string, Guid>(Guid.Parse);
 		AddTypedConverter<string, Guid?>(s => s.IsEmpty() ? null : Guid.Parse(s));

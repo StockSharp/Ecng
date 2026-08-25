@@ -581,3 +581,38 @@ public class TestNodeChildList(IStorage storage, TestNode parent) : RelationMany
 	public override ValueTask<bool> ContainsAsync(TestNodeChild item, CancellationToken cancellationToken)
 		=> ToQueryable().Where(c => c.Id == item.Id).AnyAsyncEx(cancellationToken);
 }
+
+/// <summary>
+/// A calendar date and a time of day, which are not moments and bind to their own
+/// column types.
+/// </summary>
+[Entity(Name = "Ecng_TestSchedule")]
+public class TestSchedule : IDbPersistable
+{
+	public long Id { get; set; }
+	public DateOnly Day { get; set; }
+	public DateOnly? Until { get; set; }
+	public TimeOnly OpensAt { get; set; }
+	public TimeOnly? ClosesAt { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.Set(nameof(Day), Day)
+			.Set(nameof(Until), Until)
+			.Set(nameof(OpensAt), OpensAt)
+			.Set(nameof(ClosesAt), ClosesAt);
+	}
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Day = storage.GetValue<DateOnly>(nameof(Day));
+		Until = storage.GetValue<DateOnly?>(nameof(Until));
+		OpensAt = storage.GetValue<TimeOnly>(nameof(OpensAt));
+		ClosesAt = storage.GetValue<TimeOnly?>(nameof(ClosesAt));
+		return default;
+	}
+}

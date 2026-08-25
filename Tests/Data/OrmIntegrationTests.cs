@@ -59,6 +59,7 @@ public class OrmIntegrationTests : BaseTestClass
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNode)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestNodeChild)), autoIncrement: true);
 				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestItemTag)), autoIncrement: false);
+				DbTestHelper.EnsureTable(provider, SchemaRegistry.Get(typeof(TestSchedule)), autoIncrement: true);
 			}
 		}
 
@@ -75,6 +76,7 @@ public class OrmIntegrationTests : BaseTestClass
 		DbTestHelper.DeleteAll(provider, "Ecng_TestCategory");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestPerson");
 		DbTestHelper.DeleteAll(provider, "Ecng_TestNode");
+		DbTestHelper.DeleteAll(provider, "Ecng_TestSchedule");
 
 		Storage.ClearCacheAsync(CancellationToken).AsTask().Wait();
 	}
@@ -180,6 +182,66 @@ public class OrmIntegrationTests : BaseTestClass
 		loaded.Price.AssertEqual(12.50m);
 		loaded.IsActive.AssertEqual(true);
 		loaded.NullableValue.AssertEqual(42);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_DateOnlyAndTimeOnly_RoundTrip(string provider)
+	{
+		// Emitting a DATE/TIME column, binding a parameter into it and reading it back
+		// go through three separate type maps, so only a round-trip covers all three.
+		SetUp(provider);
+
+		var day = new DateOnly(2024, 3, 1);
+		var until = new DateOnly(2024, 3, 31);
+		var opensAt = new TimeOnly(9, 30, 0);
+		var closesAt = new TimeOnly(17, 45, 30);
+
+		var saved = await Storage.AddAsync(new TestSchedule
+		{
+			Day = day,
+			Until = until,
+			OpensAt = opensAt,
+			ClosesAt = closesAt,
+		}, CancellationToken);
+
+		saved.Id.AssertGreater(0);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestSchedule>(saved.Id, CancellationToken);
+		loaded.AssertNotNull();
+		loaded.Day.AssertEqual(day);
+		loaded.Until.AssertEqual(until);
+		loaded.OpensAt.AssertEqual(opensAt);
+		loaded.ClosesAt.AssertEqual(closesAt);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Crud_NullDateOnlyAndTimeOnly_RoundTrip(string provider)
+	{
+		// A null takes a different path than a value: DBNull out, DBNull back.
+		SetUp(provider);
+
+		var saved = await Storage.AddAsync(new TestSchedule
+		{
+			Day = new(2024, 3, 1),
+			Until = null,
+			OpensAt = new(9, 30, 0),
+			ClosesAt = null,
+		}, CancellationToken);
+
+		await ClearCache();
+
+		var loaded = await Storage.GetByIdAsync<long, TestSchedule>(saved.Id, CancellationToken);
+		loaded.AssertNotNull();
+		loaded.Until.AssertNull();
+		loaded.ClosesAt.AssertNull();
 	}
 
 	[TestMethod]

@@ -40,6 +40,32 @@ public class DatabaseCommandHelperTests : BaseTestClass
 		// across all dialects without dialect-specific TIME handling.
 		typeof(TimeSpan).ToDbType().AssertEqual(DbType.Int64);
 	}
+
+	[TestMethod]
+	public void ToDbType_DateOnly_MapsToDate()
+	{
+		typeof(DateOnly).ToDbType().AssertEqual(DbType.Date);
+	}
+
+	[TestMethod]
+	public void ToDbType_NullableDateOnly_MapsToDate()
+	{
+		typeof(DateOnly?).ToDbType().AssertEqual(DbType.Date);
+	}
+
+	[TestMethod]
+	public void ToDbType_TimeOnly_MapsToTime()
+	{
+		// Unlike TimeSpan, a time of day has no days to overflow into, so it binds
+		// to the dialect's TIME column instead of riding as ticks.
+		typeof(TimeOnly).ToDbType().AssertEqual(DbType.Time);
+	}
+
+	[TestMethod]
+	public void ToDbType_NullableTimeOnly_MapsToTime()
+	{
+		typeof(TimeOnly?).ToDbType().AssertEqual(DbType.Time);
+	}
 }
 
 #endif

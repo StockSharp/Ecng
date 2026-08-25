@@ -531,6 +531,49 @@ public class ConverterTest : BaseTestClass
 		0L.ToRadix(2).AssertEqual("0");
 	}
 
+	/// <summary>
+	/// A DateOnly reaches a database as a DateTime and comes back the same way, so both
+	/// directions have to convert or a date column is write-only.
+	/// </summary>
+	[TestMethod]
+	public void DateOnlyConversion()
+	{
+		var date = new DateOnly(2024, 3, 1);
+
+		date.To<DateTime>().AssertEqual(new DateTime(2024, 3, 1));
+		new DateTime(2024, 3, 1, 13, 45, 0).To<DateOnly>().AssertEqual(date);
+		date.To<DateTime>().To<DateOnly>().AssertEqual(date);
+
+		var time = new TimeOnly(13, 45, 30);
+
+		time.To<TimeSpan>().AssertEqual(new TimeSpan(13, 45, 30));
+		new TimeSpan(13, 45, 30).To<TimeOnly>().AssertEqual(time);
+	}
+
+	/// <summary>
+	/// Stores with no date or time type hand both back as text, and what they wrote
+	/// may carry a midnight time the date itself never had.
+	/// </summary>
+	[TestMethod]
+	public void DateOnlyStringConversion()
+	{
+		var date = new DateOnly(2024, 3, 1);
+
+		date.To<string>().AssertEqual("2024-03-01");
+		"2024-03-01".To<DateOnly>().AssertEqual(date);
+		"2024-03-01 00:00:00".To<DateOnly>().AssertEqual(date);
+		date.To<string>().To<DateOnly>().AssertEqual(date);
+
+		var time = new TimeOnly(13, 45, 30);
+
+		time.To<string>().AssertEqual("13:45:30.0000000");
+		"13:45:30".To<TimeOnly>().AssertEqual(time);
+		time.To<string>().To<TimeOnly>().AssertEqual(time);
+
+		string.Empty.To<DateOnly?>().AssertNull();
+		string.Empty.To<TimeOnly?>().AssertNull();
+	}
+
 	[TestMethod]
 	public void DbTypeConversion()
 	{
@@ -547,6 +590,12 @@ public class ConverterTest : BaseTestClass
 		typeof(long).To<DbType>().AssertEqual(DbType.Int64);
 		typeof(short).To<DbType>().AssertEqual(DbType.Int16);
 		typeof(object).To<DbType>().AssertEqual(DbType.Object);
+
+		// A calendar date is not a moment: DATE is the column an ORM binds it to.
+		typeof(DateOnly).To<DbType>().AssertEqual(DbType.Date);
+		typeof(DateOnly?).To<DbType>().AssertEqual(DbType.Date);
+		typeof(TimeOnly).To<DbType>().AssertEqual(DbType.Time);
+		typeof(TimeOnly?).To<DbType>().AssertEqual(DbType.Time);
 
 		// Test DbType <-> Type round-trip
 		DbType.Int32.To<Type>().AssertEqual(typeof(int));
