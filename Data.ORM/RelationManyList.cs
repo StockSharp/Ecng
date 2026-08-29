@@ -1,4 +1,4 @@
-namespace Ecng.Serialization;
+﻿namespace Ecng.Serialization;
 
 using System.Data;
 
@@ -173,8 +173,13 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	public IStorage Storage { get; } = storage ?? throw new ArgumentNullException(nameof(storage));
 
 	/// <summary>
-	/// Gets or sets whether to load all entities in bulk on first access.
+	/// Gets or sets whether the whole list is kept in memory, filled on first access or by <see cref="PreloadAsync"/>.
 	/// </summary>
+	/// <remarks>
+	/// Filling it here, when the flag is set, would read the table while the list is still being built --
+	/// before a buffer size or a filter set next to it in the same initialiser has been applied. Whoever
+	/// builds the list knows when it is ready; that is when to preload it.
+	/// </remarks>
 	public bool BulkLoad { get; set; }
 
 	/// <summary>
@@ -574,6 +579,18 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 		return entities;
 	}
+
+	/// <summary>
+	/// Reads the whole list into memory now, when <see cref="BulkLoad"/> asks for it to be kept there.
+	/// </summary>
+	/// <remarks>
+	/// Left alone, the list fills itself on the first read -- so whoever reads first waits for the whole
+	/// table and everyone arriving meanwhile queues behind them. Calling this hands that cost to a moment
+	/// the caller picks, typically while the host is starting. Without <see cref="BulkLoad"/> there is
+	/// nothing to fill and this does nothing.
+	/// </remarks>
+	public Task PreloadAsync(CancellationToken cancellationToken = default)
+		=> BulkLoad ? EnsureBulkLoadedAsync(null, ListSortDirection.Ascending, cancellationToken) : Task.CompletedTask;
 
 	private Task EnsureBulkLoadedAsync(string orderByColumn, ListSortDirection direction, CancellationToken cancellationToken)
 	{

@@ -1,4 +1,4 @@
-#if NET10_0_OR_GREATER
+﻿#if NET10_0_OR_GREATER
 
 namespace Ecng.Tests.Data;
 
@@ -205,6 +205,48 @@ public class NullStorage : IStorage
 [TestClass]
 public class RelationManyListTests : BaseTestClass
 {
+	[TestMethod]
+	public async Task PreloadAsync_FillsTheCacheBeforeAnybodyReads()
+	{
+		// A list told to keep the whole table in memory fills itself on the first read, so whoever reads
+		// first pays for the table and everyone else waits behind them. Preloading moves that cost to a
+		// moment of the caller's choosing -- a host starting up, rather than a visitor's page.
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GroupItems = [new() { Id = 1, Name = "one" }, new() { Id = 2, Name = "two" }],
+		};
+
+		list.OnGetGroupCalls.AssertEqual(0);
+
+		await list.PreloadAsync(CancellationToken);
+
+		var afterPreload = list.OnGetGroupCalls;
+		(afterPreload > 0).AssertTrue("preloading should have read the table");
+
+		var cache = await list.GetCacheForTest(CancellationToken);
+		cache.Count.AssertEqual(2);
+
+		// A reader arriving afterwards is served from memory: the table is not read again.
+		await list.GetRangeAsync(0, 2, false, nameof(TestItem.Id), ListSortDirection.Ascending, CancellationToken);
+
+		list.OnGetGroupCalls.AssertEqual(afterPreload, "a filled list must not read the table again");
+	}
+
+	[TestMethod]
+	public async Task PreloadAsync_WithoutBulkLoad_ReadsNothing()
+	{
+		// Without the flag there is nothing to fill, and preloading must not turn into a table scan.
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			GroupItems = [new() { Id = 1, Name = "one" }],
+		};
+
+		await list.PreloadAsync(CancellationToken);
+
+		list.OnGetGroupCalls.AssertEqual(0);
+	}
+
 	[TestMethod]
 	public async Task UpdateAsync_BulkLoad_FailedStorage_CacheShouldNotContainEntity()
 	{
