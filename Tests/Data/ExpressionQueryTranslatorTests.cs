@@ -1,4 +1,4 @@
-#if NET10_0_OR_GREATER
+﻿#if NET10_0_OR_GREATER
 
 namespace Ecng.Tests.Data;
 
@@ -72,6 +72,29 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 		sql.Contains("[]").AssertFalse($"SQL should not contain empty alias '[]', got: {sql}");
 		sql.Contains("[e].*").AssertTrue($"Expected main table alias '[e].*', got: {sql}");
+	}
+
+	[TestMethod]
+	public void SubqueryAverageWithCast_ShouldNotCastPredicate()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var query = from p in persons
+					select new VTestPersonWithTasks
+					{
+						AllColumns = p.AllColumns,
+						AvgPriority = (from t in tasks where !t.IsDone && t.Person.Id == p.Id select (decimal)t.Priority).Average(),
+					};
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		// averaging asks for one converted column; the rows it averages are chosen by plain comparisons, and
+		// converting those keeps every index out of the plan.
+		sql.Contains("cast([t].[Priority]").AssertTrue($"the averaged column should be converted, got: {sql}");
+		sql.Contains("cast([t].[IsDone]").AssertFalse($"the flag must not be converted, got: {sql}");
+		sql.Contains("cast([t].[Person]").AssertFalse($"the relation must not be converted, got: {sql}");
+		sql.Contains("cast([e].[Id]").AssertFalse($"the correlated key must not be converted, got: {sql}");
 	}
 
 	[TestMethod]
@@ -1525,6 +1548,7 @@ public class VTestPersonWithTasks : IDbPersistable
 	public bool HasTasks { get; set; }
 	public int TaskCount { get; set; }
 	public long MaxSubTaskId { get; set; }
+	public decimal? AvgPriority { get; set; }
 
 	object IDbPersistable.GetIdentity() => default;
 	void IDbPersistable.SetIdentity(object id) { }

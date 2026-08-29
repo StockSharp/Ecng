@@ -1706,6 +1706,12 @@ class DecimalCastVisitor : MethodVisitor
 
 		translator.WrapColumn.Enqueue((b, q) =>
 		{
+			// The conversion belongs to the projected column alone. Applied to the sub-query's WHERE
+			// columns as well -- as it was -- the predicate compares converted values, and a converted
+			// column keeps every index out of the plan: the whole table is read for each outer row.
+			if (translator.Context.IsWhere)
+				return;
+
 			if (b)
 				q.Cast().OpenBracket();
 			else
