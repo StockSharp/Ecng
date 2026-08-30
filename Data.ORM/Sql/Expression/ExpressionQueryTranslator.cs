@@ -1609,6 +1609,15 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 	protected override Expression VisitMember(MemberExpression m)
 	{
+		// A chain rooted at a static member -- a registry offering the tables a query may name -- carries no
+		// expression at all, so it never reaches the branches below. It is materialised the same way a
+		// captured local is, which for a table means the sub-query handler resolves it and nothing is emitted.
+		if (m.Expression is null && ClosureMaterializer.TryEvaluate(m, out var staticValue))
+		{
+			EmitMaterialisedValue(m.Member, staticValue);
+			return m;
+		}
+
 		if (m.Expression != null/* && m.Expression.NodeType == ExpressionType.Parameter*/)
 		{
 			if (Context.Members.TryGetValue((m.Expression.Type, m.Member), out var exp))

@@ -98,6 +98,175 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void CorrelatedAnyInWhere_IsAskedAsExists()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		// "Whose person has a task worth showing" is one question about the person, and a list asks it that
+		// way rather than joining every task and throwing the duplicates away with a distinct.
+		var query = from p in persons
+					where tasks.Any(t => t.Person.Id == p.Id && !t.IsDone)
+					select p;
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+		sql.Contains("[e].[Id]").AssertTrue($"the sub-query should refer to the outer row, got: {sql}");
+	}
+
+	[TestMethod]
+	public void CorrelatedAnyInWhere_SurvivesAJoinAroundIt()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+		var categories = CreateQueryable<TestItemCategory>();
+
+		// The same question asked by a query that also joins -- which is what a list with access rules looks
+		// like. This is the shape that threw NullReferenceException while translating.
+		var query = from p in persons
+					join c in categories on p.Id equals c.Id into cg
+					from c2 in cg.DefaultIfEmpty()
+					where tasks.Any(t => t.Person.Id == p.Id && !t.IsDone) && c2.Id == null
+					select p;
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+	}
+
+	[TestMethod]
+	public void CorrelatedAnyInWhere_ComparingARelationToNull()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		// "Has a task that belongs to nobody else" -- a relation compared to null inside the correlated
+		// question. This is the shape a topic list asks with ("a message with no parent"), and it threw
+		// NullReferenceException while being translated.
+		var query = from p in persons
+					where tasks.Any(t => t.Person == null && !t.IsDone)
+					select p;
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+		sql.Contains("is null").AssertTrue($"the relation should be compared to null, got: {sql}");
+	}
+
+	[TestMethod]
+	public void CorrelatedAnyInWhere_OverAView()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+
+		var view = from p in persons
+				   select new VTestPersonWithTasks
+				   {
+					   AllColumns = p.AllColumns,
+					   TaskCount = (from t in tasks where t.Person.Id == p.Id select t).Count(),
+				   };
+
+		// The question is asked of the view, not of the table -- which is how a list filters a view the site
+		// reads. This is the shape that threw NullReferenceException while being translated.
+		var query = from v in view
+					where tasks.Any(t => t.Person.Id == v.Id && !t.IsDone)
+					select v;
+
+		var sql = GenerateSql<VTestPersonWithTasks>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+	}
+
+	[TestMethod]
+	public void CorrelatedAnyInWhere_WholeShape()
+	{
+		var persons = CreateQueryable<TestPerson>();
+		var tasks = CreateQueryable<TestTask>();
+		var categories = CreateQueryable<TestItemCategory>();
+
+		var view = from p in persons
+				   select new VTestPersonWithTasks
+				   {
+					   AllColumns = p.AllColumns,
+					   TaskCount = (from t in tasks where t.Person.Id == p.Id select t).Count(),
+				   };
+
+		// Everything a topic list is made of at once: a view, a pre-filtered source, an optional join, and
+		// the correlated question standing last among the conditions.
+		var filtered = view.Where(v => v.TaskCount >= 0);
+
+		var query = from e in filtered
+					join c in categories on e.Id equals c.Id into cg
+					from c2 in cg.DefaultIfEmpty()
+					where c2.Id == null && tasks.Any(t => t.Person.Id == e.Id)
+					select e;
+
+		var sql = GenerateSql<VTestPersonWithTasks>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+	}
+
+	[TestMethod]
+	public void AnyInWhere_OverAViewEntity()
+	{
+		var view = CreateQueryable<VTestPersonWithTasks>();
+		var tasks = CreateQueryable<TestTask>();
+
+		// The list a site reads is a view registered in the schema, not a projection written on the spot.
+		// Asking a sub-query question in a filter over such a view threw NullReferenceException.
+		var query = from v in view
+					where v.TaskCount > 0 && tasks.Any(t => !t.IsDone)
+					select v;
+
+		var sql = GenerateSql<VTestPersonWithTasks>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+	}
+
+	/// <summary>
+	/// A registry of tables reached as static properties, which is how an application usually offers the
+	/// tables a query may refer to.
+	/// </summary>
+	private static class Tables
+	{
+		public static IQueryable<TestTask> Tasks => CreateQueryable<TestTask>();
+	}
+
+	[TestMethod]
+	public void AnyOverAStaticallyReachedTable()
+	{
+		var persons = CreateQueryable<TestPerson>();
+
+		// The sub-query's source is reached through a static property rather than held in a local. It stands
+		// for a table either way, but the chain has no constant at its root, and walking it as if it were a
+		// column threw NullReferenceException.
+		var query = from p in persons
+					where Tables.Tasks.Any(t => !t.IsDone)
+					select p;
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+		sql.Contains("Ecng_TestTask").AssertTrue($"the sub-query should read the task table, got: {sql}");
+	}
+
+	[TestMethod]
+	public void CorrelatedAnyOverAStaticallyReachedTable()
+	{
+		var persons = CreateQueryable<TestPerson>();
+
+		var query = from p in persons
+					where Tables.Tasks.Any(t => t.Person.Id == p.Id && !t.IsDone)
+					select p;
+
+		var sql = GenerateSql<TestPerson>(query);
+
+		sql.Contains("exists").AssertTrue($"the question should become an EXISTS, got: {sql}");
+		sql.Contains("[e].[Id]").AssertTrue($"the sub-query should refer to the outer row, got: {sql}");
+	}
+
+	[TestMethod]
 	public void SubqueryCount_ShouldNotProduceEmptyAlias()
 	{
 		var persons = CreateQueryable<TestPerson>();
@@ -1544,6 +1713,8 @@ public class VTestPersonWithTasks : IDbPersistable
 {
 	[AllColumnsField]
 	public object AllColumns { get; set; }
+
+	public long Id { get; set; }
 
 	public bool HasTasks { get; set; }
 	public int TaskCount { get; set; }

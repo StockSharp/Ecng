@@ -1,4 +1,4 @@
-namespace Ecng.Data.Sql.Model;
+﻿namespace Ecng.Data.Sql.Model;
 
 /// <summary>
 /// Walks a <see cref="MemberExpression"/> chain that ultimately roots at a
@@ -49,16 +49,22 @@ public static class ClosureMaterializer
 			cur = me.Expression;
 		}
 
-		if (cur is not ConstantExpression ce)
-			return false;
+		// A chain either starts from a captured value or from a static member, which opens it without an
+		// instance -- a registry of tables offered as static properties reaches here that way.
+		object instance;
 
-		var instance = ce.Value;
+		if (cur is ConstantExpression ce)
+			instance = ce.Value;
+		else if (cur is null)
+			instance = null;
+		else
+			return false;
 
 		while (stack.Count > 0)
 		{
 			var hop = stack.Pop();
 
-			if (instance is null)
+			if (instance is null && !hop.IsStatic())
 				return false;
 
 			instance = hop.GetMemberValue(instance);
