@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq.Expressions;
 
+using Ecng.Data.Sql;
 using Ecng.Serialization;
 
 /// <summary>
@@ -205,6 +206,32 @@ public class NullStorage : IStorage
 [TestClass]
 public class RelationManyListTests : BaseTestClass
 {
+	[TestMethod]
+	public async Task BulkLoadedList_AnswersALikeQueryFromMemory()
+	{
+		// A list kept in memory answers queries without the database, so the query is executed by LINQ rather
+		// than translated to SQL. Everything the caller wrote it with must therefore work in both places --
+		// including LIKE, which is how every search box in a catalogue is written.
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GroupItems =
+			[
+				new() { Id = 1, Name = "Binance" },
+				new() { Id = 2, Name = "Bitfinex" },
+				new() { Id = 3, Name = "Kraken" },
+			],
+		};
+
+		await list.PreloadAsync(CancellationToken);
+
+		var found = list.ToQueryable().Where(i => i.Name.Like("%in%")).OrderBy(i => i.Id).ToArray();
+
+		found.Length.AssertEqual(2);
+		found[0].Name.AssertEqual("Binance");
+		found[1].Name.AssertEqual("Bitfinex");
+	}
+
 	[TestMethod]
 	public async Task PreloadAsync_FillsTheCacheBeforeAnybodyReads()
 	{
