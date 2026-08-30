@@ -1,4 +1,4 @@
-namespace Ecng.Net;
+﻿namespace Ecng.Net;
 
 using System.Collections.Concurrent;
 using System.Threading;
@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 /// </summary>
 /// <remarks>
 /// For a caller that asks the same question far more often than the answer changes: a burst of asks
-/// reaches the source once, and a change at the source is picked up within the lifetime. Unlike
-/// <see cref="InMemoryRestApiClientCache"/>, which keys what a REST client asked by the request it
-/// asked with, this is keyed by whatever the caller resolves by.
+/// reaches the source once, and a change at the source is picked up within the lifetime. What an
+/// answer is looked up by is the caller's own: a REST client keys by the request it asked with,
+/// another by whatever it resolves by.
 /// <para>
 /// What has gone stale is dropped rather than left, so a key asked about once and never again does
 /// not sit here for the life of the process. The sweep runs on the ask that was going to reach the
@@ -48,8 +48,7 @@ public class TtlCache<TKey, TValue>
 	/// <exception cref="ArgumentNullException"><paramref name="time"/> is null.</exception>
 	public TtlCache(TimeSpan ttl, TimeProvider time, IEqualityComparer<TKey> comparer)
 	{
-		if (ttl <= TimeSpan.Zero)
-			throw new ArgumentOutOfRangeException(nameof(ttl), ttl, "Must be positive.");
+		CheckTtl(ttl);
 
 		_ttl = ttl;
 		_time = time ?? throw new ArgumentNullException(nameof(time));
@@ -82,10 +81,30 @@ public class TtlCache<TKey, TValue>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>The answer.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="resolve"/> is null.</exception>
-	public async ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, CancellationToken cancellationToken)
+	public ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, CancellationToken cancellationToken)
+		=> GetAsync(key, resolve, _ttl, cancellationToken);
+
+	/// <summary>
+	/// Serves the answer for a key, asking <paramref name="resolve"/> when there is none to serve, and holds
+	/// what it answered for a lifetime of this call's choosing.
+	/// </summary>
+	/// <param name="key">What the answer is looked up by.</param>
+	/// <param name="resolve">Where the answer comes from.</param>
+	/// <param name="ttl">How long this answer is served before the source is asked again.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>The answer.</returns>
+	/// <remarks>
+	/// For a caller whose lifetime is not its own to fix -- a site that reads it from a setting somebody can
+	/// change while it runs, and wants the change to apply to what is stored next.
+	/// </remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="resolve"/> is null.</exception>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
+	public async ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, TimeSpan ttl, CancellationToken cancellationToken)
 	{
 		if (resolve is null)
 			throw new ArgumentNullException(nameof(resolve));
+
+		CheckTtl(ttl);
 
 		if (TryGet(key, out var held))
 			return held;
@@ -93,7 +112,7 @@ public class TtlCache<TKey, TValue>
 		var value = await resolve(key, cancellationToken);
 		var now = Now;
 
-		_entries[key] = (value, now + _ttl);
+		_entries[key] = (value, now + ttl);
 
 		Sweep(now);
 
@@ -131,10 +150,22 @@ public class TtlCache<TKey, TValue>
 	/// <param name="key">What the answer is looked up by.</param>
 	/// <param name="value">The answer.</param>
 	public void Set(TKey key, TValue value)
+		=> Set(key, value, _ttl);
+
+	/// <summary>
+	/// Holds an answer for a key, for a lifetime of this call's choosing.
+	/// </summary>
+	/// <param name="key">What the answer is looked up by.</param>
+	/// <param name="value">The answer.</param>
+	/// <param name="ttl">How long it is served.</param>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
+	public void Set(TKey key, TValue value, TimeSpan ttl)
 	{
+		CheckTtl(ttl);
+
 		var now = Now;
 
-		_entries[key] = (value, now + _ttl);
+		_entries[key] = (value, now + ttl);
 
 		Sweep(now);
 	}
@@ -169,9 +200,61 @@ public class TtlCache<TKey, TValue>
 	}
 
 	/// <summary>
+	/// Drops every answer the caller recognises by what was cached.
+	/// </summary>
+	/// <param name="match">What the answers to drop have in common.</param>
+	/// <returns>How many were dropped.</returns>
+	/// <remarks>
+	/// What has to go is often known by the answer rather than by the key it was cached under -- everything
+	/// holding the record that just changed, whatever question it was the answer to.
+	/// </remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="match"/> is null.</exception>
+	public int RemoveWhere(Func<TKey, TValue, bool> match)
+	{
+		if (match is null)
+			throw new ArgumentNullException(nameof(match));
+
+		var removed = 0;
+
+		foreach (var (key, entry) in _entries)
+		{
+			if (match(key, entry.Value) && _entries.TryRemove(new(key, entry)))
+				removed++;
+		}
+
+		return removed;
+	}
+
+	/// <summary>
+	/// Gets the answers held that have not gone stale.
+	/// </summary>
+	/// <remarks>
+	/// A snapshot: what it lists was held when it was taken, and may be replaced or dropped while it is read.
+	/// </remarks>
+	public IEnumerable<TValue> Values
+	{
+		get
+		{
+			var now = Now;
+
+			foreach (var (_, entry) in _entries)
+			{
+				if (entry.Expires > now)
+					yield return entry.Value;
+			}
+		}
+	}
+
+	/// <summary>
 	/// Drops every answer held.
 	/// </summary>
 	public void Clear() => _entries.Clear();
+
+	private static void CheckTtl(TimeSpan ttl)
+	{
+		if (ttl <= TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(ttl), ttl, "Must be positive.");
+	}
 
 	private DateTime Now => _time.GetUtcNow().UtcDateTime;
 

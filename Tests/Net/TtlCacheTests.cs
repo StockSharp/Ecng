@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net;
+﻿namespace Ecng.Tests.Net;
 
 using Ecng.Net;
 
@@ -134,6 +134,112 @@ public class TtlCacheTests : BaseTestClass
 		cache.HeldCount.AssertEqual(2, "a walk of the whole cache per ask is what the interval is there to avoid");
 	}
 
+	// --- a lifetime the caller decides per answer ---
+
+	[TestMethod]
+	public void AnAnswerCanBeHeldForALifetimeOfItsOwn()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+
+		// A site whose cache lifetime is a setting reads it as it stores, so a change to the setting applies
+		// to what is stored next rather than at the next restart.
+		cache.Set("A", "one", TimeSpan.FromSeconds(30));
+		cache.Set("B", "two");
+
+		time.Advance(TimeSpan.FromSeconds(20));
+
+		IsTrue(cache.TryGet("A", out var a));
+		AreEqual("one", a);
+
+		// The one stored for the cache's own lifetime went stale on schedule.
+		IsFalse(cache.TryGet("B", out _));
+
+		time.Advance(TimeSpan.FromSeconds(11));
+
+		IsFalse(cache.TryGet("A", out _));
+	}
+
+	[TestMethod]
+	public async Task AResolvedAnswerCanBeHeldForALifetimeOfItsOwn()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+		var asked = 0;
+
+		ValueTask<string> Count(string key, CancellationToken ct)
+		{
+			asked++;
+			return Answer(key, ct);
+		}
+
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+
+		time.Advance(TimeSpan.FromSeconds(20));
+
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+		AreEqual(1, asked);
+
+		time.Advance(TimeSpan.FromSeconds(11));
+
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+		AreEqual(2, asked);
+	}
+
+	[TestMethod]
+	public void ALifetimeOfItsOwnHasToBePositive()
+	{
+		var cache = Create(new TestClock());
+
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => cache.Set("A", "one", TimeSpan.Zero));
+	}
+
+	// --- dropping and reading by what is held, not only by key ---
+
+	[TestMethod]
+	public void EveryAnswerTheCallerRecognisesIsDropped()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+
+		cache.Set("A", "keep");
+		cache.Set("B", "drop me");
+		cache.Set("C", "drop me too");
+
+		// What has to go is often known by what was cached, not by the key it was cached under: a page cache
+		// drops whatever holds the entity that just changed.
+		AreEqual(2, cache.RemoveWhere((key, value) => value.StartsWith("drop")));
+
+		IsTrue(cache.TryGet("A", out _));
+		IsFalse(cache.TryGet("B", out _));
+		IsFalse(cache.TryGet("C", out _));
+	}
+
+	[TestMethod]
+	public void WhatIsHeldCanBeRead()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+
+		cache.Set("A", "one");
+		cache.Set("B", "two", TimeSpan.FromSeconds(30));
+
+		CollectionAssert.AreEquivalent(new[] { "one", "two" }, cache.Values.ToArray());
+
+		time.Advance(TimeSpan.FromSeconds(11));
+
+		// What has gone stale is not held any more, whether or not the sweep has come round to it.
+		CollectionAssert.AreEquivalent(new[] { "two" }, cache.Values.ToArray());
+	}
+
+	[TestMethod]
+	public void WhatToDropByValueHasToBeNamed()
+	{
+		var cache = Create(new TestClock());
+
+		Assert.ThrowsExactly<ArgumentNullException>(() => cache.RemoveWhere((Func<string, string, bool>)null));
+	}
+
 	[TestMethod]
 	public void WhatIsPutInIsServedUntilItGoesStale()
 	{
@@ -173,7 +279,7 @@ public class TtlCacheTests : BaseTestClass
 	{
 		var cache = Create(new TestClock());
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => cache.RemoveWhere(null));
+		Assert.ThrowsExactly<ArgumentNullException>(() => cache.RemoveWhere((Func<string, bool>)null));
 	}
 
 	[TestMethod]
