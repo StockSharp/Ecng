@@ -2,6 +2,8 @@ namespace Ecng.Logging;
 
 using System.IO;
 
+using Ecng.IO;
+
 /// <summary>
 /// Provides stream logging functionality by wrapping an underlying stream. 
 /// It logs read and write operations using supplied formatting functions and log levels.

@@ -13,11 +13,24 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 	/// <param name="timeout">The duration after which a cached item expires.</param>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="timeout"/> is less than or equal to zero.</exception>
 	public InMemoryRestApiClientCache(TimeSpan timeout)
+		: this(timeout, TimeProvider.System)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="InMemoryRestApiClientCache"/> class with the specified timeout.
+	/// </summary>
+	/// <param name="timeout">The duration after which a cached item expires.</param>
+	/// <param name="time">The clock an item's age is measured on.</param>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="timeout"/> is less than or equal to zero.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="time"/> is null.</exception>
+	public InMemoryRestApiClientCache(TimeSpan timeout, TimeProvider time)
 	{
 		if (timeout <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(timeout));
 
 		Timeout = timeout;
+		Cache = new(timeout, time);
 	}
 
 	/// <summary>
@@ -28,7 +41,7 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 	/// <summary>
 	/// The cache that stores the cached items.
 	/// </summary>
-	protected readonly SynchronizedDictionary<(HttpMethod method, string uri, object body), (object value, DateTime till)> Cache = [];
+	protected readonly TtlCache<(HttpMethod method, string uri, object body), object> Cache;
 
 	/// <summary>
 	/// Converts the provided HTTP method, URI, and body into a cache key.
@@ -71,25 +84,17 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 		if (value is null || !IsSupported(method))
 			return;
 
-		Cache[ToKey(method, uri, body)] = new(value, DateTime.UtcNow + Timeout);
+		Cache.Set(ToKey(method, uri, body), value);
 	}
 
 	bool IRestApiClientCache.TryGet<T>(HttpMethod method, Uri uri, object body, out T value)
 	{
 		value = default;
 
-		var key = ToKey(method, uri, body);
-
-		if (!IsSupported(method) || !Cache.TryGetValue(key, out var tuple))
+		if (!IsSupported(method) || !Cache.TryGet(ToKey(method, uri, body), out var held))
 			return false;
 
-		if (tuple.till < DateTime.UtcNow)
-		{
-			Cache.Remove(key);
-			return false;
-		}
-
-		value = (T)tuple.value;
+		value = (T)held;
 		return true;
 	}
 
@@ -101,12 +106,6 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 			return;
 		}
 
-		using (Cache.EnterScope())
-		{
-			var keys = Cache.Keys.Where(p => (method is null || p.method == method) && (uriLike.IsEmpty() || p.uri.Like(uriLike, op))).ToArray();
-
-			foreach (var key in keys)
-				Cache.Remove(key);
-		}
+		Cache.RemoveWhere(key => (method is null || key.method == method) && (uriLike.IsEmpty() || key.uri.Like(uriLike, op)));
 	}
 }

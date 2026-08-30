@@ -1,4 +1,4 @@
-namespace Ecng.Common;
+namespace Ecng.IO;
 
 /// <summary>
 /// Represents a stream wrapper that records all data read from and written to the underlying stream.

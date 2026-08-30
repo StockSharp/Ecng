@@ -10,6 +10,10 @@
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
     <PackageReference Include="SmartFormat" Version="$(SmartFormatVer)" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="$(BclTimeProviderVer)" />
+  </ItemGroup>
 <ItemGroup>
     <EmbeddedResource Include="TimeZoneConverter\Data\*.csv.gz" />
   </ItemGroup>
