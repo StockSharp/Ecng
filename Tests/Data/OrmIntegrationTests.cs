@@ -4813,6 +4813,46 @@ public class OrmIntegrationTests : BaseTestClass
 
 	#endregion
 
+	#region Held rows, grouped by something other than identity
+
+	/// <summary>
+	/// A held table answers "the rows of this owner" from a grouping built once, not by walking itself for
+	/// every owner asked about -- which is what a page of owners does, once per row shown.
+	/// </summary>
+	[TestMethod]
+	public async Task GetByKeyAsync_GroupsHeldRows_AndDropsTheGroupingWithThem()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GetCountResult = 4,
+			GroupItems =
+			[
+				new() { Id = 1, Priority = 10 },
+				new() { Id = 2, Priority = 10 },
+				new() { Id = 3, Priority = 20 },
+				new() { Id = 4, Priority = 30 },
+			],
+		};
+
+		(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).Length.AssertEqual(2);
+		(await list.GetByKeyAsync(i => i.Priority, 30, CancellationToken)).Length.AssertEqual(1);
+		(await list.GetByKeyAsync(i => i.Priority, 99, CancellationToken)).Length.AssertEqual(0);
+
+		var reads = list.OnGetGroupCalls;
+
+		// Asked again, the grouping is already there: the table is not read a second time.
+		(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).Length.AssertEqual(2);
+		list.OnGetGroupCalls.AssertEqual(reads);
+
+		// The grouping describes the held rows, so letting go of them lets go of it.
+		list.GroupItems = [new() { Id = 5, Priority = 10 }];
+		list.ResetCache();
+
+		(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).Length.AssertEqual(1);
+	}
+
+	#endregion
 	#region Audit regression: reading rows must use the bulk cache
 
 	/// <summary>

@@ -223,6 +223,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		dict.Clear();
 		_bulkInitialized = false;
 		_cacheExpire = null;
+		_indexes.Clear();
 
 		using (_cachedEntitiesInitLock.EnterScope())
 			_count = null;
@@ -740,7 +741,47 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	// answer "nothing to fill" -- otherwise the read inside the load starts another load, endlessly.
 	private readonly AsyncLocal<bool> _bulkLoading = new();
 
-	async ValueTask<IQueryable<TEntity>> IRelationManyList<TEntity>.TryInitBulkLoad(CancellationToken cancellationToken)
+	// Groupings of the held rows, told apart by the expression that reads their key: naming them by hand
+	// would let a typo build a second copy of the same grouping, and let two callers disagree about the
+	// key's type behind one name.
+	private readonly SynchronizedDictionary<(string selector, Type key), object> _indexes = [];
+
+	/// <summary>
+	/// The held rows grouped by something other than their identity, so a caller asking for "the rows of
+	/// this owner" is answered by a lookup rather than by walking the whole table.
+	/// </summary>
+	/// <typeparam name="TKey">What the rows are grouped by.</typeparam>
+	/// <param name="keySelector">Reads the key off a row; it also identifies the grouping, so the same one is built once and reused.</param>
+	/// <param name="key">The key to look up.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>The rows under that key, or an empty array.</returns>
+	/// <remarks>
+	/// Only for a <see cref="BulkLoad"/> list, which is the case this exists for: the table is already held,
+	/// and the cost that remains is finding rows in it. The grouping is built on first use and dropped with
+	/// the rows themselves, so it cannot outlive what it describes.
+	/// </remarks>
+	public async ValueTask<TEntity[]> GetByKeyAsync<TKey>(Expression<Func<TEntity, TKey>> keySelector, TKey key, CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(keySelector);
+
+		if (!BulkLoad)
+			throw new InvalidOperationException($"{typeof(TEntity).Name}: the list does not hold its rows.");
+
+		if (!BulkInitialized())
+			await GetRangeAsync(cancellationToken).NoWait();
+
+		var index = (Dictionary<TKey, TEntity[]>)_indexes.SafeAdd((keySelector.ToString(), typeof(TKey)), _ =>
+		{
+			var selector = keySelector.Compile();
+			var (sync, dict) = CachedEntitiesPair;
+
+			using (sync.ReaderLock())
+				return dict.Values.GroupBy(selector).ToDictionary(g => g.Key, g => g.ToArray());
+		});
+
+		return index.TryGetValue(key, out var rows) ? rows : [];
+	}
+async ValueTask<IQueryable<TEntity>> IRelationManyList<TEntity>.TryInitBulkLoad(CancellationToken cancellationToken)
 	{
 		if (!BulkLoad || _bulkLoading.Value)
 			return default;
