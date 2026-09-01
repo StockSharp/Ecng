@@ -59,6 +59,40 @@ public static class ExpressionExtensions
 		field.SetValue(expression, provider);
 	}
 
+	/// <summary>
+	/// Rebuilds <paramref name="expression"/> over another source, so a query composed against one
+	/// queryable runs against another.
+	/// </summary>
+	/// <param name="expression">The composed query, e.g. a Where over a table.</param>
+	/// <param name="source">The source to run it over instead, e.g. the same table held in memory.</param>
+	/// <returns>The rebuilt expression, or <paramref name="expression"/> when it has no queryable root.</returns>
+	/// <remarks>
+	/// Only the root is swapped: a join or a sub-query naming another source keeps naming it.
+	/// </remarks>
+	public static Expression ReplaceRootSource(this Expression expression, IQueryable source)
+	{
+		if (expression is null)
+			throw new ArgumentNullException(nameof(expression));
+
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		var root = expression;
+
+		while (root is MethodCallExpression mce)
+			root = mce.Arguments.Count > 0 ? mce.Arguments[0] : mce.Object;
+
+		if (root is not ConstantExpression constant || constant.Value is not IQueryable)
+			return expression;
+
+		return new RootSourceSwapper(constant, Expression.Constant(source)).Visit(expression);
+	}
+
+	private sealed class RootSourceSwapper(ConstantExpression from, Expression to) : ExpressionVisitor
+	{
+		protected override Expression VisitConstant(ConstantExpression node)
+			=> ReferenceEquals(node, from) ? to : node;
+	}
 	private static IEnumerable<FieldInfo> GetInstanceFields(this Type type)
 	{
 		for (var t = type; t != null; t = t.BaseType)

@@ -5,6 +5,10 @@
 /// </summary>
 public static class QueryableAsyncExtensions
 {
+	// A query is composed against the table's own queryable, so pointing the caller at the held copy is not
+	// enough: the composition still names the original source inside itself. Rebuild it over the held copy.
+	private static IQueryable<T> OverBulk<T>(IQueryable<T> source, IQueryable bulkSource)
+		=> (IQueryable<T>)bulkSource.Provider.CreateQuery(source.Expression.ReplaceRootSource(bulkSource));
 	/// <summary>
 	/// Asynchronously counts the elements in a queryable sequence, using bulk-load when available.
 	/// </summary>
@@ -23,7 +27,7 @@ public static class QueryableAsyncExtensions
 			if (bulkSource is null)
 				return await source.CountAsync(cancellationToken).NoWait();
 
-			((DefaultQueryable<T>)source).ReplaceProvider(bulkSource.Provider);
+			source = OverBulk(source, bulkSource);
 		}
 
 		return source.Count();
@@ -60,7 +64,7 @@ public static class QueryableAsyncExtensions
 			if (bulkSource is null)
 				return await source.FirstOrDefaultAsync(cancellationToken).NoWait();
 
-			((DefaultQueryable<T>)source).ReplaceProvider(bulkSource.Provider);
+			source = OverBulk(source, bulkSource);
 		}
 
 		return source.FirstOrDefault();
@@ -87,6 +91,21 @@ public static class QueryableAsyncExtensions
 	/// <param name="source">The queryable source.</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>An array containing the elements.</returns>
-	public static ValueTask<T[]> ToArrayAsyncEx<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> source.ToAsync().ToArrayAsync(cancellationToken);
+	public static async ValueTask<T[]> ToArrayAsyncEx<T>(this IQueryable<T> source, CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(source);
+
+		if (source.Provider is IDefaultQueryProvider defProvider)
+		{
+			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
+
+
+			if (bulkSource is null)
+				return await source.ToAsync().ToArrayAsync(cancellationToken).NoWait();
+
+			source = OverBulk(source, bulkSource);
+		}
+
+		return [.. source];
+	}
 }

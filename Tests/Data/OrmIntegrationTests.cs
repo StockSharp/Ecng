@@ -4813,6 +4813,76 @@ public class OrmIntegrationTests : BaseTestClass
 
 	#endregion
 
+	#region Audit regression: reading rows must use the bulk cache
+
+	/// <summary>
+	/// Regression test for <c>ToArrayAsyncEx</c> on a <c>BulkLoad</c> list: reading the rows has to fill
+	/// and then use the in-memory cache, the way <c>CountAsyncEx</c>, <c>AnyAsyncEx</c> and
+	/// <c>FirstOrDefaultAsyncEx</c> already do. (Was: it went straight to storage on every call and never
+	/// touched <c>TryInitBulkLoad</c>, so a list asked only for rows -- which is what a page of entities
+	/// is -- queried the database every time and its cache stayed empty for the life of the process;
+	/// Data.ORM\QueryableAsyncExtensions.cs.)
+	/// </summary>
+	[TestMethod]
+	public async Task ToArrayAsyncEx_BulkLoad_FillsCacheAndThenReadsFromIt()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GetCountResult = 2,
+			GroupItems = [new() { Id = 1 }, new() { Id = 2 }],
+		};
+
+		list.CachedEntities.AssertNull();
+
+		var first = await list.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		first.Length.AssertEqual(2);
+
+		list.CachedEntities.AssertNotNull();
+
+		var reads = list.OnGetGroupCalls;
+
+		var second = await list.ToQueryable().ToArrayAsyncEx(CancellationToken);
+		second.Length.AssertEqual(2);
+
+		// The second read is served from the cache: storage is not asked again.
+		list.OnGetGroupCalls.AssertEqual(reads);
+	}
+
+	#endregion
+	/// <summary>
+	/// The list a real storage gives back reads its rows through <c>ToArrayAsyncEx</c> as well, so filling
+	/// the cache runs the very helper that asks for the cache to be filled. Nothing may re-enter the load:
+	/// (Was: the read inside the load asked to fill the cache again, and the process died of a stack
+	/// overflow on the first query -- Data.ORM\QueryableAsyncExtensions.cs, Data.ORM\RelationManyList.cs.)
+	/// </summary>
+	[TestMethod]
+	public async Task ToArrayAsyncEx_BulkLoad_LoadReadingThroughTheSameHelper_DoesNotRecurse()
+	{
+		var list = new ReadsThroughToArrayList(new NullStorage())
+		{
+			BulkLoad = true,
+			GetCountResult = 2,
+			GroupItems = [new() { Id = 1 }, new() { Id = 2 }],
+		};
+
+		var items = await list.ToQueryable().ToArrayAsyncEx(CancellationToken);
+
+		items.Length.AssertEqual(2);
+	}
+
+	/// <summary>
+	/// <see cref="TestRelationManyList"/> variant whose row read goes through <c>ToArrayAsyncEx</c>, the way
+	/// a storage-backed list's does.
+	/// </summary>
+	private sealed class ReadsThroughToArrayList(IStorage storage) : TestRelationManyList(storage)
+	{
+		protected override async ValueTask<TestItem[]> OnGetGroup(long startIndex, long count, bool deleted, string orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+		{
+			var rows = await base.OnGetGroup(startIndex, count, deleted, orderBy, direction, cancellationToken);
+			return await rows.AsQueryable().ToArrayAsyncEx(cancellationToken);
+		}
+	}
 	#region Audit regression: RelationManyList cache
 
 	/// <summary>

@@ -736,11 +736,37 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		return true;
 	}
 
+	// The load reads its rows through the very helpers that ask this question, so a load in flight must
+	// answer "nothing to fill" -- otherwise the read inside the load starts another load, endlessly.
+	private readonly AsyncLocal<bool> _bulkLoading = new();
+
 	async ValueTask<IQueryable<TEntity>> IRelationManyList<TEntity>.TryInitBulkLoad(CancellationToken cancellationToken)
 	{
-		if (!BulkLoad || BulkInitialized())
+		if (!BulkLoad || _bulkLoading.Value)
 			return default;
 
-		return (await GetRangeAsync(cancellationToken).NoWait()).AsQueryable();
+		// A held table answers whether or not this caller is the one that filled it: a query built while the
+		// cache was still cold otherwise keeps going to storage for the life of that query.
+		if (BulkInitialized())
+		{
+			var (sync, dict) = CachedEntitiesPair;
+
+			using (await sync.ReaderLockAsync(cancellationToken).ConfigureAwait(false))
+			{
+				if (_bulkInitialized)
+					return dict.Values.ToArray().AsQueryable();
+			}
+		}
+
+		_bulkLoading.Value = true;
+
+		try
+		{
+			return (await GetRangeAsync(cancellationToken).NoWait()).AsQueryable();
+		}
+		finally
+		{
+			_bulkLoading.Value = false;
+		}
 	}
 }
