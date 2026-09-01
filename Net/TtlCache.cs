@@ -26,6 +26,9 @@ public class TtlCache<TKey, TValue>
 	private readonly TimeProvider _time;
 	private readonly ConcurrentDictionary<TKey, (TValue Value, DateTime Expires)> _entries;
 
+	// What is being asked of the source right now, so a burst on a cold key reaches the source once.
+	private readonly ConcurrentDictionary<TKey, Task<TValue>> _pending;
+
 	private DateTime _nextSweep;
 
 	/// <summary>
@@ -53,6 +56,7 @@ public class TtlCache<TKey, TValue>
 		_ttl = ttl;
 		_time = time ?? throw new ArgumentNullException(nameof(time));
 		_entries = comparer is null ? new() : new(comparer);
+		_pending = comparer is null ? new() : new(comparer);
 		_nextSweep = Now + ttl;
 	}
 
@@ -109,14 +113,38 @@ public class TtlCache<TKey, TValue>
 		if (TryGet(key, out var held))
 			return held;
 
-		var value = await resolve(key, cancellationToken);
-		var now = Now;
+		var promise = new TaskCompletionSource<TValue>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var pending = _pending.GetOrAdd(key, promise.Task);
 
-		_entries[key] = (value, now + ttl);
+		// Somebody is already asking the source for this key: wait for their answer rather than asking
+		// again. Waiting honours this caller's cancellation, so one caller giving up does not free the
+		// others and does not cancel the work they are waiting on.
+		if (!ReferenceEquals(pending, promise.Task))
+			return await pending.WaitAsync(cancellationToken);
 
-		Sweep(now);
+		try
+		{
+			var value = await resolve(key, cancellationToken);
+			var now = Now;
 
-		return value;
+			_entries[key] = (value, now + ttl);
+
+			promise.TrySetResult(value);
+
+			Sweep(now);
+
+			return value;
+		}
+		catch (Exception ex)
+		{
+			// Those waiting hear the same failure, and the next ask starts afresh.
+			promise.TrySetException(ex);
+			throw;
+		}
+		finally
+		{
+			_pending.TryRemove(key, out _);
+		}
 	}
 
 	/// <summary>

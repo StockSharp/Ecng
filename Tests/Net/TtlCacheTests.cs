@@ -282,6 +282,57 @@ public class TtlCacheTests : BaseTestClass
 		Assert.ThrowsExactly<ArgumentNullException>(() => cache.RemoveWhere((Func<string, bool>)null));
 	}
 
+	/// <summary>
+	/// A burst on a key nobody has asked about yet reaches the source once: the first caller asks, the rest
+	/// wait for that answer. (Was: each of them asked, so a cache going cold under load cost as many
+	/// resolutions as there were callers at that moment.)
+	/// </summary>
+	[TestMethod]
+	public async Task ABurstOnAColdKeyReachesTheSourceOnce()
+	{
+		var cache = Create(new TestClock());
+		var asked = 0;
+		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		async ValueTask<string> Slow(string key, CancellationToken ct)
+		{
+			Interlocked.Increment(ref asked);
+			await gate.Task;
+			return "answer:" + key;
+		}
+
+		var callers = Enumerable.Range(0, 10).Select(_ => cache.GetAsync("A", Slow, default).AsTask()).ToArray();
+
+		gate.SetResult();
+
+		foreach (var answer in await Task.WhenAll(callers))
+			answer.AssertEqual("answer:A");
+
+		asked.AssertEqual(1);
+	}
+
+	/// <summary>
+	/// A failure is not held: those waiting hear it, and the next ask starts afresh rather than being served
+	/// the failure for the rest of the lifetime.
+	/// </summary>
+	[TestMethod]
+	public async Task AFailedAskIsNotHeld()
+	{
+		var cache = Create(new TestClock());
+		var asked = 0;
+
+		ValueTask<string> Failing(string key, CancellationToken ct)
+		{
+			Interlocked.Increment(ref asked);
+			throw new InvalidOperationException("source is down");
+		}
+
+		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await cache.GetAsync("A", Failing, default));
+		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await cache.GetAsync("A", Failing, default));
+
+		asked.AssertEqual(2);
+		cache.HeldCount.AssertEqual(0);
+	}
 	[TestMethod]
 	public async Task WhatIsKnownToHaveChangedCanBeDropped()
 	{
