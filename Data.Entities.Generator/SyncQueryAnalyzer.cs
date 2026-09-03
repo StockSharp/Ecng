@@ -1,4 +1,4 @@
-namespace Ecng.Data;
+﻿namespace Ecng.Data;
 
 using System;
 using System.Collections.Generic;
@@ -76,13 +76,39 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		if (source is null || !IsFromOrmQuery(source))
 			return;
 
+		if (IsInsideExpressionTree(op))
+			return;
+
 		ctx.ReportDiagnostic(Diagnostic.Create(Rule, op.Syntax.GetLocation(), method.Name));
+	}
+
+	// A terminal written inside a lambda that becomes an expression tree is not executed where it stands - it
+	// is translated into the query and runs on the server. Reporting it would be wrong, and a rule that cries
+	// wolf gets suppressed and then ignored.
+	private static bool IsInsideExpressionTree(IOperation op)
+	{
+		// The body of a lambda is its own operation tree, so walking operation parents never reaches the
+		// conversion that turns it into an expression tree. The syntax does reach it.
+		var model = op.SemanticModel;
+
+		if (model is null)
+			return false;
+
+		for (var node = op.Syntax.Parent; node is not null; node = node.Parent)
+		{
+			if (model.GetTypeInfo(node).ConvertedType is INamedTypeSymbol named &&
+				named.Name == "Expression" &&
+				named.ContainingNamespace?.ToDisplayString() == "System.Linq.Expressions")
+				return true;
+		}
+
+		return false;
 	}
 
 	/// <summary>
 	/// Walks the source chain of a terminal looking for evidence that the query originates
 	/// from Ecng.Data.ORM: either a value typed <c>DefaultQueryable&lt;T&gt;</c> or a call to
-	/// a <c>ToQueryable()</c> method, both declared in the Ecng.Data.ORM assembly.
+	/// a <c>ToQueryable()</c> method that the ORM declares.
 	/// </summary>
 	private static bool IsFromOrmQuery(IOperation op)
 	{
@@ -94,10 +120,16 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 			switch (op)
 			{
 				case IInvocationOperation inv:
-					if (inv.TargetMethod.Name == "ToQueryable" && IsFromOrmAssembly(inv.TargetMethod.ContainingAssembly))
+					if (IsOrmToQueryable(inv.TargetMethod))
 						return true;
 
 					op = inv.Instance ?? (inv.Arguments.Length > 0 ? inv.Arguments[0].Value : null);
+					break;
+
+				// `a?.B()` puts the rest of the chain under the conditional access, so the source is found by
+				// stepping into it rather than by giving up here.
+				case IConditionalAccessOperation conditional:
+					op = conditional.WhenNotNull;
 					break;
 
 				case IConversionOperation conv:
@@ -115,6 +147,23 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 				default:
 					return false;
 			}
+		}
+
+		return false;
+	}
+
+	// A consumer declares its own list type and overrides ToQueryable, so the method named at the call site
+	// belongs to that assembly, not to the ORM. Following what it overrides is what finds the ORM underneath -
+	// matching only the declaring assembly leaves the rule silent across an entire codebase.
+	private static bool IsOrmToQueryable(IMethodSymbol method)
+	{
+		if (method?.Name != "ToQueryable")
+			return false;
+
+		for (var current = method; current is not null; current = current.OverriddenMethod)
+		{
+			if (IsFromOrmAssembly(current.ContainingAssembly))
+				return true;
 		}
 
 		return false;
