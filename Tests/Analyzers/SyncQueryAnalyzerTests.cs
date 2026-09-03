@@ -3,6 +3,7 @@
 namespace Ecng.Tests.Analyzers;
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
@@ -48,13 +49,39 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 		}
 		""";
 
+	// Building the reference set out of whatever happens to be loaded makes the probe depend on the order the
+	// suite runs in: a missing System.Linq.Queryable leaves the probe uncompilable, the analyzer then has
+	// nothing to look at, and the test reads as "rule broken" when it is the harness that is.
+	private static MetadataReference[] BaseReferences()
+		=> [.. new[]
+			{
+				typeof(object),
+				typeof(IEnumerable<>),
+				typeof(Enumerable),
+				typeof(IQueryable),
+				typeof(Queryable),
+				typeof(System.Linq.Expressions.Expression),
+			}
+			.Select(t => t.Assembly)
+			.Concat(AppDomain.CurrentDomain.GetAssemblies())
+			// The real ORM is loaded in this process, and the stub below carries its name: importing both is
+			// what made the probe fail, silently, whenever the suite happened to have loaded it first.
+			.Where(a => !a.IsDynamic && !a.Location.IsEmpty() && a.GetName().Name != "Ecng.Data.ORM")
+			.Select(a => a.Location)
+			.Distinct()
+			.Select(l => (MetadataReference)MetadataReference.CreateFromFile(l))];
+
+	private static void EnsureCompiles(CSharpCompilation compilation)
+	{
+		var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+
+		if (errors.Length > 0)
+			throw new InvalidOperationException("the probe does not compile: " + errors.Select(e => e.ToString()).JoinN());
+	}
+
 	private static MetadataReference BuildOrmReference()
 	{
-		var refs = AppDomain.CurrentDomain
-			.GetAssemblies()
-			.Where(a => !a.IsDynamic && !a.Location.IsEmpty())
-			.Select(a => (MetadataReference)MetadataReference.CreateFromFile(a.Location))
-			.ToArray();
+		var refs = BaseReferences();
 
 		var orm = CSharpCompilation.Create(
 			"Ecng.Data.ORM",
@@ -74,18 +101,15 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 
 	private async Task<Diagnostic[]> AnalyzeAsync(string code)
 	{
-		var refs = AppDomain.CurrentDomain
-			.GetAssemblies()
-			.Where(a => !a.IsDynamic && !a.Location.IsEmpty())
-			.Select(a => (MetadataReference)MetadataReference.CreateFromFile(a.Location))
-			.Concat([BuildOrmReference()])
-			.ToArray();
+		var refs = BaseReferences().Concat([BuildOrmReference()]).ToArray();
 
 		var compilation = CSharpCompilation.Create(
 			"SyncQueryProbe",
 			[CSharpSyntaxTree.ParseText(code)],
 			refs,
 			new(OutputKind.DynamicallyLinkedLibrary));
+
+		EnsureCompiles(compilation);
 
 		var withAnalyzers = compilation.WithAnalyzers(
 			ImmutableArray.Create<DiagnosticAnalyzer>(new SyncQueryAnalyzer()));
@@ -162,8 +186,7 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 		var diags = await ProbeAsync("""
 				public object M(ItemList a, ItemList b)
 				{
-					var query = a.ToQueryable().Where(i => !b.ToQueryable().Any(x => x.Deleted));
-					return query.ToArray();
+					return a.ToQueryable().Where(i => !b.ToQueryable().Any(x => x.Deleted)).ToArray();
 				}
 			""");
 
