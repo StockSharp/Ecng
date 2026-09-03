@@ -6,9 +6,39 @@
 public static class QueryableAsyncExtensions
 {
 	// A query is composed against the table's own queryable, so pointing the caller at the held copy is not
-	// enough: the composition still names the original source inside itself. Rebuild it over the held copy.
-	private static IQueryable<T> OverBulk<T>(IQueryable<T> source, IQueryable bulkSource)
-		=> (IQueryable<T>)bulkSource.Provider.CreateQuery(source.Expression.ReplaceRootSource(bulkSource));
+	// enough: the composition still names the original source inside itself, and a join or a sub-query names a
+	// second one. Every source has to be swapped for its held copy, because one left naming a table is reached
+	// through the synchronous enumeration LINQ-to-Objects uses -- which parks the calling thread for the whole
+	// round-trip, and under load parks more threads than the pool has.
+	//
+	// Returns null when the query cannot be answered from held copies alone, so the caller runs it against the
+	// database as a whole instead, asynchronously.
+	private static async ValueTask<IQueryable<T>> TryOverBulk<T>(IQueryable<T> source, CancellationToken cancellationToken)
+	{
+		var sources = source.Expression.EnumerateSources();
+
+		if (sources.Length == 0)
+			return null;
+
+		var held = new Dictionary<object, IQueryable>(ReferenceEqualityComparer.Instance);
+		IQueryable any = null;
+
+		foreach (var part in sources)
+		{
+			if (part.Provider is not IDefaultQueryProvider provider)
+				return null;
+
+			var bulk = await provider.TryInitBulkLoad(cancellationToken).NoWait();
+
+			if (bulk is null)
+				return null;
+
+			held.Add(part, bulk);
+			any ??= bulk;
+		}
+
+		return (IQueryable<T>)any.Provider.CreateQuery(source.Expression.ReplaceSources(held));
+	}
 	/// <summary>
 	/// Asynchronously counts the elements in a queryable sequence, using bulk-load when available.
 	/// </summary>
@@ -20,14 +50,14 @@ public static class QueryableAsyncExtensions
 	{
 		ArgumentNullException.ThrowIfNull(source);
 
-		if (source.Provider is IDefaultQueryProvider defProvider)
+		if (source.Provider is IDefaultQueryProvider)
 		{
-			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
+			var bulk = await TryOverBulk(source, cancellationToken).NoWait();
 
-			if (bulkSource is null)
+			if (bulk is null)
 				return await source.CountAsync(cancellationToken).NoWait();
 
-			source = OverBulk(source, bulkSource);
+			source = bulk;
 		}
 
 		return source.Count();
@@ -57,14 +87,14 @@ public static class QueryableAsyncExtensions
 	{
 		ArgumentNullException.ThrowIfNull(source);
 
-		if (source.Provider is IDefaultQueryProvider defProvider)
+		if (source.Provider is IDefaultQueryProvider)
 		{
-			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
+			var bulk = await TryOverBulk(source, cancellationToken).NoWait();
 
-			if (bulkSource is null)
+			if (bulk is null)
 				return await source.FirstOrDefaultAsync(cancellationToken).NoWait();
 
-			source = OverBulk(source, bulkSource);
+			source = bulk;
 		}
 
 		return source.FirstOrDefault();
@@ -95,15 +125,14 @@ public static class QueryableAsyncExtensions
 	{
 		ArgumentNullException.ThrowIfNull(source);
 
-		if (source.Provider is IDefaultQueryProvider defProvider)
+		if (source.Provider is IDefaultQueryProvider)
 		{
-			var bulkSource = await defProvider.TryInitBulkLoad(cancellationToken).NoWait();
+			var bulk = await TryOverBulk(source, cancellationToken).NoWait();
 
-
-			if (bulkSource is null)
+			if (bulk is null)
 				return await source.ToAsync().ToArrayAsync(cancellationToken).NoWait();
 
-			source = OverBulk(source, bulkSource);
+			source = bulk;
 		}
 
 		return [.. source];

@@ -93,6 +93,120 @@ public static class ExpressionExtensions
 		protected override Expression VisitConstant(ConstantExpression node)
 			=> ReferenceEquals(node, from) ? to : node;
 	}
+
+	/// <summary>
+	/// Lists every queryable source <paramref name="expression"/> names: the one it is composed over plus any
+	/// a join or a sub-query brings in.
+	/// </summary>
+	/// <param name="expression">The composed query.</param>
+	/// <returns>The distinct sources, in the order they appear.</returns>
+	public static IQueryable[] EnumerateSources(this Expression expression)
+	{
+		if (expression is null)
+			throw new ArgumentNullException(nameof(expression));
+
+		var collector = new SourceCollector();
+		collector.Visit(expression);
+		return [.. collector.Sources];
+	}
+
+	/// <summary>
+	/// Rebuilds <paramref name="expression"/> with each source it names replaced by the one mapped to it, so a
+	/// query composed over database tables runs over held copies of them instead.
+	/// </summary>
+	/// <param name="expression">The composed query.</param>
+	/// <param name="sources">What to put in place of each source.</param>
+	/// <returns>The rebuilt expression.</returns>
+	/// <remarks>
+	/// Every source has to be replaced, not just the one the query is composed over: a source left naming a
+	/// database table is reached through the synchronous enumeration LINQ-to-Objects uses, which blocks the
+	/// calling thread for the whole round-trip.
+	/// </remarks>
+	public static Expression ReplaceSources(this Expression expression, IReadOnlyDictionary<object, IQueryable> sources)
+	{
+		if (expression is null)
+			throw new ArgumentNullException(nameof(expression));
+
+		if (sources is null)
+			throw new ArgumentNullException(nameof(sources));
+
+		return new SourceSwapper(sources).Visit(expression);
+	}
+
+	// A source is not always a constant in the tree. A sub-query names the one it reads through the closure the
+	// compiler built for it, which arrives as a field read off a captured object -- so a search for constants
+	// alone would miss it, and it is exactly the source a join or a sub-query brings in.
+	private static object ReadValue(Expression node)
+	{
+		switch (node)
+		{
+			case ConstantExpression constant:
+				return constant.Value;
+
+			case MemberExpression member:
+			{
+				var owner = member.Expression is null ? null : ReadValue(member.Expression);
+
+				if (owner is null && member.Expression is not null)
+					return null;
+
+				return member.Member switch
+				{
+					FieldInfo field => field.GetValue(owner),
+					PropertyInfo property => property.GetValue(owner),
+					_ => null,
+				};
+			}
+
+			default:
+				return null;
+		}
+	}
+
+	private sealed class SourceCollector : ExpressionVisitor
+	{
+		private readonly HashSet<object> _seen = new(ReferenceEqualityComparer.Instance);
+
+		public List<IQueryable> Sources { get; } = [];
+
+		protected override Expression VisitConstant(ConstantExpression node)
+		{
+			Add(node.Value);
+			return node;
+		}
+
+		protected override Expression VisitMember(MemberExpression node)
+		{
+			if (ReadValue(node) is IQueryable source)
+			{
+				Add(source);
+				return node;
+			}
+
+			return base.VisitMember(node);
+		}
+
+		private void Add(object value)
+		{
+			if (value is IQueryable source && _seen.Add(source))
+				Sources.Add(source);
+		}
+	}
+
+	private sealed class SourceSwapper(IReadOnlyDictionary<object, IQueryable> sources) : ExpressionVisitor
+	{
+		protected override Expression VisitConstant(ConstantExpression node)
+			=> TryReplace(node.Value) ?? node;
+
+		protected override Expression VisitMember(MemberExpression node)
+			=> TryReplace(ReadValue(node)) ?? base.VisitMember(node);
+
+		private Expression TryReplace(object value)
+			=> value is not null && sources.TryGetValue(value, out var replacement)
+				? Expression.Constant(replacement)
+				: null;
+	}
+
 	private static IEnumerable<FieldInfo> GetInstanceFields(this Type type)
 	{
 		for (var t = type; t != null; t = t.BaseType)
