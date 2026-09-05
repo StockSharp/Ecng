@@ -76,6 +76,24 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	public virtual IQueryable<TEntity> ToQueryable() => CreateQueryable();
 
 	/// <summary>
+	/// Hands the list over as a query, loading it first when it is one that is kept in memory.
+	/// </summary>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A query over the held copy for a list kept in memory, over the storage for one that is not.</returns>
+	/// <remarks>
+	/// <see cref="ToQueryable"/> cannot wait, so before the table is loaded it hands over a reference to
+	/// storage, and a query composed with it keeps that reference for its whole life. Waiting removes the
+	/// choice: for a kept table what comes back is the held copy, always.
+	/// </remarks>
+	public virtual async ValueTask<IQueryable<TEntity>> ToQueryableAsync(CancellationToken cancellationToken)
+	{
+		if (BulkLoad)
+			await PreloadAsync(cancellationToken).NoWait();
+
+		return CreateQueryable();
+	}
+
+	/// <summary>
 	/// Creates an <see cref="IQueryable{T}"/> over the list data.
 	/// </summary>
 	protected virtual IQueryable<TEntity> CreateQueryable()

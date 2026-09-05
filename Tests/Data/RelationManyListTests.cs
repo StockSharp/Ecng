@@ -196,10 +196,8 @@ public class NullStorage : IStorage
 	public ValueTask<TEntity> UpdateAsync<TEntity>(TEntity entity, CancellationToken ct) where TEntity : IDbPersistable => new(entity);
 	public ValueTask<bool> RemoveAsync<TEntity>(TEntity entity, CancellationToken ct) where TEntity : IDbPersistable => new(true);
 	public ValueTask ClearAsync<TEntity>(CancellationToken ct) where TEntity : IDbPersistable => default;
-	public IEnumerable<TResult> ExecuteEnum<TSource, TResult>(Expression expression) => [];
 	public IAsyncEnumerable<TResult> ExecuteEnumAsync<TSource, TResult>(Expression expression) => AsyncEnumerable.Empty<TResult>();
 	public ValueTask ExecuteAsync<TSource>(Expression expression) => default;
-	public TResult ExecuteResult<TSource, TResult>(Expression expression) => default;
 	public ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression) => default;
 }
 

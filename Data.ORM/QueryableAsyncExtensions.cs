@@ -5,17 +5,11 @@
 /// </summary>
 public static class QueryableAsyncExtensions
 {
-	// A query is composed against the table's own queryable, so pointing the caller at the held copy is not
-	// enough: the composition still names the original source inside itself, and a join or a sub-query names a
-	// second one. Every source has to be swapped for its held copy, because one left naming a table is reached
-	// through the synchronous enumeration LINQ-to-Objects uses -- which parks the calling thread for the whole
-	// round-trip, and under load parks more threads than the pool has.
-	//
-	// Returns null when the query cannot be answered from held copies alone, so the caller runs it against the
-	// database as a whole instead, asynchronously.
+	// Every source has to be swapped, not just the one the query is composed over: one left naming a table is
+	// reached through synchronous enumeration. Null when held copies cannot answer it.
 	private static async ValueTask<IQueryable<T>> TryOverBulk<T>(IQueryable<T> source, CancellationToken cancellationToken)
 	{
-		var sources = source.Expression.EnumerateSources();
+		var pinned = source.Expression.PinSources(out var sources);
 
 		if (sources.Length == 0)
 			return null;
@@ -37,8 +31,30 @@ public static class QueryableAsyncExtensions
 			any ??= bulk;
 		}
 
-		return (IQueryable<T>)any.Provider.CreateQuery(source.Expression.ReplaceSources(held));
+		return (IQueryable<T>)any.Provider.CreateQuery(pinned.ReplaceSources(held));
 	}
+	// For a query composed by LINQ-to-Objects: the outer provider is not ours, but the tree still names tables,
+	// and it was going to read them whole anyway. Reading them here only makes that read awaited.
+	private static async ValueTask<IQueryable<T>> OverHeldCopies<T>(IQueryable<T> source, CancellationToken cancellationToken)
+	{
+		var pinned = source.Expression.PinSources(out var sources);
+		var held = new Dictionary<object, IQueryable>(ReferenceEqualityComparer.Instance);
+
+		foreach (var part in sources)
+		{
+			if (part.Provider is not IDefaultQueryProvider provider)
+				continue;
+
+			held.Add(part, await provider.TryInitBulkLoad(cancellationToken).NoWait()
+				?? await provider.ReadAllAsync(part, cancellationToken).NoWait());
+		}
+
+		if (held.Count == 0)
+			return source;
+
+		return (IQueryable<T>)source.Provider.CreateQuery(pinned.ReplaceSources(held));
+	}
+
 	/// <summary>
 	/// Asynchronously counts the elements in a queryable sequence, using bulk-load when available.
 	/// </summary>
@@ -59,6 +75,8 @@ public static class QueryableAsyncExtensions
 
 			source = bulk;
 		}
+		else
+			source = await OverHeldCopies(source, cancellationToken).NoWait();
 
 		return source.Count();
 	}
@@ -96,6 +114,8 @@ public static class QueryableAsyncExtensions
 
 			source = bulk;
 		}
+		else
+			source = await OverHeldCopies(source, cancellationToken).NoWait();
 
 		return source.FirstOrDefault();
 	}
@@ -134,6 +154,8 @@ public static class QueryableAsyncExtensions
 
 			source = bulk;
 		}
+		else
+			source = await OverHeldCopies(source, cancellationToken).NoWait();
 
 		return [.. source];
 	}

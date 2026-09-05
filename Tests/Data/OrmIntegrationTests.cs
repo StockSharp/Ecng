@@ -1,4 +1,4 @@
-#if NET10_0_OR_GREATER
+﻿#if NET10_0_OR_GREATER
 
 namespace Ecng.Tests.Data;
 
@@ -4574,16 +4574,11 @@ public class OrmIntegrationTests : BaseTestClass
 	/// </summary>
 	private sealed class ThrowingQueryContext : IQueryContext
 	{
-		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
 
 		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
-			=> throw new NotSupportedException();
-
-		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)
@@ -4697,56 +4692,6 @@ public class OrmIntegrationTests : BaseTestClass
 	#endregion
 
 	#region Audit regression: query provider routing
-
-	/// <summary>
-	/// Regression test for <c>DefaultQueryProvider.ResolveExecuteMethod</c> routing:
-	/// ensures a synchronous scalar <c>string</c> terminal dispatches to the scalar
-	/// <c>ExecuteResult&lt;TSource,string&gt;</c> path. (Was: any result type that merely
-	/// implemented <c>IEnumerable&lt;&gt;</c> — including <c>string</c>, an
-	/// <c>IEnumerable&lt;char&gt;</c> — was routed into the enumerable branch and threw
-	/// InvalidOperationException; Data.ORM\DefaultQueryProvider.cs.)
-	/// </summary>
-	[TestMethod]
-	public void Execute_ScalarString_RoutesToExecuteResult_NotEnumerableBranch()
-	{
-		var ctx = new RecordingScalarContext { ResultValue = "the-name" };
-		IQueryProvider provider = new DefaultQueryProvider<TestItem>(ctx);
-
-		// A constant string expression stands in for a scalar terminal whose result
-		// type is string; the routing decision is purely type-driven.
-		var result = provider.Execute<string>(Expression.Constant("the-name"));
-
-		AreEqual("the-name", result);
-		ctx.ExecuteResultCalled.AssertTrue("Scalar string terminal must route to ExecuteResult, not the IEnumerable branch.");
-	}
-
-	/// <summary>
-	/// Records whether the scalar <c>ExecuteResult</c> path was taken and supplies a
-	/// canned string result for it.
-	/// </summary>
-	private sealed class RecordingScalarContext : IQueryContext
-	{
-		public string ResultValue { get; set; }
-		public bool ExecuteResultCalled { get; private set; }
-
-		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
-		{
-			ExecuteResultCalled = true;
-			return (TResult)(object)ResultValue;
-		}
-
-		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
-
-		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
-
-		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
-			=> throw new NotSupportedException();
-
-		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
-	}
 
 	/// <summary>
 	/// Regression test for <c>AnyAsyncEx</c>: ensures an empty value-type sequence (e.g.

@@ -21,16 +21,11 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	private class DummyQueryContext : IQueryContext
 	{
-		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
 
 		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
-			=> throw new NotSupportedException();
-
-		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)

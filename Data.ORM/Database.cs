@@ -1,4 +1,4 @@
-namespace Ecng.Data;
+﻿namespace Ecng.Data;
 
 using System.Collections;
 using System.ComponentModel;
@@ -1213,9 +1213,6 @@ public partial class Database : Disposable, IStorage
 		return (command, input);
 	}
 
-	IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
-		=> AsyncHelper.Run(() => ((IQueryContext)this).ExecuteEnumAsync<TSource, TResult>(expression).ToArrayAsync());
-
 	private static (ExpressionQueryTranslator translator, Query query, CancellationToken token) GetQuery<TEntity>(Expression expression)
 		=> GetQuery(SchemaRegistry.Get(typeof(TEntity)), expression);
 
@@ -1234,9 +1231,6 @@ public partial class Database : Disposable, IStorage
 
 	IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
 		=> new SelectAsyncEnumerable<TSource, TResult>(this, expression);
-
-	TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
-		=> AsyncHelper.Run(() => ExecuteResultAsync<TSource, TResult>(expression));
 
 	/// <summary>
 	/// Executes a LINQ expression and returns a single result asynchronously.

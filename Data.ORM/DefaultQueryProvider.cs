@@ -3,6 +3,9 @@
 interface IDefaultQueryProvider
 {
 	ValueTask<IQueryable> TryInitBulkLoad(CancellationToken cancellationToken);
+
+	/// <summary>Reads the whole source into memory without blocking the calling thread.</summary>
+	ValueTask<IQueryable> ReadAllAsync(IQueryable source, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -15,11 +18,9 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 	private readonly IQueryContext _context = context ?? throw new ArgumentNullException(nameof(context));
 	private readonly IRelationManyList<TEntity> _list;
 
-	private readonly MethodInfo _execEnum = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteEnum));
 	private readonly MethodInfo _execEnumAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteEnumAsync));
 	private readonly MethodInfo _execAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteAsync));
 	private readonly MethodInfo _execResultAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResultAsync));
-	private readonly MethodInfo _execResult = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResult));
 
 	// Per-result-type cache for the closed generic IQueryContext.* methods we
 	// dispatch into. Without this every Execute<T>() pays for MakeGenericMethod
@@ -64,12 +65,10 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 
 	private MethodInfo ResolveExecuteMethod(Type resultType)
 	{
-		// Route to the enumerable/async-enumerable branch only when the result type is
-		// itself the constructed IEnumerable<>/IAsyncEnumerable<> sequence terminal. A
-		// scalar result type that merely implements IEnumerable<> (e.g. string, which is
-		// IEnumerable<char>) must fall through to the scalar ExecuteResult path instead.
+		// A thread waiting for a round-trip is a thread the pool cannot use, and every read has an awaitable
+		// form. Asking for a plain sequence or a plain value is asking for the read to happen on this thread.
 		if (IsConstructedGeneric(resultType, typeof(IEnumerable<>)))
-			return _execEnum.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
+			throw new NotSupportedException($"A query over {typeof(TEntity).Name} cannot be read on the calling thread. Read it with ToArrayAsyncEx, or walk it with ToAsync.");
 
 		if (IsConstructedGeneric(resultType, typeof(IAsyncEnumerable<>)))
 			return _execEnumAsync.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
@@ -80,11 +79,15 @@ public class DefaultQueryProvider<TEntity>(IQueryContext context) : IQueryProvid
 		if (IsConstructedGeneric(resultType, typeof(ValueTask<>)))
 			return _execResultAsync.Make(typeof(TEntity), resultType.GetGenericArguments()[0]);
 
-		return _execResult.Make(typeof(TEntity), resultType);
+		throw new NotSupportedException($"A query over {typeof(TEntity).Name} cannot be answered on the calling thread. Use CountAsyncEx, AnyAsyncEx or FirstOrDefaultAsyncEx.");
 	}
 
 	private static bool IsConstructedGeneric(Type type, Type definition)
 		=> type.IsGenericType && type.GetGenericTypeDefinition() == definition;
 
 	async ValueTask<IQueryable> IDefaultQueryProvider.TryInitBulkLoad(CancellationToken cancellationToken)
-		=> _list is null ? default : await _list.TryInitBulkLoad(cancellationToken).NoWait();}
+		=> _list is null ? default : await _list.TryInitBulkLoad(cancellationToken).NoWait();
+
+	async ValueTask<IQueryable> IDefaultQueryProvider.ReadAllAsync(IQueryable source, CancellationToken cancellationToken)
+		=> (await ((IAsyncEnumerable<TEntity>)source).ToArrayAsync(cancellationToken).NoWait()).AsQueryable();
+}

@@ -1,4 +1,4 @@
-#if NET10_0_OR_GREATER
+﻿#if NET10_0_OR_GREATER
 
 namespace Ecng.Tests.Data;
 
@@ -21,16 +21,11 @@ public class GroupByTranslationTests : BaseTestClass
 
 	private sealed class DummyQueryContext : IQueryContext
 	{
-		IEnumerable<TResult> IQueryContext.ExecuteEnum<TSource, TResult>(Expression expression)
-			=> throw new NotSupportedException();
 
 		IAsyncEnumerable<TResult> IQueryContext.ExecuteEnumAsync<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask IQueryContext.ExecuteAsync<TSource>(Expression expression)
-			=> throw new NotSupportedException();
-
-		TResult IQueryContext.ExecuteResult<TSource, TResult>(Expression expression)
 			=> throw new NotSupportedException();
 
 		ValueTask<TResult> IQueryContext.ExecuteResultAsync<TSource, TResult>(Expression expression)

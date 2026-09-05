@@ -111,6 +111,29 @@ public static class ExpressionExtensions
 	}
 
 	/// <summary>
+	/// Rebuilds <paramref name="expression"/> so that every source it names is held in place, and reports the
+	/// sources found.
+	/// </summary>
+	/// <param name="expression">The composed query.</param>
+	/// <param name="sources">The distinct sources, in the order they appear.</param>
+	/// <returns>The rebuilt expression, naming each source directly.</returns>
+	/// <remarks>
+	/// A source read through a property is built anew on each read, so finding it and replacing it would meet
+	/// two different objects. Each is read once and put into the expression, so both steps mean the same one.
+	/// </remarks>
+	public static Expression PinSources(this Expression expression, out IQueryable[] sources)
+	{
+		if (expression is null)
+			throw new ArgumentNullException(nameof(expression));
+
+		var pinner = new SourcePinner();
+		var pinned = pinner.Visit(expression);
+
+		sources = [.. pinner.Sources];
+		return pinned;
+	}
+
+	/// <summary>
 	/// Rebuilds <paramref name="expression"/> with each source it names replaced by the one mapped to it, so a
 	/// query composed over database tables runs over held copies of them instead.
 	/// </summary>
@@ -118,9 +141,8 @@ public static class ExpressionExtensions
 	/// <param name="sources">What to put in place of each source.</param>
 	/// <returns>The rebuilt expression.</returns>
 	/// <remarks>
-	/// Every source has to be replaced, not just the one the query is composed over: a source left naming a
-	/// database table is reached through the synchronous enumeration LINQ-to-Objects uses, which blocks the
-	/// calling thread for the whole round-trip.
+	/// Every source, not just the one the query is composed over: one left naming a table is read
+	/// synchronously, blocking the caller for the round-trip.
 	/// </remarks>
 	public static Expression ReplaceSources(this Expression expression, IReadOnlyDictionary<object, IQueryable> sources)
 	{
@@ -133,9 +155,8 @@ public static class ExpressionExtensions
 		return new SourceSwapper(sources).Visit(expression);
 	}
 
-	// A source is not always a constant in the tree. A sub-query names the one it reads through the closure the
-	// compiler built for it, which arrives as a field read off a captured object -- so a search for constants
-	// alone would miss it, and it is exactly the source a join or a sub-query brings in.
+	// A sub-query names its source through the compiler's closure, which arrives as a field read - so looking
+	// for constants alone would miss exactly the source a join or a sub-query brings in.
 	private static object ReadValue(Expression node)
 	{
 		switch (node)
@@ -190,6 +211,84 @@ public static class ExpressionExtensions
 		{
 			if (value is IQueryable source && _seen.Add(source))
 				Sources.Add(source);
+		}
+	}
+
+	private sealed class SourcePinner : ExpressionVisitor
+	{
+		private readonly HashSet<object> _seen = new(ReferenceEqualityComparer.Instance);
+
+		public List<IQueryable> Sources { get; } = [];
+
+		protected override Expression VisitConstant(ConstantExpression node)
+		{
+			Add(node.Value);
+			return node;
+		}
+
+		public override Expression Visit(Expression node)
+		{
+			if (!IsSource(node))
+				return base.Visit(node);
+
+			if (Evaluate(node) is not IQueryable source)
+				return base.Visit(node);
+
+			Add(source);
+
+			// What was read replaces the read itself, so nobody reads it a second time and gets something else.
+			return Expression.Constant(source);
+		}
+
+		// A step of the query is named by the same interface as a source, and evaluating one would run the very
+		// query being looked at.
+		private static bool IsSource(Expression node)
+		{
+			if (node is null || node is ConstantExpression || !typeof(IQueryable).IsAssignableFrom(node.Type))
+				return false;
+
+			if (node is MethodCallExpression call &&
+				(call.Method.DeclaringType == typeof(Queryable) || call.Method.DeclaringType == typeof(Enumerable)))
+				return false;
+
+			return node is MemberExpression or MethodCallExpression && IsClosed(node);
+		}
+
+		// Anything reaching for the value a lambda is called with has no value yet.
+		private static bool IsClosed(Expression node)
+		{
+			var finder = new ParameterFinder();
+			finder.Visit(node);
+			return !finder.Found;
+		}
+
+		private static object Evaluate(Expression node)
+		{
+			try
+			{
+				return Expression.Lambda(node).Compile().DynamicInvoke();
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+		}
+
+		private void Add(object value)
+		{
+			if (value is IQueryable source && _seen.Add(source))
+				Sources.Add(source);
+		}
+	}
+
+	private sealed class ParameterFinder : ExpressionVisitor
+	{
+		public bool Found { get; private set; }
+
+		protected override Expression VisitParameter(ParameterExpression node)
+		{
+			Found = true;
+			return node;
 		}
 	}
 
