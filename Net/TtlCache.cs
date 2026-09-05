@@ -23,8 +23,9 @@ using System.Threading.Tasks;
 public class TtlCache<TKey, TValue>
 {
 	private readonly TimeSpan _ttl;
+	private readonly TimeSpan _maxAge;
 	private readonly TimeProvider _time;
-	private readonly ConcurrentDictionary<TKey, (TValue Value, DateTime Expires)> _entries;
+	private readonly ConcurrentDictionary<TKey, (TValue Value, DateTime Expires, DateTime Deadline)> _entries;
 
 	// What is being asked of the source right now, so a burst on a cold key reaches the source once.
 	private readonly ConcurrentDictionary<TKey, Task<TValue>> _pending;
@@ -34,26 +35,30 @@ public class TtlCache<TKey, TValue>
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TtlCache{TKey, TValue}"/>.
 	/// </summary>
-	/// <param name="ttl">How long an answer is served before the source is asked again.</param>
+	/// <param name="ttl">How long an answer is kept after it was last asked for.</param>
+	/// <param name="maxAge">The oldest an answer may be, however often it is asked for.</param>
 	/// <param name="time">The clock an answer's age is measured on.</param>
-	public TtlCache(TimeSpan ttl, TimeProvider time)
-		: this(ttl, time, null)
+	public TtlCache(TimeSpan ttl, TimeSpan maxAge, TimeProvider time)
+		: this(ttl, maxAge, time, null)
 	{
 	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TtlCache{TKey, TValue}"/>.
 	/// </summary>
-	/// <param name="ttl">How long an answer is served before the source is asked again.</param>
+	/// <param name="ttl">How long an answer is kept after it was last asked for.</param>
+	/// <param name="maxAge">The oldest an answer may be, however often it is asked for.</param>
 	/// <param name="time">The clock an answer's age is measured on.</param>
 	/// <param name="comparer">How keys are compared.</param>
-	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> or <paramref name="maxAge"/> is not positive.</exception>
 	/// <exception cref="ArgumentNullException"><paramref name="time"/> is null.</exception>
-	public TtlCache(TimeSpan ttl, TimeProvider time, IEqualityComparer<TKey> comparer)
+	public TtlCache(TimeSpan ttl, TimeSpan maxAge, TimeProvider time, IEqualityComparer<TKey> comparer)
 	{
-		CheckTtl(ttl);
+		CheckPositive(ttl, nameof(ttl));
+		CheckPositive(maxAge, nameof(maxAge));
 
 		_ttl = ttl;
+		_maxAge = maxAge;
 		_time = time ?? throw new ArgumentNullException(nameof(time));
 		_entries = comparer is null ? new() : new(comparer);
 		_pending = comparer is null ? new() : new(comparer);
@@ -86,7 +91,7 @@ public class TtlCache<TKey, TValue>
 	/// <returns>The answer.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="resolve"/> is null.</exception>
 	public ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, CancellationToken cancellationToken)
-		=> GetAsync(key, resolve, _ttl, cancellationToken);
+		=> GetAsync(key, resolve, _ttl, _maxAge, cancellationToken);
 
 	/// <summary>
 	/// Serves the answer for a key, asking <paramref name="resolve"/> when there is none to serve, and holds
@@ -103,14 +108,15 @@ public class TtlCache<TKey, TValue>
 	/// </remarks>
 	/// <exception cref="ArgumentNullException"><paramref name="resolve"/> is null.</exception>
 	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
-	public async ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, TimeSpan ttl, CancellationToken cancellationToken)
+	public async ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, TimeSpan ttl, TimeSpan maxAge, CancellationToken cancellationToken)
 	{
 		if (resolve is null)
 			throw new ArgumentNullException(nameof(resolve));
 
-		CheckTtl(ttl);
+		CheckPositive(ttl, nameof(ttl));
+		CheckPositive(maxAge, nameof(maxAge));
 
-		if (TryGet(key, out var held))
+		if (TryGet(key, ttl, out var held))
 			return held;
 
 		var promise = new TaskCompletionSource<TValue>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -127,7 +133,7 @@ public class TtlCache<TKey, TValue>
 			var value = await resolve(key, cancellationToken);
 			var now = Now;
 
-			_entries[key] = (value, now + ttl);
+			_entries[key] = (value, (now + ttl).Min(now + maxAge), now + maxAge);
 
 			promise.TrySetResult(value);
 
@@ -154,11 +160,24 @@ public class TtlCache<TKey, TValue>
 	/// <param name="value">The answer.</param>
 	/// <returns>true if one is held and has not gone stale; otherwise, false.</returns>
 	public bool TryGet(TKey key, out TValue value)
+		=> TryGet(key, _ttl, out value);
+
+	private bool TryGet(TKey key, TimeSpan ttl, out TValue value)
 	{
 		if (_entries.TryGetValue(key, out var entry))
 		{
-			if (entry.Expires > Now)
+			var now = Now;
+
+			if (entry.Expires > now)
 			{
+				// Being asked for is what keeps an answer: one nobody wants any more stops being kept, and a
+				// busy one stops reaching the source. Never past the deadline, though, or the answer everybody
+				// wants would be the one that never notices the source changing.
+				var extended = (now + ttl).Min(entry.Deadline);
+
+				if (extended > entry.Expires)
+					_entries.TryUpdate(key, (entry.Value, extended, entry.Deadline), entry);
+
 				value = entry.Value;
 				return true;
 			}
@@ -178,22 +197,24 @@ public class TtlCache<TKey, TValue>
 	/// <param name="key">What the answer is looked up by.</param>
 	/// <param name="value">The answer.</param>
 	public void Set(TKey key, TValue value)
-		=> Set(key, value, _ttl);
+		=> Set(key, value, _ttl, _maxAge);
 
 	/// <summary>
 	/// Holds an answer for a key, for a lifetime of this call's choosing.
 	/// </summary>
 	/// <param name="key">What the answer is looked up by.</param>
 	/// <param name="value">The answer.</param>
-	/// <param name="ttl">How long it is served.</param>
-	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
-	public void Set(TKey key, TValue value, TimeSpan ttl)
+	/// <param name="ttl">How long it is kept after it was last asked for.</param>
+	/// <param name="maxAge">The oldest it may be, however often it is asked for.</param>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> or <paramref name="maxAge"/> is not positive.</exception>
+	public void Set(TKey key, TValue value, TimeSpan ttl, TimeSpan maxAge)
 	{
-		CheckTtl(ttl);
+		CheckPositive(ttl, nameof(ttl));
+		CheckPositive(maxAge, nameof(maxAge));
 
 		var now = Now;
 
-		_entries[key] = (value, now + ttl);
+		_entries[key] = (value, (now + ttl).Min(now + maxAge), now + maxAge);
 
 		Sweep(now);
 	}
@@ -278,10 +299,10 @@ public class TtlCache<TKey, TValue>
 	/// </summary>
 	public void Clear() => _entries.Clear();
 
-	private static void CheckTtl(TimeSpan ttl)
+	private static void CheckPositive(TimeSpan value, string name)
 	{
-		if (ttl <= TimeSpan.Zero)
-			throw new ArgumentOutOfRangeException(nameof(ttl), ttl, "Must be positive.");
+		if (value <= TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(name, value, "Must be positive.");
 	}
 
 	private DateTime Now => _time.GetUtcNow().UtcDateTime;

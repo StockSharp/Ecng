@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net;
+﻿namespace Ecng.Tests.Net;
 
 using Ecng.Net;
 using Ecng.Serialization;
@@ -12,6 +12,38 @@ public class NetworkHelperTests : BaseTestClass
 	public void Gravatar()
 	{
 		"info@stocksharp.com".GetGravatarToken().GetGravatarUrl(100).AssertEqual("https://www.gravatar.com/avatar/cf4c4e682b9869e05c4cc4536b734828?size=100");
+	}
+
+	// A clock the test moves itself, so a response can be aged without waiting it out.
+	private sealed class TestClock : TimeProvider
+	{
+		private DateTimeOffset _now = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+		public override DateTimeOffset GetUtcNow() => _now;
+
+		public void Advance(TimeSpan by) => _now += by;
+	}
+
+	[TestMethod]
+	public void AResponseStillBeingRequestedIsKept()
+	{
+		var time = new TestClock();
+		var timeout = TimeSpan.FromSeconds(10);
+		IRestApiClientCache cache = new InMemoryRestApiClientCache(timeout, time);
+		var url = "https://example.com/rates".To<Uri>();
+
+		cache.Set(HttpMethod.Get, url, default, new { });
+
+		// Asked for every eight seconds, so it never sits unwanted for the ten it is kept.
+		for (var i = 0; i < 5; i++)
+		{
+			time.Advance(TimeSpan.FromSeconds(8));
+			cache.TryGet<object>(HttpMethod.Get, url, default, out _).AssertTrue();
+		}
+
+		// Past the age it may reach however often it is asked for.
+		time.Advance(TimeSpan.FromSeconds(20));
+		cache.TryGet<object>(HttpMethod.Get, url, default, out _).AssertFalse();
 	}
 
 	[TestMethod]

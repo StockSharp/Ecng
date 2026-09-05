@@ -19,14 +19,87 @@ public class TtlCacheTests : BaseTestClass
 
 	private static ValueTask<string> Answer(string key, CancellationToken ct) => new("answer:" + key);
 
+	// The oldest an answer may be, however often it is asked for.
+	private static readonly TimeSpan _maxAge = TimeSpan.FromSeconds(60);
+
 	private static TtlCache<string, string> Create(TestClock time)
-		=> new(_ttl, time, StringComparer.OrdinalIgnoreCase);
+		=> new(_ttl, _maxAge, time, StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Asked for again, an answer is kept longer, so a busy key stops reaching the source.</summary>
+	[TestMethod]
+	public async Task AnAnswerAskedForAgainIsHeldLonger()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+		var asked = 0;
+
+		ValueTask<string> Count(string key, CancellationToken ct)
+		{
+			asked++;
+			return new("answer:" + key);
+		}
+
+		await cache.GetAsync("A", Count, CancellationToken);
+
+		// Asked for every eight seconds, so it never sits unasked for the ten it is kept.
+		for (var i = 0; i < 5; i++)
+		{
+			time.Advance(TimeSpan.FromSeconds(8));
+			await cache.GetAsync("A", Count, CancellationToken);
+		}
+
+		AreEqual(1, asked);
+	}
+
+	/// <summary>However often it is asked for, it is fetched again once it is old enough.</summary>
+	/// <remarks>
+	/// Without this a busy key would never see a change at the source: each ask would push its lifetime out,
+	/// and the more popular the answer, the longer it would go on being wrong.
+	/// </remarks>
+	[TestMethod]
+	public async Task AnAnswerIsFetchedAgainOnceItIsOldEnough()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+		var asked = 0;
+
+		ValueTask<string> Count(string key, CancellationToken ct)
+		{
+			asked++;
+			return new("answer:" + key);
+		}
+
+		await cache.GetAsync("A", Count, CancellationToken);
+
+		for (var i = 0; i < 10; i++)
+		{
+			time.Advance(TimeSpan.FromSeconds(8));
+			await cache.GetAsync("A", Count, CancellationToken);
+		}
+
+		// Eighty seconds of being asked for, against a sixty-second oldest it may be.
+		AreEqual(2, asked);
+	}
+
+	/// <summary>An answer nobody asks for still goes when its time is up.</summary>
+	[TestMethod]
+	public async Task AnAnswerNobodyAsksForGoesOnTime()
+	{
+		var time = new TestClock();
+		var cache = Create(time);
+
+		await cache.GetAsync("A", Answer, CancellationToken);
+
+		time.Advance(_ttl + TimeSpan.FromSeconds(1));
+
+		IsFalse(cache.TryGet("A", out _));
+	}
 
 	[TestMethod]
 	public void TtlHasToBePositiveAndAClockIsRequired()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TtlCache<string, string>(TimeSpan.Zero, new TestClock()));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new TtlCache<string, string>(_ttl, null));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TtlCache<string, string>(TimeSpan.Zero, _maxAge, new TestClock()));
+		Assert.ThrowsExactly<ArgumentNullException>(() => new TtlCache<string, string>(_ttl, _maxAge, null));
 	}
 
 	[TestMethod]
@@ -144,7 +217,7 @@ public class TtlCacheTests : BaseTestClass
 
 		// A site whose cache lifetime is a setting reads it as it stores, so a change to the setting applies
 		// to what is stored next rather than at the next restart.
-		cache.Set("A", "one", TimeSpan.FromSeconds(30));
+		cache.Set("A", "one", TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
 		cache.Set("B", "two");
 
 		time.Advance(TimeSpan.FromSeconds(20));
@@ -173,16 +246,16 @@ public class TtlCacheTests : BaseTestClass
 			return Answer(key, ct);
 		}
 
-		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30), CancellationToken));
 
 		time.Advance(TimeSpan.FromSeconds(20));
 
-		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30), CancellationToken));
 		AreEqual(1, asked);
 
 		time.Advance(TimeSpan.FromSeconds(11));
 
-		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), CancellationToken));
+		AreEqual("answer:A", await cache.GetAsync("A", Count, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30), CancellationToken));
 		AreEqual(2, asked);
 	}
 
@@ -191,7 +264,7 @@ public class TtlCacheTests : BaseTestClass
 	{
 		var cache = Create(new TestClock());
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => cache.Set("A", "one", TimeSpan.Zero));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => cache.Set("A", "one", TimeSpan.Zero, _maxAge));
 	}
 
 	// --- dropping and reading by what is held, not only by key ---
@@ -222,7 +295,7 @@ public class TtlCacheTests : BaseTestClass
 		var cache = Create(time);
 
 		cache.Set("A", "one");
-		cache.Set("B", "two", TimeSpan.FromSeconds(30));
+		cache.Set("B", "two", TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
 
 		CollectionAssert.AreEquivalent(new[] { "one", "two" }, cache.Values.ToArray());
 
