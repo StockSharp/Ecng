@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Data;
+﻿namespace Ecng.Tests.Data;
 
 using System.Data;
 using System.Data.Common;
@@ -820,6 +820,12 @@ public class AdoIntegrationTests : BaseTestClass
 			=> inner.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
 		public Task<IReadOnlyList<DbIndexInfo>> ReadDbIndexesAsync(DbConnection connection, string tableSchema = null, CancellationToken cancellationToken = default)
 			=> inner.ReadDbIndexesAsync(connection, tableSchema, cancellationToken);
+
+		public Task<IReadOnlyList<DbTableCompressionInfo>> ReadDbCompressionsAsync(DbConnection connection, string tableSchema = null, CancellationToken cancellationToken = default)
+			=> inner.ReadDbCompressionsAsync(connection, tableSchema, cancellationToken);
+
+		public void AppendSetCompression(StringBuilder builder, string tableName, DataCompressions compression)
+			=> inner.AppendSetCompression(builder, tableName, compression);
 	}
 
 	#endregion

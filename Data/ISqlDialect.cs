@@ -1,4 +1,4 @@
-namespace Ecng.Data;
+﻿namespace Ecng.Data;
 
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -379,4 +379,25 @@ public interface ISqlDialect
 		DbConnection connection,
 		string tableSchema = null,
 		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Reads how each table is packed on disk. Databases without the concept report every table as
+	/// <see cref="DataCompressions.None"/>, which matches an entity that declares nothing.
+	/// </summary>
+	/// <param name="connection">An open database connection.</param>
+	/// <param name="tableSchema">Schema name; dialect default when <see langword="null"/>.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>One row per table.</returns>
+	Task<IReadOnlyList<DbTableCompressionInfo>> ReadDbCompressionsAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Writes the statement that repacks a table.
+	/// </summary>
+	/// <param name="builder">Where the statement is written.</param>
+	/// <param name="tableName">Table to repack.</param>
+	/// <param name="compression">The packing to apply.</param>
+	void AppendSetCompression(StringBuilder builder, string tableName, DataCompressions compression);
 }

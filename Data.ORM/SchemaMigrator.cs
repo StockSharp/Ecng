@@ -1,4 +1,4 @@
-namespace Ecng.Serialization;
+﻿namespace Ecng.Serialization;
 
 using System.Text;
 
@@ -59,6 +59,13 @@ public enum SchemaDiffKind
 	/// don't surface as false positives.
 	/// </summary>
 	ExtraIndex,
+
+	/// <summary>
+	/// The table is packed on disk differently from what the entity declares with
+	/// <c>[DataCompression]</c>. Repacking loses nothing, but it rewrites every index of the
+	/// table, so it is emitted as a statement to run rather than applied quietly.
+	/// </summary>
+	CompressionMismatch,
 
 	/// <summary>
 	/// Table exists in the database but no entity maps to it. Surfaced only when the
@@ -169,7 +176,8 @@ public static class SchemaMigrator
 		IReadOnlyList<DbForeignKeyInfo> dbForeignKeys = null,
 		IReadOnlyList<DbIndexInfo> dbIndexes = null,
 		bool detectExtraTables = false,
-		bool checkNaming = false)
+		bool checkNaming = false,
+		IReadOnlyList<DbTableCompressionInfo> dbCompressions = null)
 	{
 		var diffs = new List<SchemaDiff>();
 
@@ -281,10 +289,44 @@ public static class SchemaMigrator
 		if (dbIndexes is not null)
 			AppendIndexDiffs(entities, dbIndexes, dbTables, diffs);
 
+		if (dbCompressions is not null)
+			AppendCompressionDiffs(entities, dbCompressions, dbTables, diffs);
+
 		if (checkNaming)
 			AppendNamingDiffs(entities, dbForeignKeys, dbIndexes, filtered, diffs);
 
 		return diffs;
+	}
+
+	/// <summary>
+	/// Compares the packing each entity declares with the packing its table actually uses. A table the
+	/// database does not report is one this dialect cannot pack, and is passed over.
+	/// </summary>
+	private static void AppendCompressionDiffs(
+		IEnumerable<Schema> entities,
+		IReadOnlyList<DbTableCompressionInfo> dbCompressions,
+		IDictionary<string, Dictionary<string, DbColumnInfo>> dbTables,
+		List<SchemaDiff> diffs)
+	{
+		var actual = new Dictionary<string, DataCompressions>(StringComparer.InvariantCultureIgnoreCase);
+
+		foreach (var info in dbCompressions)
+			actual[info.TableName] = info.Compression;
+
+		foreach (var schema in entities)
+		{
+			var table = schema.Name;
+
+			// A table the migration is about to create is packed by its own CREATE, and one this
+			// database has no opinion about cannot be repacked.
+			if (!dbTables.ContainsKey(table) || !actual.TryGetValue(table, out var current))
+				continue;
+
+			var declared = schema.EntityType.GetAttribute<DataCompressionAttribute>()?.Compression ?? DataCompressions.None;
+
+			if (declared != current)
+				diffs.Add(new(table, string.Empty, SchemaDiffKind.CompressionMismatch, declared.To<string>(), current.To<string>()));
+		}
 	}
 
 	/// <summary>
@@ -312,8 +354,9 @@ public static class SchemaMigrator
 		var dbColumns = await dialect.ReadDbSchemaAsync(connection, tableSchema, cancellationToken);
 		var dbForeignKeys = await dialect.ReadDbForeignKeysAsync(connection, tableSchema, cancellationToken);
 		var dbIndexes = await dialect.ReadDbIndexesAsync(connection, tableSchema, cancellationToken);
+		var dbCompressions = await dialect.ReadDbCompressionsAsync(connection, tableSchema, cancellationToken);
 
-		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes, detectExtraTables, checkNaming);
+		return Compare(snapshot, dbColumns, dialect, skipComputed, dbForeignKeys, dbIndexes, detectExtraTables, checkNaming, dbCompressions);
 	}
 
 	private static void AppendForeignKeyDiffs(
@@ -1206,6 +1249,13 @@ public static class SchemaMigrator
 					EmitIndexByName(dialect, sb, schema, diff.TableName, diff.ColumnName);
 					break;
 				}
+
+				case SchemaDiffKind.CompressionMismatch:
+					// Rewrites every index of the table, so it goes in as its own statement and the
+					// person running the script decides when.
+					dialect.AppendSetCompression(sb, diff.TableName, diff.Expected.To<DataCompressions>());
+					sb.AppendLine(";");
+					break;
 
 				case SchemaDiffKind.ExtraIndex:
 					// Extra indexes are never auto-dropped — emit the DROP INDEX commented

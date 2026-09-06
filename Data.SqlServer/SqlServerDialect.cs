@@ -1,4 +1,4 @@
-namespace Ecng.Data;
+﻿namespace Ecng.Data;
 
 using System;
 using System.Collections.Generic;
@@ -367,6 +367,82 @@ public class SqlServerDialect : SqlDialectBase
 		}
 
 		return result;
+	}
+
+	/// <inheritdoc />
+	public override async Task<IReadOnlyList<DbTableCompressionInfo>> ReadDbCompressionsAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+	{
+		tableSchema ??= "dbo";
+
+		// Compression is a property of each partition of each index, not of the table. A table repacked
+		// as a whole reports the same setting everywhere, so the clustered index (or the heap) speaks for
+		// it, and index_id <= 1 is exactly that one.
+		//
+		// SELECT OBJECT_NAME(p.object_id), p.data_compression_desc
+		// FROM sys.partitions p
+		// JOIN sys.tables t ON t.object_id = p.object_id
+		// WHERE SCHEMA_NAME(t.schema_id) = @schema AND p.index_id <= 1
+		var sql = new Query()
+			.Select()
+				.Raw("OBJECT_NAME(p.object_id)").Comma()
+				.Column("p", "data_compression_desc").NewLine()
+			.From().Raw("sys.partitions p").NewLine()
+			.InnerJoin().Raw("sys.tables t").On()
+				.Column("t", "object_id").Equal().Column("p", "object_id").NewLine()
+			.Where().NewLine()
+				.Raw("SCHEMA_NAME(t.schema_id) ").Equal().Param("schema")
+				.And().Column("p", "index_id").LessOrEqual().Raw("1")
+			.Render(this);
+
+		using var cmd = connection.CreateCommand();
+		cmd.CommandText = sql;
+
+		var param = cmd.CreateParameter();
+		param.ParameterName = "@schema";
+		param.Value = tableSchema;
+		cmd.Parameters.Add(param);
+
+		var result = new List<DbTableCompressionInfo>();
+
+		using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+		while (await reader.ReadAsync(cancellationToken))
+		{
+			result.Add(new DbTableCompressionInfo(
+				TableName: reader.GetString(0),
+				Compression: reader.GetString(1).ToUpperInvariant() switch
+				{
+					"ROW" => DataCompressions.Row,
+					"PAGE" => DataCompressions.Page,
+					_ => DataCompressions.None,
+				}));
+		}
+
+		return result;
+	}
+
+	/// <inheritdoc />
+	/// <remarks>
+	/// Repacking rewrites every index of the table, so it is written as one statement over all of them
+	/// rather than a statement per index that would leave the table half packed if one failed.
+	/// </remarks>
+	public override void AppendSetCompression(StringBuilder builder, string tableName, DataCompressions compression)
+	{
+		if (builder is null)
+			throw new ArgumentNullException(nameof(builder));
+
+		var setting = compression switch
+		{
+			DataCompressions.None => "NONE",
+			DataCompressions.Row => "ROW",
+			DataCompressions.Page => "PAGE",
+			_ => throw new ArgumentOutOfRangeException(nameof(compression), compression, null),
+		};
+
+		builder.Append($"ALTER INDEX ALL ON {QuoteIdentifier(tableName)} REBUILD WITH (DATA_COMPRESSION = {setting})");
 	}
 
 	/// <inheritdoc />

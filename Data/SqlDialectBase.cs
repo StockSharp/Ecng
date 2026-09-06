@@ -1,4 +1,4 @@
-namespace Ecng.Data;
+﻿namespace Ecng.Data;
 
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -358,5 +358,20 @@ public abstract class SqlDialectBase : ISqlDialect
 		DbConnection connection,
 		string tableSchema = null,
 		CancellationToken cancellationToken = default)
+		=> throw new NotSupportedException();
+
+	/// <inheritdoc />
+	/// <remarks>
+	/// A database without the concept has nothing to report, and an empty list reads as "everything is
+	/// unpacked" - which is what an entity declaring no compression expects.
+	/// </remarks>
+	public virtual Task<IReadOnlyList<DbTableCompressionInfo>> ReadDbCompressionsAsync(
+		DbConnection connection,
+		string tableSchema = null,
+		CancellationToken cancellationToken = default)
+		=> ((IReadOnlyList<DbTableCompressionInfo>)[]).FromResult();
+
+	/// <inheritdoc />
+	public virtual void AppendSetCompression(StringBuilder builder, string tableName, DataCompressions compression)
 		=> throw new NotSupportedException();
 }
