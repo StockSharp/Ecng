@@ -138,6 +138,42 @@ public static class EntityPropertyHelper
 		return type;
 	}
 
+	// A property a type implements explicitly for an interface is absent from the type's own properties,
+	// while GetPropType finds it on the interface the caller named. Reading it back therefore starts from
+	// the declared type when the caller supplied one, and only then falls back to the instance.
+	private static PropertyInfo FindProperty(Type declaredType, Type actualType, string name)
+	{
+		var info = declaredType?.GetProperty(name);
+
+		if (info is not null)
+			return info;
+
+		info = actualType.GetProperty(name);
+
+		if (info is not null)
+			return info;
+
+		PropertyInfo found = null;
+
+		foreach (var iface in actualType.GetInterfaces())
+		{
+			var candidate = iface.GetProperty(name);
+
+			if (candidate is null)
+				continue;
+
+			// Two interfaces can give one name two meanings -- ExecutionMessage carries both
+			// ITickTradeMessage.Price and IOrderMessage.Price -- and nothing here can choose between
+			// them, so an ambiguous name is left unread rather than answered by whichever came first.
+			if (found is not null)
+				return null;
+
+			found = candidate;
+		}
+
+		return found;
+	}
+
 	/// <summary>
 	/// Gets the value of a nested property from an object.
 	/// </summary>
@@ -147,6 +183,18 @@ public static class EntityPropertyHelper
 	/// <param name="vars">An optional dictionary of variables for indexing.</param>
 	/// <returns>The value of the property if found; otherwise, null.</returns>
 	public static object GetPropValue(this object entity, string name, Func<object, string, object> getVirtualProp = null, IDictionary<string, object> vars = null)
+		=> entity.GetPropValue(null, name, getVirtualProp, vars);
+
+	/// <summary>
+	/// Gets the value of a nested property from an object, reading it by the type the caller declares it under.
+	/// </summary>
+	/// <param name="entity">The object to retrieve the value from.</param>
+	/// <param name="declaredType">The type the name was resolved against, or <see langword="null"/> to resolve it against the object itself. Naming the interface is what makes a member implemented explicitly for it readable, and what settles a name two interfaces both declare.</param>
+	/// <param name="name">The dot-separated name of the property.</param>
+	/// <param name="getVirtualProp">An optional function to retrieve the value of a virtual property.</param>
+	/// <param name="vars">An optional dictionary of variables for indexing.</param>
+	/// <returns>The value of the property if found; otherwise, null.</returns>
+	public static object GetPropValue(this object entity, Type declaredType, string name, Func<object, string, object> getVirtualProp = null, IDictionary<string, object> vars = null)
 	{
 		var value = entity;
 
@@ -165,7 +213,9 @@ public static class EntityPropertyHelper
 			if (index is not null)
 				part = part.Substring(0, brIdx);
 
-			var info = value.GetType().GetProperty(part);
+			var info = FindProperty(declaredType, value.GetType(), part);
+
+			declaredType = info?.PropertyType;
 
 			if (info is null)
 			{

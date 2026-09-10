@@ -16,6 +16,37 @@ public class EntityPropertyTests
 		public int Prop3 { get; set; }
 	}
 
+	private interface IExplicit
+	{
+		int Prop4 { get; }
+		TestEntity2 Prop5 { get; }
+	}
+
+	private interface IOther
+	{
+		int Prop4 { get; }
+	}
+
+	private class ExplicitEntity : IExplicit
+	{
+		public int Renamed { get; set; }
+		public TestEntity2 Nested { get; set; }
+
+		int IExplicit.Prop4 => Renamed;
+		TestEntity2 IExplicit.Prop5 => Nested;
+	}
+
+	private class AmbiguousEntity : IExplicit, IOther
+	{
+		public int Mine { get; set; }
+		public int Theirs { get; set; }
+		public TestEntity2 Nested { get; set; }
+
+		int IExplicit.Prop4 => Mine;
+		TestEntity2 IExplicit.Prop5 => Nested;
+		int IOther.Prop4 => Theirs;
+	}
+
 	[TestMethod]
 	public void Simple()
 	{
@@ -33,6 +64,39 @@ public class EntityPropertyTests
 
 		typeof(TestEntity).GetPropType("Prop2.Prop3").AssertEqual(typeof(int));
 		typeof(TestEntity).GetPropType("Prop3.Prop4").AssertNull();
+	}
+
+	[TestMethod]
+	public void ExplicitInterface()
+	{
+		// The type is asked of the interface and the value of the instance behind it. An explicitly
+		// implemented member is absent from the instance type, so without the interfaces being searched
+		// the two answers disagree: a caller is told the property exists and then reads null from it.
+		var entity = new ExplicitEntity { Renamed = 11, Nested = new() { Prop3 = 123 } };
+
+		typeof(IExplicit).GetPropType(nameof(IExplicit.Prop4)).AssertEqual(typeof(int));
+		((object)entity).GetPropValue(nameof(IExplicit.Prop4)).AssertEqual(11);
+
+		typeof(IExplicit).GetPropType("Prop5.Prop3").AssertEqual(typeof(int));
+		((object)entity).GetPropValue("Prop5.Prop3").AssertEqual(123);
+
+		((object)entity).GetPropValue("Prop6").AssertNull();
+	}
+
+	[TestMethod]
+	public void ExplicitInterfaceAmbiguous()
+	{
+		// Two interfaces give the same name two meanings. Read against the object alone there is nothing
+		// to choose by, so nothing is read; named against the interface the caller asked the type of, the
+		// answer is the one that interface declares.
+		var entity = new AmbiguousEntity { Mine = 11, Theirs = 22, Nested = new() { Prop3 = 123 } };
+
+		((object)entity).GetPropValue(nameof(IExplicit.Prop4)).AssertNull();
+
+		((object)entity).GetPropValue(typeof(IExplicit), nameof(IExplicit.Prop4)).AssertEqual(11);
+		((object)entity).GetPropValue(typeof(IOther), nameof(IOther.Prop4)).AssertEqual(22);
+
+		((object)entity).GetPropValue(typeof(IExplicit), "Prop5.Prop3").AssertEqual(123);
 	}
 
 	[TestMethod]
