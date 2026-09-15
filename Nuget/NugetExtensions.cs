@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Nuget;
 
+using System.Net;
 using System.Reflection;
+using System.Text.Json;
 
 using Ecng.Reflection;
 
@@ -191,6 +193,117 @@ public static class NugetExtensions
 			baseUrl = (str + "/").To<Uri>();
 
 		return baseUrl;
+	}
+
+	/// <summary>
+	/// Get the search URL for the repository.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The search URL for the repository.</returns>
+	public static async Task<Uri> GetSearchUrl(this SourceRepository repo, CancellationToken cancellationToken)
+	{
+		if (repo is null)
+			throw new ArgumentNullException(nameof(repo));
+
+		var serviceIndex = await repo.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken).NoWait()
+			?? throw new InvalidOperationException($"ServiceIndexResourceV3 for {repo.PackageSource.Name} is null.");
+
+		return serviceIndex.GetServiceEntryUri(ServiceTypes.SearchQueryService)
+			?? throw new InvalidOperationException($"No SearchQueryService endpoint for {repo.PackageSource.Name}.");
+	}
+
+	/// <summary>
+	/// The versions listed in a flat container index, oldest first. An entry that cannot be read is skipped
+	/// rather than throwing the rest of the list away.
+	/// </summary>
+	/// <param name="json">The index.</param>
+	/// <returns>The versions.</returns>
+	public static NuGetVersion[] ParseFeedVersions(string json)
+	{
+		using var doc = JsonDocument.Parse(json);
+
+		if (!doc.RootElement.TryGetProperty("versions", out var versions) || versions.ValueKind != JsonValueKind.Array)
+			return [];
+
+		return [.. versions
+			.EnumerateArray()
+			.Select(v => NuGetVersion.TryParse(v.GetString(), out var parsed) ? parsed : null)
+			.Where(v => v is not null)
+			.OrderBy(v => v)];
+	}
+
+	/// <summary>
+	/// The versions a feed holds for a package right now, oldest first.
+	/// </summary>
+	/// <remarks>
+	/// Read from the feed's own index rather than through <see cref="FindPackageByIdResource"/>: that resource
+	/// keeps the list it read for as long as it lives, so a caller that outlives a publish -- a long running
+	/// service -- would go on answering for the versions that existed when it started.
+	/// </remarks>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="http"><see cref="HttpClient"/></param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The versions, or empty when the feed does not carry the package.</returns>
+	public static async Task<NuGetVersion[]> GetFeedVersionsAsync(this SourceRepository repo, HttpClient http, string packageId, CancellationToken cancellationToken)
+	{
+		if (repo is null)			throw new ArgumentNullException(nameof(repo));
+		if (http is null)			throw new ArgumentNullException(nameof(http));
+		if (packageId.IsEmpty())	throw new ArgumentNullException(nameof(packageId));
+
+		var baseUrl = await repo.GetBaseUrl(cancellationToken).NoWait();
+
+		try
+		{
+			return ParseFeedVersions(await http.GetStringAsync(new Uri(baseUrl, $"{packageId}/index.json".ToLowerInvariant()), cancellationToken).NoWait());
+		}
+		catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+		{
+			return [];
+		}
+	}
+
+	/// <summary>
+	/// Everything a feed answers to a search query, page by page.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="query">The query, in the feed's own syntax (for example <c>author:someone</c>).</param>
+	/// <param name="allowPreview">Allow preview versions.</param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The packages found, each carrying its latest version and download count.</returns>
+	public static async Task<IPackageSearchMetadata[]> SearchAllAsync(this SourceRepository repo, string query, bool allowPreview, ILogger logger, CancellationToken cancellationToken)
+	{
+		if (repo is null)		throw new ArgumentNullException(nameof(repo));
+		if (query is null)		throw new ArgumentNullException(nameof(query));
+		if (logger is null)		throw new ArgumentNullException(nameof(logger));
+
+		const int pageSize = 1000;
+
+		var search = await repo.GetResourceAsync<PackageSearchResource>(cancellationToken).NoWait()
+			?? throw new InvalidOperationException($"PackageSearchResource for {repo.PackageSource.Name} is null.");
+
+		var filter = new SearchFilter(allowPreview);
+		var found = new Dictionary<string, IPackageSearchMetadata>(StringComparer.InvariantCultureIgnoreCase);
+
+		for (var page = 0; ; page++)
+		{
+			var hasNew = false;
+
+			foreach (var result in await search.SearchAsync(query, filter, page * pageSize, pageSize, logger, cancellationToken).NoWait())
+			{
+				if (found.TryAdd(result.Identity.Id, result))
+					hasNew = true;
+			}
+
+			// A page that adds nothing new is the end of the list: a feed that keeps answering the same
+			// packages would otherwise be paged forever.
+			if (!hasNew)
+				break;
+		}
+
+		return [.. found.Values];
 	}
 
 	/// <summary>

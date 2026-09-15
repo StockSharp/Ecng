@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Nuget;
+﻿namespace Ecng.Tests.Nuget;
 
 using System.Xml.Linq;
 
@@ -409,5 +409,70 @@ public class NugetExtensionsTests : BaseTestClass
 		// replaced proxy should return null (no proxy configured in dummy settings)
 		Assert.IsNull(instance.GetUserConfiguredProxy());
 		Assert.IsNull(instance.GetProxy(new Uri("https://api.nuget.org/v3/index.json")));
+	}
+
+	[TestMethod]
+	public void ParseFeedVersions_SkipsWhatItCannotRead()
+	{
+		var versions = NugetExtensions.ParseFeedVersions("""{"versions":["1.0.0","not-a-version","1.10.0","1.9.0"]}""");
+
+		versions.Length.AssertEqual(3);
+		versions[0].ToNormalizedString().AssertEqual("1.0.0");
+		versions[1].ToNormalizedString().AssertEqual("1.9.0");
+		versions[2].ToNormalizedString().AssertEqual("1.10.0");
+	}
+
+	[TestMethod]
+	public void ParseFeedVersions_WithoutVersions_ReturnsEmpty()
+	{
+		NugetExtensions.ParseFeedVersions("{}").Length.AssertEqual(0);
+		NugetExtensions.ParseFeedVersions("""{"versions":{}}""").Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task GetFeedVersionsAsync_RealPackage_ReturnsOrderedVersions()
+	{
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+
+		using var http = new HttpClient();
+
+		var versions = await repo.GetFeedVersionsAsync(http, "Ecng.Common", CancellationToken);
+
+		versions.AssertNotNull();
+		(versions.Length > 0).AssertTrue($"versions.Length={versions.Length} should be >0");
+
+		for (var i = 1; i < versions.Length; i++)
+			(versions[i] >= versions[i - 1]).AssertTrue();
+	}
+
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task GetFeedVersionsAsync_UnknownPackage_ReturnsEmpty()
+	{
+		// A feed that does not carry the package answers 404, and the caller reads that as "not published
+		// here" -- not as a failure.
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+
+		using var http = new HttpClient();
+
+		(await repo.GetFeedVersionsAsync(http, "Ecng.NoSuchPackage.Test", CancellationToken)).Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task SearchAllAsync_RealPackage_CarriesTheDownloadCount()
+	{
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+
+		var found = await repo.SearchAllAsync("packageid:Ecng.Common", allowPreview: false, NullLogger.Instance, CancellationToken);
+
+		found.AssertNotNull();
+		(found.Length > 0).AssertTrue($"found.Length={found.Length} should be >0");
+
+		var package = found.First(p => p.Identity.Id.EqualsIgnoreCase("Ecng.Common"));
+
+		package.Identity.Version.AssertNotNull();
+		(package.DownloadCount > 0).AssertTrue($"DownloadCount={package.DownloadCount} should be >0");
 	}
 }
