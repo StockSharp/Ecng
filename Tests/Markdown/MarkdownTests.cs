@@ -97,6 +97,23 @@ public class MarkdownTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[DataRow(null)]
+	[DataRow("")]
+	[DataRow("   ")]
+	public void Parse_TakesNothingTheWayTheRestOfTheClassDoes(string text)
+	{
+		// Clean, ActivateRule, CollectInlineRoleIds and EnsureTableSpacing all return on exactly this
+		// condition, so a caller that passes whatever it was given reaches Parse expecting the same and got
+		// a NullReferenceException out of Markdig instead. Nothing to parse is an empty document.
+		var parsed = _formatter.Parse(text, false);
+
+		IsNotNull(parsed);
+		IsNotNull(parsed.Document);
+		IsNotNull(parsed.Pipeline);
+		AreEqual(string.Empty, _formatter.Render(parsed, new()));
+	}
+
+	[TestMethod]
 	public void Bold()
 	{
 		var html = ToHtml("**bold**");

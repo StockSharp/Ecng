@@ -116,6 +116,16 @@ public class Md2HtmlFormatter
 	{
 		var pipeline = GetPipeline(allowHtml);
 
+		// Nothing to parse is an empty document, not a fault, and there is nothing below to run over it:
+		// no node to collect a reference from and no text for the raw scans to match. Said here because
+		// every other entry point of this class already reads it that way -- Clean, ActivateRule,
+		// CollectInlineRoleIds and EnsureTableSpacing all return on the same condition -- so a caller that
+		// passes on whatever it was given arrives expecting the same and would instead get a
+		// NullReferenceException out of Markdig. The pipeline still travels with it, because a renderer
+		// asks the result which pipeline produced it rather than choosing one itself.
+		if (text.IsEmptyOrWhiteSpace())
+			return new(new(), [], [], [], [], [], [], pipeline);
+
 		// Normalize line endings up front so the output is deterministic regardless of the source's
 		// CRLF/LF. Markdig normalizes the document itself, but raw passthroughs (e.g. the verbatim
 		// @role block content) would otherwise leak the original \r into the rendered HTML.
