@@ -15,28 +15,44 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 /// <summary>
-/// Verifies <see cref="SyncQueryAnalyzer"/> (ECNGORM001) flags a synchronous LINQ terminal on a query that
-/// comes from the ORM, and stays silent on everything else.
+/// Verifies <see cref="SyncQueryAnalyzer"/> flags the three synchronous reads of a query that comes from the
+/// ORM - a LINQ terminal (ECNGORM001), a <c>foreach</c> (ECNGORM002) and <c>ToAsyncEnumerable</c>
+/// (ECNGORM003) - and stays silent on everything else.
 ///
 /// Two shapes decide whether it is any use in practice. Consumers derive their own list type and override
 /// <c>ToQueryable</c>, so the method the call site names belongs to their assembly, not to the ORM - looking
 /// only at the declaring assembly makes the rule silent across a whole codebase. And a query reached through
 /// <c>?.</c> puts a conditional access between the terminal and its source, which the walk has to step over
 /// rather than give up on.
+///
+/// The silences matter as much: <c>await foreach</c> over <c>ToAsync</c> reaches the analyzer as the same
+/// loop operation as a plain <c>foreach</c>, and a loop over an already-read array sits on top of a source
+/// chain that still leads back to the ORM.
 /// </summary>
 [TestClass]
 public class SyncQueryAnalyzerTests : BaseTestClass
 {
 	private const string _diagId = "ECNGORM001";
+	private const string _foreachId = "ECNGORM002";
+	private const string _toAsyncEnumerableId = "ECNGORM003";
 
 	// Stands in for the ORM. What matters is the assembly name, which is what the analyzer recognises.
 	private const string _ormSource = """
+		using System.Collections.Generic;
 		using System.Linq;
+		using System.Threading;
+		using System.Threading.Tasks;
 
 		namespace Ecng.Serialization
 		{
 			public class DefaultQueryable<T>
 			{
+			}
+
+			public static class QueryableAsyncExtensions
+			{
+				public static IAsyncEnumerable<T> ToAsync<T>(this IQueryable<T> q) => null;
+				public static ValueTask<T[]> ToArrayAsyncEx<T>(this IQueryable<T> q, CancellationToken token) => default;
 			}
 		}
 
@@ -57,9 +73,14 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 			{
 				typeof(object),
 				typeof(IEnumerable<>),
+				typeof(IAsyncEnumerable<>),
 				typeof(Enumerable),
 				typeof(IQueryable),
 				typeof(Queryable),
+				typeof(AsyncEnumerable),
+				typeof(CancellationToken),
+				typeof(ValueTask<>),
+				typeof(TaskAsyncEnumerableExtensions),
 				typeof(System.Linq.Expressions.Expression),
 			}
 			.Select(t => t.Assembly)
@@ -116,11 +137,18 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 
 		var diags = await withAnalyzers.GetAnalyzerDiagnosticsAsync(CancellationToken);
 
-		return [.. diags.Where(d => d.Id == _diagId)];
+		// Every rule of this analyzer is kept, not just the one a test is about: a probe that expects
+		// silence has to fail when any of the three starts firing on it.
+		return [.. diags.Where(d => d.Id.StartsWith("ECNGORM", StringComparison.Ordinal))];
 	}
 
 	private const string _consumer = """
+		using System.Collections.Generic;
 		using System.Linq;
+		using System.Threading;
+		using System.Threading.Tasks;
+
+		using Ecng.Serialization;
 
 		public class Item
 		{
@@ -207,6 +235,120 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 		var diags = await ProbeAsync("	public object M(ItemList list) => list.ToQueryable();");
 
 		AreEqual(0, diags.Length, "reading the query without a terminal was flagged");
+	}
+
+	/// <summary>A plain foreach calls the synchronous GetEnumerator, which the ORM refuses at runtime.</summary>
+	[TestMethod]
+	public async Task AForeachOverAnOrmQueryIsFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public void M(ItemList list)
+				{
+					foreach (var i in list.ToQueryable().Where(x => !x.Deleted))
+					{
+					}
+				}
+			""");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_foreachId, diags[0].Id);
+	}
+
+	/// <summary>An await foreach over ToAsync is the recommended form and must stay silent.</summary>
+	[TestMethod]
+	public async Task AnAwaitForeachOverToAsyncIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public async Task M(ItemList list)
+				{
+					await foreach (var i in list.ToQueryable().ToAsync())
+					{
+					}
+				}
+			""");
+
+		AreEqual(0, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+	}
+
+	[TestMethod]
+	public async Task AnAwaitForeachOverToAsyncWithCancellationIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public async Task M(ItemList list, CancellationToken token)
+				{
+					await foreach (var i in list.ToQueryable().ToAsync().WithCancellation(token))
+					{
+					}
+				}
+			""");
+
+		AreEqual(0, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+	}
+
+	/// <summary>The other recommended form: the query is already an array by the time the loop runs.</summary>
+	[TestMethod]
+	public async Task AForeachOverAMaterializedQueryIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public async Task M(ItemList list, CancellationToken token)
+				{
+					foreach (var i in await list.ToQueryable().ToArrayAsyncEx(token))
+					{
+					}
+				}
+			""");
+
+		AreEqual(0, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+	}
+
+	/// <summary>The sync terminal is the problem here; the loop walks an array and must not add a second report.</summary>
+	[TestMethod]
+	public async Task AForeachOverASyncTerminalIsReportedOnceOnTheTerminal()
+	{
+		var diags = await ProbeAsync("""
+				public void M(ItemList list)
+				{
+					foreach (var i in list.ToQueryable().ToArray())
+					{
+					}
+				}
+			""");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_diagId, diags[0].Id);
+	}
+
+	[TestMethod]
+	public async Task AForeachOverAPlainListIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public void M(List<Item> items)
+				{
+					foreach (var i in items)
+					{
+					}
+				}
+			""");
+
+		AreEqual(0, diags.Length, "a foreach over an ordinary list was flagged");
+	}
+
+	/// <summary>ToAsyncEnumerable wraps the synchronous enumerator, so it only defers the same failure.</summary>
+	[TestMethod]
+	public async Task ToAsyncEnumerableOverAnOrmQueryIsFlagged()
+	{
+		var diags = await ProbeAsync("	public object M(ItemList list) => list.ToQueryable().Where(x => !x.Deleted).ToAsyncEnumerable();");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_toAsyncEnumerableId, diags[0].Id);
+	}
+
+	[TestMethod]
+	public async Task ToAsyncEnumerableOverAnArrayIsNotFlagged()
+	{
+		var diags = await ProbeAsync("	public object M(Item[] items) => items.ToAsyncEnumerable();");
+
+		AreEqual(0, diags.Length, "ToAsyncEnumerable over an ordinary array was flagged");
 	}
 }
 

@@ -10,12 +10,18 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
 /// <summary>
-/// Reports synchronous LINQ terminals (<c>ToList</c>/<c>First</c>/<c>Any</c>/<c>Count</c>/…)
-/// applied to an Ecng.Data.ORM query. Such terminals route through
-/// <c>IQueryProvider.Execute</c> → <c>AsyncHelper.Run</c>, which blocks a thread-pool
-/// thread for the entire database round-trip; under load that starves the pool and makes
-/// every request time out (only a restart clears it). The async terminals
-/// (<c>ToArrayAsyncEx</c>/<c>FirstAsyncEx</c>/<c>CountAsyncEx</c>/…) must be used instead.
+/// Reports the three ways of reading an Ecng.Data.ORM query synchronously:
+/// <list type="bullet">
+/// <item>ECNGORM001 - a synchronous LINQ terminal (<c>ToList</c>/<c>First</c>/<c>Any</c>/<c>Count</c>/…),
+/// which routes through <c>IQueryProvider.Execute</c> → <c>AsyncHelper.Run</c> and blocks a thread-pool
+/// thread for the entire database round-trip; under load that starves the pool and makes every request
+/// time out (only a restart clears it). The async terminals
+/// (<c>ToArrayAsyncEx</c>/<c>FirstAsyncEx</c>/<c>CountAsyncEx</c>/…) must be used instead.</item>
+/// <item>ECNGORM002 - a <c>foreach</c> over the query, which calls the synchronous <c>GetEnumerator</c>
+/// the ORM refuses outright with <c>NotSupportedException</c>.</item>
+/// <item>ECNGORM003 - <c>ToAsyncEnumerable</c> over the query, which wraps that same synchronous
+/// enumerator and so only defers the failure to the first <c>MoveNextAsync</c>.</item>
+/// </list>
 /// </summary>
 // The Roslyn analyzer surface (DiagnosticAnalyzer base, ImmutableArray, AnalysisContext)
 // is not CLS-compliant, and the assembly is [CLSCompliant(true)]; an analyzer must stay
@@ -35,6 +41,24 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		isEnabledByDefault: true,
 		description: "Synchronous LINQ terminals on a Database-backed IQueryable dispatch to IQueryContext.ExecuteEnum/ExecuteResult, which call AsyncHelper.Run and block the calling thread for the entire query. Under parallel load this exhausts the thread pool.");
 
+	internal static readonly DiagnosticDescriptor ForEachRule = new(
+		id: "ECNGORM002",
+		title: "Synchronous foreach over a database query",
+		messageFormat: "a foreach walks a database query with its synchronous enumerator, which the ORM refuses at runtime - read the query with ToArrayAsyncEx first, or walk it with 'await foreach' over ToAsync",
+		category: "Ecng.Data.ORM",
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true,
+		description: "A foreach over a Database-backed IQueryable calls the synchronous GetEnumerator, which DefaultQueryable refuses with NotSupportedException. The query has to be read with ToArrayAsyncEx or walked with await foreach over ToAsync.");
+
+	internal static readonly DiagnosticDescriptor AsyncEnumerableRule = new(
+		id: "ECNGORM003",
+		title: "ToAsyncEnumerable over a database query",
+		messageFormat: "'{0}' wraps the synchronous enumerator of a database query, so the failure is only deferred to the first MoveNextAsync - use ToAsync, which hands back the query's own async enumerator",
+		category: "Ecng.Data.ORM",
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true,
+		description: "System.Linq.AsyncEnumerable.ToAsyncEnumerable adapts a synchronous IEnumerable, so over a Database-backed IQueryable it still reaches the synchronous GetEnumerator the ORM refuses - it only makes the code look asynchronous. QueryableAsyncExtensions.ToAsync returns the query itself, which implements IAsyncEnumerable.");
+
 	// LINQ terminals (System.Linq.Enumerable/Queryable) that force enumeration/execution
 	// of the query synchronously.
 	private static readonly HashSet<string> _syncTerminals = new()
@@ -46,13 +70,14 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		"ElementAt", "ElementAtOrDefault",
 	};
 
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule, ForEachRule, AsyncEnumerableRule);
 
 	public override void Initialize(AnalysisContext context)
 	{
 		context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 		context.EnableConcurrentExecution();
 		context.RegisterOperationAction(AnalyzeInvocation, OperationKind.Invocation);
+		context.RegisterOperationAction(AnalyzeLoop, OperationKind.Loop);
 	}
 
 	private static void AnalyzeInvocation(OperationAnalysisContext ctx)
@@ -60,14 +85,13 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		var op = (IInvocationOperation)ctx.Operation;
 		var method = op.TargetMethod;
 
-		var containing = method.ContainingType;
+		DiagnosticDescriptor rule;
 
-		if (containing is null ||
-			(containing.Name != "Enumerable" && containing.Name != "Queryable") ||
-			containing.ContainingNamespace?.ToDisplayString() != "System.Linq")
-			return;
-
-		if (!_syncTerminals.Contains(method.Name))
+		if (IsSyncTerminal(method))
+			rule = Rule;
+		else if (IsToAsyncEnumerable(method))
+			rule = AsyncEnumerableRule;
+		else
 			return;
 
 		// The source is the receiver — for an extension method it is the first argument.
@@ -79,7 +103,69 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		if (IsInsideExpressionTree(op))
 			return;
 
-		ctx.ReportDiagnostic(Diagnostic.Create(Rule, op.Syntax.GetLocation(), method.Name));
+		ctx.ReportDiagnostic(Diagnostic.Create(rule, op.Syntax.GetLocation(), method.Name));
+	}
+
+	private static void AnalyzeLoop(OperationAnalysisContext ctx)
+	{
+		if (ctx.Operation is not IForEachLoopOperation loop)
+			return;
+
+		// `await foreach` is the same operation with this flag set, and over the query it is the correct form:
+		// DefaultQueryable is an IAsyncEnumerable. Only the synchronous enumerator is what throws.
+		if (loop.IsAsynchronous)
+			return;
+
+		var collection = Unwrap(loop.Collection);
+
+		// A terminal has already read the query into memory, and it is reported where it stands - the loop then
+		// walks an array, so a second report here would only say the same thing twice.
+		if (collection is IInvocationOperation inv && IsSyncTerminal(inv.TargetMethod))
+			return;
+
+		if (!IsFromOrmQuery(collection))
+			return;
+
+		ctx.ReportDiagnostic(Diagnostic.Create(ForEachRule, collection.Syntax.GetLocation()));
+	}
+
+	private static IOperation Unwrap(IOperation op)
+	{
+		while (true)
+		{
+			switch (op)
+			{
+				case IConversionOperation conv:
+					op = conv.Operand;
+					break;
+
+				case IParenthesizedOperation paren:
+					op = paren.Operand;
+					break;
+
+				default:
+					return op;
+			}
+		}
+	}
+
+	private static bool IsSyncTerminal(IMethodSymbol method)
+	{
+		var containing = method?.ContainingType;
+
+		return containing is not null &&
+			(containing.Name == "Enumerable" || containing.Name == "Queryable") &&
+			containing.ContainingNamespace?.ToDisplayString() == "System.Linq" &&
+			_syncTerminals.Contains(method.Name);
+	}
+
+	private static bool IsToAsyncEnumerable(IMethodSymbol method)
+	{
+		var containing = method?.ContainingType;
+
+		return method?.Name == "ToAsyncEnumerable" &&
+			containing?.Name == "AsyncEnumerable" &&
+			containing.ContainingNamespace?.ToDisplayString() == "System.Linq";
 	}
 
 	// A terminal written inside a lambda that becomes an expression tree is not executed where it stands - it
