@@ -25,6 +25,10 @@ using Microsoft.CodeAnalysis.Diagnostics;
 /// <c>?.</c> puts a conditional access between the terminal and its source, which the walk has to step over
 /// rather than give up on.
 ///
+/// A third shape decides it as much: the query is routinely put in a local before it is read, and a rule
+/// that only sees the direct form misses most real code. Following the local is only safe while the
+/// declaration is what decides the value, so the probes pin both halves of that.
+///
 /// The silences matter as much: <c>await foreach</c> over <c>ToAsync</c> reaches the analyzer as the same
 /// loop operation as a plain <c>foreach</c>, and a loop over an already-read array sits on top of a source
 /// chain that still leads back to the ORM.
@@ -349,6 +353,122 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 		var diags = await ProbeAsync("	public object M(Item[] items) => items.ToAsyncEnumerable();");
 
 		AreEqual(0, diags.Length, "ToAsyncEnumerable over an ordinary array was flagged");
+	}
+
+	/// <summary>Putting the query in a local first is the usual shape, and all three rules have to see through it.</summary>
+	[TestMethod]
+	public async Task ATerminalOnALocalHoldingAnOrmQueryIsFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public object M(ItemList list)
+				{
+					var q = list.ToQueryable().Where(x => !x.Deleted);
+					return q.ToArray();
+				}
+			""");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_diagId, diags[0].Id);
+	}
+
+	[TestMethod]
+	public async Task AForeachOverALocalHoldingAnOrmQueryIsFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public void M(ItemList list)
+				{
+					var q = list.ToQueryable().Where(x => !x.Deleted);
+
+					foreach (var i in q)
+					{
+					}
+				}
+			""");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_foreachId, diags[0].Id);
+	}
+
+	[TestMethod]
+	public async Task ToAsyncEnumerableOverALocalHoldingAnOrmQueryIsFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public object M(ItemList list)
+				{
+					var q = list.ToQueryable().Where(x => !x.Deleted);
+					return q.ToAsyncEnumerable();
+				}
+			""");
+
+		AreEqual(1, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+		AreEqual(_toAsyncEnumerableId, diags[0].Id);
+	}
+
+	/// <summary>A local still has to be read for what it holds, not assumed to hold a query.</summary>
+	[TestMethod]
+	public async Task AForeachOverALocalHoldingAPlainListIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public void M(List<Item> source)
+				{
+					var items = source;
+
+					foreach (var i in items)
+					{
+					}
+				}
+			""");
+
+		AreEqual(0, diags.Length, "a foreach over a local holding an ordinary list was flagged");
+	}
+
+	/// <summary>Two assignments mean the value at the terminal is not decided by the declaration.</summary>
+	[TestMethod]
+	public async Task ALocalAssignedInTwoBranchesIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public object M(ItemList list, Item[] items, bool flag)
+				{
+					IQueryable<Item> q;
+
+					if (flag)
+						q = list.ToQueryable();
+					else
+						q = items.AsQueryable();
+
+					return q.ToArray();
+				}
+			""");
+
+		AreEqual(0, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+	}
+
+	/// <summary>The declaration says ORM, a later assignment says otherwise - so the declaration does not settle it.</summary>
+	[TestMethod]
+	public async Task ALocalReassignedAfterItsDeclarationIsNotFlagged()
+	{
+		var diags = await ProbeAsync("""
+				public object M(ItemList list, Item[] items, bool flag)
+				{
+					var q = list.ToQueryable();
+
+					if (flag)
+						q = items.AsQueryable();
+
+					return q.ToArray();
+				}
+			""");
+
+		AreEqual(0, diags.Length, $"got {diags.Length}: {diags.Select(d => d.GetMessage()).JoinComma()}");
+	}
+
+	/// <summary>Where a parameter came from is decided by the caller, which is outside this method.</summary>
+	[TestMethod]
+	public async Task AQueryableParameterIsNotFlagged()
+	{
+		var diags = await ProbeAsync("	public object M(IQueryable<Item> q) => q.ToArray();");
+
+		AreEqual(0, diags.Length, "a terminal on an IQueryable parameter was flagged");
 	}
 }
 

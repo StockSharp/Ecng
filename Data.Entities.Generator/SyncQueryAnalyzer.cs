@@ -116,37 +116,18 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 		if (loop.IsAsynchronous)
 			return;
 
-		var collection = Unwrap(loop.Collection);
+		var source = ResolveValue(loop.Collection);
 
 		// A terminal has already read the query into memory, and it is reported where it stands - the loop then
 		// walks an array, so a second report here would only say the same thing twice.
-		if (collection is IInvocationOperation inv && IsSyncTerminal(inv.TargetMethod))
+		if (source is IInvocationOperation inv && IsSyncTerminal(inv.TargetMethod))
 			return;
 
-		if (!IsFromOrmQuery(collection))
+		if (!IsFromOrmQuery(source))
 			return;
 
-		ctx.ReportDiagnostic(Diagnostic.Create(ForEachRule, collection.Syntax.GetLocation()));
-	}
-
-	private static IOperation Unwrap(IOperation op)
-	{
-		while (true)
-		{
-			switch (op)
-			{
-				case IConversionOperation conv:
-					op = conv.Operand;
-					break;
-
-				case IParenthesizedOperation paren:
-					op = paren.Operand;
-					break;
-
-				default:
-					return op;
-			}
-		}
+		// The loop header is where the reader is standing; the local it names may have been declared far above.
+		ctx.ReportDiagnostic(Diagnostic.Create(ForEachRule, loop.Collection.Syntax.GetLocation()));
 	}
 
 	private static bool IsSyncTerminal(IMethodSymbol method)
@@ -200,6 +181,8 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 	{
 		while (op is not null)
 		{
+			op = ResolveValue(op);
+
 			if (IsOrmType(op.Type))
 				return true;
 
@@ -218,16 +201,8 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 					op = conditional.WhenNotNull;
 					break;
 
-				case IConversionOperation conv:
-					op = conv.Operand;
-					break;
-
 				case IArgumentOperation arg:
 					op = arg.Value;
-					break;
-
-				case IParenthesizedOperation paren:
-					op = paren.Operand;
 					break;
 
 				default:
@@ -237,6 +212,102 @@ public class SyncQueryAnalyzer : DiagnosticAnalyzer
 
 		return false;
 	}
+
+	/// <summary>
+	/// Steps over what only passes a value along - a conversion, parentheses, or a local that holds what was
+	/// put in it - to reach the expression that produces the value.
+	/// </summary>
+	private static IOperation ResolveValue(IOperation op)
+	{
+		HashSet<ISymbol> followed = null;
+
+		while (true)
+		{
+			switch (op)
+			{
+				case IConversionOperation conv:
+					op = conv.Operand;
+					break;
+
+				case IParenthesizedOperation paren:
+					op = paren.Operand;
+					break;
+
+				case ILocalReferenceOperation local:
+					followed ??= new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+
+					// A local already stepped through must not be stepped through again.
+					if (!followed.Add(local.Local))
+						return op;
+
+					var declared = ResolveWriteOnceLocal(local.Local, GetBody(op));
+
+					if (declared is null)
+						return op;
+
+					op = declared;
+					break;
+
+				default:
+					return op;
+			}
+		}
+	}
+
+	// The root of an operation tree is the body of the member being analysed, which is also how far a local can
+	// reach - so it is both the place to look for the declaration and the boundary this must not cross.
+	private static IOperation GetBody(IOperation op)
+	{
+		while (op.Parent is not null)
+			op = op.Parent;
+
+		return op;
+	}
+
+	// A query is routinely put in a local before it is read, so following the local is what makes these rules
+	// worth having. It is followed only when the declaration is the single thing that decides the value: with a
+	// second assignment, or none at all, what the local holds is settled elsewhere, and guessing would report
+	// code that is fine. Parameters, fields and properties are not followed either - their value comes from
+	// outside the body, which is as far as this looks.
+	private static IOperation ResolveWriteOnceLocal(ILocalSymbol local, IOperation body)
+	{
+		if (body is null)
+			return null;
+
+		IOperation declared = null;
+
+		foreach (var op in body.Descendants())
+		{
+			if (op is IVariableDeclaratorOperation declarator && SymbolEqualityComparer.Default.Equals(declarator.Symbol, local))
+			{
+				if (declared is not null)
+					return null;
+
+				declared = declarator.GetVariableInitializer()?.Value;
+
+				if (declared is null)
+					return null;
+			}
+			else if (IsWriteTo(op, local))
+				return null;
+		}
+
+		return declared;
+	}
+
+	private static bool IsWriteTo(IOperation op, ILocalSymbol local)
+		=> op switch
+		{
+			ISimpleAssignmentOperation assignment => IsReferenceTo(assignment.Target, local),
+			ICompoundAssignmentOperation compound => IsReferenceTo(compound.Target, local),
+			IIncrementOrDecrementOperation change => IsReferenceTo(change.Target, local),
+			IDeconstructionAssignmentOperation deconstruction => deconstruction.Target.DescendantsAndSelf().Any(t => IsReferenceTo(t, local)),
+			IArgumentOperation argument => argument.Parameter?.RefKind is RefKind.Ref or RefKind.Out && IsReferenceTo(argument.Value, local),
+			_ => false,
+		};
+
+	private static bool IsReferenceTo(IOperation op, ILocalSymbol local)
+		=> op is ILocalReferenceOperation reference && SymbolEqualityComparer.Default.Equals(reference.Local, local);
 
 	// A consumer declares its own list type and overrides ToQueryable, so the method named at the call site
 	// belongs to that assembly, not to the ORM. Following what it overrides is what finds the ORM underneath -
