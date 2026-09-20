@@ -444,4 +444,328 @@ public class LoggingTests : BaseTestClass
 
 		raised.AssertEqual(1, "A single Trace write must not re-feed into TraceSource (no infinite loop).");
 	}
+
+	/// <summary>
+	/// An <see cref="ILogSource"/> that is not a <see cref="BaseLogSource"/>: the level walk crosses
+	/// foreign implementations as well, so the base class owns neither every link nor every level.
+	/// </summary>
+	private sealed class ManualSource : ILogSource
+	{
+		public Guid Id { get; } = Guid.NewGuid();
+		public string Name { get; set; } = "Manual";
+		public LogLevels LogLevel { get; set; } = LogLevels.Inherit;
+		public DateTime CurrentTime => DateTime.UtcNow;
+		public bool IsRoot { get; set; }
+
+		private ILogSource _parent;
+
+		public ILogSource Parent
+		{
+			get => _parent;
+			set
+			{
+				_parent = value;
+
+				if (value is null)
+					ParentRemoved?.Invoke(this);
+			}
+		}
+
+		public event Action<ILogSource> ParentRemoved;
+
+		public event Action<LogMessage> Log
+		{
+			add { }
+			remove { }
+		}
+
+		void IDisposable.Dispose()
+		{
+		}
+	}
+
+	/// <summary>
+	/// A source that overrides <see cref="BaseLogSource.LogLevel"/> and keeps the value elsewhere,
+	/// the way a strategy or a diagram element keeps it in a parameter object that the UI and the
+	/// settings restore write to directly, without the property setter ever running.
+	/// </summary>
+	private sealed class ParamLevelSource : LogReceiver
+	{
+		public LogLevels Storage = LogLevels.Inherit;
+
+		public override LogLevels LogLevel
+		{
+			get => Storage;
+			set => Storage = value;
+		}
+	}
+
+	[TestMethod]
+	public void GetLogLevel_OverriddenLevelWrittenBehindTheSetter_SeenImmediately()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new ParamLevelSource { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+		middle.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// the value moves without the setter running at all
+		middle.Storage = LogLevels.Debug;
+
+		middle.GetLogLevel().AssertEqual(LogLevels.Debug);
+		child.GetLogLevel().AssertEqual(LogLevels.Debug);
+
+		middle.Storage = LogLevels.Inherit;
+
+		middle.GetLogLevel().AssertEqual(LogLevels.Error);
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_OwnOverriddenLevelWrittenBehindTheSetter_SeenImmediately()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var source = new ParamLevelSource { Parent = root };
+
+		source.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		source.Storage = LogLevels.Warning;
+		source.GetLogLevel().AssertEqual(LogLevels.Warning);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_NullSource_Throws()
+	{
+		ThrowsExactly<ArgumentNullException>(() => ((ILogSource)null).GetLogLevel());
+	}
+
+	[TestMethod]
+	public void GetLogLevel_OwnLevel_WinsOverParent()
+	{
+		var parent = new LogReceiver("Parent") { LogLevel = LogLevels.Error };
+		var child = new LogReceiver("Child") { Parent = parent, LogLevel = LogLevels.Debug };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Debug);
+		parent.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// the parent moving does not touch a child that answers for itself
+		parent.LogLevel = LogLevels.Off;
+		child.GetLogLevel().AssertEqual(LogLevels.Debug);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_Inherit_TakesNearestConfiguredAncestor()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		// the parent answers when it is configured
+		middle.LogLevel = LogLevels.Warning;
+		child.GetLogLevel().AssertEqual(LogLevels.Warning);
+
+		// and the grandparent answers when the parent is Inherit
+		middle.LogLevel = LogLevels.Inherit;
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+	}
+
+	[TestMethod]
+	[DataRow(LogLevels.Verbose)]
+	[DataRow(LogLevels.Debug)]
+	[DataRow(LogLevels.Info)]
+	[DataRow(LogLevels.Warning)]
+	[DataRow(LogLevels.Error)]
+	[DataRow(LogLevels.Off)]
+	public void GetLogLevel_EveryLevel_InheritsThroughTwoHops(LogLevels level)
+	{
+		var root = new LogReceiver("Root") { LogLevel = level };
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		// Off is a level like any other here, not an absence of one
+		child.GetLogLevel().AssertEqual(level);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_WholeChainInherit_ReturnsInherit()
+	{
+		var root = new LogReceiver("Root");
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+		middle.GetLogLevel().AssertEqual(LogLevels.Inherit);
+		root.GetLogLevel().AssertEqual(LogLevels.Inherit);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_AncestorLevelChange_SeenImmediately()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		// asked once before anything moves
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// a change two levels up, after the first answer was already given
+		root.LogLevel = LogLevels.Verbose;
+		child.GetLogLevel().AssertEqual(LogLevels.Verbose);
+
+		// a nearer ancestor takes the answer over
+		middle.LogLevel = LogLevels.Warning;
+		child.GetLogLevel().AssertEqual(LogLevels.Warning);
+
+		// and gives it back when it returns to Inherit
+		middle.LogLevel = LogLevels.Inherit;
+		child.GetLogLevel().AssertEqual(LogLevels.Verbose);
+
+		// the chain going fully Inherit is visible too
+		root.LogLevel = LogLevels.Inherit;
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_Reparent_SeenImmediately()
+	{
+		var quiet = new LogReceiver("Quiet") { LogLevel = LogLevels.Error };
+		var loud = new LogReceiver("Loud") { LogLevel = LogLevels.Verbose };
+		var child = new LogReceiver("Child") { Parent = quiet };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// detaching leaves the source with nothing to inherit from
+		child.Parent = null;
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+
+		// attaching to a differently configured parent answers with that parent at once
+		child.Parent = loud;
+		child.GetLogLevel().AssertEqual(LogLevels.Verbose);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_ReparentAncestor_SeenByWholeSubtree()
+	{
+		var quiet = new LogReceiver("Quiet") { LogLevel = LogLevels.Error };
+		var loud = new LogReceiver("Loud") { LogLevel = LogLevels.Verbose };
+		var middle = new LogReceiver("Middle") { Parent = quiet };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// the link that moves is above the source being asked
+		middle.Parent = null;
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+
+		middle.Parent = loud;
+		child.GetLogLevel().AssertEqual(LogLevels.Verbose);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_ForeignSourceInChain_IsWalked()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new ManualSource { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// a level set on a foreign link
+		middle.LogLevel = LogLevels.Debug;
+		child.GetLogLevel().AssertEqual(LogLevels.Debug);
+
+		// and a parent link cut on a foreign link
+		middle.LogLevel = LogLevels.Inherit;
+		middle.Parent = null;
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_OverriddenLevelDeeperInTheChain_SeenImmediately()
+	{
+		// two links that can be remembered stand below the one that cannot
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new ParamLevelSource { Parent = root };
+		var inner = new LogReceiver("Inner") { Parent = middle };
+		var leaf = new LogReceiver("Leaf") { Parent = inner };
+
+		leaf.GetLogLevel().AssertEqual(LogLevels.Error);
+		inner.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		middle.Storage = LogLevels.Debug;
+
+		leaf.GetLogLevel().AssertEqual(LogLevels.Debug);
+		inner.GetLogLevel().AssertEqual(LogLevels.Debug);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_OwnLevelBelowOverriddenAncestor_WinsOverIt()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new ParamLevelSource { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// the source that was walking the chain now answers for itself
+		child.LogLevel = LogLevels.Warning;
+		child.GetLogLevel().AssertEqual(LogLevels.Warning);
+
+		// and goes back to walking it
+		child.LogLevel = LogLevels.Inherit;
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_ReparentAwayFromOverriddenAncestor_SeenImmediately()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new ParamLevelSource { Parent = root };
+		var loud = new LogReceiver("Loud") { LogLevel = LogLevels.Verbose };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		child.GetLogLevel().AssertEqual(LogLevels.Error);
+
+		// the chain the walk was starting into is gone
+		child.Parent = null;
+		child.GetLogLevel().AssertEqual(LogLevels.Inherit);
+
+		child.Parent = loud;
+		child.GetLogLevel().AssertEqual(LogLevels.Verbose);
+	}
+
+	[TestMethod]
+	public void GetLogLevel_ConcurrentAncestorChange_AnswersOnlyLevelsTheAncestorHeld()
+	{
+		var root = new LogReceiver("Root") { LogLevel = LogLevels.Error };
+		var middle = new LogReceiver("Middle") { Parent = root };
+		var child = new LogReceiver("Child") { Parent = middle };
+
+		var stop = false;
+
+		var writer = Task.Run(() =>
+		{
+			while (!Volatile.Read(ref stop))
+			{
+				root.LogLevel = LogLevels.Error;
+				root.LogLevel = LogLevels.Verbose;
+			}
+		}, CancellationToken);
+
+		var seen = new HashSet<LogLevels>();
+
+		for (var i = 0; i < 200000; i++)
+			seen.Add(child.GetLogLevel());
+
+		Volatile.Write(ref stop, true);
+		writer.Wait(TimeSpan.FromSeconds(10)).AssertTrue("The level writer must finish.");
+
+		// the only two values the root ever held; a torn or stale answer would show up as a third
+		seen.Remove(LogLevels.Error);
+		seen.Remove(LogLevels.Verbose);
+
+		if (seen.Count > 0)
+			Fail($"GetLogLevel answered {seen.Select(l => l.ToString()).JoinComma()}, which no ancestor ever had.");
+	}
 }

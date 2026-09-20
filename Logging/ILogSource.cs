@@ -2,6 +2,7 @@ namespace Ecng.Logging;
 
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 using Ecng.ComponentModel;
 
@@ -56,12 +57,17 @@ public interface ILogSource : IDisposable
 /// </summary>
 public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 {
+	private readonly bool _isLevelCacheable;
+
 	/// <summary>
 	/// Initialize <see cref="BaseLogSource"/>.
 	/// </summary>
 	protected BaseLogSource()
 	{
-		_name = GetType().GetDisplayName();
+		var type = GetType();
+
+		_name = type.GetDisplayName();
+		_isLevelCacheable = LogLevelCache.IsCacheable(type);
 	}
 
 	/// <inheritdoc />
@@ -146,6 +152,8 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 
 			_parent = value;
 
+			LogLevelCache.Invalidate();
+
 			if (_parent == null)
 				ParentRemoved?.Invoke(this);
 		}
@@ -154,6 +162,8 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 	/// <inheritdoc />
 	public event Action<ILogSource> ParentRemoved;
 
+	private LogLevels _logLevel = LogLevels.Inherit;
+
 	/// <inheritdoc />
 	[Display(
 		ResourceType = typeof(LocalizedStrings),
@@ -161,7 +171,69 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 		Description = LocalizedStrings.LogLevelDescKey,
 		GroupName = LocalizedStrings.LoggingKey,
 		Order = 1001)]
-	public virtual LogLevels LogLevel { get; set; } = LogLevels.Inherit;
+	public virtual LogLevels LogLevel
+	{
+		get => _logLevel;
+		set
+		{
+			if (_logLevel == value)
+				return;
+
+			_logLevel = value;
+
+			LogLevelCache.Invalidate();
+		}
+	}
+
+	// Two answers, never both in the same set: either the level is known, or it is only known
+	// where the walk still has to start. They are kept apart so that reading the level - the read
+	// on every log call - touches one field and nothing else.
+	private LogLevelEntry _levelCache;
+	private LogLevelWalk _walkCache;
+
+	/// <summary>
+	/// Whether this source keeps <see cref="LogLevel"/> and <see cref="Parent"/> where its own
+	/// setters can invalidate the cache, so a walk crossing it may be remembered.
+	/// </summary>
+	internal bool IsLevelCacheable => _isLevelCacheable;
+
+	/// <summary>
+	/// The level last remembered for this source, whichever set it was remembered in.
+	/// </summary>
+	internal LogLevelEntry LevelCache
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => Volatile.Read(ref _levelCache);
+	}
+
+	/// <summary>
+	/// The starting point last remembered for this source, whichever set it was remembered in.
+	/// </summary>
+	internal LogLevelWalk WalkCache
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => Volatile.Read(ref _walkCache);
+	}
+
+	/// <summary>
+	/// Remember <paramref name="entry"/> as the effective level of this source.
+	/// </summary>
+	/// <param name="entry">The entry, already made in the set it is to be read back in.</param>
+	internal void SetCachedLogLevel(LogLevelEntry entry)
+	{
+		// One reference write, so a reader sees the level and the set it was computed in as one
+		// pair - two sources answering at once leave one whole entry or the other, never a mix.
+		Volatile.Write(ref _levelCache, entry);
+	}
+
+	/// <summary>
+	/// Remember that the answer for this source is whatever walking from <paramref name="from"/>
+	/// gives, because from there on a level can move without the cache being told.
+	/// </summary>
+	/// <param name="current">The set the walk was made in.</param>
+	/// <param name="from">The link the walk has to start from.</param>
+	internal void SetCachedWalk(LogLevelEntry[] current, ILogSource from)
+		=> Volatile.Write(ref _walkCache, new(current, from));
 
 	/// <inheritdoc />
 	[Browsable(false)]

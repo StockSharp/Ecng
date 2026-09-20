@@ -1,6 +1,7 @@
 namespace Ecng.Logging;
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Extension class for <see cref="ILogSource"/>.
@@ -180,11 +181,49 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="source">The log source.</param>
 	/// <returns>The logging level.</returns>
+	/// <remarks>
+	/// The answer is remembered per source and dropped as a whole whenever any source changes its
+	/// <see cref="ILogSource.LogLevel"/> or <see cref="ILogSource.Parent"/>, so a chain that stands
+	/// still costs a field read. A chain reaching a source that keeps either property outside
+	/// <see cref="BaseLogSource"/> is remembered only up to that link: from there on the level is
+	/// read again on every call, since it can move without the cache being told.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static LogLevels GetLogLevel(this ILogSource source)
 	{
-		if (source == null)
+		if (source is BaseLogSource target)
+		{
+			var set = LogLevelCache.Current;
+			var entry = target.LevelCache;
+
+			if (entry is not null && ReferenceEquals(entry.Set, set))
+				return entry.Level;
+
+			var walk = target.WalkCache;
+
+			// The settled prefix of the chain has already been walked once, so only the part whose
+			// level has to be read again is left.
+			if (walk is not null && ReferenceEquals(walk.Set, set))
+				return Walk(walk.From);
+
+			return WalkLogLevel(target, set);
+		}
+
+		return WalkForeign(source);
+	}
+
+	private static LogLevels WalkForeign(ILogSource source)
+	{
+		if (source is null)
 			throw new ArgumentNullException(nameof(source));
 
+		// A source that is no BaseLogSource has nowhere to keep an answer, so it is walked the way
+		// every source used to be.
+		return Walk(source);
+	}
+
+	private static LogLevels Walk(ILogSource source)
+	{
 		do
 		{
 			var level = source.LogLevel;
@@ -194,9 +233,77 @@ public static class LoggingHelper
 
 			source = source.Parent;
 		}
-		while (source != null);
-		
+		while (source is not null);
+
 		return LogLevels.Inherit;
+	}
+
+	private static LogLevels WalkLogLevel(BaseLogSource target, LogLevelEntry[] set)
+	{
+		if (!target.IsLevelCacheable)
+		{
+			// Its own level can move without the cache hearing about it, so the only thing worth
+			// remembering is that the walk starts here - which stays true whatever the level does.
+			target.SetCachedWalk(set, target);
+			return Walk(target);
+		}
+
+		var current = target;
+
+		while (true)
+		{
+			var level = current.LogLevel;
+
+			if (level != LogLevels.Inherit)
+				return Remember(target, current, set, level);
+
+			var parent = current.Parent;
+
+			if (parent is null)
+				return Remember(target, current, set, LogLevels.Inherit);
+
+			if (parent is not BaseLogSource next || !next.IsLevelCacheable)
+			{
+				// Everything walked so far is Inherit and cannot move without invalidating the set,
+				// so that prefix is settled and only the rest is walked from now on.
+				target.SetCachedWalk(set, parent);
+				return Walk(parent);
+			}
+
+			// An ancestor that already answered in this set answers for the whole chain below it,
+			// since every link in between is Inherit.
+			var known = next.LevelCache;
+
+			if (known is not null && ReferenceEquals(known.Set, set))
+			{
+				target.SetCachedLogLevel(known);
+				return known.Level;
+			}
+
+			var shortcut = next.WalkCache;
+
+			if (shortcut is not null && ReferenceEquals(shortcut.Set, set))
+			{
+				target.SetCachedWalk(set, shortcut.From);
+				return Walk(shortcut.From);
+			}
+
+			current = next;
+		}
+	}
+
+	private static LogLevels Remember(BaseLogSource target, BaseLogSource current, LogLevelEntry[] set, LogLevels level)
+	{
+		// Nothing above took part in this answer, so the link that gave it remembers it for itself
+		// as well as for the source that asked.
+		var entry = LogLevelCache.Entry(set, level);
+
+		current.SetCachedLogLevel(entry);
+
+		if (!ReferenceEquals(current, target))
+			target.SetCachedLogLevel(entry);
+
+		return level;
 	}
 
 	/// <summary>
