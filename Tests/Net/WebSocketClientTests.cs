@@ -1,4 +1,4 @@
-namespace Ecng.Tests.Net;
+﻿namespace Ecng.Tests.Net;
 
 using System.Net.WebSockets;
 
@@ -1224,5 +1224,72 @@ public class WebSocketClientTests : BaseTestClass
 
 		eventStates.Contains(ConnectionStates.Connecting).AssertTrue("StateChanged should fire for Connecting.");
 		eventStates.Contains(ConnectionStates.Connected).AssertTrue("StateChanged should fire for Connected.");
+	}
+
+	/// <summary>
+	/// A retry that will be followed by another retry is not a failure to report. Only running out of
+	/// attempts is, and the difference is what the error table pays for: one endpoint that went away used
+	/// to file a row per attempt, for as long as it stayed away.
+	/// </summary>
+	[TestMethod]
+	[Timeout(120000, CooperativeCancellation = true)]
+	public async Task RetriesAreNotErrors_OnlyGivingUpIs()
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+
+		var server = await LocalWebSocketEchoServer.StartAsync(cts.Token);
+		var url = server.Url;
+
+		var errors = new List<string>();
+		var infos = new List<string>();
+
+		using var client = new WebSocketClient(
+			url,
+			(_, _) => default,
+			(_, _) => default,
+			(_, _, _) => default,
+			(fmt, arg) => { lock (infos) infos.Add((fmt ?? string.Empty).Put(arg)); },
+			(fmt, arg) => { lock (errors) errors.Add((fmt ?? string.Empty).Put(arg)); },
+			null
+		);
+
+		client.ReconnectAttempts = 3;
+		client.ReconnectInterval = TimeSpan.FromMilliseconds(50);
+
+		await client.ConnectAsync(cts.Token);
+		client.IsConnected.AssertTrue();
+
+		lock (errors) errors.Clear();
+		lock (infos) infos.Clear();
+
+		// The endpoint goes away for good, so every reconnect attempt fails and the client runs out of them.
+		await server.DisposeAsync();
+		client.Abort();
+
+		var sw = Stopwatch.StartNew();
+
+		while (sw.Elapsed < TimeSpan.FromSeconds(30))
+		{
+			lock (errors)
+			{
+				if (errors.Any(e => e.ContainsIgnoreCase("no attempts left")))
+					break;
+			}
+
+			await Task.Delay(100, cts.Token);
+		}
+
+		string[] takenErrors, takenInfos;
+		lock (errors) takenErrors = [.. errors];
+		lock (infos) takenInfos = [.. infos];
+
+		var givingUp = takenErrors.Count(e => e.ContainsIgnoreCase("no attempts left"));
+		var retried = takenInfos.Count(i => i.ContainsIgnoreCase("attempts left"));
+
+		AreEqual(1, givingUp, takenErrors.JoinN());
+		IsTrue(retried >= 1, takenInfos.JoinN());
+
+		// Every retry but the last one is reported as news, not as a fault.
+		IsTrue(takenErrors.Count(e => e.ContainsIgnoreCase("attempts left")) == givingUp, takenErrors.JoinN());
 	}
 }

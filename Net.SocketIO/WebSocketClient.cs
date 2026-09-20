@@ -280,12 +280,16 @@ public class WebSocketClient : Disposable, IConnection
 			}
 			catch
 			{
+				// An attempt that is followed by another one is not a failure to report: an endpoint that
+				// went away would otherwise file an error on every retry, for as long as it stays away.
 				if (attempts > 0 || attempts == -1)
 				{
-					_errorLog("Reconnect failed. Attempts left {0}.", attempts);
+					_infoLog("Reconnect failed. Attempts left {0}.", attempts);
 					await ReconnectInterval.Delay(token).NoWait();
 					continue;
 				}
+
+				_errorLog("Reconnect failed, no attempts left ({0}).", _url);
 
 				try { _ws?.Dispose(); } catch { }
 				_ws = null;
