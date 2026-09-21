@@ -1,10 +1,19 @@
 ﻿namespace Ecng.Compilation;
 
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Provides extension methods for the ICompiler interface and compilation results.
 /// </summary>
 public static class ICompilerExtensions
 {
+	private sealed record CachedImage(DateTime WriteTime, long Length, byte[] Body);
+
+	// Every compilation pulls in the whole framework surface, tens of megabytes of it, and nothing
+	// upstream holds on to the images. Keyed by file system so the cache dies together with it.
+	private static readonly ConditionalWeakTable<IFileSystem, ConcurrentDictionary<string, CachedImage>> _refImages = new();
+
 	/// <summary>
 	/// Gets the runtime directory path where the System.Object assembly is located.
 	/// </summary>
@@ -62,12 +71,37 @@ public static class ICompilerExtensions
 
 	/// <summary>
 	/// Reads the file at the given path and returns its file name and binary content.
+	/// The content is cached per file system and re-read only once the file's last write time or
+	/// length changes, so the same image instance is handed out to repeated compilations.
 	/// </summary>
 	/// <param name="path">The path to the reference file.</param>
 	/// <param name="fileSystem">The file system to use.</param>
 	/// <returns>A tuple containing the file name and its binary content.</returns>
 	public static (string name, byte[] body) ToRef(this string path, IFileSystem fileSystem)
-		=> (Path.GetFileName(path), fileSystem.ReadAllBytes(path));
+	{
+		if (fileSystem is null)
+			throw new ArgumentNullException(nameof(fileSystem));
+
+		var name = Path.GetFileName(path);
+
+		// A missing file has to fail the way reading it would.
+		if (!fileSystem.FileExists(path))
+			return (name, fileSystem.ReadAllBytes(path));
+
+		var writeTime = fileSystem.GetLastWriteTimeUtc(path);
+		var length = fileSystem.GetFileLength(path);
+		var images = _refImages.GetOrCreateValue(fileSystem);
+
+		if (images.TryGetValue(path, out var cached) && cached.WriteTime == writeTime && cached.Length == length)
+			return (name, cached.Body);
+
+		// Two threads racing on the first read both load the file; either image is valid.
+		var body = fileSystem.ReadAllBytes(path);
+
+		images[path] = new(writeTime, length, body);
+
+		return (name, body);
+	}
 
 	/// <summary>
 	/// Asynchronously extracts valid reference images from the provided references.

@@ -1457,4 +1457,119 @@ class AnalyticsScript_{i}:
 
 		AreEqual("only", result);
 	}
+
+	private sealed class CountingFileSystem(IFileSystem inner) : IFileSystem
+	{
+		private readonly IFileSystem _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+
+		public int Reads { get; private set; }
+
+		public void ResetReads() => Reads = 0;
+
+		public Stream Open(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None)
+		{
+			if (access == FileAccess.Read)
+				Reads++;
+
+			return _inner.Open(path, mode, access, share);
+		}
+
+		public bool FileExists(string path) => _inner.FileExists(path);
+		public bool DirectoryExists(string path) => _inner.DirectoryExists(path);
+		public void CreateDirectory(string path) => _inner.CreateDirectory(path);
+		public void DeleteDirectory(string path, bool recursive = false) => _inner.DeleteDirectory(path, recursive);
+		public void DeleteFile(string path) => _inner.DeleteFile(path);
+		public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false) => _inner.MoveFile(sourceFileName, destFileName, overwrite);
+		public void MoveDirectory(string sourceDirName, string destDirName) => _inner.MoveDirectory(sourceDirName, destDirName);
+		public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false) => _inner.CopyFile(sourceFileName, destFileName, overwrite);
+		public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => _inner.EnumerateFiles(path, searchPattern, searchOption);
+		public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly) => _inner.EnumerateDirectories(path, searchPattern, searchOption);
+		public DateTime GetCreationTimeUtc(string path) => _inner.GetCreationTimeUtc(path);
+		public DateTime GetLastWriteTimeUtc(string path) => _inner.GetLastWriteTimeUtc(path);
+		public long GetFileLength(string path) => _inner.GetFileLength(path);
+		public void SetReadOnly(string path, bool isReadOnly) => _inner.SetReadOnly(path, isReadOnly);
+		public FileAttributes GetAttributes(string path) => _inner.GetAttributes(path);
+
+		public long MaxSize { get => _inner.MaxSize; set => _inner.MaxSize = value; }
+		public FileSystemOverflowBehavior OverflowBehavior { get => _inner.OverflowBehavior; set => _inner.OverflowBehavior = value; }
+		public long TotalSize => _inner.TotalSize;
+	}
+
+	private static CountingFileSystem CreateFileSystem(string path, byte[] body)
+	{
+		var fs = new CountingFileSystem(new MemoryFileSystem());
+
+		fs.WriteAllBytes(path, body);
+		fs.ResetReads();
+
+		return fs;
+	}
+
+	[TestMethod]
+	public void RepeatedCallReadsTheFileOnce()
+	{
+		const string path = "unchanged.dll";
+
+		var fs = CreateFileSystem(path, [1, 2, 3, 4]);
+
+		path.ToRef(fs);
+		path.ToRef(fs);
+
+		fs.Reads.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void RepeatedCallReturnsTheSameImage()
+	{
+		const string path = "same-instance.dll";
+
+		var fs = CreateFileSystem(path, [1, 2, 3, 4]);
+
+		var first = path.ToRef(fs);
+		var second = path.ToRef(fs);
+
+		second.name.AssertEqual(first.name);
+
+		// The compiler keys its metadata references by the identity of this array, so handing out a
+		// fresh copy silently defeats that cache.
+		second.body.AssertSame(first.body);
+	}
+
+	[TestMethod]
+	public void ChangedFileIsReadAgain()
+	{
+		const string path = "changed.dll";
+
+		var fs = CreateFileSystem(path, [1, 2, 3, 4]);
+
+		var first = path.ToRef(fs);
+
+		fs.WriteAllBytes(path, [9, 8, 7, 6, 5]);
+
+		var second = path.ToRef(fs);
+
+		fs.Reads.AssertEqual(2);
+		second.body.SequenceEqual(new byte[] { 9, 8, 7, 6, 5 }).AssertTrue();
+		second.body.AssertNotSame(first.body);
+	}
+
+	[TestMethod]
+	public void SeparateFileSystemsDoNotShareImages()
+	{
+		const string path = "shared-name.dll";
+
+		var first = CreateFileSystem(path, [1, 2, 3, 4]);
+		var second = CreateFileSystem(path, [5, 6, 7, 8]);
+
+		path.ToRef(first).body.SequenceEqual(new byte[] { 1, 2, 3, 4 }).AssertTrue();
+		path.ToRef(second).body.SequenceEqual(new byte[] { 5, 6, 7, 8 }).AssertTrue();
+	}
+
+	[TestMethod]
+	public void MissingFileStillThrows()
+	{
+		var fs = new CountingFileSystem(new MemoryFileSystem());
+
+		Throws<FileNotFoundException>(() => "absent.dll".ToRef(fs));
+	}
 }
