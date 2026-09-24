@@ -44,6 +44,29 @@ public class MarkdownProjectorTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Link_ToAnEntityReference_ArrivesAsTheEntitysAddress()
+	{
+		var data = new ResolvedMarkdownData
+		{
+			Entities = new() { ["message"] = new() { [51317] = new() { Url = "~/ru/posts/m/51317/", Name = "FAQ" } } },
+		};
+
+		var link = SingleParagraph(Project("[John](@message(51317)) wrote", data)).Children.OfType<MdLink>().Single();
+
+		link.Url.AssertEqual("/ru/posts/m/51317/");
+		((MdText)link.Children.Single()).Text.AssertEqual("John");
+	}
+
+	[TestMethod]
+	public void Link_ToAnUnresolvedEntityReference_KeepsOnlyItsText()
+	{
+		var paragraph = SingleParagraph(Project("[John](@message(51317)) wrote"));
+
+		paragraph.Children.OfType<MdLink>().Any().AssertFalse();
+		paragraph.Children.OfType<MdText>().First().Text.AssertEqual("John");
+	}
+
+	[TestMethod]
 	public void DiagramReference_ArrivesAsItsResolvedAddress()
 	{
 		// The whole point of rendering natively: the desktop gets the schema's address and draws it with the

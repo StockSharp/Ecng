@@ -340,7 +340,7 @@ public static class MarkdownProjector
 			case LinkInline link:
 				return link.IsImage
 					? [new MdImage(ResolveTarget(link.Url, data), GetPlainText(link))]
-					: [new MdLink(ResolveTarget(link.Url, data), link.Title ?? string.Empty, ProjectInlines(link, data))];
+					: ProjectLink(link, data);
 
 			case DiagramInline diagram:
 				return data.Diagrams.TryGetValue(diagram.Ref, out var src) && !src.IsEmpty()
@@ -378,6 +378,19 @@ public static class MarkdownProjector
 			default:
 				return [];
 		}
+	}
+
+	// A reference written as a link's address points at the entity; one that did not resolve leaves the text only.
+	private static IReadOnlyList<MdInline> ProjectLink(LinkInline link, ResolvedMarkdownData data)
+	{
+		var entityUrl = UrlHelper.ResolveEntityReference(link.Url, data);
+
+		if (entityUrl is null)
+			return [new MdLink(ResolveTarget(link.Url, data), link.Title ?? string.Empty, ProjectInlines(link, data))];
+
+		return entityUrl.IsEmpty()
+			? ProjectInlines(link, data)
+			: [new MdLink(entityUrl, link.Title ?? string.Empty, ProjectInlines(link, data))];
 	}
 
 	private static IReadOnlyList<MdInline> ProjectEntity(EntityReferenceInline entity, ResolvedMarkdownData data)

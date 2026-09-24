@@ -31,6 +31,7 @@ public class Md2HtmlFormatter
 	private static readonly Regex _imgPattern = new(@"!\[[^\]]*\]\((?:(\d+)|[^)]*\/file\/(\d+)[^)]*)\)", RegexOptions.Compiled);
 	private static readonly Regex _rawHtmlImgPattern = new(@"<img\s[^>]*?src=""(\d+)""", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 	private static readonly Regex _anchorHrefPattern = new(@"<a\s([^>]*?)href=""(\d+)""([^>]*?)>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+	private static readonly Regex _entityLinkPattern = new(@"<a\s([^>]*?)href=""(@[a-z_]+\(\d+\))""([^>]*?)>(.*?)</a>", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 	private static readonly Regex _htmlTagPattern = new(@"<[^>]+>", RegexOptions.Compiled);
 	private static readonly Regex _htmlEntityPattern = new(@"&(?:nbsp|quot|amp|lt|gt|#\d+|#x[\da-fA-F]+);", RegexOptions.Compiled);
 
@@ -155,10 +156,18 @@ public class Md2HtmlFormatter
 				fileIds.Add(fid);
 		}
 
-		// Scan raw text for entity refs that may be inside styled content (:[...]{...})
-		// where they aren't parsed as AST nodes. HashSet deduplicates.
+		// Scan raw text for entity refs that are not parsed as AST nodes: inside styled content (:[...]{...}) or
+		// as a link's address. A file goes with the files, as the AST collection sends it. HashSet deduplicates.
 		foreach (Match match in _entityRefPattern.Matches(text))
-			entities.Add((match.Groups[1].Value, match.Groups[2].Value.To<long>()));
+		{
+			var type = match.Groups[1].Value;
+			var id = match.Groups[2].Value.To<long>();
+
+			if (type == "file")
+				fileIds.Add(id);
+			else
+				entities.Add((type, id));
+		}
 
 		// Scan raw text for @diagram(dg) refs (dg is a file id or an http(s) URL).
 		foreach (Match match in _diagramRefPattern.Matches(text))
@@ -243,6 +252,7 @@ public class Md2HtmlFormatter
 		var html = Markdig.Markdown.ToHtml(parsed.Document, parsed.Pipeline);
 		html = ResolveImageFiles(html, data.Files);
 		html = ResolveLinkFiles(html, data.Files);
+		html = ResolveEntityLinks(html, data);
 		html = ConvertSpoilers(html);
 		html = ResolveEntities(html, data.Entities, data.Files);
 		html = ResolveCounters(html, data.Counters);
@@ -540,6 +550,21 @@ public class Md2HtmlFormatter
 			return $"<a {before}href=\"{url}\"{after}>";
 		});
 	}
+
+	// A reference written as a link's address points at the entity. One that did not resolve loses the link and
+	// keeps the text: as a relative href it would be appended to the address of the page it sits on.
+	private static string ResolveEntityLinks(string html, ResolvedMarkdownData data)
+		=> _entityLinkPattern.Replace(html, match =>
+		{
+			var url = UrlHelper.ResolveEntityReference(match.Groups[2].Value, data);
+
+			if (url is null)
+				return match.Value;
+
+			return url.IsEmpty()
+				? match.Groups[4].Value
+				: $"<a {match.Groups[1].Value}href=\"{url}\"{match.Groups[3].Value}>{match.Groups[4].Value}</a>";
+		});
 
 	private static string ConvertSpoilers(string html)
 	{

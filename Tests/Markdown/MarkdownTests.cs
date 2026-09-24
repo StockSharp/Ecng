@@ -1475,4 +1475,55 @@ public class MarkdownTests : BaseTestClass
 		IsFalse(html.Contains("<b>Bold</b>"), $"got: {html}");
 		html.Contains("&amp; co").AssertTrue($"got: {html}");
 	}
+
+	// A quote names its source as a link whose address is the message reference: "> **[John](@message(51317)):**".
+	// Left as written, the reference reaches the page as a relative href and the browser appends it to the page's
+	// own address, a 404 for every quote.
+	[TestMethod]
+	public void EntityReference_AsLinkAddress_PointsAtTheEntity()
+	{
+		var html = ToHtml("> **[John](@message(51317)):**\n> quoted text");
+
+		html.Contains("href=\"/forum/getting-started/faq/#51317\"").AssertTrue($"got: {html}");
+		html.Contains(">John</a>").AssertTrue($"got: {html}");
+		html.Contains("@message(").AssertFalse($"got: {html}");
+	}
+
+	[TestMethod]
+	public void EntityReference_AsLinkAddress_ResolvesAVirtualPath()
+	{
+		var parsed = _formatter.Parse("[John](@user(5)) wrote", false);
+		var html = _formatter.Render(parsed, new ResolvedMarkdownData
+		{
+			Entities = new() { ["user"] = new() { [5] = new() { Url = "~/ru/users/5/john/", Name = "John" } } },
+		});
+
+		html.Contains("href=\"/ru/users/5/john/\"").AssertTrue($"got: {html}");
+	}
+
+	// A file named by reference as a link's address is fetched with the files, the way an inline @file(id) is.
+	[TestMethod]
+	public void FileReference_AsLinkAddress_PointsAtTheFile()
+	{
+		var parsed = _formatter.Parse("[Download the manual](@file(9))", false);
+
+		parsed.FileIds.Contains(9).AssertTrue();
+
+		var html = _formatter.Render(parsed, ResolveTestData(parsed));
+
+		html.Contains("href=\"/file/9/file.png\"").AssertTrue($"got: {html}");
+		html.Contains(">Download the manual</a>").AssertTrue($"got: {html}");
+	}
+
+	// Nothing to point at is no reason to point at the page itself: the link goes, its text stays.
+	[TestMethod]
+	public void EntityReference_AsLinkAddress_Unresolved_KeepsOnlyTheText()
+	{
+		var parsed = _formatter.Parse("[John](@message(51317)) wrote", false);
+		var html = _formatter.Render(parsed, new ResolvedMarkdownData());
+
+		html.Contains("<a").AssertFalse($"got: {html}");
+		html.Contains("@message(").AssertFalse($"got: {html}");
+		html.Contains("John wrote").AssertTrue($"got: {html}");
+	}
 }
