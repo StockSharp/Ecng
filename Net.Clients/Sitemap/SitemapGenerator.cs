@@ -17,9 +17,9 @@ public static class SitemapGenerator
 	public const int MaximumSitemapCount = 50000;
 
 	/// <summary>
-	/// The maximum size of a sitemap file in bytes (10MB).
+	/// The maximum size of an uncompressed sitemap file in bytes (50MB), as the sitemaps.org protocol sets it.
 	/// </summary>
-	public const int MaximumSitemapSizeInBytes = 10485760;
+	public const int MaximumSitemapSizeInBytes = 52428800;
 
 	private static string Url2Abs(string url)
 	{
@@ -132,13 +132,14 @@ public static class SitemapGenerator
 	}
 
 	/// <summary>
-	/// Checks the size of the XML sitemap document. If it is over 10MB, logs an error.
+	/// Checks the size of the XML sitemap document against the protocol's 50MB limit.
 	/// </summary>
-	/// <param name="size">The sitemap XML document size.</param>
+	/// <param name="size">The uncompressed sitemap XML document size.</param>
+	/// <exception cref="ArgumentOutOfRangeException">The document is larger than 50MB.</exception>
 	public static void CheckDocumentSize(int size)
 	{
-		if (size >= MaximumSitemapSizeInBytes)
-			throw new ArgumentOutOfRangeException(nameof(size), size, "Sitemap exceeds the maximum size of 10MB.");
+		if (size > MaximumSitemapSizeInBytes)
+			throw new ArgumentOutOfRangeException(nameof(size), size, "Sitemap exceeds the maximum size of 50MB.");
 	}
 
 	/// <summary>

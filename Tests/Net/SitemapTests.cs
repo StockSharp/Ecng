@@ -787,20 +787,17 @@ public class SitemapTests : BaseTestClass
 			SitemapGenerator.CheckSitemapCount(SitemapGenerator.MaximumSitemapCount + 1));
 	}
 
+	// sitemaps.org: a sitemap must be "no larger than 50MB (52,428,800 bytes)" uncompressed.
 	[TestMethod]
-	public void DocumentSize_ValidSize_NoException()
-	{
-		// Should not throw for valid sizes
-		SitemapGenerator.CheckDocumentSize(1000);
-		SitemapGenerator.CheckDocumentSize(SitemapGenerator.MaximumSitemapSizeInBytes - 1);
-	}
+	[DataRow(1000)]
+	[DataRow(15_000_000)]
+	[DataRow(SitemapGenerator.MaximumSitemapSizeInBytes)]
+	public void DocumentSize_WithinTheProtocolLimit_IsAccepted(int size)
+		=> SitemapGenerator.CheckDocumentSize(size);
 
 	[TestMethod]
-	public void DocumentSize_ExceedsMaximum_ThrowsArgumentOutOfRangeException()
-	{
-		ThrowsExactly<ArgumentOutOfRangeException>(() => 
-			SitemapGenerator.CheckDocumentSize(SitemapGenerator.MaximumSitemapSizeInBytes));
-	}
+	public void DocumentSize_OverTheProtocolLimit_IsRefused()
+		=> ThrowsExactly<ArgumentOutOfRangeException>(() => SitemapGenerator.CheckDocumentSize(SitemapGenerator.MaximumSitemapSizeInBytes + 1));
 
 	[TestMethod]
 	public void Sitemap_MaximumNodes_ThrowsArgumentOutOfRangeException()
@@ -816,12 +813,10 @@ public class SitemapTests : BaseTestClass
 			SitemapGenerator.GenerateSitemap(nodes));
 	}
 
+	// sitemaps.org: a sitemap holds "no more than 50,000 URLs".
 	[TestMethod]
-	public void Constants_HaveCorrectValues()
-	{
-		SitemapGenerator.MaximumSitemapCount.AssertEqual(50000);
-		SitemapGenerator.MaximumSitemapSizeInBytes.AssertEqual(10485760); // 10MB
-	}
+	public void Sitemap_OfTheProtocolMaximum_IsAccepted()
+		=> SitemapGenerator.GenerateSitemap([.. Enumerable.Range(0, SitemapGenerator.MaximumSitemapCount).Select(i => new SitemapNode($"https://example.com/page{i}"))]);
 
 	#endregion
 
