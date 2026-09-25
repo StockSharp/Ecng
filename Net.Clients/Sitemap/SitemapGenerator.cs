@@ -92,19 +92,6 @@ public static class SitemapGenerator
 			// Add basic sitemap elements
 			urlElement.Add(new XElement(xmlns + "loc", Url2Abs(sitemapNode.Url)));
 
-			// Add XHTML alternate links
-			if (sitemapNode.AlternateLinks.Count > 0)
-			{
-				foreach (var alternateLink in sitemapNode.AlternateLinks)
-				{
-					var xhtmlLink = new XElement(xhtmlNs + "link");
-					xhtmlLink.SetAttributeValue("rel", alternateLink.Rel);
-					xhtmlLink.SetAttributeValue("hreflang", alternateLink.Hreflang);
-					xhtmlLink.SetAttributeValue("href", Url2Abs(alternateLink.Href));
-					urlElement.Add(xhtmlLink);
-				}
-			}
-
 			// Add optional sitemap elements
 			if (sitemapNode.LastModified is not null)
 			{
@@ -122,6 +109,16 @@ public static class SitemapGenerator
 			{
 				urlElement.Add(new XElement(xmlns + "priority",
 					sitemapNode.Priority.Value.ToString("F1", CultureInfo.InvariantCulture)));
+			}
+
+			// XHTML alternate links go last: sitemap.xsd admits elements of other namespaces only after the url's own.
+			foreach (var alternateLink in sitemapNode.AlternateLinks)
+			{
+				var xhtmlLink = new XElement(xhtmlNs + "link");
+				xhtmlLink.SetAttributeValue("rel", alternateLink.Rel);
+				xhtmlLink.SetAttributeValue("hreflang", alternateLink.Hreflang);
+				xhtmlLink.SetAttributeValue("href", Url2Abs(alternateLink.Href));
+				urlElement.Add(xhtmlLink);
 			}
 
 			root.Add(urlElement);

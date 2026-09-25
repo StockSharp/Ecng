@@ -1,12 +1,51 @@
 ﻿namespace Ecng.Tests.Net;
 
+using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Schema;
 
 using Ecng.Net.Sitemap;
 
 [TestClass]
 public class SitemapTests : BaseTestClass
 {
+	#region Schema
+
+	// The official schemas: sitemaps.org for a url set and an index, W3C XHTML for the hreflang links. They import
+	// each other by their published addresses, which the copies embedded in the tests stand in for.
+	private static readonly Lazy<XmlSchemaSet> _schemas = new(() =>
+	{
+		var set = new XmlSchemaSet { XmlResolver = new EmbeddedSchemas() };
+
+		foreach (var name in new[] { "sitemap.xsd", "siteindex.xsd", "xhtml1-strict.xsd" })
+		{
+			using var reader = XmlReader.Create(EmbeddedSchemas.Open(name));
+			set.Add(null, reader);
+		}
+
+		set.Compile();
+		return set;
+	});
+
+	private sealed class EmbeddedSchemas : XmlResolver
+	{
+		public static Stream Open(string name)
+			=> typeof(SitemapTests).Assembly.GetManifestResourceStream("Schemas." + name)
+				?? throw new InvalidOperationException($"schema {name} is not embedded");
+
+		public override object GetEntity(Uri absoluteUri, string role, Type ofObjectToReturn)
+			=> Open(Path.GetFileName(absoluteUri.AbsolutePath));
+	}
+
+	private static string[] SchemaErrors(XDocument document)
+	{
+		var errors = new List<string>();
+		document.Validate(_schemas.Value, (_, e) => errors.Add($"{e.Severity}: {e.Message}"));
+		return [.. errors];
+	}
+
+	#endregion
+
 	#region SitemapNode Basic Tests
 
 	[TestMethod]
@@ -248,6 +287,28 @@ public class SitemapTests : BaseTestClass
 		priorityElement.AssertNotNull();
 		priorityElement.Value.AssertEqual("0.8");
 	}
+
+	// A generated url set, every element and hreflang alternates included, is what the official schema says it is.
+	[TestMethod]
+	public void Sitemap_IsValidAgainstTheSchema()
+	{
+		var full = new SitemapNode("https://example.com/page")
+		{
+			LastModified = new DateTime(2023, 12, 25, 10, 30, 0, DateTimeKind.Utc),
+			Frequency = SitemapFrequency.Weekly,
+			Priority = 0.8,
+		};
+		full.AlternateLinks.Add(new XhtmlLink("https://example.com/page-fr", "fr"));
+		full.AlternateLinks.Add(new XhtmlLink("https://example.com/page", "x-default"));
+
+		var bare = new SitemapNode("https://example.com/other");
+
+		SchemaErrors(SitemapGenerator.GenerateSitemap([full, bare])).AssertEqual([]);
+	}
+
+	[TestMethod]
+	public void SitemapIndex_IsValidAgainstTheSchema()
+		=> SchemaErrors(SitemapGenerator.GenerateSitemapIndex(["https://example.com/sitemap-1.xml.gz", "https://example.com/sitemap-2.xml.gz"])).AssertEqual([]);
 
 	[TestMethod]
 	public void Sitemap_NodeWithXhtmlLinks_ValidXml()
