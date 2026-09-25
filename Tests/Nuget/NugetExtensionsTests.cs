@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Tests.Nuget;
 
+using System.IO.Compression;
 using System.Xml.Linq;
 
 using Ecng.Nuget;
@@ -474,5 +475,154 @@ public class NugetExtensionsTests : BaseTestClass
 
 		package.Identity.Version.AssertNotNull();
 		(package.DownloadCount > 0).AssertTrue($"DownloadCount={package.DownloadCount} should be >0");
+	}
+	// The registration index of a package, in the shape nuget.org serves it: pages that carry their versions inline,
+	// or -- for a package with many versions -- only the address to read them from.
+	private const string _registrations = "https://feed.test/registration/";
+
+	private static string Leaf(string version, string published, string framework)
+		=> $$"""
+		{
+			"@id": "{{_registrations}}some.package/{{version}}.json",
+			"catalogEntry": {
+				"@id": "https://feed.test/catalog/some.package.{{version}}.json",
+				"id": "Some.Package",
+				"version": "{{version}}",
+				"published": "{{published}}",
+				"listed": true,
+				"dependencyGroups": [ { "targetFramework": "{{framework}}" } ]
+			},
+			"packageContent": "https://feed.test/flat/some.package/{{version}}/some.package.{{version}}.nupkg"
+		}
+		""";
+
+	private static string Page(string url, string lower, string upper, params string[] leaves)
+		=> $$"""
+		{
+			"@id": "{{url}}",
+			"count": {{leaves.Length}},
+			"lower": "{{lower}}",
+			"upper": "{{upper}}"{{(leaves.Length == 0 ? string.Empty : ", \"items\": [" + leaves.JoinComma() + "]")}}
+		}
+		""";
+
+	private static string Index(params string[] pages)
+		=> $$"""{ "count": {{pages.Length}}, "items": [ {{pages.JoinComma()}} ] }""";
+
+	private sealed class FeedHandler(Dictionary<string, string> documents, bool gzip = false) : HttpMessageHandler
+	{
+		public List<string> Requested { get; } = [];
+
+		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+		{
+			var url = request.RequestUri.AbsoluteUri;
+			Requested.Add(url);
+
+			if (!documents.TryGetValue(url, out var body))
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+			if (!gzip)
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) });
+
+			using var packed = new MemoryStream();
+
+			using (var zip = new GZipStream(packed, CompressionLevel.Optimal, true))
+				zip.Write(Encoding.UTF8.GetBytes(body));
+
+			var content = new ByteArrayContent(packed.ToArray());
+			content.Headers.ContentEncoding.Add("gzip");
+
+			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+		}
+	}
+
+	private static string IndexUrl => _registrations + "some.package/index.json";
+
+	[TestMethod]
+	public async Task GetFeedMetadataAsync_InlinePage_DescribesEveryVersion()
+	{
+		var handler = new FeedHandler(new()
+		{
+			[IndexUrl] = Index(Page(IndexUrl + "#page/1.0.0/1.1.0", "1.0.0", "1.1.0",
+				Leaf("1.1.0", "2025-02-03T04:05:06+00:00", "net10.0"),
+				Leaf("1.0.0", "2025-01-02T00:00:00+00:00", "net6.0"))),
+		});
+
+		using var http = new HttpClient(handler);
+
+		var versions = await http.GetFeedMetadataAsync(new Uri(_registrations), "Some.Package", CancellationToken);
+
+		versions.Select(v => v.Identity.Version.ToString()).ToArray().AssertEqual(["1.0.0", "1.1.0"]);
+		versions[0].Published.Value.UtcDateTime.AssertEqual(new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc));
+		versions[1].Published.Value.UtcDateTime.AssertEqual(new DateTime(2025, 2, 3, 4, 5, 6, DateTimeKind.Utc));
+		versions[0].DependencySets.Single().TargetFramework.GetShortFolderName().AssertEqual("net6.0");
+		versions[1].DependencySets.Single().TargetFramework.GetShortFolderName().AssertEqual("net10.0");
+	}
+
+	[TestMethod]
+	public async Task GetFeedMetadataAsync_PageNotInline_IsReadFromItsAddress()
+	{
+		const string pageUrl = _registrations + "some.package/page/1.0.0/1.1.0.json";
+
+		var handler = new FeedHandler(new()
+		{
+			[IndexUrl] = Index(Page(pageUrl, "1.0.0", "1.1.0")),
+			[pageUrl] = Page(pageUrl, "1.0.0", "1.1.0",
+				Leaf("1.0.0", "2025-01-02T00:00:00+00:00", "net6.0"),
+				Leaf("1.1.0", "2025-02-03T00:00:00+00:00", "net10.0")),
+		});
+
+		using var http = new HttpClient(handler);
+
+		var versions = await http.GetFeedMetadataAsync(new Uri(_registrations), "Some.Package", CancellationToken);
+
+		versions.Length.AssertEqual(2);
+		IsTrue(handler.Requested.Contains(pageUrl), handler.Requested.JoinComma());
+	}
+
+	[TestMethod]
+	public async Task GetFeedMetadataAsync_GzipEncodedAnswer_IsRead()
+	{
+		// nuget.org serves the registrations that know SemVer 2.0.0 gzip-encoded, whether the client asked for it or not.
+		var handler = new FeedHandler(new()
+		{
+			[IndexUrl] = Index(Page(IndexUrl + "#page/1.0.0/1.0.0", "1.0.0", "1.0.0",
+				Leaf("1.0.0", "2025-01-02T00:00:00+00:00", "net6.0"))),
+		}, gzip: true);
+
+		using var http = new HttpClient(handler);
+
+		var versions = await http.GetFeedMetadataAsync(new Uri(_registrations), "Some.Package", CancellationToken);
+
+		versions.Single().Identity.Version.ToString().AssertEqual("1.0.0");
+	}
+
+	[TestMethod]
+	public async Task GetFeedMetadataAsync_PackageTheFeedDoesNotCarry_IsEmpty()
+	{
+		using var http = new HttpClient(new FeedHandler([]));
+
+		var versions = await http.GetFeedMetadataAsync(new Uri(_registrations), "Some.Package", CancellationToken);
+
+		versions.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	[TestCategory("Integration")]
+	public async Task GetFeedMetadataAsync_RealPackage_DescribesTheVersionsTheFeedLists()
+	{
+		const string packageId = "Ecng.Common";
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+
+		using var http = new HttpClient();
+
+		var listed = await repo.GetFeedVersionsAsync(http, packageId, CancellationToken);
+		var described = await repo.GetFeedMetadataAsync(http, packageId, CancellationToken);
+
+		described.Last().Identity.Version.AssertEqual(listed.Last());
+
+		var newest = described.Last();
+		(newest.Published > new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero)).AssertTrue($"published {newest.Published}");
+		newest.DependencySets.Any(g => !g.TargetFramework.IsAny).AssertTrue("no target framework");
 	}
 }

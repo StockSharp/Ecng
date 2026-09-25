@@ -1,10 +1,14 @@
 ﻿namespace Ecng.Nuget;
 
+using System.IO.Compression;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 
 using Ecng.Reflection;
+
+using Newtonsoft.Json.Linq;
 
 /// <summary>
 /// NuGET extensions.
@@ -262,6 +266,118 @@ public static class NugetExtensions
 		{
 			return [];
 		}
+	}
+
+	/// <summary>
+	/// Get the registrations URL for the repository: where the feed describes each version of a package.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The registrations URL for the repository.</returns>
+	public static async Task<Uri> GetRegistrationsUrl(this SourceRepository repo, CancellationToken cancellationToken)
+	{
+		if (repo is null)
+			throw new ArgumentNullException(nameof(repo));
+
+		var serviceIndex = await repo.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken).NoWait()
+			?? throw new InvalidOperationException($"ServiceIndexResourceV3 for {repo.PackageSource.Name} is null.");
+
+		var url = serviceIndex.GetServiceEntryUri(ServiceTypes.RegistrationsBaseUrl)
+			?? throw new InvalidOperationException($"No RegistrationsBaseUrl endpoint for {repo.PackageSource.Name}.");
+
+		var str = url.To<string>();
+
+		return str.EndsWith('/') ? url : (str + "/").To<Uri>();
+	}
+
+	/// <summary>
+	/// What a feed says about every version of a package -- when it was published, whether it is listed, and
+	/// what it depends on for each target framework -- oldest first. Unlisted versions are included.
+	/// </summary>
+	/// <remarks>
+	/// Read with the given client rather than through <see cref="PackageMetadataResource"/>: that resource keeps
+	/// an HTTP cache on disk in the user profile, and a service running under an account that has none it may
+	/// write to -- an IIS application pool -- fails on every call.
+	/// </remarks>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="http"><see cref="HttpClient"/></param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The versions, or empty when the feed does not carry the package.</returns>
+	public static async Task<IPackageSearchMetadata[]> GetFeedMetadataAsync(this SourceRepository repo, HttpClient http, string packageId, CancellationToken cancellationToken)
+	{
+		if (repo is null)
+			throw new ArgumentNullException(nameof(repo));
+
+		return await http.GetFeedMetadataAsync(await repo.GetRegistrationsUrl(cancellationToken).NoWait(), packageId, cancellationToken).NoWait();
+	}
+
+	/// <summary>
+	/// What a feed says about every version of a package, read from its registration index -- see
+	/// <see cref="GetFeedMetadataAsync(SourceRepository, HttpClient, string, CancellationToken)"/>.
+	/// </summary>
+	/// <param name="http"><see cref="HttpClient"/></param>
+	/// <param name="registrationsUrl">The registrations URL for the repository.</param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The versions, or empty when the feed does not carry the package.</returns>
+	public static async Task<IPackageSearchMetadata[]> GetFeedMetadataAsync(this HttpClient http, Uri registrationsUrl, string packageId, CancellationToken cancellationToken)
+	{
+		if (http is null)				throw new ArgumentNullException(nameof(http));
+		if (registrationsUrl is null)	throw new ArgumentNullException(nameof(registrationsUrl));
+		if (packageId.IsEmpty())		throw new ArgumentNullException(nameof(packageId));
+
+		JObject index;
+
+		try
+		{
+			index = JObject.Parse(await http.GetFeedJsonAsync(new Uri(registrationsUrl, $"{packageId}/index.json".ToLowerInvariant()), cancellationToken).NoWait());
+		}
+		catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+		{
+			return [];
+		}
+
+		var versions = new List<IPackageSearchMetadata>();
+
+		foreach (var page in Items(index))
+		{
+			// A package with many versions has its pages listed by address only.
+			var leaves = page["items"] is JArray inline
+				? inline
+				: Items(JObject.Parse(await http.GetFeedJsonAsync(new Uri((string)page["@id"]), cancellationToken).NoWait()));
+
+			foreach (var leaf in leaves)
+			{
+				if (leaf["catalogEntry"] is JObject entry)
+					versions.Add(entry.FromJToken<PackageSearchMetadataRegistration>());
+			}
+		}
+
+		return [.. versions.OrderBy(v => v.Identity.Version)];
+	}
+
+	private static IEnumerable<JToken> Items(JToken token)
+		=> (IEnumerable<JToken>)(token["items"] as JArray) ?? [];
+
+	private static async Task<string> GetFeedJsonAsync(this HttpClient http, Uri url, CancellationToken cancellationToken)
+	{
+		using var response = await http.GetAsync(url, cancellationToken).NoWait();
+		response.EnsureSuccessStatusCode();
+
+		var body = await response.Content.ReadAsByteArrayAsync(cancellationToken).NoWait();
+
+		// nuget.org encodes some documents whether the client asked for it or not.
+		if (response.Content.Headers.ContentEncoding.Contains("gzip", StringComparer.OrdinalIgnoreCase))
+		{
+			using var zip = new GZipStream(new MemoryStream(body), CompressionMode.Decompress);
+			using var plain = new MemoryStream();
+
+			await zip.CopyToAsync(plain, 81920, cancellationToken).NoWait();
+			body = plain.ToArray();
+		}
+
+		return Encoding.UTF8.GetString(body);
 	}
 
 	/// <summary>
