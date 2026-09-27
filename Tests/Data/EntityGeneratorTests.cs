@@ -832,12 +832,13 @@ public class EntityGeneratorTests : BaseTestClass
 	[TestMethod]
 	[DataRow(typeof(GenTestScheduleEntity))]
 	[DataRow(typeof(GenTestColumnAttrEntity))]
+	[DataRow(typeof(GenTestPrecisionEntity))]
 	public void GeneratedSchema_ColumnTypes_MatchReflection(Type entityType)
 	{
 		static string Describe(Schema schema)
 			=> schema.Columns
 				.OrderBy(c => c.Name, StringComparer.Ordinal)
-				.Select(c => $"{c.Name}|{c.ClrType}|{c.IsNullable}")
+				.Select(c => $"{c.Name}|{c.ClrType}|{c.IsNullable}|{c.Precision}|{c.Scale}")
 				.JoinN();
 
 		var generated = SchemaRegistry.Get(entityType);

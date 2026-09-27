@@ -529,6 +529,21 @@ public class ComparisonOperatorIntegrationTests : BaseTestClass
 		Names(rows).First().AssertEqual("Cherry");
 	}
 
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Decimal_OrderBy_SortsAsNumber(string provider)
+	{
+		Init(provider);
+
+		var ascending = await _table.SelectAsync(null, [new OrderByCondition("Price", typeof(decimal))], null, null, CancellationToken);
+		ascending.Select(r => r["Price"].To<decimal>()).ToArray().AssertEqual(new[] { 1.50m, 2.00m, 2.00m, 3.75m, 4.50m, 5.00m, 8.00m, 10.25m });
+
+		var descending = await _table.SelectAsync(null, [new OrderByCondition("Price", typeof(decimal), Descending: true)], null, null, CancellationToken);
+		descending.Select(r => r["Price"].To<decimal>()).First().AssertEqual(10.25m);
+	}
+
 	// ─── NULL handling ───
 
 	[TestMethod]

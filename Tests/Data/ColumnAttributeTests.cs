@@ -17,6 +17,9 @@ public class ColAttrInner
 	public string Tag { get; set; }
 
 	public int Score { get; set; }
+
+	[Column(Precision = 18, Scale = 4)]
+	public decimal Weight { get; set; }
 }
 
 [Entity(Name = "Ecng_ColAttrTest")]
@@ -38,6 +41,11 @@ public class ColAttrTestEntity : IDbPersistable
 	public int? NullableInt { get; set; }
 
 	public int RequiredInt { get; set; }
+
+	[Column(Precision = 18, Scale = 6)]
+	public decimal Amount { get; set; }
+
+	public decimal PlainAmount { get; set; }
 
 	// Plain id column that declares its FK target without being a navigation relation.
 	[ForeignKey(typeof(ColAttrTestEntity))]
@@ -185,6 +193,36 @@ public class ColumnAttributeTests : BaseTestClass
 		col.MaxLength.AssertEqual(50);
 	}
 
+	[TestMethod]
+	public void ColumnAttr_PrecisionScale_SetsPrecisionScaleOnColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var col = schema.Columns.First(c => c.Name == "Amount");
+
+		col.Precision.AssertEqual(18);
+		col.Scale.AssertEqual(6);
+	}
+
+	[TestMethod]
+	public void NoAttribute_Decimal_LeavesPrecisionScaleToDialect()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var col = schema.Columns.First(c => c.Name == "PlainAmount");
+
+		col.Precision.AssertEqual(0);
+		col.Scale.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void InnerSchema_PrecisionScale_PropagatedToFlattenedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColAttrTestEntity));
+		var col = schema.Columns.First(c => c.Name == "MetaWeight");
+
+		col.Precision.AssertEqual(18);
+		col.Scale.AssertEqual(4);
+	}
+
 	#endregion
 
 	#region GetColumnDefinition (driver-agnostic)
@@ -289,7 +327,7 @@ public class ColumnAttributeTests : BaseTestClass
 	{
 		var sb = new StringBuilder();
 
-		GetDialect(dialectName).AppendAlterColumn(sb, "Users", "Notes", typeof(string), isNullable: true, maxLength: ColumnAttribute.Max);
+		GetDialect(dialectName).AppendAlterColumn(sb, "Users", "Notes", typeof(string), isNullable: true, maxLength: ColumnAttribute.Max, precision: 0, scale: 0, live: null);
 
 		sb.ToString().Contains(expectedFragment).AssertTrue($"Expected '{expectedFragment}', got: {sb}");
 	}
@@ -318,7 +356,7 @@ public class ColumnAttributeTests : BaseTestClass
 	{
 		var sb = new StringBuilder();
 
-		SqlServerDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512);
+		SqlServerDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512, 0, 0, null);
 
 		sb.ToString().AssertEqual("ALTER TABLE [Users] ALTER COLUMN [Email] NVARCHAR(512) NULL");
 	}
@@ -328,7 +366,7 @@ public class ColumnAttributeTests : BaseTestClass
 	{
 		var sb = new StringBuilder();
 
-		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512);
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), true, 512, 0, 0, null);
 
 		var sql = sb.ToString();
 		sql.Contains("SET DATA TYPE VARCHAR(512)").AssertTrue($"Expected SET DATA TYPE, got: {sql}");
@@ -341,7 +379,7 @@ public class ColumnAttributeTests : BaseTestClass
 	{
 		var sb = new StringBuilder();
 
-		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), false, 256);
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "Users", "Email", typeof(string), false, 256, 0, 0, null);
 
 		var sql = sb.ToString();
 		sql.Contains("SET DATA TYPE VARCHAR(256)").AssertTrue($"Expected SET DATA TYPE, got: {sql}");
@@ -796,6 +834,453 @@ public class ColumnAttributeTests : BaseTestClass
 
 		diffs.Any(d => d.ColumnName == "Modified").AssertTrue(
 			"DateTimeOffset precision mismatch (7 vs 3) should be detected");
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer", "DECIMAL(18,6) NOT NULL")]
+	[DataRow("PostgreSql", "NUMERIC(18,6) NOT NULL")]
+	public void GetColumnDefinition_DecimalScaleWithoutPrecision_KeepsTheScale(string dialectName, string expected)
+	{
+		ISqlDialect dialect = dialectName == "SqlServer" ? SqlServerDialect.Instance : PostgreSqlDialect.Instance;
+
+		dialect.GetColumnDefinition(typeof(decimal), isNullable: false, scale: 6).AssertEqual(expected);
+	}
+
+	[TestMethod]
+	public void GenerateSql_DecimalScaleWithoutPrecision_AltersToTheDeclaredScale()
+	{
+		var schema = new Schema
+		{
+			TableName = "Prices",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Rate", ClrType = typeof(decimal), Scale = 6 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("Prices", "Rate", "decimal", false, null, 18, 8)], SqlServerDialect.Instance, false);
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, diffs, [schema]);
+
+		sql.ContainsIgnoreCase("DECIMAL(18,6)").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void Compare_DecimalPrecisionWithZeroScale_AgainstAScaledColumn_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Qty", ClrType = typeof(decimal), Precision = 18 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("TestTable", "Qty", "decimal", false, null, 18, 8)], SqlServerDialect.Instance, false);
+
+		diffs.Any(d => d.ColumnName == "Qty" && d.Kind == SchemaDiffKind.PrecisionMismatch).AssertTrue(
+			"DECIMAL(18) is DECIMAL(18,0), which a DECIMAL(18,8) column is not");
+	}
+
+	[TestMethod]
+	public void Compare_DecimalDigits_AgainstUnconstrainedNumeric_Detected()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("TestTable", "Amount", "numeric", false, null, null, null)], PostgreSqlDialect.Instance, false);
+
+		diffs.Any(d => d.ColumnName == "Amount" && d.Kind == SchemaDiffKind.PrecisionMismatch).AssertTrue(
+			"A numeric column without precision holds any digits, not the declared (18,6)");
+	}
+
+	[TestMethod]
+	public void Compare_DecimalDigits_OnSQLite_AreNotCompared()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("TestTable", "Amount", "TEXT", false, null, null, null)], SQLiteDialect.Instance, false);
+
+		diffs.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_MissingColumn_ExpectedCarriesTheDeclaredDigits()
+	{
+		var schema = new Schema
+		{
+			TableName = "TestTable",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Other", ClrType = typeof(int) },
+				new SchemaColumn { Name = "Balance", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("TestTable", "Other", "int", false, null, 10, 0)], SqlServerDialect.Instance, false);
+
+		diffs.Single(d => d.Kind == SchemaDiffKind.MissingColumn).Expected.AssertEqual("DECIMAL(18,6) NOT NULL");
+	}
+
+	[TestMethod]
+	[DataRow(typeof(DateTime), "SET DATA TYPE TIMESTAMPTZ(3);")]
+	[DataRow(typeof(TimeOnly), "SET DATA TYPE TIME(3);")]
+	public void PostgreSqlDialect_AppendAlterColumn_KeepsTheTimePrecision(Type clrType, string expected)
+	{
+		var sb = new StringBuilder();
+		PostgreSqlDialect.Instance.AppendAlterColumn(sb, "T", "Created", clrType, isNullable: false, maxLength: 0, precision: 3, scale: 0, live: null);
+
+		sb.ToString().ContainsIgnoreCase(expected).AssertTrue(sb.ToString());
+	}
+
+	private static string MigrateColumn(ISqlDialect dialect, SchemaColumn column, DbColumnInfo live)
+	{
+		var schema = new Schema
+		{
+			TableName = live.TableName,
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [column],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [live], dialect, false);
+		return SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schema]);
+	}
+
+	[TestMethod]
+	public void GenerateSql_NullabilityOnly_KeepsTheLiveVarchar()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Email", ClrType = typeof(string), MaxLength = 256 },
+			new DbColumnInfo("Users", "Email", "varchar", true, 256, null, null));
+
+		sql.ContainsIgnoreCase("ALTER COLUMN [Email] VARCHAR(256) NOT NULL").AssertTrue(sql);
+		sql.ContainsIgnoreCase("NVARCHAR").AssertFalse(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_NullabilityOnly_KeepsTheLiveDigitsOfAnUndeclaredDecimal()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Commission", ClrType = typeof(decimal?), IsNullable = true },
+			new DbColumnInfo("Trades", "Commission", "decimal", false, null, 28, 10));
+
+		sql.ContainsIgnoreCase("ALTER COLUMN [Commission] DECIMAL(28,10) NULL").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_NullabilityOnly_KeepsTheLiveDatetime()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Created", ClrType = typeof(DateTime?), IsNullable = true },
+			new DbColumnInfo("Users", "Created", "datetime", false, null, 3, null));
+
+		sql.ContainsIgnoreCase("ALTER COLUMN [Created] DATETIME NULL").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_NullabilityOnly_PostgreSql_ChangesOnlyTheNullability()
+	{
+		var sql = MigrateColumn(PostgreSqlDialect.Instance,
+			new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			new DbColumnInfo("T", "Amount", "numeric", true, null, 18, 6));
+
+		sql.ContainsIgnoreCase("SET DATA TYPE").AssertFalse(sql);
+		sql.ContainsIgnoreCase("ALTER COLUMN \"Amount\" SET NOT NULL").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_LengthOnly_KeepsTheLiveVarchar()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Email", ClrType = typeof(string), MaxLength = 512 },
+			new DbColumnInfo("Users", "Email", "varchar", false, 256, null, null));
+
+		sql.ContainsIgnoreCase("ALTER COLUMN [Email] VARCHAR(512) NOT NULL").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_SeveralDiffsOnOneColumn_AlterItOnce()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			new DbColumnInfo("T", "Amount", "decimal", true, null, 18, 2));
+
+		sql.Split("ALTER COLUMN").Length.AssertEqual(2, sql);
+		sql.ContainsIgnoreCase("DECIMAL(18,6) NOT NULL").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer")]
+	[DataRow("PostgreSql")]
+	public void GenerateSql_FewerDecimalPlaces_IsCalledOut(string dialectName)
+	{
+		var sql = MigrateColumn(GetDialect(dialectName),
+			new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			new DbColumnInfo("T", "Amount", "decimal", false, null, 18, 8));
+
+		sql.Split('\n').Any(l => l.TrimStart().StartsWith("--") && l.Contains("Amount") && l.ContainsIgnoreCase("round")).AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_FewerIntegerDigits_IsCalledOut()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6 },
+			new DbColumnInfo("T", "Amount", "decimal", false, null, 20, 6));
+
+		sql.Split('\n').Any(l => l.TrimStart().StartsWith("--") && l.Contains("Amount") && l.Contains("12")).AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_WiderDecimal_IsNotCalledOut()
+	{
+		var sql = MigrateColumn(SqlServerDialect.Instance,
+			new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 22, Scale = 6 },
+			new DbColumnInfo("T", "Amount", "decimal", false, null, 18, 2));
+
+		sql.Contains("--").AssertFalse(sql);
+	}
+
+	private static string MigrateIndexedColumn(ISqlDialect dialect, IReadOnlyList<DbIndexInfo> indexes, IReadOnlyList<DbForeignKeyInfo> foreignKeys)
+	{
+		var schema = new Schema
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6, Indexes = [new(null, 0)] },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var live = new DbColumnInfo("T", "Amount", "decimal", false, null, 18, 2);
+		var diffs = SchemaMigrator.Compare([schema], [live], dialect, false, foreignKeys, indexes);
+
+		return SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schema]);
+	}
+
+	[TestMethod]
+	public void GenerateSql_AlteringAColumnAnUndeclaredIndexCovers_SqlServer_SaysSo()
+	{
+		var sql = MigrateIndexedColumn(SqlServerDialect.Instance,
+			[
+				new DbIndexInfo("IX_T_Amount", "T", "Amount", 1, false, false),
+				new DbIndexInfo("IX_Hand_Made", "T", "Other", 1, false, false),
+				new DbIndexInfo("IX_Hand_Made", "T", "Amount", 2, false, false),
+			],
+			[]);
+
+		sql.Split('\n').Any(l => l.StartsWith("-- T.Amount:") && l.Contains("IX_Hand_Made")).AssertTrue(sql);
+		sql.Split('\n').Any(l => !l.TrimStart().StartsWith("--") && l.ContainsIgnoreCase("DROP INDEX")).AssertFalse(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_AlteringAForeignKeyColumn_SqlServer_SaysSo()
+	{
+		var sql = MigrateIndexedColumn(SqlServerDialect.Instance,
+			[new DbIndexInfo("IX_T_Amount", "T", "Amount", 1, false, false)],
+			[new DbForeignKeyInfo("FK_Other_Amount", "Other", "AmountRef", "T", "Amount")]);
+
+		sql.Split('\n').Any(l => l.StartsWith("-- T.Amount:") && l.Contains("FK_Other_Amount")).AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_AlteringAnIndexedColumn_PostgreSql_LeavesTheIndex()
+	{
+		var sql = MigrateIndexedColumn(PostgreSqlDialect.Instance,
+			[new DbIndexInfo("IX_T_Amount", "T", "Amount", 1, false, false)],
+			[]);
+
+		sql.ContainsIgnoreCase("DROP INDEX").AssertFalse(sql);
+		sql.ContainsIgnoreCase("CREATE").AssertFalse(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_ColumnChange_ComesBeforeAMissingIndexOnIt()
+	{
+		var schema = new Schema
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Amount", ClrType = typeof(decimal), Precision = 18, Scale = 6, Indexes = [new(null, 0)] },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var live = new DbColumnInfo("T", "Amount", "decimal", false, null, 18, 2);
+		var diffs = SchemaMigrator.Compare([schema], [live], SqlServerDialect.Instance, false, [], []);
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SqlServerDialect.Instance, [.. diffs.Reverse()], [schema]);
+
+		(sql.IndexOf("ALTER COLUMN", StringComparison.Ordinal) < sql.IndexOf("CREATE INDEX", StringComparison.Ordinal)).AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_TimestampToTimestamptz_ReadsTheStoredValuesAsUtc()
+	{
+		var sql = MigrateColumn(PostgreSqlDialect.Instance,
+			new SchemaColumn { Name = "Created", ClrType = typeof(DateTime) },
+			new DbColumnInfo("T", "Created", "timestamp without time zone", false, null, 6, null));
+
+		sql.ContainsIgnoreCase("SET DATA TYPE TIMESTAMPTZ USING \"Created\" AT TIME ZONE 'UTC'").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer", "nvarchar")]
+	[DataRow("PostgreSql", "character varying")]
+	public void GenerateSql_NewRequiredReference_IsNotBackfilledWithADefault(string dialectName, string textType)
+	{
+		var dialect = GetDialect(dialectName);
+
+		var schema = new Schema
+		{
+			TableName = "Child",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns =
+			[
+				new SchemaColumn { Name = "Name", ClrType = typeof(string), MaxLength = 64 },
+				new SchemaColumn { Name = "ParentId", ClrType = typeof(long), ReferencedEntityType = typeof(ColAttrTestEntity) },
+			],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("Child", "Name", textType, false, 64, null, null)], dialect, false);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [schema]);
+		var runnable = sql.Split('\n').Where(l => !l.TrimStart().StartsWith("--")).JoinN();
+
+		runnable.ContainsIgnoreCase("UPDATE").AssertFalse(sql);
+		runnable.ContainsIgnoreCase("NOT NULL").AssertFalse(sql);
+		runnable.ContainsIgnoreCase("FOREIGN KEY").AssertTrue(sql);
+		sql.Split('\n').Any(l => l.StartsWith("-- Child.ParentId") && l.ContainsIgnoreCase("NOT NULL")).AssertTrue(sql);
+	}
+
+	private static Schema CreateSQLiteSchema(params SchemaColumn[] columns)
+		=> new()
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [new SchemaColumn { Name = "Name", ClrType = typeof(string) }, .. columns],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+	[TestMethod]
+	public void GenerateSql_SQLite_NewRequiredColumn_IsAddedWithADefault()
+	{
+		var schema = CreateSQLiteSchema(new SchemaColumn { Name = "Fee", ClrType = typeof(decimal) });
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("T", "Name", "TEXT", false, null, null, null)], SQLiteDialect.Instance, false);
+		var sql = SchemaMigrator.GenerateMigrationSql(SQLiteDialect.Instance, diffs, [schema]);
+
+		sql.Contains("ALTER TABLE \"T\" ADD \"Fee\" TEXT NOT NULL DEFAULT 0;").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_SQLite_NewReference_IsAddedWithItsForeignKeyInline()
+	{
+		var schema = CreateSQLiteSchema(new SchemaColumn { Name = "ParentId", ClrType = typeof(long?), IsNullable = true, ReferencedEntityType = typeof(ColAttrTestEntity) });
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("T", "Name", "TEXT", false, null, null, null)], SQLiteDialect.Instance, false);
+		var sql = SchemaMigrator.GenerateMigrationSql(SQLiteDialect.Instance, diffs, [schema]);
+
+		sql.Contains("ADD \"ParentId\" INTEGER NULL CONSTRAINT").AssertTrue(sql);
+		sql.Contains("REFERENCES \"Ecng_ColAttrTest\" (\"Id\")").AssertTrue(sql);
+	}
+
+	[TestMethod]
+	public void GenerateSql_SQLite_ColumnChange_IsLeftAsANote()
+	{
+		var schema = CreateSQLiteSchema(new SchemaColumn { Name = "Qty", ClrType = typeof(int) });
+
+		var diffs = SchemaMigrator.Compare([schema],
+			[
+				new DbColumnInfo("T", "Name", "TEXT", false, null, null, null),
+				new DbColumnInfo("T", "Qty", "TEXT", true, null, null, null),
+			], SQLiteDialect.Instance, false);
+
+		var sql = SchemaMigrator.GenerateMigrationSql(SQLiteDialect.Instance, diffs, [schema]);
+
+		sql.Split('\n').Any(l => l.StartsWith("-- T.Qty")).AssertTrue(sql);
+		sql.Split('\n').Any(l => !l.TrimStart().StartsWith("--") && l.ContainsIgnoreCase("Qty")).AssertFalse(sql);
+	}
+
+	[TestMethod]
+	[DataRow(typeof(string), 5000, "nvarchar")]
+	[DataRow(typeof(byte[]), 9000, "varbinary")]
+	public void Compare_LengthTheDialectStoresAsMax_MatchesAMaxColumn(Type clrType, int maxLength, string dataType)
+	{
+		var schema = new Schema
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [new SchemaColumn { Name = "Body", ClrType = clrType, MaxLength = maxLength }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("T", "Body", dataType, false, -1, null, null)], SqlServerDialect.Instance, false);
+
+		diffs.Count.AssertEqual(0, diffs.Select(d => $"{d.Kind} {d.Expected} vs {d.Actual}").JoinCommaSpace());
+	}
+
+	[TestMethod]
+	public void Compare_LengthWithinTheDialectLimit_StillDiffersFromMax()
+	{
+		var schema = new Schema
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [new SchemaColumn { Name = "Body", ClrType = typeof(string), MaxLength = 4000 }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo("T", "Body", "nvarchar", false, -1, null, null)], SqlServerDialect.Instance, false);
+
+		diffs.Single().Kind.AssertEqual(SchemaDiffKind.MaxLengthMismatch);
+	}
+
+	[TestMethod]
+	[DataRow("SqlServer", "-- DROP INDEX [IX_T_Old] ON [T];")]
+	[DataRow("PostgreSql", "-- DROP INDEX \"IX_T_Old\";")]
+	[DataRow("SQLite", "-- DROP INDEX \"IX_T_Old\";")]
+	public void GenerateSql_ExtraIndex_CommentsOutADropTheDialectRuns(string dialectName, string expected)
+	{
+		var schema = new Schema
+		{
+			TableName = "T",
+			EntityType = typeof(ColAttrTestEntity),
+			Columns = [new SchemaColumn { Name = "Old", ClrType = typeof(int) }],
+			Factory = () => new ColAttrTestEntity(),
+		};
+
+		var sql = SchemaMigrator.GenerateMigrationSql(GetDialect(dialectName), [new SchemaDiff("T", "IX_T_Old", SchemaDiffKind.ExtraIndex, "", "(Old)")], [schema]);
+
+		sql.Contains(expected).AssertTrue(sql);
 	}
 
 	#endregion

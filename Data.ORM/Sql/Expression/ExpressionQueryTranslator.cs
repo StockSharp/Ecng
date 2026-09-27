@@ -23,6 +23,35 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 	public Queue<Action<bool, Query>> WrapColumn => Context.WrapColumn;
 
+	/// <summary>
+	/// Runs <paramref name="visit"/> with <paramref name="wrap"/> written around every column it emits.
+	/// Wrappers nest, so afterwards exactly this one is removed, not the oldest in the queue.
+	/// </summary>
+	public void VisitWrapped(Action<bool, Query> wrap, Action visit)
+	{
+		var wraps = WrapColumn;
+
+		wraps.Enqueue(wrap);
+
+		try
+		{
+			visit();
+		}
+		finally
+		{
+			var pending = wraps.ToArray();
+			var index = Array.LastIndexOf(pending, wrap);
+
+			wraps.Clear();
+
+			for (var i = 0; i < pending.Length; i++)
+			{
+				if (i != index)
+					wraps.Enqueue(pending[i]);
+			}
+		}
+	}
+
 	public Query GenerateSql(Expression expression)
 	{
 		Context = new() { TableAlias = Extensions.DefaultAlias };
@@ -885,7 +914,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 	/// correlation degenerated to <c>[e].[Fk] = [e].[Id]</c> and the inner FROM was
 	/// lost — producing malformed or silently wrong SQL.
 	/// </summary>
-	private void VisitOperand(Expression expr)
+	public void VisitOperand(Expression expr)
 	{
 		// A correlated Any() in a VALUE position (e.g. `(...).Any() == flag`) must
 		// become a scalar sub-query, not a bare exists() predicate. Only wrap it here
@@ -896,6 +925,29 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			ProcessInitExpression(expr);
 		else
 			Visit(expr);
+	}
+
+	/// <summary>
+	/// Renders what <paramref name="visit"/> emits into a query of its own, for a dialect that has to
+	/// place the operands of a function itself. Columns inside still get the pending column wrappers.
+	/// </summary>
+	public Query Capture(Action visit)
+	{
+		var curr = Curr;
+		var captured = new Query { WrapColumn = WrapColumn };
+
+		Curr = captured;
+
+		try
+		{
+			visit();
+		}
+		finally
+		{
+			Curr = curr;
+		}
+
+		return captured;
 	}
 
 	/// <summary>
@@ -1215,8 +1267,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				Curr.CloseBracket();
 				break;
 			case ExpressionType.Negate:
-				Curr.Raw(" -1 * ");
+				// Bracketed so a negated right operand of / or % stays one operand.
+				Curr.OpenBracket().Raw("-1 * ");
 				ProcessInitExpression(u.Operand);
+				Curr.CloseBracket();
 				break;
 			case ExpressionType.Quote:
 				Visit(u.StripQuotes());
@@ -1239,6 +1293,9 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		{
 			return Visit(rewritten);
 		}
+
+		if (b.NodeType == ExpressionType.Modulo && b.Type.IsDecimal())
+			return VisitDecimalModulo(b);
 
 		Curr.OpenBracket();
 
@@ -1389,39 +1446,53 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		return b;
 	}
 
-	private void VisitDecimalComparisonOperand(Expression expression)
+	private Expression VisitDecimalModulo(BinaryExpression b)
 	{
-		Context.WrapColumn.Enqueue((before, query) =>
-		{
-			query.AddAction((dialect, builder) =>
-			{
-				var castType = dialect.DecimalComparisonCastSqlType;
+		var savedPredicate = Context.PredicatePosition;
+		Context.PredicatePosition = false;
 
-				if (castType.IsEmpty())
-					return;
+		var dividend = Capture(() => VisitOperand(b.Left));
+		var divisor = Capture(() => VisitOperand(b.Right));
 
-				if (before)
-					builder.Append("cast(");
-				else
-					builder.Append(" as ").Append(castType).Append(')');
-			});
-		});
+		Context.PredicatePosition = savedPredicate;
 
-		try
-		{
-			// A correlated scalar aggregate compared as decimal (e.g.
-			// `(from o ...).Sum() > 1000m`) must still be wrapped as a scalar
-			// sub-query, otherwise it flattens into the outer statement like any
-			// other un-wrapped aggregate.
-			if (NeedsSubqueryContext(expression))
-				ProcessInitExpression(expression);
-			else
-				Visit(expression);
-		}
-		finally
-		{
-			Context.WrapColumn.Dequeue();
-		}
+		Curr
+			.OpenBracket()
+			.AddAction((dialect, builder) => dialect.AppendDecimalModulo(builder, dividend.Render(dialect), divisor.Render(dialect)))
+			.CloseBracket();
+
+		return b;
+	}
+
+	/// <summary>
+	/// Visits one side of a decimal comparison. Where decimals are stored as text, the whole side is cast:
+	/// a bound decimal parameter is text too, and arithmetic, a function or a sub-query yields a value
+	/// without numeric affinity, so a cast on the columns inside it would leave the comparison textual.
+	/// A literal is already a number.
+	/// </summary>
+	public void VisitDecimalComparisonOperand(Expression expression)
+	{
+		// An integer compares with a decimal exactly on every engine, and left unconverted a column
+		// stays usable by an index.
+		if (DecimalCastVisitor.IsConversion(expression, out var integer))
+			expression = integer;
+
+		var cast = UnwrapConvert(expression) is not ConstantExpression;
+
+		if (cast)
+			Curr.OpenDecimalComparisonCast();
+
+		// A correlated scalar aggregate compared as decimal (e.g.
+		// `(from o ...).Sum() > 1000m`) must still be wrapped as a scalar
+		// sub-query, otherwise it flattens into the outer statement like any
+		// other un-wrapped aggregate.
+		if (NeedsSubqueryContext(expression))
+			ProcessInitExpression(expression);
+		else
+			Visit(expression);
+
+		if (cast)
+			Curr.CloseDecimalComparisonCast();
 	}
 
 	private static bool IsDecimalComparison(BinaryExpression b)
@@ -1436,11 +1507,8 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			ExpressionType.LessThanOrEqual or
 			ExpressionType.GreaterThan or
 			ExpressionType.GreaterThanOrEqual)
-			&& (IsDecimalType(b.Left.Type) || IsDecimalType(b.Right.Type));
+			&& (b.Left.Type.IsDecimal() || b.Right.Type.IsDecimal());
 	}
-
-	private static bool IsDecimalType(Type type)
-		=> (Nullable.GetUnderlyingType(type) ?? type) == typeof(decimal);
 
 	private static bool TryRewriteEntityNullComparison(BinaryExpression b, out BinaryExpression rewritten)
 	{
@@ -1896,7 +1964,15 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				if (!call.Method.TryGetVisitor(out var visitor))
 					throw new NotSupportedException();
 
+				var isDecimal = call.Type.IsDecimal();
+
+				if (isDecimal)
+					Curr.OpenDecimalComparisonCast();
+
 				visitor.Visit(this, call);
+
+				if (isDecimal)
+					Curr.CloseDecimalComparisonCast();
 
 				if (!asc)
 					Curr.Desc();
@@ -1926,10 +2002,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 				foreach (var jp in res.RequiredJoins)
 					RegisterJoinPlan(jp);
 
-				return new(res.Column.Alias, res.Column.Name, asc);
+				return new(res.Column.Alias, res.Column.Name, asc, me.Type.IsDecimal());
 			}
 
-			return new(null, me.Member.Name, asc);
+			return new(null, me.Member.Name, asc, me.Type.IsDecimal());
 		}
 
 		throw new NotSupportedException($"Cannot use {body.NodeType} as an ORDER BY column.");

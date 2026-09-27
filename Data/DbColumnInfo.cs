@@ -8,7 +8,7 @@ namespace Ecng.Data;
 /// <param name="DataType">SQL data type name (e.g. "nvarchar", "bigint").</param>
 /// <param name="IsNullable">Whether the column allows NULLs.</param>
 /// <param name="MaxLength">Max character length for string columns, or null.</param>
-/// <param name="NumericPrecision">Numeric precision, or null.</param>
+/// <param name="NumericPrecision">Numeric precision, or the fractional-second digits of a date/time column; null when the column has neither.</param>
 /// <param name="NumericScale">Numeric scale, or null.</param>
 /// <param name="IsComputed">Whether the column is computed (calculated).</param>
 public record DbColumnInfo(

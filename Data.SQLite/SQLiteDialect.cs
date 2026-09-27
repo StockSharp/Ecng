@@ -90,6 +90,19 @@ public class SQLiteDialect : SqlDialectBase
 	public override string DecimalComparisonCastSqlType => "NUMERIC";
 
 	/// <inheritdoc />
+	/// <remarks>
+	/// CAST(3 AS NUMERIC) stays the integer 3, and 3 / 4 is then integer division. SQLite has no
+	/// decimal type: a decimal stored as text already turns into a REAL in arithmetic.
+	/// </remarks>
+	public override string GetIntegerToDecimalCastSqlType(int precision) => "REAL";
+
+	/// <inheritdoc />
+	public override bool KeepsDecimalDigits => false;
+
+	/// <inheritdoc />
+	public override bool CanAlterColumn => false;
+
+	/// <inheritdoc />
 	public override void AppendDatePartOpen(StringBuilder sb, string part)
 	{
 		// SQLite doesn't have EXTRACT or DATEPART natively.
@@ -151,6 +164,37 @@ public class SQLiteDialect : SqlDialectBase
 		};
 
 		sb.Append($"((julianday({endSql}) - julianday({startSql})) * {perDayUnits})");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>SQLite's % casts both operands to INTEGER; the math function mod() keeps the fraction.</remarks>
+	public override void AppendDecimalModulo(StringBuilder sb, string dividendSql, string divisorSql)
+	{
+		sb.Append($"mod({dividendSql}, {divisorSql})");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>trunc() is one of SQLite's math functions and takes no digits argument.</remarks>
+	protected override void AppendTruncate(StringBuilder sb, string valueSql, string digitsSql)
+	{
+		if (digitsSql is not null)
+			throw new NotSupportedException("SQLite cannot truncate to a number of fractional digits.");
+
+		sb.Append($"trunc({valueSql})");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>The two-argument max() is SQLite's scalar function; only the one-argument form aggregates.</remarks>
+	public override void AppendGreatest(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"max({leftSql}, {rightSql})");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>The two-argument min() is SQLite's scalar function; only the one-argument form aggregates.</remarks>
+	public override void AppendLeast(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"min({leftSql}, {rightSql})");
 	}
 
 	/// <inheritdoc />
@@ -449,7 +493,7 @@ public class SQLiteDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live)
 	{
 		// SQLite's ALTER TABLE … ALTER COLUMN does not exist — only
 		// RENAME COLUMN and a few specific cases were added in 3.25/3.35.

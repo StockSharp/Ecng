@@ -463,10 +463,17 @@ internal class AdoTable : IDatabaseTable
 		if (orderList == null || orderList.Count == 0)
 			return null;
 
+		var decimalCastType = Dialect.DecimalComparisonCastSqlType;
+
 		var orderClauses = orderList.Select(o =>
-			o.Descending
-				? $"{Dialect.QuoteIdentifier(o.Column)} DESC"
-				: $"{Dialect.QuoteIdentifier(o.Column)} ASC");
+		{
+			var column = Dialect.QuoteIdentifier(o.Column);
+
+			if (!decimalCastType.IsEmpty() && (o.ColumnType.GetUnderlyingType() ?? o.ColumnType) == typeof(decimal))
+				column = $"cast({column} as {decimalCastType})";
+
+			return o.Descending ? $"{column} DESC" : $"{column} ASC";
+		});
 
 		return orderClauses.JoinCommaSpace();
 	}

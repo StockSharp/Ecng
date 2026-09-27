@@ -64,27 +64,30 @@ public class OrderByConditionTests
 	[TestMethod]
 	public void Constructor_Ascending()
 	{
-		var orderBy = new OrderByCondition("Column1");
+		var orderBy = new OrderByCondition("Column1", typeof(string));
 
 		orderBy.Column.AssertEqual("Column1");
+		orderBy.ColumnType.AssertEqual(typeof(string));
 		orderBy.Descending.AssertEqual(false);
 	}
 
 	[TestMethod]
 	public void Constructor_Descending()
 	{
-		var orderBy = new OrderByCondition("Column1", Descending: true);
+		var orderBy = new OrderByCondition("Column1", typeof(string), Descending: true);
 
 		orderBy.Column.AssertEqual("Column1");
+		orderBy.ColumnType.AssertEqual(typeof(string));
 		orderBy.Descending.AssertEqual(true);
 	}
 
 	[TestMethod]
 	public void Constructor_ExplicitAscending()
 	{
-		var orderBy = new OrderByCondition("Column1", Descending: false);
+		var orderBy = new OrderByCondition("Column1", typeof(string), Descending: false);
 
 		orderBy.Column.AssertEqual("Column1");
+		orderBy.ColumnType.AssertEqual(typeof(string));
 		orderBy.Descending.AssertEqual(false);
 	}
 }

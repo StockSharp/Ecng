@@ -123,7 +123,24 @@ public enum SchemaDiffKind
 /// <param name="Kind">The kind of difference.</param>
 /// <param name="Expected">Expected value (from entity).</param>
 /// <param name="Actual">Actual value (from database).</param>
-public record SchemaDiff(string TableName, string ColumnName, SchemaDiffKind Kind, string Expected, string Actual);
+public record SchemaDiff(string TableName, string ColumnName, SchemaDiffKind Kind, string Expected, string Actual)
+{
+	/// <summary>
+	/// The column as the database holds it, for a difference in an existing column; otherwise null.
+	/// </summary>
+	public DbColumnInfo Live { get; init; }
+
+	/// <summary>
+	/// Every index of the table that includes the column, one entry per indexed column, for a difference in an
+	/// existing column.
+	/// </summary>
+	public IReadOnlyList<DbIndexInfo> LiveIndexes { get; init; } = [];
+
+	/// <summary>
+	/// The foreign keys on the column or referencing it, for a difference in an existing column.
+	/// </summary>
+	public IReadOnlyList<DbForeignKeyInfo> LiveForeignKeys { get; init; } = [];
+}
 
 /// <summary>
 /// Compares entity schemas (from <see cref="SchemaRegistry"/>) with a live database
@@ -205,14 +222,22 @@ public static class SchemaMigrator
 				if (!dbCols.TryGetValue(col.Name, out var dbCol))
 				{
 					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MissingColumn,
-						dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength), string.Empty));
+						dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale), string.Empty));
 					continue;
 				}
+
+				SchemaDiff ColumnDiff(SchemaDiffKind kind, string expected, string actual)
+					=> new(schema.TableName, col.Name, kind, expected, actual)
+					{
+						Live = dbCol,
+						LiveIndexes = IndexesOn(dbIndexes, schema.TableName, col.Name),
+						LiveForeignKeys = ForeignKeysOn(dbForeignKeys, schema.TableName, col.Name),
+					};
 
 				// compare nullability
 				if (col.IsNullable != dbCol.IsNullable)
 				{
-					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.NullabilityMismatch,
+					diffs.Add(ColumnDiff(SchemaDiffKind.NullabilityMismatch,
 						col.IsNullable ? "NULL" : "NOT NULL",
 						dbCol.IsNullable ? "NULL" : "NOT NULL"));
 				}
@@ -223,33 +248,37 @@ public static class SchemaMigrator
 
 				if (!expectedType.EqualsIgnoreCase(actualType))
 				{
-					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.TypeMismatch,
-						expectedType, actualType));
+					diffs.Add(ColumnDiff(SchemaDiffKind.TypeMismatch, expectedType, actualType));
 				}
 
-				// compare max length. int.MaxValue (ColumnAttribute.Max) is the
-				// explicit "unbounded" sentinel; SQL Server's sys.columns reports
-				// max_length == -1 for NVARCHAR(MAX)/VARBINARY(MAX). Treat the two
-				// as equivalent so an entity that explicitly declares its column
-				// as Max doesn't show a perpetual MaxLengthMismatch diff.
-				var entityMaxIsUnbounded = col.MaxLength == int.MaxValue;
-				var dbMaxIsUnbounded = dbCol.MaxLength == -1;
-				if (col.MaxLength > 0 && !(entityMaxIsUnbounded && dbMaxIsUnbounded) && dbCol.MaxLength is not null && col.MaxLength != dbCol.MaxLength)
+				// compare max length as the database reports it for the declared one: -1 for a column the
+				// dialect stores unbounded, whether declared Max or longer than the dialect's longest bounded type.
+				if (col.MaxLength > 0 && dbCol.MaxLength is not null && dialect.GetStoredMaxLength(col.ClrType, col.MaxLength) != dbCol.MaxLength)
 				{
-					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.MaxLengthMismatch,
+					diffs.Add(ColumnDiff(SchemaDiffKind.MaxLengthMismatch,
 						col.MaxLength.ToString(), dbCol.MaxLength.Value.ToString()));
 				}
 
-				// compare precision/scale
-				if (col.Precision > 0 && dbCol.NumericPrecision is not null && col.Precision != dbCol.NumericPrecision)
+				// compare precision/scale. A decimal that declares digits is held to what GetColumnTypeName creates
+				// for it; one that declares none is not compared.
+				if ((col.ClrType.GetUnderlyingType() ?? col.ClrType) == typeof(decimal))
 				{
-					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.PrecisionMismatch,
-						$"({col.Precision},{col.Scale})", $"({dbCol.NumericPrecision},{dbCol.NumericScale ?? 0})"));
+					if ((col.Precision > 0 || col.Scale > 0) && dialect.KeepsDecimalDigits)
+					{
+						var precision = col.Precision > 0 ? col.Precision : SqlDialectBase.DefaultDecimalPrecision;
+
+						if (dbCol.NumericPrecision != precision || (dbCol.NumericScale ?? 0) != col.Scale)
+						{
+							diffs.Add(ColumnDiff(SchemaDiffKind.PrecisionMismatch,
+								$"({precision},{col.Scale})",
+								dbCol.NumericPrecision is null ? "(unconstrained)" : $"({dbCol.NumericPrecision},{dbCol.NumericScale ?? 0})"));
+						}
+					}
 				}
-				else if (col.Scale > 0 && dbCol.NumericScale is not null && col.Scale != dbCol.NumericScale)
+				else if (col.Precision > 0 && dbCol.NumericPrecision is not null && col.Precision != dbCol.NumericPrecision)
 				{
-					diffs.Add(new(schema.TableName, col.Name, SchemaDiffKind.PrecisionMismatch,
-						$"({col.Precision},{col.Scale})", $"({dbCol.NumericPrecision ?? 0},{dbCol.NumericScale})"));
+					diffs.Add(ColumnDiff(SchemaDiffKind.PrecisionMismatch,
+						$"({col.Precision})", $"({dbCol.NumericPrecision})"));
 				}
 
 				dbCols.Remove(col.Name);
@@ -804,7 +833,7 @@ public static class SchemaMigrator
 		var participating = schema.Columns
 			.SelectMany(c => c.Indexes
 				.Where(ix => string.Equals(ix.Name ?? SchemaNaming.Index(tableName, c.Name, ix.IsUnique), indexName, StringComparison.OrdinalIgnoreCase))
-				.Select(ix => (Column: c, Order: ix.Order, ix.IsUnique)))
+				.Select(ix => (Column: c, Order: ix.Order, ix.IsUnique, ix.Condition)))
 			.OrderBy(p => p.Order)
 			.ThenBy(p => p.Column.Name, StringComparer.Ordinal)
 			.ToArray();
@@ -833,6 +862,9 @@ public static class SchemaMigrator
 
 		var unique = participating.Any(p => p.IsUnique);
 
+		// Any one member may carry the partial-index predicate, as in EmitCreateIndexesForTable.
+		var condition = participating.Select(p => p.Condition).FirstOrDefault(c => !c.IsEmpty());
+
 		if (participating.Length == 1)
 		{
 			dialect.AppendCreateIndex(sb,
@@ -840,6 +872,10 @@ public static class SchemaMigrator
 				tableName: tableName,
 				columnName: participating[0].Column.Name,
 				unique: unique);
+
+			if (!condition.IsEmpty())
+				sb.Append(" WHERE ").Append(RenderIndexCondition(condition, dialect));
+
 			sb.AppendLine(";");
 			return;
 		}
@@ -856,7 +892,12 @@ public static class SchemaMigrator
 		sb.Append(dialect.QuoteIdentifier(tableName));
 		sb.Append(" (");
 		sb.Append(cols);
-		sb.AppendLine(");");
+		sb.Append(")");
+
+		if (!condition.IsEmpty())
+			sb.Append(" WHERE ").Append(RenderIndexCondition(condition, dialect));
+
+		sb.AppendLine(";");
 	}
 
 	/// <summary>
@@ -1069,6 +1110,8 @@ public static class SchemaMigrator
 		// script contiguous and the review-only drops at the very end.
 		var drops = new StringBuilder();
 
+		var alteredColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
 		// Emit phases so the script can be uncommented and run as-is in a dependency-safe
 		// order: new tables first (topologically), then the remaining additive/corrective
 		// statements, then deferred new-table FKs (appended after the loop), then the
@@ -1077,6 +1120,8 @@ public static class SchemaMigrator
 		static int EmitPhase(SchemaDiffKind kind) => kind switch
 		{
 			SchemaDiffKind.MissingTable => 0,
+			// Before any index or foreign key is added on the column it changes.
+			_ when IsColumnChange(kind) => 3,
 			SchemaDiffKind.ExtraForeignKey => 10,
 			SchemaDiffKind.ExtraIndex => 11,
 			SchemaDiffKind.ExtraColumn => 12,
@@ -1156,7 +1201,40 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					if (!col.IsNullable)
+					// A dialect that adds no foreign key to an existing table takes it as a clause of the new column.
+					var inlineReference = string.Empty;
+
+					if (col.ReferencedEntityType is not null && !dialect.SupportsAddForeignKeyViaAlter)
+					{
+						var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
+						inlineReference = $" CONSTRAINT {dialect.QuoteIdentifier(SchemaNaming.ForeignKey(diff.TableName, col.Name))} REFERENCES {dialect.QuoteIdentifier(refSchema.TableName)} ({dialect.QuoteIdentifier(refSchema.Identity?.Name ?? "Id")})";
+					}
+
+					if (!col.IsNullable && col.ReferencedEntityType is not null)
+					{
+						// Nothing fills a required reference: a default points at no row, and the foreign key would
+						// refuse it. The column goes in nullable, and requiring it waits until it is filled.
+						var nullableDef = dialect.GetColumnDefinition(col.ClrType, isNullable: true, col.MaxLength, col.Precision, col.Scale);
+						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, nullableDef + inlineReference);
+						sb.AppendLine(";");
+
+						if (dialect.CanAlterColumn)
+						{
+							var tighten = new StringBuilder();
+							dialect.AppendAlterColumn(tighten, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale, live: null);
+							drops.AppendLine($"-- {diff.TableName}.{diff.ColumnName} is a new required reference: fill it, then run {tighten};");
+						}
+						else
+							drops.AppendLine($"-- {diff.TableName}.{diff.ColumnName} is a new required reference: fill it, then rebuild the table to make it NOT NULL");
+					}
+					else if (!col.IsNullable && !dialect.CanAlterColumn)
+					{
+						// Without ALTER COLUMN a required column arrives required at once, which takes a default.
+						var colDef = $"{dialect.GetColumnTypeName(col.ClrType, col.MaxLength, col.Precision, col.Scale)} NOT NULL DEFAULT {dialect.GetDefaultLiteral(col.ClrType)}";
+						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
+						sb.AppendLine(";");
+					}
+					else if (!col.IsNullable)
 					{
 						var batch = dialect.BatchSeparator;
 
@@ -1175,18 +1253,18 @@ public static class SchemaMigrator
 						if (!batch.IsEmpty())
 							sb.AppendLine(batch);
 
-						dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
+						dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale, live: null);
 						sb.AppendLine(";");
 					}
 					else
 					{
 						var colDef = dialect.GetColumnDefinition(col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
-						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef);
+						dialect.AppendAddColumn(sb, diff.TableName, diff.ColumnName, colDef + inlineReference);
 						sb.AppendLine(";");
 					}
 
 					// if the new column is a foreign key, append ALTER TABLE ADD CONSTRAINT
-					if (col.ReferencedEntityType is not null)
+					if (col.ReferencedEntityType is not null && dialect.SupportsAddForeignKeyViaAlter)
 					{
 						var refSchema = ResolveForeignKeyTarget(col.ReferencedEntityType);
 						var refCol = refSchema.Identity?.Name ?? "Id";
@@ -1209,8 +1287,40 @@ public static class SchemaMigrator
 					if (col is null)
 						break;
 
-					dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale);
+					// One statement per column, whatever the number of ways it differs.
+					if (!alteredColumns.Add($"{diff.TableName}.{diff.ColumnName}"))
+						break;
+
+					var columnDiffs = diffs
+						.Where(d => IsColumnChange(d.Kind) && d.TableName.EqualsIgnoreCase(diff.TableName) && d.ColumnName.EqualsIgnoreCase(diff.ColumnName))
+						.ToArray();
+
+					if (!dialect.CanAlterColumn)
+					{
+						var found = columnDiffs.Select(d => $"{d.Kind} ({d.Expected} vs {d.Actual})").JoinCommaSpace();
+						drops.AppendLine($"-- {diff.TableName}.{diff.ColumnName}: {found}; this dialect cannot alter a column in place, so the table has to be rebuilt");
+						break;
+					}
+
+					var live = columnDiffs.Select(d => d.Live).FirstOrDefault(l => l is not null);
+
+					var rebuilt = DropDependentIndexes(dialect, sb, schema, diff.TableName, diff.ColumnName,
+						[.. columnDiffs.SelectMany(d => d.LiveIndexes).Distinct()],
+						[.. columnDiffs.SelectMany(d => d.LiveForeignKeys).Distinct()]);
+
+					if (live is not null && columnDiffs.All(d => d.Kind == SchemaDiffKind.NullabilityMismatch))
+						dialect.AppendAlterNullability(sb, diff.TableName, diff.ColumnName, col.IsNullable, live);
+					else
+					{
+						AppendNarrowingNote(dialect, sb, diff.TableName, col, live);
+						dialect.AppendAlterColumn(sb, diff.TableName, diff.ColumnName, col.ClrType, col.IsNullable, col.MaxLength, col.Precision, col.Scale, live);
+					}
+
 					sb.AppendLine(";");
+
+					foreach (var (name, index) in rebuilt)
+						AppendCreateIndex(dialect, sb, name, diff.TableName, index);
+
 					break;
 				}
 
@@ -1258,11 +1368,15 @@ public static class SchemaMigrator
 					break;
 
 				case SchemaDiffKind.ExtraIndex:
+				{
 					// Extra indexes are never auto-dropped — emit the DROP INDEX commented
 					// out, ready for a human to review and uncomment. diff.ColumnName carries
 					// the index name; diff.Actual the column list for context.
-					drops.AppendLine($"-- DROP INDEX {dialect.QuoteIdentifier(diff.ColumnName)} ON {dialect.QuoteIdentifier(diff.TableName)};   -- {diff.Actual}");
+					var drop = new StringBuilder();
+					dialect.AppendDropIndex(drop, diff.TableName, diff.ColumnName);
+					drops.Append("-- ").Append(drop).AppendLine($";   -- {diff.Actual}");
 					break;
+				}
 
 				case SchemaDiffKind.ExtraColumn:
 				{
@@ -1356,6 +1470,156 @@ public static class SchemaMigrator
 		var tail = current.ToString().Trim();
 		if (!tail.IsEmpty())
 			yield return tail;
+	}
+
+	private sealed record DeclaredIndex(string[] Columns, bool IsUnique, string Condition);
+
+	// The indexes a schema declares, grouped the way AppendIndexDiffs matches them against the database.
+	private static IReadOnlyList<DeclaredIndex> GetDeclaredIndexes(Schema schema)
+	{
+		var participations = new List<(string Name, string Column, int Order, bool IsUnique, string Condition)>();
+
+		foreach (var col in schema.Columns)
+		{
+			if (col == schema.Identity)
+				continue;
+
+			if (col.Indexes.Count == 0 && col.IsUnique)
+			{
+				participations.Add((SchemaNaming.Index(schema.TableName, col.Name, unique: true), col.Name, 0, true, null));
+				continue;
+			}
+
+			foreach (var ix in col.Indexes)
+				participations.Add((ix.Name ?? SchemaNaming.Index(schema.TableName, col.Name, ix.IsUnique), col.Name, ix.Order, ix.IsUnique, ix.Condition));
+		}
+
+		return [.. participations
+			.GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+			.Select(g =>
+			{
+				var ordered = g.OrderBy(p => p.Order).ThenBy(p => p.Column, StringComparer.Ordinal).ToArray();
+				return new DeclaredIndex([.. ordered.Select(p => p.Column)], ordered.Any(p => p.IsUnique), ordered.Select(p => p.Condition).FirstOrDefault(c => !c.IsEmpty()));
+			})];
+	}
+
+	private static IReadOnlyList<DbIndexInfo> IndexesOn(IReadOnlyList<DbIndexInfo> dbIndexes, string tableName, string columnName)
+		=> dbIndexes is null
+			? []
+			: [.. dbIndexes
+				.Where(i => i.TableName.EqualsIgnoreCase(tableName))
+				.GroupBy(i => i.IndexName, StringComparer.OrdinalIgnoreCase)
+				.Where(g => g.Any(i => i.ColumnName.EqualsIgnoreCase(columnName)))
+				.SelectMany(g => g)];
+
+	private static IReadOnlyList<DbForeignKeyInfo> ForeignKeysOn(IReadOnlyList<DbForeignKeyInfo> dbForeignKeys, string tableName, string columnName)
+		=> dbForeignKeys is null
+			? []
+			: [.. dbForeignKeys.Where(f =>
+				(f.TableName.EqualsIgnoreCase(tableName) && f.ColumnName.EqualsIgnoreCase(columnName)) ||
+				(f.RefTableName.EqualsIgnoreCase(tableName) && f.RefColumnName.EqualsIgnoreCase(columnName)))];
+
+	// A dialect that alters no column something depends on gets the declared indexes dropped before the ALTER and
+	// recreated after, under the name the database knows them by. A primary key, a foreign key or an index the
+	// schema does not declare is left to a person, with a note saying what stands in the way.
+	private static IReadOnlyList<(string Name, DeclaredIndex Index)> DropDependentIndexes(ISqlDialect dialect, StringBuilder sb, Schema schema, string tableName, string columnName,
+		IReadOnlyList<DbIndexInfo> liveIndexes, IReadOnlyList<DbForeignKeyInfo> liveForeignKeys)
+	{
+		if (dialect.CanAlterColumnWithDependents)
+			return [];
+
+		var declared = GetDeclaredIndexes(schema);
+		var blockers = new List<string>();
+		var rebuild = new List<(string Name, DeclaredIndex Index)>();
+
+		foreach (var index in liveIndexes.GroupBy(i => i.IndexName, StringComparer.OrdinalIgnoreCase))
+		{
+			var rows = index.OrderBy(i => i.ColumnOrdinal).ToArray();
+
+			if (rows[0].IsPrimaryKey)
+			{
+				blockers.Add($"primary key {index.Key}");
+				continue;
+			}
+
+			var columns = rows.Select(r => r.ColumnName).ToArray();
+			var match = declared.FirstOrDefault(d => d.IsUnique == rows[0].IsUnique && d.Columns.SequenceEqual(columns, StringComparer.OrdinalIgnoreCase));
+
+			if (match is null)
+				blockers.Add($"index {index.Key}");
+			else
+				rebuild.Add((index.Key, match));
+		}
+
+		blockers.AddRange(liveForeignKeys.Select(f => $"foreign key {f.ConstraintName}"));
+
+		if (blockers.Count > 0)
+		{
+			sb.AppendLine($"-- {tableName}.{columnName}: {blockers.JoinCommaSpace()} depend on this column, which keeps the statement below from running; drop them before it and recreate them after");
+			return [];
+		}
+
+		foreach (var (name, _) in rebuild)
+		{
+			dialect.AppendDropIndex(sb, tableName, name);
+			sb.AppendLine(";");
+		}
+
+		return rebuild;
+	}
+
+	private static void AppendCreateIndex(ISqlDialect dialect, StringBuilder sb, string indexName, string tableName, DeclaredIndex index)
+	{
+		sb.Append(index.IsUnique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ");
+		sb.Append(dialect.QuoteIdentifier(indexName));
+		sb.Append(" ON ");
+		sb.Append(dialect.QuoteIdentifier(tableName));
+		sb.Append(" (");
+		sb.Append(index.Columns.Select(dialect.QuoteIdentifier).JoinCommaSpace());
+		sb.Append(')');
+
+		if (!index.Condition.IsEmpty())
+			sb.Append(" WHERE ").Append(RenderIndexCondition(index.Condition, dialect));
+
+		sb.AppendLine(";");
+	}
+
+	private static bool IsColumnChange(SchemaDiffKind kind)
+		=> kind is SchemaDiffKind.TypeMismatch
+			or SchemaDiffKind.NullabilityMismatch
+			or SchemaDiffKind.MaxLengthMismatch
+			or SchemaDiffKind.PrecisionMismatch;
+
+	// The engine rounds a decimal to fewer places, and refuses one with too many digits before the point,
+	// without the script saying so; the note does.
+	private static void AppendNarrowingNote(ISqlDialect dialect, StringBuilder sb, string tableName, SchemaColumn col, DbColumnInfo live)
+	{
+		if (live is null || !dialect.KeepsDecimalDigits || (col.ClrType.GetUnderlyingType() ?? col.ClrType) != typeof(decimal))
+			return;
+
+		if (!dialect.NormalizeDbType(live.DataType).EqualsIgnoreCase(NormalizeSqlType(dialect.GetSqlTypeName(typeof(decimal)))))
+			return;
+
+		var declared = col.Precision > 0 || col.Scale > 0;
+		var precision = col.Precision > 0 ? col.Precision : SqlDialectBase.DefaultDecimalPrecision;
+		var scale = declared ? col.Scale : SqlDialectBase.DefaultDecimalScale;
+		var name = $"{tableName}.{col.Name}";
+
+		if (live.NumericPrecision is null)
+		{
+			sb.AppendLine($"-- {name}: an unconstrained number becomes ({precision},{scale}): stored values are rounded to {scale} decimal places, and one with more than {precision - scale} digits before the point stops this statement");
+			return;
+		}
+
+		var liveScale = live.NumericScale ?? 0;
+		var liveIntegers = live.NumericPrecision.Value - liveScale;
+		var change = $"({live.NumericPrecision},{liveScale}) -> ({precision},{scale})";
+
+		if (scale < liveScale)
+			sb.AppendLine($"-- {name}: {change} rounds the stored values to {scale} decimal places");
+
+		if (precision - scale < liveIntegers)
+			sb.AppendLine($"-- {name}: {change} leaves {precision - scale} digits before the point, down from {liveIntegers}; a larger stored value stops this statement");
 	}
 
 	private static string NormalizeSqlType(string sqlType)

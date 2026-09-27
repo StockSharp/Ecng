@@ -44,14 +44,15 @@ public class ColumnAttribute : Attribute
 	public int MaxLength { get; set; }
 
 	/// <summary>
-	/// Gets or sets the numeric precision for decimal/numeric columns.
-	/// 0 means use the dialect default.
+	/// Gets or sets the numeric precision for decimal/numeric columns, or the fractional-second digits for
+	/// date/time columns. 0 means use the dialect default.
 	/// </summary>
 	public int Precision { get; set; }
 
 	/// <summary>
-	/// Gets or sets the numeric scale for decimal/numeric columns.
-	/// 0 means use the dialect default.
+	/// Gets or sets the numeric scale for decimal/numeric columns. With <see cref="Precision"/> set, 0 means
+	/// no digits after the point, as in DECIMAL(p). Without it, 0 means the dialect default and any other value
+	/// is paired with the dialect's default precision.
 	/// </summary>
 	public int Scale { get; set; }
 }

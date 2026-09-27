@@ -152,7 +152,7 @@ public class AdoIntegrationTests : BaseTestClass
 			}, CancellationToken);
 		}
 
-		var orderBy = new[] { new OrderByCondition("Value") }; // ASC
+		var orderBy = new[] { new OrderByCondition("Value", typeof(decimal)) }; // ASC
 		var rows = (await _table.SelectAsync(null, orderBy, null, null, CancellationToken)).ToList();
 		rows.Count.AssertEqual(3);
 		rows[0]["Value"].To<decimal>().AssertEqual(10m);
@@ -299,7 +299,7 @@ public class AdoIntegrationTests : BaseTestClass
 			}, CancellationToken);
 		}
 
-		var orderBy = new[] { new OrderByCondition("Id") };
+		var orderBy = new[] { new OrderByCondition("Id", typeof(int)) };
 		var rows = (await _table.SelectAsync(null, orderBy, 2, 3, CancellationToken)).ToList();
 		rows.Count.AssertEqual(3);
 		rows[0]["Id"].To<int>().AssertEqual(3); // skip 2, take 3 → items 3,4,5
@@ -740,6 +740,13 @@ public class AdoIntegrationTests : BaseTestClass
 		public string FalseLiteral => inner.FalseLiteral;
 		public string BooleanCastSqlType => inner.BooleanCastSqlType;
 		public string DecimalComparisonCastSqlType => inner.DecimalComparisonCastSqlType;
+		public string GetIntegerToDecimalCastSqlType(int precision) => inner.GetIntegerToDecimalCastSqlType(precision);
+		public bool KeepsDecimalDigits => inner.KeepsDecimalDigits;
+		public bool CanAlterColumnWithDependents => inner.CanAlterColumnWithDependents;
+		public bool CanAlterColumn => inner.CanAlterColumn;
+		public int GetStoredMaxLength(Type clrType, int maxLength) => inner.GetStoredMaxLength(clrType, maxLength);
+		public void AppendDropIndex(System.Text.StringBuilder sb, string tableName, string indexName)
+			=> inner.AppendDropIndex(sb, tableName, indexName);
 		public string UnicodePrefix => inner.UnicodePrefix;
 		public string EmptyBinaryLiteral => inner.EmptyBinaryLiteral;
 		public string LenFunction => inner.LenFunction;
@@ -766,6 +773,8 @@ public class AdoIntegrationTests : BaseTestClass
 			=> inner.GetForeignKeyConstraint(tableName, columnName, refTableName, refColumnName);
 		public string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
 			=> inner.GetColumnDefinition(clrType, isNullable, maxLength, precision, scale);
+		public string GetColumnTypeName(Type clrType, int maxLength, int precision, int scale)
+			=> inner.GetColumnTypeName(clrType, maxLength, precision, scale);
 		public string NormalizeDbType(string dbTypeName) => inner.NormalizeDbType(dbTypeName);
 		public string GetDefaultLiteral(Type clrType) => inner.GetDefaultLiteral(clrType);
 
@@ -791,8 +800,10 @@ public class AdoIntegrationTests : BaseTestClass
 			=> inner.AppendCreateIndex(sb, indexName, tableName, columnName, unique);
 		public void AppendAddColumn(System.Text.StringBuilder sb, string tableName, string columnName, string columnDef)
 			=> inner.AppendAddColumn(sb, tableName, columnName, columnDef);
-		public void AppendAlterColumn(System.Text.StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
-			=> inner.AppendAlterColumn(sb, tableName, columnName, clrType, isNullable, maxLength, precision, scale);
+		public void AppendAlterColumn(System.Text.StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live)
+			=> inner.AppendAlterColumn(sb, tableName, columnName, clrType, isNullable, maxLength, precision, scale, live);
+		public void AppendAlterNullability(System.Text.StringBuilder sb, string tableName, string columnName, bool isNullable, DbColumnInfo live)
+			=> inner.AppendAlterNullability(sb, tableName, columnName, isNullable, live);
 		public void AppendDropColumn(System.Text.StringBuilder sb, string tableName, string columnName)
 			=> inner.AppendDropColumn(sb, tableName, columnName);
 		public void AppendUpdateWhereNull(System.Text.StringBuilder sb, string tableName, string columnName, string defaultLiteral)
@@ -809,6 +820,14 @@ public class AdoIntegrationTests : BaseTestClass
 			=> inner.AppendDateAdd(sb, part, amountSql, sourceSql);
 		public void AppendDateDiff(System.Text.StringBuilder sb, string part, string startSql, string endSql)
 			=> inner.AppendDateDiff(sb, part, startSql, endSql);
+		public void AppendDecimalModulo(System.Text.StringBuilder sb, string dividendSql, string divisorSql)
+			=> inner.AppendDecimalModulo(sb, dividendSql, divisorSql);
+		public void AppendRound(System.Text.StringBuilder sb, string valueSql, string digitsSql, MidpointRounding mode)
+			=> inner.AppendRound(sb, valueSql, digitsSql, mode);
+		public void AppendGreatest(System.Text.StringBuilder sb, string leftSql, string rightSql)
+			=> inner.AppendGreatest(sb, leftSql, rightSql);
+		public void AppendLeast(System.Text.StringBuilder sb, string leftSql, string rightSql)
+			=> inner.AppendLeast(sb, leftSql, rightSql);
 		public void AppendTrimOpen(System.Text.StringBuilder sb)
 			=> inner.AppendTrimOpen(sb);
 		public void AppendTrimClose(System.Text.StringBuilder sb)

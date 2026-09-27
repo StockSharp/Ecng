@@ -59,7 +59,7 @@ public class PostgreSqlDialect : SqlDialectBase
 			_ when underlying == typeof(short) => "SMALLINT",
 			_ when underlying == typeof(byte) => "SMALLINT", // PostgreSQL has no single-byte integer
 			_ when underlying == typeof(bool) => "BOOLEAN",
-			_ when underlying == typeof(decimal) => "NUMERIC(18,8)",
+			_ when underlying == typeof(decimal) => $"NUMERIC({DefaultDecimalPrecision},{DefaultDecimalScale})",
 			_ when underlying == typeof(double) => "DOUBLE PRECISION",
 			_ when underlying == typeof(float) => "REAL",
 			_ when underlying == typeof(string) => "TEXT",
@@ -235,6 +235,24 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	protected override void AppendTruncate(StringBuilder sb, string valueSql, string digitsSql)
+	{
+		sb.Append(digitsSql is null ? $"trunc({valueSql})" : $"trunc({valueSql}, {digitsSql})");
+	}
+
+	/// <inheritdoc />
+	public override void AppendGreatest(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"greatest({leftSql}, {rightSql})");
+	}
+
+	/// <inheritdoc />
+	public override void AppendLeast(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"least({leftSql}, {rightSql})");
+	}
+
+	/// <inheritdoc />
 	public override void AppendTrimOpen(StringBuilder sb)
 	{
 		sb.Append("TRIM(");
@@ -337,28 +355,24 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	public override string GetColumnTypeName(Type clrType, int maxLength, int precision, int scale)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;
-
-		string typeName;
 
 		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit
 		// unbounded sentinel — same encoding as MaxLength == 0, lets entity
 		// authors document intent for "yes, intentionally TEXT" columns.
 		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = isMax ? "TEXT" : $"VARCHAR({maxLength})";
-		else if (underlying == typeof(byte[]))
-			typeName = "BYTEA";
-		else if (underlying == typeof(decimal) && precision > 0)
-			typeName = $"NUMERIC({precision},{scale})";
-		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(TimeOnly)) && precision > 0)
-			typeName = $"{GetSqlTypeName(clrType)}({precision})";
-		else
-			typeName = GetSqlTypeName(clrType);
+			return isMax ? "TEXT" : $"VARCHAR({maxLength})";
+		if (underlying == typeof(byte[]))
+			return "BYTEA";
+		if (underlying == typeof(decimal) && (precision > 0 || scale > 0))
+			return FormatDecimal("NUMERIC", precision, scale);
+		if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(TimeOnly)) && precision > 0)
+			return $"{GetSqlTypeName(clrType)}({precision})";
 
-		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+		return GetSqlTypeName(clrType);
 	}
 
 	/// <inheritdoc />
@@ -371,7 +385,7 @@ public class PostgreSqlDialect : SqlDialectBase
 
 		// SELECT shape:
 		//   table_name, column_name, data_type, is_nullable,
-		//   character_maximum_length, numeric_precision, numeric_scale,
+		//   character_maximum_length, coalesce(numeric_precision, datetime_precision), numeric_scale,
 		//   is_generated <> 'NEVER'
 		// FROM information_schema.columns
 		// WHERE table_schema = @schema
@@ -383,7 +397,8 @@ public class PostgreSqlDialect : SqlDialectBase
 				.Column("data_type").Comma()
 				.Column("is_nullable").Comma()
 				.Column("character_maximum_length").Comma()
-				.Column("numeric_precision").Comma()
+				// A date/time column reports its fractional-second digits in datetime_precision, not numeric_precision.
+				.Raw("coalesce(numeric_precision, datetime_precision)").Comma()
 				.Column("numeric_scale").Comma()
 				.Raw("is_generated <> 'NEVER'").NewLine()
 			.From().Raw("information_schema.columns").NewLine()
@@ -551,32 +566,30 @@ public class PostgreSqlDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live)
 	{
-		var underlying = clrType.GetUnderlyingType() ?? clrType;
-
-		string typeName;
-
-		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit
-		// unbounded sentinel — same encoding as MaxLength == 0, lets entity
-		// authors document intent for "yes, intentionally TEXT" columns.
-		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
-		if (underlying == typeof(string))
-			typeName = isMax ? "TEXT" : $"VARCHAR({maxLength})";
-		else if (underlying == typeof(byte[]))
-			typeName = "BYTEA";
-		else if (underlying == typeof(decimal) && precision > 0)
-			typeName = $"NUMERIC({precision},{scale})";
-		else
-			typeName = GetSqlTypeName(clrType);
+		var typeName = GetColumnTypeName(clrType, maxLength, precision, scale);
 
 		var qt = QuoteIdentifier(tableName);
 		var qc = QuoteIdentifier(columnName);
 
+		// A TIMESTAMP holds the UTC wall-clock time the read path assumes; without USING PostgreSQL would read
+		// it in the session's time zone and shift every stored moment by that offset.
+		var paren = typeName.IndexOf('(');
+		var convert = live is not null
+			&& NormalizeDbType(live.DataType) == "TIMESTAMP"
+			&& NormalizeDbType(paren > 0 ? typeName[..paren] : typeName) == "TIMESTAMPTZ"
+			? $" USING {qc} AT TIME ZONE 'UTC'"
+			: string.Empty;
+
 		// PostgreSQL requires separate statements for type and nullability changes
-		sb.Append($"ALTER TABLE {qt} ALTER COLUMN {qc} SET DATA TYPE {typeName}; ");
+		sb.Append($"ALTER TABLE {qt} ALTER COLUMN {qc} SET DATA TYPE {typeName}{convert}; ");
 		sb.Append($"ALTER TABLE {qt} ALTER COLUMN {qc} {(isNullable ? "DROP NOT NULL" : "SET NOT NULL")}");
 	}
+
+	/// <inheritdoc />
+	public override void AppendAlterNullability(StringBuilder sb, string tableName, string columnName, bool isNullable, DbColumnInfo live)
+		=> sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {(isNullable ? "DROP NOT NULL" : "SET NOT NULL")}");
 
 	/// <inheritdoc />
 	/// <remarks>

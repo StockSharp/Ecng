@@ -355,6 +355,7 @@ public class SchemaMigratorSqlTests : BaseTestClass
 	[TestMethod]
 	[DataRow("SqlServer")]
 	[DataRow("PostgreSql")]
+	[DataRow("SQLite")]
 	public void MissingNotNullDateOnly_BackfillsWithAValidLiteral(string dialectName)
 	{
 		var dialect = GetDialect(dialectName);

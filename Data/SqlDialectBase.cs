@@ -10,6 +10,16 @@ using Ecng.Common;
 /// </summary>
 public abstract class SqlDialectBase : ISqlDialect
 {
+	/// <summary>
+	/// The precision of the default decimal type, and the one a decimal column gets when it declares only a scale.
+	/// </summary>
+	public const int DefaultDecimalPrecision = 18;
+
+	/// <summary>
+	/// The scale of the default decimal type.
+	/// </summary>
+	public const int DefaultDecimalScale = 8;
+
 	/// <inheritdoc />
 	public virtual string ConcatOperator => "+";
 
@@ -24,6 +34,18 @@ public abstract class SqlDialectBase : ISqlDialect
 
 	/// <inheritdoc />
 	public virtual string DecimalComparisonCastSqlType => null;
+
+	/// <inheritdoc />
+	public virtual string GetIntegerToDecimalCastSqlType(int precision) => $"decimal({precision},0)";
+
+	/// <inheritdoc />
+	public virtual bool KeepsDecimalDigits => true;
+
+	/// <inheritdoc />
+	public virtual bool CanAlterColumnWithDependents => true;
+
+	/// <inheritdoc />
+	public virtual bool CanAlterColumn => true;
 
 	/// <inheritdoc />
 	public virtual string UnicodePrefix => "N";
@@ -60,6 +82,69 @@ public abstract class SqlDialectBase : ISqlDialect
 	{
 		// SQL Server native DATEDIFF(part, startdate, enddate) == enddate - startdate.
 		sb.Append($"dateDiff({part},{startSql},{endSql})");
+	}
+
+	/// <inheritdoc />
+	public virtual void AppendDecimalModulo(StringBuilder sb, string dividendSql, string divisorSql)
+	{
+		sb.Append($"{dividendSql} % {divisorSql}");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>GREATEST exists on SQL Server only from 2022, so the portable CASE is used.</remarks>
+	public virtual void AppendGreatest(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"(case when {leftSql} >= {rightSql} then {leftSql} else {rightSql} end)");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>LEAST exists on SQL Server only from 2022, so the portable CASE is used.</remarks>
+	public virtual void AppendLeast(StringBuilder sb, string leftSql, string rightSql)
+	{
+		sb.Append($"(case when {leftSql} <= {rightSql} then {leftSql} else {rightSql} end)");
+	}
+
+	/// <inheritdoc />
+	/// <remarks>
+	/// ROUND of a decimal rounds half away from zero on every supported database; none rounds it half to even.
+	/// FLOOR and CEILING have no digits argument, so they only round to a whole number.
+	/// </remarks>
+	public virtual void AppendRound(StringBuilder sb, string valueSql, string digitsSql, MidpointRounding mode)
+	{
+		switch (mode)
+		{
+			case MidpointRounding.AwayFromZero:
+				sb.Append($"Round({valueSql}, {digitsSql ?? "0"})");
+				break;
+
+			case MidpointRounding.ToZero:
+				AppendTruncate(sb, valueSql, digitsSql);
+				break;
+
+			case MidpointRounding.ToNegativeInfinity when digitsSql is null:
+				sb.Append($"floor({valueSql})");
+				break;
+
+			case MidpointRounding.ToPositiveInfinity when digitsSql is null:
+				sb.Append($"ceiling({valueSql})");
+				break;
+
+			default:
+				throw new NotSupportedException($"Rounding {mode}{(digitsSql is null ? string.Empty : " to a number of digits")} is not supported by {GetType().Name}.");
+		}
+	}
+
+	/// <summary>
+	/// Appends an expression that drops the digits of a value beyond <paramref name="digitsSql"/>,
+	/// rounding toward zero.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="valueSql">SQL of the value.</param>
+	/// <param name="digitsSql">SQL of the number of fractional digits to keep, or <see langword="null"/> for a whole number.</param>
+	/// <remarks>A non-zero third argument makes SQL Server's ROUND truncate.</remarks>
+	protected virtual void AppendTruncate(StringBuilder sb, string valueSql, string digitsSql)
+	{
+		sb.Append($"Round({valueSql}, {digitsSql ?? "0"}, 1)");
 	}
 
 	/// <inheritdoc />
@@ -188,6 +273,10 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
+	public virtual void AppendDropIndex(StringBuilder sb, string tableName, string indexName)
+		=> sb.Append($"DROP INDEX {QuoteIdentifier(indexName)}");
+
+	/// <inheritdoc />
 	public abstract void AppendCreateTable(StringBuilder sb, string tableName, string columnDefs);
 
 	/// <inheritdoc />
@@ -235,10 +324,22 @@ public abstract class SqlDialectBase : ISqlDialect
 
 	/// <inheritdoc />
 	public virtual string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
-	{
-		var typeName = GetSqlTypeName(clrType);
-		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
-	}
+		=> $"{GetColumnTypeName(clrType, maxLength, precision, scale)} {(isNullable ? "NULL" : "NOT NULL")}";
+
+	/// <inheritdoc />
+	public virtual string GetColumnTypeName(Type clrType, int maxLength, int precision, int scale)
+		=> GetSqlTypeName(clrType);
+
+	/// <inheritdoc />
+	public virtual int GetStoredMaxLength(Type clrType, int maxLength)
+		=> maxLength == int.MaxValue ? -1 : maxLength;
+
+	/// <summary>
+	/// A decimal type with the declared digits, <see cref="DefaultDecimalPrecision"/> standing in for an
+	/// undeclared precision.
+	/// </summary>
+	protected static string FormatDecimal(string typeName, int precision, int scale)
+		=> $"{typeName}({(precision > 0 ? precision : DefaultDecimalPrecision)},{scale})";
 
 	/// <inheritdoc />
 	public virtual void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef)
@@ -247,11 +348,15 @@ public abstract class SqlDialectBase : ISqlDialect
 	}
 
 	/// <inheritdoc />
-	public virtual void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	public virtual void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live)
 	{
 		var colDef = GetColumnDefinition(clrType, isNullable, maxLength, precision, scale);
 		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {colDef}");
 	}
+
+	/// <inheritdoc />
+	public virtual void AppendAlterNullability(StringBuilder sb, string tableName, string columnName, bool isNullable, DbColumnInfo live)
+		=> throw new NotSupportedException($"{GetType().Name} cannot change the nullability of {tableName}.{columnName} on its own.");
 
 	/// <inheritdoc />
 	public virtual void AppendDropColumn(StringBuilder sb, string tableName, string columnName)

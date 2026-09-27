@@ -271,7 +271,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.BulkInsertAsync(rows, CancellationToken);
 
 		// Select with order by descending
-		var orderBy = new[] { new OrderByCondition("Id", Descending: true) };
+		var orderBy = new[] { new OrderByCondition("Id", typeof(int), Descending: true) };
 		var results = await table.SelectAsync(null, orderBy, null, null, CancellationToken);
 		var list = results.ToList();
 
@@ -309,7 +309,7 @@ public class DatabaseTableIntegrationTests : BaseTestClass
 		await table.BulkInsertAsync(rows, CancellationToken);
 
 		// Select with pagination (skip 5, take 10), ordered by Id
-		var orderBy = new[] { new OrderByCondition("Id") };
+		var orderBy = new[] { new OrderByCondition("Id", typeof(int)) };
 		var results = await table.SelectAsync(null, orderBy, skip: 5, take: 10, CancellationToken);
 		var list = results.ToList();
 

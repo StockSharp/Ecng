@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Data.Sql;
 
+using Ecng.Data.Sql.Model;
+
 abstract class MethodVisitor(IEnumerable<MemberInfo> members)
 {
 	public IEnumerable<MemberInfo> Members { get; } = members.ToArray();
@@ -1343,15 +1345,29 @@ class MathVisitor : MethodVisitor
 
 	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
 	{
-		var q = translator.Context.Curr;
 		var mce = (MethodCallExpression)expression;
 
-		var methodName = mce.Method.Name;
+		if (mce.Method.Name is nameof(Math.Max) or nameof(Math.Min))
+		{
+			VisitMaxMin(translator, mce);
+			return;
+		}
 
 		if (mce.Method.Name == nameof(Math.Truncate))
-			methodName = nameof(Math.Round);
+		{
+			VisitRound(translator, mce.Arguments[0], null, MidpointRounding.ToZero);
+			return;
+		}
 
-		q.Raw(methodName).OpenBracket();
+		if (mce.Method.Name == nameof(Math.Round) && mce.Arguments[^1].Type == typeof(MidpointRounding))
+		{
+			VisitRound(translator, mce.Arguments[0], mce.Arguments.Count == 3 ? mce.Arguments[1] : null, GetRounding(mce.Arguments[^1]));
+			return;
+		}
+
+		var q = translator.Context.Curr;
+
+		q.Raw(mce.Method.Name).OpenBracket();
 
 		var idx = 0;
 
@@ -1365,16 +1381,64 @@ class MathVisitor : MethodVisitor
 				q.Comma();
 		}
 
-		if (mce.Method.Name == nameof(Math.Truncate))
-		{
-			q.Comma().Raw("0").Comma().Raw("1");
-		}
-		else if (mce.Method.Name == nameof(Math.Round) && mce.Method.GetParameters().Length == 1)
+		if (mce.Method.Name == nameof(Math.Round) && mce.Method.GetParameters().Length == 1)
 		{
 			q.Comma().Raw("0");
 		}
 
 		q.CloseBracket();
+	}
+
+	private static MidpointRounding GetRounding(Expression mode)
+	{
+		if (mode is ConstantExpression constant)
+			return (MidpointRounding)constant.Value;
+
+		if (mode is MemberExpression member && ClosureMaterializer.TryEvaluate(member, out var value))
+			return (MidpointRounding)value;
+
+		throw new NotSupportedException("The rounding mode must be known when the query is translated.");
+	}
+
+	private static void VisitRound(ExpressionQueryTranslator translator, Expression value, Expression digits, MidpointRounding mode)
+	{
+		var valueQuery = translator.Capture(() => translator.VisitOperand(value));
+
+		// Zero digits is a whole number, which FLOOR and CEILING can round to.
+		var digitsQuery = digits is null or ConstantExpression { Value: 0 }
+			? null
+			: translator.Capture(() => translator.VisitOperand(digits));
+
+		translator.Context.Curr.AddAction((dialect, builder) =>
+			dialect.AppendRound(builder, valueQuery.Render(dialect), digitsQuery?.Render(dialect), mode));
+	}
+
+	private static void VisitMaxMin(ExpressionQueryTranslator translator, MethodCallExpression mce)
+	{
+		var isMax = mce.Method.Name == nameof(Math.Max);
+
+		// Picking the larger value is a comparison, so decimals stored as text are compared as numbers.
+		var isDecimal = mce.Type == typeof(decimal);
+
+		Query VisitArgument(Expression argument)
+			=> translator.Capture(() =>
+			{
+				if (isDecimal)
+					translator.VisitDecimalComparisonOperand(argument);
+				else
+					translator.VisitOperand(argument);
+			});
+
+		var left = VisitArgument(mce.Arguments[0]);
+		var right = VisitArgument(mce.Arguments[1]);
+
+		translator.Context.Curr.AddAction((dialect, builder) =>
+		{
+			if (isMax)
+				dialect.AppendGreatest(builder, left.Render(dialect), right.Render(dialect));
+			else
+				dialect.AppendLeast(builder, left.Render(dialect), right.Render(dialect));
+		});
 	}
 }
 
@@ -1477,9 +1541,12 @@ class CountVisitor<T> : EnumerableAndQueryableVisitor<T>
 	}
 }
 
-abstract class BaseGroupFuncVisitor(Func<Query, Query> func)
+/// <param name="func">Writes the aggregate's name.</param>
+/// <param name="comparesValues">The aggregate picks a value by comparing (MAX, MIN), so decimals stored as text are cast to numbers first.</param>
+abstract class BaseGroupFuncVisitor(Func<Query, Query> func, bool comparesValues)
 {
 	private readonly Func<Query, Query> _func = func;
+	private readonly bool _comparesValues = comparesValues;
 
 	public void Visit(ExpressionQueryTranslator translator, Expression expression)
 	{
@@ -1487,43 +1554,56 @@ abstract class BaseGroupFuncVisitor(Func<Query, Query> func)
 		var mce = (MethodCallExpression)expression;
 
 		var isInline = mce.Arguments.Count == 2;
+		var castDecimal = _comparesValues && mce.Type.IsDecimal();
 
 		if (isInline)
+		{
 			_func(q).OpenBracket();
-		else
-		{
-			translator.WrapColumn.Enqueue((b, q) =>
-			{
-				// The aggregate must wrap only the projected column of the sub-query. Columns
-				// referenced in the sub-query's WHERE predicate must stay un-aggregated: wrapping
-				// e.g. a bit predicate column in MAX produces invalid SQL ("Operand data type bit
-				// is invalid for max operator" on SQL Server). Skip the wrap while visiting WHERE.
-				if (translator.Context.IsWhere)
-					return;
 
-				if (b)
-					_func(q).OpenBracket();
-				else
-					q.CloseBracket();
-			});
-		}
+			if (castDecimal)
+				q.OpenDecimalComparisonCast();
 
-		translator.Visit(mce.Arguments[0]);
-
-		if (isInline)
-		{
+			translator.Visit(mce.Arguments[0]);
 			translator.Visit(mce.Arguments[1]);
+
+			if (castDecimal)
+				q.CloseDecimalComparisonCast();
+
 			q.CloseBracket();
+			return;
 		}
-		else
-			translator.WrapColumn.Dequeue();
+
+		translator.VisitWrapped((b, q) =>
+		{
+			// The aggregate must wrap only the projected column of the sub-query. Columns
+			// referenced in the sub-query's WHERE predicate must stay un-aggregated: wrapping
+			// e.g. a bit predicate column in MAX produces invalid SQL ("Operand data type bit
+			// is invalid for max operator" on SQL Server). Skip the wrap while visiting WHERE.
+			if (translator.Context.IsWhere)
+				return;
+
+			if (b)
+			{
+				_func(q).OpenBracket();
+
+				if (castDecimal)
+					q.OpenDecimalComparisonCast();
+			}
+			else
+			{
+				if (castDecimal)
+					q.CloseDecimalComparisonCast();
+
+				q.CloseBracket();
+			}
+		}, () => translator.Visit(mce.Arguments[0]));
 	}
 }
 
 class MaxVisitorVisitor : BaseGroupFuncVisitor
 {
 	public MaxVisitorVisitor()
-		: base(q => q.Max())
+		: base(q => q.Max(), true)
 	{
 	}
 }
@@ -1570,7 +1650,7 @@ class MaxSelectorVisitor<T> : EnumerableAndQueryable2Visitor<T>
 class MinVisitorVisitor : BaseGroupFuncVisitor
 {
 	public MinVisitorVisitor()
-		: base(q => q.Min())
+		: base(q => q.Min(), true)
 	{
 	}
 }
@@ -1617,7 +1697,7 @@ class MinVisitor<T> : EnumerableAndQueryableVisitor<T>
 class AvgVisitorVisitor : BaseGroupFuncVisitor
 {
 	public AvgVisitorVisitor()
-		: base(q => q.Avg())
+		: base(q => q.Avg(), false)
 	{
 	}
 }
@@ -1651,7 +1731,7 @@ class AvgVisitor<T> : EnumerableAndQueryableVisitor<T>
 class SumVisitorVisitor : BaseGroupFuncVisitor
 {
 	public SumVisitorVisitor()
-		: base(q => q.Sum())
+		: base(q => q.Sum(), false)
 	{
 	}
 }
@@ -1695,32 +1775,72 @@ class NullableValueVisitor<T> : MethodVisitor
 
 class DecimalCastVisitor : MethodVisitor
 {
+	// Digits of the largest value of each integer type decimal converts from implicitly.
+	private static readonly Dictionary<Type, int> _precisions = new()
+	{
+		[typeof(byte)] = 3,
+		[typeof(sbyte)] = 3,
+		[typeof(short)] = 5,
+		[typeof(ushort)] = 5,
+		[typeof(char)] = 5,
+		[typeof(int)] = 10,
+		[typeof(uint)] = 10,
+		[typeof(long)] = 19,
+		[typeof(ulong)] = 20,
+	};
+
 	public DecimalCastVisitor()
 		: base(typeof(decimal).GetMethods(BindingFlags.Public | BindingFlags.Static).Where(mi => mi.Name == "op_Implicit"))
 	{
 	}
 
+	/// <summary>
+	/// True when <paramref name="expression"/> is an integer converted to <see cref="decimal"/>.
+	/// </summary>
+	public static bool IsConversion(Expression expression, out Expression operand)
+	{
+		if (expression is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked, Method: { } method } convert &&
+			method.TryGetVisitor(out var visitor) && visitor is DecimalCastVisitor)
+		{
+			operand = convert.Operand;
+			return true;
+		}
+
+		operand = null;
+		return false;
+	}
+
 	public override void Visit(ExpressionQueryTranslator translator, Expression expression)
 	{
-		var q = translator.Context.Curr;
+		var precision = _precisions[expression.Type.GetUnderlyingType() ?? expression.Type];
 
-		translator.WrapColumn.Enqueue((b, q) =>
+		void AppendType(Query query)
+			=> query.AddAction((dialect, builder) => builder.Append(dialect.GetIntegerToDecimalCastSqlType(precision)));
+
+		// A pending wrapper is an aggregate written around the column where it is emitted (a sub-query's
+		// MAX/SUM/AVG), so the conversion goes there too and stays inside the aggregate. Anywhere else the
+		// converted value is cast as a whole: an integer quotient is converted, not its operands.
+		if (translator.WrapColumn.Count > 0)
 		{
-			// The conversion belongs to the projected column alone. Applied to the sub-query's WHERE
-			// columns as well -- as it was -- the predicate compares converted values, and a converted
-			// column keeps every index out of the plan: the whole table is read for each outer row.
-			if (translator.Context.IsWhere)
-				return;
-
-			if (b)
-				q.Cast().OpenBracket();
-			else
-				q.As().Raw("decimal(18,2)").CloseBracket();
-		});
-
-		translator.Visit(expression);
-
-		translator.WrapColumn.Dequeue();
+			translator.VisitWrapped((b, q) =>
+			{
+				if (b)
+					q.Cast().OpenBracket();
+				else
+				{
+					q.As();
+					AppendType(q);
+					q.CloseBracket();
+				}
+			}, () => translator.Visit(expression));
+		}
+		else
+		{
+			translator.Context.Curr.Cast().OpenBracket();
+			translator.VisitOperand(expression);
+			AppendType(translator.Context.Curr.As());
+			translator.Context.Curr.CloseBracket();
+		}
 	}
 }
 

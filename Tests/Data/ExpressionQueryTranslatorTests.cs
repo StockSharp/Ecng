@@ -18,6 +18,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 {
 	private static readonly ISqlDialect _dialect = SqlServerDialect.Instance;
 	private static readonly ISqlDialect _pgDialect = PostgreSqlDialect.Instance;
+	private static readonly ISqlDialect _sqliteDialect = SQLiteDialect.Instance;
 
 	private class DummyQueryContext : IQueryContext
 	{
@@ -1612,6 +1613,19 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.Contains(" % ").AssertTrue($"Expected '%' operator, got: {sql}");
 	}
 
+	[TestMethod]
+	public void Arithmetic_NegatedDivisor_StaysOneOperand()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var query = items.Where(x => 100m / -x.Price < -5m);
+
+		var sql = GenerateSql<TestItem>(query);
+
+		// Without its own brackets "100 / -1 * Price" reads as "(100 / -1) * Price".
+		sql.Contains("(100 / (-1 * [e].[Price]))").AssertTrue($"the negated divisor must stay bracketed, got: {sql}");
+	}
+
 	#endregion
 
 	#region FK-shortcut projection over single relation
@@ -1692,6 +1706,286 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		sql.ContainsIgnoreCase("min(").AssertTrue($"Expected MIN aggregate, got: {sql}");
 		sql.ContainsIgnoreCase("AS [Priority]").AssertTrue(
 			$"Expected grouping key aliased to ctor parameter 'AS [Priority]', got: {sql}");
+	}
+
+	#endregion
+
+	#region Decimal arithmetic and comparison
+
+	[TestMethod]
+	public void DecimalComparison_SQLite_CastsParameterAndArithmetic()
+	{
+		var items = CreateQueryable<TestItem>();
+		var limit = 100m;
+
+		var sql = GenerateSql<TestItem>(items.Where(x => x.Price * 2m > limit), _sqliteDialect);
+
+		// A decimal parameter is bound as text; compared as it is, it is greater than every number.
+		sql.Contains("cast(@limit0 as NUMERIC)").AssertTrue($"the parameter must compare as a number, got: {sql}");
+		sql.Contains("* 2) as NUMERIC)").AssertTrue($"the product must compare as a number, got: {sql}");
+	}
+
+	[TestMethod]
+	public void DecimalComparison_SQLite_CastsParameterComparedToLiteral()
+	{
+		var items = CreateQueryable<TestItem>();
+		var maxPrice = 0m;
+
+		var sql = GenerateSql<TestItem>(items.Where(x => maxPrice == 0m || x.Price <= maxPrice), _sqliteDialect);
+
+		sql.Contains("(cast(@maxPrice0 as NUMERIC) = 0)").AssertTrue($"the parameter must compare as a number, got: {sql}");
+	}
+
+	[TestMethod]
+	public void DecimalComparison_SqlServer_NoCast()
+	{
+		var items = CreateQueryable<TestItem>();
+		var limit = 100m;
+
+		var sql = GenerateSql<TestItem>(items.Where(x => x.Price * 2m > limit));
+
+		sql.ContainsIgnoreCase("cast(").AssertFalse($"SQL Server stores decimals as numbers, got: {sql}");
+	}
+
+	[TestMethod]
+	public void MathMaxMin_AreScalar()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var max = items.Where(x => Math.Max(x.Price, 10m) > 50m);
+		var min = items.Select(x => new { M = Math.Min(x.Price, 10m) });
+
+		var sql = GenerateSql<TestItem>(max);
+		sql.ContainsIgnoreCase("Max([e].[Price], 10)").AssertFalse($"MAX is an aggregate on SQL Server, got: {sql}");
+		sql.Contains("(case when [e].[Price] >= 10 then [e].[Price] else 10 end)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(min);
+		sql.Contains("(case when [e].[Price] <= 10 then [e].[Price] else 10 end)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(max, _pgDialect);
+		sql.Contains("greatest(\"e\".\"Price\", 10)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(min, _pgDialect);
+		sql.Contains("least(\"e\".\"Price\", 10)").AssertTrue($"got: {sql}");
+
+		// SQLite's scalar max() orders text above every number, and decimals are stored as text.
+		sql = GenerateSql<TestItem>(max, _sqliteDialect);
+		sql.Contains("max(cast(\"e\".\"Price\" as NUMERIC), 10)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(min, _sqliteDialect);
+		sql.Contains("min(cast(\"e\".\"Price\" as NUMERIC), 10)").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void MathRound_AwayFromZero_IsRound()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// The mode is not a number of digits.
+		var sql = GenerateSql<TestItem>(items.Where(x => Math.Round(x.Price, MidpointRounding.AwayFromZero) == 10m));
+		sql.Contains("Round([e].[Price], 0)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, 1, MidpointRounding.AwayFromZero) }));
+		sql.Contains("Round([e].[Price], 1)").AssertTrue($"got: {sql}");
+		sql.Contains(", 1, 1)").AssertFalse($"a third ROUND argument truncates on SQL Server, got: {sql}");
+
+		foreach (var dialect in new[] { _pgDialect, _sqliteDialect })
+		{
+			sql = GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, 1, MidpointRounding.AwayFromZero) }), dialect);
+			sql.Contains("Round(\"e\".\"Price\", 1)").AssertTrue($"got: {sql}");
+		}
+	}
+
+	[TestMethod]
+	public void MathRound_ToZero_Truncates()
+	{
+		var items = CreateQueryable<TestItem>();
+		var whole = items.Select(x => new { R = Math.Round(x.Price, MidpointRounding.ToZero) });
+		var digits = items.Select(x => new { R = Math.Round(x.Price, 1, MidpointRounding.ToZero) });
+
+		GenerateSql<TestItem>(whole).Contains("Round([e].[Price], 0, 1)").AssertTrue();
+		GenerateSql<TestItem>(digits).Contains("Round([e].[Price], 1, 1)").AssertTrue();
+
+		GenerateSql<TestItem>(whole, _pgDialect).Contains("trunc(\"e\".\"Price\")").AssertTrue();
+		GenerateSql<TestItem>(digits, _pgDialect).Contains("trunc(\"e\".\"Price\", 1)").AssertTrue();
+
+		GenerateSql<TestItem>(whole, _sqliteDialect).Contains("trunc(\"e\".\"Price\")").AssertTrue();
+
+		// SQLite's trunc() has no digits argument.
+		Throws<NotSupportedException>(() => GenerateSql<TestItem>(digits, _sqliteDialect));
+	}
+
+	[TestMethod]
+	public void MathRound_TowardInfinity_IsFloorAndCeiling()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		foreach (var dialect in new[] { _dialect, _pgDialect, _sqliteDialect })
+		{
+			var sql = GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, MidpointRounding.ToNegativeInfinity) }), dialect);
+			sql.ContainsIgnoreCase("floor(").AssertTrue($"got: {sql}");
+
+			sql = GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, 0, MidpointRounding.ToPositiveInfinity) }), dialect);
+			sql.ContainsIgnoreCase("ceiling(").AssertTrue($"got: {sql}");
+
+			Throws<NotSupportedException>(() => GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, 2, MidpointRounding.ToNegativeInfinity) }), dialect));
+		}
+	}
+
+	[TestMethod]
+	public void MathRound_ToEven_NotSupported()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// No engine rounds half to even, and ROUND would silently round half away from zero.
+		foreach (var dialect in new[] { _dialect, _pgDialect, _sqliteDialect })
+		{
+			Throws<NotSupportedException>(() => GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, MidpointRounding.ToEven) }), dialect));
+			Throws<NotSupportedException>(() => GenerateSql<TestItem>(items.Select(x => new { R = Math.Round(x.Price, 2, MidpointRounding.ToEven) }), dialect));
+		}
+	}
+
+	[TestMethod]
+	public void OrderBy_Decimal_SortsAsNumber()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// Decimals are text in SQLite, and text sorts 199.99 before 9.99.
+		var sql = GenerateSql<TestItem>(items.OrderBy(x => x.Price), _sqliteDialect);
+		sql.Contains("order by cast(\"e\".\"Price\" as NUMERIC)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.OrderBy(x => x.Name).ThenByDescending(x => x.Price), _sqliteDialect);
+		sql.Contains("cast(\"e\".\"Price\" as NUMERIC) desc").AssertTrue($"got: {sql}");
+		sql.Contains("cast(\"e\".\"Name\"").AssertFalse($"text keeps sorting as text, got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.OrderBy(x => x.Price));
+		sql.Contains("order by [e].[Price]").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void MaxMinAggregate_Decimal_ComparesNumbers()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var grouped = items
+			.GroupBy(i => i.Priority)
+			.Select(g => new { g.Key, Max = g.Max(i => i.Price), Min = g.Min(i => i.Price) });
+
+		var sql = GenerateSql<TestItem>(grouped, _sqliteDialect);
+		sql.Contains("max(cast(\"e\".\"Price\" as NUMERIC))").AssertTrue($"got: {sql}");
+		sql.Contains("min(cast(\"e\".\"Price\" as NUMERIC))").AssertTrue($"got: {sql}");
+
+		var correlated = items.Select(e => new { e.Id, Max = (from j in items where j.Priority == e.Priority select j.Price).Max() });
+
+		sql = GenerateSql<TestItem>(correlated, _sqliteDialect);
+		sql.Contains("max(cast(\"j\".\"Price\" as NUMERIC))").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(grouped);
+		sql.Contains("max([e].[Price])").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void IntegerToDecimal_CastSizedFromSourceType()
+	{
+		SchemaRegistry.Get(typeof(TestItem));
+		var items = CreateQueryable<TestItem>();
+		var links = CreateQueryable<TestItemCategory>();
+
+		// decimal(18,2) holds 16 integer digits; a long has 19.
+		var sql = GenerateSql<TestItemCategory>(links.Select(x => (decimal)x.Item.Id));
+		sql.Contains("cast([e].[Item] as decimal(19,0))").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.Select(x => (decimal)x.Priority));
+		sql.Contains("cast([e].[Priority] as decimal(10,0))").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItemCategory>(links.Select(x => (decimal)x.Item.Id), _pgDialect);
+		sql.Contains("cast(\"e\".\"Item\" as decimal(19,0))").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void IntegerToDecimal_ArithmeticInWhere_IsDecimal()
+	{
+		var items = CreateQueryable<TestItem>();
+		var query = items.Where(x => (decimal)x.Priority / 4 > 0.5m);
+
+		// Integer by integer is integer division in SQL: 3 / 4 = 0.
+		var sql = GenerateSql<TestItem>(query);
+		sql.Contains("(cast([e].[Priority] as decimal(10,0)) / 4)").AssertTrue($"got: {sql}");
+
+		// SQLite keeps CAST(3 AS NUMERIC) an integer.
+		sql = GenerateSql<TestItem>(query, _sqliteDialect);
+		sql.Contains("(cast(\"e\".\"Priority\" as REAL) / 4)").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void IntegerToDecimal_ComparedDirectly_StaysAColumn()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// Comparing a whole number with a decimal is exact everywhere, and a bare column can use an index.
+		var sql = GenerateSql<TestItem>(items.Where(x => x.Priority > 2.5m));
+		sql.Contains("([e].[Priority] > 2.5)").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.Where(x => (decimal)x.Priority == 3m));
+		sql.Contains("([e].[Priority] = 3)").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void IntegerToDecimal_OfAnExpression_CastsTheResult()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		// C# divides the integers first and converts the quotient.
+		var sql = GenerateSql<TestItem>(items.Select(x => new { V = (decimal)(x.Priority / 4) }));
+		sql.Contains("cast(([e].[Priority] / 4) as decimal(10,0))").AssertTrue($"got: {sql}");
+
+		sql = GenerateSql<TestItem>(items.Where(x => (decimal)(x.Priority / 4) * 2 > 1m));
+		sql.Contains("cast(([e].[Priority] / 4) as decimal(10,0)) * 2").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void IntegerToDecimal_AnonymousProjection_AveragedAsDecimal()
+	{
+		var items = CreateQueryable<TestItem>();
+
+		var sql = GenerateSql<TestItem>(items.GroupBy(x => 1).Select(g => new { Avg = g.Average(x => (decimal)x.Priority) }));
+
+		// SQL Server's AVG of an int is an int.
+		sql.Contains("avg(cast([e].[Priority] as decimal(10,0)))").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void DecimalModulo_KeepsTheFraction()
+	{
+		var items = CreateQueryable<TestItem>();
+		var query = items.Where(x => x.Price % 1m != 0m);
+
+		GenerateSql<TestItem>(query).Contains("([e].[Price] % 1)").AssertTrue();
+
+		// SQLite's % casts both operands to INTEGER first.
+		var sql = GenerateSql<TestItem>(query, _sqliteDialect);
+		sql.Contains("mod(\"e\".\"Price\", 1)").AssertTrue($"got: {sql}");
+
+		// An integer remainder stays the operator.
+		sql = GenerateSql<TestItem>(items.Where(x => x.Priority % 2 == 1), _sqliteDialect);
+		sql.Contains("(\"e\".\"Priority\" % 2)").AssertTrue($"got: {sql}");
+	}
+
+	[TestMethod]
+	public void MathTruncate_PerDialect()
+	{
+		var items = CreateQueryable<TestItem>();
+		var query = items.Select(x => new { T = Math.Truncate(x.Price) });
+
+		GenerateSql<TestItem>(query).Contains("Round([e].[Price], 0, 1)").AssertTrue();
+
+		// PostgreSQL and SQLite have no three-argument round().
+		foreach (var dialect in new[] { _pgDialect, _sqliteDialect })
+		{
+			var sql = GenerateSql<TestItem>(query, dialect);
+			sql.Contains(", 0, 1)").AssertFalse($"got: {sql}");
+			sql.Contains("trunc(\"e\".\"Price\")").AssertTrue($"got: {sql}");
+		}
 	}
 
 	#endregion

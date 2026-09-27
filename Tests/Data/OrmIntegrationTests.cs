@@ -2240,6 +2240,375 @@ public class OrmIntegrationTests : BaseTestClass
 		results[0].Name.AssertEqual("Mid");
 	}
 
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_DivisionByNegatedColumn(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Ten", price: 10m);
+		await InsertItem("Fifty", price: 50m);
+
+		// 100 / -10 = -10 is below -5, 100 / -50 = -2 is not.
+		var results = await Query<TestItem>()
+			.Where(x => 100m / -x.Price < -5m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("Ten");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_DecimalProductComparedToParameter(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Sixty", price: 60m);
+		await InsertItem("Thirty", price: 30m);
+
+		var limit = 100m;
+
+		var results = await Query<TestItem>()
+			.Where(x => x.Price * 2m > limit)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("Sixty");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_OptionalDecimalFilter_ZeroMeansAll(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Sixty", price: 60m);
+		await InsertItem("Thirty", price: 30m);
+
+		var maxPrice = 0m;
+
+		var results = await Query<TestItem>()
+			.Where(x => maxPrice == 0m || x.Price <= maxPrice)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(2);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task CorrelatedDecimalAggregateComparison_ToParameter(string provider)
+	{
+		SetUp(provider);
+		// Group 1 sums to 130, group 2 to 30.
+		var a = await InsertItem("A", priority: 1, price: 50m);
+		var b = await InsertItem("B", priority: 1, price: 80m);
+		await InsertItem("C", priority: 2, price: 30m);
+
+		await ClearCache();
+
+		var items = Query<TestItem>();
+		var limit = 100m;
+
+		var rows = (await items
+			.Where(e => (from j in items where j.Priority == e.Priority select j.Price).Sum() > limit)
+			.ToArrayAsyncEx(CancellationToken))
+			.Select(r => r.Id)
+			.ToArray();
+
+		rows.Length.AssertEqual(2);
+		rows.AssertContains(a.Id);
+		rows.AssertContains(b.Id);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_MathMax_IsScalar(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Cheap", price: 9.99m);
+		await InsertItem("Mid", price: 49.99m);
+		await InsertItem("Expensive", price: 199.99m);
+
+		var results = await Query<TestItem>()
+			.Where(x => Math.Max(x.Price, 10m) > 50m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("Expensive");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_MathMin_IsScalar(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Cheap", price: 9.99m);
+		await InsertItem("Mid", price: 49.99m);
+		await InsertItem("Expensive", price: 199.99m);
+
+		var rows = await Query<TestItem>()
+			.Select(x => new { x.Name, M = Math.Min(x.Price, 10m) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(3);
+		rows.Single(r => r.Name == "Cheap").M.AssertEqual(9.99m);
+		rows.Single(r => r.Name == "Mid").M.AssertEqual(10m);
+		rows.Single(r => r.Name == "Expensive").M.AssertEqual(10m);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_MathRound_AwayFromZero(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Above", price: 9.51m);
+		await InsertItem("Below", price: 9.49m);
+		await InsertItem("Half", price: 2.5m);
+
+		var ten = await Query<TestItem>()
+			.Where(x => Math.Round(x.Price, MidpointRounding.AwayFromZero) == 10m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		ten.Length.AssertEqual(1);
+		ten[0].Name.AssertEqual("Above");
+
+		var three = await Query<TestItem>()
+			.Where(x => Math.Round(x.Price, 0, MidpointRounding.AwayFromZero) == 3m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		three.Length.AssertEqual(1);
+		three[0].Name.AssertEqual("Half");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_MathTruncate(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Positive", price: 9.99m);
+		await InsertItem("Negative", price: -9.99m);
+
+		var positive = await Query<TestItem>()
+			.Where(x => Math.Truncate(x.Price) == 9m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		positive.Length.AssertEqual(1);
+		positive[0].Name.AssertEqual("Positive");
+
+		var negative = await Query<TestItem>()
+			.Where(x => Math.Truncate(x.Price) == -9m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		negative.Length.AssertEqual(1);
+		negative[0].Name.AssertEqual("Negative");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_MathRound_TowardInfinity(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Negative", price: -9.5m);
+
+		var down = await Query<TestItem>()
+			.Where(x => Math.Round(x.Price, MidpointRounding.ToNegativeInfinity) == -10m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		down.Length.AssertEqual(1);
+
+		var up = await Query<TestItem>()
+			.Where(x => Math.Round(x.Price, MidpointRounding.ToPositiveInfinity) == -9m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		up.Length.AssertEqual(1);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_DecimalModulo_KeepsTheFraction(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Fraction", price: 9.99m);
+		await InsertItem("Whole", price: 5.00m);
+		await InsertItem("NegativeFraction", price: -9.99m);
+
+		var results = await Query<TestItem>()
+			.Where(x => x.Price % 1m != 0m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Select(r => r.Name).OrderBy(n => n).ToArray().AssertEqual(new[] { "Fraction", "NegativeFraction" });
+
+		// The remainder takes the sign of the dividend, as in C#.
+		var negative = await Query<TestItem>()
+			.Where(x => x.Price % 1m < 0m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		negative.Length.AssertEqual(1);
+		negative[0].Name.AssertEqual("NegativeFraction");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task OrderBy_Decimal_SortsAsNumber(string provider)
+	{
+		SetUp(provider);
+
+		foreach (var price in new[] { 199.99m, 9.99m, -1m, 49.99m, -2m })
+			await InsertItem(price.ToString(CultureInfo.InvariantCulture), price: price);
+
+		var ascending = await Query<TestItem>()
+			.OrderBy(x => x.Price)
+			.ToArrayAsyncEx(CancellationToken);
+
+		ascending.Select(r => r.Price).ToArray().AssertEqual(new[] { -2m, -1m, 9.99m, 49.99m, 199.99m });
+
+		var descending = await Query<TestItem>()
+			.OrderByDescending(x => x.Price)
+			.ToArrayAsyncEx(CancellationToken);
+
+		descending.Select(r => r.Price).ToArray().AssertEqual(new[] { 199.99m, 49.99m, 9.99m, -1m, -2m });
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task MaxMinAggregate_Decimal_ComparesNumbers(string provider)
+	{
+		SetUp(provider);
+
+		foreach (var price in new[] { 9.99m, 49.99m, 199.99m, -1m, -2m })
+			await InsertItem(price.ToString(CultureInfo.InvariantCulture), priority: 1, price: price);
+
+		var total = await Query<TestItem>()
+			.GroupBy(x => 1)
+			.Select(g => new { Max = g.Max(i => i.Price), Min = g.Min(i => i.Price) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		total.Length.AssertEqual(1);
+		total[0].Max.AssertEqual(199.99m);
+		total[0].Min.AssertEqual(-2m);
+
+		var items = Query<TestItem>();
+
+		var correlated = await items
+			.Select(e => new { e.Id, Max = (from j in items where j.Priority == e.Priority select j.Price).Max() })
+			.ToArrayAsyncEx(CancellationToken);
+
+		correlated.Length.AssertEqual(5);
+		correlated.All(r => r.Max == 199.99m).AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_LongAsDecimal_KeepsAllDigits(string provider)
+	{
+		SetUp(provider);
+
+		// The link column is a plain long; nothing requires the item to exist.
+		const long big = 10_000_000_000_000_000;
+		await InsertItemCategory(new TestItem { Id = big }, null);
+
+		var values = await Query<TestItemCategory>()
+			.Select(x => (decimal)x.Item.Id)
+			.ToArrayAsyncEx(CancellationToken);
+
+		values.AssertEqual(new[] { 10_000_000_000_000_000m });
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Where_IntegerAsDecimal_DividesAsDecimal(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Three", priority: 3);
+		await InsertItem("One", priority: 1);
+
+		// 3 / 4 = 0.75 in decimals, 0 in integers.
+		var results = await Query<TestItem>()
+			.Where(x => (decimal)x.Priority / 4 > 0.5m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+		results[0].Name.AssertEqual("Three");
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupBy_AverageOfIntegerAsDecimal(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("a", priority: 1);
+		await InsertItem("b", priority: 2);
+
+		var rows = await Query<TestItem>()
+			.GroupBy(x => 1)
+			.Select(g => new { Avg = g.Average(x => (decimal)x.Priority) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].Avg.AssertEqual(1.5m);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task Select_IntegerQuotientAsDecimal(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Three", priority: 3);
+
+		// The integers are divided first, as C# does, and only the quotient is converted.
+		var rows = await Query<TestItem>()
+			.Select(x => new { V = (decimal)(x.Priority / 4) })
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Length.AssertEqual(1);
+		rows[0].V.AssertEqual(0m);
+	}
+
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	public async Task Where_MathRound_ToZeroWithDigits(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("Item", price: 1.99m);
+
+		var results = await Query<TestItem>()
+			.Where(x => Math.Round(x.Price, 1, MidpointRounding.ToZero) == 1.9m)
+			.ToArrayAsyncEx(CancellationToken);
+
+		results.Length.AssertEqual(1);
+	}
+
 	#endregion
 
 	#region Transaction Tests

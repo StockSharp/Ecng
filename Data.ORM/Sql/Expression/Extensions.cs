@@ -70,6 +70,32 @@ static class Extensions
 		return me.Member.GetMemberValue(me.Expression.GetConstant<object>());
 	}
 
+	public static bool IsDecimal(this Type type)
+		=> (type.GetUnderlyingType() ?? type) == typeof(decimal);
+
+	/// <summary>
+	/// Opens a cast that makes a decimal compare and sort as a number on a dialect that stores
+	/// decimals as text (<see cref="ISqlDialect.DecimalComparisonCastSqlType"/>); writes nothing elsewhere.
+	/// </summary>
+	public static Query OpenDecimalComparisonCast(this Query query)
+		=> query.AddAction((dialect, builder) =>
+		{
+			if (!dialect.DecimalComparisonCastSqlType.IsEmpty())
+				builder.Append("cast(");
+		});
+
+	/// <summary>
+	/// Closes the cast opened by <see cref="OpenDecimalComparisonCast"/>.
+	/// </summary>
+	public static Query CloseDecimalComparisonCast(this Query query)
+		=> query.AddAction((dialect, builder) =>
+		{
+			var castType = dialect.DecimalComparisonCastSqlType;
+
+			if (!castType.IsEmpty())
+				builder.Append(" as ").Append(castType).Append(')');
+		});
+
 	public static Expression TryHandleImplicit(this Expression exp)
 	{
 		if (exp is MethodCallExpression opImplicit && opImplicit.Method.Name == "op_Implicit")

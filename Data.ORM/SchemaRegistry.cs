@@ -246,6 +246,8 @@ public static class SchemaRegistry
 					ClrType = clrType,
 					IsNullable = isNullable,
 					MaxLength = colAttr?.MaxLength ?? 0,
+					Precision = colAttr?.Precision ?? 0,
+					Scale = colAttr?.Scale ?? 0,
 					ReferencedEntityType = fkAttr?.ReferencedType,
 				});
 			}
@@ -528,6 +530,8 @@ public static class SchemaRegistry
 					IsIndex = simpleIndexes.Count > 0,
 					IsNullable = ResolveColumnNullable(prop, colAttr),
 					MaxLength = colAttr?.MaxLength ?? 0,
+					Precision = colAttr?.Precision ?? 0,
+					Scale = colAttr?.Scale ?? 0,
 					ReferencedEntityType = fkAttr?.ReferencedType,
 					Indexes = simpleIndexes,
 				});

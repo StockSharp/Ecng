@@ -41,12 +41,13 @@ public record SchemaColumn
 	public int MaxLength { get; init; }
 
 	/// <summary>
-	/// Gets the numeric precision for decimal/numeric columns (0 = dialect default).
+	/// Gets the numeric precision for decimal/numeric columns, or the fractional-second digits for date/time
+	/// columns (0 = dialect default).
 	/// </summary>
 	public int Precision { get; init; }
 
 	/// <summary>
-	/// Gets the numeric scale for decimal/numeric columns (0 = dialect default).
+	/// Gets the numeric scale for decimal/numeric columns; see <see cref="ColumnAttribute.Scale"/>.
 	/// </summary>
 	public int Scale { get; init; }
 

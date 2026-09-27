@@ -10,11 +10,13 @@ class ContextSelectColumns : Dictionary<MemberInfo, (Query, Expression)>
 /// reference (<see cref="Alias"/> / <see cref="ColumnName"/>) or a
 /// null-coalescing pair (ISNULL/COALESCE over a primary column with a
 /// fallback column) when <see cref="FallbackColumnName"/> is non-null.
+/// <see cref="IsDecimal"/> makes a dialect that stores decimals as text sort them as numbers.
 /// </summary>
 internal sealed record OrderByEntry(
 	string Alias,
 	string ColumnName,
 	bool Asc,
+	bool IsDecimal,
 	string FallbackAlias = null,
 	string FallbackColumnName = null)
 {
@@ -506,6 +508,9 @@ class Context
 				else
 					query.Comma();
 
+				if (entry.IsDecimal)
+					query.OpenDecimalComparisonCast();
+
 				if (entry.IsCoalesce)
 				{
 					// ISNULL(primary, fallback) — used by `OrderBy(e => e.A ?? e.B)`.
@@ -521,6 +526,9 @@ class Context
 				{
 					EmitOrderByColumn(query, entry.Alias, entry.ColumnName);
 				}
+
+				if (entry.IsDecimal)
+					query.CloseDecimalComparisonCast();
 
 				if (!entry.Asc)
 					query.Desc();

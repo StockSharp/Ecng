@@ -58,7 +58,7 @@ public class SqlServerDialect : SqlDialectBase
 			_ when underlying == typeof(short) => "SMALLINT",
 			_ when underlying == typeof(byte) => "TINYINT",
 			_ when underlying == typeof(bool) => "BIT",
-			_ when underlying == typeof(decimal) => "DECIMAL(18,8)",
+			_ when underlying == typeof(decimal) => $"DECIMAL({DefaultDecimalPrecision},{DefaultDecimalScale})",
 			_ when underlying == typeof(double) => "FLOAT",
 			_ when underlying == typeof(float) => "REAL",
 			_ when underlying == typeof(string) => "NVARCHAR(MAX)",
@@ -74,28 +74,24 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
-	public override string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0)
+	public override string GetColumnTypeName(Type clrType, int maxLength, int precision, int scale)
 	{
 		var underlying = clrType.GetUnderlyingType() ?? clrType;
-
-		string typeName;
 
 		// MaxLength == int.MaxValue (ColumnAttribute.Max) is the explicit "MAX"
 		// sentinel — same encoding as MaxLength == 0, but lets entity authors
 		// document intent ("yes, this column is intentionally unbounded").
 		var isMax = maxLength <= 0 || maxLength == int.MaxValue;
 		if (underlying == typeof(string))
-			typeName = isMax || maxLength > 4000 ? "NVARCHAR(MAX)" : $"NVARCHAR({maxLength})";
-		else if (underlying == typeof(byte[]))
-			typeName = isMax || maxLength > 8000 ? "VARBINARY(MAX)" : $"VARBINARY({maxLength})";
-		else if (underlying == typeof(decimal) && precision > 0)
-			typeName = $"DECIMAL({precision},{scale})";
-		else if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(TimeOnly)) && precision > 0)
-			typeName = $"{GetSqlTypeName(clrType)}({precision})";
-		else
-			typeName = GetSqlTypeName(clrType);
+			return isMax || maxLength > 4000 ? "NVARCHAR(MAX)" : $"NVARCHAR({maxLength})";
+		if (underlying == typeof(byte[]))
+			return isMax || maxLength > 8000 ? "VARBINARY(MAX)" : $"VARBINARY({maxLength})";
+		if (underlying == typeof(decimal) && (precision > 0 || scale > 0))
+			return FormatDecimal("DECIMAL", precision, scale);
+		if ((underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(TimeOnly)) && precision > 0)
+			return $"{GetSqlTypeName(clrType)}({precision})";
 
-		return $"{typeName} {(isNullable ? "NULL" : "NOT NULL")}";
+		return GetSqlTypeName(clrType);
 	}
 
 	/// <inheritdoc />
@@ -177,6 +173,84 @@ public class SqlServerDialect : SqlDialectBase
 	}
 
 	/// <inheritdoc />
+	public override bool CanAlterColumnWithDependents => false;
+
+	/// <inheritdoc />
+	public override int GetStoredMaxLength(Type clrType, int maxLength)
+	{
+		var underlying = clrType.GetUnderlyingType() ?? clrType;
+
+		if (underlying == typeof(string) && maxLength > 4000)
+			return -1;
+
+		if (underlying == typeof(byte[]) && maxLength > 8000)
+			return -1;
+
+		return base.GetStoredMaxLength(clrType, maxLength);
+	}
+
+	/// <inheritdoc />
+	public override void AppendDropIndex(StringBuilder sb, string tableName, string indexName)
+		=> sb.Append($"DROP INDEX {QuoteIdentifier(indexName)} ON {QuoteIdentifier(tableName)}");
+
+	/// <inheritdoc />
+	public override void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live)
+	{
+		var typeName = GetColumnTypeName(clrType, maxLength, precision, scale);
+
+		// The comparison folds VARCHAR into NVARCHAR and DATETIME into DATETIME2, so a column it did not report as
+		// a different type keeps its own: only its length, digits and nullability change.
+		if (live is not null)
+			typeName = KeepLiveBaseType(live.DataType, typeName);
+
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {typeName} {(isNullable ? "NULL" : "NOT NULL")}");
+	}
+
+	/// <inheritdoc />
+	public override void AppendAlterNullability(StringBuilder sb, string tableName, string columnName, bool isNullable, DbColumnInfo live)
+	{
+		if (live is null)
+			throw new ArgumentNullException(nameof(live));
+
+		sb.Append($"ALTER TABLE {QuoteIdentifier(tableName)} ALTER COLUMN {QuoteIdentifier(columnName)} {FormatLiveType(live)} {(isNullable ? "NULL" : "NOT NULL")}");
+	}
+
+	private string KeepLiveBaseType(string liveType, string typeName)
+	{
+		var live = liveType.Trim().ToUpperInvariant();
+		var paren = typeName.IndexOf('(');
+		var baseName = paren > 0 ? typeName[..paren] : typeName;
+		var suffix = paren > 0 ? typeName[paren..] : string.Empty;
+
+		if (live == baseName || NormalizeDbType(live) != NormalizeDbType(baseName))
+			return typeName;
+
+		return live switch
+		{
+			"VARCHAR" or "VARBINARY" or "NUMERIC" => live + suffix,
+			// Fixed-length types have no MAX.
+			"CHAR" or "NCHAR" or "BINARY" when suffix != "(MAX)" => live + suffix,
+			// DATETIME takes no precision; a declared one asks for DATETIME2.
+			"DATETIME" when suffix.Length == 0 => live,
+			_ => typeName,
+		};
+	}
+
+	private static string FormatLiveType(DbColumnInfo live)
+	{
+		var type = live.DataType.Trim().ToUpperInvariant();
+
+		return type switch
+		{
+			"VARCHAR" or "NVARCHAR" or "CHAR" or "NCHAR" or "VARBINARY" or "BINARY"
+				=> $"{type}({(live.MaxLength is null or -1 ? "MAX" : live.MaxLength.Value.ToString())})",
+			"DECIMAL" or "NUMERIC" => $"{type}({live.NumericPrecision},{live.NumericScale ?? 0})",
+			"DATETIME2" or "DATETIMEOFFSET" or "TIME" when live.NumericPrecision is not null => $"{type}({live.NumericPrecision})",
+			_ => type,
+		};
+	}
+
+	/// <inheritdoc />
 	public override async Task<IReadOnlyList<DbColumnInfo>> ReadDbSchemaAsync(
 		DbConnection connection,
 		string tableSchema = null,
@@ -186,7 +260,7 @@ public class SqlServerDialect : SqlDialectBase
 
 		// SELECT shape:
 		//   c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE,
-		//   c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, c.NUMERIC_SCALE,
+		//   c.CHARACTER_MAXIMUM_LENGTH, COALESCE(c.NUMERIC_PRECISION, c.DATETIME_PRECISION), c.NUMERIC_SCALE,
 		//   COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsComputed')
 		// FROM INFORMATION_SCHEMA.COLUMNS c
 		// WHERE c.TABLE_SCHEMA = @schema
@@ -198,7 +272,8 @@ public class SqlServerDialect : SqlDialectBase
 				.Column("c", "DATA_TYPE").Comma()
 				.Column("c", "IS_NULLABLE").Comma()
 				.Column("c", "CHARACTER_MAXIMUM_LENGTH").Comma()
-				.Column("c", "NUMERIC_PRECISION").Comma()
+				// A date/time column reports its fractional-second digits in DATETIME_PRECISION, not NUMERIC_PRECISION.
+				.Raw("COALESCE(c.NUMERIC_PRECISION, c.DATETIME_PRECISION)").Comma()
 				.Column("c", "NUMERIC_SCALE").Comma()
 				.Raw("COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.TABLE_SCHEMA) + '.' + QUOTENAME(c.TABLE_NAME)), c.COLUMN_NAME, 'IsComputed')").NewLine()
 			.From().Raw("INFORMATION_SCHEMA.COLUMNS c").NewLine()

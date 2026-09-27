@@ -57,6 +57,31 @@ public interface ISqlDialect
 	string DecimalComparisonCastSqlType { get; }
 
 	/// <summary>
+	/// SQL type a whole number is cast to when a query converts it to <see cref="decimal"/>.
+	/// </summary>
+	/// <param name="precision">Number of digits the source integer type can hold.</param>
+	/// <returns>The SQL type name.</returns>
+	string GetIntegerToDecimalCastSqlType(int precision);
+
+	/// <summary>
+	/// Whether a decimal column keeps a declared precision and scale. A dialect that stores decimals as text
+	/// keeps neither, so there is nothing to compare a declaration against.
+	/// </summary>
+	bool KeepsDecimalDigits { get; }
+
+	/// <summary>
+	/// Whether ALTER COLUMN can change a column that an index, a primary key or a foreign key depends on.
+	/// SQL Server cannot: those have to be dropped before and recreated after.
+	/// </summary>
+	bool CanAlterColumnWithDependents { get; }
+
+	/// <summary>
+	/// Whether an existing column's type or nullability can be changed in place. SQLite cannot: such a change
+	/// means rebuilding the table.
+	/// </summary>
+	bool CanAlterColumn { get; }
+
+	/// <summary>
 	/// Unicode string-literal prefix (e.g. <c>N</c> for SQL Server).
 	/// </summary>
 	string UnicodePrefix { get; }
@@ -188,6 +213,19 @@ public interface ISqlDialect
 	string GetColumnDefinition(Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0);
 
 	/// <summary>
+	/// The SQL type a column is created with: the type name together with its length, precision or scale.
+	/// A decimal that declares only a scale gets <see cref="SqlDialectBase.DefaultDecimalPrecision"/>; one that
+	/// declares a precision keeps its scale as declared, zero included.
+	/// </summary>
+	string GetColumnTypeName(Type clrType, int maxLength, int precision, int scale);
+
+	/// <summary>
+	/// The length the database reports for a column created with the declared length: -1 when the dialect
+	/// stores it unbounded, as SQL Server does past NVARCHAR(4000) and VARBINARY(8000).
+	/// </summary>
+	int GetStoredMaxLength(Type clrType, int maxLength);
+
+	/// <summary>
 	/// Normalises a raw database type name to the canonical form used by
 	/// this dialect.
 	/// </summary>
@@ -274,14 +312,39 @@ public interface ISqlDialect
 	void AppendCreateIndex(StringBuilder sb, string indexName, string tableName, string columnName, bool unique);
 
 	/// <summary>
+	/// Appends DROP INDEX.
+	/// </summary>
+	void AppendDropIndex(StringBuilder sb, string tableName, string indexName);
+
+	/// <summary>
 	/// Appends ALTER TABLE ADD COLUMN.
 	/// </summary>
 	void AppendAddColumn(StringBuilder sb, string tableName, string columnName, string columnDef);
 
 	/// <summary>
-	/// Appends ALTER TABLE ALTER COLUMN.
+	/// Appends ALTER TABLE ALTER COLUMN that gives a column the declared type and nullability.
 	/// </summary>
-	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength = 0, int precision = 0, int scale = 0);
+	/// <param name="sb">Where the statement goes.</param>
+	/// <param name="tableName">The table.</param>
+	/// <param name="columnName">The column.</param>
+	/// <param name="clrType">The property type the column holds.</param>
+	/// <param name="isNullable">Whether the column should allow NULLs.</param>
+	/// <param name="maxLength">The declared length, 0 for the default.</param>
+	/// <param name="precision">The declared precision, 0 for the default.</param>
+	/// <param name="scale">The declared scale.</param>
+	/// <param name="live">The column as the database holds it, or null for a column this script has just added;
+	/// a dialect uses it to keep what the declaration does not decide, and to convert the stored values.</param>
+	void AppendAlterColumn(StringBuilder sb, string tableName, string columnName, Type clrType, bool isNullable, int maxLength, int precision, int scale, DbColumnInfo live);
+
+	/// <summary>
+	/// Makes a column nullable or not, leaving its type as the database holds it.
+	/// </summary>
+	/// <param name="sb">Where the statement goes.</param>
+	/// <param name="tableName">The table.</param>
+	/// <param name="columnName">The column.</param>
+	/// <param name="isNullable">Whether the column should allow NULLs.</param>
+	/// <param name="live">The column as the database holds it.</param>
+	void AppendAlterNullability(StringBuilder sb, string tableName, string columnName, bool isNullable, DbColumnInfo live);
 
 	/// <summary>
 	/// Appends ALTER TABLE DROP COLUMN.
@@ -330,6 +393,44 @@ public interface ISqlDialect
 	/// <param name="startSql">SQL of the start date.</param>
 	/// <param name="endSql">SQL of the end date.</param>
 	void AppendDateDiff(StringBuilder sb, string part, string startSql, string endSql);
+
+	/// <summary>
+	/// Appends the remainder of dividing one decimal value by another, fraction included and with
+	/// the sign of the dividend, as the C# <c>%</c> operator gives it.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="dividendSql">SQL of the dividend.</param>
+	/// <param name="divisorSql">SQL of the divisor.</param>
+	void AppendDecimalModulo(StringBuilder sb, string dividendSql, string divisorSql);
+
+	/// <summary>
+	/// Appends the larger of two values, the way <see cref="Math.Max(decimal, decimal)"/> picks it:
+	/// a scalar function of two arguments, not the MAX aggregate.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="leftSql">SQL of the first value.</param>
+	/// <param name="rightSql">SQL of the second value.</param>
+	void AppendGreatest(StringBuilder sb, string leftSql, string rightSql);
+
+	/// <summary>
+	/// Appends the smaller of two values, the way <see cref="Math.Min(decimal, decimal)"/> picks it:
+	/// a scalar function of two arguments, not the MIN aggregate.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="leftSql">SQL of the first value.</param>
+	/// <param name="rightSql">SQL of the second value.</param>
+	void AppendLeast(StringBuilder sb, string leftSql, string rightSql);
+
+	/// <summary>
+	/// Appends an expression that rounds a value the way
+	/// <see cref="Math.Round(decimal, int, MidpointRounding)"/> does with the given mode.
+	/// </summary>
+	/// <param name="sb">Target builder.</param>
+	/// <param name="valueSql">SQL of the value.</param>
+	/// <param name="digitsSql">SQL of the number of fractional digits to keep, or <see langword="null"/> to round to a whole number.</param>
+	/// <param name="mode">How the value is rounded; <see cref="MidpointRounding.ToZero"/> truncates.</param>
+	/// <exception cref="NotSupportedException">The database cannot round exactly this way.</exception>
+	void AppendRound(StringBuilder sb, string valueSql, string digitsSql, MidpointRounding mode);
 
 	/// <summary>
 	/// Opens a TRIM expression (closed by <see cref="AppendTrimClose"/>).
