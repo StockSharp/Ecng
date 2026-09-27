@@ -37,4 +37,20 @@ public sealed class ColumnOverrideAttribute(string propertyName) : Attribute
 	/// Gets whether <see cref="IsNullable"/> was explicitly set.
 	/// </summary>
 	public bool IsNullableSet => _isNullableSet;
+
+	/// <summary>
+	/// Gets or sets the numeric precision for a decimal/numeric column, or the fractional-second digits
+	/// for a date/time column. 0 (the default) leaves the column's own <see cref="ColumnAttribute.Precision"/>
+	/// and <see cref="ColumnAttribute.Scale"/> in place. A non-zero value replaces both: <see cref="Scale"/>
+	/// is then taken literally, so 0 means no digits after the point, as in DECIMAL(p).
+	/// </summary>
+	public int Precision { get; set; }
+
+	/// <summary>
+	/// Gets or sets the numeric scale for a decimal/numeric column. With <see cref="Precision"/> set, it is
+	/// taken literally. Without it, 0 (the default) leaves the column's own scale in place, and any other
+	/// value replaces that scale while the precision stays the column's own, or the dialect default when the
+	/// column declares none.
+	/// </summary>
+	public int Scale { get; set; }
 }

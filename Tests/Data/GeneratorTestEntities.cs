@@ -288,6 +288,51 @@ public partial class GenTestColumnOverrideWithNameEntity : GenTestBaseEntity
 	public TestKeySecret Auth { get; set; }
 }
 
+/// <summary>
+/// Inner value object whose decimals get their digits only from the outer [ColumnOverride].
+/// </summary>
+public class GenTestOverrideMoney
+{
+	public decimal Amount { get; set; }
+
+	[Column(Precision = 20, Scale = 6)]
+	public decimal Fee { get; set; }
+
+	[Column(Precision = 20, Scale = 6)]
+	public decimal Rate { get; set; }
+
+	public decimal Tax { get; set; }
+
+	public decimal Price { get; set; }
+}
+
+[Entity(Name = "Ecng_GenColOverridePrecision")]
+public partial class GenTestColumnOverridePrecisionEntity : GenTestBaseEntity
+{
+	[ColumnOverride(nameof(GenTestOverrideMoney.Amount), Precision = 18, Scale = 2)]
+	[ColumnOverride(nameof(GenTestOverrideMoney.Fee), IsNullable = true)]
+	[ColumnOverride(nameof(GenTestOverrideMoney.Rate), Precision = 10)]
+	[ColumnOverride(nameof(GenTestOverrideMoney.Tax), Scale = 3)]
+	[ColumnOverride(nameof(GenTestOverrideMoney.Price), IsNullable = true, Precision = 12, Scale = 4)]
+	public GenTestOverrideMoney Money { get; set; }
+}
+
+public abstract partial class GenTestBalanceBaseEntity : GenTestBaseEntity
+{
+	public decimal Balance { get; set; }
+
+	public decimal Reserved { get; set; }
+}
+
+/// <summary>
+/// Entity-level [ColumnOverride] giving digits to a decimal column inherited from the base.
+/// </summary>
+[Entity(Name = "Ecng_GenColOverrideInherited")]
+[ColumnOverride(nameof(GenTestBalanceBaseEntity.Balance), Precision = 18, Scale = 2)]
+public partial class GenTestColumnOverrideInheritedEntity : GenTestBalanceBaseEntity
+{
+}
+
 // ===== Join entity tests (no Identity) =====
 
 /// <summary>

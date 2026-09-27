@@ -59,6 +59,59 @@ public class ColAttrTestEntity : IDbPersistable
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
 }
 
+// Inner type without ORM-driven digits, as a DTO from an assembly that does not reference the ORM.
+public class ColOverrideMoney
+{
+	public decimal Amount { get; set; }
+
+	[Column(Precision = 20, Scale = 6)]
+	public decimal Fee { get; set; }
+
+	[Column(Precision = 20, Scale = 6)]
+	public decimal Rate { get; set; }
+
+	public decimal Tax { get; set; }
+
+	public decimal Price { get; set; }
+}
+
+[Entity(Name = "Ecng_ColOverridePrecision")]
+public class ColOverridePrecisionEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[ColumnOverride(nameof(ColOverrideMoney.Amount), Precision = 18, Scale = 2)]
+	[ColumnOverride(nameof(ColOverrideMoney.Fee), IsNullable = true)]
+	[ColumnOverride(nameof(ColOverrideMoney.Rate), Precision = 10)]
+	[ColumnOverride(nameof(ColOverrideMoney.Tax), Scale = 3)]
+	[ColumnOverride(nameof(ColOverrideMoney.Price), IsNullable = true, Precision = 12, Scale = 4)]
+	public ColOverrideMoney Money { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+public class ColOverrideBalanceBase
+{
+	public decimal Balance { get; set; }
+
+	public decimal Reserved { get; set; }
+}
+
+[Entity(Name = "Ecng_ColOverrideInherited")]
+[ColumnOverride(nameof(ColOverrideBalanceBase.Balance), Precision = 18, Scale = 2)]
+public class ColOverrideInheritedEntity : ColOverrideBalanceBase, IDbPersistable
+{
+	public long Id { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 #endregion
 
 // Base class contributing an inherited column — mirrors the soft-delete `Deleted`
@@ -221,6 +274,84 @@ public class ColumnAttributeTests : BaseTestClass
 
 		col.Precision.AssertEqual(18);
 		col.Scale.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void ColumnOverride_PrecisionScale_AppliedToFlattenedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "MoneyAmount");
+
+		col.Precision.AssertEqual(18);
+		col.Scale.AssertEqual(2);
+		col.IsNullable.AssertFalse();
+	}
+
+	[TestMethod]
+	public void ColumnOverride_WithoutDigits_KeepsInnerColumnDigits()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "MoneyFee");
+
+		col.Precision.AssertEqual(20);
+		col.Scale.AssertEqual(6);
+		col.IsNullable.AssertTrue();
+	}
+
+	[TestMethod]
+	public void ColumnOverride_PrecisionOnly_MakesScaleLiteral()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "MoneyRate");
+
+		col.Precision.AssertEqual(10);
+		col.Scale.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ColumnOverride_ScaleOnly_LeavesPrecisionToDialect()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "MoneyTax");
+
+		col.Precision.AssertEqual(0);
+		col.Scale.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void ColumnOverride_NullabilityAndPrecision_BothApplied()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+		var col = schema.Columns.First(c => c.Name == "MoneyPrice");
+
+		col.IsNullable.AssertTrue();
+		col.Precision.AssertEqual(12);
+		col.Scale.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void EntityLevelColumnOverride_PrecisionScale_AppliedToInheritedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideInheritedEntity));
+
+		var balance = schema.Columns.First(c => c.Name == "Balance");
+		balance.Precision.AssertEqual(18);
+		balance.Scale.AssertEqual(2);
+
+		var reserved = schema.Columns.First(c => c.Name == "Reserved");
+		reserved.Precision.AssertEqual(0);
+		reserved.Scale.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_OverriddenFlattenedColumn_AgainstWiderLiveColumn_Detected()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverridePrecisionEntity));
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo(schema.TableName, "MoneyAmount", "decimal", false, null, 18, 8)], SqlServerDialect.Instance, false);
+
+		diffs.Any(d => d.ColumnName == "MoneyAmount" && d.Kind == SchemaDiffKind.PrecisionMismatch).AssertTrue(
+			"The override declares DECIMAL(18,2), which a DECIMAL(18,8) column is not");
 	}
 
 	#endregion

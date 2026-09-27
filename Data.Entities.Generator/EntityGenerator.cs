@@ -661,13 +661,13 @@ public class EntityGenerator : IIncrementalGenerator
 		var (entityAttrName, noCache) = GetEntityAttribute(entityType);
 		var tableName = entityAttrName ?? entityName;
 		var typeIndexLookup = BuildTypeIndexLookup(entityType, tableName);
-		var typeColumnNullable = BuildTypeColumnNullableLookup(entityType);
+		var typeColumnOverrides = BuildTypeColumnOverrideLookup(entityType);
 
 		sb.AppendLine("\t\tvar columns = new List<SchemaColumn>()");
 		sb.AppendLine("\t\t{");
 
 		foreach (var prop in allProps)
-			EmitMetaColumns(sb, prop, typeIndexLookup, typeColumnNullable);
+			EmitMetaColumns(sb, prop, typeIndexLookup, typeColumnOverrides);
 
 		sb.AppendLine("\t\t};");
 		sb.AppendLine();
@@ -701,12 +701,13 @@ public class EntityGenerator : IIncrementalGenerator
 		return sb;
 	}
 
-	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, ColumnIndexes> typeIndexLookup, Dictionary<string, bool> typeColumnNullable)
+	private static void EmitMetaColumns(StringBuilder sb, IPropertySymbol prop, Dictionary<string, ColumnIndexes> typeIndexLookup, Dictionary<string, ColumnOverride> typeColumnOverrides)
 	{
 		// A type-level [ColumnOverride] names this column from the entity, which is the only
 		// way to reach a column the entity inherits rather than declares. It outranks whatever
 		// the property itself says.
-		bool? typeNullable = typeColumnNullable.TryGetValue(prop.Name, out var overridden) ? overridden : null;
+		var typeOverride = typeColumnOverrides.TryGetValue(prop.Name, out var overridden) ? overridden : null;
+		var typeNullable = typeOverride?.IsNullable;
 
 		if (IsInnerSchema(prop))
 		{
@@ -756,6 +757,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(prop);
 			var nullable = typeNullable ?? colNullable ?? InferIsNullable(prop);
+			(colPrecision, colScale) = ResolveDigits(typeOverride, colPrecision, colScale);
 			if (nullable)
 				parts.Add("IsNullable = true");
 			if (colMaxLen > 0)
@@ -769,19 +771,16 @@ public class EntityGenerator : IIncrementalGenerator
 		}
 	}
 
-	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, bool> columnOverrides, bool outerNullable, Dictionary<string, ColumnIndexes> typeIndexLookup)
+	private static void EmitMetaColumnsRecursive(StringBuilder sb, IPropertySymbol[] innerProps, string colPrefix, Dictionary<string, string> nameOverrides, Dictionary<string, ColumnOverride> columnOverrides, bool outerNullable, Dictionary<string, ColumnIndexes> typeIndexLookup)
 	{
 		foreach (var inner in innerProps)
 		{
 			var colName = GetColumnName(colPrefix, inner.Name, nameOverrides);
 			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(inner);
 
-			bool nullable;
-
-			if (columnOverrides.TryGetValue(inner.Name, out var overrideNullable))
-				nullable = overrideNullable;
-			else
-				nullable = outerNullable || (colNullable ?? InferIsNullable(inner));
+			var columnOverride = columnOverrides.TryGetValue(inner.Name, out var overridden) ? overridden : null;
+			var nullable = columnOverride?.IsNullable ?? (outerNullable || (colNullable ?? InferIsNullable(inner)));
+			(colPrecision, colScale) = ResolveDigits(columnOverride, colPrecision, colScale);
 
 			if (IsInnerSchemaProperty(inner))
 			{
@@ -1006,29 +1005,83 @@ public class EntityGenerator : IIncrementalGenerator
 	}
 
 	/// <summary>
-	/// Reads [ColumnOverride] attributes from a property.
-	/// Returns Dictionary mapping innerPropName → isNullable.
+	/// Reads [ColumnOverride] attributes from a property, keyed by the inner property name.
 	/// </summary>
-	private static Dictionary<string, bool> GetColumnOverrides(IPropertySymbol prop)
+	private static Dictionary<string, ColumnOverride> GetColumnOverrides(IPropertySymbol prop)
+		=> ReadColumnOverrides(prop.GetAttributes(), StringComparer.Ordinal);
+
+	// Mirrors SchemaRegistry.ReadColumnOverrides, so both schema paths merge the declarations alike.
+	private static Dictionary<string, ColumnOverride> ReadColumnOverrides(IEnumerable<AttributeData> attrs, StringComparer comparer)
 	{
-		var result = new Dictionary<string, bool>();
-		foreach (var attr in prop.GetAttributes())
+		var result = new Dictionary<string, ColumnOverride>(comparer);
+
+		foreach (var attr in attrs)
 		{
 			if (attr.AttributeClass?.Name != "ColumnOverrideAttribute")
 				continue;
-			if (attr.ConstructorArguments.Length < 1)
+
+			if (attr.ConstructorArguments.Length == 0 || attr.ConstructorArguments[0].Value is not string propName || propName.Length == 0)
 				continue;
-			var innerProp = attr.ConstructorArguments[0].Value as string;
-			if (innerProp is null)
-				continue;
+
+			bool? isNullable = null;
+			var precision = 0;
+			var scale = 0;
 
 			foreach (var named in attr.NamedArguments)
 			{
-				if (named.Key == "IsNullable")
-					result[innerProp] = (bool)named.Value.Value;
+				switch (named.Key)
+				{
+					case "IsNullable":
+						isNullable = named.Value.Value is true;
+						break;
+					case "Precision":
+						precision = named.Value.Value is int p ? p : 0;
+						break;
+					case "Scale":
+						scale = named.Value.Value is int s ? s : 0;
+						break;
+				}
 			}
+
+			if (!result.TryGetValue(propName, out var entry))
+				result[propName] = entry = new();
+
+			if (isNullable is not null)
+				entry.IsNullable = isNullable;
+
+			if (precision > 0)
+			{
+				entry.Precision = precision;
+				entry.Scale = scale;
+			}
+			else if (scale > 0)
+				entry.Scale = scale;
 		}
+
 		return result;
+	}
+
+	/// <summary>
+	/// What one [ColumnOverride] (or several naming the same column) replaces on that column.
+	/// </summary>
+	private sealed class ColumnOverride
+	{
+		public bool? IsNullable { get; set; }
+		public int Precision { get; set; }
+		public int Scale { get; set; }
+	}
+
+	// An override precision replaces both digits and makes its scale literal; an override scale alone
+	// replaces only the scale, the way ColumnAttribute pairs a lone scale with the default precision.
+	private static (int precision, int scale) ResolveDigits(ColumnOverride columnOverride, int precision, int scale)
+	{
+		if (columnOverride is null)
+			return (precision, scale);
+
+		if (columnOverride.Precision > 0)
+			return (columnOverride.Precision, columnOverride.Scale);
+
+		return (precision, columnOverride.Scale > 0 ? columnOverride.Scale : scale);
 	}
 
 	private static string GetColumnName(string outerPropName, string innerPropName, Dictionary<string, string> nameOverrides)
@@ -1326,30 +1379,11 @@ public class EntityGenerator : IIncrementalGenerator
 		return values.Where(s => !string.IsNullOrEmpty(s)).ToArray();
 	}
 
-	// Builds a column-name -> nullability map from type-level [ColumnOverride] declarations, mirroring
+	// Builds a column-name -> override map from type-level [ColumnOverride] declarations, mirroring
 	// SchemaRegistry's type-level override. Naming the column from the entity is what lets an entity
 	// reshape a column it inherits from a base class, where no property-level attribute can reach.
-	private static Dictionary<string, bool> BuildTypeColumnNullableLookup(INamedTypeSymbol entityType)
-	{
-		var lookup = new Dictionary<string, bool>();
-
-		foreach (var attr in entityType.GetAttributes())
-		{
-			if (attr.AttributeClass?.Name != "ColumnOverrideAttribute")
-				continue;
-
-			if (attr.ConstructorArguments.Length == 0 || attr.ConstructorArguments[0].Value is not string propName || propName.Length == 0)
-				continue;
-
-			foreach (var named in attr.NamedArguments)
-			{
-				if (named.Key == "IsNullable")
-					lookup[propName] = named.Value.Value is true;
-			}
-		}
-
-		return lookup;
-	}
+	private static Dictionary<string, ColumnOverride> BuildTypeColumnOverrideLookup(INamedTypeSymbol entityType)
+		=> ReadColumnOverrides(entityType.GetAttributes(), StringComparer.OrdinalIgnoreCase);
 
 	// Combines property-level [Index]/[Unique] with the type-level entries for the column. Entries
 	// is the comma-joined "SchemaColumnIndex.From(...)" list, or null when the column has none.

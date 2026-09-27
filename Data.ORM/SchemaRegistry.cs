@@ -158,17 +158,57 @@ public static class SchemaRegistry
 		return result;
 	}
 
-	private static Dictionary<string, bool> GetColumnOverrides(PropertyInfo prop)
-	{
-		var result = new Dictionary<string, bool>();
+	private static Dictionary<string, ColumnOverride> GetColumnOverrides(PropertyInfo prop)
+		=> ReadColumnOverrides(prop.GetAttributes<ColumnOverrideAttribute>(), StringComparer.Ordinal);
 
-		foreach (var attr in prop.GetAttributes<ColumnOverrideAttribute>())
+	private static Dictionary<string, ColumnOverride> ReadColumnOverrides(IEnumerable<ColumnOverrideAttribute> attrs, StringComparer comparer)
+	{
+		var result = new Dictionary<string, ColumnOverride>(comparer);
+
+		foreach (var attr in attrs)
 		{
+			if (!result.TryGetValue(attr.PropertyName, out var entry))
+				result[attr.PropertyName] = entry = new();
+
 			if (attr.IsNullableSet)
-				result[attr.PropertyName] = attr.IsNullable;
+				entry.IsNullable = attr.IsNullable;
+
+			if (attr.Precision > 0)
+			{
+				entry.Precision = attr.Precision;
+				entry.Scale = attr.Scale;
+			}
+			else if (attr.Scale > 0)
+				entry.Scale = attr.Scale;
 		}
 
 		return result;
+	}
+
+	/// <summary>
+	/// What one [ColumnOverride] (or several naming the same column) replaces on that column.
+	/// </summary>
+	private sealed class ColumnOverride
+	{
+		public bool? IsNullable { get; set; }
+		public int Precision { get; set; }
+		public int Scale { get; set; }
+	}
+
+	// An override precision replaces both digits and makes its scale literal; an override scale alone
+	// replaces only the scale, the way ColumnAttribute pairs a lone scale with the default precision.
+	private static (int Precision, int Scale) ResolveDigits(ColumnOverride columnOverride, ColumnAttribute colAttr)
+	{
+		var precision = colAttr?.Precision ?? 0;
+		var scale = colAttr?.Scale ?? 0;
+
+		if (columnOverride is null)
+			return (precision, scale);
+
+		if (columnOverride.Precision > 0)
+			return (columnOverride.Precision, columnOverride.Scale);
+
+		return (precision, columnOverride.Scale > 0 ? columnOverride.Scale : scale);
 	}
 
 	private static string GetColumnName(string outerPropName, string innerPropName, Dictionary<string, string> nameOverrides)
@@ -183,7 +223,7 @@ public static class SchemaRegistry
 		Type innerType,
 		string prefix,
 		Dictionary<string, string> nameOverrides,
-		Dictionary<string, bool> columnOverrides,
+		Dictionary<string, ColumnOverride> columnOverrides,
 		List<SchemaColumn> columns,
 		HashSet<Type> visiting,
 		bool outerNullable = false)
@@ -202,12 +242,9 @@ public static class SchemaRegistry
 			// (without being a navigation relation) so schema comparison knows it.
 			var fkAttr = prop.GetAttribute<ForeignKeyAttribute>();
 
-			bool isNullable;
+			columnOverrides.TryGetValue(prop.Name, out var columnOverride);
 
-			if (columnOverrides.TryGetValue(prop.Name, out var overrideNullable))
-				isNullable = overrideNullable;
-			else
-				isNullable = outerNullable || ResolveNullable(colAttr, prop.PropertyType);
+			var isNullable = columnOverride?.IsNullable ?? (outerNullable || ResolveNullable(colAttr, prop.PropertyType));
 
 			if (prop.GetAttribute<RelationSingleAttribute>() is not null)
 			{
@@ -240,14 +277,16 @@ public static class SchemaRegistry
 					? Enum.GetUnderlyingType(propType)
 					: prop.PropertyType;
 
+				var (precision, scale) = ResolveDigits(columnOverride, colAttr);
+
 				columns.Add(new()
 				{
 					Name = colName,
 					ClrType = clrType,
 					IsNullable = isNullable,
 					MaxLength = colAttr?.MaxLength ?? 0,
-					Precision = colAttr?.Precision ?? 0,
-					Scale = colAttr?.Scale ?? 0,
+					Precision = precision,
+					Scale = scale,
 					ReferencedEntityType = fkAttr?.ReferencedType,
 				});
 			}
@@ -359,23 +398,18 @@ public static class SchemaRegistry
 		// property-level [Index].
 		var typeIndexLookup = new Dictionary<string, (List<SchemaColumnIndex> Indexes, bool HasUnique)>(StringComparer.OrdinalIgnoreCase);
 
-		// Type-level [ColumnOverride(nameof(X), IsNullable = …)] names one of this entity's
-		// columns by string, for the same reason the type-level [Index] declarations above do:
-		// the column may be declared on a base class, where no attribute on the derived type
-		// can reach it. It wins over whatever the property itself declares, so a single entity
-		// can relax an inherited column without moving every sibling over the same base.
-		var typeColumnNullable = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+		// Type-level [ColumnOverride(nameof(X), …)] names one of this entity's columns by string,
+		// for the same reason the type-level [Index] declarations above do: the column may be
+		// declared on a base class, where no attribute on the derived type can reach it. It wins
+		// over whatever the property itself declares, so a single entity can reshape an inherited
+		// column without moving every sibling over the same base.
+		var typeColumnOverrides = ReadColumnOverrides(entityType.GetAttributes<ColumnOverrideAttribute>(), StringComparer.OrdinalIgnoreCase);
 
-		foreach (var attr in entityType.GetAttributes<ColumnOverrideAttribute>())
-		{
-			if (attr.IsNullableSet)
-				typeColumnNullable[attr.PropertyName] = attr.IsNullable;
-		}
+		ColumnOverride GetTypeColumnOverride(PropertyInfo prop)
+			=> typeColumnOverrides.TryGetValue(prop.Name, out var columnOverride) ? columnOverride : null;
 
 		bool ResolveColumnNullable(PropertyInfo prop, ColumnAttribute colAttr)
-			=> typeColumnNullable.TryGetValue(prop.Name, out var isNullable)
-				? isNullable
-				: ResolveNullable(colAttr, prop.PropertyType);
+			=> GetTypeColumnOverride(prop)?.IsNullable ?? ResolveNullable(colAttr, prop.PropertyType);
 
 		foreach (var attr in entityType.GetAttributes<IndexAttribute>())
 		{
@@ -522,6 +556,8 @@ public static class SchemaRegistry
 				var (simpleIndexes, simpleHasUnique) = CollectIndexes(prop);
 				(simpleIndexes, simpleHasUnique) = MergeTypeLevelIndexes(prop.Name, simpleIndexes, simpleHasUnique);
 
+				var (simplePrecision, simpleScale) = ResolveDigits(GetTypeColumnOverride(prop), colAttr);
+
 				columns.Add(new()
 				{
 					Name = prop.Name,
@@ -530,8 +566,8 @@ public static class SchemaRegistry
 					IsIndex = simpleIndexes.Count > 0,
 					IsNullable = ResolveColumnNullable(prop, colAttr),
 					MaxLength = colAttr?.MaxLength ?? 0,
-					Precision = colAttr?.Precision ?? 0,
-					Scale = colAttr?.Scale ?? 0,
+					Precision = simplePrecision,
+					Scale = simpleScale,
 					ReferencedEntityType = fkAttr?.ReferencedType,
 					Indexes = simpleIndexes,
 				});

@@ -296,6 +296,38 @@ public class EntityGeneratorTests : BaseTestClass
 		apiToken.IsNullable.AssertFalse();
 	}
 
+	[TestMethod]
+	public void Generated_ColumnOverride_PrecisionScale()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverridePrecisionEntity));
+
+		string Describe(string name)
+		{
+			var col = schema.Columns.First(c => c.Name == name);
+			return $"{col.IsNullable}|{col.Precision}|{col.Scale}";
+		}
+
+		Describe("MoneyAmount").AssertEqual("False|18|2");
+		Describe("MoneyFee").AssertEqual("True|20|6");
+		Describe("MoneyRate").AssertEqual("False|10|0");
+		Describe("MoneyTax").AssertEqual("False|0|3");
+		Describe("MoneyPrice").AssertEqual("True|12|4");
+	}
+
+	[TestMethod]
+	public void Generated_EntityLevelColumnOverride_PrecisionScale()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverrideInheritedEntity));
+
+		var balance = schema.Columns.First(c => c.Name == "Balance");
+		balance.Precision.AssertEqual(18);
+		balance.Scale.AssertEqual(2);
+
+		var reserved = schema.Columns.First(c => c.Name == "Reserved");
+		reserved.Precision.AssertEqual(0);
+		reserved.Scale.AssertEqual(0);
+	}
+
 	#endregion
 
 	#region Finding #1: Identity IsUnique/IsIndex
@@ -833,6 +865,8 @@ public class EntityGeneratorTests : BaseTestClass
 	[DataRow(typeof(GenTestScheduleEntity))]
 	[DataRow(typeof(GenTestColumnAttrEntity))]
 	[DataRow(typeof(GenTestPrecisionEntity))]
+	[DataRow(typeof(GenTestColumnOverridePrecisionEntity))]
+	[DataRow(typeof(GenTestColumnOverrideInheritedEntity))]
 	public void GeneratedSchema_ColumnTypes_MatchReflection(Type entityType)
 	{
 		static string Describe(Schema schema)
