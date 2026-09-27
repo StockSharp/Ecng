@@ -112,6 +112,59 @@ public class ColOverrideInheritedEntity : ColOverrideBalanceBase, IDbPersistable
 	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
 }
 
+// Inner type without ORM-driven lengths, as a DTO from an assembly that does not reference the ORM.
+public class ColOverrideText
+{
+	public string Tag { get; set; }
+
+	[Column(MaxLength = 50)]
+	public string Code { get; set; }
+
+	public string Note { get; set; }
+
+	[Column(MaxLength = 100)]
+	public string Body { get; set; }
+
+	public byte[] Hash { get; set; }
+}
+
+[Entity(Name = "Ecng_ColOverrideLength")]
+public class ColOverrideLengthEntity : IDbPersistable
+{
+	public long Id { get; set; }
+
+	[ColumnOverride(nameof(ColOverrideText.Tag), MaxLength = 64)]
+	[ColumnOverride(nameof(ColOverrideText.Code), IsNullable = true)]
+	[ColumnOverride(nameof(ColOverrideText.Note), IsNullable = true, MaxLength = 200)]
+	[ColumnOverride(nameof(ColOverrideText.Body), MaxLength = ColumnAttribute.Max)]
+	[ColumnOverride(nameof(ColOverrideText.Hash), MaxLength = 32)]
+	public ColOverrideText Text { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
+public class ColOverrideLabelBase
+{
+	public string Label { get; set; }
+
+	public string Remark { get; set; }
+}
+
+[Entity(Name = "Ecng_ColOverrideInheritedLength")]
+[ColumnOverride(nameof(ColOverrideLabelBase.Label), MaxLength = 32)]
+public class ColOverrideInheritedLengthEntity : ColOverrideLabelBase, IDbPersistable
+{
+	public long Id { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+	public void Save(SettingsStorage storage) { }
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken ct) => default;
+}
+
 #endregion
 
 // Base class contributing an inherited column — mirrors the soft-delete `Deleted`
@@ -352,6 +405,82 @@ public class ColumnAttributeTests : BaseTestClass
 
 		diffs.Any(d => d.ColumnName == "MoneyAmount" && d.Kind == SchemaDiffKind.PrecisionMismatch).AssertTrue(
 			"The override declares DECIMAL(18,2), which a DECIMAL(18,8) column is not");
+	}
+
+	[TestMethod]
+	public void ColumnOverride_MaxLength_AppliedToFlattenedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+		var col = schema.Columns.First(c => c.Name == "TextTag");
+
+		col.MaxLength.AssertEqual(64);
+		col.IsNullable.AssertFalse();
+	}
+
+	[TestMethod]
+	public void ColumnOverride_MaxLength_AppliedToFlattenedBinaryColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+
+		schema.Columns.First(c => c.Name == "TextHash").MaxLength.AssertEqual(32);
+	}
+
+	[TestMethod]
+	public void ColumnOverride_WithoutMaxLength_KeepsInnerColumnLength()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+		var col = schema.Columns.First(c => c.Name == "TextCode");
+
+		col.MaxLength.AssertEqual(50);
+		col.IsNullable.AssertTrue();
+	}
+
+	[TestMethod]
+	public void ColumnOverride_NullabilityAndMaxLength_BothApplied()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+		var col = schema.Columns.First(c => c.Name == "TextNote");
+
+		col.IsNullable.AssertTrue();
+		col.MaxLength.AssertEqual(200);
+	}
+
+	[TestMethod]
+	public void ColumnOverride_MaxLengthMax_ReplacesInnerLengthWithUnbounded()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+
+		schema.Columns.First(c => c.Name == "TextBody").MaxLength.AssertEqual(ColumnAttribute.Max);
+	}
+
+	[TestMethod]
+	public void EntityLevelColumnOverride_MaxLength_AppliedToInheritedColumn()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideInheritedLengthEntity));
+
+		schema.Columns.First(c => c.Name == "Label").MaxLength.AssertEqual(32);
+		schema.Columns.First(c => c.Name == "Remark").MaxLength.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Compare_OverriddenFlattenedStringColumn_AgainstWiderLiveColumn_Detected()
+	{
+		var schema = SchemaRegistry.Get(typeof(ColOverrideLengthEntity));
+
+		var diffs = SchemaMigrator.Compare([schema], [new DbColumnInfo(schema.TableName, "TextTag", "nvarchar", false, 256, null, null)], SqlServerDialect.Instance, false);
+
+		diffs.Any(d => d.ColumnName == "TextTag" && d.Kind == SchemaDiffKind.MaxLengthMismatch).AssertTrue(
+			"The override declares NVARCHAR(64), which an NVARCHAR(256) column is not");
+	}
+
+	[TestMethod]
+	public void GenerateSql_OverriddenFlattenedStringColumn_AltersToTheDeclaredLength()
+	{
+		var column = SchemaRegistry.Get(typeof(ColOverrideLengthEntity)).Columns.First(c => c.Name == "TextTag");
+
+		var sql = MigrateColumn(SqlServerDialect.Instance, column, new DbColumnInfo("Tags", "TextTag", "nvarchar", false, 256, null, null));
+
+		sql.ContainsIgnoreCase("ALTER COLUMN [TextTag] NVARCHAR(64) NOT NULL").AssertTrue(sql);
 	}
 
 	#endregion

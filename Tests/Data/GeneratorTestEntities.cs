@@ -333,6 +333,51 @@ public partial class GenTestColumnOverrideInheritedEntity : GenTestBalanceBaseEn
 {
 }
 
+/// <summary>
+/// Inner value object whose strings get their length only from the outer [ColumnOverride].
+/// </summary>
+public class GenTestOverrideText
+{
+	public string Tag { get; set; }
+
+	[Column(MaxLength = 50)]
+	public string Code { get; set; }
+
+	public string Note { get; set; }
+
+	[Column(MaxLength = 100)]
+	public string Body { get; set; }
+
+	public byte[] Hash { get; set; }
+}
+
+[Entity(Name = "Ecng_GenColOverrideLength")]
+public partial class GenTestColumnOverrideLengthEntity : GenTestBaseEntity
+{
+	[ColumnOverride(nameof(GenTestOverrideText.Tag), MaxLength = 64)]
+	[ColumnOverride(nameof(GenTestOverrideText.Code), IsNullable = true)]
+	[ColumnOverride(nameof(GenTestOverrideText.Note), IsNullable = true, MaxLength = 200)]
+	[ColumnOverride(nameof(GenTestOverrideText.Body), MaxLength = ColumnAttribute.Max)]
+	[ColumnOverride(nameof(GenTestOverrideText.Hash), MaxLength = 32)]
+	public GenTestOverrideText Text { get; set; }
+}
+
+public abstract partial class GenTestLabelBaseEntity : GenTestBaseEntity
+{
+	public string Label { get; set; }
+
+	public string Remark { get; set; }
+}
+
+/// <summary>
+/// Entity-level [ColumnOverride] giving a length to a string column inherited from the base.
+/// </summary>
+[Entity(Name = "Ecng_GenColOverrideInheritedLength")]
+[ColumnOverride(nameof(GenTestLabelBaseEntity.Label), MaxLength = 32)]
+public partial class GenTestColumnOverrideInheritedLengthEntity : GenTestLabelBaseEntity
+{
+}
+
 // ===== Join entity tests (no Identity) =====
 
 /// <summary>

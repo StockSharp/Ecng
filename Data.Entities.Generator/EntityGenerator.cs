@@ -757,6 +757,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 			var (colNullable, colMaxLen, colPrecision, colScale) = GetColumnAttribute(prop);
 			var nullable = typeNullable ?? colNullable ?? InferIsNullable(prop);
+			colMaxLen = ResolveMaxLength(typeOverride, colMaxLen);
 			(colPrecision, colScale) = ResolveDigits(typeOverride, colPrecision, colScale);
 			if (nullable)
 				parts.Add("IsNullable = true");
@@ -780,6 +781,7 @@ public class EntityGenerator : IIncrementalGenerator
 
 			var columnOverride = columnOverrides.TryGetValue(inner.Name, out var overridden) ? overridden : null;
 			var nullable = columnOverride?.IsNullable ?? (outerNullable || (colNullable ?? InferIsNullable(inner)));
+			colMaxLen = ResolveMaxLength(columnOverride, colMaxLen);
 			(colPrecision, colScale) = ResolveDigits(columnOverride, colPrecision, colScale);
 
 			if (IsInnerSchemaProperty(inner))
@@ -1024,6 +1026,7 @@ public class EntityGenerator : IIncrementalGenerator
 				continue;
 
 			bool? isNullable = null;
+			var maxLength = 0;
 			var precision = 0;
 			var scale = 0;
 
@@ -1033,6 +1036,9 @@ public class EntityGenerator : IIncrementalGenerator
 				{
 					case "IsNullable":
 						isNullable = named.Value.Value is true;
+						break;
+					case "MaxLength":
+						maxLength = named.Value.Value is int l ? l : 0;
 						break;
 					case "Precision":
 						precision = named.Value.Value is int p ? p : 0;
@@ -1048,6 +1054,9 @@ public class EntityGenerator : IIncrementalGenerator
 
 			if (isNullable is not null)
 				entry.IsNullable = isNullable;
+
+			if (maxLength > 0)
+				entry.MaxLength = maxLength;
 
 			if (precision > 0)
 			{
@@ -1067,9 +1076,13 @@ public class EntityGenerator : IIncrementalGenerator
 	private sealed class ColumnOverride
 	{
 		public bool? IsNullable { get; set; }
+		public int MaxLength { get; set; }
 		public int Precision { get; set; }
 		public int Scale { get; set; }
 	}
+
+	private static int ResolveMaxLength(ColumnOverride columnOverride, int maxLength)
+		=> columnOverride is { MaxLength: > 0 } ? columnOverride.MaxLength : maxLength;
 
 	// An override precision replaces both digits and makes its scale literal; an override scale alone
 	// replaces only the scale, the way ColumnAttribute pairs a lone scale with the default precision.

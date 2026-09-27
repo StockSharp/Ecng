@@ -173,6 +173,9 @@ public static class SchemaRegistry
 			if (attr.IsNullableSet)
 				entry.IsNullable = attr.IsNullable;
 
+			if (attr.MaxLength > 0)
+				entry.MaxLength = attr.MaxLength;
+
 			if (attr.Precision > 0)
 			{
 				entry.Precision = attr.Precision;
@@ -191,9 +194,13 @@ public static class SchemaRegistry
 	private sealed class ColumnOverride
 	{
 		public bool? IsNullable { get; set; }
+		public int MaxLength { get; set; }
 		public int Precision { get; set; }
 		public int Scale { get; set; }
 	}
+
+	private static int ResolveMaxLength(ColumnOverride columnOverride, ColumnAttribute colAttr)
+		=> columnOverride is { MaxLength: > 0 } ? columnOverride.MaxLength : colAttr?.MaxLength ?? 0;
 
 	// An override precision replaces both digits and makes its scale literal; an override scale alone
 	// replaces only the scale, the way ColumnAttribute pairs a lone scale with the default precision.
@@ -284,7 +291,7 @@ public static class SchemaRegistry
 					Name = colName,
 					ClrType = clrType,
 					IsNullable = isNullable,
-					MaxLength = colAttr?.MaxLength ?? 0,
+					MaxLength = ResolveMaxLength(columnOverride, colAttr),
 					Precision = precision,
 					Scale = scale,
 					ReferencedEntityType = fkAttr?.ReferencedType,
@@ -556,7 +563,8 @@ public static class SchemaRegistry
 				var (simpleIndexes, simpleHasUnique) = CollectIndexes(prop);
 				(simpleIndexes, simpleHasUnique) = MergeTypeLevelIndexes(prop.Name, simpleIndexes, simpleHasUnique);
 
-				var (simplePrecision, simpleScale) = ResolveDigits(GetTypeColumnOverride(prop), colAttr);
+				var simpleOverride = GetTypeColumnOverride(prop);
+				var (simplePrecision, simpleScale) = ResolveDigits(simpleOverride, colAttr);
 
 				columns.Add(new()
 				{
@@ -565,7 +573,7 @@ public static class SchemaRegistry
 					IsUnique = simpleHasUnique,
 					IsIndex = simpleIndexes.Count > 0,
 					IsNullable = ResolveColumnNullable(prop, colAttr),
-					MaxLength = colAttr?.MaxLength ?? 0,
+					MaxLength = ResolveMaxLength(simpleOverride, colAttr),
 					Precision = simplePrecision,
 					Scale = simpleScale,
 					ReferencedEntityType = fkAttr?.ReferencedType,

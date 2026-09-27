@@ -328,6 +328,33 @@ public class EntityGeneratorTests : BaseTestClass
 		reserved.Scale.AssertEqual(0);
 	}
 
+	[TestMethod]
+	public void Generated_ColumnOverride_MaxLength()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverrideLengthEntity));
+
+		string Describe(string name)
+		{
+			var col = schema.Columns.First(c => c.Name == name);
+			return $"{col.IsNullable}|{col.MaxLength}";
+		}
+
+		Describe("TextTag").AssertEqual("False|64");
+		Describe("TextCode").AssertEqual("True|50");
+		Describe("TextNote").AssertEqual("True|200");
+		Describe("TextBody").AssertEqual($"False|{ColumnAttribute.Max}");
+		Describe("TextHash").AssertEqual("False|32");
+	}
+
+	[TestMethod]
+	public void Generated_EntityLevelColumnOverride_MaxLength()
+	{
+		var schema = SchemaRegistry.Get(typeof(GenTestColumnOverrideInheritedLengthEntity));
+
+		schema.Columns.First(c => c.Name == "Label").MaxLength.AssertEqual(32);
+		schema.Columns.First(c => c.Name == "Remark").MaxLength.AssertEqual(0);
+	}
+
 	#endregion
 
 	#region Finding #1: Identity IsUnique/IsIndex
@@ -867,12 +894,14 @@ public class EntityGeneratorTests : BaseTestClass
 	[DataRow(typeof(GenTestPrecisionEntity))]
 	[DataRow(typeof(GenTestColumnOverridePrecisionEntity))]
 	[DataRow(typeof(GenTestColumnOverrideInheritedEntity))]
+	[DataRow(typeof(GenTestColumnOverrideLengthEntity))]
+	[DataRow(typeof(GenTestColumnOverrideInheritedLengthEntity))]
 	public void GeneratedSchema_ColumnTypes_MatchReflection(Type entityType)
 	{
 		static string Describe(Schema schema)
 			=> schema.Columns
 				.OrderBy(c => c.Name, StringComparer.Ordinal)
-				.Select(c => $"{c.Name}|{c.ClrType}|{c.IsNullable}|{c.Precision}|{c.Scale}")
+				.Select(c => $"{c.Name}|{c.ClrType}|{c.IsNullable}|{c.MaxLength}|{c.Precision}|{c.Scale}")
 				.JoinN();
 
 		var generated = SchemaRegistry.Get(entityType);

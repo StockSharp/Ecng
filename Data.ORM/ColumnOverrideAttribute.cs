@@ -39,6 +39,14 @@ public sealed class ColumnOverrideAttribute(string propertyName) : Attribute
 	public bool IsNullableSet => _isNullableSet;
 
 	/// <summary>
+	/// Gets or sets the maximum length for a string/binary column. 0 (the default) leaves the column's own
+	/// <see cref="ColumnAttribute.MaxLength"/> in place. A positive value replaces it, and
+	/// <see cref="ColumnAttribute.Max"/> replaces it with the dialect-specific unbounded type, as on
+	/// <see cref="ColumnAttribute"/>. Applies only to string and byte[] columns.
+	/// </summary>
+	public int MaxLength { get; set; }
+
+	/// <summary>
 	/// Gets or sets the numeric precision for a decimal/numeric column, or the fractional-second digits
 	/// for a date/time column. 0 (the default) leaves the column's own <see cref="ColumnAttribute.Precision"/>
 	/// and <see cref="ColumnAttribute.Scale"/> in place. A non-zero value replaces both: <see cref="Scale"/>
