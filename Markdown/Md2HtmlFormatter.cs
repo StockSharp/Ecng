@@ -51,7 +51,7 @@ public class Md2HtmlFormatter
 	private static readonly Regex _diagramRefPattern = new(@"@diagram\(([^)]+)\)", RegexOptions.Compiled);
 
 	// Raw text scan for the site counters ("@connector_count"), for the same reason as the entity scan.
-	private static readonly Regex _counterRefPattern = new(@"@([a-z]+)_count\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+	private static readonly Regex _counterRefPattern = new(@"@([a-z]+)_count(?![A-Za-z0-9_])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 	private static readonly Regex _counterPlaceholder = new(@"\{\{count:(\w+)\}\}", RegexOptions.Compiled);
 
@@ -70,13 +70,27 @@ public class Md2HtmlFormatter
 	private static readonly Regex _bareEmail = new(@"(?<![\w.%+/@-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![A-Za-z0-9@.-])", RegexOptions.Compiled);
 
 	/// <summary>
+	/// Initializes both pipelines with the built-in extensions only.
+	/// </summary>
+	public Md2HtmlFormatter()
+		: this([])
+	{
+	}
+
+	/// <summary>
 	/// Initializes both pipelines: one that keeps raw HTML for trusted authors and one that
 	/// strips it for untrusted content.
 	/// </summary>
-	public Md2HtmlFormatter()
+	/// <param name="extensions">Host extensions appended after the built-in ones in both pipelines.</param>
+	public Md2HtmlFormatter(IEnumerable<IMarkdownExtension> extensions)
 	{
-		static MarkdownPipelineBuilder NewBuilder()
-			=> new MarkdownPipelineBuilder()
+		ArgumentNullException.ThrowIfNull(extensions);
+
+		var hostExtensions = extensions.ToArray();
+
+		MarkdownPipelineBuilder NewBuilder()
+		{
+			var builder = new MarkdownPipelineBuilder()
 				.UseAdvancedExtensions()
 				.Use<EntityReferenceExtension>()
 				.Use<SiteCounterExtension>()
@@ -92,6 +106,17 @@ public class Md2HtmlFormatter
 				// payload so it cannot break out of the script tag it travels in.
 				.Use<DiagramCodeBlockExtension>();
 
+			// Deduplicated by type, as Markdig's own Use<T> does; the generic AddIfNotAlready would see every
+			// extension as "already there" because the static type here is the interface.
+			foreach (var extension in hostExtensions)
+			{
+				if (!builder.Extensions.Any(e => e.GetType() == extension.GetType()))
+					builder.Extensions.Add(extension);
+			}
+
+			return builder;
+		}
+
 		// Raw HTML is allowed: trusted authors (content managers, admin pages) may embed
 		// markup such as <img src="fileId">, <div class="spoiler"> etc.
 		_pipeline = NewBuilder().Build();
@@ -101,7 +126,7 @@ public class Md2HtmlFormatter
 		// <script>, <iframe>, <img onerror=...> — is emitted as escaped text rather than a
 		// live element. The directive extensions above still render, since DisableHtml only
 		// removes the raw HTML parsers, not our custom syntax.
-		_safePipeline = NewBuilder().DisableHtml().Build();
+		_safePipeline = NewBuilder().DisableHtml().Use<NoEventAttributesExtension>().Build();
 	}
 
 	private MarkdownPipeline GetPipeline(bool allowHtml)

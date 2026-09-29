@@ -163,7 +163,9 @@ public class StyledInlineHtmlRenderer : HtmlObjectRenderer<StyledInline>
 		if (!obj.Float.IsEmpty())
 			styles.Add($"float:{obj.Float}");
 
-		renderer.Write($"<span style=\"{styles.Join("; ")}\">");
+		renderer.Write("<span style=\"");
+		renderer.WriteEscape(styles.Join("; "));
+		renderer.Write("\">");
 
 		// Render inner content as markdown (supports **bold**, *italic*, @entity refs, etc.)
 		var innerHtml = Markdig.Markdown.ToHtml(obj.Content, _pipeline).Trim();

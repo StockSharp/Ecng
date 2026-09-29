@@ -128,7 +128,8 @@ public class DiagramCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
 			// client's JSON.parse decodes it back to '<', so the schema itself is unchanged.
 			var json = GetRawText(fenced).Replace("<", "\\u003c");
 			renderer.EnsureLine();
-			renderer.Write("<div class=\"ss-diagram-host\"><script type=\"application/json\">");
+			SectionBlocks.WriteOpenTag(renderer, "div", fenced, "ss-diagram-host");
+			renderer.Write("<script type=\"application/json\">");
 			renderer.Write(json);
 			renderer.Write("</script></div>");
 			renderer.EnsureLine();

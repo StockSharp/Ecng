@@ -39,7 +39,8 @@ public class SiteCounterParser : InlineParser
 		["app"] = SiteCounters.Apps,
 	};
 
-	private static readonly Regex _regex = new(@"@([a-z]+)_count\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+	// Not \b: in .NET a CJK letter is a word character, so "@connector_countの" would never match.
+	private static readonly Regex _regex = new(@"@([a-z]+)_count(?![A-Za-z0-9_])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 	/// <summary>The counter a written name stands for, e.g. "connector" for <see cref="SiteCounters.Connectors"/>.</summary>
 	public static bool TryParseName(string name, out SiteCounters counter)

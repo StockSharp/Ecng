@@ -3,6 +3,11 @@
 using System.Text.RegularExpressions;
 
 using Ecng.Markdown;
+using Ecng.Markdown.Extensions;
+
+using Markdig;
+using Markdig.Extensions.CustomContainers;
+using Markdig.Renderers;
 
 [TestClass]
 public class MarkdownTests : BaseTestClass
@@ -309,7 +314,7 @@ public class MarkdownTests : BaseTestClass
 		// render as a table, not leave the "|" / "---" rows as literal text inside the centered block.
 		var md = ":::center\n| A | B |\n| --- | --- |\n| 1 | 2 |\n:::";
 		var html = ToHtml(md);
-		html.Contains("text-align:center").AssertTrue($"Expected centered block, got: {html}");
+		html.Contains("<div class=\"ss-md-align ss-md-align--center\">").AssertTrue($"Expected centered block, got: {html}");
 		(html.Contains("<table>") || html.Contains("<table")).AssertTrue($"Expected a table inside the align block, got: {html}");
 	}
 
@@ -320,7 +325,7 @@ public class MarkdownTests : BaseTestClass
 		// centered with :::center. The table must render instead of emitting raw "|" / "---" text.
 		var md = ":::center\n| <div>![](103848)</div> | | |\n| --- | --- | --- |\n:::";
 		var html = ToHtml(md, allowHtml: true);
-		html.Contains("text-align:center").AssertTrue($"Expected centered block, got: {html}");
+		html.Contains("<div class=\"ss-md-align ss-md-align--center\">").AssertTrue($"Expected centered block, got: {html}");
 		(html.Contains("<table>") || html.Contains("<table")).AssertTrue($"Expected a table inside the align block, got: {html}");
 	}
 
@@ -485,6 +490,24 @@ public class MarkdownTests : BaseTestClass
 
 		html.Contains("href=\"/download\"").AssertTrue($"Expected the download link, got: {html}");
 		html.Contains(">Docs<").AssertTrue($"Expected the secondary label, got: {html}");
+	}
+
+	[TestMethod]
+	public void Cta_ButtonsOpenWithHrefLikeAnyLink()
+	{
+		// A host post-processes links by the "<a href" they are written with (away page, nofollow); a button
+		// written another way would slip past it, an untrusted javascript: link included.
+		var md = ":::cta\n[Go](javascript:alert(1)) [Out](https://example.org)\n:::";
+
+		foreach (var allowHtml in new[] { true, false })
+		{
+			var anchors = Regex.Matches(ToHtml(md, allowHtml), @"<a\b[^>]*>").Select(m => m.Value).ToArray();
+
+			anchors.Length.AreEqual(2);
+
+			foreach (var anchor in anchors)
+				anchor.StartsWith("<a href=\"", StringComparison.Ordinal).AssertTrue(anchor);
+		}
 	}
 
 	[TestMethod]
@@ -837,8 +860,28 @@ public class MarkdownTests : BaseTestClass
 	public void SpoilerBlock()
 	{
 		var html = ToHtml(":::spoiler Click me\nhidden content\n:::");
-		// Markdig renders custom containers, our formatter converts them to details/summary
-		html.Contains("hidden content").AssertTrue($"Expected 'hidden content' in: {html}");
+
+		html.Contains("<details class=\"ss-md-spoiler\"><summary>Click me</summary><p>hidden content</p>").AssertTrue($"got: {html}");
+		html.TrimEnd().EndsWith("</details>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void SpoilerBlock_TitleIsText(bool allowHtml)
+	{
+		var html = ToHtml(":::spoiler <b>x</b>\nhidden\n:::", allowHtml);
+
+		html.Contains("<summary>&lt;b&gt;x&lt;/b&gt;</summary>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SpoilerBlock_WithoutATitleHasNoSummary()
+	{
+		var html = ToHtml(":::spoiler {#more}\nhidden\n:::");
+
+		html.Contains("<details id=\"more\" class=\"ss-md-spoiler\"><p>hidden</p>").AssertTrue($"got: {html}");
+		html.Contains("<summary").AssertFalse($"got: {html}");
 	}
 
 	[TestMethod]
@@ -997,9 +1040,9 @@ public class MarkdownTests : BaseTestClass
 			"Admin panel: [Settings](/admin/settings)</p>\n" +
 			"<p>Admin panel: <a href=\"/admin/settings\">Settings</a>}</p>\n" +
 			"<p></p>\n" +
-			"<div class=\"spoiler\"><p>For advanced users: modify the <code>appsettings.json</code> file\n" +
+			"<details class=\"ss-md-spoiler\"><summary>Advanced Configuration</summary><p>For advanced users: modify the <code>appsettings.json</code> file\n" +
 			"to customize connector parameters.</p>\n" +
-			"</div>\n" +
+			"</details>\n" +
 			"<p><em>Last updated by <a href=\"/users/stocksharp/\" title=\"Official StockSharp account\">StockSharp</a>. For questions visit <a href=\"/forum/shell-overview/\" title=\"Overview of S#.Shell features\">S#.Shell Overview</a>.</em></p>\n";
 
 		var html = ToHtml(md);
@@ -1161,6 +1204,34 @@ public class MarkdownTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void InlineDiagram_WritesTheFenceAttributesOnItsHost(bool allowHtml)
+	{
+		var html = ToHtml("```diagram {#arch .wide data-diagram-kind=document aria-label=\"How an order travels\" onclick=alert(1)}\n" + _diagramSchema + "\n```", allowHtml);
+
+		var host = Regex.Match(html, "<div [^>]*ss-diagram-host[^>]*>");
+		host.Success.AssertTrue($"Expected diagram host, got: {html}");
+
+		host.Value.Contains("id=\"arch\"").AssertTrue($"got: {host.Value}");
+		host.Value.Contains("class=\"ss-diagram-host wide\"").AssertTrue($"got: {host.Value}");
+		host.Value.Contains("data-diagram-kind=\"document\"").AssertTrue($"got: {host.Value}");
+		host.Value.Contains("aria-label=\"How an order travels\"").AssertTrue($"got: {host.Value}");
+		host.Value.Contains("onclick").AssertFalse($"got: {host.Value}");
+
+		html.Contains($"<script type=\"application/json\">{_diagramSchema}</script></div>").AssertTrue($"the schema must travel unchanged, got: {html}");
+	}
+
+	[TestMethod]
+	public void InlineDiagram_InsideAFigureKeepsItsCaption()
+	{
+		var html = ToHtml("^^^\n```diagram {#arch}\n" + _diagramSchema + "\n```\n^^^ How an order travels", true);
+
+		Regex.IsMatch(html, "^<figure>\\s*<div id=\"arch\" class=\"ss-diagram-host\"><script type=\"application/json\">.*</script></div>\\s*<figcaption>How an order travels</figcaption>\\s*</figure>\\s*$", RegexOptions.Singleline)
+			.AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
 	public void InlineDiagram_EscapesScriptClose()
 	{
 		// JSON whose content contains a </script> sequence must not break out of the embedding script tag.
@@ -1302,7 +1373,7 @@ public class MarkdownTests : BaseTestClass
 	public void AlignBlock_Center()
 	{
 		var html = ToHtml(":::center\ncentered content\n:::");
-		html.Contains("text-align:center").AssertTrue($"Expected text-align:center, got: {html}");
+		html.Contains("<div class=\"ss-md-align ss-md-align--center\">").AssertTrue($"Expected text-align:center, got: {html}");
 		html.Contains("centered content").AssertTrue($"Expected content, got: {html}");
 	}
 
@@ -1310,7 +1381,7 @@ public class MarkdownTests : BaseTestClass
 	public void AlignBlock_Right()
 	{
 		var html = ToHtml(":::right\nright-aligned\n:::");
-		html.Contains("text-align:right").AssertTrue($"Expected text-align:right, got: {html}");
+		html.Contains("<div class=\"ss-md-align ss-md-align--right\">").AssertTrue($"Expected text-align:right, got: {html}");
 		html.Contains("right-aligned").AssertTrue($"Expected content, got: {html}");
 	}
 
@@ -1318,8 +1389,17 @@ public class MarkdownTests : BaseTestClass
 	public void AlignBlock_Left()
 	{
 		var html = ToHtml(":::left\nleft-aligned\n:::");
-		html.Contains("text-align:left").AssertTrue($"Expected text-align:left, got: {html}");
+		html.Contains("<div class=\"ss-md-align ss-md-align--left\">").AssertTrue($"Expected text-align:left, got: {html}");
 		html.Contains("left-aligned").AssertTrue($"Expected content, got: {html}");
+	}
+
+	[TestMethod]
+	public void AlignBlock_IsAClassNotAnInlineStyle()
+	{
+		var html = ToHtml(":::center {#intro .lead}\ncentered content\n:::");
+
+		html.Contains("style=").AssertFalse($"got: {html}");
+		html.Contains("<div id=\"intro\" class=\"ss-md-align ss-md-align--center lead\">").AssertTrue($"got: {html}");
 	}
 
 	[TestMethod]
@@ -1420,6 +1500,18 @@ public class MarkdownTests : BaseTestClass
 		var html = ToHtml("The platform supports @connector_count connectors today.");
 
 		html.Contains($"supports {_counters[SiteCounters.Connectors]} connectors").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	[DataRow("@connector_countの", "93の")]
+	[DataRow("@connector_count個", "93個")]
+	[DataRow("@connector_count.", "93.")]
+	[DataRow("@connector_counts", "@connector_counts")]
+	public void SiteCounter_EndsAtTheFirstCharacterThatCannotContinueTheName(string text, string expected)
+	{
+		var html = ToHtml(text);
+
+		html.Contains($"<p>{expected}</p>").AssertTrue($"got: {html}");
 	}
 
 	/// <summary>
@@ -1525,5 +1617,233 @@ public class MarkdownTests : BaseTestClass
 		html.Contains("<a").AssertFalse($"got: {html}");
 		html.Contains("@message(").AssertFalse($"got: {html}");
 		html.Contains("John wrote").AssertTrue($"got: {html}");
+	}
+
+	// --- Host extensions: sections a site adds on top of the built-in ones ---
+
+	private sealed class TestHeroBlock : ISectionBlock
+	{
+		public string Name => "hero";
+
+		public void Write(HtmlRenderer renderer, CustomContainer block)
+		{
+			renderer.Write("<section class=\"test-hero\">");
+			renderer.WriteChildren(block);
+			renderer.Write("</section>");
+		}
+	}
+
+	private sealed class TestSectionExtension(params ISectionBlock[] blocks) : IMarkdownExtension
+	{
+		public void Setup(MarkdownPipelineBuilder pipeline)
+		{
+		}
+
+		public void Setup(MarkdownPipeline pipeline, IMarkdownRenderer renderer)
+		{
+			if (renderer is not HtmlRenderer htmlRenderer)
+				return;
+
+			var sections = htmlRenderer.ObjectRenderers.FindExact<SectionContainerRenderer>()
+				?? throw new InvalidOperationException("The section renderer is not in the pipeline.");
+
+			foreach (var block in blocks)
+				sections.Register(block);
+		}
+	}
+
+	private static string ToHtml(Md2HtmlFormatter formatter, string text, bool allowHtml)
+	{
+		var parsed = formatter.Parse(text, allowHtml);
+		return formatter.Render(parsed, ResolveTestData(parsed));
+	}
+
+	[TestMethod]
+	public void HostExtensions_Null_Throws()
+		=> Throws<ArgumentNullException>(() => new Md2HtmlFormatter(null));
+
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void HostSection_RendersThroughARegisteredBlock(bool allowHtml)
+	{
+		var formatter = new Md2HtmlFormatter([new TestSectionExtension(new TestHeroBlock())]);
+
+		var html = ToHtml(formatter, ":::hero\nHello\n:::", allowHtml);
+
+		html.Contains("<section class=\"test-hero\"><p>Hello</p>").AssertTrue($"got: {html}");
+		html.Contains("class=\"hero\"").AssertFalse($"the default container must not render it, got: {html}");
+	}
+
+	[TestMethod]
+	public void HostSection_CannotTakeABuiltInName()
+	{
+		var renderer = new SectionContainerRenderer();
+
+		Throws<ArgumentException>(() => renderer.Register(new NamedBlock("cards")));
+		Throws<ArgumentException>(() => renderer.Register(new NamedBlock("Spoiler")));
+	}
+
+	[TestMethod]
+	public void HostSection_SameNameReplaces()
+	{
+		var formatter = new Md2HtmlFormatter([new TestSectionExtension(new NamedBlock("hero"), new TestHeroBlock())]);
+		var html = ToHtml(formatter, ":::hero\nHello\n:::", true);
+
+		html.Contains("test-hero").AssertTrue($"the later registration must win, got: {html}");
+	}
+
+	[TestMethod]
+	public void UnknownSection_StillRendersTheDefaultContainer()
+	{
+		var formatter = new Md2HtmlFormatter([new TestSectionExtension(new TestHeroBlock())]);
+
+		var html = ToHtml(formatter, ":::gallery\nPictures\n:::", true);
+
+		html.Contains("<div class=\"gallery\"><p>Pictures</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void HostExtensions_LeaveTheBuiltInsAsTheyWere()
+	{
+		const string md = ":::feature-left alt\n![](https://cdn.example/shot.png)\n\n## Title\n\nText @connector_count.\n:::\n\n:::cards\n### A\nOne.\n:::\n\n:::hero\nHello\n:::";
+
+		var plain = ToHtml(new Md2HtmlFormatter(), md, true);
+		var hosted = ToHtml(new Md2HtmlFormatter([new TestSectionExtension(new TestHeroBlock())]), md, true);
+
+		var plainHero = plain.IndexOf("<div class=\"hero\">", StringComparison.Ordinal);
+		var hostedHero = hosted.IndexOf("<section class=\"test-hero\">", StringComparison.Ordinal);
+
+		(plainHero > 0).AssertTrue($"without the host the section is unknown, got: {plain}");
+		(hostedHero > 0).AssertTrue($"got: {hosted}");
+		hosted[..hostedHero].AreEqual(plain[..plainHero]);
+	}
+
+	[TestMethod]
+	public void Clean_DropsTheMarkersOfAHostSection()
+	{
+		var formatter = new Md2HtmlFormatter([new TestSectionExtension(new TestHeroBlock())]);
+
+		var text = formatter.Clean(":::hero\nHello\n:::");
+
+		text.Contains(":").AssertFalse($"got: {text}");
+		text.Trim().AreEqual("Hello");
+	}
+
+	// --- {#id .class} written on a ::: section ---
+
+	private static Match OpenTag(string html, string tag, string className)
+	{
+		var match = Regex.Match(html, $"<{tag}\\b[^>]*class=\"{Regex.Escape(className)}[^\"]*\"[^>]*>");
+		match.Success.AssertTrue($"no <{tag}> with class {className} in: {html}");
+		return match;
+	}
+
+	[TestMethod]
+	public void SectionAttributes_FeatureKeepsItsArgumentsAndTakesTheAuthorsIdAndClass()
+	{
+		var html = ToHtml(":::feature-left alt {#backoffice .wide}\n![](https://cdn.example/shot.png)\n\n## Title\n\nText.\n:::", true);
+
+		var tag = OpenTag(html, "section", "ss-md-feature").Value;
+
+		tag.Contains("id=\"backoffice\"").AssertTrue($"got: {tag}");
+		tag.Contains("class=\"ss-md-feature ss-md-feature--left ss-md-feature--alt ss-md-reveal wide\"").AssertTrue($"got: {tag}");
+	}
+
+	[TestMethod]
+	public void SectionAttributes_CardsTakeTheAuthorsId()
+	{
+		var html = ToHtml(":::cards {#plans}\n### A\nOne.\n:::", true);
+
+		OpenTag(html, "div", "ss-md-cards").Value.Contains("id=\"plans\"").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SectionAttributes_UnknownSectionTakesTheAuthorsIdAndClass()
+	{
+		var html = ToHtml(":::gallery {#gal .wide}\nPictures\n:::", true);
+
+		html.Contains("<div id=\"gal\" class=\"gallery wide\">").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SectionAttributes_NestedSectionsKeepTheirOwn()
+	{
+		var html = ToHtml("::::feature-right {#news}\n![](https://cdn.example/shot.png)\n\n## Title\n\n:::cards {#inner}\n### A\nOne.\n:::\n::::", true);
+
+		OpenTag(html, "section", "ss-md-feature").Value.Contains("id=\"news\"").AssertTrue($"got: {html}");
+		OpenTag(html, "div", "ss-md-cards").Value.Contains("id=\"inner\"").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void SectionAttributes_OnlyDataAriaRoleAndTitleAreWritten(bool allowHtml)
+	{
+		var html = ToHtml(":::cards {onclick=alert(1) style=color:red data-x=1 aria-label=Plans role=list title=T}\n### A\nOne.\n:::", allowHtml);
+
+		var tag = OpenTag(html, "div", "ss-md-cards").Value;
+
+		tag.Contains("data-x=\"1\"").AssertTrue($"got: {tag}");
+		tag.Contains("aria-label=\"Plans\"").AssertTrue($"got: {tag}");
+		tag.Contains("role=\"list\"").AssertTrue($"got: {tag}");
+		tag.Contains("title=\"T\"").AssertTrue($"got: {tag}");
+		tag.Contains("onclick").AssertFalse($"got: {tag}");
+		tag.Contains("style").AssertFalse($"got: {tag}");
+	}
+
+	[TestMethod]
+	public void SectionAttributes_EveryBuiltInWritesThem()
+	{
+		foreach (var (md, tag, className) in new[]
+		{
+			(":::stats {#sec}\n70 | indicators\n:::", "div", "ss-md-stats"),
+			(":::cta {#sec}\n[Go](https://a.example)\n:::", "div", "ss-md-cta"),
+			(":::steps {#sec}\n### One\nFirst.\n:::", "div", "ss-md-steps"),
+			(":::quote {#sec}\nGreat.\n\n— Someone\n:::", "blockquote", "ss-md-quote"),
+			(":::split {#sec}\n![](https://cdn.example/a.png)\n\n![](https://cdn.example/b.png)\n:::", "div", "ss-md-split"),
+		})
+		{
+			var html = ToHtml(md, true);
+
+			OpenTag(html, tag, className).Value.Contains("id=\"sec\"").AssertTrue($"{md}: {html}");
+		}
+	}
+
+	[TestMethod]
+	public void UntrustedMarkdown_WritesNoEventHandlers()
+	{
+		var html = ToHtml("# T {onclick=alert(1)}\n\n[x](https://a.example){onmouseover=z}\n\n![i](1){onerror=z}\n\n:[[y](https://b.example){onfocus=z}]{color=red}", allowHtml: false);
+
+		Regex.IsMatch(html, @"\son[a-z]+\s*=", RegexOptions.IgnoreCase).AssertFalse($"got: {html}");
+		html.Contains("href=\"https://b.example\"").AssertTrue($"the link itself must stay, got: {html}");
+	}
+
+	[TestMethod]
+	public void StyledInline_ValueCannotLeaveTheStyleAttribute()
+	{
+		var html = ToHtml(":[x]{color=red\"onmouseover=alert(1)}", allowHtml: false);
+
+		Regex.IsMatch(html, "<span style=\"[^\"]*\">x</span>").AssertTrue($"the value must stay inside the one attribute, got: {html}");
+	}
+
+	[TestMethod]
+	public void UntrustedMarkdown_KeepsTheAttributesThatAreNotScript()
+	{
+		var html = ToHtml("## Centered {#top .lead style=\"text-align:center\" data-x=1}", allowHtml: false);
+
+		html.Contains("<h2 id=\"top\" class=\"lead\" style=\"text-align:center\" data-x=\"1\">").AssertTrue($"got: {html}");
+	}
+
+	private sealed class NamedBlock(string name) : ISectionBlock
+	{
+		public string Name => name;
+
+		public void Write(HtmlRenderer renderer, CustomContainer block)
+		{
+			renderer.Write($"<div class=\"named-{name}\">");
+			renderer.WriteChildren(block);
+			renderer.Write("</div>");
+		}
 	}
 }

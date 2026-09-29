@@ -11,16 +11,18 @@ using Markdig.Syntax.Inlines;
 /// Custom HTML renderer for <see cref="CustomContainer"/> that turns the ::: containers into the
 /// page sections product pages are built from:
 /// <list type="bullet">
-/// <item>alignment: :::center, :::left, :::right;</item>
+/// <item>alignment: :::center, :::left, :::right — the ss-md-align--{side} class, styled by the site;</item>
 /// <item>:::feature-left / :::feature-right — a two-column media+text section (add the "alt" argument
 /// for a tinted full-width band);</item>
 /// <item>:::cards — a responsive card grid, one card per ### heading;</item>
 /// <item>:::stats — a row of big numbers, one per "value | label" line;</item>
 /// <item>:::cta — the links rendered as buttons, the first one primary;</item>
 /// <item>:::steps — a numbered walkthrough, one step per ### heading;</item>
-/// <item>:::quote — a testimonial whose trailing em-dash line becomes the attribution.</item>
+/// <item>:::quote — a testimonial whose trailing em-dash line becomes the attribution;</item>
+/// <item>:::spoiler Title — a collapsed &lt;details&gt; block with the title as its summary.</item>
 /// </list>
-/// Anything else falls back to the default container rendering (e.g. :::spoiler).
+/// A host adds its own sections with <see cref="Register"/>; anything else falls back to a plain
+/// &lt;div&gt; classed with the container name.
 /// </summary>
 public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 {
@@ -29,15 +31,42 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 
 	private static readonly HashSet<string> _alignments = new(StringComparer.OrdinalIgnoreCase) { "center", "left", "right" };
 
+	private static readonly HashSet<string> _builtIns = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"feature-left", "feature-right", "cards", "stats", "cta", "steps", "quote", "split", "spoiler", "center", "left", "right",
+	};
+
 	// A paragraph that is nothing but a diagram reference (before or after the formatter turns it into a
 	// placeholder) also fills the media half.
 	private static readonly Regex _diagramOnly = new(@"^\s*(?:@diagram\([^)]+\)|\{\{diagram:[^}]+\}\})\s*$", RegexOptions.Compiled);
+
+	private readonly Dictionary<string, ISectionBlock> _registered = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Adds a host-defined section, rendered for every ::: container whose info equals its name. A block
+	/// registered under a name already taken by another host block replaces it.
+	/// </summary>
+	/// <param name="block">The section to add.</param>
+	/// <exception cref="ArgumentException">The name is empty or one of the built-in sections.</exception>
+	public void Register(ISectionBlock block)
+	{
+		ArgumentNullException.ThrowIfNull(block);
+
+		var name = block.Name?.Trim();
+
+		if (name.IsEmpty())
+			throw new ArgumentException("A section block needs a name.", nameof(block));
+
+		if (_builtIns.Contains(name))
+			throw new ArgumentException($"'{name}' is a built-in section.", nameof(block));
+
+		_registered[name] = block;
+	}
 
 	/// <inheritdoc />
 	protected override void Write(HtmlRenderer renderer, CustomContainer obj)
 	{
 		var info = obj.Info?.Trim();
-		var args = obj.Arguments?.Trim();
 
 		if (info.IsEmpty())
 		{
@@ -47,7 +76,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 
 		if (info.EqualsIgnoreCase("feature-left") || info.EqualsIgnoreCase("feature-right"))
 		{
-			WriteFeature(renderer, obj, info.EqualsIgnoreCase("feature-right") ? "right" : "left", IsAlt(args));
+			WriteFeature(renderer, obj, info.EqualsIgnoreCase("feature-right") ? "right" : "left", SectionBlocks.HasArgument(obj, "alt"));
 			return;
 		}
 
@@ -89,30 +118,53 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 
 		if (_alignments.Contains(info))
 		{
-			renderer.Write($"<div style=\"text-align:{info}\">");
+			SectionBlocks.WriteOpenTag(renderer, "div", obj, $"ss-md-align ss-md-align--{info.ToLowerInvariant()}");
 			renderer.WriteChildren(obj);
 			renderer.Write("</div>");
+			return;
+		}
+
+		if (info.EqualsIgnoreCase("spoiler"))
+		{
+			WriteSpoiler(renderer, obj);
+			return;
+		}
+
+		if (_registered.TryGetValue(info, out var registered))
+		{
+			registered.Write(renderer, obj);
 			return;
 		}
 
 		WriteDefault(renderer, obj, info);
 	}
 
-	// Default rendering for other custom containers (e.g. :::spoiler).
+	// Renders ":::spoiler Title" as a native disclosure; the title is text, not markup.
+	private static void WriteSpoiler(HtmlRenderer renderer, CustomContainer obj)
+	{
+		renderer.EnsureLine();
+		SectionBlocks.WriteOpenTag(renderer, "details", obj, "ss-md-spoiler");
+
+		var title = obj.Arguments?.Trim();
+
+		if (!title.IsEmpty())
+		{
+			renderer.Write("<summary>");
+			renderer.WriteEscape(title);
+			renderer.Write("</summary>");
+		}
+
+		renderer.WriteChildren(obj);
+		renderer.WriteLine("</details>");
+	}
+
+	// Default rendering for other custom containers.
 	private static void WriteDefault(HtmlRenderer renderer, CustomContainer obj, string info)
 	{
-		renderer.Write("<div");
-
-		if (!info.IsEmpty())
-			renderer.Write($" class=\"{info}\"");
-
-		renderer.Write(">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, info);
 		renderer.WriteChildren(obj);
 		renderer.Write("</div>");
 	}
-
-	private static bool IsAlt(string args)
-		=> !args.IsEmpty() && args.Split(' ', StringSplitOptions.RemoveEmptyEntries).Any(a => a.EqualsIgnoreCase("alt"));
 
 	// Renders a :::feature-left / :::feature-right section. The image side is explicit in the syntax so
 	// authors control the layout per section (no automatic mirroring). The first media block becomes the
@@ -132,12 +184,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 		}
 
 		renderer.EnsureLine();
-		renderer.Write($"<section class=\"ss-md-feature ss-md-feature--{side}");
-
-		if (alt)
-			renderer.Write(" ss-md-feature--alt");
-
-		renderer.Write($" {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "section", obj, $"ss-md-feature ss-md-feature--{side}{(alt ? " ss-md-feature--alt" : string.Empty)} {_revealClass}");
 
 		renderer.Write("<div class=\"ss-md-feature__media\">");
 		if (media is not null)
@@ -159,7 +206,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	private static void WriteCards(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
-		renderer.Write($"<div class=\"ss-md-cards {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, $"ss-md-cards {_revealClass}");
 
 		foreach (var (heading, body) in GroupByHeading(obj))
 		{
@@ -185,7 +232,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	private static void WriteSteps(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
-		renderer.Write($"<div class=\"ss-md-steps {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, $"ss-md-steps {_revealClass}");
 
 		var number = 0;
 
@@ -217,14 +264,14 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	private static void WriteStats(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
-		renderer.Write($"<div class=\"ss-md-stats {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, $"ss-md-stats {_revealClass}");
 
 		foreach (var child in obj)
 		{
 			if (child is not ParagraphBlock { Inline: not null } paragraph)
 				continue;
 
-			foreach (var line in GetText(paragraph.Inline).Split('\n'))
+			foreach (var line in SectionBlocks.GetText(paragraph.Inline).Split('\n'))
 			{
 				var text = line.Trim();
 
@@ -250,16 +297,16 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	private static void WriteCta(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
-		renderer.Write($"<div class=\"ss-md-cta {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, $"ss-md-cta {_revealClass}");
 
 		var first = true;
 
 		foreach (var link in obj.Descendants<LinkInline>().Where(l => !l.IsImage))
 		{
-			renderer.Write(first ? "<a class=\"ss-md-btn ss-md-btn--primary\" href=\"" : "<a class=\"ss-md-btn\" href=\"");
+			renderer.Write("<a href=\"");
 			renderer.WriteEscapeUrl(link.GetDynamicUrl?.Invoke() ?? link.Url);
-			renderer.Write("\">");
-			renderer.WriteEscape(GetText(link));
+			renderer.Write(first ? "\" class=\"ss-md-btn ss-md-btn--primary\">" : "\" class=\"ss-md-btn\">");
+			renderer.WriteEscape(SectionBlocks.GetText(link));
 			renderer.Write("</a>");
 
 			first = false;
@@ -275,7 +322,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 	private static void WriteSplit(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
-		renderer.Write($"<div class=\"{_splitClass} {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "div", obj, $"{_splitClass} {_revealClass}");
 
 		var isBase = true;
 
@@ -301,14 +348,14 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 			if (obj[i] is not ParagraphBlock { Inline: not null } paragraph)
 				continue;
 
-			if (IsAttribution(GetText(paragraph.Inline)))
+			if (IsAttribution(SectionBlocks.GetText(paragraph.Inline)))
 				attribution = paragraph;
 
 			break;
 		}
 
 		renderer.EnsureLine();
-		renderer.Write($"<blockquote class=\"ss-md-quote {_revealClass}\">");
+		SectionBlocks.WriteOpenTag(renderer, "blockquote", obj, $"ss-md-quote {_revealClass}");
 
 		foreach (var child in obj)
 		{
@@ -319,7 +366,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 		if (attribution is not null)
 		{
 			renderer.Write("<footer class=\"ss-md-quote__by\">");
-			renderer.WriteEscape(GetText(attribution.Inline).TrimStart('—', '–', '-', ' '));
+			renderer.WriteEscape(SectionBlocks.GetText(attribution.Inline).TrimStart('—', '–', '-', ' '));
 			renderer.Write("</footer>");
 		}
 
@@ -379,7 +426,7 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 		if (block is not ParagraphBlock { Inline: not null } paragraph)
 			return false;
 
-		if (_diagramOnly.IsMatch(GetText(paragraph.Inline)))
+		if (_diagramOnly.IsMatch(SectionBlocks.GetText(paragraph.Inline)))
 			return true;
 
 		var hasImage = false;
@@ -401,41 +448,6 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 		}
 
 		return hasImage;
-	}
-
-	// Flattens an inline tree to plain text, keeping the authored line breaks.
-	private static string GetText(ContainerInline container)
-	{
-		var builder = new StringBuilder();
-
-		Append(container);
-
-		return builder.ToString();
-
-		void Append(ContainerInline inlines)
-		{
-			foreach (var inline in inlines)
-			{
-				switch (inline)
-				{
-					case LiteralInline literal:
-						builder.Append(literal.Content.ToString());
-						break;
-					case LineBreakInline:
-						builder.AppendLine();
-						break;
-					// A counter, an entity reference or a diagram is not text yet -- it is a token the fetch
-					// phase replaces. Keeping the token is what lets "@connector_count | connectors" read as
-					// a live number instead of an empty box.
-					case IPlaceholderInline placeholder:
-						builder.Append(placeholder.Token);
-						break;
-					case ContainerInline nested:
-						Append(nested);
-						break;
-				}
-			}
-		}
 	}
 }
 

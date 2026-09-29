@@ -85,9 +85,8 @@ public static class MarkdownProjector
 			case ThematicBreakBlock:
 				return [new MdThematicBreak()];
 
-			// ":::spoiler Title" arrives as a custom container, not as the SpoilerBlock the parser in the
-			// markdown library defines - that extension is not in the pipeline, and the HTML renderer turns
-			// the container into a <details> afterwards. A host folds it the same way, from the same node.
+			// ":::spoiler Title" is a custom container the HTML renderer writes as a <details>; a host folds it
+			// the same way, from the same node.
 			case CustomContainer container when container.Info?.Trim().EqualsIgnoreCase("spoiler") == true:
 				return [new MdSpoiler(container.Arguments?.Trim() ?? string.Empty, ProjectBlocks(container, data))];
 
