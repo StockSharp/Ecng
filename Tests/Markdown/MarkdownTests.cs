@@ -1748,6 +1748,221 @@ public class MarkdownTests : BaseTestClass
 		text.Trim().AreEqual("Hello");
 	}
 
+	// --- @widget(name key=value): a place in the text where the host puts a control of its own ---
+
+	private static readonly Md2HtmlFormatter _widgets = new([new WidgetExtension()]);
+
+	private static MarkdownWidget SingleWidget(string html)
+	{
+		var widgets = MarkdownWidget.Split(html).Where(p => p.Widget is not null).ToArray();
+		widgets.Length.AreEqual(1, $"got: {html}");
+		return widgets[0].Widget;
+	}
+
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void Widget_LineBecomesAMarker(bool allowHtml)
+	{
+		var html = ToHtml(_widgets, "@widget(broker-form)", allowHtml);
+
+		html.Trim().AreEqual("<div class=\"ss-md-widget\" data-widget=\"broker-form\"></div>");
+	}
+
+	[TestMethod]
+	public void Widget_ArgumentsTravelInTheMarker()
+	{
+		var widget = SingleWidget(ToHtml(_widgets, "@widget(products group=12 title=\"Top picks\" sort-by=name)", true));
+
+		widget.Name.AreEqual("products");
+		widget.Arguments.Count.AreEqual(3);
+		widget.Arguments["group"].AreEqual("12");
+		widget.Arguments["title"].AreEqual("Top picks");
+		widget.Arguments["sort-by"].AreEqual("name");
+	}
+
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void Widget_ArgumentValueCannotLeaveItsAttribute(bool allowHtml)
+	{
+		const string value = "<script>alert(1)</script> & 'x' onclick=alert(2)";
+
+		var html = ToHtml(_widgets, $"@widget(note text=\"{value}\")", allowHtml);
+
+		Regex.IsMatch(html.Trim(), "^<div class=\"ss-md-widget\" data-widget=\"note\" data-arg-text=\"[^\"<>]*\"></div>$")
+			.AssertTrue($"the value must stay inside its one attribute, got: {html}");
+		SingleWidget(html).Arguments["text"].AreEqual(value);
+	}
+
+	[TestMethod]
+	[DataRow("@widget()")]
+	[DataRow("@widget(Broker)")]
+	[DataRow("@widget(-x)")]
+	[DataRow("@widget(x y)")]
+	[DataRow("@widget(x a=1 a=2)")]
+	[DataRow("@widget(x a=\"1)")]
+	[DataRow("@widget(x A=1)")]
+	[DataRow("@widget(x a=)")]
+	[DataRow("@widget(x)(y)")]
+	public void Widget_MalformedLineStaysText(string line)
+	{
+		var html = ToHtml(_widgets, line, true);
+
+		html.Contains("ss-md-widget").AssertFalse($"got: {html}");
+		html.Contains("@widget(").AssertTrue($"the author has to see the line that did not work, got: {html}");
+	}
+
+	[TestMethod]
+	public void Widget_UnknownNameIsTheHostsToJudge()
+	{
+		var widget = SingleWidget(ToHtml(_widgets, "@widget(broker-from)", true));
+
+		widget.Name.AreEqual("broker-from");
+	}
+
+	[TestMethod]
+	public void Widget_OnlyAsAWholeLine()
+	{
+		var html = ToHtml(_widgets, "See @widget(broker-form) here", true);
+
+		html.Contains("ss-md-widget").AssertFalse($"got: {html}");
+	}
+
+	[TestMethod]
+	public void Widget_IndentedAsCodeStaysCode()
+	{
+		var html = ToHtml(_widgets, "    @widget(broker-form)", true);
+
+		html.Contains("ss-md-widget").AssertFalse($"got: {html}");
+		html.Contains("<code>@widget(broker-form)").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void Widget_InsideASection()
+	{
+		var html = ToHtml(_widgets, ":::center\n@widget(broker-form)\n:::", true);
+
+		html.Contains("<div class=\"ss-md-widget\" data-widget=\"broker-form\"></div>").AssertTrue($"got: {html}");
+		html.Contains("@widget(").AssertFalse($"got: {html}");
+	}
+
+	[TestMethod]
+	public void Widget_WithoutTheExtensionIsText()
+	{
+		var html = ToHtml("@widget(broker-form)", true);
+
+		html.Contains("ss-md-widget").AssertFalse($"got: {html}");
+		html.Contains("@widget(broker-form)").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void Widget_LeavesNoTraceInPlainText()
+	{
+		var plain = _widgets.Clean("Intro text\n\n@widget(products group=12)\n\nOutro text");
+
+		plain.Contains("widget").AssertFalse($"got: {plain}");
+		plain.Contains("group").AssertFalse($"got: {plain}");
+		plain.Contains("Intro text").AssertTrue($"got: {plain}");
+		plain.Contains("Outro text").AssertTrue($"got: {plain}");
+	}
+
+	[TestMethod]
+	public void Widget_ToHtmlIsWhatSplitReadsBack()
+	{
+		var widget = new MarkdownWidget("products", new Dictionary<string, string>
+		{
+			["group"] = "12",
+			["title"] = "\"Quoted\" <b>&</b>",
+		});
+
+		var back = SingleWidget(widget.ToHtml());
+
+		back.Name.AreEqual("products");
+		back.Arguments.Count.AreEqual(2);
+		back.Arguments["group"].AreEqual("12");
+		back.Arguments["title"].AreEqual("\"Quoted\" <b>&</b>");
+	}
+
+	[TestMethod]
+	public void Widget_NameAndKeysAreChecked()
+	{
+		Throws<ArgumentException>(() => new MarkdownWidget("Bad Name", new Dictionary<string, string>()));
+		Throws<ArgumentException>(() => new MarkdownWidget("ok", new Dictionary<string, string> { ["Bad"] = "1" }));
+		Throws<ArgumentNullException>(() => new MarkdownWidget("ok", null));
+		Throws<ArgumentNullException>(() => new MarkdownWidget("ok", new Dictionary<string, string> { ["a"] = null }));
+	}
+
+	[TestMethod]
+	public void WidgetSplit_KeepsTextAndWidgetsInOrder()
+	{
+		var marker = new MarkdownWidget("form", new Dictionary<string, string>()).ToHtml();
+
+		var parts = MarkdownWidget.Split($"<section>A</section>\n{marker}\n<section>B</section>");
+
+		parts.Count.AreEqual(3);
+		parts[0].Html.AreEqual("<section>A</section>\n");
+		IsNull(parts[0].Widget);
+		IsNull(parts[1].Html);
+		parts[1].Widget.Name.AreEqual("form");
+		parts[2].Html.AreEqual("\n<section>B</section>");
+		IsNull(parts[2].Widget);
+	}
+
+	[TestMethod]
+	public void WidgetSplit_AdjacentWidgetsGiveNoTextBetweenThem()
+	{
+		var marker = new MarkdownWidget("form", new Dictionary<string, string>()).ToHtml();
+
+		var parts = MarkdownWidget.Split($"<p>A</p>{marker}{marker}<p>B</p>");
+
+		parts.Count.AreEqual(4);
+		parts[0].Html.AreEqual("<p>A</p>");
+		parts[1].Widget.Name.AreEqual("form");
+		parts[2].Widget.Name.AreEqual("form");
+		parts[3].Html.AreEqual("<p>B</p>");
+	}
+
+	[TestMethod]
+	public void WidgetSplit_WidgetAtStartAndEnd()
+	{
+		var marker = new MarkdownWidget("form", new Dictionary<string, string>()).ToHtml();
+
+		var parts = MarkdownWidget.Split($"{marker}\n<p>middle</p>\n{marker}\n");
+
+		parts.Count.AreEqual(3);
+		parts[0].Widget.Name.AreEqual("form");
+		parts[1].Html.AreEqual("\n<p>middle</p>\n");
+		parts[2].Widget.Name.AreEqual("form");
+	}
+
+	[TestMethod]
+	public void WidgetSplit_NoWidgetIsOneTextPart()
+	{
+		var parts = MarkdownWidget.Split("<p>only text</p>");
+
+		parts.Count.AreEqual(1);
+		parts[0].Html.AreEqual("<p>only text</p>");
+		IsNull(parts[0].Widget);
+	}
+
+	[TestMethod]
+	[DataRow(null)]
+	[DataRow("")]
+	public void WidgetSplit_EmptyBodyHasNoParts(string html)
+		=> MarkdownWidget.Split(html).Count.AreEqual(0);
+
+	[TestMethod]
+	public void WidgetSplit_OnlyTheExactMarkerIsAWidget()
+	{
+		const string html = "<div class=\"ss-md-widget\" data-widget=\"form\" onclick=\"x()\"></div><div class=\"ss-md-widget\" data-widget=\"form\">text</div>";
+
+		var parts = MarkdownWidget.Split(html);
+
+		parts.Count.AreEqual(1);
+		parts[0].Html.AreEqual(html);
+	}
+
 	// --- {#id .class} written on a ::: section ---
 
 	private static Match OpenTag(string html, string tag, string className)
