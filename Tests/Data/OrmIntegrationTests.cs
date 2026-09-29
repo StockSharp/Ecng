@@ -5166,6 +5166,41 @@ public class OrmIntegrationTests : BaseTestClass
 		(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).Length.AssertEqual(1);
 	}
 
+	/// <summary>
+	/// A row written through the list after the grouping was built has to show in it: a product added while the
+	/// table was held kept no rows under its id until the cache expired, days later.
+	/// </summary>
+	[TestMethod]
+	public async Task GetByKeyAsync_FollowsRowsWrittenThroughTheList()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GetCountResult = 2,
+			GroupItems =
+			[
+				new() { Id = 1, Priority = 10 },
+				new() { Id = 2, Priority = 20 },
+			],
+		};
+
+		long[] Ids(TestItem[] rows) => [.. rows.Select(r => r.Id).OrderBy(id => id)];
+
+		Ids(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).AssertEqual([1L]);
+
+		await list.AddAsync(new() { Id = 3, Priority = 10 }, CancellationToken);
+		Ids(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).AssertEqual([1L, 3L]);
+
+		var moved = (await list.GetByKeyAsync(i => i.Priority, 20, CancellationToken)).Single();
+		moved.Priority = 10;
+		await list.UpdateAsync(moved, CancellationToken);
+		Ids(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).AssertEqual([1L, 2L, 3L]);
+		Ids(await list.GetByKeyAsync(i => i.Priority, 20, CancellationToken)).AssertEqual([]);
+
+		await list.RemoveAsync((await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).First(r => r.Id == 1), CancellationToken);
+		Ids(await list.GetByKeyAsync(i => i.Priority, 10, CancellationToken)).AssertEqual([2L, 3L]);
+	}
+
 	#endregion
 	#region Audit regression: reading rows must use the bulk cache
 

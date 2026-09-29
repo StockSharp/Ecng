@@ -310,6 +310,8 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 			if (isNew)
 				await IncrementCount(cancellationToken).NoWait();
+
+			_indexes.Clear();
 		}
 
 		return entity;
@@ -417,11 +419,13 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				var (sync, dict) = CachedEntitiesPair;
 
-				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
 				// Idempotent put: the row was successfully saved, so refresh/keep the cache
 				// entry instead of Add(), which throws if a concurrent (or pre-populated)
 				// bulk cache already holds this id (UpdateAsync uses TryAdd for the same reason).
-				dict[GetCacheId(item)] = item;
+				using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
+					dict[GetCacheId(item)] = item;
+
+				_indexes.Clear();
 			}
 			else
 				await GetRangeAsync(cancellationToken).NoWait();
@@ -483,8 +487,10 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 			{
 				var (sync, dict) = CachedEntitiesPair;
 
-				using var _ = await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false);
-				dict.Remove(GetCacheId(item));
+				using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
+					dict.Remove(GetCacheId(item));
+
+				_indexes.Clear();
 			}
 		}
 
@@ -762,6 +768,8 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 	// Groupings of the held rows, told apart by the expression that reads their key: naming them by hand
 	// would let a typo build a second copy of the same grouping, and let two callers disagree about the
 	// key's type behind one name.
+	// Dropped on every write through the list (outside the rows' lock: a grouping is built holding this
+	// dictionary's lock and then the rows' read lock), so a row added, changed or removed shows at once.
 	private readonly SynchronizedDictionary<(string selector, Type key), object> _indexes = [];
 
 	/// <summary>
