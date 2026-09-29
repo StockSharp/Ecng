@@ -139,13 +139,15 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 		WriteDefault(renderer, obj, info);
 	}
 
-	// Renders ":::spoiler Title" as a native disclosure; the title is text, not markup.
+	// Renders a spoiler as a native disclosure. The title is either the text after ":::spoiler" (plain text)
+	// or, when that line is empty, the block's first paragraph -- the form the site's markup help documents.
 	private static void WriteSpoiler(HtmlRenderer renderer, CustomContainer obj)
 	{
 		renderer.EnsureLine();
 		SectionBlocks.WriteOpenTag(renderer, "details", obj, "ss-md-spoiler");
 
 		var title = obj.Arguments?.Trim();
+		Block titleBlock = null;
 
 		if (!title.IsEmpty())
 		{
@@ -153,8 +155,25 @@ public class SectionContainerRenderer : HtmlObjectRenderer<CustomContainer>
 			renderer.WriteEscape(title);
 			renderer.Write("</summary>");
 		}
+		else if (obj.Count > 0 && obj[0] is ParagraphBlock paragraph)
+		{
+			titleBlock = paragraph;
+			renderer.Write("<summary>");
+			renderer.WriteLeafInline(paragraph);
+			renderer.Write("</summary>");
+		}
 
-		renderer.WriteChildren(obj);
+		if (titleBlock is null)
+			renderer.WriteChildren(obj);
+		else
+		{
+			foreach (var child in obj)
+			{
+				if (child != titleBlock)
+					renderer.Write(child);
+			}
+		}
+
 		renderer.WriteLine("</details>");
 	}
 

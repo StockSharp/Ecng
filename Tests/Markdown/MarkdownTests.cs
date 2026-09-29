@@ -875,13 +875,31 @@ public class MarkdownTests : BaseTestClass
 		html.Contains("<summary>&lt;b&gt;x&lt;/b&gt;</summary>").AssertTrue($"got: {html}");
 	}
 
+	// The form the site's markup help page documents: the title is the first line inside the block.
 	[TestMethod]
-	public void SpoilerBlock_WithoutATitleHasNoSummary()
+	public void SpoilerBlock_TitleOnTheFirstLineInside()
 	{
-		var html = ToHtml(":::spoiler {#more}\nhidden\n:::");
+		var html = ToHtml(":::spoiler\nПоказать спойлер\n\nЭтот текст свёрнут\n:::").Replace("\n", string.Empty);
 
-		html.Contains("<details id=\"more\" class=\"ss-md-spoiler\"><p>hidden</p>").AssertTrue($"got: {html}");
+		html.Contains("<details class=\"ss-md-spoiler\"><summary>Показать спойлер</summary><p>Этот текст свёрнут</p></details>").AssertTrue($"got: {html}");
+		html.Contains("<p>Показать спойлер</p>").AssertFalse($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SpoilerBlock_FirstLineTitleKeepsItsMarkupAndAttributes()
+	{
+		var html = ToHtml(":::spoiler {#more}\n**Details**\n\nhidden\n:::").Replace("\n", string.Empty);
+
+		html.Contains("<details id=\"more\" class=\"ss-md-spoiler\"><summary><strong>Details</strong></summary><p>hidden</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SpoilerBlock_WithoutAnyTitleHasNoSummary()
+	{
+		var html = ToHtml(":::spoiler\n- one\n- two\n:::");
+
 		html.Contains("<summary").AssertFalse($"got: {html}");
+		html.Contains("<li>one</li>").AssertTrue($"got: {html}");
 	}
 
 	[TestMethod]
