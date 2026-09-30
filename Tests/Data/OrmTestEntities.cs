@@ -616,3 +616,45 @@ public class TestSchedule : IDbPersistable
 		return default;
 	}
 }
+
+/// <summary>
+/// Grouped view over <see cref="TestItem"/>: one row per priority and activity with the
+/// aggregates of the items in it. <see cref="Rank"/> mixes the group key with an aggregate,
+/// <see cref="LastId"/> is an aggregate of a nullable identifier.
+/// </summary>
+[Entity(Name = "Ecng_VTestItemPriorityCount", NoCache = true)]
+public class VTestItemPriorityCount : IDbPersistable
+{
+	public long Id { get; set; }
+	public int Priority { get; set; }
+	public bool IsActive { get; set; }
+	public int Count { get; set; }
+	public decimal Total { get; set; }
+	public int Rank { get; set; }
+	public long? LastId { get; set; }
+
+	object IDbPersistable.GetIdentity() => Id;
+	void IDbPersistable.SetIdentity(object id) => Id = id.To<long>();
+
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.Set(nameof(Priority), Priority)
+			.Set(nameof(IsActive), IsActive)
+			.Set(nameof(Count), Count)
+			.Set(nameof(Total), Total)
+			.Set(nameof(Rank), Rank)
+			.Set(nameof(LastId), LastId);
+	}
+
+	public ValueTask LoadAsync(SettingsStorage storage, IStorage db, CancellationToken cancellationToken)
+	{
+		Priority = storage.GetValue<int>(nameof(Priority));
+		IsActive = storage.GetValue<bool>(nameof(IsActive));
+		Count = storage.GetValue<int>(nameof(Count));
+		Total = storage.GetValue<decimal>(nameof(Total));
+		Rank = storage.GetValue<int>(nameof(Rank));
+		LastId = storage.GetValue<long?>(nameof(LastId));
+		return default;
+	}
+}

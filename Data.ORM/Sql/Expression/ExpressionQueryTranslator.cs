@@ -145,7 +145,37 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 
 		RegisterLambdaParameters(lambda, Context.TableAlias.IsEmpty() ? Extensions.DefaultAlias : Context.TableAlias);
 
-		var isBoolEqual = lambda.Body is MemberExpression me && me.Type == typeof(bool);
+		if (lambda.Parameters.Count > 0 && lambda.Parameters[0].Type.GetGenericType(typeof(IGrouping<,>)) is not null)
+		{
+			VisitPredicate(lambda.Body);
+			Context.HavingParts.Add(Curr);
+			return m;
+		}
+
+		// Over a grouped projection, conditions on its aggregate members filter groups, not rows.
+		var (rows, groups) = GroupedFilter.Split(m.Arguments[0], lambda);
+
+		if (rows is not null)
+		{
+			VisitPredicate(rows);
+			Context.WhereParts.Add(Curr);
+		}
+
+		if (groups is not null)
+		{
+			if (rows is not null)
+				Curr = new Query { WrapColumn = WrapColumn };
+
+			VisitPredicate(groups);
+			Context.HavingParts.Add(Curr);
+		}
+
+		return m;
+	}
+
+	private void VisitPredicate(Expression body)
+	{
+		var isBoolEqual = body is MemberExpression me && me.Type == typeof(bool);
 
 		if (isBoolEqual)
 			Curr.OpenBracket();
@@ -154,7 +184,7 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		var predicate = Context.PredicatePosition;
 		Context.IsWhere = true;
 		Context.PredicatePosition = true;
-		Visit(lambda.Body);
+		Visit(body);
 		Context.IsWhere = isWhere;
 		Context.PredicatePosition = predicate;
 
@@ -163,13 +193,6 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 			Curr.IsTrue();
 			Curr.CloseBracket();
 		}
-
-		if (lambda.Parameters.Count > 0 && lambda.Parameters[0].Type.GetGenericType(typeof(IGrouping<,>)) is not null)
-			Context.HavingParts.Add(Curr);
-		else
-			Context.WhereParts.Add(Curr);
-
-		return m;
 	}
 
 	private Expression VisitSelectCall(MethodCallExpression m)
@@ -612,7 +635,10 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 		// GROUP BY at all: `SELECT <aggregates> FROM ... WHERE ...` already collapses
 		// to a single row on every dialect. Leave GroupByPart empty.
 		if (keyLambda.Body is ConstantExpression)
+		{
+			Context.IsGrandTotal = true;
 			return m;
+		}
 
 		var curr = Curr;
 		Curr = Context.GroupByPart;
@@ -1804,7 +1830,12 @@ class ExpressionQueryTranslator(Schema meta) : ExpressionVisitor
 					return m;
 				}
 
-				var columns = Context.IsWhere && m.Member.GetMemberType() != typeof(long?) ? Context.GetColumns(m.Member, default, default, true) : null;
+				var columns = Context.IsWhere ? Context.GetColumns(m.Member, default, default, true) : null;
+
+				// A nullable identifier is filtered by its own column unless the projection computes
+				// it, as an aggregate such as g.Max(i => (long?)i.Id) does.
+				if (columns is not null && m.Member.GetMemberType() == typeof(long?) && !columns.Any(c => c.Item1?.Actions.Count > 1))
+					columns = null;
 
 				if (columns is null)
 				{

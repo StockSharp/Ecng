@@ -74,6 +74,12 @@ class Context
 	/// grouping column when rendering the Select that follows GroupBy.
 	/// </summary>
 	public Expression GroupKeySelector;
+
+	/// <summary>
+	/// True when the query is grouped by a constant key: one group over all its rows, emitted
+	/// without GROUP BY.
+	/// </summary>
+	public bool IsGrandTotal;
 	public readonly Dictionary<(Type, MemberInfo), MemberExpression> Members = [];
 
 	/// <summary>
@@ -373,20 +379,16 @@ class Context
 
 	private Query EmitGroupAndHaving(Query query)
 	{
-		if (GroupByPart.Actions.Count == 0)
-			return query;
+		var isGrouped = GroupByPart.Actions.Count > 0;
 
-		GroupByPart.CopyTo(query);
-		query.NewLine();
+		if (isGrouped)
+		{
+			GroupByPart.CopyTo(query);
+			query.NewLine();
+		}
 
-		// COUNT(*) on a grouped result and Skip/Take on a grouped result
-		// both wrap the grouped query in a CTE so the outer pagination /
-		// counting consumes a flat row set instead of fighting the GROUP BY.
-		if (Count)
-			query = WrapInCteCount(query);
-		else if (Skip is not null || Take is not null)
-			query = WrapInCtePassthrough(query);
-
+		// HAVING belongs to the grouped query itself, so it goes before the wrapping below reads
+		// its rows. A grand total (constant key) has no GROUP BY but still filters its one group.
 		if (HavingParts.Count > 0)
 		{
 			query.Having().NewLine();
@@ -403,6 +405,17 @@ class Context
 
 			query.NewLine();
 		}
+
+		if (!isGrouped && !IsGrandTotal)
+			return query;
+
+		// COUNT(*) on a grouped result and Skip/Take on a grouped result
+		// both wrap the grouped query in a CTE so the outer pagination /
+		// counting consumes a flat row set instead of fighting the GROUP BY.
+		if (Count)
+			query = WrapInCteCount(query);
+		else if (Skip is not null || Take is not null)
+			query = WrapInCtePassthrough(query);
 
 		return query;
 	}

@@ -4473,6 +4473,137 @@ public class OrmIntegrationTests : BaseTestClass
 		(rows.Length > 0).AssertTrue($"Expected rows > 0 from join+groupby+conditional, got {rows.Length}");
 	}
 
+	private IQueryable<VTestItemPriorityCount> PriorityCounts()
+		=>
+			from i in Query<TestItem>()
+			group i by new { i.Priority, i.IsActive } into g
+			select new VTestItemPriorityCount
+			{
+				Id = 0,
+				Priority = g.Key.Priority,
+				IsActive = g.Key.IsActive,
+				Count = g.Count(),
+				Total = g.Sum(i => i.Price),
+				Rank = g.Key.Priority == default ? -g.Count() : g.Key.Priority,
+				LastId = g.Max(i => (long?)i.Id),
+			};
+
+	/// <summary>
+	/// A grouped view filtered on its aggregate members together with a key member, ordered by an
+	/// aggregate and paged, then counted. Every provider rejects an aggregate in WHERE, so the
+	/// aggregate conditions must reach it as HAVING of the grouped query. Each condition removes
+	/// a group that the others keep.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupedView_FilterOnAggregate_OrderedPagedAndCounted(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 1);
+		await InsertItem("B", priority: 1);
+		await InsertItem("C", priority: 1);
+		await InsertItem("D", priority: 2);
+		await InsertItem("E", priority: 2);
+		await InsertItem("F", priority: 3);
+		await InsertItem("G", priority: 4);
+		await InsertItem("H", priority: 4);
+
+		// Removed only by the rank: two items, but the rank of priority 0 is -2.
+		await InsertItem("I", priority: 0);
+		await InsertItem("J", priority: 0);
+
+		// Removed only by the count: a group of its own with a single item.
+		await InsertItem("K", priority: 2, isActive: false);
+
+		await ClearCache();
+
+		var min = 2;
+		var maxPriority = 3;
+
+		var filtered = PriorityCounts()
+			.Where(v => v.Count >= min && v.Rank > 0)
+			.Where(v => v.Priority < maxPriority);
+
+		var rows = await filtered
+			.OrderByDescending(v => v.Count)
+			.Skip(0)
+			.Take(10)
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Select(r => $"{r.Priority}:{r.Count}").JoinComma().AssertEqual("1:3,2:2");
+
+		var count = await filtered.CountAsyncEx(CancellationToken);
+
+		count.AssertEqual(2L);
+	}
+
+	/// <summary>
+	/// A grouped view filtered on an aggregate of a nullable identifier and on a member that
+	/// re-projects an aggregate: both conditions filter the groups in HAVING.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupedView_FilterOnNullableAndReprojectedAggregates(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A", priority: 1);
+		var b = await InsertItem("B", priority: 1);
+		var c = await InsertItem("C", priority: 2);
+		await InsertItem("D", priority: 3);
+		await InsertItem("E", priority: 3);
+
+		await ClearCache();
+
+		var rows = await PriorityCounts()
+			.Where(v => v.LastId > b.Id)
+			.OrderBy(v => v.Priority)
+			.ToArrayAsyncEx(CancellationToken);
+
+		rows.Select(r => $"{r.Priority}").JoinComma().AssertEqual("2,3");
+		rows[0].LastId.AssertEqual(c.Id);
+
+		var min = 2;
+
+		var counts = await PriorityCounts()
+			.Select(v => new { v.Priority, v.Count })
+			.Where(x => x.Count >= min)
+			.ToArrayAsyncEx(CancellationToken);
+
+		counts.OrderBy(x => x.Priority).Select(x => $"{x.Priority}:{x.Count}").JoinComma().AssertEqual("1:2,3:2");
+	}
+
+	/// <summary>
+	/// A grand total (constant key) is one group, so counting it gives 1, or 0 when its filter
+	/// removes that group, not the number of rows it aggregates.
+	/// </summary>
+	[TestMethod]
+	[DataRow(DatabaseProviderRegistry.SqlServer)]
+	[DataRow(DatabaseProviderRegistry.PostgreSql)]
+	[DataRow(DatabaseProviderRegistry.SQLite)]
+	public async Task GroupBy_ConstantKey_Counted_CountsTheGroup(string provider)
+	{
+		SetUp(provider);
+		await InsertItem("A");
+		await InsertItem("B");
+		await InsertItem("C");
+
+		await ClearCache();
+
+		ValueTask<long> CountAsync(int min)
+			=> Query<TestItem>()
+				.GroupBy(i => 1)
+				.Where(g => g.Count() > min)
+				.Select(g => new { Count = g.Count() })
+				.CountAsyncEx(CancellationToken);
+
+		(await CountAsync(2)).AssertEqual(1L);
+		(await CountAsync(3)).AssertEqual(0L);
+	}
+
 	/// <summary>
 	/// Mirrors StockSharp.Web's TopicTagService.FindAsync chain:
 	/// <c>(from a in T1 join b in T2 ... select new { A=a, B=b }).Where(p =&gt; p.B.Field == X)</c>
