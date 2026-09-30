@@ -189,6 +189,59 @@ public class MemberPathResolverTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Resolve_InnerSchemaMemberWithNameOverride_UsesTheOverriddenColumn()
+	{
+		// [NameOverride("Tag", "ProductTag")] on Meta stores Meta.Tag in ProductTag, not in MetaTag.
+		var res = MemberPathResolver.Resolve(Body((ReflTestProduct p) => p.Meta.Tag), RootAlias);
+
+		res.AssertNotNull();
+		res.Column.AssertEqual(new ColumnRef(RootAlias, "ProductTag"));
+		res.RequiredJoins.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Resolve_NestedInnerSchemaWithNameOverrides_UsesTheColumnsOfTheSchema()
+	{
+		// The override on State renames Cash, whose name then prefixes the members of Cash; the override on Cash renames
+		// Amount outright.
+		var columns = SchemaRegistry.Get(typeof(TestAccount)).Columns.Select(c => c.Name).ToArray();
+
+		var amount = MemberPathResolver.Resolve(Body((TestAccount a) => a.State.Cash.Amount), RootAlias);
+
+		amount.AssertNotNull();
+		amount.Column.AssertEqual(new ColumnRef(RootAlias, "CashValue"));
+		amount.RequiredJoins.Count.AssertEqual(0);
+		columns.Contains("CashValue").AssertTrue();
+
+		var currency = MemberPathResolver.Resolve(Body((TestAccount a) => a.State.Cash.Currency), RootAlias);
+
+		currency.AssertNotNull();
+		currency.Column.AssertEqual(new ColumnRef(RootAlias, "MoneyCurrency"));
+		currency.RequiredJoins.Count.AssertEqual(0);
+		columns.Contains("MoneyCurrency").AssertTrue();
+	}
+
+	[TestMethod]
+	public void Resolve_RelationSingleRenamedInsideInnerSchema_UsesTheRenamedFk()
+	{
+		SchemaRegistry.Get(typeof(TestAccount)).Columns.Any(c => c.Name == "HomeCountry").AssertTrue();
+
+		var byId = MemberPathResolver.Resolve(Body((TestAccount a) => a.State.Country.Id), RootAlias);
+
+		byId.AssertNotNull();
+		byId.Column.AssertEqual(new ColumnRef(RootAlias, "HomeCountry"));
+		byId.RequiredJoins.Count.AssertEqual(0);
+
+		var byName = MemberPathResolver.Resolve(Body((TestAccount a) => a.State.Country.Name), RootAlias);
+
+		byName.AssertNotNull();
+		byName.Column.AssertEqual(new ColumnRef("Country", "Name"));
+		byName.RequiredJoins.Count.AssertEqual(1);
+		byName.RequiredJoins[0].ParentAlias.AssertEqual(RootAlias);
+		byName.RequiredJoins[0].OnParentColumn.AssertEqual("HomeCountry");
+	}
+
+	[TestMethod]
 	public void Resolve_ChainNotRootedAtParameter_ReturnsNull()
 	{
 		// `someValue.X.Y` — closure capture chain. Resolver must refuse it
@@ -202,6 +255,29 @@ public class MemberPathResolverTests : BaseTestClass
 		res.AssertNull();
 	}
 
+	private sealed class TestMoney
+	{
+		public decimal Amount { get; set; }
+		public string Currency { get; set; }
+	}
+
+	private sealed class TestAccountState
+	{
+		[NameOverride(nameof(TestMoney.Amount), "CashValue")]
+		public TestMoney Cash { get; set; }
+
+		[RelationSingle]
+		public TestCountry Country { get; set; }
+	}
+
+	private sealed class TestAccount
+	{
+		public long Id { get; set; }
+
+		[NameOverride(nameof(TestAccountState.Cash), "Money")]
+		[NameOverride(nameof(TestAccountState.Country), "HomeCountry")]
+		public TestAccountState State { get; set; }
+	}
 }
 
 #endif

@@ -15,7 +15,9 @@ using Ecng.Serialization;
 /// dropped; equivalent to an INNER JOIN for a non-null FK under referential
 /// integrity); switches the running alias to the joined table.</item>
 /// <item>Inner-schema (value object) — accumulates a column-name prefix that
-/// flattens nested members into a single physical column.</item>
+/// flattens nested members into a single physical column; a
+/// <see cref="NameOverrideAttribute"/> on the hop renames the column of a
+/// member outright, as <see cref="SchemaRegistry"/> does.</item>
 /// <item>FK short-circuit — when the leaf is <c>Id</c> directly under a
 /// RelationSingle hop, no JOIN is added and the FK column on the parent
 /// alias is used instead.</item>
@@ -62,6 +64,9 @@ public static class MemberPathResolver
 		var currentAlias = rootAlias;
 		var innerPrefix = string.Empty;
 
+		// The [NameOverride]s of the inner-schema hop just passed: they rename the columns of its members.
+		IReadOnlyDictionary<string, string> nameOverrides = null;
+
 		for (var i = 0; i < chain.Count - 1; i++)
 		{
 			var hop = chain[i];
@@ -75,7 +80,7 @@ public static class MemberPathResolver
 				if (!SchemaRegistry.TryGet(hopType, out var targetSchema) || targetSchema.Identity is null)
 					return null;
 
-				var fkColumn = innerPrefix + hop.Name;
+				var fkColumn = GetColumnName(innerPrefix, hop.Name, nameOverrides);
 
 				if (isLastBeforeLeaf && leaf.Name == IdColumnName)
 				{
@@ -98,10 +103,12 @@ public static class MemberPathResolver
 
 				currentAlias = hop.Name;
 				innerPrefix = string.Empty;
+				nameOverrides = null;
 			}
 			else if (IsInnerSchema(hopType))
 			{
-				innerPrefix += hop.Name;
+				innerPrefix = GetColumnName(innerPrefix, hop.Name, nameOverrides);
+				nameOverrides = GetNameOverrides(hop);
 			}
 			else
 			{
@@ -111,8 +118,23 @@ public static class MemberPathResolver
 
 		var leafMember = chain[chain.Count - 1];
 		return new MemberPathResolution(
-			new ColumnRef(currentAlias, innerPrefix + leafMember.Name),
+			new ColumnRef(currentAlias, GetColumnName(innerPrefix, leafMember.Name, nameOverrides)),
 			joins);
+	}
+
+	// Names the column of a member as SchemaRegistry flattens an inner schema: the name a [NameOverride] gives it, or the
+	// prefix of the inner schema followed by the member name.
+	private static string GetColumnName(string prefix, string memberName, IReadOnlyDictionary<string, string> nameOverrides)
+		=> nameOverrides is not null && nameOverrides.TryGetValue(memberName, out var columnName) ? columnName : prefix + memberName;
+
+	private static Dictionary<string, string> GetNameOverrides(MemberInfo member)
+	{
+		var overrides = new Dictionary<string, string>();
+
+		foreach (var attr in member.GetAttributes<NameOverrideAttribute>())
+			overrides[attr.OldName] = attr.NewName;
+
+		return overrides;
 	}
 
 	private static bool IsInnerSchema(Type t)

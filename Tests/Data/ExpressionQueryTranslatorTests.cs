@@ -1219,6 +1219,29 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 
 	#endregion
 
+	#region Inner schema members renamed by [NameOverride]
+
+	/// <summary>
+	/// A member of an inner schema whose column [NameOverride] renames is filtered and sorted by that column, the one the
+	/// schema declares, not by the prefixed name the member would have without the override.
+	/// </summary>
+	[TestMethod]
+	public void WhereAndOrderBy_InnerSchemaMemberWithNameOverride_UseTheOverriddenColumn()
+	{
+		var products = CreateQueryable<ReflTestProduct>();
+
+		var query = products.Where(p => p.Meta.Score > 5).OrderByDescending(p => p.Meta.Tag);
+
+		var sql = GenerateSql<ReflTestProduct>(query);
+
+		sql.Contains("[ProductScore]").AssertTrue($"Expected the renamed column [ProductScore] in WHERE, got: {sql}");
+		sql.Contains("[ProductTag]").AssertTrue($"Expected the renamed column [ProductTag] in ORDER BY, got: {sql}");
+		sql.Contains("[MetaScore]").AssertFalse($"The schema has no column [MetaScore], got: {sql}");
+		sql.Contains("[MetaTag]").AssertFalse($"The schema has no column [MetaTag], got: {sql}");
+	}
+
+	#endregion
+
 	#region String Parameterization Tests
 
 	/// <summary>
