@@ -64,6 +64,7 @@ public static class ServicePath
 	/// <remarks>
 	/// Same file and settings as the overload taking a logger; it only leaves out the forwarding into
 	/// <see cref="ILogger"/>, which a service being fed from <see cref="ILogger"/> must not have.
+	/// What is still waiting to be written when the manager is disposed is written, not dropped.
 	/// </remarks>
 	public static LogManager CreateLogManager(IFileSystem fileSystem, string dataDir, LogLevels defaultLevel)
 	{
@@ -78,7 +79,10 @@ public static class ServicePath
 
 		var logManager = new LogManager
 		{
-			Application = { LogLevel = defaultLevel }
+			Application = { LogLevel = defaultLevel },
+			// A service that fails at start is torn down before its first flush, and those last lines
+			// are the only account of why it stopped.
+			ClearPendingOnDispose = false,
 		};
 
 		if (fileSystem.FileExists(logSettingsFile))
