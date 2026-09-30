@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 using Ecng.Logging;
 using Ecng.Serialization;
@@ -40,17 +39,12 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 
 	private static (LogManager manager, CapturingListener listener) CreateManager()
 	{
-		var manager = new LogManager { Application = { LogLevel = LogLevels.Verbose }, FlushInterval = TimeSpan.FromMilliseconds(10) };
+		// Synchronous: a line reaches the listener before the call that wrote it returns, so a test reads it at
+		// once instead of betting on when a flush timer next fires on a busy machine.
+		var manager = new LogManager(asyncMode: false) { Application = { LogLevel = LogLevels.Verbose } };
 		var listener = new CapturingListener();
 		manager.Listeners.Add(listener);
 		return (manager, listener);
-	}
-
-	/// <summary>The log hands messages to its listeners on its own timer, so a reader has to let it.</summary>
-	private static void WaitFor(CapturingListener listener, Func<bool> condition)
-	{
-		for (var i = 0; i < 200 && !condition(); i++)
-			Thread.Sleep(10);
 	}
 
 	[TestMethod]
@@ -60,8 +54,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		using var provider = new LogManagerLoggerProvider(manager);
 
 		provider.CreateLogger("Worker").LogInformation("started");
-
-		WaitFor(listener, () => listener.Messages.Any(m => m.Message == "started"));
 
 		var message = listener.Messages.FirstOrDefault(m => m.Message == "started");
 
@@ -78,8 +70,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 
 		provider.CreateLogger("Worker").LogInformation("from the worker");
 		provider.CreateLogger("CpuMonitor").LogInformation("from the monitor");
-
-		WaitFor(listener, () => listener.Messages.Count >= 2);
 
 		AreEqual("Worker", listener.Messages.First(m => m.Message == "from the worker").Source.Name);
 		AreEqual("CpuMonitor", listener.Messages.First(m => m.Message == "from the monitor").Source.Name);
@@ -112,8 +102,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		logger.LogError("e");
 		logger.LogCritical("c");
 
-		WaitFor(listener, () => listener.Messages.Count >= 6);
-
 		LogLevels levelOf(string text) => listener.Messages.First(m => m.Message == text).Level;
 
 		AreEqual(LogLevels.Verbose, levelOf("t"));
@@ -132,8 +120,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		using var provider = new LogManagerLoggerProvider(manager);
 
 		provider.CreateLogger("Worker").LogError(new InvalidOperationException("boom"), "sample failed");
-
-		WaitFor(listener, () => listener.Messages.Any(m => m.Level == LogLevels.Error));
 
 		var message = listener.Messages.First(m => m.Level == LogLevels.Error);
 
@@ -166,8 +152,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 
 		provider.CreateLogger("StockSharp.Web.Servers.Mail.CpuMonitorService").LogInformation("shortened");
 
-		WaitFor(listener, () => listener.Messages.Any(m => m.Message == "shortened"));
-
 		AreEqual("CpuMonitorService", listener.Messages.First(m => m.Message == "shortened").Source.Name);
 	}
 
@@ -180,8 +164,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 
 		provider.CreateLogger("StockSharp.Web.Servers.Mail.Worker").LogInformation("from mail");
 		provider.CreateLogger("StockSharp.Web.Servers.Video.Worker").LogInformation("from video");
-
-		WaitFor(listener, () => listener.Messages.Count >= 2);
 
 		var mail = listener.Messages.First(m => m.Message == "from mail").Source.Name;
 		var video = listener.Messages.First(m => m.Message == "from video").Source.Name;
@@ -201,8 +183,6 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 		var before = DateTime.UtcNow.AddSeconds(-5);
 
 		provider.CreateLogger("Worker").LogInformation("stamped");
-
-		WaitFor(listener, () => listener.Messages.Any(m => m.Message == "stamped"));
 
 		var time = listener.Messages.First(m => m.Message == "stamped").Time;
 
