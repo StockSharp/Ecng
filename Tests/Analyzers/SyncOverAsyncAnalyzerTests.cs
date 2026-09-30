@@ -52,16 +52,10 @@ public class SyncOverAsyncAnalyzerTests : BaseTestClass
 
 	private async Task<Diagnostic[]> AnalyzeAsync(string code)
 	{
-		var refs = AppDomain.CurrentDomain
-			.GetAssemblies()
-			.Where(a => !a.IsDynamic && !a.Location.IsEmpty())
-			.Select(a => (MetadataReference)MetadataReference.CreateFromFile(a.Location))
-			.ToArray();
-
 		var compilation = CSharpCompilation.Create(
 			"SyncOverAsyncProbe",
 			[CSharpSyntaxTree.ParseText(_stubs), CSharpSyntaxTree.ParseText(code)],
-			refs,
+			AnalyzerProbe.Framework,
 			new(OutputKind.DynamicallyLinkedLibrary));
 
 		var withAnalyzers = compilation.WithAnalyzers(

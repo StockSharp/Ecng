@@ -3,7 +3,6 @@
 namespace Ecng.Tests.Analyzers;
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,32 +68,7 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 		}
 		""";
 
-	// Building the reference set out of whatever happens to be loaded makes the probe depend on the order the
-	// suite runs in: a missing System.Linq.Queryable leaves the probe uncompilable, the analyzer then has
-	// nothing to look at, and the test reads as "rule broken" when it is the harness that is.
-	private static MetadataReference[] BaseReferences()
-		=> [.. new[]
-			{
-				typeof(object),
-				typeof(IEnumerable<>),
-				typeof(IAsyncEnumerable<>),
-				typeof(Enumerable),
-				typeof(IQueryable),
-				typeof(Queryable),
-				typeof(AsyncEnumerable),
-				typeof(CancellationToken),
-				typeof(ValueTask<>),
-				typeof(TaskAsyncEnumerableExtensions),
-				typeof(System.Linq.Expressions.Expression),
-			}
-			.Select(t => t.Assembly)
-			.Concat(AppDomain.CurrentDomain.GetAssemblies())
-			// The real ORM is loaded in this process, and the stub below carries its name: importing both is
-			// what made the probe fail, silently, whenever the suite happened to have loaded it first.
-			.Where(a => !a.IsDynamic && !a.Location.IsEmpty() && a.GetName().Name != "Ecng.Data.ORM")
-			.Select(a => a.Location)
-			.Distinct()
-			.Select(l => (MetadataReference)MetadataReference.CreateFromFile(l))];
+	private static readonly Lazy<MetadataReference> _orm = new(BuildOrmReference);
 
 	private static void EnsureCompiles(CSharpCompilation compilation)
 	{
@@ -106,12 +80,10 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 
 	private static MetadataReference BuildOrmReference()
 	{
-		var refs = BaseReferences();
-
 		var orm = CSharpCompilation.Create(
 			"Ecng.Data.ORM",
 			[CSharpSyntaxTree.ParseText(_ormSource)],
-			refs,
+			AnalyzerProbe.Framework,
 			new(OutputKind.DynamicallyLinkedLibrary));
 
 		var stream = new MemoryStream();
@@ -126,7 +98,7 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 
 	private async Task<Diagnostic[]> AnalyzeAsync(string code)
 	{
-		var refs = BaseReferences().Concat([BuildOrmReference()]).ToArray();
+		MetadataReference[] refs = [.. AnalyzerProbe.Framework, _orm.Value];
 
 		var compilation = CSharpCompilation.Create(
 			"SyncQueryProbe",
@@ -173,6 +145,23 @@ public class SyncQueryAnalyzerTests : BaseTestClass
 
 	private Task<Diagnostic[]> ProbeAsync(string body)
 		=> AnalyzeAsync(_consumer + "\n\npublic class Probe\n{\n" + body + "\n}\n");
+
+	/// <summary>
+	/// The probe compiles against the framework alone, so what it costs does not depend on how much the suite
+	/// has loaded before it: eight probes at once over everything a full run has loaded exhaust the test host.
+	/// </summary>
+	[TestMethod]
+	public void TheProbeReferencesTheFrameworkOnly()
+	{
+		var framework = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
+		var outside = AnalyzerProbe.Framework
+			.Select(r => r.Display)
+			.Where(path => !Path.GetDirectoryName(path).EqualsIgnoreCase(framework))
+			.ToArray();
+
+		AreEqual(0, outside.Length, outside.JoinN());
+	}
 
 	[TestMethod]
 	public async Task ATerminalOnAnOverriddenToQueryableIsFlagged()
