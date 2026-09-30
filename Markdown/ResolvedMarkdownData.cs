@@ -36,11 +36,27 @@ public class ResolvedMarkdownData
 	public Dictionary<string, string> Diagrams { get; init; } = [];
 
 	/// <summary>
-	/// Counter values keyed by counter.
+	/// Counter values keyed by the key the host registered each counter with (see
+	/// <see cref="Extensions.SiteCounterParser.Register"/>).
 	/// </summary>
 	/// <remarks>
 	/// Already formatted for the language being rendered: the count is a number, but how it reads (grouping
 	/// separators) belongs to the language, which only the caller knows.
 	/// </remarks>
-	public Dictionary<SiteCounters, string> Counters { get; init; } = [];
+	public Dictionary<string, string> Counters { get; init; } = [];
+
+	/// <summary>
+	/// The counts behind <see cref="Counters"/>, keyed the same way.
+	/// </summary>
+	/// <remarks>
+	/// A counter written with its word forms ("@user_count(пользователь/пользователя/пользователей)") picks the
+	/// form by the count, so the number itself is needed and not only how it reads.
+	/// </remarks>
+	public Dictionary<string, long> CounterValues { get; init; } = [];
+
+	/// <summary>
+	/// The two-letter ISO 639-1 code of the language the text is rendered in, whose plural rule picks the word
+	/// form of a counter.
+	/// </summary>
+	public string Language { get; init; }
 }

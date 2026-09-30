@@ -46,20 +46,22 @@ public class MarkdownTests : BaseTestClass
 		return new() { Url = url, Name = name, Description = description };
 	}
 
-	// What the API resolves the site counters to: already formatted for the language being rendered.
-	private static readonly Dictionary<SiteCounters, string> _counters = new()
+	// What the host resolves the site counters to: already formatted for the language being rendered.
+	private static readonly Dictionary<string, string> _counters = new()
 	{
-		[SiteCounters.Indicators] = "70",
-		[SiteCounters.Connectors] = "93",
-		[SiteCounters.Users] = "22 431",
-		[SiteCounters.Strategies] = "156",
-		[SiteCounters.Apps] = "12",
+		[TestSiteCounters.Indicators] = "70",
+		[TestSiteCounters.Connectors] = "93",
+		[TestSiteCounters.Users] = "22 431",
+		[TestSiteCounters.Strategies] = "156",
+		[TestSiteCounters.Apps] = "12",
 	};
 
 	private const string _knownDiagram = "555";
 	private const long _pendingVideo = 7;
 
 	private static readonly Md2HtmlFormatter _formatter = new();
+
+	static MarkdownTests() => TestSiteCounters.Register();
 
 	private static ResolvedMarkdownData ResolveTestData(ParsedMarkdown parsed) => new()
 	{
@@ -458,8 +460,8 @@ public class MarkdownTests : BaseTestClass
 		var html = ToHtml(md, allowHtml: true);
 
 		html.Contains("{{count:").AssertFalse($"The internal placeholder leaked: {html}");
-		html.Contains($">{_counters[SiteCounters.Connectors]}<").AssertTrue($"Expected the connectors count, got: {html}");
-		html.Contains($">{_counters[SiteCounters.Indicators]}<").AssertTrue($"Expected the indicators count, got: {html}");
+		html.Contains($">{_counters[TestSiteCounters.Connectors]}<").AssertTrue($"Expected the connectors count, got: {html}");
+		html.Contains($">{_counters[TestSiteCounters.Indicators]}<").AssertTrue($"Expected the indicators count, got: {html}");
 	}
 
 	[TestMethod]
@@ -1517,7 +1519,7 @@ public class MarkdownTests : BaseTestClass
 	{
 		var html = ToHtml("The platform supports @connector_count connectors today.");
 
-		html.Contains($"supports {_counters[SiteCounters.Connectors]} connectors").AssertTrue($"got: {html}");
+		html.Contains($"supports {_counters[TestSiteCounters.Connectors]} connectors").AssertTrue($"got: {html}");
 	}
 
 	[TestMethod]
@@ -1546,6 +1548,133 @@ public class MarkdownTests : BaseTestClass
 
 		IsFalse(html.Contains(">0<") || html.Contains(" 0 "), $"a missing counter was rendered as zero: {html}");
 		html.Contains("@connector_count").AssertTrue($"got: {html}");
+	}
+
+	/// <summary>
+	/// Which counters exist is the host's business: a name it never registered is plain text, not a counter
+	/// left unresolved.
+	/// </summary>
+	[TestMethod]
+	[DataRow("We have @nosuch_count items.")]
+	[DataRow("We have @nosuch_count(item/items).")]
+	public void SiteCounter_TheHostDidNotRegister_IsText(string text)
+	{
+		var parsed = _formatter.Parse(text, allowHtml: false);
+
+		IsFalse(parsed.CounterRefs.Count > 0, "an unregistered name was collected as a counter");
+		_formatter.Render(parsed, new ResolvedMarkdownData()).Contains($"<p>{text}</p>").AssertTrue();
+	}
+
+	[TestMethod]
+	[DataRow("con-nector", "Key")]
+	[DataRow("connector2", "Key")]
+	[DataRow("Connector", "Key")]
+	[DataRow("", "Key")]
+	[DataRow("widget", "")]
+	[DataRow("widget", " ")]
+	public void SiteCounter_ANameOrKeyTheTextCannotCarry_IsRefused(string name, string key)
+		=> Throws<ArgumentException>(() => SiteCounterParser.Register(name, key));
+
+	[TestMethod]
+	public void SiteCounter_ARegisteredNameKeepsItsMeaning()
+		// Every text quoting "@connector_count" means the connectors; reading it as anything else would change them all.
+		=> Throws<ArgumentException>(() => SiteCounterParser.Register("connector", "Something"));
+
+	// --- A counter written with its word forms: "@connector_count(коннектор/коннектора/коннекторов)" ---
+
+	private static string RenderCount(string text, string language, long value)
+	{
+		var parsed = _formatter.Parse(text, allowHtml: false);
+
+		return _formatter.Render(parsed, new ResolvedMarkdownData
+		{
+			Language = language,
+			Counters = { [TestSiteCounters.Connectors] = value.To<string>() },
+			CounterValues = { [TestSiteCounters.Connectors] = value },
+		});
+	}
+
+	/// <summary>
+	/// A noun typed after a live number breaks as soon as the number moves: "221 коннекторов" is wrong
+	/// Russian. The author writes the forms, and the number picks one by its language's rule.
+	/// </summary>
+	[TestMethod]
+	[DataRow(1L, "1&#160;коннектор")]
+	[DataRow(221L, "221&#160;коннектор")]
+	[DataRow(3L, "3&#160;коннектора")]
+	[DataRow(24L, "24&#160;коннектора")]
+	[DataRow(11L, "11&#160;коннекторов")]
+	[DataRow(112L, "112&#160;коннекторов")]
+	[DataRow(25L, "25&#160;коннекторов")]
+	public void SiteCounter_TakesTheWordFormItsNumberAsksFor(long value, string expected)
+	{
+		var html = RenderCount("@connector_count(коннектор/коннектора/коннекторов) в каталоге", "ru", value);
+
+		html.Contains($"<p>{expected} в каталоге</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	[DataRow(1L, "1&#160;connector")]
+	[DataRow(21L, "21&#160;connectors")]
+	public void SiteCounter_WordForms_FollowTheLanguageOfTheText(long value, string expected)
+	{
+		var html = RenderCount("@connector_count(connector/connectors)", "en", value);
+
+		html.Contains($"<p>{expected}</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SiteCounter_WithFormsButWithoutAValue_KeepsWhatTheAuthorTyped()
+	{
+		const string text = "@connector_count(коннектор/коннектора/коннекторов) в каталоге";
+
+		var parsed = _formatter.Parse(text, allowHtml: false);
+		var html = _formatter.Render(parsed, new ResolvedMarkdownData { Language = "ru" });
+
+		html.Contains($"<p>{text}</p>").AssertTrue($"got: {html}");
+	}
+
+	/// <summary>
+	/// Without a language to take the rule from, the last form - the general plural - is the one that
+	/// reads right for most numbers; guessing another language's rule would not be.
+	/// </summary>
+	[TestMethod]
+	public void SiteCounter_WithoutALanguage_TakesTheLastForm()
+	{
+		var html = RenderCount("@connector_count(коннектор/коннектора/коннекторов)", null, 221);
+
+		html.Contains("<p>221&#160;коннекторов</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SiteCounter_WordForms_AreText()
+	{
+		var html = RenderCount("@connector_count(a<b>/c&d)", "en", 2);
+
+		IsFalse(html.Contains("<b>"), $"a word form reached the page as markup: {html}");
+		html.Contains("<p>2&#160;c&amp;d</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SiteCounter_AnUnclosedFormList_IsText()
+	{
+		var html = ToHtml("@connector_count(коннектор");
+
+		html.Contains($"<p>{_counters[TestSiteCounters.Connectors]}(коннектор</p>").AssertTrue($"got: {html}");
+	}
+
+	[TestMethod]
+	public void SiteCounter_WordForms_SurviveAStatsRow()
+	{
+		var parsed = _formatter.Parse(":::stats\n@connector_count(коннектор/коннектора/коннекторов) | в каталоге\n:::", allowHtml: false);
+		var html = _formatter.Render(parsed, new ResolvedMarkdownData
+		{
+			Language = "ru",
+			Counters = { [TestSiteCounters.Connectors] = "221" },
+			CounterValues = { [TestSiteCounters.Connectors] = 221 },
+		});
+
+		html.Contains(">221&#160;коннектор<").AssertTrue($"got: {html}");
 	}
 
 	// --- @product_name(id): the localized name, not a link ---

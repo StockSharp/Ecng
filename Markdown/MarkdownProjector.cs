@@ -354,9 +354,8 @@ public static class MarkdownProjector
 					: [];
 
 			case SiteCounterInline counter:
-				return data.Counters.TryGetValue(counter.Counter, out var count)
-					? [new MdText(count)]
-					: [new MdText($"@{counter.Counter.ToString().ToLowerInvariant()}")];
+				return [new MdText(SiteCounterText.TryResolve(counter.Key, counter.Forms, data)
+					?? SiteCounterParser.ToToken(counter.Name, counter.Forms))];
 
 			case EntityReferenceInline entity:
 				return ProjectEntity(entity, data);

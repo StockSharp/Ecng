@@ -33,7 +33,9 @@ public class ResolvedMarkdownDataSerializationTests : BaseTestClass
 			[7] = new(string.Empty, "Video is being processed"),
 		},
 		Diagrams = { ["122179"] = "https://stocksharp.com/file/122179/schema.json" },
-		Counters = { [SiteCounters.Connectors] = "93", [SiteCounters.Users] = "22 431" },
+		Counters = { [TestSiteCounters.Connectors] = "93", [TestSiteCounters.Users] = "22 431" },
+		CounterValues = { [TestSiteCounters.Connectors] = 93, [TestSiteCounters.Users] = 22431 },
+		Language = "ru",
 	};
 
 	[TestMethod]
@@ -47,7 +49,9 @@ public class ResolvedMarkdownDataSerializationTests : BaseTestClass
 
 		data.Files[122179].Url.AssertEqual("/file/122179/file.png");
 		data.Diagrams["122179"].AssertEqual("https://stocksharp.com/file/122179/schema.json");
-		data.Counters[SiteCounters.Connectors].AssertEqual("93");
+		data.Counters[TestSiteCounters.Connectors].AssertEqual("93");
+		data.CounterValues[TestSiteCounters.Users].AssertEqual(22431L);
+		data.Language.AssertEqual("ru");
 
 		data.Roles[1].AssertTrue();
 		data.Roles[2].AssertFalse();

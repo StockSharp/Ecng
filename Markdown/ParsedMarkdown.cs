@@ -22,7 +22,7 @@ public class ParsedMarkdown(
 	HashSet<long> roleIds,
 	HashSet<long> videoIds,
 	HashSet<string> diagramRefs,
-	HashSet<SiteCounters> counterRefs,
+	HashSet<string> counterRefs,
 	MarkdownPipeline pipeline)
 {
 	/// <summary>
@@ -67,7 +67,7 @@ public class ParsedMarkdown(
 	public HashSet<string> DiagramRefs { get; } = diagramRefs;
 
 	/// <summary>
-	/// The site counters the text quotes ("@connector_count"), so the caller fetches only those.
+	/// The keys of the site counters the text quotes ("@user_count"), so the caller fetches only those.
 	/// </summary>
-	public HashSet<SiteCounters> CounterRefs { get; } = counterRefs;
+	public HashSet<string> CounterRefs { get; } = counterRefs;
 }

@@ -53,7 +53,8 @@ public class Md2HtmlFormatter
 	// Raw text scan for the site counters ("@connector_count"), for the same reason as the entity scan.
 	private static readonly Regex _counterRefPattern = new(@"@([a-z]+)_count(?![A-Za-z0-9_])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-	private static readonly Regex _counterPlaceholder = new(@"\{\{count:(\w+)\}\}", RegexOptions.Compiled);
+	// The word forms, when there are any, arrive HTML-escaped: they are the author's text.
+	private static readonly Regex _counterPlaceholder = new(@"\{\{count:(\w+)(?:\(([^)]*)\))?\}\}", RegexOptions.Compiled);
 
 	/// <summary>The entity type that renders as a bare localized name instead of a link.</summary>
 	public const string ProductNameEntity = "product_name";
@@ -199,12 +200,12 @@ public class Md2HtmlFormatter
 			diagramRefs.Add(match.Groups[1].Value);
 
 		// Same raw scan for the site counters, so one inside styled content is fetched too.
-		var counterRefs = new HashSet<SiteCounters>();
+		var counterRefs = new HashSet<string>();
 
 		foreach (Match match in _counterRefPattern.Matches(text))
 		{
-			if (SiteCounterParser.TryParseName(match.Groups[1].Value, out var counter))
-				counterRefs.Add(counter);
+			if (SiteCounterParser.TryParseName(match.Groups[1].Value, out var key))
+				counterRefs.Add(key);
 		}
 
 		return new(doc, entities, fileIds, roleIds, videoIds, diagramRefs, counterRefs, pipeline);
@@ -280,7 +281,7 @@ public class Md2HtmlFormatter
 		html = ResolveEntityLinks(html, data);
 		html = ConvertSpoilers(html);
 		html = ResolveEntities(html, data.Entities, data.Files);
-		html = ResolveCounters(html, data.Counters);
+		html = ResolveCounters(html, data);
 		html = ResolveRoles(html, data.Roles);
 		html = ResolveVideos(html, data.Videos);
 		html = ResolveDiagrams(html, data.Diagrams);
@@ -640,19 +641,22 @@ public class Md2HtmlFormatter
 	/// as the source token: a number nobody could obtain must not be invented, and a zero in a sentence reads
 	/// as a fact, while the token is visible to whoever edits the page.
 	/// </summary>
-	private static string ResolveCounters(string html, Dictionary<SiteCounters, string> counters)
+	private static string ResolveCounters(string html, ResolvedMarkdownData data)
 	{
 		if (!html.Contains("{{count:"))
 			return html;
 
 		return _counterPlaceholder.Replace(html, match =>
 		{
-			if (!Enum.TryParse<SiteCounters>(match.Groups[1].Value, out var counter))
-				return match.Value;
+			var name = match.Groups[1].Value;
 
-			return counters.TryGetValue(counter, out var value) && !value.IsEmpty()
-				? WebUtility.HtmlEncode(value)
-				: SiteCounterParser.ToToken(counter);
+			IReadOnlyList<string> forms = match.Groups[2].Success
+				? [.. match.Groups[2].Value.Split('/').Select(WebUtility.HtmlDecode)]
+				: [];
+
+			var text = SiteCounterParser.TryParseName(name, out var key) ? SiteCounterText.TryResolve(key, forms, data) : null;
+
+			return WebUtility.HtmlEncode(text ?? SiteCounterParser.ToToken(name, forms));
 		});
 	}
 

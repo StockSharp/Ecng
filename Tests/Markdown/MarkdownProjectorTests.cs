@@ -9,6 +9,8 @@ public class MarkdownProjectorTests : BaseTestClass
 {
 	private static readonly Md2HtmlFormatter _formatter = new();
 
+	static MarkdownProjectorTests() => TestSiteCounters.Register();
+
 	private static MdDocument Project(string text, ResolvedMarkdownData data = null)
 	{
 		var parsed = _formatter.Parse(text, false);
@@ -279,5 +281,31 @@ public class MarkdownProjectorTests : BaseTestClass
 		var document = Project(":::whatever\nStill readable.\n:::");
 
 		document.Blocks.OfType<MdParagraph>().Count().AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void Counter_WithWordForms_ReadsAsTheHtmlDoes()
+	{
+		var data = new ResolvedMarkdownData
+		{
+			Language = "ru",
+			Counters = { [TestSiteCounters.Connectors] = "221" },
+			CounterValues = { [TestSiteCounters.Connectors] = 221 },
+		};
+
+		var text = string.Concat(SingleParagraph(Project("@connector_count(коннектор/коннектора/коннекторов)", data))
+			.Children.OfType<MdText>().Select(t => t.Text));
+
+		text.AssertEqual("221\u00A0коннектор");
+	}
+
+	[TestMethod]
+	public void Counter_WithoutAValue_ShowsTheTokenAsTyped()
+	{
+		// The author has to recognise what did not resolve, so it reads back exactly as it was written.
+		var text = string.Concat(SingleParagraph(Project("@connector_count(коннектор/коннектора/коннекторов)"))
+			.Children.OfType<MdText>().Select(t => t.Text));
+
+		text.AssertEqual("@connector_count(коннектор/коннектора/коннекторов)");
 	}
 }
