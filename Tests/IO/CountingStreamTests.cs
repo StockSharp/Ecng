@@ -27,10 +27,10 @@ public class CountingStreamTests : BaseTestClass
 		using var ms = new MemoryStream(new byte[64]);
 		using var counting = new CountingStream(ms);
 
-		counting.Read(new byte[4], 0, 4);
+		counting.Read(new byte[4], 0, 4).AssertEqual(4);
 		counting.ReadCount.AssertEqual(4L);
 
-		counting.Read(new byte[6].AsSpan());
+		counting.Read(new byte[6].AsSpan()).AssertEqual(6);
 		counting.ReadCount.AssertEqual(10L);
 
 		counting.ReadByte();
@@ -43,10 +43,10 @@ public class CountingStreamTests : BaseTestClass
 		using var ms = new MemoryStream(new byte[64]);
 		using var counting = new CountingStream(ms);
 
-		await counting.ReadAsync(new byte[8], 0, 8, CancellationToken.None);
+		(await counting.ReadAsync(new byte[8], 0, 8, CancellationToken)).AssertEqual(8);
 		counting.ReadCount.AssertEqual(8L);
 
-		await counting.ReadAsync(new byte[3].AsMemory(), CancellationToken.None);
+		(await counting.ReadAsync(new byte[3].AsMemory(), CancellationToken)).AssertEqual(3);
 		counting.ReadCount.AssertEqual(11L);
 	}
 

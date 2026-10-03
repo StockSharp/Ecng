@@ -186,7 +186,7 @@ public class HeldReadsTests : BaseTestClass
 		var store = new RecordingStorage();
 		var list = Held(store, "Binance", "Kraken");
 
-		IsTrue(RefusedAsSynchronous(() => list.ToQueryable().ToArray()), "a cold table was read without complaint");
+		IsTrue(RefusedAsSynchronous(() => list.ToQueryable().GetEnumerator()), "a cold table was read without complaint");
 	}
 
 	/// <summary>Asked for the other way, it is loaded first and handed over as memory.</summary>

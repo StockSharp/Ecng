@@ -117,8 +117,8 @@ public class SchemaMigratorCompressionTests : BaseTestClass
 	/// nothing is packed. Without this a PostgreSQL or SQLite database would be compared against an empty
 	/// reading it never produced, or the comparison would throw where it used to work.
 	/// </summary>
-	[DataTestMethod]
-	[DynamicData(nameof(DialectsWithoutCompression), DynamicDataSourceType.Property)]
+	[TestMethod]
+	[DynamicData(nameof(DialectsWithoutCompression))]
 	public async Task DialectWithoutCompressionReportsNothing(ISqlDialect dialect)
 	{
 		// The base reading looks at no connection, which is what lets it answer for a database it cannot ask.

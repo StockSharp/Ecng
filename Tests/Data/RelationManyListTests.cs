@@ -223,7 +223,7 @@ public class RelationManyListTests : BaseTestClass
 
 		await list.PreloadAsync(CancellationToken);
 
-		var found = list.ToQueryable().Where(i => i.Name.Like("%in%")).OrderBy(i => i.Id).ToArray();
+		var found = await list.ToQueryable().Where(i => i.Name.Like("%in%")).OrderBy(i => i.Id).ToArrayAsyncEx(CancellationToken);
 
 		found.Length.AssertEqual(2);
 		found[0].Name.AssertEqual("Binance");

@@ -100,6 +100,7 @@ public class TtlCache<TKey, TValue>
 	/// <param name="key">What the answer is looked up by.</param>
 	/// <param name="resolve">Where the answer comes from.</param>
 	/// <param name="ttl">How long this answer is served before the source is asked again.</param>
+	/// <param name="maxAge">The oldest this answer may be, however often it is asked for.</param>
 	/// <param name="cancellationToken">Cancellation token.</param>
 	/// <returns>The answer.</returns>
 	/// <remarks>
@@ -107,7 +108,7 @@ public class TtlCache<TKey, TValue>
 	/// change while it runs, and wants the change to apply to what is stored next.
 	/// </remarks>
 	/// <exception cref="ArgumentNullException"><paramref name="resolve"/> is null.</exception>
-	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> is not positive.</exception>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="ttl"/> or <paramref name="maxAge"/> is not positive.</exception>
 	public async ValueTask<TValue> GetAsync(TKey key, Func<TKey, CancellationToken, ValueTask<TValue>> resolve, TimeSpan ttl, TimeSpan maxAge, CancellationToken cancellationToken)
 	{
 		if (resolve is null)

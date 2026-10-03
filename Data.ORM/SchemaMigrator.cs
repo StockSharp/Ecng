@@ -184,6 +184,11 @@ public static class SchemaMigrator
 	/// diffs a migration actually acts on. Requires the corresponding metadata
 	/// (<paramref name="dbForeignKeys"/> / <paramref name="dbIndexes"/>) to be supplied.
 	/// </param>
+	/// <param name="dbCompressions">
+	/// The packing the database reports for its tables. When supplied, a table whose packing differs from
+	/// the one its entity declares is surfaced as <see cref="SchemaDiffKind.CompressionMismatch"/>; a table
+	/// the database does not report is passed over.
+	/// </param>
 	/// <returns>List of differences found.</returns>
 	public static IReadOnlyList<SchemaDiff> Compare(
 		IEnumerable<Schema> entities,
@@ -360,7 +365,7 @@ public static class SchemaMigrator
 
 	/// <summary>
 	/// Reads columns, foreign keys and indexes via <paramref name="dialect"/>
-	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo},bool,bool)"/>.
+	/// in one shot and forwards to <see cref="Compare(IEnumerable{Schema},IReadOnlyList{DbColumnInfo},ISqlDialect,bool,IReadOnlyList{DbForeignKeyInfo},IReadOnlyList{DbIndexInfo},bool,bool,IReadOnlyList{DbTableCompressionInfo})"/>.
 	/// Convenience for callers that want the full FK + index-aware comparison
 	/// without orchestrating three metadata reads themselves.
 	/// </summary>

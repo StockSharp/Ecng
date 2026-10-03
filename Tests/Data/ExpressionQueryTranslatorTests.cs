@@ -123,7 +123,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var query = from p in persons
 					join c in categories on p.Id equals c.Id into cg
 					from c2 in cg.DefaultIfEmpty()
-					where tasks.Any(t => t.Person.Id == p.Id && !t.IsDone) && c2.Id == null
+					where tasks.Any(t => t.Person.Id == p.Id && !t.IsDone) && c2 == null
 					select p;
 
 		var sql = GenerateSql<TestPerson>(query);
@@ -195,7 +195,7 @@ public class ExpressionQueryTranslatorTests : BaseTestClass
 		var query = from e in filtered
 					join c in categories on e.Id equals c.Id into cg
 					from c2 in cg.DefaultIfEmpty()
-					where c2.Id == null && tasks.Any(t => t.Person.Id == e.Id)
+					where c2 == null && tasks.Any(t => t.Person.Id == e.Id)
 					select e;
 
 		var sql = GenerateSql<VTestPersonWithTasks>(query);
