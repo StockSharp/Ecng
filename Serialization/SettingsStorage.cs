@@ -229,6 +229,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// <returns>A <see cref="ValueTask{T}"/> representing the asynchronous operation producing the value converted to type <typeparamref name="T"/>.</returns>
 	public async ValueTask<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
 		=> (T)await GetValueAsync(typeof(T), name, defaultValue, cancellationToken).NoWait();
+
 	/// <summary>
 	/// Asynchronously gets the value of a setting with the specified name and converts it to the given type.
 	/// </summary>
@@ -239,10 +240,65 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 	/// <returns>A <see cref="ValueTask"/> representing the asynchronous operation producing the setting value converted to the specified type.</returns>
 	public async ValueTask<object> GetValueAsync(Type type, string name, object defaultValue = default, CancellationToken cancellationToken = default)
 	{
-		if (_reader is null)
-			return GetValue(type, name, defaultValue);
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		if (name.IsEmpty())
+			throw new ArgumentNullException(nameof(name));
+
+		if (_reader != null)
+			return await GetValueFromReaderAsync(type, name, cancellationToken).NoWait() ?? defaultValue;
+
+		if (!TryGetValue(name, out var value))
+			return defaultValue;
+
+		if (value is SettingsStorage storage)
+		{
+			if (typeof(SettingsStorage).Is(type))
+				return storage;
+
+			var t = type.GetUnderlyingType() ?? type;
+
+			return await LoadPersistableAsync(t, storage, cancellationToken).NoWait();
+		}
+		else if (type.IsCollection() && type.GetItemType().IsPersistable())
+		{
+			if (value is null)
+				return default;
+
+			var elemType = type.GetItemType();
+			var items = ((IEnumerable)value).Cast<SettingsStorage>().ToArray();
+			var typedArr = elemType.CreateArray(items.Length);
+
+			for (var i = 0; i < items.Length; i++)
+			{
+				if (items[i] is not null)
+					typedArr.SetValue(await LoadPersistableAsync(elemType, items[i], cancellationToken).NoWait(), i);
+			}
+
+			return typedArr.To(type);
+		}
+		else if (type == typeof(SecureString) && value is string str)
+		{
+			value = SecureStringHelper.Decrypt(str.Base64());
+		}
+
+		return value.To(type);
+	}
+
+	private static async ValueTask<object> LoadPersistableAsync(Type type, SettingsStorage storage, CancellationToken cancellationToken)
+	{
+		var obj = Activator.CreateInstance(type);
+
+		if (obj is IAsyncPersistable asyncPer)
+			await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
+		else if (obj is IPersistable per)
+			per.Load(storage);
 		else
-			return await GetValueFromReaderAsync(type, name, cancellationToken).NoWait() ?? defaultValue;	}
+			throw new ArgumentOutOfRangeException(type.To<string>());
+
+		return obj;
+	}
 
 	/// <summary>
 	/// Asynchronously gets the value from the JSON reader using the provided delegate.

@@ -15,8 +15,21 @@ public static class ISerializerExtensions
 	/// <param name="graph">The object graph to serialize.</param>
 	/// <param name="fs">The file system to use.</param>
 	/// <param name="path">The path of the file to write to.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use SerializeAsync instead.")]
 	public static void Serialize(this ISerializer serializer, object graph, IFileSystem fs, string path)
-		=> fs.CheckOnNull(nameof(fs)).WriteAllBytes(path, serializer.CheckOnNull(nameof(serializer)).Serialize(graph));
+		=> AsyncHelper.Run(() => serializer.SerializeAsync(graph, fs, path, default));
+
+	/// <summary>
+	/// Serializes the specified object graph and writes the output to a file using the provided file system.
+	/// </summary>
+	/// <param name="serializer">The serializer instance.</param>
+	/// <param name="graph">The object graph to serialize.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="path">The path of the file to write to.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns><see cref="ValueTask"/></returns>
+	public static async ValueTask SerializeAsync(this ISerializer serializer, object graph, IFileSystem fs, string path, CancellationToken cancellationToken)
+		=> await fs.CheckOnNull(nameof(fs)).WriteAllBytesAsync(path, await serializer.SerializeAsync(graph, cancellationToken).NoWait(), cancellationToken).NoWait();
 
 	/// <summary>
 	/// Serializes the specified object graph and returns the result as a byte array.
@@ -24,10 +37,21 @@ public static class ISerializerExtensions
 	/// <param name="serializer">The serializer instance.</param>
 	/// <param name="graph">The object graph to serialize.</param>
 	/// <returns>A byte array containing the serialized data.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use SerializeAsync instead.")]
 	public static byte[] Serialize(this ISerializer serializer, object graph)
+		=> AsyncHelper.Run(() => serializer.SerializeAsync(graph, default));
+
+	/// <summary>
+	/// Serializes the specified object graph and returns the result as a byte array.
+	/// </summary>
+	/// <param name="serializer">The serializer instance.</param>
+	/// <param name="graph">The object graph to serialize.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A byte array containing the serialized data.</returns>
+	public static async ValueTask<byte[]> SerializeAsync(this ISerializer serializer, object graph, CancellationToken cancellationToken)
 	{
 		using var stream = new MemoryStream();
-		serializer.CheckOnNull(nameof(serializer)).Serialize(graph, stream);
+		await serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, cancellationToken).NoWait();
 		return stream.To<byte[]>();
 	}
 
@@ -37,6 +61,7 @@ public static class ISerializerExtensions
 	/// <param name="serializer">The serializer instance.</param>
 	/// <param name="graph">The object graph to serialize.</param>
 	/// <param name="stream">The stream to which to write the serialized data.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use SerializeAsync instead.")]
 	public static void Serialize(this ISerializer serializer, object graph, Stream stream)
 		=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
 
@@ -109,10 +134,21 @@ public static class ISerializerExtensions
 	/// <param name="serializer">The serializer instance.</param>
 	/// <param name="data">The byte array containing the serialized data.</param>
 	/// <returns>The deserialized object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use DeserializeAsync instead.")]
 	public static object Deserialize(this ISerializer serializer, byte[] data)
+		=> AsyncHelper.Run(() => serializer.DeserializeAsync(data, default));
+
+	/// <summary>
+	/// Deserializes the specified byte array into an object.
+	/// </summary>
+	/// <param name="serializer">The serializer instance.</param>
+	/// <param name="data">The byte array containing the serialized data.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The deserialized object.</returns>
+	public static async ValueTask<object> DeserializeAsync(this ISerializer serializer, byte[] data, CancellationToken cancellationToken)
 	{
 		using var stream = new MemoryStream(data);
-		return serializer.CheckOnNull(nameof(serializer)).Deserialize(stream);
+		return await serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -121,6 +157,7 @@ public static class ISerializerExtensions
 	/// <param name="serializer">The serializer instance.</param>
 	/// <param name="stream">The stream containing the serialized data.</param>
 	/// <returns>The deserialized object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use DeserializeAsync instead.")]
 	public static object Deserialize(this ISerializer serializer, Stream stream)
 		=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
 
@@ -131,9 +168,21 @@ public static class ISerializerExtensions
 	/// <param name="fs">The file system to use.</param>
 	/// <param name="path">The path of the file to read from.</param>
 	/// <returns>The deserialized object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use DeserializeAsync instead.")]
 	public static object Deserialize(this ISerializer serializer, IFileSystem fs, string path)
+		=> AsyncHelper.Run(() => serializer.DeserializeAsync(fs, path, default));
+
+	/// <summary>
+	/// Deserializes the data from the specified file into an object using the provided file system.
+	/// </summary>
+	/// <param name="serializer">The serializer instance.</param>
+	/// <param name="fs">The file system to use.</param>
+	/// <param name="path">The path of the file to read from.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The deserialized object.</returns>
+	public static async ValueTask<object> DeserializeAsync(this ISerializer serializer, IFileSystem fs, string path, CancellationToken cancellationToken)
 	{
-		using var stream = fs.CheckOnNull(nameof(fs)).OpenRead(path);
-		return serializer.CheckOnNull(nameof(serializer)).Deserialize(stream);
+		await using var stream = fs.CheckOnNull(nameof(fs)).OpenRead(path);
+		return await serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, cancellationToken).NoWait();
 	}
 }
