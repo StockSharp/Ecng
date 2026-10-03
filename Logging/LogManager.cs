@@ -1,5 +1,7 @@
 namespace Ecng.Logging;
 
+using Ecng.IO;
+
 using Nito.AsyncEx;
 
 /// <summary>
@@ -104,7 +106,28 @@ public class LogManager : Disposable, IPersistable
 	/// </summary>
 	/// <param name="asyncMode">Asynchronous mode.</param>
 	public LogManager(bool asyncMode)
+		: this(LocalFileSystem.Instance, asyncMode)
 	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="Load"/> keep their files on <paramref name="fileSystem"/>.
+	/// </summary>
+	/// <param name="fileSystem">The file system the restored listeners keep their files on.</param>
+	public LogManager(IFileSystem fileSystem)
+		: this(fileSystem, true)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="Load"/> keep their files on <paramref name="fileSystem"/>.
+	/// </summary>
+	/// <param name="fileSystem">The file system the restored listeners keep their files on.</param>
+	/// <param name="asyncMode">Asynchronous mode.</param>
+	public LogManager(IFileSystem fileSystem, bool asyncMode)
+	{
+		FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+
 		_instance ??= this;
 		_unhandledExceptionSource = new();
 
@@ -245,6 +268,11 @@ public class LogManager : Disposable, IPersistable
 	public IList<ILogListener> Listeners => _listeners;
 
 	/// <summary>
+	/// The file system the listeners restored by <see cref="Load"/> keep their files on.
+	/// </summary>
+	public IFileSystem FileSystem { get; }
+
+	/// <summary>
 	/// Logs sources which are listened to the event <see cref="ILogSource.Log"/>.
 	/// </summary>
 	public IList<ILogSource> Sources { get; }
@@ -370,12 +398,18 @@ public class LogManager : Disposable, IPersistable
 		{
 			// TODO 2025-02-04: remove 1 year after
 			s.Set("type", s.GetValue<string>("type").Replace("StockSharp.Logging", "Ecng.Logging"));
-			return s.LoadEntire<ILogListener>();
+			return s.LoadEntire(CreateListener);
 		}));
 
 		if (storage.Contains(nameof(Application)) && Application is IPersistable appPers)
 			appPers.Load(storage, nameof(Application));
 	}
+
+	// A listener that can keep its files on a given file system is put on this manager's.
+	private ILogListener CreateListener(Type type)
+		=> type.GetConstructor([typeof(IFileSystem)]) is null
+			? type.CreateInstance<ILogListener>()
+			: type.CreateInstance<ILogListener>(FileSystem);
 
 	/// <summary>
 	/// Save settings.

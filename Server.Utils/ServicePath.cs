@@ -117,7 +117,7 @@ public static class ServicePath
 
 		var logSettingsFile = Path.Combine(dataDir, $"logManager.{serializer.FileExtension}");
 
-		var logManager = new LogManager
+		var logManager = new LogManager(fileSystem)
 		{
 			Application = { LogLevel = defaultLevel },
 			// A service that fails at start is torn down before its first flush, and those last lines

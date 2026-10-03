@@ -58,4 +58,22 @@ public class ServicePathTests : BaseTestClass
 		second.Listeners.Count.AssertEqual(1, "the next start reads the listener back rather than adding another");
 		second.Application.LogLevel.AssertEqual(LogLevels.Warning, "the level is the one stored, not the default passed now");
 	}
+
+	[TestMethod]
+	public async Task TheNextStartWritesIntoTheFileSystemItWasGiven()
+	{
+		var (fs, dataDir) = Config.CreateFs(nameof(MemoryFileSystem));
+
+		using (await ServicePath.CreateLogManagerAsync(fs, dataDir, LogLevels.Info, CancellationToken))
+		{
+		}
+
+		var second = await ServicePath.CreateLogManagerAsync(fs, dataDir, LogLevels.Info, CancellationToken);
+		second.FlushInterval = TimeSpan.FromHours(1);
+
+		second.Application.AddErrorLog("written after the restart");
+		second.Dispose();
+
+		ReadLogs(fs, dataDir).Contains("written after the restart").AssertTrue("the listener read back from the settings writes somewhere else");
+	}
 }

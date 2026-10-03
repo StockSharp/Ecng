@@ -69,11 +69,25 @@ public static class PersistableHelper
 	/// <returns>The created and initialized object.</returns>
 	public static T LoadEntire<T>(this SettingsStorage storage)
 		where T : IPersistable
+		=> storage.LoadEntire(type => type.CreateInstance<T>());
+
+	/// <summary>
+	/// Creates an object of the type the settings storage names with <paramref name="create"/> and initializes it from the storage.
+	/// </summary>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
+	/// <param name="storage">The settings storage used to create the object.</param>
+	/// <param name="create">Builds the instance of the type the storage names.</param>
+	/// <returns>The created and initialized object.</returns>
+	public static T LoadEntire<T>(this SettingsStorage storage, Func<Type, T> create)
+		where T : IPersistable
 	{
 		if (storage is null)
 			throw new ArgumentNullException(nameof(storage));
 
-		var instance = storage.GetValue<Type>(_typeKey).CreateInstance<T>();
+		if (create is null)
+			throw new ArgumentNullException(nameof(create));
+
+		var instance = create(storage.GetValue<Type>(_typeKey));
 		instance.Load(storage, _settingsKey);
 		return instance;
 	}
