@@ -270,12 +270,24 @@ public static class PersistableHelper
 	/// <param name="serializer">The serializer to use.</param>
 	/// <param name="persistable">The persistable object to load.</param>
 	/// <param name="value">The string representation of the state.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadFromStringAsync instead.")]
 	public static void LoadFromString(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value)
+		=> AsyncHelper.Run(() => serializer.LoadFromStringAsync(persistable, value, default));
+
+	/// <summary>
+	/// Loads the state of the persistable object from a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="value">The string representation of the state.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A ValueTask representing the asynchronous operation.</returns>
+	public static async ValueTask LoadFromStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value, CancellationToken cancellationToken)
 	{
 		if (persistable is null)
 			throw new ArgumentNullException(nameof(persistable));
 
-		persistable.Load(serializer.LoadFromString(value));
+		persistable.Load(await serializer.LoadFromStringAsync(value, cancellationToken).NoWait());
 	}
 
 	/// <summary>
@@ -285,12 +297,24 @@ public static class PersistableHelper
 	/// <param name="serializer">The serializer to use.</param>
 	/// <param name="value">The string representation of the value.</param>
 	/// <returns>The deserialized value.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadFromStringAsync instead.")]
 	public static TValue LoadFromString<TValue>(this ISerializer<TValue> serializer, string value)
+		=> AsyncHelper.Run(() => serializer.LoadFromStringAsync(value, default));
+
+	/// <summary>
+	/// Loads a value of type TValue from a string using the provided serializer.
+	/// </summary>
+	/// <typeparam name="TValue">The type of the value to load.</typeparam>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="value">The string representation of the value.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The deserialized value.</returns>
+	public static async ValueTask<TValue> LoadFromStringAsync<TValue>(this ISerializer<TValue> serializer, string value, CancellationToken cancellationToken)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
 
-		return Do.Invariant(() => serializer.Deserialize(value.UTF8()));
+		return await Do.InvariantAsync(() => serializer.DeserializeAsync(value.UTF8(), cancellationToken).AsTask()).NoWait();
 	}
 
 	/// <summary>
@@ -299,12 +323,23 @@ public static class PersistableHelper
 	/// <param name="serializer">The serializer to use.</param>
 	/// <param name="persistable">The persistable object to save.</param>
 	/// <returns>A string representing the saved state.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveToStringAsync instead.")]
 	public static string SaveToString(this ISerializer<SettingsStorage> serializer, IPersistable persistable)
+		=> AsyncHelper.Run(() => serializer.SaveToStringAsync(persistable, default));
+
+	/// <summary>
+	/// Saves the state of the persistable object to a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A string representing the saved state.</returns>
+	public static ValueTask<string> SaveToStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, CancellationToken cancellationToken)
 	{
 		if (persistable is null)
 			throw new ArgumentNullException(nameof(persistable));
 
-		return serializer.SaveToString(persistable.Save());
+		return serializer.SaveToStringAsync(persistable.Save(), cancellationToken);
 	}
 
 	/// <summary>
@@ -314,7 +349,19 @@ public static class PersistableHelper
 	/// <param name="serializer">The serializer to use.</param>
 	/// <param name="settings">The settings to save.</param>
 	/// <returns>A string representing the settings.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveToStringAsync instead.")]
 	public static string SaveToString<TValue>(this ISerializer<TValue> serializer, TValue settings)
+		=> AsyncHelper.Run(() => serializer.SaveToStringAsync(settings, default));
+
+	/// <summary>
+	/// Saves the settings to a string using the provided serializer.
+	/// </summary>
+	/// <typeparam name="TValue">The type of the settings.</typeparam>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="settings">The settings to save.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A string representing the settings.</returns>
+	public static async ValueTask<string> SaveToStringAsync<TValue>(this ISerializer<TValue> serializer, TValue settings, CancellationToken cancellationToken)
 	{
 		if (serializer is null)
 			throw new ArgumentNullException(nameof(serializer));
@@ -322,7 +369,12 @@ public static class PersistableHelper
 		if (settings is null)
 			throw new ArgumentNullException(nameof(settings));
 
-		return Do.Invariant(() => serializer.Serialize(settings).UTF8());
+		return await Do.InvariantAsync(async () =>
+		{
+			using var stream = new MemoryStream();
+			await serializer.SerializeAsync(settings, stream, cancellationToken).NoWait();
+			return stream.ToArray().UTF8();
+		}).NoWait();
 	}
 
 	/// <summary>

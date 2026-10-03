@@ -25,12 +25,12 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SaveLoad()
+	public async Task SaveLoad()
 	{
 		var cache = new DatabaseConnectionCache();
 		var pair = cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "123");
 		var ser = new JsonSerializer<DatabaseConnectionCache>();
-		var cache2 = ser.Deserialize(ser.Serialize(cache));
+		var cache2 = await ser.DeserializeAsync(ser.Serialize(cache), CancellationToken);
 
 		cache2.Connections.Count().AssertEqual(cache.Connections.Count());
 		var pair2 = cache2.Connections.First();
@@ -202,12 +202,12 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SaveLoadEmptyCache()
+	public async Task SaveLoadEmptyCache()
 	{
 		var cache = new DatabaseConnectionCache();
 		var ser = new JsonSerializer<DatabaseConnectionCache>();
 
-		var restored = ser.Deserialize(ser.Serialize(cache));
+		var restored = await ser.DeserializeAsync(ser.Serialize(cache), CancellationToken);
 
 		IsNotNull(restored);
 		restored.Connections.Count().AssertEqual(0);
@@ -236,7 +236,7 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SaveLoadMultipleConnectionsRoundTrip()
+	public async Task SaveLoadMultipleConnectionsRoundTrip()
 	{
 		var cache = new DatabaseConnectionCache();
 		cache.GetOrAdd(DatabaseProviderRegistry.SqlServer, "Server=A");
@@ -244,7 +244,7 @@ public class DataTests : BaseTestClass
 		cache.GetOrAdd(DatabaseProviderRegistry.PostgreSql, "Host=c");
 
 		var ser = new JsonSerializer<DatabaseConnectionCache>();
-		var restored = ser.Deserialize(ser.Serialize(cache));
+		var restored = await ser.DeserializeAsync(ser.Serialize(cache), CancellationToken);
 
 		restored.Connections.Count().AssertEqual(3);
 

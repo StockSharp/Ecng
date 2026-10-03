@@ -2,6 +2,7 @@ namespace Ecng.Tests.Serialization;
 
 using System.Drawing;
 
+using Ecng.IO;
 using Ecng.Serialization;
 using Ecng.Reflection;
 
@@ -1483,5 +1484,70 @@ public class JsonTests : BaseTestClass
 		arr.Length.AssertEqual(2);
 		arr[0].IntProp.AssertEqual(11);
 		arr[1].IntProp.AssertEqual(22);
+	}
+
+	[TestMethod]
+	public async Task DeserializeAsync_Bytes_ReadsBackWhatWasWritten()
+	{
+		var serializer = new JsonSerializer<List<int>>();
+
+		var bytes = new MemoryStream();
+		await serializer.SerializeAsync([1, 2, 3], bytes, CancellationToken);
+
+		var read = await serializer.DeserializeAsync(bytes.ToArray(), CancellationToken);
+
+		read.SequenceEqual([1, 2, 3]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task DeserializeAsync_File_ReadsBackWhatWasWritten()
+	{
+		var serializer = new JsonSerializer<List<int>>();
+		var fs = new MemoryFileSystem();
+
+		using (var stream = fs.OpenWrite("values.json"))
+			await serializer.SerializeAsync([4, 5], stream, CancellationToken);
+
+		var read = await serializer.DeserializeAsync(fs, "values.json", CancellationToken);
+
+		read.SequenceEqual([4, 5]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task StringAsync_Value_RoundTrips()
+	{
+		var serializer = new JsonSerializer<List<int>>();
+
+		var text = await serializer.SaveToStringAsync([7, 8, 9], CancellationToken);
+		var read = await serializer.LoadFromStringAsync(text, CancellationToken);
+
+		read.SequenceEqual([7, 8, 9]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task StringAsync_Persistable_RoundTrips()
+	{
+		var serializer = new JsonSerializer<SettingsStorage>();
+		var original = new TestClass { IntProp = 3, StringProp = "alpha" };
+
+		var text = await serializer.SaveToStringAsync(original, CancellationToken);
+
+		var read = new TestClass();
+		await serializer.LoadFromStringAsync(read, text, CancellationToken);
+
+		read.AssertEqual(original);
+	}
+
+	[TestMethod]
+	public async Task String_BlockingFormsMatchTheAwaitableOnes()
+	{
+		var serializer = new JsonSerializer<List<int>>();
+
+		var text = await serializer.SaveToStringAsync([1, 2], CancellationToken);
+
+#pragma warning disable CS0618 // the blocking forms are kept as wrappers over the awaitable ones
+		serializer.LoadFromString(text).SequenceEqual([1, 2]).AssertTrue();
+		serializer.SaveToString([1, 2]).AssertEqual(text);
+#pragma warning restore CS0618
 	}
 }

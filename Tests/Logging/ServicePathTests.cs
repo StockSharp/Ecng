@@ -29,11 +29,11 @@ public class ServicePathTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogManager_WritesWhatIsPendingWhenDisposed()
+	public async Task LogManager_WritesWhatIsPendingWhenDisposed()
 	{
 		var (fs, dataDir) = Config.CreateFs(nameof(MemoryFileSystem));
 
-		var manager = ServicePath.CreateLogManager(fs, dataDir, LogLevels.Info);
+		var manager = await ServicePath.CreateLogManagerAsync(fs, dataDir, LogLevels.Info, CancellationToken);
 
 		// Long enough that only the stop itself can deliver the line: a service that fails at start
 		// is torn down before its first flush.
@@ -43,5 +43,19 @@ public class ServicePathTests : BaseTestClass
 		manager.Dispose();
 
 		ReadLogs(fs, dataDir).Contains("the reason the service stopped").AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task TheSettingsWrittenAtTheFirstStartAreReadAtTheNext()
+	{
+		var (fs, dataDir) = Config.CreateFs(nameof(MemoryFileSystem));
+
+		using (var first = await ServicePath.CreateLogManagerAsync(fs, dataDir, LogLevels.Warning, CancellationToken))
+			first.Listeners.Count.AssertEqual(1, "the first start sets up the file listener");
+
+		using var second = await ServicePath.CreateLogManagerAsync(fs, dataDir, LogLevels.Info, CancellationToken);
+
+		second.Listeners.Count.AssertEqual(1, "the next start reads the listener back rather than adding another");
+		second.Application.LogLevel.AssertEqual(LogLevels.Warning, "the level is the one stored, not the default passed now");
 	}
 }
