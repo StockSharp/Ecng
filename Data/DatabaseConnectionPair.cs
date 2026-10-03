@@ -1,12 +1,14 @@
 namespace Ecng.Data;
 
+using System.Threading;
+using System.Threading.Tasks;
 using Ecng.ComponentModel;
 using Ecng.Serialization;
 
 /// <summary>
 /// Provider and connection string pair.
 /// </summary>
-public class DatabaseConnectionPair : NotifiableObject, IPersistable
+public class DatabaseConnectionPair : NotifiableObject, IAsyncPersistable
 {
 	private string _provider;
 
@@ -51,18 +53,22 @@ public class DatabaseConnectionPair : NotifiableObject, IPersistable
 	/// <inheritdoc />
 	public override string ToString() => Title;
 
-	void IPersistable.Load(SettingsStorage storage)
+	Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		Provider = storage.GetValue<string>(nameof(Provider));
 		ConnectionString = storage.GetValue<string>(nameof(ConnectionString));
+
+		return Task.CompletedTask;
 	}
 
-	void IPersistable.Save(SettingsStorage storage)
+	Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(Provider), Provider)
 			.Set(nameof(ConnectionString), ConnectionString)
 			;
+
+		return Task.CompletedTask;
 	}
 
 	/// <inheritdoc />

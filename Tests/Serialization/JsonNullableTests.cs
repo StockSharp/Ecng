@@ -6,7 +6,7 @@ using Ecng.ComponentModel;
 [TestClass]
 public class JsonNullableTests : BaseTestClass
 {
-	private struct NullableHolder : IEquatable<NullableHolder>, IPersistable
+	private struct NullableHolder : IEquatable<NullableHolder>, IAsyncPersistable
 	{
 		public int? I { get; set; }
 		public DateTime? D { get; set; }
@@ -20,7 +20,7 @@ public class JsonNullableTests : BaseTestClass
 		public override readonly bool Equals(object obj) => obj is NullableHolder n && Equals(n);
 		public override readonly int GetHashCode() => HashCode.Combine(I, D, T, G, M, P);
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			I = storage.GetValue<int?>(nameof(I));
 			D = storage.GetValue<DateTime?>(nameof(D));
@@ -28,9 +28,11 @@ public class JsonNullableTests : BaseTestClass
 			G = storage.GetValue<Guid?>(nameof(G));
 			M = storage.GetValue<decimal?>(nameof(M));
 			P = storage.GetValue<Price?>(nameof(P));
+
+			return Task.CompletedTask;
 		}
 
-		readonly void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(I), I)
@@ -39,6 +41,8 @@ public class JsonNullableTests : BaseTestClass
 				.Set(nameof(G), G)
 				.Set(nameof(M), M)
 				.Set(nameof(P), P);
+
+			return Task.CompletedTask;
 		}
 	}
 

@@ -8,7 +8,7 @@ using Ecng.Serialization;
 /// <summary>
 /// Provides configuration information for retry policies, including retry counts and delays.
 /// </summary>
-public class RetryPolicyInfo : IPersistable
+public class RetryPolicyInfo : IAsyncPersistable
 {
 	private int _readMaxCount;
 
@@ -101,7 +101,7 @@ public class RetryPolicyInfo : IPersistable
 	};
 
 	/// <inheritdoc />
-	public void Load(SettingsStorage storage)
+	public Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		ReadMaxCount = storage.GetValue(nameof(ReadMaxCount), ReadMaxCount);
 		WriteMaxCount = storage.GetValue(nameof(WriteMaxCount), WriteMaxCount);
@@ -109,15 +109,17 @@ public class RetryPolicyInfo : IPersistable
 		MaxDelay = storage.GetValue(nameof(MaxDelay), MaxDelay);
 		
 		if (!storage.ContainsKey(nameof(Track)))
-			return;
+			return Task.CompletedTask;
 
 		var strs = storage.GetValue(nameof(Track), string.Empty).SplitByComma();
 		Track.Clear();
 		Track.AddRange(strs.Where(s => !s.IsEmpty()).Select(s => (SocketError)s.To<int>()));
+
+		return Task.CompletedTask;
 	}
 
 	/// <inheritdoc />
-	public void Save(SettingsStorage storage)
+	public Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(ReadMaxCount), ReadMaxCount)
@@ -126,5 +128,7 @@ public class RetryPolicyInfo : IPersistable
 			.Set(nameof(MaxDelay), MaxDelay)
 			.Set(nameof(Track), Track.Select(e => ((int)e).ToString()).JoinComma())
 		;
+
+		return Task.CompletedTask;
 	}
 }

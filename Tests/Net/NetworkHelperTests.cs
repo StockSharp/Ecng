@@ -409,12 +409,12 @@ public class NetworkHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void RetryPolicyInfo_LoadMissingTrackPreservesDefaults()
+	public async Task RetryPolicyInfo_LoadMissingTrackPreservesDefaults()
 	{
 		var policy = new RetryPolicyInfo();
 		var expected = policy.Track.ToArray();
 
-		policy.Load(new SettingsStorage());
+		await policy.LoadAsync(new SettingsStorage(), CancellationToken);
 
 		policy.Track.Count.AssertEqual(expected.Length);
 		expected.All(policy.Track.Contains).AssertTrue();

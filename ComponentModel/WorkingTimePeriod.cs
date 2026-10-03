@@ -7,7 +7,7 @@ namespace Ecng.ComponentModel;
 	ResourceType = typeof(LocalizedStrings),
 	Name = LocalizedStrings.ScheduleValidityPeriodKey,
 	Description = LocalizedStrings.ScheduleValidityPeriodKey)]
-public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
+public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IAsyncPersistable
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="WorkingTimePeriod"/>.
@@ -75,7 +75,7 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 	}
 
 	/// <inheritdoc />
-	public void Load(SettingsStorage storage)
+	public Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		Till = storage.GetValue<DateTime>(nameof(Till));
 		Times = [.. storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Times)).Select(s => s.ToRange<TimeSpan>())];
@@ -84,10 +84,12 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 				s.GetValue<DayOfWeek>("Day"),
 				[.. s.GetValue<IEnumerable<SettingsStorage>>("Periods").Select(s1 => s1.ToRange<TimeSpan>())]))
 		.ToDictionary();
+
+		return Task.CompletedTask;
 	}
 
 	/// <inheritdoc />
-	public void Save(SettingsStorage storage)
+	public Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(Till), Till)
@@ -96,6 +98,8 @@ public class WorkingTimePeriod : Cloneable<WorkingTimePeriod>, IPersistable
 				.Set("Day", p.Key)
 				.Set("Periods", p.Value.Select(r => r.ToStorage()).ToArray())
 			).ToArray());
+
+		return Task.CompletedTask;
 	}
 
 	/// <inheritdoc />

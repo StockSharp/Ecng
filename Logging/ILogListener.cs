@@ -3,7 +3,7 @@ namespace Ecng.Logging;
 /// <summary>
 /// The class interface that monitors the event <see cref="ILogSource.Log"/> and saves to some storage.
 /// </summary>
-public interface ILogListener : IPersistable, IDisposable
+public interface ILogListener : IAsyncPersistable, IDisposable
 {
 	/// <summary>
 	/// Can save listener.
@@ -20,7 +20,7 @@ public interface ILogListener : IPersistable, IDisposable
 /// <summary>
 /// The class interface that monitors the event <see cref="ILogSource.Log"/> and saves to some storage asynchronously.
 /// </summary>
-public interface IAsyncLogListener : IPersistable, IDisposable
+public interface IAsyncLogListener : IAsyncPersistable, IDisposable
 {
 	/// <summary>
 	/// To record messages asynchronously.

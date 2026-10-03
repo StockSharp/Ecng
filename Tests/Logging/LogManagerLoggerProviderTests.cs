@@ -27,8 +27,16 @@ public class LogManagerLoggerProviderTests : BaseTestClass
 
 		bool ILogListener.CanSave => false;
 		void IDisposable.Dispose() { }
-		void IPersistable.Load(SettingsStorage storage) { }
-		void IPersistable.Save(SettingsStorage storage) { }
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+
+			return Task.CompletedTask;
+		}
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+
+			return Task.CompletedTask;
+		}
 
 		void ILogListener.WriteMessages(IEnumerable<LogMessage> messages)
 		{

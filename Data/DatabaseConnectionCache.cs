@@ -1,5 +1,7 @@
 namespace Ecng.Data;
 
+using System.Threading;
+using System.Threading.Tasks;
 using System.Linq;
 
 using Ecng.Collections;
@@ -9,7 +11,7 @@ using Ecng.Serialization;
 /// <summary>
 /// Represents a cache for <see cref="DatabaseConnectionPair"/> objects.
 /// </summary>
-public class DatabaseConnectionCache : IPersistable
+public class DatabaseConnectionCache : IAsyncPersistable
 {
 	private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = [];
 
@@ -113,19 +115,28 @@ public class DatabaseConnectionCache : IPersistable
 	/// Loads the database connection pairs from the specified settings storage.
 	/// </summary>
 	/// <param name="storage">The settings storage to load from.</param>
-	public void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
-		_connections.AddRange((storage
-			.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections)) ?? Enumerable.Empty<DatabaseConnectionPair>())
-			.Where(p => !p.Provider.IsEmpty()));
+		var connections = await storage.GetValueAsync<IEnumerable<DatabaseConnectionPair>>(nameof(Connections), cancellationToken: cancellationToken);
+
+		_connections.AddRange((connections ?? []).Where(p => !p.Provider.IsEmpty()));
 	}
 
 	/// <summary>
 	/// Saves the database connection pairs to the specified settings storage.
 	/// </summary>
 	/// <param name="storage">The settings storage to save to.</param>
-	public void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public async Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
-		storage.SetValue(nameof(Connections), Connections.Select(pair => pair.Save()).ToArray());
+		var connections = new List<SettingsStorage>();
+
+		foreach (var pair in Connections)
+			connections.Add(await pair.SaveAsync(cancellationToken));
+
+		storage.SetValue(nameof(Connections), connections.ToArray());
 	}
 }

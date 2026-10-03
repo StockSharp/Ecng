@@ -214,11 +214,11 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LoadMissingConnectionsPreservesEmptyCache()
+	public async Task LoadMissingConnectionsPreservesEmptyCache()
 	{
 		var cache = new DatabaseConnectionCache();
 
-		((IPersistable)cache).Load(new SettingsStorage());
+		await ((IAsyncPersistable)cache).LoadAsync(new SettingsStorage(), CancellationToken);
 
 		cache.Connections.Count().AssertEqual(0);
 	}
@@ -259,9 +259,9 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SaveLoadDropsEntriesWithEmptyProvider()
+	public async Task SaveLoadDropsEntriesWithEmptyProvider()
 	{
-		// Use IPersistable directly to inject an entry with an empty provider, then verify
+		// Use IAsyncPersistable directly to inject an entry with an empty provider, then verify
 		// that DatabaseConnectionCache.Load filters such invalid entries out.
 		var pair = new DatabaseConnectionPair
 		{
@@ -270,10 +270,10 @@ public class DataTests : BaseTestClass
 		};
 
 		var storage = new SettingsStorage();
-		storage.SetValue("Connections", new[] { ((IPersistable)pair).Save() });
+		storage.SetValue("Connections", new[] { await ((IAsyncPersistable)pair).SaveAsync(CancellationToken) });
 
 		var cache = new DatabaseConnectionCache();
-		((IPersistable)cache).Load(storage);
+		await ((IAsyncPersistable)cache).LoadAsync(storage, CancellationToken);
 
 		cache.Connections.Count().AssertEqual(0);
 	}
@@ -367,7 +367,7 @@ public class DataTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void PairPersistableRoundTrip()
+	public async Task PairPersistableRoundTrip()
 	{
 		var original = new DatabaseConnectionPair
 		{
@@ -376,10 +376,10 @@ public class DataTests : BaseTestClass
 		};
 
 		var storage = new SettingsStorage();
-		((IPersistable)original).Save(storage);
+		await ((IAsyncPersistable)original).SaveAsync(storage, CancellationToken);
 
 		var restored = new DatabaseConnectionPair();
-		((IPersistable)restored).Load(storage);
+		await ((IAsyncPersistable)restored).LoadAsync(storage, CancellationToken);
 
 		restored.Provider.AssertEqual(original.Provider);
 		restored.ConnectionString.AssertEqual(original.ConnectionString);

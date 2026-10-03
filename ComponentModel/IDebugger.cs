@@ -3,7 +3,7 @@
 /// <summary>
 /// The interfaces describes debugger.
 /// </summary>
-public interface IDebugger : IPersistable, IDisposable
+public interface IDebugger : IAsyncPersistable, IDisposable
 {
 	/// <summary>
 	/// <see langword="false" />, if the debugger is used. Otherwise, <see langword="true" />.

@@ -8,7 +8,7 @@
 /// </remarks>
 [Serializable]
 [DataContract]
-public struct Price : IComparable<Price>, IEquatable<Price>, IPersistable, IOperable<Price>, IFormattable
+public struct Price : IComparable<Price>, IEquatable<Price>, IAsyncPersistable, IOperable<Price>, IFormattable
 {
 	static Price()
 	{
@@ -292,15 +292,19 @@ public struct Price : IComparable<Price>, IEquatable<Price>, IPersistable, IOper
 	/// </summary>
 	public const char LimitChar = 'l';
 
-	void IPersistable.Load(SettingsStorage storage)
+	Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		Type = storage.GetValue<PriceTypes>(nameof(Type));
 		Value = storage.GetValue<decimal>(nameof(Value));
+
+		return Task.CompletedTask;
 	}
 
-	readonly void IPersistable.Save(SettingsStorage storage)
+	readonly Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage.Set(nameof(Type), Type.To<string>());
 		storage.Set(nameof(Value), Value);
+
+		return Task.CompletedTask;
 	}
 }

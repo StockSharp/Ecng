@@ -10,7 +10,7 @@ using Ecng.Serialization;
 /// Represents the configuration for a UDP multicast source address.
 /// </summary>
 [TypeConverter(typeof(ExpandableObjectConverter))]
-public class MulticastSourceAddress : NotifiableObject, IPersistable
+public class MulticastSourceAddress : NotifiableObject, IAsyncPersistable
 {
 	private IPAddress _groupAddress;
 
@@ -112,20 +112,26 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 	/// Loads settings from the specified SettingsStorage.
 	/// </summary>
 	/// <param name="storage">The settings storage to load from.</param>
-	public void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		SourceAddress = storage.GetValue<IPAddress>(nameof(SourceAddress));
 		Port = storage.GetValue<int>(nameof(Port));
 		GroupAddress = storage.GetValue<IPAddress>(nameof(GroupAddress));
 		IsEnabled = storage.GetValue(nameof(IsEnabled), IsEnabled);
 		InterfaceAddress = storage.GetValue(nameof(InterfaceAddress), default(IPAddress));
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
 	/// Saves settings to the specified SettingsStorage.
 	/// </summary>
 	/// <param name="storage">The settings storage to save to.</param>
-	public void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(SourceAddress), SourceAddress.To<string>())
@@ -133,6 +139,8 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 			.Set(nameof(GroupAddress), GroupAddress.To<string>())
 			.Set(nameof(IsEnabled), IsEnabled)
 			.Set(nameof(InterfaceAddress), InterfaceAddress.To<string>());
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>

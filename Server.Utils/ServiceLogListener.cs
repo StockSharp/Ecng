@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Server.Utils;
 
+using System.Threading;
+using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 
@@ -26,12 +28,14 @@ public class ServiceLogListener(ILogger logger) : ILogListener
 		GC.SuppressFinalize(this);
 	}
 
-	void IPersistable.Load(SettingsStorage storage)
+	Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
+		return Task.CompletedTask;
 	}
 
-	void IPersistable.Save(SettingsStorage storage)
+	Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
+		return Task.CompletedTask;
 	}
 
 	void ILogListener.WriteMessages(IEnumerable<LogMessage> messages)

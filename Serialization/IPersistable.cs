@@ -3,6 +3,7 @@
 /// <summary>
 /// Interface for objects whose state can be persisted synchronously using a SettingsStorage.
 /// </summary>
+[Obsolete("Use IAsyncPersistable instead.")]
 public interface IPersistable
 {
 	/// <summary>

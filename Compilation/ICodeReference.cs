@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a reference to code that supports persistence.
 /// </summary>
-public interface ICodeReference : IPersistable
+public interface ICodeReference : IAsyncPersistable
 {
 	/// <summary>
 	/// Gets the identifier of the code reference.
@@ -76,13 +76,17 @@ public abstract class BaseCodeReference(IFileSystem fileSystem) : ICodeReference
 	/// Loads the settings from the specified storage.
 	/// </summary>
 	/// <param name="storage">The storage containing the settings.</param>
-	public abstract void Load(SettingsStorage storage);
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public abstract Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Saves the settings to the specified storage.
 	/// </summary>
 	/// <param name="storage">The storage where the settings will be saved.</param>
-	public abstract void Save(SettingsStorage storage);
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public abstract Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Returns a string that represents the current code reference.

@@ -55,7 +55,7 @@ public interface ILogSource : IDisposable
 /// <summary>
 /// The base implementation <see cref="ILogSource"/>.
 /// </summary>
-public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
+public abstract class BaseLogSource : Disposable, ILogSource, IAsyncPersistable
 {
 	private readonly bool _isLevelCacheable;
 
@@ -283,19 +283,27 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		LogLevel = storage.GetValue(nameof(LogLevel), LogLevels.Inherit);
 		Name = storage.GetValue(nameof(Name), Name);
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage.SetValue(nameof(LogLevel), LogLevel.To<string>());
 		storage.SetValue(nameof(Name), Name);
+
+		return Task.CompletedTask;
 	}
 }

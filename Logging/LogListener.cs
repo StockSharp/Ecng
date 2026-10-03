@@ -116,23 +116,31 @@ public abstract class LogListener : Disposable, ILogListener, IAsyncLogListener
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		DateFormat = storage.GetValue(nameof(DateFormat), DateFormat);
 		TimeFormat = storage.GetValue(nameof(TimeFormat), TimeFormat);
 		IsLocalTime = storage.GetValue(nameof(IsLocalTime), IsLocalTime);
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(DateFormat), DateFormat)
 			.Set(nameof(TimeFormat), TimeFormat)
 			.Set(nameof(IsLocalTime), IsLocalTime)
 		;
+
+		return Task.CompletedTask;
 	}
 }

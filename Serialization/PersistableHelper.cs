@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
+using System.Collections.Generic;
+
 using Ecng.Collections;
 using Ecng.Common;
 
@@ -16,7 +18,7 @@ public static class PersistableHelper
 			throw new ArgumentNullException(nameof(adapterType));
 
 		if (!adapterType.IsPersistable())
-			throw new ArgumentException($"Not {typeof(IPersistable)}.", nameof(adapterType));
+			throw new ArgumentException("The type is not persistable.", nameof(adapterType));
 
 		if (!adapterType.Is<IPersistableAdapter>())
 			throw new ArgumentException($"Not {typeof(IPersistableAdapter)}.", nameof(adapterType));
@@ -55,7 +57,7 @@ public static class PersistableHelper
 	/// <param name="type">The type to evaluate.</param>
 	/// <returns><c>true</c> if the type implements IPersistable or IAsyncPersistable; otherwise, <c>false</c>.</returns>
 	public static bool IsPersistable(this Type type)
-		=> type.Is<IPersistable>() || type.Is<IAsyncPersistable>();
+		=> type.IsSyncPersistable() || type.Is<IAsyncPersistable>();
 
 	private const string _typeKey = "type";
 	private const string _valueKey = "value";
@@ -85,11 +87,10 @@ public static class PersistableHelper
 			case IAsyncPersistable asyncPer:
 				await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
 				break;
-			case IPersistable per:
-				per.Load(storage);
-				break;
 			default:
-				throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
+				if (!SyncPersistableCompat.TryLoadSync(persistable, storage))
+					throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
+				break;
 		}
 	}
 
@@ -99,10 +100,10 @@ public static class PersistableHelper
 		{
 			case IAsyncPersistable asyncPer:
 				return await asyncPer.SaveAsync(cancellationToken).NoWait();
-			case IPersistable per:
-				return per.Save();
 			default:
-				throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
+				return SyncPersistableCompat.TrySaveSync(persistable, out var storage)
+					? storage
+					: throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
 		}
 	}
 
@@ -281,10 +282,53 @@ public static class PersistableHelper
 		=> (T)await storage.LoadAsync(typeof(T), cancellationToken).NoWait();
 
 	/// <summary>
+	/// Asynchronously saves every item into a settings storage of its own.
+	/// </summary>
+	/// <typeparam name="T">The type of the asynchronous persistable objects.</typeparam>
+	/// <param name="items">The objects to save.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A ValueTask with the storages, in the order of <paramref name="items"/>.</returns>
+	public static async ValueTask<SettingsStorage[]> SaveAllAsync<T>(this IEnumerable<T> items, CancellationToken cancellationToken)
+		where T : IAsyncPersistable
+	{
+		if (items is null)
+			throw new ArgumentNullException(nameof(items));
+
+		var storages = new List<SettingsStorage>();
+
+		foreach (var item in items)
+			storages.Add(await item.SaveAsync(cancellationToken).NoWait());
+
+		return [.. storages];
+	}
+
+	/// <summary>
+	/// Asynchronously loads an object of type T from every settings storage.
+	/// </summary>
+	/// <typeparam name="T">The type of the asynchronous persistable objects.</typeparam>
+	/// <param name="storages">The settings storages to load from.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A ValueTask with the loaded objects, in the order of <paramref name="storages"/>.</returns>
+	public static async ValueTask<T[]> LoadAllAsync<T>(this IEnumerable<SettingsStorage> storages, CancellationToken cancellationToken)
+		where T : IAsyncPersistable, new()
+	{
+		if (storages is null)
+			throw new ArgumentNullException(nameof(storages));
+
+		var items = new List<T>();
+
+		foreach (var storage in storages)
+			items.Add(await storage.LoadAsync<T>(cancellationToken).NoWait());
+
+		return [.. items];
+	}
+
+	/// <summary>
 	/// Saves the state of the persistable object to a settings storage.
 	/// </summary>
 	/// <param name="persistable">The persistable object to save.</param>
 	/// <returns>A settings storage containing the saved state.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static SettingsStorage Save(this IPersistable persistable)
 	{
 		if (persistable is null)
@@ -301,6 +345,7 @@ public static class PersistableHelper
 	/// <param name="storage">The settings storage to load from.</param>
 	/// <param name="type">The type of the persistable object.</param>
 	/// <returns>The loaded persistable object.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static IPersistable Load(this SettingsStorage storage, Type type)
 	{
 		if (storage is null)
@@ -312,14 +357,19 @@ public static class PersistableHelper
 	}
 
 	/// <summary>
-	/// Loads an IPersistable object of type T from the settings storage.
+	/// Loads a persistable object of type T from the settings storage.
 	/// </summary>
 	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="storage">The settings storage to load from.</param>
 	/// <returns>The loaded object of type T.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadAsync instead.")]
 	public static T Load<T>(this SettingsStorage storage)
-		where T : IPersistable
-		=> (T)storage.Load(typeof(T));
+	{
+		if (typeof(T).IsSyncPersistable())
+			return (T)storage.Load(typeof(T));
+
+		return (T)AsyncHelper.Run(() => storage.LoadAsync(typeof(T), default));
+	}
 
 	/// <summary>
 	/// Forces the persistable object to load its state from the given settings storage.
@@ -327,6 +377,7 @@ public static class PersistableHelper
 	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="t">The target object.</param>
 	/// <param name="storage">The settings storage to load from.</param>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static void ForceLoad<T>(this T t, SettingsStorage storage)
 		where T : IPersistable
 		=> t.Load(storage);
@@ -337,6 +388,7 @@ public static class PersistableHelper
 	/// <param name="storage">The settings storage to update.</param>
 	/// <param name="name">The name of the setting.</param>
 	/// <param name="persistable">The persistable object whose state is added.</param>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static void SetValue(this SettingsStorage storage, string name, IPersistable persistable)
 	{
 		if (storage is null)
@@ -352,7 +404,7 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to load.</param>
 	/// <param name="value">The string representation of the state.</param>
 	[Obsolete("Blocking sync-over-async wrapper. Use LoadFromStringAsync instead.")]
-	public static void LoadFromString(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value)
+	public static void LoadFromString(this ISerializer<SettingsStorage> serializer, IAsyncPersistable persistable, string value)
 		=> AsyncHelper.Run(() => serializer.LoadFromStringAsync(persistable, value, default));
 
 	/// <summary>
@@ -363,12 +415,12 @@ public static class PersistableHelper
 	/// <param name="value">The string representation of the state.</param>
 	/// <param name="cancellationToken">A token for cancellation.</param>
 	/// <returns>A ValueTask representing the asynchronous operation.</returns>
-	public static async ValueTask LoadFromStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value, CancellationToken cancellationToken)
+	public static async ValueTask LoadFromStringAsync(this ISerializer<SettingsStorage> serializer, IAsyncPersistable persistable, string value, CancellationToken cancellationToken)
 	{
 		if (persistable is null)
 			throw new ArgumentNullException(nameof(persistable));
 
-		persistable.Load(await serializer.LoadFromStringAsync(value, cancellationToken).NoWait());
+		await persistable.LoadAsync(await serializer.LoadFromStringAsync(value, cancellationToken).NoWait(), cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -405,7 +457,7 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to save.</param>
 	/// <returns>A string representing the saved state.</returns>
 	[Obsolete("Blocking sync-over-async wrapper. Use SaveToStringAsync instead.")]
-	public static string SaveToString(this ISerializer<SettingsStorage> serializer, IPersistable persistable)
+	public static string SaveToString(this ISerializer<SettingsStorage> serializer, IAsyncPersistable persistable)
 		=> AsyncHelper.Run(() => serializer.SaveToStringAsync(persistable, default));
 
 	/// <summary>
@@ -415,12 +467,12 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to save.</param>
 	/// <param name="cancellationToken">A token for cancellation.</param>
 	/// <returns>A string representing the saved state.</returns>
-	public static ValueTask<string> SaveToStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, CancellationToken cancellationToken)
+	public static async ValueTask<string> SaveToStringAsync(this ISerializer<SettingsStorage> serializer, IAsyncPersistable persistable, CancellationToken cancellationToken)
 	{
 		if (persistable is null)
 			throw new ArgumentNullException(nameof(persistable));
 
-		return serializer.SaveToStringAsync(persistable.Save(), cancellationToken);
+		return await serializer.SaveToStringAsync(await persistable.SaveAsync(cancellationToken).NoWait(), cancellationToken).NoWait();
 	}
 
 	/// <summary>
@@ -626,6 +678,7 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to load.</param>
 	/// <param name="settings">The settings storage.</param>
 	/// <param name="name">The name of the value within the storage.</param>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static void Load(this IPersistable persistable, SettingsStorage settings, string name)
 	{
 		if (persistable is null)
@@ -644,6 +697,7 @@ public static class PersistableHelper
 	/// <param name="settings">The settings storage.</param>
 	/// <param name="name">The name of the value within the storage.</param>
 	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage settings, string name)
 	{
 		if (settings is null)
@@ -658,6 +712,7 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to load.</param>
 	/// <param name="storage">The settings storage.</param>
 	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
 	public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage storage)
 	{
 		if (persistable is null)
@@ -671,33 +726,196 @@ public static class PersistableHelper
 	}
 
 	/// <summary>
+	/// Loads the state of the asynchronously persisted object.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="storage">The settings storage.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadAsync instead.")]
+	public static void Load(this IAsyncPersistable persistable, SettingsStorage storage)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		AsyncHelper.Run(() => persistable.LoadAsync(storage, default).AsValueTask());
+	}
+
+	/// <summary>
+	/// Saves the state of the asynchronously persisted object.
+	/// </summary>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <param name="storage">The settings storage.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveAsync instead.")]
+	public static void Save(this IAsyncPersistable persistable, SettingsStorage storage)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		AsyncHelper.Run(() => persistable.SaveAsync(storage, default).AsValueTask());
+	}
+
+	/// <summary>
+	/// Saves the state of the asynchronously persisted object to a new settings storage.
+	/// </summary>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <returns>A settings storage containing the saved state.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveAsync instead.")]
+	public static SettingsStorage Save(this IAsyncPersistable persistable)
+		=> AsyncHelper.Run(() => persistable.SaveAsync(default));
+
+	/// <summary>
+	/// Loads the state of the asynchronously persisted object from the specified settings storage using the given key.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="settings">The settings storage.</param>
+	/// <param name="name">The name of the value within the storage.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadAsync instead.")]
+	public static void Load(this IAsyncPersistable persistable, SettingsStorage settings, string name)
+		=> AsyncHelper.Run(() => persistable.LoadAsync(settings, name, default));
+
+	/// <summary>
+	/// Loads the state of the asynchronously persisted object from the specified settings storage using the given key if it is not null.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="settings">The settings storage.</param>
+	/// <param name="name">The name of the value within the storage.</param>
+	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadIfNotNullAsync instead.")]
+	public static bool LoadIfNotNull(this IAsyncPersistable persistable, SettingsStorage settings, string name)
+		=> AsyncHelper.Run(() => persistable.LoadIfNotNullAsync(settings, name, default));
+
+	/// <summary>
+	/// Loads the state of the asynchronously persisted object from the specified settings storage if the storage is not null.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="storage">The settings storage.</param>
+	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadIfNotNullAsync instead.")]
+	public static bool LoadIfNotNull(this IAsyncPersistable persistable, SettingsStorage storage)
+		=> AsyncHelper.Run(() => persistable.LoadIfNotNullAsync(storage, default));
+
+	/// <summary>
+	/// Asynchronously loads the state of the persistable object from the specified settings storage using the given key.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="settings">The settings storage.</param>
+	/// <param name="name">The name of the value within the storage.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A ValueTask representing the asynchronous operation.</returns>
+	public static async ValueTask LoadAsync(this IAsyncPersistable persistable, SettingsStorage settings, string name, CancellationToken cancellationToken)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		if (settings is null)
+			throw new ArgumentNullException(nameof(settings));
+
+		await persistable.LoadAsync(settings.GetValue<SettingsStorage>(name), cancellationToken).NoWait();
+	}
+
+	/// <summary>
+	/// Asynchronously loads the state of the persistable object from the specified settings storage using the given key if it is not null.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="settings">The settings storage.</param>
+	/// <param name="name">The name of the value within the storage.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	public static ValueTask<bool> LoadIfNotNullAsync(this IAsyncPersistable persistable, SettingsStorage settings, string name, CancellationToken cancellationToken)
+	{
+		if (settings is null)
+			throw new ArgumentNullException(nameof(settings));
+
+		return persistable.LoadIfNotNullAsync(settings.GetValue<SettingsStorage>(name), cancellationToken);
+	}
+
+	/// <summary>
+	/// Asynchronously loads the state of the persistable object from the specified settings storage if the storage is not null.
+	/// </summary>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="storage">The settings storage.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns><c>true</c> if the state was loaded; otherwise, <c>false</c>.</returns>
+	public static async ValueTask<bool> LoadIfNotNullAsync(this IAsyncPersistable persistable, SettingsStorage storage, CancellationToken cancellationToken)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		if (storage is null)
+			return false;
+
+		await persistable.LoadAsync(storage, cancellationToken).NoWait();
+		return true;
+	}
+
+	/// <summary>
 	/// Converts an object to a settings storage with type and value.
 	/// </summary>
 	/// <param name="value">The object to convert.</param>
 	/// <param name="isAssemblyQualifiedName">A value indicating whether the type name should be assembly qualified.</param>
 	/// <returns>A settings storage representing the object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use ToStorageAsync instead.")]
 	public static SettingsStorage ToStorage(this object value, bool isAssemblyQualifiedName = default)
-		=> new SettingsStorage()
-			.Set(_typeKey, value.CheckOnNull() is Type ? typeof(Type).GetTypeAsString(isAssemblyQualifiedName) : value.GetType().GetTypeAsString(isAssemblyQualifiedName))
-			.Set(_valueKey, value is IPersistable pv ? (object)pv.Save() : value.To<string>())
-		;
+		=> AsyncHelper.Run(() => value.ToStorageAsync(isAssemblyQualifiedName, default));
+
+	/// <summary>
+	/// Converts an object to a settings storage with type and value.
+	/// </summary>
+	/// <param name="value">The object to convert.</param>
+	/// <param name="isAssemblyQualifiedName">A value indicating whether the type name should be assembly qualified.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A settings storage representing the object.</returns>
+	public static async ValueTask<SettingsStorage> ToStorageAsync(this object value, bool isAssemblyQualifiedName, CancellationToken cancellationToken)
+	{
+		var typeName = value.CheckOnNull(nameof(value)) is Type
+			? typeof(Type).GetTypeAsString(isAssemblyQualifiedName)
+			: value.GetType().GetTypeAsString(isAssemblyQualifiedName);
+
+		object saved;
+
+		if (value is IAsyncPersistable persistable)
+			saved = await persistable.SaveAsync(cancellationToken).NoWait();
+		else if (SyncPersistableCompat.TrySaveSync(value, out var storage))
+			saved = storage;
+		else
+			saved = value.To<string>();
+
+		return new SettingsStorage()
+			.Set(_typeKey, typeName)
+			.Set(_valueKey, saved);
+	}
 
 	/// <summary>
 	/// Converts the settings storage back to an object.
 	/// </summary>
 	/// <param name="storage">The settings storage.</param>
 	/// <returns>The object represented by the settings storage.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use FromStorageAsync instead.")]
 	public static object FromStorage(this SettingsStorage storage)
+		=> AsyncHelper.Run(() => storage.FromStorageAsync(default));
+
+	/// <summary>
+	/// Converts the settings storage back to an object.
+	/// </summary>
+	/// <param name="storage">The settings storage.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The object represented by the settings storage.</returns>
+	public static async ValueTask<object> FromStorageAsync(this SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		if (storage is null)
 			throw new ArgumentNullException(nameof(storage));
 
 		var valueType = storage.GetValue<Type>(_typeKey);
 
-		if (valueType.Is<IPersistable>())
+		if (valueType.Is<IAsyncPersistable>())
 		{
-			var value = valueType.CreateInstance<IPersistable>();
-			value.Load(storage, _valueKey);
+			var value = valueType.CreateInstance<IAsyncPersistable>();
+			await value.LoadAsync(storage.GetValue<SettingsStorage>(_valueKey), cancellationToken).NoWait();
+			return value;
+		}
+		else if (valueType.IsSyncPersistable())
+		{
+			var value = valueType.CreateInstance();
+			SyncPersistableCompat.TryLoadSync(value, storage.GetValue<SettingsStorage>(_valueKey));
 			return value;
 		}
 		else

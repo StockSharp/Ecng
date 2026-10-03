@@ -7,7 +7,7 @@ using Nito.AsyncEx;
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
 /// </summary>
-public class LogManager : Disposable, IPersistable, IAsyncPersistable
+public class LogManager : Disposable, IAsyncPersistable
 {
 	private sealed class ApplicationReceiver : BaseLogReceiver
 	{
@@ -111,7 +111,7 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="Load"/> keep their files on <paramref name="fileSystem"/>.
+	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="LoadAsync"/> keep their files on <paramref name="fileSystem"/>.
 	/// </summary>
 	/// <param name="fileSystem">The file system the restored listeners keep their files on.</param>
 	public LogManager(IFileSystem fileSystem)
@@ -120,7 +120,7 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="Load"/> keep their files on <paramref name="fileSystem"/>.
+	/// Initializes a new instance of the <see cref="LogManager"/> whose listeners restored by <see cref="LoadAsync"/> keep their files on <paramref name="fileSystem"/>.
 	/// </summary>
 	/// <param name="fileSystem">The file system the restored listeners keep their files on.</param>
 	/// <param name="asyncMode">Asynchronous mode.</param>
@@ -268,7 +268,7 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 	public IList<ILogListener> Listeners => _listeners;
 
 	/// <summary>
-	/// The file system the listeners restored by <see cref="Load"/> keep their files on.
+	/// The file system the listeners restored by <see cref="LoadAsync"/> keep their files on.
 	/// </summary>
 	public IFileSystem FileSystem { get; }
 
@@ -388,14 +388,6 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	[Obsolete("Blocking sync-over-async wrapper. Use LoadAsync instead.")]
-	public void Load(SettingsStorage storage)
-		=> AsyncHelper.Run(() => LoadAsync(storage, default).AsValueTask());
-
-	/// <summary>
-	/// Load settings.
-	/// </summary>
-	/// <param name="storage">Settings storage.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 	/// <returns><see cref="Task"/></returns>
 	public virtual async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
@@ -411,8 +403,8 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 			Listeners.Add(await s.LoadEntireAsync(CreateListener, cancellationToken));
 		}
 
-		if (storage.Contains(nameof(Application)) && Application is IPersistable appPers)
-			appPers.Load(storage, nameof(Application));
+		if (storage.Contains(nameof(Application)) && Application is IAsyncPersistable appPers)
+			await appPers.LoadAsync(storage, nameof(Application), cancellationToken);
 	}
 
 	// A listener that can keep its files on a given file system is put on this manager's.
@@ -420,14 +412,6 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 		=> type.GetConstructor([typeof(IFileSystem)]) is null
 			? type.CreateInstance<ILogListener>()
 			: type.CreateInstance<ILogListener>(FileSystem);
-
-	/// <summary>
-	/// Save settings.
-	/// </summary>
-	/// <param name="storage">Settings storage.</param>
-	[Obsolete("Blocking sync-over-async wrapper. Use SaveAsync instead.")]
-	public void Save(SettingsStorage storage)
-		=> AsyncHelper.Run(() => SaveAsync(storage, default).AsValueTask());
 
 	/// <summary>
 	/// Save settings.
@@ -447,7 +431,7 @@ public class LogManager : Disposable, IPersistable, IAsyncPersistable
 
 		storage.SetValue(nameof(Listeners), listeners.ToArray());
 
-		if (Application is IPersistable appPers)
-			storage.SetValue(nameof(Application), appPers.Save());
+		if (Application is IAsyncPersistable appPers)
+			storage.SetValue(nameof(Application), await appPers.SaveAsync(cancellationToken));
 	}
 }

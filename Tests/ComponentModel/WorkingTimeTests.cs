@@ -36,7 +36,7 @@ public class WorkingTimeTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Period_SaveLoad_Roundtrip()
+	public async Task Period_SaveLoad_Roundtrip()
 	{
 		var period = new WorkingTimePeriod
 		{
@@ -53,10 +53,10 @@ public class WorkingTimeTests : BaseTestClass
 		};
 
 		var storage = new SettingsStorage();
-		period.Save(storage);
+		await period.SaveAsync(storage, CancellationToken);
 
 		var loaded = new WorkingTimePeriod();
-		loaded.Load(storage);
+		await loaded.LoadAsync(storage, CancellationToken);
 
 		loaded.Till.AssertEqual(period.Till);
 		loaded.Times.Count.AssertEqual(2);
@@ -195,7 +195,7 @@ public class WorkingTimeTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void WorkingTime_SaveLoad_Roundtrip()
+	public async Task WorkingTime_SaveLoad_Roundtrip()
 	{
 		var wt = new WorkingTime
 		{
@@ -216,10 +216,10 @@ public class WorkingTimeTests : BaseTestClass
 		};
 
 		var storage = new SettingsStorage();
-		wt.Save(storage);
+		await wt.SaveAsync(storage, CancellationToken);
 
 		var loaded = new WorkingTime();
-		loaded.Load(storage);
+		await loaded.LoadAsync(storage, CancellationToken);
 
 		loaded.IsEnabled.AssertTrue();
 		loaded.Periods.Count.AssertEqual(1);

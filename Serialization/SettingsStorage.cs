@@ -155,9 +155,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 
 			if (obj is IAsyncPersistable asyncPer)
 				AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
-			else if (obj is IPersistable per)
-				per.Load(storage);
-			else
+			else if (!SyncPersistableCompat.TryLoadSync(obj, storage))
 				throw new ArgumentOutOfRangeException(t.To<string>());
 
 			return obj;
@@ -181,7 +179,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 					if (per is IAsyncPersistable asyncPer)
 						AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
 					else
-						((IPersistable)per).Load(storage);
+						SyncPersistableCompat.TryLoadSync(per, storage);
 
 					return per;
 				})
@@ -292,9 +290,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 
 		if (obj is IAsyncPersistable asyncPer)
 			await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
-		else if (obj is IPersistable per)
-			per.Load(storage);
-		else
+		else if (!SyncPersistableCompat.TryLoadSync(obj, storage))
 			throw new ArgumentOutOfRangeException(type.To<string>());
 
 		return obj;

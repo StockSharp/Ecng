@@ -51,14 +51,14 @@ public class NuGetReference : BaseCodeReference
 		=> throw new System.NotImplementedException();
 
 	/// <inheritdoc />
-	public override void Load(SettingsStorage storage)
+	public override async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		PackageId = storage.GetValue<string>(nameof(PackageId));
 		Version = storage.GetValue<string>(nameof(Version));
 	}
 
 	/// <inheritdoc />
-	public override void Save(SettingsStorage storage)
+	public override async Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage.Set(nameof(PackageId), PackageId);
 		storage.Set(nameof(Version), Version);

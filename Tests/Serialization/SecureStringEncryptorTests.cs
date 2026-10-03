@@ -44,18 +44,22 @@ public class SecureStringEncryptorTests : BaseTestClass
 		}
 	}
 
-	private sealed class SecureStringHolder : IPersistable
+	private sealed class SecureStringHolder : IAsyncPersistable
 	{
 		public SecureString Secret { get; set; }
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			Secret = storage.GetValue<SecureString>(nameof(Secret));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage.Set(nameof(Secret), Secret);
+
+			return Task.CompletedTask;
 		}
 	}
 

@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Interop.Dde;
 
 using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 
 using Ecng.Serialization;
@@ -9,7 +11,7 @@ using Ecng.Serialization;
 /// Represents the settings for DDE (Dynamic Data Exchange) communication.
 /// </summary>
 [DisplayName("DDE settings")]
-public class DdeSettings : Cloneable<DdeSettings>, IPersistable
+public class DdeSettings : Cloneable<DdeSettings>, IAsyncPersistable
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="DdeSettings"/> class with default values.
@@ -82,7 +84,14 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	/// <param name="clone">The instance containing the new settings.</param>
 	public void Apply(DdeSettings clone)
 	{
-		Load(clone.Save());
+		if (clone is null)
+			throw new ArgumentNullException(nameof(clone));
+
+		Server = clone.Server;
+		Topic = clone.Topic;
+		ColumnOffset = clone.ColumnOffset;
+		RowOffset = clone.RowOffset;
+		ShowHeaders = clone.ShowHeaders;
 	}
 
 	/// <summary>
@@ -98,20 +107,26 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	/// Loads the settings from the provided <see cref="SettingsStorage"/>.
 	/// </summary>
 	/// <param name="storage">The storage from which to load the settings.</param>
-	public void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		Server = storage.GetValue<string>(nameof(Server));
 		Topic = storage.GetValue<string>(nameof(Topic));
 		ColumnOffset = storage.GetValue<int>(nameof(ColumnOffset));
 		RowOffset = storage.GetValue<int>(nameof(RowOffset));
 		ShowHeaders = storage.GetValue<bool>(nameof(ShowHeaders));
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
 	/// Saves the current settings to the provided <see cref="SettingsStorage"/>.
 	/// </summary>
 	/// <param name="storage">The storage to which the settings will be saved.</param>
-	public void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(Server), Server)
@@ -119,5 +134,7 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 			.Set(nameof(ColumnOffset), ColumnOffset)
 			.Set(nameof(RowOffset), RowOffset)
 			.Set(nameof(ShowHeaders), ShowHeaders);
+
+		return Task.CompletedTask;
 	}
 }

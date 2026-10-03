@@ -1551,7 +1551,7 @@ public class FileLogListenerTests : BaseTestClass
 	[TestMethod]
 	[DataRow(nameof(LocalFileSystem))]
 	[DataRow(nameof(MemoryFileSystem))]
-	public void SaveLoad_LogDirectory_RoundtripsRelative(string fsType)
+	public async Task SaveLoad_LogDirectory_RoundtripsRelative(string fsType)
 	{
 		var (fs, root) = Config.CreateFs(fsType, "logs");
 
@@ -1564,14 +1564,14 @@ public class FileLogListenerTests : BaseTestClass
 
 		using (var listener = new FileLogListener(fs) { LogDirectory = logDir })
 		{
-			listener.Save(storage);
+			await listener.SaveAsync(storage, CancellationToken);
 		}
 
 		var saved = storage.GetValue<string>(nameof(FileLogListener.LogDirectory));
 		saved.AssertEqual(logDir);
 
 		using var loaded = new FileLogListener(fs);
-		loaded.Load(storage);
+		await loaded.LoadAsync(storage, CancellationToken);
 		loaded.LogDirectory.AssertEqual(logDir);
 	}
 

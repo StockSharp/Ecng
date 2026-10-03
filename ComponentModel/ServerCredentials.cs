@@ -5,7 +5,7 @@ using System.Security;
 /// <summary>
 /// The class that contains a login and password.
 /// </summary>
-public class ServerCredentials : NotifiableObject, IPersistable
+public class ServerCredentials : NotifiableObject, IAsyncPersistable
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ServerCredentials"/>.
@@ -72,22 +72,30 @@ public class ServerCredentials : NotifiableObject, IPersistable
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Load(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		Email = storage.GetValue<string>(nameof(Email));
 		Password = storage.GetValue<SecureString>(nameof(Password));
 		Token = storage.GetValue<SecureString>(nameof(Token));
+
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Save(SettingsStorage storage)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage
 			.Set(nameof(Email), Email)
 			.Set(nameof(Password), Password)
 			.Set(nameof(Token), Token);
+
+		return Task.CompletedTask;
 	}
 }

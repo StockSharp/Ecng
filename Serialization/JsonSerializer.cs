@@ -285,7 +285,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				if (per is IAsyncPersistable asyncPer)
 					await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
 				else
-					((IPersistable)per).Load(storage);
+					SyncPersistableCompat.TryLoadSync(per, storage);
 
 				return per;
 			}
@@ -305,7 +305,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				if (per is IAsyncPersistable asyncPer)
 					await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
 				else
-					((IPersistable)per).Load(storage);
+					SyncPersistableCompat.TryLoadSync(per, storage);
 
 				await TryClearDeepLevel(reader, storage, cancellationToken).NoWait();
 
@@ -434,9 +434,9 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			await writer.WriteEndObjectAsync(cancellationToken).NoWait();
 		}
 
-		if (value is IPersistable per)
+		if (SyncPersistableCompat.TrySaveSync(value, out var saved))
 		{
-			await WriteSettingsStorageAsync(per.Save()).NoWait();
+			await WriteSettingsStorageAsync(saved).NoWait();
 		}
 		else if (value is IAsyncPersistable asyncPer)
 		{

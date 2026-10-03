@@ -344,7 +344,7 @@ public class JsonTests : BaseTestClass
 		}
 	}
 
-	private class TestClass : Equatable<TestClass>, IPersistable
+	private class TestClass : Equatable<TestClass>, IAsyncPersistable
 	{
 		public int IntProp { get; set; }
 		public DateTime DateProp { get; set; }
@@ -370,7 +370,7 @@ public class JsonTests : BaseTestClass
 				;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			IntProp = storage.GetValue<int>(nameof(IntProp));
 			DateProp = storage.GetValue<DateTime>(nameof(DateProp));
@@ -378,9 +378,11 @@ public class JsonTests : BaseTestClass
 			SecureStringProp = storage.GetValue<SecureString>(nameof(SecureStringProp));
 			TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 			TypeProp = storage.GetValue<Type>(nameof(TypeProp));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(IntProp), IntProp)
@@ -389,6 +391,8 @@ public class JsonTests : BaseTestClass
 				.Set(nameof(SecureStringProp), SecureStringProp)
 				.Set(nameof(TimeProp), TimeProp)
 				.Set(nameof(TypeProp), TypeProp);
+
+			return Task.CompletedTask;
 		}
 	}
 
@@ -626,7 +630,7 @@ public class JsonTests : BaseTestClass
 		};
 
 		var storage = await source.SaveEntireAsync(false, CancellationToken);
-		var restored = await storage.LoadEntireAsync<IPersistable>(CancellationToken);
+		var restored = await storage.LoadEntireAsync<IAsyncPersistable>(CancellationToken);
 
 		IsInstanceOfType<TestClass>(restored);
 		AreEqual(source.IntProp, ((TestClass)restored).IntProp);
@@ -646,40 +650,6 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task AsynchronousForms_PreferAsynchronousPersistence()
-	{
-		var source = new DualPersistable { Value = 5 };
-
-		var clone = await source.CloneAsync(CancellationToken);
-
-		AreEqual(5, clone.Value);
-		IsTrue(clone.IsLoadedAsynchronously);
-	}
-
-	private class DualPersistable : IPersistable, IAsyncPersistable
-	{
-		public int Value { get; set; }
-		public bool IsLoadedAsynchronously { get; private set; }
-
-		void IPersistable.Load(SettingsStorage storage) => Value = storage.GetValue<int>(nameof(Value));
-
-		void IPersistable.Save(SettingsStorage storage) => storage.Set(nameof(Value), Value);
-
-		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
-		{
-			Value = storage.GetValue<int>(nameof(Value));
-			IsLoadedAsynchronously = true;
-			return Task.CompletedTask;
-		}
-
-		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
-		{
-			storage.Set(nameof(Value), Value);
-			return Task.CompletedTask;
-		}
-	}
-
-	[TestMethod]
 	public async Task ComplexAsync()
 	{
 		await Do(new TestClassAsync
@@ -690,7 +660,36 @@ public class JsonTests : BaseTestClass
 		});
 	}
 
-	private class TestComplexClass : Equatable<TestComplexClass>, IPersistable
+	private static async Task<TestClass> LoadOrNullAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		=> storage is null ? null : await storage.LoadAsync<TestClass>(cancellationToken);
+
+	private static async Task<TestClass[]> LoadAllAsync(SettingsStorage[] storages, CancellationToken cancellationToken)
+	{
+		if (storages is null)
+			return null;
+
+		var items = new TestClass[storages.Length];
+
+		for (var i = 0; i < storages.Length; i++)
+			items[i] = await LoadOrNullAsync(storages[i], cancellationToken);
+
+		return items;
+	}
+
+	private static async Task<SettingsStorage[]> SaveAllAsync(TestClass[] items, CancellationToken cancellationToken)
+	{
+		if (items is null)
+			return null;
+
+		var storages = new SettingsStorage[items.Length];
+
+		for (var i = 0; i < items.Length; i++)
+			storages[i] = items[i] is null ? null : await items[i].SaveAsync(cancellationToken);
+
+		return storages;
+	}
+
+	private class TestComplexClass : Equatable<TestComplexClass>, IAsyncPersistable
 	{
 		public int IntProp { get; set; }
 		public DateTime DateProp { get; set; }
@@ -724,7 +723,7 @@ public class JsonTests : BaseTestClass
 				;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		async Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			IntProp = storage.GetValue<int>(nameof(IntProp));
 			DateProp = storage.GetValue<DateTime>(nameof(DateProp));
@@ -737,13 +736,13 @@ public class JsonTests : BaseTestClass
 			SecureStringArrayProp = storage.GetValue<SecureString[]>(nameof(SecureStringArrayProp));
 
 			//if (storage.ContainsKey(nameof(Obj1)))
-			Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
+			Obj1 = await LoadOrNullAsync(storage.GetValue<SettingsStorage>(nameof(Obj1)), cancellationToken);
 
 			//if (storage.ContainsKey(nameof(Obj2)))
-			Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
+			Obj2 = await LoadAllAsync(storage.GetValue<SettingsStorage[]>(nameof(Obj2)), cancellationToken);
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		async Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(IntProp), IntProp)
@@ -754,8 +753,8 @@ public class JsonTests : BaseTestClass
 				.Set(nameof(StringArrayProp), StringArrayProp)
 				.Set(nameof(StringArray2Prop), StringArray2Prop)
 				.Set(nameof(SecureStringArrayProp), SecureStringArrayProp)
-				.Set(nameof(Obj1), Obj1?.Save())
-				.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
+				.Set(nameof(Obj1), Obj1 is null ? null : await Obj1.SaveAsync(cancellationToken))
+				.Set(nameof(Obj2), await SaveAllAsync(Obj2, cancellationToken));
 		}
 	}
 
@@ -858,7 +857,7 @@ public class JsonTests : BaseTestClass
 		});
 	}
 
-	private class TestContainsClass : Equatable<TestContainsClass>, IPersistable
+	private class TestContainsClass : Equatable<TestContainsClass>, IAsyncPersistable
 	{
 		public int IntProp { get; set; }
 		public DateTime DateProp { get; set; }
@@ -882,20 +881,20 @@ public class JsonTests : BaseTestClass
 				;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		async Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			IntProp = storage.GetValue<int>(nameof(IntProp));
 			DateProp = storage.GetValue<DateTime>(nameof(DateProp));
 			TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 
 			if (storage.ContainsKey(nameof(Obj1)))
-				Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestClass>();
+				Obj1 = await storage.GetValue<SettingsStorage>(nameof(Obj1)).LoadAsync<TestClass>(cancellationToken);
 
 			if (storage.ContainsKey(nameof(Obj2)))
-				Obj2 = [.. storage.GetValue<object[]>(nameof(Obj2)).Select(s => ((SettingsStorage)s)?.Load<TestClass>())];
+				Obj2 = await LoadAllAsync([.. storage.GetValue<object[]>(nameof(Obj2)).Cast<SettingsStorage>()], cancellationToken);
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		async Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(IntProp), IntProp)
@@ -903,10 +902,10 @@ public class JsonTests : BaseTestClass
 				.Set(nameof(TimeProp), TimeProp);
 
 			if (Obj1 != null)
-				storage.Set(nameof(Obj1), Obj1.Save());
+				storage.Set(nameof(Obj1), await Obj1.SaveAsync(cancellationToken));
 
 			if (Obj2 != null)
-				storage.Set(nameof(Obj2), Obj2.Select(o => o?.Save()));
+				storage.Set(nameof(Obj2), await SaveAllAsync(Obj2, cancellationToken));
 		}
 	}
 
@@ -949,7 +948,7 @@ public class JsonTests : BaseTestClass
 		await Do<TestContainsClass>(null, true);
 	}
 
-	private class TestDirectClass : Equatable<TestDirectClass>, IPersistable
+	private class TestDirectClass : Equatable<TestDirectClass>, IAsyncPersistable
 	{
 		public int IntProp { get; set; }
 		public DateTime DateProp { get; set; }
@@ -973,19 +972,19 @@ public class JsonTests : BaseTestClass
 				;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		async Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			IntProp = storage.GetValue<int>(nameof(IntProp));
 			DateProp = storage.GetValue<DateTime>(nameof(DateProp));
 			TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 
-			Obj1 = storage.GetValue<TestClass>(nameof(Obj1));
+			Obj1 = await storage.GetValueAsync<TestClass>(nameof(Obj1), cancellationToken: cancellationToken);
 
 			if (storage.ContainsKey(nameof(Obj2)))
-				Obj2 = storage.GetValue<TestClass[]>(nameof(Obj2));
+				Obj2 = await storage.GetValueAsync<TestClass[]>(nameof(Obj2), cancellationToken: cancellationToken);
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		async Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(IntProp), IntProp)
@@ -993,10 +992,10 @@ public class JsonTests : BaseTestClass
 				.Set(nameof(TimeProp), TimeProp);
 
 			if (Obj1 != null)
-				storage.Set(nameof(Obj1), Obj1.Save());
+				storage.Set(nameof(Obj1), await Obj1.SaveAsync(cancellationToken));
 
 			if (Obj2 != null)
-				storage.Set(nameof(Obj2), Obj2.Select(o => o?.Save()));
+				storage.Set(nameof(Obj2), await SaveAllAsync(Obj2, cancellationToken));
 		}
 	}
 
@@ -1041,7 +1040,7 @@ public class JsonTests : BaseTestClass
 		}, fillMode: true);
 	}
 
-	private class TestEnumClass : Equatable<TestEnumClass>, IPersistable
+	private class TestEnumClass : Equatable<TestEnumClass>, IAsyncPersistable
 	{
 		public GCKind EnumProp { get; set; }
 		public GCKind? NullableEnumProp { get; set; }
@@ -1058,17 +1057,21 @@ public class JsonTests : BaseTestClass
 				NullableEnumProp == other.NullableEnumProp;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			EnumProp = storage.GetValue<GCKind>(nameof(EnumProp));
 			NullableEnumProp = storage.GetValue<GCKind?>(nameof(NullableEnumProp));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(EnumProp), EnumProp)
 				.Set(nameof(NullableEnumProp), NullableEnumProp);
+
+			return Task.CompletedTask;
 		}
 	}
 
@@ -1098,7 +1101,7 @@ public class JsonTests : BaseTestClass
 		});
 	}
 
-	private class TestSecureString : Equatable<TestSecureString>, IPersistable
+	private class TestSecureString : Equatable<TestSecureString>, IAsyncPersistable
 	{
 		public SecureString SecureStringProp { get; set; }
 
@@ -1113,15 +1116,19 @@ public class JsonTests : BaseTestClass
 				SecureStringProp.IsEqualTo(other.SecureStringProp);
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			SecureStringProp = storage.GetValue<SecureString>(nameof(SecureStringProp));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(SecureStringProp), SecureStringProp);
+
+			return Task.CompletedTask;
 		}
 	}
 
@@ -1146,16 +1153,16 @@ public class JsonTests : BaseTestClass
 			json.Contains("SecureStringProp").AssertTrue("JSON should contain the property name");
 		});
 
-		var ss = obj.Save();
+		var ss = (await obj.SaveAsync(CancellationToken));
 
 		await Do(ss, encryptedAsByteArray: true);
 		await Do(ss);
 
-		obj.AssertEqual((await Do(ss, encryptedAsByteArray: true)).Load<TestSecureString>());
-		obj.AssertEqual((await Do(ss)).Load<TestSecureString>());
+		obj.AssertEqual(await (await Do(ss, encryptedAsByteArray: true)).LoadAsync<TestSecureString>(CancellationToken));
+		obj.AssertEqual(await (await Do(ss)).LoadAsync<TestSecureString>(CancellationToken));
 	}
 
-	private struct CurrencyPersistableAdapter : IPersistableAdapter, IPersistable
+	private struct CurrencyPersistableAdapter : IPersistableAdapter, IAsyncPersistable
 	{
 		private Currency _underlyingValue;
 
@@ -1165,24 +1172,28 @@ public class JsonTests : BaseTestClass
 			set => _underlyingValue = (Currency)value;
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			_underlyingValue = new()
 			{
 				Type = storage.GetValue<CurrencyTypes>(nameof(_underlyingValue.Type)),
 				Value = storage.GetValue<decimal>(nameof(_underlyingValue.Value))
 			};
+
+			return Task.CompletedTask;
 		}
 
-		readonly void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage
 				.Set(nameof(_underlyingValue.Type), _underlyingValue.Type)
 				.Set(nameof(_underlyingValue.Value), _underlyingValue.Value);
+
+			return Task.CompletedTask;
 		}
 	}
 
-	private class TestCurrencyComplex : Equatable<TestCurrencyComplex>, IPersistable
+	private class TestCurrencyComplex : Equatable<TestCurrencyComplex>, IAsyncPersistable
 	{
 		public Currency Currency { get; set; }
 
@@ -1196,14 +1207,18 @@ public class JsonTests : BaseTestClass
 			return new() { Currency = Currency };
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			Currency = storage.GetValue<Currency>(nameof(Currency));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage.Set(nameof(Currency), Currency);
+
+			return Task.CompletedTask;
 		}
 	}
 
@@ -1273,17 +1288,34 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Object2Storage()
+	public async Task Object2Storage()
 	{
-		static void Do<T>(T v) => v.ToStorage().FromStorage().AssertEqual(v);
+		async Task Do<T>(T v)
+			=> (await (await v.ToStorageAsync(false, CancellationToken)).FromStorageAsync(CancellationToken)).AssertEqual(v);
 
-		Do("123");
-		Do(123);
-		Do(123L);
-		Do(DateTime.UtcNow);
-		Do(DateTimeOffset.UtcNow);
-		Do(TimeSpan.FromSeconds(123));
-		Do(new Uri("https://google.com"));
+		await Do("123");
+		await Do(123);
+		await Do(123L);
+		await Do(DateTime.UtcNow);
+		await Do(DateTimeOffset.UtcNow);
+		await Do(TimeSpan.FromSeconds(123));
+		await Do(new Uri("https://google.com"));
+	}
+
+	[TestMethod]
+	public async Task Object2Storage_AsyncPersistableRoundTrips()
+	{
+		var value = new TestClassAsync
+		{
+			IntProp = 9,
+			DateProp = DateTime.UtcNow,
+			TimeProp = TimeSpan.FromSeconds(4),
+		};
+
+		var restored = await (await value.ToStorageAsync(false, CancellationToken)).FromStorageAsync(CancellationToken);
+
+		IsInstanceOfType<TestClassAsync>(restored);
+		AreEqual(value, (TestClassAsync)restored);
 	}
 
 	private sealed class NestedTypeStorageMarker
@@ -1302,22 +1334,22 @@ public class JsonTests : BaseTestClass
 	[TestMethod]
 	[DataRow("2024-01-01T12:00:00.0000000Z")]
 	[DataRow("2024-06-15T23:59:59.0000000Z")]
-	public void Object2Storage_UtcDateTimeDoesNotShift(string text)
+	public async Task Object2Storage_UtcDateTimeDoesNotShift(string text)
 	{
 		var value = DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 
-		var restored = (DateTime)value.ToStorage().FromStorage();
+		var restored = (DateTime)await (await value.ToStorageAsync(false, CancellationToken)).FromStorageAsync(CancellationToken);
 
 		restored.AssertEqual(value);
 		restored.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
-	public void Object2Storage_UnspecifiedDateTimeDoesNotShift()
+	public async Task Object2Storage_UnspecifiedDateTimeDoesNotShift()
 	{
 		var value = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Unspecified);
 
-		var restored = (DateTime)value.ToStorage().FromStorage();
+		var restored = (DateTime)await (await value.ToStorageAsync(false, CancellationToken)).FromStorageAsync(CancellationToken);
 
 		restored.AssertEqual(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 		restored.Kind.AssertEqual(DateTimeKind.Utc);
@@ -1519,18 +1551,22 @@ public class JsonTests : BaseTestClass
 
 	#endregion
 
-	private class ExtraPropClass : IPersistable
+	private class ExtraPropClass : IAsyncPersistable
 	{
 		public int IntProp { get; set; }
 
-		void IPersistable.Load(SettingsStorage storage)
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			IntProp = storage.GetValue<int>(nameof(IntProp));
+
+			return Task.CompletedTask;
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			storage.Set(nameof(IntProp), IntProp);
+
+			return Task.CompletedTask;
 		}
 	}
 
@@ -1630,6 +1666,87 @@ public class JsonTests : BaseTestClass
 #pragma warning disable CS0618 // the blocking forms are kept as wrappers over the awaitable ones
 		serializer.LoadFromString(text).SequenceEqual([1, 2]).AssertTrue();
 		serializer.SaveToString([1, 2]).AssertEqual(text);
+#pragma warning restore CS0618
+	}
+
+#pragma warning disable CS0618 // the obsolete contract is still honoured for types that have not moved
+	private class SyncPropClass : IPersistable
+	{
+		public int IntProp { get; set; }
+
+		void IPersistable.Load(SettingsStorage storage)
+			=> IntProp = storage.GetValue<int>(nameof(IntProp));
+
+		void IPersistable.Save(SettingsStorage storage)
+			=> storage.Set(nameof(IntProp), IntProp);
+	}
+#pragma warning restore CS0618
+
+	private struct StructPropValue : IAsyncPersistable
+	{
+		public int IntProp { get; set; }
+
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+			IntProp = storage.GetValue<int>(nameof(IntProp));
+
+			return Task.CompletedTask;
+		}
+
+		readonly Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+			storage.Set(nameof(IntProp), IntProp);
+
+			return Task.CompletedTask;
+		}
+	}
+
+	[TestMethod]
+	public async Task SaveAllAsync_SavesEveryItemInOrder()
+	{
+		ExtraPropClass[] items = [new() { IntProp = 1 }, new() { IntProp = 2 }, new() { IntProp = 3 }];
+
+		var storages = await items.SaveAllAsync(CancellationToken);
+
+		storages.Select(s => s.GetValue<int>(nameof(ExtraPropClass.IntProp))).SequenceEqual([1, 2, 3]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task LoadAllAsync_LoadsAnItemFromEveryStorage()
+	{
+		var storages = new[] { 4, 5 }.Select(v => new SettingsStorage().Set(nameof(ExtraPropClass.IntProp), v)).ToArray();
+
+		var items = await storages.LoadAllAsync<ExtraPropClass>(CancellationToken);
+
+		items.Select(i => i.IntProp).SequenceEqual([4, 5]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task AllAsync_Structs_RoundTrip()
+	{
+		StructPropValue[] items = [new() { IntProp = 6 }, new() { IntProp = 7 }];
+
+		var restored = await (await items.SaveAllAsync(CancellationToken)).LoadAllAsync<StructPropValue>(CancellationToken);
+
+		restored.Select(i => i.IntProp).SequenceEqual([6, 7]).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task AllAsync_NoItems_GiveEmptyArrays()
+	{
+		(await Array.Empty<ExtraPropClass>().SaveAllAsync(CancellationToken)).Length.AssertEqual(0);
+		(await Array.Empty<SettingsStorage>().LoadAllAsync<ExtraPropClass>(CancellationToken)).Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public async Task Load_BlockingForm_LoadsEveryKindOfPersistable()
+	{
+		var storage = await new ExtraPropClass { IntProp = 9 }.SaveAsync(CancellationToken);
+
+#pragma warning disable CS0618 // the blocking form is kept as a wrapper over the awaitable one
+		storage.Load<ExtraPropClass>().IntProp.AssertEqual(9);
+		storage.Load<StructPropValue>().IntProp.AssertEqual(9);
+		storage.Load<SyncPropClass>().IntProp.AssertEqual(9);
 #pragma warning restore CS0618
 	}
 }

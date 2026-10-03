@@ -7,7 +7,7 @@ namespace Ecng.ComponentModel;
 	ResourceType = typeof(LocalizedStrings),
 	Name = LocalizedStrings.WorkScheduleKey,
 	Description = LocalizedStrings.WorkScheduleDescKey)]
-public class WorkingTime : Cloneable<WorkingTime>, IPersistable
+public class WorkingTime : Cloneable<WorkingTime>, IAsyncPersistable
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="WorkingTime"/>.
@@ -144,10 +144,16 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	}
 
 	/// <inheritdoc />
-	public void Load(SettingsStorage storage)
+	public async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		IsEnabled = storage.GetValue(nameof(IsEnabled), IsEnabled);
-		Periods = [.. storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Periods)).Select(s => s.Load<WorkingTimePeriod>())];
+
+		var periods = new List<WorkingTimePeriod>();
+
+		foreach (var s in storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Periods)))
+			periods.Add(await s.LoadAsync<WorkingTimePeriod>(cancellationToken));
+
+		Periods = periods;
 
 		if (storage.ContainsKey(nameof(SpecialDays)))
 		{
@@ -169,11 +175,16 @@ public class WorkingTime : Cloneable<WorkingTime>, IPersistable
 	}
 
 	/// <inheritdoc />
-	public void Save(SettingsStorage storage)
+	public async Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
+		var periods = new List<SettingsStorage>();
+
+		foreach (var period in Periods)
+			periods.Add(await period.SaveAsync(cancellationToken));
+
 		storage
 			.Set(nameof(IsEnabled), IsEnabled)
-			.Set(nameof(Periods), Periods.Select(p => p.Save()).ToArray())
+			.Set(nameof(Periods), periods.ToArray())
 			.Set(nameof(SpecialDays), SpecialDays.Select(p => new SettingsStorage()
 				.Set("Day", p.Key)
 				.Set("Periods", p.Value.Select(p1 => p1.ToStorage()).ToArray())

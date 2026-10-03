@@ -882,9 +882,9 @@ public class FileLogListener : LogListener
 #endif
 
 	/// <inheritdoc />
-	public override void Load(SettingsStorage storage)
+	public override async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
-		base.Load(storage);
+		await base.LoadAsync(storage, cancellationToken);
 
 		FileName = storage.GetValue<string>(nameof(FileName));
 		MaxLength = storage.GetValue<long>(nameof(MaxLength));
@@ -904,9 +904,9 @@ public class FileLogListener : LogListener
 	}
 
 	/// <inheritdoc />
-	public override void Save(SettingsStorage storage)
+	public override async Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
-		base.Save(storage);
+		await base.SaveAsync(storage, cancellationToken);
 
 		storage
 			.Set(nameof(FileName), FileName)
