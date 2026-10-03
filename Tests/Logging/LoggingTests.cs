@@ -211,14 +211,14 @@ public class LoggingTests : BaseTestClass
 
 	[TestMethod]
 	[DoNotParallelize]
-	public void LogManager_LoadWithoutFlushInterval_KeepsDefault()
+	public async Task LogManager_LoadWithoutFlushInterval_KeepsDefault()
 	{
 		using var manager = new LogManager();
 		var before = manager.FlushInterval;
 		var storage = new SettingsStorage()
 			.Set(nameof(LogManager.Listeners), Array.Empty<SettingsStorage>());
 
-		manager.Load(storage);
+		await manager.LoadAsync(storage, CancellationToken);
 
 		manager.FlushInterval.AssertEqual(before);
 	}

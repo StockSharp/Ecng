@@ -7,7 +7,7 @@ using Nito.AsyncEx;
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
 /// </summary>
-public class LogManager : Disposable, IPersistable
+public class LogManager : Disposable, IPersistable, IAsyncPersistable
 {
 	private sealed class ApplicationReceiver : BaseLogReceiver
 	{
@@ -388,18 +388,28 @@ public class LogManager : Disposable, IPersistable
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Load(SettingsStorage storage)
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadAsync instead.")]
+	public void Load(SettingsStorage storage)
+		=> AsyncHelper.Run(() => LoadAsync(storage, default).AsValueTask());
+
+	/// <summary>
+	/// Load settings.
+	/// </summary>
+	/// <param name="storage">Settings storage.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual async Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		if (storage.Contains(nameof(FlushInterval)))
 			FlushInterval = storage.GetValue<TimeSpan>(nameof(FlushInterval));
 
 		//MaxMessageCount = storage.GetValue<int>(nameof(MaxMessageCount));
-		Listeners.AddRange(storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Listeners)).Select(s =>
+		foreach (var s in storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Listeners)))
 		{
 			// TODO 2025-02-04: remove 1 year after
 			s.Set("type", s.GetValue<string>("type").Replace("StockSharp.Logging", "Ecng.Logging"));
-			return s.LoadEntire(CreateListener);
-		}));
+			Listeners.Add(await s.LoadEntireAsync(CreateListener, cancellationToken));
+		}
 
 		if (storage.Contains(nameof(Application)) && Application is IPersistable appPers)
 			appPers.Load(storage, nameof(Application));
@@ -415,11 +425,27 @@ public class LogManager : Disposable, IPersistable
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Save(SettingsStorage storage)
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveAsync instead.")]
+	public void Save(SettingsStorage storage)
+		=> AsyncHelper.Run(() => SaveAsync(storage, default).AsValueTask());
+
+	/// <summary>
+	/// Save settings.
+	/// </summary>
+	/// <param name="storage">Settings storage.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="Task"/></returns>
+	public virtual async Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
 	{
 		storage.SetValue(nameof(FlushInterval), FlushInterval);
 		//storage.SetValue(nameof(MaxMessageCount), MaxMessageCount);
-		storage.SetValue(nameof(Listeners), Listeners.Where(l => l.CanSave).Select(l => l.SaveEntire(false)).ToArray());
+
+		var listeners = new List<SettingsStorage>();
+
+		foreach (var listener in Listeners.Where(l => l.CanSave))
+			listeners.Add(await listener.SaveEntireAsync(false, cancellationToken));
+
+		storage.SetValue(nameof(Listeners), listeners.ToArray());
 
 		if (Application is IPersistable appPers)
 			storage.SetValue(nameof(Application), appPers.Save());

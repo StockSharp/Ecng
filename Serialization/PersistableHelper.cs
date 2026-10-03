@@ -61,15 +61,61 @@ public static class PersistableHelper
 	private const string _valueKey = "value";
 	private const string _settingsKey = "settings";
 
+	private static SettingsStorage CreateEntire(object persistable, bool isAssemblyQualifiedName, SettingsStorage settings)
+		=> new SettingsStorage()
+			.Set(_typeKey, persistable.GetType().GetTypeAsString(isAssemblyQualifiedName))
+			.Set(_settingsKey, settings);
+
+	private static T CreateFromEntire<T>(SettingsStorage storage, Func<Type, T> create, out SettingsStorage settings)
+	{
+		if (storage is null)
+			throw new ArgumentNullException(nameof(storage));
+
+		if (create is null)
+			throw new ArgumentNullException(nameof(create));
+
+		settings = storage.GetValue<SettingsStorage>(_settingsKey);
+		return create(storage.GetValue<Type>(_typeKey));
+	}
+
+	private static async ValueTask LoadAnyAsync(object persistable, SettingsStorage storage, CancellationToken cancellationToken)
+	{
+		switch (persistable)
+		{
+			case IAsyncPersistable asyncPer:
+				await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
+				break;
+			case IPersistable per:
+				per.Load(storage);
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
+		}
+	}
+
+	private static async ValueTask<SettingsStorage> SaveAnyAsync(object persistable, CancellationToken cancellationToken)
+	{
+		switch (persistable)
+		{
+			case IAsyncPersistable asyncPer:
+				return await asyncPer.SaveAsync(cancellationToken).NoWait();
+			case IPersistable per:
+				return per.Save();
+			default:
+				throw new ArgumentOutOfRangeException(nameof(persistable), persistable?.GetType(), "The object is not persistable.");
+		}
+	}
+
 	/// <summary>
 	/// Creates and initializes an object from the specified settings storage.
 	/// </summary>
 	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="storage">The settings storage used to create the object.</param>
 	/// <returns>The created and initialized object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadEntireAsync instead.")]
 	public static T LoadEntire<T>(this SettingsStorage storage)
 		where T : IPersistable
-		=> storage.LoadEntire(type => type.CreateInstance<T>());
+		=> AsyncHelper.Run(() => storage.LoadEntireAsync<T>(default));
 
 	/// <summary>
 	/// Creates an object of the type the settings storage names with <paramref name="create"/> and initializes it from the storage.
@@ -78,18 +124,53 @@ public static class PersistableHelper
 	/// <param name="storage">The settings storage used to create the object.</param>
 	/// <param name="create">Builds the instance of the type the storage names.</param>
 	/// <returns>The created and initialized object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use LoadEntireAsync instead.")]
 	public static T LoadEntire<T>(this SettingsStorage storage, Func<Type, T> create)
 		where T : IPersistable
+		=> AsyncHelper.Run(() => storage.LoadEntireAsync(create, default));
+
+	/// <summary>
+	/// Asynchronously creates and initializes an object from the settings storage written by <see cref="SaveEntireAsync"/>
+	/// or <see cref="SaveEntire"/>. The object may be persisted either synchronously or asynchronously.
+	/// </summary>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
+	/// <param name="storage">The settings storage used to create the object.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The created and initialized object.</returns>
+	public static ValueTask<T> LoadEntireAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken)
+		=> storage.LoadEntireAsync(type => type.CreateInstance<T>(), cancellationToken);
+
+	/// <summary>
+	/// Asynchronously creates an object of the type the settings storage names with <paramref name="create"/> and initializes it from the storage.
+	/// The object may be persisted either synchronously or asynchronously.
+	/// </summary>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
+	/// <param name="storage">The settings storage used to create the object.</param>
+	/// <param name="create">Builds the instance of the type the storage names.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>The created and initialized object.</returns>
+	public static async ValueTask<T> LoadEntireAsync<T>(this SettingsStorage storage, Func<Type, T> create, CancellationToken cancellationToken)
 	{
-		if (storage is null)
-			throw new ArgumentNullException(nameof(storage));
-
-		if (create is null)
-			throw new ArgumentNullException(nameof(create));
-
-		var instance = create(storage.GetValue<Type>(_typeKey));
-		instance.Load(storage, _settingsKey);
+		var instance = CreateFromEntire(storage, create, out var settings);
+		await LoadAnyAsync(instance, settings, cancellationToken).NoWait();
 		return instance;
+	}
+
+	/// <summary>
+	/// Asynchronously saves the entire state of the persistable object, together with its type, into a new settings storage.
+	/// The object may be persisted either synchronously or asynchronously.
+	/// </summary>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <param name="isAssemblyQualifiedName">A value indicating whether the type name should be assembly qualified.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A settings storage containing the saved state.</returns>
+	public static async ValueTask<SettingsStorage> SaveEntireAsync<T>(this T persistable, bool isAssemblyQualifiedName, CancellationToken cancellationToken)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		return CreateEntire(persistable, isAssemblyQualifiedName, await SaveAnyAsync(persistable, cancellationToken).NoWait());
 	}
 
 	/// <summary>
@@ -98,15 +179,9 @@ public static class PersistableHelper
 	/// <param name="persistable">The persistable object to save.</param>
 	/// <param name="isAssemblyQualifiedName">A value indicating whether the type name should be assembly qualified.</param>
 	/// <returns>A settings storage containing the saved state.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use SaveEntireAsync instead.")]
 	public static SettingsStorage SaveEntire(this IPersistable persistable, bool isAssemblyQualifiedName)
-	{
-		if (persistable is null)
-			throw new ArgumentNullException(nameof(persistable));
-
-		return new SettingsStorage()
-			.Set(_typeKey, persistable.GetType().GetTypeAsString(isAssemblyQualifiedName))
-			.Set(_settingsKey, persistable.Save());
-	}
+		=> AsyncHelper.Run(() => persistable.SaveEntireAsync(isAssemblyQualifiedName, default));
 
 	/// <summary>
 	/// Clones the specified persistable object.
@@ -114,32 +189,25 @@ public static class PersistableHelper
 	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="obj">The object to clone.</param>
 	/// <returns>A clone of the object.</returns>
+	[Obsolete("Blocking sync-over-async wrapper. Use CloneAsync instead.")]
 	public static T Clone<T>(this T obj)
 		where T : IPersistable
-	{
-		if (obj.IsNull())
-			return default;
-
-		var clone = obj.GetType().CreateInstance<T>();
-		clone.Load(obj.Save());
-		return clone;
-	}
+		=> AsyncHelper.Run(() => obj.CloneAsync(default));
 
 	/// <summary>
-	/// Asynchronously clones the specified asynchronous persistable object.
+	/// Asynchronously clones the specified persistable object. The object may be persisted either synchronously or asynchronously.
 	/// </summary>
-	/// <typeparam name="T">The type of the asynchronous persistable object.</typeparam>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="obj">The object to clone.</param>
 	/// <param name="cancellationToken">A token for cancellation.</param>
 	/// <returns>A ValueTask with the cloned object.</returns>
 	public static async ValueTask<T> CloneAsync<T>(this T obj, CancellationToken cancellationToken = default)
-		where T : IAsyncPersistable
 	{
-		if (obj.IsNull())
+		if (obj is null)
 			return default;
 
 		var clone = obj.GetType().CreateInstance<T>();
-		await clone.LoadAsync(await obj.SaveAsync(cancellationToken), cancellationToken).NoWait();
+		await LoadAnyAsync(clone, await SaveAnyAsync(obj, cancellationToken).NoWait(), cancellationToken).NoWait();
 		return clone;
 	}
 
@@ -149,24 +217,23 @@ public static class PersistableHelper
 	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="obj">The target object.</param>
 	/// <param name="clone">The object from which to copy the state.</param>
+	[Obsolete("Blocking sync-over-async wrapper. Use ApplyAsync instead.")]
 	public static void Apply<T>(this T obj, T clone)
 		where T : IPersistable
-	{
-		obj.Load(clone.Save());
-	}
+		=> AsyncHelper.Run(() => obj.ApplyAsync(clone, default));
 
 	/// <summary>
-	/// Asynchronously applies the state from the clone to the target asynchronous persistable object.
+	/// Asynchronously applies the state from the clone to the target persistable object.
+	/// The object may be persisted either synchronously or asynchronously.
 	/// </summary>
-	/// <typeparam name="T">The type of the asynchronous persistable object.</typeparam>
+	/// <typeparam name="T">The type of the persistable object.</typeparam>
 	/// <param name="obj">The target object.</param>
 	/// <param name="clone">The object from which to copy the state.</param>
 	/// <param name="cancellationToken">A token for cancellation.</param>
 	/// <returns>A ValueTask representing the asynchronous operation.</returns>
 	public static async ValueTask ApplyAsync<T>(this T obj, T clone, CancellationToken cancellationToken = default)
-		where T : IAsyncPersistable
 	{
-		await obj.LoadAsync(await clone.SaveAsync(cancellationToken), cancellationToken).NoWait();
+		await LoadAnyAsync(obj, await SaveAnyAsync(clone, cancellationToken).NoWait(), cancellationToken).NoWait();
 	}
 
 	/// <summary>

@@ -355,7 +355,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestClass Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestClass)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestClass other)
@@ -598,6 +598,88 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public async Task EntireAsync_RoundTripsTypeAndState()
+	{
+		var source = new TestClassAsync
+		{
+			IntProp = 7,
+			DateProp = DateTime.UtcNow,
+			TimeProp = TimeSpan.FromSeconds(3),
+		};
+
+		var storage = await source.SaveEntireAsync(false, CancellationToken);
+		var restored = await storage.LoadEntireAsync<IAsyncPersistable>(CancellationToken);
+
+		IsInstanceOfType<TestClassAsync>(restored);
+		AreEqual(source, (TestClassAsync)restored);
+	}
+
+	[TestMethod]
+	public async Task EntireAsync_RoundTripsSynchronouslyPersistedObject()
+	{
+		var source = new TestClass
+		{
+			IntProp = 11,
+			DateProp = DateTime.UtcNow,
+			StringProp = "entire",
+			TimeProp = TimeSpan.FromSeconds(5),
+		};
+
+		var storage = await source.SaveEntireAsync(false, CancellationToken);
+		var restored = await storage.LoadEntireAsync<IPersistable>(CancellationToken);
+
+		IsInstanceOfType<TestClass>(restored);
+		AreEqual(source.IntProp, ((TestClass)restored).IntProp);
+		AreEqual(source.StringProp, ((TestClass)restored).StringProp);
+	}
+
+	[TestMethod]
+	public async Task CloneAsync_ClonesSynchronouslyPersistedObject()
+	{
+		var source = new TestClass { IntProp = 3, StringProp = "clone" };
+
+		var clone = await source.CloneAsync(CancellationToken);
+
+		AreNotSame(source, clone);
+		AreEqual(source.IntProp, clone.IntProp);
+		AreEqual(source.StringProp, clone.StringProp);
+	}
+
+	[TestMethod]
+	public async Task AsynchronousForms_PreferAsynchronousPersistence()
+	{
+		var source = new DualPersistable { Value = 5 };
+
+		var clone = await source.CloneAsync(CancellationToken);
+
+		AreEqual(5, clone.Value);
+		IsTrue(clone.IsLoadedAsynchronously);
+	}
+
+	private class DualPersistable : IPersistable, IAsyncPersistable
+	{
+		public int Value { get; set; }
+		public bool IsLoadedAsynchronously { get; private set; }
+
+		void IPersistable.Load(SettingsStorage storage) => Value = storage.GetValue<int>(nameof(Value));
+
+		void IPersistable.Save(SettingsStorage storage) => storage.Set(nameof(Value), Value);
+
+		Task IAsyncPersistable.LoadAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+			Value = storage.GetValue<int>(nameof(Value));
+			IsLoadedAsynchronously = true;
+			return Task.CompletedTask;
+		}
+
+		Task IAsyncPersistable.SaveAsync(SettingsStorage storage, CancellationToken cancellationToken)
+		{
+			storage.Set(nameof(Value), Value);
+			return Task.CompletedTask;
+		}
+	}
+
+	[TestMethod]
 	public async Task ComplexAsync()
 	{
 		await Do(new TestClassAsync
@@ -623,7 +705,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestComplexClass Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestComplexClass)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestComplexClass other)
@@ -786,7 +868,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestContainsClass Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestContainsClass)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestContainsClass other)
@@ -877,7 +959,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestDirectClass Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestDirectClass)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestDirectClass other)
@@ -966,7 +1048,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestEnumClass Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestEnumClass)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestEnumClass other)
@@ -1022,7 +1104,7 @@ public class JsonTests : BaseTestClass
 
 		public override TestSecureString Clone()
 		{
-			return PersistableHelper.Clone(this);
+			return (TestSecureString)MemberwiseClone();
 		}
 
 		protected override bool OnEquals(TestSecureString other)

@@ -82,7 +82,7 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	/// <param name="clone">The instance containing the new settings.</param>
 	public void Apply(DdeSettings clone)
 	{
-		PersistableHelper.Apply(this, clone);
+		Load(clone.Save());
 	}
 
 	/// <summary>
@@ -91,7 +91,7 @@ public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	/// <returns>A new instance that is a deep copy of this instance.</returns>
 	public override DdeSettings Clone()
 	{
-		return PersistableHelper.Clone(this);
+		return (DdeSettings)MemberwiseClone();
 	}
 
 	/// <summary>

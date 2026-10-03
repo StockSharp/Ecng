@@ -127,7 +127,7 @@ public static class ServicePath
 
 		if (fileSystem.FileExists(logSettingsFile))
 		{
-			logManager.Load(await serializer.DeserializeAsync(fileSystem, logSettingsFile, cancellationToken).NoWait());
+			await logManager.LoadAsync(await serializer.DeserializeAsync(fileSystem, logSettingsFile, cancellationToken).NoWait(), cancellationToken);
 		}
 		else
 		{
@@ -141,7 +141,7 @@ public static class ServicePath
 			});
 
 			await using var stream = fileSystem.OpenWrite(logSettingsFile);
-			await serializer.SerializeAsync(logManager.Save(), stream, cancellationToken).NoWait();
+			await serializer.SerializeAsync(await logManager.SaveAsync(cancellationToken), stream, cancellationToken).NoWait();
 		}
 
 		return logManager;
