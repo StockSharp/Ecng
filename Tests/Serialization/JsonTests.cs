@@ -619,7 +619,7 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task EntireAsync_RoundTripsSynchronouslyPersistedObject()
+	public async Task EntireAsync_RoundTripsEveryProperty()
 	{
 		var source = new TestClass
 		{
@@ -638,7 +638,7 @@ public class JsonTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task CloneAsync_ClonesSynchronouslyPersistedObject()
+	public async Task CloneAsync_ClonesPersistedObject()
 	{
 		var source = new TestClass { IntProp = 3, StringProp = "clone" };
 

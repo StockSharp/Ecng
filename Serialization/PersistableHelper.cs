@@ -424,6 +424,33 @@ public static class PersistableHelper
 	}
 
 	/// <summary>
+	/// Loads the state of the persistable object from a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="value">The string representation of the state.</param>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
+	public static void LoadFromString(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value)
+		=> AsyncHelper.Run(() => serializer.LoadFromStringAsync(persistable, value, default));
+
+	/// <summary>
+	/// Loads the state of the persistable object from a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to load.</param>
+	/// <param name="value">The string representation of the state.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A ValueTask representing the asynchronous operation.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
+	public static async ValueTask LoadFromStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value, CancellationToken cancellationToken)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		persistable.Load(await serializer.LoadFromStringAsync(value, cancellationToken).NoWait());
+	}
+
+	/// <summary>
 	/// Loads a value of type TValue from a string using the provided serializer.
 	/// </summary>
 	/// <typeparam name="TValue">The type of the value to load.</typeparam>
@@ -473,6 +500,32 @@ public static class PersistableHelper
 			throw new ArgumentNullException(nameof(persistable));
 
 		return await serializer.SaveToStringAsync(await persistable.SaveAsync(cancellationToken).NoWait(), cancellationToken).NoWait();
+	}
+
+	/// <summary>
+	/// Saves the state of the persistable object to a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <returns>A string representing the saved state.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
+	public static string SaveToString(this ISerializer<SettingsStorage> serializer, IPersistable persistable)
+		=> AsyncHelper.Run(() => serializer.SaveToStringAsync(persistable, default));
+
+	/// <summary>
+	/// Saves the state of the persistable object to a string using the provided serializer.
+	/// </summary>
+	/// <param name="serializer">The serializer to use.</param>
+	/// <param name="persistable">The persistable object to save.</param>
+	/// <param name="cancellationToken">A token for cancellation.</param>
+	/// <returns>A string representing the saved state.</returns>
+	[Obsolete("IPersistable is obsolete. Use the IAsyncPersistable overload instead.")]
+	public static ValueTask<string> SaveToStringAsync(this ISerializer<SettingsStorage> serializer, IPersistable persistable, CancellationToken cancellationToken)
+	{
+		if (persistable is null)
+			throw new ArgumentNullException(nameof(persistable));
+
+		return serializer.SaveToStringAsync(persistable.Save(), cancellationToken);
 	}
 
 	/// <summary>
