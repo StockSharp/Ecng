@@ -433,9 +433,29 @@ public class RelationManyListTests : BaseTestClass
 		var updated = new TestItem { Id = 8, Name = "second" };
 		await list.UpdateAsync(updated, CancellationToken);
 
-		// Same id -> single entry, original instance preserved by TryAdd semantics.
-		list.CachedEntities.Count.AssertEqual(1);
-		list.CachedEntities[8L].Name.AssertEqual("first");
+		AreEqual(1, list.CachedEntities.Count);
+		AreEqual("second", list.CachedEntities[8L].Name);
+		AreEqual("second", (await list.GetRangeAsync(0, long.MaxValue, false, null, ListSortDirection.Ascending, CancellationToken)).Single().Name);
+		AreEqual(1, await list.CountAsync(CancellationToken));
+	}
+
+	[TestMethod]
+	public async Task UpdateAsync_BulkLoad_KeyLookupUsesUpdatedEntry()
+	{
+		var list = new TestRelationManyList(new NullStorage())
+		{
+			BulkLoad = true,
+			GroupItems = [new TestItem { Id = 8, Name = "first" }, new TestItem { Id = 9, Name = "other" }],
+		};
+
+		AreEqual(8L, (await list.GetByKeyAsync(i => i.Name, "first", CancellationToken)).Single().Id);
+
+		await list.UpdateAsync(new TestItem { Id = 8, Name = "second" }, CancellationToken);
+
+		AreEqual(0, (await list.GetByKeyAsync(i => i.Name, "first", CancellationToken)).Length);
+		AreEqual(8L, (await list.GetByKeyAsync(i => i.Name, "second", CancellationToken)).Single().Id);
+		AreEqual(9L, (await list.GetByKeyAsync(i => i.Name, "other", CancellationToken)).Single().Id);
+		AreEqual(2, await list.CountAsync(CancellationToken));
 	}
 
 	[TestMethod]

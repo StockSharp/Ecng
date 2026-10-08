@@ -296,16 +296,14 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 		{
 			var id = GetCacheId(entity);
 
-			var isNew = false;
+			bool isNew;
 
 			var (sync, dict) = CachedEntitiesPair;
 
 			using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
 			{
-				if (dict.TryAdd(id, entity))
-				{
-					isNew = true;
-				}
+				isNew = !dict.ContainsKey(id);
+				dict[id] = entity;
 			}
 
 			if (isNew)
@@ -421,7 +419,7 @@ public abstract class RelationManyList<TEntity, TId>(IStorage storage) : IRelati
 
 				// Idempotent put: the row was successfully saved, so refresh/keep the cache
 				// entry instead of Add(), which throws if a concurrent (or pre-populated)
-				// bulk cache already holds this id (UpdateAsync uses TryAdd for the same reason).
+				// bulk cache already holds this id.
 				using (await sync.WriterLockAsync(cancellationToken).ConfigureAwait(false))
 					dict[GetCacheId(item)] = item;
 
