@@ -282,10 +282,10 @@ Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
 ## Image Processing
 
-\`ImageHelper\` works with encoded \`byte[]\` images (PNG, JPEG, and other formats recognized by ImageSharp).
-Its operations do not modify the input buffer; \`GetImageSize\` also accepts \`ReadOnlySpan<byte>\`.
+`ImageHelper` works with encoded `byte[]` images (PNG, JPEG, and other formats recognized by ImageSharp).
+Its operations do not modify the input buffer; `GetImageSize` also accepts `ReadOnlySpan<byte>`.
 
-\`\`\`csharp
+```csharp
 using Ecng.Drawing;
 
 byte[] source = await File.ReadAllBytesAsync("photo.jpg");
@@ -295,14 +295,14 @@ byte[] smaller = source.ResizeImage(maxWidth: 640, maxHeight: 480);
 byte[] png = smaller.ConvertToPng();
 byte[] watermarked = png.AddTextWatermark("StockSharp", fontSize: 24);
 await File.WriteAllBytesAsync("photo-watermarked.png", watermarked);
-\`\`\`
+```
 
-- \`GetImageSize\` reads dimensions without decoding the pixels; \`GetPngSize\` is the lighter PNG-only header helper.
-- \`ResizeImage\` scales **down only**, preserves aspect ratio and the original format, and returns an independent copy even if already small enough.
-- \`ConvertToPng\` always returns PNG and preserves alpha, using only the first frame of animated input.
-- \`AddTextWatermark\` draws semi-transparent white text near the bottom-right corner, shrinks the font if necessary, and returns PNG. Defaults: Verdana, 24 pt, alpha 160, margin 12 pixels.
+- `GetImageSize` reads dimensions without decoding the pixels; `GetPngSize` is the lighter PNG-only header helper.
+- `ResizeImage` scales **down only**, preserves aspect ratio and the original format, and returns an independent copy even if already small enough.
+- `ConvertToPng` always returns PNG and preserves alpha, using only the first frame of animated input.
+- `AddTextWatermark` draws semi-transparent white text near the bottom-right corner, shrinks the font if necessary, and returns PNG. Defaults: Verdana, 24 pt, alpha 160, margin 12 pixels.
 
-**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as \`fontFamily: "DejaVu Sans"\`. The method reports a missing font instead of silently substituting one. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
+**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as `fontFamily: "DejaVu Sans"`. The method reports a missing font instead of silently substituting one. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
 
 ## Usage Examples
 
