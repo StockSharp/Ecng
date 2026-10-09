@@ -57,7 +57,12 @@ public static class ImageHelper
 		var width = Math.Max(1, (int)Math.Floor(image.Width * scale));
 		var height = Math.Max(1, (int)Math.Floor(image.Height * scale));
 
-		image.Mutate(ctx => ctx.Resize(new ImageSharpSize(width, height), KnownResamplers.Lanczos3));
+		image.Mutate(ctx => ctx.Resize(new ResizeOptions
+		{
+			Size = new ImageSharpSize(width, height),
+			Mode = ResizeMode.Stretch,
+			Sampler = KnownResamplers.Lanczos3,
+		}));
 
 		IImageFormat format = image.Metadata.DecodedImageFormat
 			?? throw new InvalidDataException("The decoded image format is unknown.");
