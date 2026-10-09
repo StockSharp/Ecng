@@ -141,9 +141,12 @@ public static class ImageHelper
 
 		try
 		{
-			using var graphics = new NativeGraphics(canvas);
-			graphics.Draw(source.Handle, source.Width, source.Height, source.Width, source.Height);
-			graphics.DrawWatermark(text, fontSize, opacity, margin, fontFamily, source.Width, source.Height);
+			using (var graphics = new NativeGraphics(canvas))
+			{
+				graphics.Draw(source.Handle, source.Width, source.Height, source.Width, source.Height);
+				graphics.DrawWatermark(text, fontSize, opacity, margin, fontFamily, source.Width, source.Height);
+			}
+
 			return Save(canvas, Encoder.Png);
 		}
 		finally
