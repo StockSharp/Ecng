@@ -12,6 +12,7 @@ A lightweight, cross-platform drawing primitives library for .NET applications. 
   - [Layout and Alignment](#layout-and-alignment)
   - [Drawing Styles](#drawing-styles)
   - [PNG Header](#png-header)
+  - [Image Processing](#image-processing)
 - [Usage Examples](#usage-examples)
 - [Target Frameworks](#target-frameworks)
 
@@ -30,6 +31,7 @@ Add a reference to the `Ecng.Drawing` project or NuGet package in your .NET appl
 - **Layout Primitives**: Thickness, alignment enums for UI layout
 - **Drawing Styles**: Comprehensive set of chart and visualization styles
 - **PNG Header**: Tell a PNG picture by its signature and read its size without decoding it
+- **Image Processing**: Dimensions, downscaling, PNG conversion, and text watermarks
 - **Cross-Platform**: Supports .NET Standard 2.0, .NET 6.0, and .NET 10.0
 - **Lightweight**: Minimal dependencies, no heavy graphics frameworks required
 
@@ -277,6 +279,30 @@ if (picture.TryGetPngSize(out var read))
 ```
 
 Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
+
+## Image Processing
+
+\`ImageHelper\` works with encoded \`byte[]\` images (PNG, JPEG, and other formats recognized by ImageSharp).
+Its operations do not modify the input buffer; \`GetImageSize\` also accepts \`ReadOnlySpan<byte>\`.
+
+\`\`\`csharp
+using Ecng.Drawing;
+
+byte[] source = await File.ReadAllBytesAsync("photo.jpg");
+var dimensions = source.GetImageSize();
+
+byte[] smaller = source.ResizeImage(maxWidth: 640, maxHeight: 480);
+byte[] png = smaller.ConvertToPng();
+byte[] watermarked = png.AddTextWatermark("StockSharp", fontSize: 24);
+await File.WriteAllBytesAsync("photo-watermarked.png", watermarked);
+\`\`\`
+
+- \`GetImageSize\` reads dimensions without decoding the pixels; \`GetPngSize\` is the lighter PNG-only header helper.
+- \`ResizeImage\` scales **down only**, preserves aspect ratio and the original format, and returns an independent copy even if already small enough.
+- \`ConvertToPng\` always returns PNG and preserves alpha, using only the first frame of animated input.
+- \`AddTextWatermark\` draws semi-transparent white text near the bottom-right corner, shrinks the font if necessary, and returns PNG. Defaults: Verdana, 24 pt, alpha 160, margin 12 pixels.
+
+**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as \`fontFamily: "DejaVu Sans"\`. The method reports a missing font instead of silently substituting one. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
 
 ## Usage Examples
 
