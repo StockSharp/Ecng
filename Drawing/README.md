@@ -280,29 +280,22 @@ if (picture.TryGetPngSize(out var read))
 
 Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
-## Image Processing
+## Image Processing (no third-party libraries)
 
-`ImageHelper` works with encoded `byte[]` images (PNG, JPEG, and other formats recognized by ImageSharp, except TIFF).
-Its operations do not modify the input buffer; `GetImageSize` also accepts `ReadOnlySpan<byte>`.
+The image helper has **no NuGet imaging or font dependencies**. It uses built-in Windows GDI+ for decoding, resizing, PNG output and installed Verdana text rendering. The project still builds on Linux/macOS, but those operating systems can only read PNG dimensions using the separate managed `PngHelper`. Rendering methods throw `PlatformNotSupportedException` outside Windows; .NET 6 and .NET 10 have no universal platform-independent image decoder or TrueType renderer in their base class libraries.
 
 ```csharp
 using Ecng.Drawing;
 
-byte[] source = await File.ReadAllBytesAsync("photo.jpg");
-var dimensions = source.GetImageSize();
-
-byte[] smaller = source.ResizeImage(maxWidth: 640, maxHeight: 480);
-byte[] png = smaller.ConvertToPng();
-byte[] watermarked = png.AddTextWatermark("StockSharp", fontSize: 24);
-await File.WriteAllBytesAsync("photo-watermarked.png", watermarked);
+byte[] original = await File.ReadAllBytesAsync("photo.jpg");
+var dimensions = original.GetImageSize();
+byte[] smaller = original.ResizeImage(640, 480); // Windows; preserves aspect ratio and format
+byte[] png = smaller.ConvertToPng();             // Windows; PNG output
+byte[] watermarked = png.AddTextWatermark("StockSharp"); // Windows; Verdana
+await File.WriteAllBytesAsync("watermarked.png", watermarked);
 ```
 
-- `GetImageSize` reads dimensions without decoding the pixels; `GetPngSize` is the lighter PNG-only header helper.
-- `ResizeImage` scales **down only**, preserves aspect ratio and the original format, and returns an independent copy even if already small enough.
-- `ConvertToPng` always returns PNG and preserves alpha, using only the first frame of animated input.
-- `AddTextWatermark` draws semi-transparent white text near the bottom-right corner, shrinks the font if necessary, and returns PNG. Defaults: Verdana, 24 pt, alpha 160, margin 12 pixels.
-
-**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as `fontFamily: "DejaVu Sans"`. The method reports a missing font instead of silently substituting one. TIFF input is rejected before decoding because available ImageSharp 3.x releases have unpatched TIFF decoder advisories; decoding skips unnecessary metadata. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
+PNG dimensions can be read on any OS without decoding via `GetPngSize` or `GetImageSize`. On Windows the supported formats are PNG, JPEG, GIF and BMP. GIF processing flattens animation to the first frame. Image methods return new arrays and do not modify their source. The Windows watermark defaults to white, 24 pt, 160/255 opacity and a 12-pixel margin. It requires Verdana to be installed; pass another installed `fontFamily` to override it.
 
 ## Usage Examples
 
