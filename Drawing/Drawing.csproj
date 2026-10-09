@@ -2,5 +2,8 @@
   <Import Project="..\common.props" />
   <ItemGroup>
     <ProjectReference Include="..\Localization\Localization.csproj" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="$(ImageSharpVer)" />
+    <!-- ImageSharp.Drawing 3.x requires ImageSharp 4.x and net8+, so retain 2.1 on net6. -->
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="$(ImageSharpDrawingVer)" />
   </ItemGroup>
 </Project>
