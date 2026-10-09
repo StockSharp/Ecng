@@ -44,7 +44,6 @@
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>7.9.0</NuGetApiVer>
-    <ImageSharpVer>3.*</ImageSharpVer>
     <MsSqlClientVer>7.*</MsSqlClientVer>
     <!-- 11.0 preview: pulls SQLitePCLRaw.bundle_e_sqlite3 3.0.3 (SQLite >= 3.50.2)
          transitively, clearing NU1903/CVE-2025-6965. The 10.* line still ships the

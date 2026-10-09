@@ -11,6 +11,7 @@ A lightweight, cross-platform drawing primitives library for .NET applications. 
   - [Brushes](#brushes)
   - [Layout and Alignment](#layout-and-alignment)
   - [Drawing Styles](#drawing-styles)
+  - [PNG Header](#png-header)
 - [Usage Examples](#usage-examples)
 - [Target Frameworks](#target-frameworks)
 
@@ -28,6 +29,7 @@ Add a reference to the `Ecng.Drawing` project or NuGet package in your .NET appl
 - **Brush Abstractions**: Solid and gradient brush implementations for graphics rendering
 - **Layout Primitives**: Thickness, alignment enums for UI layout
 - **Drawing Styles**: Comprehensive set of chart and visualization styles
+- **PNG Header**: Tell a PNG picture by its signature and read its size without decoding it
 - **Cross-Platform**: Supports .NET Standard 2.0, .NET 6.0, and .NET 10.0
 - **Lightweight**: Minimal dependencies, no heavy graphics frameworks required
 
@@ -251,6 +253,30 @@ void ApplyChartStyle(DrawStyles style)
     }
 }
 ```
+
+### PNG Header
+
+The `PngHelper` class reads what a PNG picture states about itself in its header, without decoding the picture.
+The size sits in the first 24 bytes, so the beginning of a picture is enough.
+
+```csharp
+using System.Drawing;
+using Ecng.Drawing;
+
+byte[] picture = await http.GetByteArrayAsync(url);
+
+// By the signature every PNG picture starts with
+bool isPng = picture.IsPng();
+
+// Throws InvalidDataException if the data does not begin with a PNG header
+Size size = picture.GetPngSize();
+
+// The same without an exception
+if (picture.TryGetPngSize(out var read))
+    Console.WriteLine($"{read.Width}x{read.Height}");
+```
+
+Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
 ## Usage Examples
 

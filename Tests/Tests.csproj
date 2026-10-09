@@ -10,7 +10,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="$(ImageSharpVer)" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MsSqlClientVer)" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MsDataSqliteVer)" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />

@@ -1,9 +1,10 @@
 ﻿namespace Ecng.Tests.Net;
 
+using System.Drawing;
+
+using Ecng.Drawing;
 using Ecng.Net;
 using Ecng.Serialization;
-
-using SixLabors.ImageSharp;
 
 [TestClass]
 public class NetworkHelperTests : BaseTestClass
@@ -322,9 +323,7 @@ public class NetworkHelperTests : BaseTestClass
 			// Assert
 			bytes.Length.AssertGreater(0);
 
-			using var image = Image.Load(bytes);
-			image.Width.AssertEqual(size);
-			image.Height.AssertEqual(size);
+			bytes.GetPngSize().AssertEqual(new Size(size, size));
 		}).WhenAll();
 	}
 
