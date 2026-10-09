@@ -1,7 +1,7 @@
 namespace Ecng.Drawing;
 
 using System;
-using System.Drawing;
+using SystemDrawingSize = System.Drawing.Size;
 using System.IO;
 
 using SixLabors.Fonts;
@@ -24,11 +24,11 @@ public static class ImageHelper
 	/// Reads the image dimensions without decoding pixel data. Supports all image formats recognized by ImageSharp.
 	/// For a PNG-only fast header check see <see cref="PngHelper.GetPngSize(byte[])"/>.
 	/// </summary>
-	public static Size GetImageSize(this byte[] data)
+	public static SystemDrawingSize GetImageSize(this byte[] data)
 		=> GetImageSize((ReadOnlySpan<byte>)(data ?? throw new ArgumentNullException(nameof(data))));
 
 	/// <inheritdoc cref="GetImageSize(byte[])"/>
-	public static Size GetImageSize(this ReadOnlySpan<byte> data)
+	public static SystemDrawingSize GetImageSize(this ReadOnlySpan<byte> data)
 	{
 		var info = Image.Identify(data);
 		return new(info.Width, info.Height);
