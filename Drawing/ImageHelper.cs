@@ -30,7 +30,8 @@ public static class ImageHelper
 	/// <inheritdoc cref="GetImageSize(byte[])"/>
 	public static SystemDrawingSize GetImageSize(this ReadOnlySpan<byte> data)
 	{
-		var info = Image.Identify(data);
+		RejectTiff(data);
+		var info = Image.Identify(new DecoderOptions { SkipMetadata = true }, data);
 		return new(info.Width, info.Height);
 	}
 
@@ -48,7 +49,8 @@ public static class ImageHelper
 		if (maxHeight <= 0)
 			throw new ArgumentOutOfRangeException(nameof(maxHeight));
 
-		using var image = Image.Load(data);
+		RejectTiff(data);
+		using var image = Image.Load(new DecoderOptions { SkipMetadata = true }, data);
 		var scale = Math.Min((double)maxWidth / image.Width, (double)maxHeight / image.Height);
 
 		if (scale >= 1)
@@ -79,7 +81,8 @@ public static class ImageHelper
 	{
 		ArgumentNullException.ThrowIfNull(data);
 
-		using var image = Image.Load<Rgba32>(data);
+		RejectTiff(data);
+		using var image = Image.Load<Rgba32>(new DecoderOptions { SkipMetadata = true }, data);
 		KeepFirstFrame(image);
 
 		using var output = new MemoryStream();
@@ -123,7 +126,8 @@ public static class ImageHelper
 		if (!SystemFonts.TryGet(fontFamily, out var family))
 			throw new InvalidOperationException($"Font '{fontFamily}' is not installed. Install it or specify another font family.");
 
-		using var image = Image.Load<Rgba32>(data);
+		RejectTiff(data);
+		using var image = Image.Load<Rgba32>(new DecoderOptions { SkipMetadata = true }, data);
 		KeepFirstFrame(image);
 
 		// Use long arithmetic for margins to prevent integer overflow.
@@ -169,6 +173,16 @@ public static class ImageHelper
 		using var output = new MemoryStream();
 		image.SaveAsPng(output);
 		return output.ToArray();
+	}
+
+	// ImageSharp 3.x is required by the project's net6 target. Its TIFF decoder has
+	// published security advisories without a 3.x patch; reject TIFF before decoding.
+	private static void RejectTiff(ReadOnlySpan<byte> data)
+	{
+		var format = Image.DetectFormat(data);
+
+		if (string.Equals(format.Name, "TIFF", StringComparison.OrdinalIgnoreCase))
+			throw new NotSupportedException("TIFF decoding is not supported by this image helper.");
 	}
 
 	private static void KeepFirstFrame(Image<Rgba32> image)
