@@ -48,6 +48,25 @@ public class ImageHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Tiff_IsRejectedBeforeUnsafeDecoding()
+	{
+		using var original = new Image<Rgba32>(20, 10);
+		using var buffer = new MemoryStream();
+		original.SaveAsTiff(buffer);
+		var tiff = buffer.ToArray();
+
+		ThrowsExactly<NotSupportedException>(() => tiff.GetImageSize());
+		ThrowsExactly<NotSupportedException>(() => tiff.ResizeImage(10, 5));
+		ThrowsExactly<NotSupportedException>(() => tiff.ConvertToPng());
+		ThrowsExactly<NotSupportedException>(() => tiff.AddTextWatermark("test", fontFamily: TestFont));
+	}
+
+	private static string TestFont => new[]
+	{
+		"Verdana", "Arial", "DejaVu Sans", "Liberation Sans", "Helvetica", "Noto Sans"
+	}.FirstOrDefault(name => SystemFonts.TryGet(name, out _)) ?? SystemFonts.Families.First().Name;
+
+	[TestMethod]
 	public void ResizeImage_ConstrainedByWidthOrHeight_KeepAspectRatio()
 	{
 		var source = CreateImage(400, 200);
@@ -120,7 +139,7 @@ public class ImageHelperTests : BaseTestClass
 	{
 		var source = CreateImage(400, 170);
 		var original = (byte[])source.Clone();
-		var font = SystemFonts.Families.First().Name;
+		var font = TestFont;
 
 		var output = source.AddTextWatermark("StockSharp", fontSize: 24, opacity: 220, margin: 10, fontFamily: font);
 		output.IsPng().AssertTrue();
@@ -145,7 +164,7 @@ public class ImageHelperTests : BaseTestClass
 	[TestMethod]
 	public void AddTextWatermark_FitsLongTextWithinMargins()
 	{
-		var font = SystemFonts.Families.First().Name;
+		var font = TestFont;
 		var result = CreateImage(350, 140).AddTextWatermark(
 			"Long watermark text for checking resizing", fontSize: 50, margin: 8, fontFamily: font);
 
@@ -161,7 +180,7 @@ public class ImageHelperTests : BaseTestClass
 	[TestMethod]
 	public void AddTextWatermark_ConvertsJpegToPng()
 	{
-		var font = SystemFonts.Families.First().Name;
+		var font = TestFont;
 		var output = CreateImage(300, 150, jpeg: true).AddTextWatermark("ECNG", fontFamily: font);
 		output.IsPng().AssertTrue();
 		output.GetImageSize().AssertEqual(new DrawingSize(300, 150));
@@ -182,7 +201,7 @@ public class ImageHelperTests : BaseTestClass
 	public void AddTextWatermark_ValidatesArguments()
 	{
 		var source = CreateImage();
-		var font = SystemFonts.Families.First().Name;
+		var font = TestFont;
 
 		ThrowsExactly<ArgumentException>(() => source.AddTextWatermark(" "));
 		ThrowsExactly<ArgumentOutOfRangeException>(() => source.AddTextWatermark("text", fontSize: 0));
