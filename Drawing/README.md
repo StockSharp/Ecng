@@ -282,7 +282,7 @@ Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
 ## Image Processing
 
-`ImageHelper` works with encoded `byte[]` images (PNG, JPEG, and other formats recognized by ImageSharp).
+`ImageHelper` works with encoded `byte[]` images (PNG, JPEG, and other formats recognized by ImageSharp, except TIFF).
 Its operations do not modify the input buffer; `GetImageSize` also accepts `ReadOnlySpan<byte>`.
 
 ```csharp
@@ -302,7 +302,7 @@ await File.WriteAllBytesAsync("photo-watermarked.png", watermarked);
 - `ConvertToPng` always returns PNG and preserves alpha, using only the first frame of animated input.
 - `AddTextWatermark` draws semi-transparent white text near the bottom-right corner, shrinks the font if necessary, and returns PNG. Defaults: Verdana, 24 pt, alpha 160, margin 12 pixels.
 
-**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as `fontFamily: "DejaVu Sans"`. The method reports a missing font instead of silently substituting one. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
+**Fonts:** Verdana is not available by default on many Linux/macOS systems. Install Verdana or pass an installed family such as `fontFamily: "DejaVu Sans"`. The method reports a missing font instead of silently substituting one. TIFF input is rejected before decoding because available ImageSharp 3.x releases have unpatched TIFF decoder advisories; decoding skips unnecessary metadata. The drawing dependency is fixed to ImageSharp.Drawing 2.1.7 for .NET 6 compatibility. Review the Six Labors Split License for redistribution.
 
 ## Usage Examples
 
