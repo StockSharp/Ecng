@@ -101,7 +101,7 @@ public class ImageHelperTests : BaseTestClass
 		_rgba.ResizeImage(8, 8).GetPngSize().AssertEqual(new Size(8, 4));
 		_rgba.ResizeImage(4, 1).GetPngSize().AssertEqual(new Size(2, 1));
 		_rgba.ResizeImage(100, 100).GetPngSize().AssertEqual(new Size(16, 8));
-		_jpeg.ResizeImage(4, 4).GetPngSize().AssertEqual(new Size(4, 2));
+		_jpeg.ResizeImage(4, 4).GetImageSize().AssertEqual(new Size(4, 2));
 	}
 
 	[TestMethod]
