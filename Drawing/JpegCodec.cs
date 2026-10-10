@@ -154,12 +154,18 @@ internal static class JpegCodec
 		var width = 0;
 		var height = 0;
 		var restartInterval = 0;
+		var adobeTransform = -1;
 		var foundScan = false;
 
 		while (NextSegment(data, ref cursor, out var marker, out var segment))
 		{
 			switch (marker)
 			{
+				case 0xEE:
+					if (segment.Length >= 12 && segment.Slice(0, 5).SequenceEqual("Adobe"u8))
+						adobeTransform = segment[11];
+					break;
+
 				case 0xDB:
 					for (var p = 0; p < segment.Length;)
 					{
@@ -219,8 +225,8 @@ internal static class JpegCodec
 					CheckSize(width, height);
 					var count = segment[5];
 
-					if (count != 1 && count != 3)
-						throw new NotSupportedException("Only grayscale and YCbCr JPEG are supported.");
+					if (count != 1 && count != 3 && count != 4)
+						throw new NotSupportedException("JPEG must have 1, 3 or 4 color components.");
 
 					if (segment.Length != 6 + count * 3)
 						throw new InvalidDataException("Malformed JPEG frame components.");
@@ -353,13 +359,38 @@ internal static class JpegCodec
 				{
 					result.Pixels[off] = result.Pixels[off + 1] = result.Pixels[off + 2] = yy;
 				}
-				else
+				else if (components.Length == 3)
 				{
 					var cb = Value(components[1], x, y, maxH, maxV) - 128;
 					var cr = Value(components[2], x, y, maxH, maxV) - 128;
 					result.Pixels[off] = RasterImage.ToByte(yy + 1.402 * cr);
 					result.Pixels[off + 1] = RasterImage.ToByte(yy - 0.344136 * cb - 0.714136 * cr);
 					result.Pixels[off + 2] = RasterImage.ToByte(yy + 1.772 * cb);
+				}
+				else
+				{
+					var k = Value(components[3], x, y, maxH, maxV);
+					if (adobeTransform == 2) // YCCK: YCbCr encodes inverted CMY
+					{
+						var cb = Value(components[1], x, y, maxH, maxV) - 128;
+						var cr = Value(components[2], x, y, maxH, maxV) - 128;
+						result.Pixels[off] = RasterImage.ToByte((yy + 1.402 * cr) * k / 255.0);
+						result.Pixels[off + 1] = RasterImage.ToByte((yy - 0.344136 * cb - 0.714136 * cr) * k / 255.0);
+						result.Pixels[off + 2] = RasterImage.ToByte((yy + 1.772 * cb) * k / 255.0);
+					}
+					else if (adobeTransform == 0) // Adobe inverted CMYK
+					{
+						result.Pixels[off] = RasterImage.ToByte(yy * k / 255.0);
+						result.Pixels[off + 1] = RasterImage.ToByte(Value(components[1], x, y, maxH, maxV) * k / 255.0);
+						result.Pixels[off + 2] = RasterImage.ToByte(Value(components[2], x, y, maxH, maxV) * k / 255.0);
+					}
+					else if (adobeTransform == -1) // non-Adobe conventional CMYK
+					{
+						result.Pixels[off] = RasterImage.ToByte((255 - yy) * (255 - k) / 255.0);
+						result.Pixels[off + 1] = RasterImage.ToByte((255 - Value(components[1], x, y, maxH, maxV)) * (255 - k) / 255.0);
+						result.Pixels[off + 2] = RasterImage.ToByte((255 - Value(components[2], x, y, maxH, maxV)) * (255 - k) / 255.0);
+					}
+					else throw new NotSupportedException("Unsupported Adobe JPEG color transform.");
 				}
 				result.Pixels[off + 3] = 255;
 			}
