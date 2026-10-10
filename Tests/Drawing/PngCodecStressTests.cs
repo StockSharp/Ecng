@@ -92,11 +92,12 @@ public class PngCodecStressTests : BaseTestClass
 	public void Png_Rgba16Bit_ConvertsEveryChannelToHighOrderByte()
 	{
 		byte[] samples = [12,34,56,78,100,120,140,160,201,217,233,249,77,33,22,11];
-		var raw = new byte[1+16*2];
+		var raw = new byte[2*(1+2*4*2)];
 		for(var i=0;i<16;i++)
 		{
-			raw[1+i*2]=samples[i];
-			raw[2+i*2]= (byte)(i*11);
+			var at=1+(i/8)*17+(i%8)*2;
+			raw[at]=samples[i];
+			raw[at+1]=(byte)(i*11);
 		}
 		var png=RawPng(2,2,16,6,0,raw,[],[]);
 		// Four pixels, each RGBA channel retained via high byte.
