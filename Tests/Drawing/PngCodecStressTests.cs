@@ -469,4 +469,55 @@ public class PngCodecStressTests : BaseTestClass
 		return result;
 	}
 
+
+	[TestMethod]
+	public void Png_IdatChunksSeparatedByAncillaryChunk_MustBeRejected()
+	{
+		// Valid PNG compressors may split one zlib stream into multiple IDAT
+		// chunks, but the chunks must be contiguous (PNG chunk ordering rule).
+		var original=Pack(7,5,Pattern(7,5),0,false);
+		var originalIdatLength=BinaryPrimitives.ReadInt32BigEndian(original.AsSpan(33,4));
+		var compressed=original.AsSpan(41,originalIdatLength).ToArray();
+		using var file=new MemoryStream();
+		file.Write(original,0,33);
+		var split=compressed.Length/2;
+		Chunk(file,"IDAT",compressed.AsSpan(0,split).ToArray());
+		Chunk(file,"tEXt",[77,97,114,107]);
+		Chunk(file,"IDAT",compressed.AsSpan(split).ToArray());
+		Chunk(file,"IEND",[]);
+		ThrowsExactly<InvalidDataException>(()=>file.ToArray().ConvertToPng());
+	}
+
+	[TestMethod]
+	public void Png_ConsecutiveIdatChunks_AreDecodedAsOneCompressedStream()
+	{
+		var original=Pack(7,5,Pattern(7,5),0,false);
+		var len=BinaryPrimitives.ReadInt32BigEndian(original.AsSpan(33,4));
+		var compressed=original.AsSpan(41,len).ToArray();
+		using var file=new MemoryStream();
+		file.Write(original,0,33);
+		var split=compressed.Length/3;
+		Chunk(file,"IDAT",compressed.AsSpan(0,split).ToArray());
+		Chunk(file,"IDAT",compressed.AsSpan(split,compressed.Length-split).ToArray());
+		Chunk(file,"IEND",[]);
+		Compare(Pattern(7,5),DecodeOutput(file.ToArray().ConvertToPng(),7,5),7);
+	}
+
+	[TestMethod]
+	public void Png_DuplicateIhdrOrMisorderedPalette_IsInvalid()
+	{
+		var original=Pack(3,3,Pattern(3,3),0,false);
+		using var duplicated=new MemoryStream();
+		duplicated.Write(original,0,33);
+		duplicated.Write(original,8,25); // second complete IHDR
+		duplicated.Write(original,33,original.Length-33);
+		ThrowsExactly<InvalidDataException>(()=>duplicated.ToArray().ConvertToPng());
+
+		using var misplaced=new MemoryStream();
+		misplaced.Write(original,0,original.Length-12); // IHDR + IDAT
+		Chunk(misplaced,"PLTE",[0,0,0,255,255,255]);
+		Chunk(misplaced,"IEND",[]);
+		ThrowsExactly<InvalidDataException>(()=>misplaced.ToArray().ConvertToPng());
+	}
+
 }
