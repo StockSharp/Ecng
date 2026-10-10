@@ -44,6 +44,7 @@ internal static class PngCodec
 		var transparency = Array.Empty<byte>();
 		var gotHeader = false;
 		var gotData = false;
+		var dataClosed = false;
 		var ended = false;
 		using var compressed = new MemoryStream();
 		var offset = 8;
@@ -59,6 +60,11 @@ internal static class PngCodec
 			var actualCrc = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(offset + 8 + (int)length, 4));
 			if (actualCrc != Crc(data.AsSpan(offset + 4, (int)length + 4)))
 				throw new InvalidDataException("PNG CRC mismatch.");
+
+			// PNG requires all IDAT chunks to appear consecutively.
+			// Ancillary chunks may follow IDAT, but cannot split its sequence.
+			if (gotData && !tag.SequenceEqual("IDAT"u8) && !tag.SequenceEqual("IEND"u8))
+				dataClosed = true;
 
 			if (tag.SequenceEqual("IHDR"u8))
 			{
@@ -88,6 +94,8 @@ internal static class PngCodec
 			}
 			else if (tag.SequenceEqual("IDAT"u8))
 			{
+				if (dataClosed)
+					throw new InvalidDataException("PNG IDAT chunks must be contiguous.");
 				if (!gotHeader)
 					throw new InvalidDataException("PNG data precedes header.");
 				gotData = true;
