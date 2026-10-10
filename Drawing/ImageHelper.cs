@@ -29,7 +29,8 @@ public static class ImageHelper
 	/// <summary>
 	/// Reduces the image to fit within the specified dimensions while keeping aspect
 	/// ratio and proper premultiplied-alpha interpolation. Does not enlarge images.
-	/// Always returns PNG to avoid lossy double encoding of JPEG sources.
+	/// Preserves the source format: PNG remains lossless PNG; JPEG is re-encoded
+	/// as baseline JPEG only when its dimensions actually change.
 	/// </summary>
 	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight)
 	{
@@ -40,11 +41,12 @@ public static class ImageHelper
 		var image = Decode(data);
 		var ratio = Math.Min((double)maxWidth / image.Width, (double)maxHeight / image.Height);
 		if (ratio >= 1)
-			return PngCodec.Encode(image);
+			return (byte[])data.Clone();
 
 		var width = Math.Max(1, (int)Math.Floor(image.Width * ratio));
 		var height = Math.Max(1, (int)Math.Floor(image.Height * ratio));
-		return PngCodec.Encode(image.Downscale(width, height));
+		var resized = image.Downscale(width, height);
+		return JpegCodec.IsJpeg(data) ? JpegEncoder.Encode(resized) : PngCodec.Encode(resized);
 	}
 
 	/// <summary>
