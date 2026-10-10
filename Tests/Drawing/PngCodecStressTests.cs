@@ -263,4 +263,203 @@ public class PngCodecStressTests : BaseTestClass
 				Assert.Fail($"Pixel ({i/4%width},{i/4/width}), channel {"RGBA"[i%4]}: "+
 					$"expected {expected[i]} actual {actual[i]}");
 	}
+
+	[TestMethod]
+	public void Png_AllLegalColorTypesAndBitDepths_AgreeWithIndependentPixelOracle()
+	{
+		// All 15 legal (color type, bit depth) pairs, each with odd-width rows.
+		foreach (var (color, depth) in new (byte color, byte depth)[]
+		{
+			(0,1),(0,2),(0,4),(0,8),(0,16),
+			(2,8),(2,16),
+			(3,1),(3,2),(3,4),(3,8),
+			(4,8),(4,16),
+			(6,8),(6,16)
+		})
+		{
+			const int width = 5, height = 3;
+			var channels = color switch { 2=>3, 4=>2, 6=>4, _=>1 };
+			var maxSample = depth == 16 ? 65535 : (1 << depth) - 1;
+			byte[] palette = [], transparency = [];
+			if (color == 3)
+			{
+				var count = 1 << depth;
+				palette = new byte[count*3];
+				for (var index = 0; index < count; index++)
+				{
+					palette[3*index] = (byte)(17*index);
+					palette[3*index+1] = (byte)(255-index);
+					palette[3*index+2] = (byte)(index ^ 0x5a);
+				}
+				transparency = Enumerable.Range(0,Math.Min(count,5)).Select(i=>(byte)(i*43)).ToArray();
+			}
+
+			var samples = new int[width*height*channels];
+			for (var p = 0; p < width*height; p++)
+				for (var c = 0; c < channels; c++)
+					samples[p*channels+c] = color == 3
+						? p % (1 << depth)
+						: (p*37001 + c*13111 + 17773) & maxSample;
+
+			using var raw = new MemoryStream();
+			for (var y=0; y<height; y++)
+			{
+				raw.WriteByte((byte)(y%5));
+				// Build a zero-filtered row, then encode the appropriate PNG
+				// filter separately for each byte (bpp is not always 4).
+				var row = PackSamples(samples.AsSpan(y*width*channels,width*channels),depth);
+				var bpp=Math.Max(1,(channels*depth+7)/8);
+				var previous = y == 0 ? new byte[row.Length] :
+					PackSamples(samples.AsSpan((y-1)*width*channels,width*channels),depth);
+				for(var j=0;j<row.Length;j++)
+				{
+					var left=j>=bpp?row[j-bpp]:0;
+					var up=previous[j];
+					var upperLeft=j>=bpp?previous[j-bpp]:0;
+					var predictor = y%5 switch
+					{
+						0=>0, 1=>left, 2=>up, 3=>(left+up)/2,
+						4=>Paeth(left,up,upperLeft), _=>0
+					};
+					raw.WriteByte(unchecked((byte)(row[j]-predictor)));
+				}
+			}
+
+			var expected = new byte[width*height*4];
+			for(var p=0;p<width*height;p++)
+			{
+				int Read(int c) => samples[p*channels+c];
+				byte Normal(int v) => depth==16?(byte)(v>>8):depth==8?(byte)v:
+					(byte)(v*255/maxSample);
+				var off=p*4;
+				switch(color)
+				{
+					case 0:
+						expected[off]=expected[off+1]=expected[off+2]=Normal(Read(0));
+						expected[off+3]=255;
+						break;
+					case 2:
+						for(var c=0;c<3;c++)expected[off+c]=Normal(Read(c));
+						expected[off+3]=255;
+						break;
+					case 3:
+						var idx=Read(0);
+						Array.Copy(palette,idx*3,expected,off,3);
+						expected[off+3]=idx<transparency.Length?transparency[idx]:(byte)255;
+						break;
+					case 4:
+						expected[off]=expected[off+1]=expected[off+2]=Normal(Read(0));
+						expected[off+3]=Normal(Read(1));
+						break;
+					case 6:
+						for(var c=0;c<4;c++)expected[off+c]=Normal(Read(c));
+						break;
+				}
+			}
+
+			var source=RawPng(width,height,depth,color,0,raw.ToArray(),palette,transparency);
+			Compare(expected,DecodeOutput(source.ConvertToPng(),width,height),width);
+		}
+	}
+
+	[TestMethod]
+	public void Png_GrayscaleAndRgbTransparencyKeys_PreserveTransparentPixels()
+	{
+		foreach(var depth in new byte[]{1,2,4,8,16})
+		{
+			var value=depth==16?0x3040:depth==8?37:1;
+			byte[] raw=[0,..PackSamples([0,value,value,depth==16?65535:(1<<depth)-1],depth)];
+			byte[] key=[(byte)(value>>8),(byte)value];
+			var pixels=DecodeOutput(RawPng(4,1,depth,0,0,raw,[],key).ConvertToPng(),4,1);
+			for(var i=0;i<4;i++)
+				pixels[4*i+3].AssertEqual((byte)(i is 1 or 2?0:255));
+		}
+
+		foreach(var depth in new byte[]{8,16})
+		{
+			var values=depth==8?new[]{17,91,250}:new[]{0x1234,0x5678,0x9abc};
+			byte[] raw=[0,..PackSamples([
+				0,0,0,values[0],values[1],values[2],
+				values[0],values[1],values[2],values[0],values[1],values[0]],depth)];
+			var key=new byte[6];
+			for(var j=0;j<3;j++)
+			{
+				key[2*j]=(byte)(values[j]>>8);
+				key[2*j+1]=(byte)values[j];
+			}
+			var pixels=DecodeOutput(RawPng(4,1,depth,2,0,raw,[],key).ConvertToPng(),4,1);
+			for(var i=0;i<4;i++)
+				pixels[4*i+3].AssertEqual((byte)(i is 1 or 2?0:255));
+		}
+	}
+
+	[TestMethod]
+	public void Png_UnknownCriticalChunkRejected_AncillaryChunkIgnored()
+	{
+		var source=Pack(2,2,Pattern(2,2),0,false);
+		byte[] WithChunk(string tag)
+		{
+			using var output=new MemoryStream();
+			output.Write(source,0,33); // signature + IHDR
+			Chunk(output,tag,[11,22,33]);
+			output.Write(source,33,source.Length-33);
+			return output.ToArray();
+		}
+		ThrowsExactly<NotSupportedException>(()=>WithChunk("UNKN").ConvertToPng());
+		Compare(Pattern(2,2),DecodeOutput(WithChunk("tEXt").ConvertToPng(),2,2),2);
+	}
+
+	[TestMethod]
+	public void Png_TruncatedAndMalformedContents_FailWithoutRuntimeIndexErrors()
+	{
+		var source=Pack(13,7,Pattern(13,7),4,false);
+		for(var length=8;length<source.Length;length+=Math.Max(1,source.Length/37))
+		{
+			var cut=source[..length];
+			try
+			{
+				cut.ConvertToPng();
+				Assert.Fail($"Truncated PNG accepted at {length} bytes.");
+			}
+			catch(InvalidDataException) {}
+			catch(NotSupportedException) {}
+		}
+
+		ThrowsExactly<NotSupportedException>(()=>
+			RawPng(1,1,4,6,0,[0,0,0,0,0],[],[]).ConvertToPng());
+		ThrowsExactly<NotSupportedException>(()=>
+			RawPng(1,1,8,6,2,[0,0,0,0,0],[],[]).ConvertToPng());
+		ThrowsExactly<InvalidDataException>(()=>
+			RawPng(2,1,8,3,0,[0,1,2],[255,0,0],[]).ConvertToPng());
+		ThrowsExactly<InvalidDataException>(()=>
+			RawPng(1,1,8,6,0,[0,0,0,0,0,0,255],[],[]).ConvertToPng());
+	}
+
+	[TestMethod]
+	public void Png_IendMustBeLastChunk_NotSilentlyIgnoreAppendedData()
+	{
+		var source=Pack(2,2,Pattern(2,2),0,false);
+		ThrowsExactly<InvalidDataException>(() => source.Concat([1,2,3,4]).ToArray().ConvertToPng());
+	}
+
+	private static byte[] PackSamples(ReadOnlySpan<int> samples,int depth)
+	{
+		var result=new byte[(samples.Length*depth+7)/8];
+		for(var i=0;i<samples.Length;i++)
+		{
+			if(depth==16)
+			{
+				result[i*2]=(byte)(samples[i]>>8);
+				result[i*2+1]=(byte)samples[i];
+			}
+			else if(depth==8)result[i]=(byte)samples[i];
+			else
+			{
+				var bit=i*depth;
+				result[bit/8]|=(byte)(samples[i] << (8-depth-bit%8));
+			}
+		}
+		return result;
+	}
+
 }
