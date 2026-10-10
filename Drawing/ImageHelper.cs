@@ -11,7 +11,7 @@ using System.IO;
 public static class ImageHelper
 {
 	/// <summary>
-	/// Reads dimensions from the PNG or JPEG header without allocating a pixel buffer.
+	/// Reads PNG, JPEG, BMP and GIF dimensions without allocating a pixel buffer.
 	/// </summary>
 	public static Size GetImageSize(this byte[] data)
 		=> GetImageSize((ReadOnlySpan<byte>)(data ?? throw new ArgumentNullException(nameof(data))));
@@ -21,7 +21,9 @@ public static class ImageHelper
 	{
 		var (width, height) = PngCodec.IsPng(data) ? PngCodec.ReadSize(data) :
 			JpegCodec.IsJpeg(data) ? JpegCodec.ReadSize(data) :
-			throw new NotSupportedException("Only PNG and JPEG images are supported.");
+			BmpCodec.IsBmp(data) ? BmpCodec.ReadSize(data) :
+			GifCodec.IsGif(data) ? GifCodec.ReadSize(data) :
+			throw new NotSupportedException("Only PNG, JPEG, BMP and GIF images are supported.");
 
 		return new Size(width, height);
 	}
@@ -38,6 +40,20 @@ public static class ImageHelper
 		if (maxWidth <= 0) throw new ArgumentOutOfRangeException(nameof(maxWidth));
 		if (maxHeight <= 0) throw new ArgumentOutOfRangeException(nameof(maxHeight));
 
+		if (GifCodec.IsGif(data))
+		{
+			var animation = GifCodec.Decode(data);
+			var gifRatio = Math.Min((double)maxWidth / animation.Width, (double)maxHeight / animation.Height);
+			if (gifRatio >= 1) return (byte[])data.Clone();
+			var gifWidth = Math.Max(1, (int)Math.Floor(animation.Width * gifRatio));
+			var gifHeight = Math.Max(1, (int)Math.Floor(animation.Height * gifRatio));
+			var resizedAnimation = new GifAnimation(gifWidth, gifHeight) { LoopCount = animation.LoopCount };
+			foreach (var frame in animation.Frames)
+				resizedAnimation.Frames.Add(new GifFrame(frame.Image.Downscale(gifWidth, gifHeight),
+					frame.DelayCentiseconds));
+			return GifCodec.Encode(resizedAnimation);
+		}
+
 		var image = Decode(data);
 		var ratio = Math.Min((double)maxWidth / image.Width, (double)maxHeight / image.Height);
 		if (ratio >= 1)
@@ -46,7 +62,8 @@ public static class ImageHelper
 		var width = Math.Max(1, (int)Math.Floor(image.Width * ratio));
 		var height = Math.Max(1, (int)Math.Floor(image.Height * ratio));
 		var resized = image.Downscale(width, height);
-		return JpegCodec.IsJpeg(data) ? JpegEncoder.Encode(resized) : PngCodec.Encode(resized);
+		return JpegCodec.IsJpeg(data) ? JpegEncoder.Encode(resized) :
+			BmpCodec.IsBmp(data) ? BmpCodec.Encode(resized) : PngCodec.Encode(resized);
 	}
 
 	/// <summary>
@@ -55,7 +72,7 @@ public static class ImageHelper
 	public static byte[] ConvertToPng(this byte[] data)
 	{
 		ArgumentNullException.ThrowIfNull(data);
-		return PngCodec.Encode(Decode(data));
+		return GifCodec.IsGif(data) ? ApngEncoder.Encode(GifCodec.Decode(data)) : PngCodec.Encode(Decode(data));
 	}
 
 	/// <summary>
@@ -84,6 +101,18 @@ public static class ImageHelper
 		if (string.IsNullOrWhiteSpace(fontFamily))
 			throw new ArgumentException("A font family is required.", nameof(fontFamily));
 
+		if (GifCodec.IsGif(data))
+		{
+			var animation = GifCodec.Decode(data);
+			if (2L * margin >= animation.Width || 2L * margin >= animation.Height)
+				throw new ArgumentOutOfRangeException(nameof(margin), "Margins leave no room for text.");
+			if (opacity == 0) return GifCodec.Encode(animation);
+			var font = new TrueTypeFont(TrueTypeFont.ResolveFontFile(fontFamily, fontFilePath));
+			foreach (var frame in animation.Frames)
+				font.Draw(frame.Image, text, fontSize, opacity, margin);
+			return GifCodec.Encode(animation);
+		}
+
 		var image = Decode(data);
 		if (2L * margin >= image.Width || 2L * margin >= image.Height)
 			throw new ArgumentOutOfRangeException(nameof(margin), "Margins leave no room for text.");
@@ -94,7 +123,27 @@ public static class ImageHelper
 			font.Draw(image, text, fontSize, opacity, margin);
 		}
 
-		return PngCodec.Encode(image);
+		return BmpCodec.IsBmp(data) ? BmpCodec.Encode(image) : PngCodec.Encode(image);
+	}
+
+	/// <summary>All displayed GIF frames as full-canvas RGBA8 PNG images with their delays.</summary>
+	public static System.Collections.Generic.IReadOnlyList<(byte[] png, int delayMilliseconds)> GetGifFrames(this byte[] data)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		if (!GifCodec.IsGif(data)) throw new NotSupportedException("Expected GIF87a/GIF89a data.");
+		var animation = GifCodec.Decode(data);
+		var frames = new (byte[] png, int delayMilliseconds)[animation.Frames.Count];
+		for (var i = 0; i < frames.Length; i++)
+			frames[i] = (PngCodec.Encode(animation.Frames[i].Image), animation.Frames[i].DelayCentiseconds * 10);
+		return frames;
+	}
+
+	/// <summary>NETSCAPE loop count: 0 for infinite; -1 if no loop extension exists.</summary>
+	public static int GetGifLoopCount(this byte[] data)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		if (!GifCodec.IsGif(data)) throw new NotSupportedException("Expected GIF87a/GIF89a data.");
+		return GifCodec.Decode(data).LoopCount;
 	}
 
 	private static RasterImage Decode(byte[] data)
@@ -102,6 +151,7 @@ public static class ImageHelper
 		if (data.Length == 0) throw new InvalidDataException("Image data is empty.");
 		if (PngCodec.IsPng(data)) return PngCodec.Decode(data);
 		if (JpegCodec.IsJpeg(data)) return JpegCodec.Decode(data);
-		throw new NotSupportedException("Only PNG and supported 8-bit JPEG images are supported.");
+		if (BmpCodec.IsBmp(data)) return BmpCodec.Decode(data);
+		throw new NotSupportedException("Only PNG, supported 8-bit JPEG, BMP and GIF are supported.");
 	}
 }
