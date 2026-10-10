@@ -1,0 +1,267 @@
+namespace Ecng.Tests.Drawing;
+
+using Ecng.Drawing;
+
+using static ImageTestHelper;
+
+/// <summary>
+/// JPEG decoding, resizing and watermarking checked against fixtures and reference
+/// pixels generated independently with Pillow (libjpeg). A watermarked JPEG is compared
+/// with its source as well as with the source written again by the library's own encoder.
+/// </summary>
+[TestClass]
+public class ImageExtendedTddTests : BaseTestClass
+{
+	// RGB 16x16: Pillow baseline 8-bit, Q92. Input is deliberately not a PNG.
+	private static readonly byte[] _baseline = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAQABADAREAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDov/r9/wA+f5nv0Ffh7atd+fX723u03pOa1m/chof0J/X9f15s+aec98/5/wA+1fq2qfW9/JO6X3KSX/btGPebP4B/r+v61P0y5z3z/n/PtX8pap9b38k7pfcpJf8AbtGPebP6N/r+v61Pmj/63b8uP5Dv1NfqiStZeXT7klu03rCD1m/fnofwF/X9f15I/9k=");
+
+	// Same source pixels as _baseline, encoded as progressive JPEG by Pillow/libjpeg.
+	private static readonly byte[] _progressive = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wgARCAAQABADAREAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABwUI/8QAFQEBAQAAAAAAAAAAAAAAAAAABwb/2gAMAwEAAhADEAAAAaMOhGlWAaZKEYzqgH//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAEFAh//xAAUEQEAAAAAAAAAAAAAAAAAAAAg/9oACAEDAQE/AR//xAAcEQABAwUAAAAAAAAAAAAAAADwAAFhAjFBocH/2gAIAQIBAT8BDr5syCdUNKCdUNKDjZu6/8QAFBABAAAAAAAAAAAAAAAAAAAAIP/aAAgBAQAGPwIf/8QAFBABAAAAAAAAAAAAAAAAAAAAIP/aAAgBAQABPyEf/9oADAMBAAIAAwAAABAB7//EABgRAQEAAwAAAAAAAAAAAAAAAPAAASFh/9oACAEDAQE/EB3MNw3DmL//xAAcEQEAAQUBAQAAAAAAAAAAAAABEQAhQWGRMdH/2gAIAQIBAT8QUiXeeq+otju8dXHMzoZDgD6HVxzM6GQ4A+h0BEGscA9Rbvd46//EAB4QAAAFBQEAAAAAAAAAAAAAAAABESFBMWGRsfDh/9oACAEBAAE/EPZy+zmhB1le6wdZXusPIw2impj/2Q==");
+
+	private static readonly byte[] _cmyk = Convert.FromBase64String(
+		"/9j/7gAOQWRvYmUAZAAAAAAA/9sAQwADAgICAgIDAgICAwMDAwQGBAQEBAQIBgYFBgkICgoJCAkJCgwPDAoLDgsJCQ0RDQ4PEBAREAoMEhMSEBMPEBAQ/8AAFAgAEAAQBEMRAE0RAFkRAEsRAP/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/aAA4EQwBNAFkASwAAPwD7brKr5bZlKs7uhUrK7M85ZSpO2VmlXllLfLLMvzStiGHCgmv1Tr8BKKd+8WT/AJarKsn+xHIJET/viORE/wC2dpH6yGiv37r9CqP3iyf8tVlWT/YjkEiJ/wB8RyIn/bO0j9ZDRX4CUU1VUqqIiFSsSKqQFlKk7olWJuWUt80ULfNK2ZpsKAKK/9k=");
+
+	private static readonly byte[] _grayProgressive = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wgALCAAQABABAREA/8QAFgABAQEAAAAAAAAAAAAAAAAABgQH/9oACAEBAAAAAaiWuEf/xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAEFAh//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAY/Ah//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAE/IR//2gAIAQEAAAAQH//EABcQAQEBAQAAAAAAAAAAAAAAAPAAIRD/2gAIAQEAAT8QhkM5/9k=");
+
+	[TestMethod]
+	public void ResizeJpeg_PreservesJpegFormatAndCanBeDecoded()
+	{
+		var output = _baseline.ResizeImage(8, 8);
+		(output.Length > 4 && output[0] == 0xFF && output[1] == 0xD8 && output[^2] == 0xFF && output[^1] == 0xD9).AssertTrue();
+		output.GetImageSize().Width.AssertEqual(8);
+		output.GetImageSize().Height.AssertEqual(8);
+		var pixels = output.ConvertToPng();
+		pixels.GetPngSize().Width.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void ResizeJpeg_WhenAlreadySmall_PreservesOriginalBytes()
+	{
+		var output = _baseline.ResizeImage(64, 64);
+		_baseline.SequenceEqual(output).AssertTrue();
+	}
+
+	[TestMethod]
+	public void ProgressiveJpeg_DecodesFullColorImage()
+	{
+		var png = _progressive.ConvertToPng();
+		png.GetPngSize().Width.AssertEqual(16);
+		png.GetPngSize().Height.AssertEqual(16);
+		_progressive.ResizeImage(8, 8).GetImageSize().Width.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void ProgressiveGrayJpeg_DecodesAndResizes()
+	{
+		var png = _grayProgressive.ConvertToPng();
+		png.GetPngSize().Width.AssertEqual(16);
+		_grayProgressive.ResizeImage(8, 8).GetImageSize().Width.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void AdobeCmykJpeg_DecodesWithNonGrayColors()
+	{
+		var png = _cmyk.ConvertToPng();
+		png.GetPngSize().Width.AssertEqual(16);
+		png.GetPngSize().Height.AssertEqual(16);
+		_cmyk.ResizeImage(8, 8).GetImageSize().Width.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void Watermark_OnEverySupportedJpegMode_ChangesPixelsAndPreservesOutsideRegion()
+	{
+		var path = TempFile("font.ttf", ImagePixelGoldenTests.BuildTestTrueType());
+		foreach (var source in new[] { _baseline, _progressive, _grayProgressive, _cmyk })
+		{
+			var input = (byte[])source.Clone();
+			var original = ReadPng(source.ConvertToPng(), 16, 16);
+			// The picture as it is when written again as a JPEG, without the text.
+			var reference = ReadPng(JpegEncoder.Encode(JpegCodec.Decode(source), ImageHelper.DefaultJpegQuality, []).ConvertToPng(), 16, 16);
+			// At 5 pt the glyph spans (9, 8.3) to (14.3, 13.7): it stays inside the 8x8 block at (8, 8).
+			var marked = source.AddTextWatermark("I", fontSize: 5,
+				opacity: 255, margin: 1, fontFilePath: path);
+			(marked.Length > 8 && marked[0] == 0xFF && marked[1] == 0xD8).AssertTrue();
+			var actual = ReadPng(marked.ConvertToPng(), 16, 16);
+			actual.Length.AssertEqual(reference.Length);
+
+			// The pixels the glyph covers whole are white, as far as a JPEG block holds a white patch:
+			// at the default quality the darkest channel of them is 236, 236, 248 and 239 in the four pictures.
+			for (var y = 9; y <= 12; y++)
+				for (var x = 9; x <= 13; x++)
+				{
+					var (r, g, b, _) = Pixel(actual, 16, x, y);
+
+					(r >= 230 && g >= 230 && b >= 230).AssertTrue($"inside the glyph at ({x}, {y}): ({r}, {g}, {b})");
+				}
+
+			// The other three blocks are encoded from the pixels they had: unaffected, to the last bit,
+			// and as close to the source as a second generation of it is - 14, 14, 3 and 21 levels at the furthest.
+			AssertPixels(OtherBlocks(reference), OtherBlocks(actual), 16);
+			AssertPixels(OtherBlocks(original), OtherBlocks(actual), 16, tolerance: 25);
+			source.SequenceEqual(input).AssertTrue(); // input never mutated
+		}
+
+		static byte[] OtherBlocks(byte[] rgba)
+			=> Rgba(16, 16, (x, y) => x >= 8 && y >= 8 ? default : Pixel(rgba, 16, x, y));
+	}
+
+	[TestMethod]
+	public void Watermark_UnknownFamilyFallbackWithoutPrivateTtf()
+	{
+		var png = CreatePng(160, 40, new byte[160 * 40 * 4]);
+		var output = png.AddTextWatermark("StockSharp", fontSize: 7, margin: 1,
+			fontFamily: "__a_missing_font_family_6bf471__");
+		output.GetPngSize().Width.AssertEqual(160);
+		output.GetPngSize().Height.AssertEqual(40);
+		// The canvas was transparent: what is not is the text, drawn with the font taken instead.
+		// Which font that is depends on the machine; the order they are tried in is the subject of TrueTypeFontTests.
+		ReadPng(output, 160, 40).Any(value => value != 0).AssertTrue();
+	}
+
+	[TestMethod]
+	public void JpegMustRejectMissingEndOfImageNotSilentlyReturnPixels()
+	{
+		ThrowsExactly<InvalidDataException>(() => _baseline[..^2].ConvertToPng());
+		ThrowsExactly<InvalidDataException>(() => _cmyk[..^2].ConvertToPng());
+	}
+
+	[TestMethod]
+	public void Fuzz_MalformedJpegMustFailCleanly_NotCrashWithUnexpectedRuntimeErrors()
+	{
+		var seed = new Random(809123);
+		var originals = new[] { _baseline, _progressive, _cmyk, _grayProgressive };
+		foreach (var source in originals)
+		{
+			for (var iteration = 0; iteration < 80; iteration++)
+			{
+				var corrupted = (byte[])source.Clone();
+				var index = seed.Next(2, corrupted.Length - 2);
+				corrupted[index] ^= (byte)(1 << seed.Next(8));
+				try
+				{
+					var png = corrupted.ConvertToPng();
+					var size = png.GetPngSize();
+					size.Width.AssertEqual(16);
+					size.Height.AssertEqual(16);
+				}
+				catch (InvalidDataException) { }
+				catch (NotSupportedException) { }
+				catch (IOException) { }
+			}
+		}
+	}
+
+	[TestMethod]
+	public void InvalidJpeg_TruncatedProgressiveDoesNotReturnValidPixels()
+	{
+		foreach (var length in new[] { 4, 16, 48, _progressive.Length / 2 })
+		{
+			var cut = _progressive[..length];
+			try
+			{
+				cut.ConvertToPng();
+				Fail($"Truncated progressive JPEG of {length} bytes decoded successfully.");
+			}
+			catch (InvalidDataException) { }
+			catch (NotSupportedException) { }
+		}
+	}
+
+	// Reference RGBA buffers decoded by Pillow/libjpeg, not generated from Ecng.
+	// They are zlib compressed to keep the test source small.
+	private const string ProgressiveReference =
+		"eNotUWtP2gAU/b5FJ32wGY2gRqdQqrAMmR/1ryhGZ0Dk1VKcJvtzW+ZGHzwLFNiW/Y2zey9+aHLb3nPueYTVGr61txA0TYRWGT/sDNzGAUL7Dq6dR9z5BL15A/3hABr9U6sVmk3oLQN67Q7fHxIIK6fwrSaeW/sYNHLo2SX8aiXhWsfQGte0l4P6eAilfg+9nobmGFDtW+Hgu4FtwW9m4dXp3blE0CYN9R10GyW5y1itckW4lNzWKkXh4HmpeQ9+I4OBc4tOPQ+3XEDfeULXTi01N6rQ22nErTTUmiO4eMMQL88tE/16Fn7rgvQWSI9BuCL86jk6zp7s8C5jGMsczMWc2ktW/VYZXtuQu73WFYKvO3ArCQRWcamXtLLm5ZwSL+yJvY1If4ey8hq7hH2Ed39GTxL+Uw19a5kzZyV+KTvOULCUKWfr2yfoNI8kqz7tsGa/eYmBncVPergj6Yr1kxfWzHe5U+42iArwwxv48wP4ExNu/x7+gjqJDPiDCt5Mc1iPjqCNi1iLdhCfG4iHJcTGR1CjE3gj0jDIwf1zCHdYofc0vMhEZ/wZ/jSNd1Py/LcGtZ+EMjhDPPoCdbxNXNvYmFBus/eC9brXNKfQWWTg9YrC4c0zclfpJaD924Y+u0Is+AiVvsdnZcTCQ9HsjUjzPI1gQreHDtzfJnkyxEtstgt1eA4tovzHBpRJgeYLvB1msTp78cu7hGEsczCXcBK3FqXwbv4EpZvHWpjH+py6CDNYme5hY1wSjaKVNIt28sBexBN50ykrJUxCW5hyVx1Rn+Mc9MgiPaZkxFkJB2XHGTKWM+VslckxdZCk/RLWww9YjfahTZvY7J3i9SIhHUlXixcvpFm6pE65W2Wax+b0TrJaiTLYpMz57qv5FjaGNfwHwppe4A==";
+	private const string CmykReference =
+		"eNpdkc2tgzAQhJtIC4kCxiwRVSXBWIELdXJ2L++N7Q8JcRhpMDs/Xu9b+Ns3EzphEl7wen7bGmEROhCEXnCF79vAfBR6wQsfYRQObSt4YcYj+8bis+vfrvPaIfMFv0ZYyfHkGtlvuKfzwHzWPvFaC6/aiM7w8fSY6Hl0Nu4w0aEvM3X22iGS/6D/sbcf98idvuiMztcOjp551uHT8T2Tf2QZPWa0bdlt7XzH59hngPdkOXzC6R2X8rZ7ypBP6oC0SdrkCr+JV2TewvUu6S4YWmUm7SLNeOTzWHzqvDqnQejgju+VHE+ukf2G657py2zO/uHxwueBNqIzfDw9JvKz5uDaY/oI2XssM3X22iGS/+S+BtfetLPaaUJndL52cGgbOizcw+jfnrKMHjPatuy2asdT53yHiN9AlsMnnN5xKW9bs8JpbxO8nv8DdY5e9Q==";
+	private const string GrayReference =
+		"eNqNkUkKhUAQQ0/oPKJeSc/kPKIeKZ/XIPyV7aIgi+RVurqua9UvE4ah8jxXFEUKgsDoJEnk+76yLHvNMvgdx1GapirLUq7rGlZVVYZhy+MlG8ex0exmHm3L05m9+D3PU1EUhkcPun3pj5cMWRiwYMK25f+7Ppq3wEPb8tyIW+GlB3vJctMv/fkjGOzGT2dYaP52miYdx6F5njWOo9HrumoYBu37rqZpXgd/27batk3XdanrOsO679swbHm8ZJdlMZrdzKNteTqzF3/f9zrP0/DoQbcv/fGSIQsDFkzYtvx/10fzFnhoW54bcSu89GAvWW76pT9/BIPd+OkMC83f2vI/WPWoIw==";
+
+	[TestMethod]
+	public void JpegResizer_CompareEveryPixelAgainstIndependentPillowBilinearReference()
+	{
+		// Reference generated by decoding the original 16x16 JPEG with libjpeg,
+		// then center-aligned bilinear averaging to 8x8.
+		const string reference =
+			"eNotjUESgjAQBP8AyWcAU3DRE+BrTIRPmsAJgvqTcXblkKrNdu9M9DWWMCCFC9LTwfo7zNTABMfXK1u8Q/QtVs5mbmBDRTaqk8LJ5hvioz7vxr9DV3JX/oUtU6eZ6rBDutJG9m4QM7P2HvbTodgq2INdh1OWcoVXHtUpNnZ8ryj2FiX/shMmjrg2D8os94azZIqjOeySTLkTr8w1fqf9l7U=";
+
+		var expected = Inflate(reference);
+		expected.Length.AssertEqual(8 * 8 * 4);
+
+		// At a quality of 100 every coefficient is kept to the nearest whole number: what differs is the
+		// two decoders and the two ways of reducing, by 2 levels at the furthest.
+		AssertPixels(expected, ReadPng(_baseline.ResizeImage(8, 8, 100).ConvertToPng(), 8, 8), 8, tolerance: 4);
+
+		// The default quality loses more on top of that: 14 levels at the furthest.
+		var result = _baseline.ResizeImage(8, 8);
+		(result.Length > 2 && result[0] == 0xFF && result[1] == 0xD8).AssertTrue();
+		AssertPixels(expected, ReadPng(result.ConvertToPng(), 8, 8), 8, tolerance: 25);
+	}
+
+	// Independently created Pillow/libjpeg fixture: four-component JPEG with
+	// Adobe APP14 transform=2 (YCCK). This is NOT an Adobe CMYK transform=0 file.
+	private static readonly byte[] _ycckFixture = Convert.FromBase64String(
+		"/9j/7gAOQWRvYmUAZAAAAAAC/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/8AAFAgACwAPBEMRAE0RAFkRAEsRAP/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/aAA4EQwBNAFkASwAAPwD2D9q34gf8fn7z1716b4u/bS+//p//AI/TPF/7Y3ir4lareaZ4Q0zWPFWpRQtcyWeiWct5MkQZVMhSNWIUM6DdjGWA7in6x+0N8Ufj3cyR+AvDWseIrd5pbY6hDH5djHKkfmNHJdSFYY22FTtdwTuQDJZQfEP+Cf3gaHxV8XPFXxV1OO4+z+FEXT9IdoZFhkvblXWZ1lDBWaKDKtGQ3F4jHaQhPi3ir9tL5z/p/f8Av1BYfs5/FfxzPez/ABC8U6f8MbSNmSGHfHq15M4MZVtkMwiWIhpBuM28NHjy8MGqBv2ZP9Jvrj4u/E7+No7fT/BMvvGVle5uYf8ArqpiEP8AcbzOq0z9q2+n/wBM/et3r5x/Y28NWHxp/ax8E+DPGaTaz4b1L7f9rsvtMkHmeXYXEqfPEyuMPGh4YZxg8EivpjxfbWnw10q80zwhpuneFdNlma5ks9EsYbOF5SqqZCkaqCxVEG7GcKB2FexfGDxPqegaVHpmmXP9nabZQrbWtnaRrFDBEihUjRFACqqgAKAAAABXrf7H2iWfh/8AYw8KX+nxNb3euajqOoahJ5jN5863klsHwSQv7m2hXC4HyZxkkn9Vz+yr8HPB+i2+kWHww8K3Fpbltkmq6TDqFwdzljvnuFklfljjcxwMAYAAHxx8XfHOv+e//E0n+96j1r8+Pjb498Q/aX/4mtx9/wBR6/Sv/9k=");
+
+	private const string YcckLibjpegRgba =
+		"eJwV0V1I01EYx/HHub9ubnNzbrb958uWsjnzbYHzBdEEa6XMNjHFauBqqMnCpIgioggqqZCwG6GL8iIIichACoqoMIPywpsIFELqQqibvI76drz48JwHnh+Hcx65Icgt5aYyo+z000KpqlWXhbZLwv6LDhKTOsfGKhlMhRkejmDPUXOjyogyoaSFvHHBlRFqTggt6QJiRz309ZcR76miL1bDoc5aopEQdlHz3cpBZb+g9QpBdd7TrRHtcnKgXaerzU9npJKuxhCRqgB+3YdV5bSdbJ1gUNwRIVAvhOqttIbdNNeW0RQspzngp7G0goBbx2l1YNJM3BedxxLEpKucV6goK6DBV0yD7qHO6yPq8RN26ui2YuwmG6Lu2Z7dZkH2Iol2ZCiBXpBHqc1Gtc1N5Q5LCUGrF7tmwWI08y/zi+3sNpsTm+xbX0eiMWUAaR3DZ3BQYXCy21iC1+jElVuIlmPkT8cPtjq28GxsULO2Rmx5meOLi4hvGCk/hVSfxitFuMSOWfL5a3nHb9ca8uYbthdf0V+v0rz0lvjCUwbn55H8NGIbQxwTWIuy5IvGd3nOT/mEzK0qXyic/Uj43iuaZp7Qe/sBQ1fukrl6Xb05Ta7hJDZjCreWRKbeI5MryJnPyIUVPNlnhKYeEc3OER+9w0DmGqmRs6TG7WguweFWf6vqriK1o74PSPIluUeW8PQ/JJKcoyUxTc954fA5oX/ESjxpwWwWChWHSbDnCxZN+A/l6hnb";
+
+	[TestMethod]
+	public void YcckJpeg_AdobeTransform2_DecodesPixelForPixelAgainstLibjpeg()
+		=> AssertPixels(Inflate(YcckLibjpegRgba), ReadPng(_ycckFixture.ConvertToPng(), 15, 11), 15, tolerance: 4);
+
+	[TestMethod]
+	public void YcckJpeg_ResizePreservesJpeg_AndWatermarkPreservesImageSize()
+	{
+		_ycckFixture.GetImageSize().Width.AssertEqual(15);
+		_ycckFixture.GetImageSize().Height.AssertEqual(11);
+		var resized = _ycckFixture.ResizeImage(8, 8);
+		(resized[0] == 0xFF && resized[1] == 0xD8).AssertTrue();
+		resized.GetImageSize().Width.AssertEqual(8);
+		// At 5 pt the glyph is 6.67 pixels to the em: it has room on 15x11 and is drawn.
+		var marked = _ycckFixture.AddTextWatermark("I", ImagePixelGoldenTests.BuildTestTrueType(), fontSize: 5, opacity: 255, margin: 1);
+		(marked[0] == 0xFF && marked[1] == 0xD8).AssertTrue();
+		marked.GetImageSize().Width.AssertEqual(15);
+		marked.GetImageSize().Height.AssertEqual(11);
+		marked.SequenceEqual(JpegEncoder.Encode(JpegCodec.Decode(_ycckFixture), ImageHelper.DefaultJpegQuality, [])).AssertFalse("the text is not in the picture");
+	}
+
+	[TestMethod]
+	public void ProgressiveJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_progressive, ProgressiveReference, 5);
+
+	[TestMethod]
+	public void AdobeCmykJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_cmyk, CmykReference, 5);
+
+	[TestMethod]
+	public void ProgressiveGrayJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_grayProgressive, GrayReference, 4);
+
+	private static void CompareReference(byte[] jpeg, string reference, int tolerance)
+		=> AssertPixels(Inflate(reference), ReadPng(jpeg.ConvertToPng(), 16, 16), 16, tolerance: tolerance);
+
+	// Created by libjpeg with restart_marker_blocks=1. Both have real DRI and
+	// RST0 markers, exercising predictor and bit alignment reset logic.
+	private static readonly byte[] _restartBaseline = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQECAgMCAgICAgQDAwIDBQQFBQUEBAQFBgcGBQUHBgQEBgkGBwgICAgIBQYJCgkICgcICAj/wAALCAAIABABAREA/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/90ABAAB/9oACAEBAAA/AM//AIJk/wDBKX/kXv8Aim/7n/LL6V//0OP/AG5f+CjPir4h+Krb9i3/AIJc+PvEHgv4baLqEK+M/jJ4R1CSzvvFV9BIGFh4d1C3ZZIdMjkQebfwsGvmXZCwswz6h//Z");
+	private static readonly byte[] _restartProgressive = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAICAgICAQICAgIDAgIDAwYEAwMDAwcFBQQGCAcJCAgHCAgJCg0LCQoMCggICw8LDA0ODg8OCQsQERAOEQ0ODg7/wgALCAAIABABAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAwT/3QAEAAH/2gAIAQEAAAABP//Qj//EABgQAAIDAAAAAAAAAAAAAAAAAAQGAAMF/9oACAEBAAEFAllUn//Q3GO0gr//xAAjEAABAgILAAAAAAAAAAAAAAADAQIFQgAEBhEjJDJBYnGh/9oACAEBAAY/Ah4flP/QSC2XO4NWG7MRADrnFVJRuSXlv1q//8QAGxABAAEFAQAAAAAAAAAAAAAAAQARIUFRYaH/2gAIAQEAAT8h8mP/0CJ5r7LYBS45M4//2gAIAQEAAAAQf//Qf//EABYQAQEBAAAAAAAAAAAAAAAAAAERAP/aAAgBAQABPxDYf//QPfeOsbgIWiyoXP8A/9k=");
+	private const string RestartBaselineLibjpegRgba =
+		"eJw9zjGogWEAheFfJmUhBklKkqQsipIYJMnAYlCEQZIki5RBiSRJklKiDAZSkqSUEoOBspAkpVgYpDCgzr33G+7Zn95DURRYLBZEIhGUSiUMBgPsdjt8Ph+i0SgymQwqlQparRZGoxEWiwX2+z1utxv+xmazIRaLiTUajcT6/X7EYjFks1lUq1V0Oh2Mx2Msl0scj0fc73dQv90/K5FIoFarYTKZ4HA4EAgEEI/HkcvlUKvV0G63MZlMsFqtcDgc8Hg8QKfTweFw/q3ZbCY2GAwSm8/nUa/X0e12MZ1OiT2dTni9XqDRaOByuZBKpVCpVLBYLHA6nQiFQkgkEigUCmg0Guj1epjNZliv1zifz3g+n2AwGODz+cRqtVry2eVyIRwOE1ssFont9/vEbjYbYt/vN7E8Hg8ymQwajYZ03W43IpEIkskkSqUSms0mBoMB5vM5ttstLpcLPp8PsQKBAHK5HHq9HlarFV6vl3RTqRTK5TKxw+GQ2N1uh+v1iu/3CyaTCaFQCIVCAZ1OB5vNBo/HQ7rpdBo/g1M5nw==";
+	private const string RestartProgressiveLibjpegRgba =
+		"eJwd0L2rMXAYxnEDsiApkjLIaymlhLNRBkkyKBKySBmIJEk6nRjEoGRCiSgGg8Gk5CVlIAPJIMoimeic4ajrPM/vD/j0va+bQqGAw+FALBZDo9HAbDbD6XQiGAwimUwin8+jVquh0+lgMplguVzidDrh+Xzi9/cXXC4XEokEWq2WWJfLhVAohFQqhUKhgEajgV6vh/F4jM1mg8vlgsfjAcq/Lo/Hg0wmg06ng8VigdvtRjgcRjqdRrFYRL1eR7/fx3Q6xXq9JvZ/l0ajgcViQSqVQq/XE+vxeIjNZDIolUqkOxgMMJvNsNvtcD6f8Xq9QKVSwefzoVQqYTAYYLPZ4PP5EIlEkM1mUS6X0Ww2MRwOMZ/Psd1ucb1eyVY6nQ6hUAi5XI6Pjw9YrVb4/X5Eo1F8fn4S22q1iF0sFtjv97jf7/j+/gaDwYBAIIBCoSDWbreTm2OxGL6+vlCpVNButzEajciPD4cDbrcbfn5+wGazSVelUsFoNBLr9XqRSCSQy+VQrVbR7XaJXa1WOB6PpPt+v8FkMiESiaBWq2EymeBwOBAIBBCPx0n3D3JnOZM=";
+
+	[TestMethod]
+	public void BaselineJpeg_RestartMarkers_EveryPixelMatchesIndependentDecoder()
+		=> AssertRestartPixels(_restartBaseline, RestartBaselineLibjpegRgba);
+
+	[TestMethod]
+	public void ProgressiveJpeg_RestartMarkers_EveryPixelMatchesIndependentDecoder()
+		=> AssertRestartPixels(_restartProgressive, RestartProgressiveLibjpegRgba);
+
+	private static void AssertRestartPixels(byte[] jpeg, string compressedReference)
+		=> AssertPixels(Inflate(compressedReference), ReadPng(jpeg.ConvertToPng(), 16, 8), 16, tolerance: 4);
+}
