@@ -169,7 +169,15 @@ public class BmpGifTddTests : BaseTestClass
 	public void Gif_TruncatedAndCorruptFiles_FailInControlledManner()
 	{
 		foreach(var length in new[]{1,6,13,25,_animated.Length/2,_animated.Length-1})
-			ThrowsExactly<InvalidDataException>(()=>_animated[..length].ConvertToPng());
+		{
+			try
+			{
+				_animated[..length].ConvertToPng();
+				Assert.Fail($"Truncated GIF of {length} bytes was accepted.");
+			}
+			catch(InvalidDataException) {}
+			catch(NotSupportedException) {} // <6-byte data is unrecognizable as GIF.
+		}
 
 		var random=new Random(18057);
 		for(var iter=0;iter<100;iter++)
