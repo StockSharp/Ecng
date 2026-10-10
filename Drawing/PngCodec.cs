@@ -96,6 +96,8 @@ internal static class PngCodec
 			else if (tag.SequenceEqual("IEND"u8))
 			{
 				if (length != 0) throw new InvalidDataException("Invalid IEND.");
+				if (offset + 12 != data.Length)
+					throw new InvalidDataException("PNG contains bytes after the IEND chunk.");
 				ended = true;
 				break;
 			}
