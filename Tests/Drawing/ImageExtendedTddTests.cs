@@ -30,7 +30,7 @@ public class ImageExtendedTddTests : BaseTestClass
 		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wgALCAAQABABAREA/8QAFgABAQEAAAAAAAAAAAAAAAAABgQH/9oACAEBAAAAAaiWuEf/xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAEFAh//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAY/Ah//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAE/IR//2gAIAQEAAAAQH//EABcQAQEBAQAAAAAAAAAAAAAAAPAAIRD/2gAIAQEAAT8QhkM5/9k=");
 
 	[TestMethod]
-	public void Red_ResizeJpeg_PreservesJpegFormatAndCanBeDecoded()
+	public void ResizeJpeg_PreservesJpegFormatAndCanBeDecoded()
 	{
 		var output = _baseline.ResizeImage(8, 8);
 		(output.Length > 4 && output[0] == 0xFF && output[1] == 0xD8 && output[^2] == 0xFF && output[^1] == 0xD9).AssertTrue();
@@ -41,14 +41,14 @@ public class ImageExtendedTddTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Red_ResizeJpeg_WhenAlreadySmall_PreservesOriginalBytes()
+	public void ResizeJpeg_WhenAlreadySmall_PreservesOriginalBytes()
 	{
 		var output = _baseline.ResizeImage(64, 64);
 		_baseline.SequenceEqual(output).AssertTrue();
 	}
 
 	[TestMethod]
-	public void Red_ProgressiveJpeg_DecodesFullColorImage()
+	public void ProgressiveJpeg_DecodesFullColorImage()
 	{
 		var png = _progressive.ConvertToPng();
 		png.GetPngSize().Width.AssertEqual(16);
@@ -57,7 +57,7 @@ public class ImageExtendedTddTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Red_ProgressiveGrayJpeg_DecodesAndResizes()
+	public void ProgressiveGrayJpeg_DecodesAndResizes()
 	{
 		var png = _grayProgressive.ConvertToPng();
 		png.GetPngSize().Width.AssertEqual(16);
@@ -65,7 +65,7 @@ public class ImageExtendedTddTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Red_AdobeCmykJpeg_DecodesWithNonGrayColors()
+	public void AdobeCmykJpeg_DecodesWithNonGrayColors()
 	{
 		var png = _cmyk.ConvertToPng();
 		png.GetPngSize().Width.AssertEqual(16);
@@ -74,7 +74,7 @@ public class ImageExtendedTddTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Red_Watermark_UnknownFamilyFallbackWithoutPrivateTtf()
+	public void Watermark_UnknownFamilyFallbackWithoutPrivateTtf()
 	{
 		var png = _baseline.ConvertToPng();
 		var output = png.AddTextWatermark("StockSharp", fontSize: 7, margin: 1,
@@ -85,7 +85,7 @@ public class ImageExtendedTddTests : BaseTestClass
 
 
 	[TestMethod]
-	public void Red_JpegMustRejectMissingEndOfImageNotSilentlyReturnPixels()
+	public void JpegMustRejectMissingEndOfImageNotSilentlyReturnPixels()
 	{
 		ThrowsExactly<InvalidDataException>(() => _baseline[..^2].ConvertToPng());
 		ThrowsExactly<InvalidDataException>(() => _cmyk[..^2].ConvertToPng());

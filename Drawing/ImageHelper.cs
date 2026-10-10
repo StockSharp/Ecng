@@ -50,7 +50,7 @@ public static class ImageHelper
 	}
 
 	/// <summary>
-	/// Converts a PNG or 8-bit baseline JPEG picture to a standard RGBA8 PNG.
+	/// Converts a PNG or 8-bit baseline/progressive JPEG (including grayscale and CMYK) to RGBA8 PNG.
 	/// </summary>
 	public static byte[] ConvertToPng(this byte[] data)
 	{
@@ -60,10 +60,10 @@ public static class ImageHelper
 
 	/// <summary>
 	/// Renders anti-aliased semi-transparent TrueType text into the bottom-right corner,
-	/// then returns a PNG. The default font is Verdana; it must be installed as a .ttf
-	/// on the host, or its path can be specified explicitly. No font is bundled.
+	/// then returns a PNG. Prefers Verdana, falls back to installed TrueType fonts,
+	/// or accepts an explicit .ttf path. No licensed font is bundled.
 	/// </summary>
-	/// <param name="data">Encoded PNG or baseline JPEG image.</param>
+	/// <param name="data">Encoded PNG or supported 8-bit JPEG image.</param>
 	/// <param name="text">Single-line watermark text.</param>
 	/// <param name="fontSize">Maximum font size in points.</param>
 	/// <param name="opacity">White text opacity, 0..255.</param>
@@ -102,6 +102,6 @@ public static class ImageHelper
 		if (data.Length == 0) throw new InvalidDataException("Image data is empty.");
 		if (PngCodec.IsPng(data)) return PngCodec.Decode(data);
 		if (JpegCodec.IsJpeg(data)) return JpegCodec.Decode(data);
-		throw new NotSupportedException("Only PNG and baseline 8-bit JPEG images are supported.");
+		throw new NotSupportedException("Only PNG and supported 8-bit JPEG images are supported.");
 	}
 }

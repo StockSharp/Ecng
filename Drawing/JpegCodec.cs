@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 
 /// <summary>
-/// Pure managed decoder for baseline sequential 8-bit JPEG (grayscale and YCbCr, including
-/// common 4:2:0 / 4:2:2 subsampling and DRI restart markers). Progressive, arithmetic-coded,
-/// CMYK and multi-scan JPEGs are deliberately rejected rather than misdecoded.
+/// Pure managed decoder for 8-bit JPEG. Baseline grayscale/YCbCr/CMYK and restart markers
+/// are decoded here; SOF2 progressive scans delegate to JpegProgressiveCodec.
+/// Unsupported arithmetic-coded, lossless and 12-bit JPEG fail explicitly.
 /// </summary>
 internal static class JpegCodec
 {
