@@ -193,13 +193,13 @@ internal static class JpegCodec
 
 						var counts = segment.Slice(p, 16);
 						p += 16;
-						var count = 0;
-						foreach (var n in counts) count += n;
-						if (count > 256 || count > segment.Length - p)
+						var symbolCount = 0;
+						foreach (var n in counts) symbolCount += n;
+						if (symbolCount > 256 || symbolCount > segment.Length - p)
 							throw new InvalidDataException("Invalid JPEG Huffman symbols.");
 
-						var table = new Huffman(counts, segment.Slice(p, count));
-						p += count;
+						var table = new Huffman(counts, segment.Slice(p, symbolCount));
+						p += symbolCount;
 						if (cls == 0) dc[index] = table;
 						else ac[index] = table;
 					}
