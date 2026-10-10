@@ -351,6 +351,29 @@ public class BmpGifTddTests : BaseTestClass
 		Reject(chunks => { var at = Array.FindIndex(chunks, c => c.tag == "fdAT"); chunks[at] = (chunks[at].tag, Array.Empty<byte>()); });
 	}
 
+
+	[TestMethod]
+	public void Gif_DeltaFrames_ExportForPillowCrossValidation()
+	{
+		// Independent Python/Pillow CI step checks every displayed pixel,
+		// frame duration and loop count on the original and encoded GIFs.
+		var directory = Environment.GetEnvironmentVariable("ECNG_GIF_PILLOW_DIR");
+		if (string.IsNullOrEmpty(directory))
+			return;
+
+		Directory.CreateDirectory(directory);
+		foreach (var (name, original) in new[]
+		{
+			("four-frame-disposals", _animated),
+			("three-frame-large", _watermarkGif)
+		})
+		{
+			File.WriteAllBytes(Path.Combine(directory, name + ".original.gif"), original);
+			File.WriteAllBytes(Path.Combine(directory, name + ".delta.gif"),
+				GifCodec.Encode(GifCodec.Open(original)));
+		}
+	}
+
 	private static void CompareNonEqual(byte[] expected, byte[] actual)
 	{
 		expected.Length.AssertEqual(actual.Length);
