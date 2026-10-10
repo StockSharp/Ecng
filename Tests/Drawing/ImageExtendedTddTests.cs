@@ -331,4 +331,41 @@ public class ImageExtendedTddTests : BaseTestClass
 		return result;
 	}
 
+
+	// Created by libjpeg with restart_marker_blocks=1. Both have real DRI and
+	// RST0 markers, exercising predictor and bit alignment reset logic.
+	private static readonly byte[] _restartBaseline = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQECAgMCAgICAgQDAwIDBQQFBQUEBAQFBgcGBQUHBgQEBgkGBwgICAgIBQYJCgkICgcICAj/wAALCAAIABABAREA/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/90ABAAB/9oACAEBAAA/AM//AIJk/wDBKX/kXv8Aim/7n/LL6V//0OP/AG5f+CjPir4h+Krb9i3/AIJc+PvEHgv4baLqEK+M/jJ4R1CSzvvFV9BIGFh4d1C3ZZIdMjkQebfwsGvmXZCwswz6h//Z");
+	private static readonly byte[] _restartProgressive = Convert.FromBase64String(
+		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAICAgICAQICAgIDAgIDAwYEAwMDAwcFBQQGCAcJCAgHCAgJCg0LCQoMCggICw8LDA0ODg8OCQsQERAOEQ0ODg7/wgALCAAIABABAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAwT/3QAEAAH/2gAIAQEAAAABP//Qj//EABgQAAIDAAAAAAAAAAAAAAAAAAQGAAMF/9oACAEBAAEFAllUn//Q3GO0gr//xAAjEAABAgILAAAAAAAAAAAAAAADAQIFQgAEBhEjJDJBYnGh/9oACAEBAAY/Ah4flP/QSC2XO4NWG7MRADrnFVJRuSXlv1q//8QAGxABAAEFAQAAAAAAAAAAAAAAAQARIUFRYaH/2gAIAQEAAT8h8mP/0CJ5r7LYBS45M4//2gAIAQEAAAAQf//Qf//EABYQAQEBAAAAAAAAAAAAAAAAAAERAP/aAAgBAQABPxDYf//QPfeOsbgIWiyoXP8A/9k=");
+	private const string RestartBaselineLibjpegRgba =
+		"eJw9zjGogWEAheFfJmUhBklKkqQsipIYJMnAYlCEQZIki5RBiSRJklKiDAZSkqSUEoOBspAkpVgYpDCgzr33G+7Zn95DURRYLBZEIhGUSiUMBgPsdjt8Ph+i0SgymQwqlQparRZGoxEWiwX2+z1utxv+xmazIRaLiTUajcT6/X7EYjFks1lUq1V0Oh2Msl0scj0fc73dQv90/K5FIoFarYTKZ4HA4EAgEEI/HkcvlUKvV0G63MZlMsFqtcDgc8Hg8QKfTweFw/q3ZbCY2GAwSm8/nUa/X0e12MZ1OiT2dTni9XqDRaOByuZBKpVCpVLBYLHA6nQiFQkgkEigUCmg0Guj1epjNZliv1zifz3g+n2AwGODz+cRqtVry2eVyIRwOE1ssFont9/vEbjYbYt/vN7E8Hg8ymQwajYZ03W43IpEIkskkSqUSms0mBoMB5vM5ttstLpcLPp8PsQKBAHK5HHq9HlarFV6vl3RTqRTK5TKxw+GQ2N1uh+v1iu/3CyaTCaFQCIVCAZ1OB5vNBo/HQ7rpdBo/g1M5nw==";
+	private const string RestartProgressiveLibjpegRgba =
+		"eJwd0L2rMXAYxnEDsiApkjLIaymlhLNRBkkyKBKySBmIJEk6nRjEoGRCiSgGg8Gk5CVlIAPJIMoimeic4ajrPM/vD/j0va+bQqGAw+FALBZDo9HAbDbD6XQiGAwimUwin8+jVquh0+lgMplguVzidDrh+Xzi9/cXXC4XEokEWq2WWJfLhVAohFQqhUKhgEajgV6vh/F4jM1mg8vlgsfjAcq/Lo/Hg0wmg06ng8VigdvtRjgcRjqdRrFYRL1eR7/fx3Q6xXq9JvZ/l0ajgcViQSqVQq/XE+vxeIjNZDIolUqkOxgMMJvNsNvtcD6f8Xq9QKVSwefzoVQqYTAYYLPZ4PP5EIlEkM1mUS6X0Ww2MRwOMZ/Psd1ucb1eyVY6nQ6hUAi5XI6Pjw9YrVb4/X5Eo1F8fn4S22q1iF0sFtjv97jf7/j+/gaDwYBAIIBCoSDWbreTm2OxGL6+vlCpVNButzEajciPD4cDbrcbfn5+wGazSVelUsFoNBLr9XqRSCSQy+VQrVbR7XaJXa1WOB6PpPt+v8FkMiESiaBWq2EymeBwOBAIBBCPx0n3D3JnOZM=";
+
+	[TestMethod]
+	public void BaselineJpeg_RestartMarkers_EveryPixelMatchesIndependentDecoder()
+		=> AssertRestartPixels(_restartBaseline, RestartBaselineLibjpegRgba);
+
+	[TestMethod]
+	public void ProgressiveJpeg_RestartMarkers_EveryPixelMatchesIndependentDecoder()
+		=> AssertRestartPixels(_restartProgressive, RestartProgressiveLibjpegRgba);
+
+	private static void AssertRestartPixels(byte[] jpeg, string compressedReference)
+	{
+		var actual = ReadPngRgba8(jpeg.ConvertToPng(), 16, 8);
+		using var input = new MemoryStream(Convert.FromBase64String(compressedReference));
+		using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+		using var raw = new MemoryStream();
+		zlib.CopyTo(raw);
+		var expected = raw.ToArray();
+		expected.Length.AssertEqual(actual.Length);
+		for (var i = 0; i < expected.Length; i++)
+		{
+			if (Math.Abs(expected[i] - actual[i]) > 4)
+				Assert.Fail($"Restart JPEG pixel ({i/4%16},{i/4/16}), channel {"RGBA"[i%4]}: " +
+					$"actual {actual[i]}, expected {expected[i]}.");
+		}
+	}
+
 }
