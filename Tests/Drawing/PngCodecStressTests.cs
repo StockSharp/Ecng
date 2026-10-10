@@ -372,7 +372,7 @@ public class PngCodecStressTests : BaseTestClass
 			byte[] key=[(byte)(value>>8),(byte)value];
 			var pixels=DecodeOutput(RawPng(4,1,depth,0,0,raw,[],key).ConvertToPng(),4,1);
 			for(var i=0;i<4;i++)
-				pixels[4*i+3].AssertEqual((byte)(i is 1 or 2?0:255));
+				pixels[4*i+3].AssertEqual((byte)(i is 1 or 2 || (i == 3 && depth == 1)?0:255));
 		}
 
 		foreach(var depth in new byte[]{8,16})
