@@ -277,6 +277,8 @@ public class PngCodecStressTests : BaseTestClass
 			(6,8),(6,16)
 		})
 		{
+			try
+			{
 			const int width = 5, height = 3;
 			var channels = color switch { 2=>3, 4=>2, 6=>4, _=>1 };
 			var maxSample = depth == 16 ? 65535 : (1 << depth) - 1;
@@ -359,6 +361,11 @@ public class PngCodecStressTests : BaseTestClass
 
 			var source=RawPng(width,height,depth,color,0,raw.ToArray(),palette,transparency);
 			Compare(expected,DecodeOutput(source.ConvertToPng(),width,height),width);
+			}
+			catch (Exception ex)
+			{
+				Assert.Fail($"PNG color={color}, depth={depth}: {ex}");
+			}
 		}
 	}
 
