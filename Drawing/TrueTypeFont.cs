@@ -110,8 +110,10 @@ internal sealed class TrueTypeFont
 
 	public void Draw(RasterImage image, string text, float size, byte opacity, int margin)
 	{
-		var codepoints = text.EnumerateRunes().Select(x => x.Value).ToArray();
-		if (codepoints.Length == 0 || codepoints.Length > 1024 || codepoints.Any(x => x == '\n' || x == '\r'))
+		var codepoints = new List<int>();
+		foreach (var rune in text.EnumerateRunes())
+			codepoints.Add(rune.Value);
+		if (codepoints.Count == 0 || codepoints.Count > 1024 || codepoints.Any(x => x == '\n' || x == '\r'))
 			throw new ArgumentException("Watermark must be one line with 1..1024 Unicode characters.", nameof(text));
 
 		var glyphs = codepoints.Select(x => LoadGlyph(Map(x), 0)).ToArray();
