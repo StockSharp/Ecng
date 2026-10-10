@@ -26,8 +26,7 @@ public class ImageHelperTests : BaseTestClass
 	private static readonly byte[] _palette = Convert.FromBase64String(
 		"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAFAQMAAABCXz8WAAAABlBMVEUAAAD/AAAb/40iAAAAAnRSTlMA/1uRIrUAAAASSURBVHjaYwhlCmVmYAplZgAABokBCjJzwdAAAAAASUVORK5CYII=");
 
-	private static readonly byte[] _large = Convert.FromBase64String(
-		"iVBORw0KGgoAAAANSUhEUgAAAUAAAACgCAYAAAB9o7WcAAABrElEQVR42u3UMQEAAAjDsIF/zyCDg0RCj1aSCcBDLQFggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhggYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCBigBIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCBggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYIAABghggAAGCGCAAAYIYICAAQIYIIABAhgggAECGCCAAQIYIIABAhgggAECGCCAAQIYIIABAlxYTD8CPy69A28AAAAASUVORK5CYII=");
+	private static readonly byte[] _large = CreateCanvasPng(320, 160);
 
 	[TestMethod]
 	public void GetImageSize_PngAndJpegAcrossOperatingSystems()
@@ -158,7 +157,7 @@ public class ImageHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Watermark_JpegAndUnicodeText()
+	public void Watermark_UnicodeText()
 	{
 		var font = FindFont();
 		if (font == null) return;
@@ -201,6 +200,59 @@ public class ImageHelperTests : BaseTestClass
 	// Our encoder produces RGBA8 PNG with filter type 0 on every scanline. Inspect
 	// decoded pixel bytes using only the standard zlib implementation, independent
 	// of ImageHelper's decoding path.
+
+	// Construct the large canvas at runtime instead of maintaining a long Base64
+	// fixture that is easy to corrupt. The raw PNG chunks and checksums are built
+	// independently of the production image codec.
+	private static byte[] CreateCanvasPng(int width, int height)
+	{
+		using var output = new MemoryStream();
+		output.Write(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+
+		var header = new byte[13];
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(0, 4), width);
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4, 4), height);
+		header[8] = 8;
+		header[9] = 6;
+		WriteTestChunk(output, "IHDR", header);
+
+		using var compressed = new MemoryStream();
+		using (var zlib = new ZLibStream(compressed, CompressionLevel.Optimal, leaveOpen: true))
+		{
+			var row = new byte[1 + width * 4];
+			for (var x = 0; x < width; x++) row[1 + 4 * x + 3] = 255;
+
+			for (var y = 0; y < height; y++)
+				zlib.Write(row);
+		}
+
+		WriteTestChunk(output, "IDAT", compressed.ToArray());
+		WriteTestChunk(output, "IEND", Array.Empty<byte>());
+		return output.ToArray();
+	}
+
+	private static void WriteTestChunk(Stream stream, string type, byte[] data)
+	{
+		Span<byte> length = stackalloc byte[4];
+		BinaryPrimitives.WriteInt32BigEndian(length, data.Length);
+		stream.Write(length);
+
+		var tag = System.Text.Encoding.ASCII.GetBytes(type);
+		stream.Write(tag);
+		stream.Write(data);
+
+		uint crc = 0xffffffff;
+		foreach (var value in tag.Concat(data))
+		{
+			crc ^= value;
+			for (var bit = 0; bit < 8; bit++)
+				crc = (crc & 1) == 1 ? (crc >> 1) ^ 0xedb88320 : crc >> 1;
+		}
+
+		BinaryPrimitives.WriteUInt32BigEndian(length, crc ^ 0xffffffff);
+		stream.Write(length);
+	}
+
 	private static byte[] Pixels(byte[] png)
 	{
 		using var compressed = new MemoryStream();
