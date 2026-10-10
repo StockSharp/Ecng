@@ -374,7 +374,7 @@ public class BmpGifTddTests : BaseTestClass
 		Reject(chunks=>BinaryPrimitives.WriteUInt32BigEndian(chunks.First(c=>c.tag=="fcTL").data.AsSpan(4,4),5));
 		Reject(chunks=>chunks.First(c=>c.tag=="fcTL").data[24]=3);
 		Reject(chunks=>chunks.First(c=>c.tag=="fcTL").data[25]=2);
-		Reject(chunks=>chunks.First(c=>c.tag=="fdAT").data=Array.Empty<byte>());
+		Reject(chunks=> { var at=Array.FindIndex(chunks,c=>c.tag=="fdAT"); chunks[at] = (chunks[at].tag, Array.Empty<byte>()); });
 	}
 
 	private static byte[] BuildApngChunks((string tag,byte[] data)[] chunks)
