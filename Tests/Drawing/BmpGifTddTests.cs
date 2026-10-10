@@ -126,6 +126,74 @@ public class BmpGifTddTests : BaseTestClass
 		Compare(Pixels(_animated.GetGifFrames()[0].png,4,4),Pixels(apng,4,4));
 	}
 
+
+	[TestMethod]
+	public void Gif_ApngExport_CheckEveryFramePayloadAndControlAgainstIndependentColors()
+	{
+		var apng = _animated.ConvertToPng();
+		var chunks = ReadPngChunks(apng);
+		var expectedDurations = new[] { 5,12,20,7 }; // centiseconds
+		byte[][] colors =
+		[
+			[255,0,0,255], [0,255,0,255],
+			[0,0,255,255], [255,255,0,255]
+		];
+
+		var seq = 0u;
+		var frameIndex = -1;
+		using var currentCompressed = new MemoryStream();
+
+		void VerifyCompleted()
+		{
+			if (frameIndex < 0) return;
+			currentCompressed.Position = 0;
+			using var decoded = new MemoryStream();
+			using(var zlib = new ZLibStream(currentCompressed, CompressionMode.Decompress, leaveOpen:true))
+				zlib.CopyTo(decoded);
+			var pixels = decoded.ToArray();
+			pixels.Length.AssertEqual(4*(1+4*4));
+			for(var y=0;y<4;y++)
+			{
+				pixels[y*17].AssertEqual((byte)0);
+				for(var x=0;x<4;x++)
+					for(var c=0;c<4;c++)
+					{
+						var expected = x==frameIndex ? colors[frameIndex][c] : (byte)0;
+						pixels[y*17+1+x*4+c].AssertEqual(expected);
+					}
+			}
+			currentCompressed.SetLength(0);
+		}
+
+		foreach (var chunk in chunks)
+		{
+			if (chunk.tag == "fcTL")
+			{
+				VerifyCompleted();
+				frameIndex++;
+				var control = chunk.data;
+				control.Length.AssertEqual(26);
+				BinaryPrimitives.ReadUInt32BigEndian(control.AsSpan(0,4)).AssertEqual(seq++);
+				BinaryPrimitives.ReadUInt32BigEndian(control.AsSpan(4,4)).AssertEqual((uint)4);
+				BinaryPrimitives.ReadUInt32BigEndian(control.AsSpan(8,4)).AssertEqual((uint)4);
+				BinaryPrimitives.ReadUInt16BigEndian(control.AsSpan(20,2)).AssertEqual(
+					(ushort)expectedDurations[frameIndex]);
+				BinaryPrimitives.ReadUInt16BigEndian(control.AsSpan(22,2)).AssertEqual((ushort)100);
+				control[24].AssertEqual((byte)0);
+				control[25].AssertEqual((byte)0);
+			}
+			else if (chunk.tag == "IDAT")
+				currentCompressed.Write(chunk.data);
+			else if (chunk.tag == "fdAT")
+			{
+				BinaryPrimitives.ReadUInt32BigEndian(chunk.data.AsSpan(0,4)).AssertEqual(seq++);
+				currentCompressed.Write(chunk.data,4,chunk.data.Length-4);
+			}
+		}
+		VerifyCompleted();
+		(frameIndex+1).AssertEqual(4);
+	}
+
 	[TestMethod]
 	public void Gif_Watermark_EachOfThreeFramesChanged_AnimationPreserved()
 	{
