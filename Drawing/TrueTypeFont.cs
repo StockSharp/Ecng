@@ -130,7 +130,7 @@ internal sealed class TrueTypeFont
 		// FontSize is points, and 96dpi defines a stable cross-platform point conversion.
 		var scale = size * (96.0 / 72.0) / _unitsPerEm;
 		var glyphHeight = Math.Max(1, _ascent - _descent);
-		scale = Math.Min(scale, Math.Min(maxWidth / advance, maxHeight / (double)glyphHeight) * 0.95);
+		scale = Math.Min(scale, Math.Min((double)maxWidth / advance, maxHeight / (double)glyphHeight) * 0.95);
 
 		if (!double.IsFinite(scale) || scale <= 0 || scale * _unitsPerEm < 1)
 			throw new ArgumentException("Watermark cannot fit within image margins.", nameof(text));
