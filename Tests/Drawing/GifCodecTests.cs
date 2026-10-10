@@ -303,7 +303,7 @@ public class GifCodecTests : BaseTestClass
 		});
 
 		var frame = GifFile.Read(Reencode(gif)).Frames[1];
-		var actual = frame.ToRgba();
+		var actual = IndependentlyComposited(GifFile.Read(Reencode(gif)))[1];
 
 		// Two neighbors of a ramp may share a table entry; nothing moves further than that.
 		AssertPixels(expected, actual, width, tolerance: 6);
@@ -335,6 +335,170 @@ public class GifCodecTests : BaseTestClass
 		file.Frames[1].Delay.AssertEqual(5);
 		AssertPixels(Rgba(2, 2, (x, _) => x == 0 ? _red : blue), file.Frames[0].ToRgba(), 2);
 		AssertPixels(Rgba(2, 2, (x, _) => x == 0 ? blue : _red), file.Frames[1].ToRgba(), 2);
+	}
+
+
+	[TestMethod]
+	public void DifferenceFrames_SixtySparseUpdates_AreSubrectanglesAndMuchSmaller()
+	{
+		const int width = 200, height = 120;
+		var builder = new GifBuilder(width, height, _palette)
+			.Loop(0)
+			.Frame(0, 0, width, height, Filled(width * height, 3), delay: 5);
+
+		for (var i = 0; i < 60; i++)
+			builder.Frame(i * 3, i % 35, 1, 1, [1], delay: 2 + i % 7);
+
+		var original = builder.Build();
+		var encoded = Reencode(original);
+		var independent = GifFile.Read(encoded);
+
+		independent.Frames.Count.AssertEqual(61);
+		independent.LoopCount.AssertEqual(0);
+		(encoded.Length < 15_000).AssertTrue($"Sparse animation unexpectedly takes {encoded.Length} bytes.");
+
+		for (var i = 1; i < 61; i++)
+		{
+			var frame = independent.Frames[i];
+			frame.Width.AssertEqual(1);
+			frame.Height.AssertEqual(1);
+			frame.Left.AssertEqual((i - 1) * 3);
+			frame.Top.AssertEqual((i - 1) % 35);
+			frame.Disposal.AssertEqual(1);
+			frame.Delay.AssertEqual(2 + (i - 1) % 7);
+			frame.HasEndCode.AssertTrue();
+		}
+		AssertEveryFrameLikeSource(GifFile.Read(original), independent);
+	}
+
+	[TestMethod]
+	public void DifferenceFrames_UnchangedHolesInBoundingRectangle_UseTransparentPaletteIndex()
+	{
+		var gif = new GifBuilder(7, 4, _palette)
+			.Frame(0, 0, 7, 4, Filled(28, 3), delay: 2)
+			.Frame(1, 1, 5, 2,
+			[
+				1, 0, 0, 0, 0,
+				0, 0, 0, 0, 2
+			], transparent: 0, delay: 9)
+			.Build();
+
+		var output = GifFile.Read(Reencode(gif));
+		var changed = output.Frames[1];
+
+		changed.Left.AssertEqual(1);
+		changed.Top.AssertEqual(1);
+		changed.Width.AssertEqual(5);
+		changed.Height.AssertEqual(2);
+		(changed.Transparent >= 0).AssertTrue();
+		(changed.Indices[0] != changed.Transparent).AssertTrue();
+		(changed.Indices[9] != changed.Transparent).AssertTrue();
+		for (var index = 1; index < 9; index++)
+			changed.Indices[index].AssertEqual((byte)changed.Transparent);
+		changed.Disposal.AssertEqual(1);
+
+		AssertEveryFrameLikeSource(GifFile.Read(gif), output);
+	}
+
+	[TestMethod]
+	public void DifferenceFrames_OpaqueToTransparent_ClearsTheFullCanvas()
+	{
+		var gif = new GifBuilder(5, 3, _palette)
+			.Frame(0, 0, 5, 3, Filled(15, 1), disposal: 2, delay: 4)
+			.Frame(2, 1, 1, 1, [3], delay: 7)
+			.Build();
+
+		var output = GifFile.Read(Reencode(gif));
+		output.Frames[0].Disposal.AssertEqual(2);
+		output.Frames[0].Width.AssertEqual(5);
+		output.Frames[0].Height.AssertEqual(3);
+		output.Frames[1].Left.AssertEqual(2);
+		output.Frames[1].Top.AssertEqual(1);
+		output.Frames[1].Width.AssertEqual(1);
+		output.Frames[1].Height.AssertEqual(1);
+		AssertEveryFrameLikeSource(GifFile.Read(gif), output);
+	}
+
+	[TestMethod]
+	public void DifferenceFrames_UnchangedFrame_WritesOnlyOneTransparentPixel()
+	{
+		var gif = new GifBuilder(4, 3, _palette)
+			.Frame(0, 0, 4, 3, Filled(12, 1), delay: 3)
+			.Frame(0, 0, 4, 3, Filled(12, 1), delay: 11)
+			.Build();
+
+		var encoded = GifFile.Read(Reencode(gif));
+		var duplicate = encoded.Frames[1];
+
+		duplicate.Width.AssertEqual(1);
+		duplicate.Height.AssertEqual(1);
+		(duplicate.Transparent >= 0).AssertTrue();
+		duplicate.Indices.Single().AssertEqual((byte)duplicate.Transparent);
+		duplicate.Delay.AssertEqual(11);
+		AssertEveryFrameLikeSource(GifFile.Read(gif), encoded);
+	}
+
+	[TestMethod]
+	public void DifferenceFrames_LastFrameAtLoopBoundary_ClearsBeforeTransparentFirstFrame()
+	{
+		var gif = new GifBuilder(3, 1, _palette)
+			.Loop(0)
+			.Frame(0, 0, 3, 1, [0, 1, 0], transparent: 0, delay: 2)
+			.Frame(0, 0, 3, 1, [1, 1, 1], delay: 5)
+			.Build();
+
+		var encoded = GifFile.Read(Reencode(gif));
+		encoded.Frames[1].Disposal.AssertEqual(2);
+		encoded.Frames[1].Width.AssertEqual(3);
+		encoded.Frames[1].Height.AssertEqual(1);
+		encoded.LoopCount.AssertEqual(0);
+		AssertEveryFrameLikeSource(GifFile.Read(gif), encoded);
+	}
+
+	private static void AssertEveryFrameLikeSource(GifFile original, GifFile encoded)
+	{
+		var a = IndependentlyComposited(original);
+		var b = IndependentlyComposited(encoded);
+		a.Length.AssertEqual(b.Length);
+		for (var i = 0; i < a.Length; i++)
+			AssertPixels(a[i], b[i], original.Width);
+	}
+
+	// Test-only independent LZW decoding (GifFile) and disposal composition.
+	// Never uses the production GIF decoder to read encoded output.
+	private static byte[][] IndependentlyComposited(GifFile file)
+	{
+		var canvas = new byte[file.Width * file.Height * 4];
+		var pictures = new List<byte[]>();
+		GifFile.Frame previous = null;
+		byte[] previousSaved = null;
+		foreach (var frame in file.Frames)
+		{
+			if (previous?.Disposal == 2)
+			{
+				for (var y = previous.Top; y < previous.Top + previous.Height; y++)
+					for (var x = previous.Left; x < previous.Left + previous.Width; x++)
+						Array.Clear(canvas, (y * file.Width + x) * 4, 4);
+			}
+			else if (previous?.Disposal == 3)
+				previousSaved.CopyTo(canvas, 0);
+
+			var saved = frame.Disposal == 3 ? (byte[])canvas.Clone() : null;
+			var patch = frame.ToRgba();
+			for (var y = 0; y < frame.Height; y++)
+				for (var x = 0; x < frame.Width; x++)
+				{
+					var pixel = (y * frame.Width + x) * 4;
+					if (patch[pixel + 3] < 128) continue;
+					var dest = ((y + frame.Top) * file.Width + x + frame.Left) * 4;
+					Array.Copy(patch, pixel, canvas, dest, 4);
+				}
+
+			pictures.Add((byte[])canvas.Clone());
+			previous = frame;
+			previousSaved = saved;
+		}
+		return [.. pictures];
 	}
 
 	// Sixteen one-pixel frames on a 3000x3000 screen.
