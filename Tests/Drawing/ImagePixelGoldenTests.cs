@@ -284,7 +284,7 @@ public class ImagePixelGoldenTests : BaseTestClass
 		stream.Write(number);
 	}
 
-	private static byte[] BuildTestTrueType()
+	internal static byte[] BuildTestTrueType()
 	{
 		// A hand-built minimal .ttf with glyph 0 empty and glyph 1 = a rectangle,
 		// cmap Unicode 'I' -> glyph 1. No third-party font binary is distributed.
@@ -376,4 +376,68 @@ public class ImagePixelGoldenTests : BaseTestClass
 
 	private static void Put32(byte[] data, int index, uint value)
 		=> BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(index, 4), value);
+
+	[TestMethod]
+	public void Watermark_PixelExactSourceOverBlending_ForOpaqueAndTransparentBackgrounds()
+	{
+		// Analytically computed Porter-Duff source-over goldens, not an
+		// ImageHelper-vs-ImageHelper round trip. Glyph interior at (40,25).
+		var fontPath = Path.Combine(Path.GetTempPath(), $"ecng-alpha-{Guid.NewGuid():N}.ttf");
+		File.WriteAllBytes(fontPath, BuildTestTrueType());
+		try
+		{
+			foreach (var backgroundAlpha in new byte[] { 0, 1, 32, 127, 254, 255 })
+				foreach (var watermarkOpacity in new byte[] { 1, 64, 160, 254, 255 })
+				{
+					var sourcePixels = new byte[64 * 48 * 4];
+					for (var index = 0; index < sourcePixels.Length; index += 4)
+					{
+						sourcePixels[index] = 30;
+						sourcePixels[index + 1] = 75;
+						sourcePixels[index + 2] = 120;
+						sourcePixels[index + 3] = backgroundAlpha;
+					}
+
+					var input = CreateRgbaPng(64, 48, sourcePixels);
+					var copy = (byte[])input.Clone();
+					var actual = Pixels(input.AddTextWatermark("I", fontSize: 18,
+						opacity: watermarkOpacity, margin: 8, fontFilePath: fontPath), 64, 48);
+
+					input.SequenceEqual(copy).AssertTrue();
+					for (var channel = 0; channel < 4; channel++)
+						actual[channel].AssertEqual(sourcePixels[channel]); // outside the glyph
+
+					var destination = (25 * 64 + 40) * 4;
+					var foregroundAlpha = watermarkOpacity / 255.0;
+					var oldAlpha = backgroundAlpha / 255.0;
+					var combinedAlpha = foregroundAlpha + oldAlpha * (1 - foregroundAlpha);
+					for (var channel = 0; channel < 3; channel++)
+					{
+						var expected = (byte)Math.Clamp((int)Math.Round(
+							(255 * foregroundAlpha + sourcePixels[destination + channel] *
+							oldAlpha * (1 - foregroundAlpha)) / combinedAlpha), 0, 255);
+						actual[destination + channel].AssertEqual(expected);
+					}
+					actual[destination + 3].AssertEqual(
+						(byte)Math.Clamp((int)Math.Round(combinedAlpha * 255), 0, 255));
+				}
+		}
+		finally
+		{
+			File.Delete(fontPath);
+		}
+	}
+
+	[TestMethod]
+	public void Watermark_ZeroOpacityDoesNotNeedInstalledOrProvidedFont()
+	{
+		var pixelBytes = new byte[32 * 16 * 4];
+		for (var i = 0; i < pixelBytes.Length; i++)
+			pixelBytes[i] = (byte)(i * 11);
+		var png = CreateRgbaPng(32, 16, pixelBytes);
+		var output = png.AddTextWatermark("Invisible", opacity: 0, margin: 1,
+			fontFilePath: Path.Combine(Path.GetTempPath(), "missing-ecng-invisible.ttf"));
+		ComparePixels(pixelBytes, Pixels(output, 32, 16), 32, 16);
+	}
+
 }
