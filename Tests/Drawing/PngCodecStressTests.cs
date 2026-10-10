@@ -318,7 +318,7 @@ public class PngCodecStressTests : BaseTestClass
 					var left=j>=bpp?row[j-bpp]:0;
 					var up=previous[j];
 					var upperLeft=j>=bpp?previous[j-bpp]:0;
-					var predictor = y%5 switch
+					var predictor = (y % 5) switch
 					{
 						0=>0, 1=>left, 2=>up, 3=>(left+up)/2,
 						4=>Paeth(left,up,upperLeft), _=>0
