@@ -312,6 +312,9 @@ Verdana is a separately licensed font and is **not** included in the library. Th
 
 ### Testing
 
+CI includes a dedicated [Drawing coverage](https://github.com/StockSharp/Ecng/actions/workflows/drawing-coverage.yml) workflow. It instruments `Ecng.Drawing` with Coverlet, uploads the Cobertura XML report, prints per-class line/branch percentages, and **fails if line coverage drops below 90% or branch coverage drops below 85%**. The report covers the Drawing assembly as exercised by the Drawing test suite; it is not proof of complete path coverage or a security audit.
+
+
 `Tests/Drawing` contains pixel-by-pixel golden fixtures generated independently of the implementation, progressive/CMYK JPEG fixtures with full libjpeg-decoded RGBA reference buffers, exact transparency/resizing calculations, an independently generated deterministic TrueType glyph, PNG Adam7/filter stress tests, randomized PNG roundtrips and malformed-input tests. Test-only reference data uses Pillow/libjpeg; runtime code and the CI test project do not require Python or imaging NuGet packages.
 
 ## Usage Examples

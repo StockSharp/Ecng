@@ -46,6 +46,14 @@ jobs:
           print('Ecng.Drawing:')
           print(f'  lines:    {100 * float(root.attrib.get("line-rate", 0)):.1f}%')
           print(f'  branches: {100 * float(root.attrib.get("branch-rate", 0)):.1f}%')
+          line_rate = float(root.attrib.get('line-rate', 0))
+          branch_rate = float(root.attrib.get('branch-rate', 0))
+          # CI regression gate for the Drawing assembly when running the
+          # Drawing test suite. Do not weaken these to get a green build.
+          if line_rate < 0.90 or branch_rate < 0.85:
+              raise SystemExit(
+                  f'Coverage regression: lines {line_rate:.1%} (min 90%), '
+                  f'branches {branch_rate:.1%} (min 85%)')
           for entry in root.findall('.//class'):
               path = entry.get('filename', '')
               rate = 100 * float(entry.get('line-rate', 0))
