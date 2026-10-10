@@ -66,6 +66,7 @@ internal static class JpegCodec
 	{
 		private readonly byte[] _data;
 		private int _offset;
+		public int Position => _offset;
 		private int _value, _remaining;
 		public Bits(byte[] data, int offset) { _data = data; _offset = offset; }
 
@@ -350,6 +351,17 @@ internal static class JpegCodec
 
 				mcuNumber++;
 			}
+
+		// We consumed the declared MCU count. The next byte-aligned marker must
+		// close the image; accepting a missing EOI would silently treat truncated
+		// JPEG files as successfully decoded pictures.
+		var trailing = reader.Position;
+		if (trailing >= data.Length || data[trailing++] != 0xFF)
+			throw new InvalidDataException("JPEG end-of-image marker is missing.");
+		while (trailing < data.Length && data[trailing] == 0xFF)
+			trailing++;
+		if (trailing >= data.Length || data[trailing] != 0xD9)
+			throw new InvalidDataException("JPEG scan is incomplete or the EOI marker is missing.");
 
 		var result = new RasterImage(width, height);
 		for (var y = 0; y < height; y++)
