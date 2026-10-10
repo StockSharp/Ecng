@@ -362,10 +362,19 @@ public class BmpGifTddTests : BaseTestClass
 			return;
 
 		Directory.CreateDirectory(directory);
+		const int width = 200, height = 120;
+		var screen = new GifBuilder(width, height, GifBuilder.Palette((0, 0, 0), (255, 0, 0)))
+			.Loop(0)
+			.Frame(0, 0, width, height, new byte[width * height], delay: 4);
+
+		for (var index = 0; index < 60; index++)
+			screen.Frame(index * 3, index % 35, 1, 1, [1], delay: 2 + index % 7);
+
 		foreach (var (name, original) in new[]
 		{
 			("four-frame-disposals", _animated),
-			("three-frame-large", _watermarkGif)
+			("three-frame-large", _watermarkGif),
+			("sixty-frame-screen-capture", screen.Build())
 		})
 		{
 			File.WriteAllBytes(Path.Combine(directory, name + ".original.gif"), original);
