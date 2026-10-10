@@ -351,6 +351,38 @@ public class BmpGifTddTests : BaseTestClass
 		Reject(chunks => { var at = Array.FindIndex(chunks, c => c.tag == "fdAT"); chunks[at] = (chunks[at].tag, Array.Empty<byte>()); });
 	}
 
+
+	[TestMethod]
+	public void Gif_DeltaFrames_ExportForPillowCrossValidation()
+	{
+		// Independent Python/Pillow CI step checks every displayed pixel,
+		// frame duration and loop count on the original and encoded GIFs.
+		var directory = Environment.GetEnvironmentVariable("ECNG_GIF_PILLOW_DIR");
+		if (string.IsNullOrEmpty(directory))
+			return;
+
+		Directory.CreateDirectory(directory);
+		const int width = 200, height = 120;
+		var screen = new GifBuilder(width, height, GifBuilder.Palette((0, 0, 0), (255, 0, 0)))
+			.Loop(0)
+			.Frame(0, 0, width, height, new byte[width * height], delay: 4);
+
+		for (var index = 0; index < 60; index++)
+			screen.Frame(index * 3, index % 35, 1, 1, [1], delay: 2 + index % 7);
+
+		foreach (var (name, original) in new[]
+		{
+			("four-frame-disposals", _animated),
+			("three-frame-large", _watermarkGif),
+			("sixty-frame-screen-capture", screen.Build())
+		})
+		{
+			File.WriteAllBytes(Path.Combine(directory, name + ".original.gif"), original);
+			File.WriteAllBytes(Path.Combine(directory, name + ".delta.gif"),
+				GifCodec.Encode(GifCodec.Open(original)));
+		}
+	}
+
 	private static void CompareNonEqual(byte[] expected, byte[] actual)
 	{
 		expected.Length.AssertEqual(actual.Length);

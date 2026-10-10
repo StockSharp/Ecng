@@ -325,19 +325,40 @@ internal static class GifCodec
 			output.WriteByte(0);
 		}
 
-		var count = 0;
+		// Look only one frame ahead. Frames may be decoded lazily, so do not
+		// materialize an entire screen recording in memory merely to encode it.
+		using var frames = animation.Frames.GetEnumerator();
 
-		foreach (var frame in animation.Frames)
+		if (!frames.MoveNext())
+			throw new InvalidDataException("Cannot encode an empty GIF.");
+
+		var first = frames.Current;
+		var current = first;
+		RasterImage retained = null;
+
+		while (true)
 		{
-			if (frame.Image.Width != animation.Width || frame.Image.Height != animation.Height)
+			if (current.Image.Width != animation.Width || current.Image.Height != animation.Height)
 				throw new InvalidDataException("GIF frame size must equal logical canvas.");
 
-			WriteFrame(output, frame);
-			count++;
-		}
+			var hasNext = frames.MoveNext();
+			var next = hasNext ? frames.Current.Image :
+				animation.Plays != 1 ? first.Image : null;
 
-		if (count == 0)
-			throw new InvalidDataException("Cannot encode an empty GIF.");
+			// A transparent pixel cannot erase an opaque old GIF pixel. If the
+			// NEXT frame needs such erasure, encode this one full-screen and
+			// dispose it to transparent before the next frame is drawn.
+			// Include the last-to-first transition for looping animations.
+			var clearAfter = next is not null && NeedsClearing(current.Image, next);
+			WriteFrame(output, current, retained, clearAfter);
+
+			retained = clearAfter ? null : current.Image;
+
+			if (!hasNext)
+				break;
+
+			current = frames.Current;
+		}
 
 		output.WriteByte(_trailer);
 		return output.ToArray();
@@ -439,23 +460,112 @@ internal static class GifCodec
 			}
 	}
 
-	private static void WriteFrame(Stream output, AnimationFrame frame)
-	{
-		var image = frame.Image;
-		var pixels = image.Width * image.Height;
-		var indices = new byte[pixels];
 
+	// GIF uses binary transparency: the RGB of an invisible pixel does not
+	// matter, nor does the alpha value of an otherwise identical opaque pixel.
+	private static bool Matches(byte[] pixels, byte[] retained, int at)
+	{
+		var opaque = pixels[at + 3] >= ColorQuantizer.OpaqueAlpha;
+		var wasOpaque = retained is not null && retained[at + 3] >= ColorQuantizer.OpaqueAlpha;
+
+		return opaque == wasOpaque && (!opaque ||
+			(pixels[at] == retained[at] &&
+			 pixels[at + 1] == retained[at + 1] &&
+			 pixels[at + 2] == retained[at + 2]));
+	}
+
+	private static bool NeedsClearing(RasterImage current, RasterImage next)
+	{
+		var a = current.Pixels;
+		var b = next.Pixels;
+
+		for (var at = 3; at < a.Length; at += 4)
+			if (a[at] >= ColorQuantizer.OpaqueAlpha && b[at] < ColorQuantizer.OpaqueAlpha)
+				return true;
+
+		return false;
+	}
+
+	private static void WriteFrame(Stream output, AnimationFrame frame, RasterImage retained, bool clearAfter)
+	{
+		var full = frame.Image;
+		var source = full.Pixels;
+		var prior = retained?.Pixels;
+		var left = 0;
+		var top = 0;
+		var width = full.Width;
+		var height = full.Height;
+		RasterImage image;
+
+		if (clearAfter)
+		{
+			// Disposal 2 must clear the complete canvas. Otherwise old opaque
+			// pixels outside a small frame rectangle could survive the clear.
+			image = full;
+		}
+		else
+		{
+			// Bounding rectangle of all differences from the canvas retained
+			// after the preceding frame's disposal. The entire-screen scan
+			// does not allocate a new full-canvas pixel buffer.
+			var minX = full.Width;
+			var minY = full.Height;
+			var maxX = -1;
+			var maxY = -1;
+
+			for (var y = 0; y < full.Height; y++)
+				for (var x = 0; x < full.Width; x++)
+				{
+					var at = (y * full.Width + x) * 4;
+					if (Matches(source, prior, at))
+						continue;
+
+					minX = Math.Min(minX, x);
+					minY = Math.Min(minY, y);
+					maxX = Math.Max(maxX, x);
+					maxY = Math.Max(maxY, y);
+				}
+
+			if (maxX < 0)
+			{
+				// A frame with no changes is still required to carry its own
+				// delay. One transparent pixel leaves the canvas untouched.
+				image = new RasterImage(1, 1);
+			}
+			else
+			{
+				left = minX;
+				top = minY;
+				width = maxX - minX + 1;
+				height = maxY - minY + 1;
+				image = new RasterImage(width, height);
+
+				for (var y = 0; y < height; y++)
+					for (var x = 0; x < width; x++)
+					{
+						var src = ((y + top) * full.Width + x + left) * 4;
+						if (Matches(source, prior, src))
+							continue; // Transparent hole: show retained canvas.
+
+						if (source[src + 3] < ColorQuantizer.OpaqueAlpha &&
+							prior is not null && prior[src + 3] >= ColorQuantizer.OpaqueAlpha)
+							throw new InvalidDataException("GIF delta cannot remove opaque pixels without disposal.");
+
+						Array.Copy(source, src, image.Pixels, (y * width + x) * 4, 4);
+					}
+			}
+		}
+
+		var pixelCount = image.Width * image.Height;
+		var indices = new byte[pixelCount];
 		var hasTransparency = false;
 
-		for (var i = 0; i < pixels && !hasTransparency; i++)
+		for (var i = 0; i < pixelCount && !hasTransparency; i++)
 			hasTransparency = image.Pixels[i * 4 + 3] < ColorQuantizer.OpaqueAlpha;
 
-		// A frame with transparent pixels gives them index 0 and has one color fewer for the rest.
 		var first = hasTransparency ? 1 : 0;
 		var colors = ColorQuantizer.Quantize(image, 256 - first, indices, first);
 		var used = first + colors.Length / 3;
-
-		// The table holds a power of two of colors, two at the least.
 		var bits = 1;
 
 		while (1 << bits < used)
@@ -463,16 +573,15 @@ internal static class GifCodec
 
 		var delay = Math.Clamp((int)Math.Round(frame.DelayNumerator * 100.0 / frame.DelayDenominator, MidpointRounding.AwayFromZero), 0, ushort.MaxValue);
 
-		// Every frame is the whole canvas and is cleared before the next one, so that the transparent
-		// pixels of a frame show nothing of the frame before it.
-		output.Write([_extension, _graphicControl, 4, (byte)(_disposeToBackground << 2 | (hasTransparency ? 1 : 0))]);
+		output.Write([_extension, _graphicControl, 4,
+			(byte)((clearAfter ? _disposeToBackground : 1) << 2 | (hasTransparency ? 1 : 0))]);
 		Word(output, delay);
-		output.WriteByte(0);
+		output.WriteByte(0); // Transparent index, if any.
 		output.WriteByte(0);
 
 		output.WriteByte(_imageSeparator);
-		Word(output, 0);
-		Word(output, 0);
+		Word(output, left);
+		Word(output, top);
 		Word(output, image.Width);
 		Word(output, image.Height);
 		output.WriteByte((byte)(0x80 | (bits - 1)));
@@ -483,7 +592,6 @@ internal static class GifCodec
 
 		var minCodeSize = Math.Max(2, bits);
 		output.WriteByte((byte)minCodeSize);
-
 		var compressed = Compress(indices, minCodeSize);
 
 		for (var at = 0; at < compressed.Length; at += 255)
