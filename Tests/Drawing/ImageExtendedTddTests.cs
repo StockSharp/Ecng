@@ -2,6 +2,7 @@ namespace Ecng.Tests.Drawing;
 
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 
 using Ecng.Drawing;
@@ -97,4 +98,93 @@ public class ImageExtendedTddTests : BaseTestClass
 			catch (NotSupportedException) { }
 		}
 	}
+
+	// These reference RGBA buffers were decoded by Pillow/libjpeg *before*
+	// implementing the managed progressive/CMYK decoder. They are zlib
+	// compressed to keep the test source small, not generated from Ecng.
+	private const string ProgressiveReference =
+		"eNotUWtP2gAU/b5FJ32wGY2gRqdQqrAMmR/1ryhGZ0Dk1VKcJvtzW+ZGHzwLFNiW/Y2zey9+aHLb3nPueYTVGr61txA0TYRWGT/sDNzGAUL7Dq6dR9z5BL15A/3hABr9U6sVmk3oLQN67Q7fHxIIK6fwrSaeW/sYNHLo2SX8aiXhWsfQGte0l4P6eAilfg+9nobmGFDtW+Hgu4FtwW9m4dXp3blE0CYN9R10GyW5y1itckW4lNzWKkXh4HmpeQ9+I4OBc4tOPQ+3XEDfeULXTi01N6rQ22nErTTUmiO4eMMQL88tE/16Fn7rgvQWSI9BuCL86jk6zp7s8C5jGMsczMWc2ktW/VYZXtuQu73WFYKvO3ArCQRWcamXtLLm5ZwSL+yJvY1If4ey8hq7hH2Ed39GTxL+Uw19a5kzZyV+KTvOULCUKWfr2yfoNI8kqz7tsGa/eYmBncVPergj6Yr1kxfWzHe5U+42iArwwxv48wP4ExNu/x7+gjqJDPiDCt5Mc1iPjqCNi1iLdhCfG4iHJcTGR1CjE3gj0jDIwf1zCHdYofc0vMhEZ/wZ/jSNd1Py/LcGtZ+EMjhDPPoCdbxNXNvYmFBus/eC9brXNKfQWWTg9YrC4c0zclfpJaD924Y+u0Is+AiVvsdnZcTCQ9HsjUjzPI1gQreHDtzfJnkyxEtstgt1eA4tovzHBpRJgeYLvB1msTp78cu7hGEsczCXcBK3FqXwbv4EpZvHWpjH+py6CDNYme5hY1wSjaKVNIt28sBexBN50ykrJUxCW5hyVx1Rn+Mc9MgiPaZkxFkJB2XHGTKWM+VslckxdZCk/RLWww9YjfahTZvY7J3i9SIhHUlXixcvpFm6pE65W2Wax+b0TrJaiTLYpMz57qv5FjaGNfwHwppe4A==";
+	private const string CmykReference =
+		"eNpdkc2tgzAQhJtIC4kCxiwRVSXBWIELdXJ2L++N7Q8JcRhpMDs/Xu9b+Ns3EzphEl7wen7bGmEROhCEXnCF79vAfBR6wQsfYRQObSt4YcYj+8bis+vfrvPaIfMFv0ZYyfHkGtlvuKfzwHzWPvFaC6/aiM7w8fSY6Hl0Nu4w0aEvM3X22iGS/6D/sbcf98idvuiMztcOjp551uHT8T2Tf2QZPWa0bdlt7XzH59hngPdkOXzC6R2X8rZ7ypBP6oC0SdrkCr+JV2TewvUu6S4YWmUm7SLNeOTzWHzqvDqnQejgju+VHE+ukf2G657py2zO/uHxwueBNqIzfDw9JvKz5uDaY/oI2XssM3X22iGS/+S+BtfetLPaaUJndL52cGgbOizcw+jfnrKMHjPatuy2asdT53yHiN9AlsMnnN5xKW9bs8JpbxO8nv8DdY5e9Q==";
+	private const string GrayReference =
+		"eNqNkUkKhUAQQ0/oPKJeSc/kPKIeKZ/XIPyV7aIgi+RVurqua9UvE4ah8jxXFEUKgsDoJEnk+76yLHvNMvgdx1GapirLUq7rGlZVVYZhy+MlG8ex0exmHm3L05m9+D3PU1EUhkcPun3pj5cMWRiwYMK25f+7Ppq3wEPb8tyIW+GlB3vJctMv/fkjGOzGT2dYaP52miYdx6F5njWOo9HrumoYBu37rqZpXgd/27batk3XdanrOsO679swbHm8ZJdlMZrdzKNteTqzF3/f9zrP0/DoQbcv/fGSIQsDFkzYtvx/10fzFnhoW54bcSu89GAvWW76pT9/BIPd+OkMC83f2vI/WPWoIw==";
+
+	[TestMethod]
+	public void ProgressiveJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_progressive, ProgressiveReference, 5);
+
+	[TestMethod]
+	public void AdobeCmykJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_cmyk, CmykReference, 5);
+
+	[TestMethod]
+	public void ProgressiveGrayJpeg_CompareAllRgbPixelsAgainstLibjpeg()
+		=> CompareReference(_grayProgressive, GrayReference, 4);
+
+	private static void CompareReference(byte[] jpeg, string reference, int tolerance)
+	{
+		using var compressed = new MemoryStream(Convert.FromBase64String(reference));
+		using var zlib = new ZLibStream(compressed, CompressionMode.Decompress);
+		using var expectedStream = new MemoryStream();
+		zlib.CopyTo(expectedStream);
+		var expected = expectedStream.ToArray();
+		if (expected.Length != 1024)
+			Assert.Fail("Independent RGB reference is invalid.");
+
+		// Production PNG encoder is verified separately by strict independent
+		// tests; decode its unfiltered RGBA8 IDAT bytes without JpegCodec.
+		var png = jpeg.ConvertToPng();
+		var actual = ReadPngRgba8(png);
+		if (actual.Length != expected.Length)
+			Assert.Fail($"Pixel buffer size mismatch: {actual.Length} != {expected.Length}");
+
+		var mismatches = 0;
+		var largestDifference = 0;
+		var firstMismatch = -1;
+		for (var i = 0; i < actual.Length; i++)
+		{
+			var diff = Math.Abs(actual[i] - expected[i]);
+			largestDifference = Math.Max(largestDifference, diff);
+			if (diff <= tolerance) continue;
+			mismatches++;
+			if (firstMismatch < 0) firstMismatch = i;
+		}
+
+		if (mismatches != 0)
+			Assert.Fail($"{mismatches} channel mismatches (maximum difference {largestDifference}), " +
+				$"first at ({firstMismatch / 4 % 16},{firstMismatch / 4 / 16}), " +
+				$"channel {"RGBA"[firstMismatch % 4]}: actual={actual[firstMismatch]}, expected={expected[firstMismatch]}, " +
+				$"per-channel tolerance={tolerance}");
+	}
+
+	private static byte[] ReadPngRgba8(byte[] png)
+	{
+		using var idat = new MemoryStream();
+		for (var position = 8; position + 12 <= png.Length;)
+		{
+			var count = System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(position, 4));
+			if (count < 0 || count > png.Length - position - 12)
+				throw new InvalidDataException("Corrupted output PNG.");
+			if (png.AsSpan(position + 4, 4).SequenceEqual("IDAT"u8))
+				idat.Write(png, position + 8, count);
+			position += count + 12;
+		}
+		idat.Position = 0;
+		using var output = new MemoryStream();
+		using (var stream = new ZLibStream(idat, CompressionMode.Decompress))
+			stream.CopyTo(output);
+
+		var data = output.ToArray();
+		var result = new byte[1024];
+		if (data.Length != 16 * (1 + 16 * 4))
+			throw new InvalidDataException("Unexpected output PNG dimension.");
+		for (var y = 0; y < 16; y++)
+		{
+			if (data[y * 65] != 0)
+				throw new InvalidDataException("Output PNG uses an unexpected scanline filter.");
+			Array.Copy(data, y * 65 + 1, result, y * 64, 64);
+		}
+		return result;
+	}
+
 }
