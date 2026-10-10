@@ -12,6 +12,7 @@ A lightweight, cross-platform drawing primitives library for .NET applications. 
   - [Layout and Alignment](#layout-and-alignment)
   - [Drawing Styles](#drawing-styles)
   - [PNG Header](#png-header)
+  - [Image Processing](#image-processing)
 - [Usage Examples](#usage-examples)
 - [Target Frameworks](#target-frameworks)
 
@@ -30,6 +31,7 @@ Add a reference to the `Ecng.Drawing` project or NuGet package in your .NET appl
 - **Layout Primitives**: Thickness, alignment enums for UI layout
 - **Drawing Styles**: Comprehensive set of chart and visualization styles
 - **PNG Header**: Tell a PNG picture by its signature and read its size without decoding it
+- **Image Processing**: Dimensions, downscaling, PNG conversion, and text watermarks
 - **Cross-Platform**: Supports .NET Standard 2.0, .NET 6.0, and .NET 10.0
 - **Lightweight**: Minimal dependencies, no heavy graphics frameworks required
 
@@ -277,6 +279,69 @@ if (picture.TryGetPngSize(out var read))
 ```
 
 Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
+
+## Image Processing (fully managed C#)
+
+The image pipeline is pure managed .NET and requires no third-party imaging packages, GDI+, SkiaSharp, P/Invoke, or native graphics codecs. Tested on Windows, Linux and macOS.
+
+| Input | GetImageSize | ResizeImage | ConvertToPng | AddTextWatermark |
+|---|---|---|---|---|
+| PNG | Yes | PNG | PNG | PNG |
+| APNG (animated PNG) | Yes | **APNG, all frames** | APNG unchanged | **APNG, all frames** |
+| JPEG (8-bit baseline / progressive, CMYK, YCCK) | Yes | JPEG | PNG | PNG |
+| BMP (indexed, RGB, bitfields and RLE) | Yes | BMP | PNG | BMP |
+| GIF87a / GIF89a | Yes | **animated GIF, all frames** | **APNG, all frames** | **animated GIF, all frames** |
+
+### Animated GIF and APNG
+
+GIF processing preserves **every displayed frame**, its delay and the NETSCAPE looping setting (0 means infinite), and composites GIF subrectangles using transparent indices and disposal modes 0–3. Interlaced GIF frames, global/local color tables, and LZW are supported.
+
+- `GetGifFrames()` returns a list of `(byte[] png, int delayMilliseconds)` for all displayed GIF frames. Each `png` is a *full-canvas* composited RGBA8 PNG.
+- `GetGifLoopCount()` returns the GIF NETSCAPE repetition count (0 means infinite; -1 means no loop extension).
+- `GetAnimationFrames()` and `GetAnimationLoopCount()` also work with **APNG** input.
+- Resizing GIF/APNG resizes **every displayed frame**. Animation timings and looping remain unchanged.
+- Adding a watermark to GIF/APNG draws the text **on every frame**, retaining the animation.
+- `ConvertToPng` on GIF yields **APNG**, not a frozen first frame. APNG carries the complete animation, timings and loop metadata. Calling the other methods on that APNG is also animation-preserving.
+- APNG decoding handles per-frame rectangles, SOURCE/OVER blending, and NONE/BACKGROUND/PREVIOUS disposal.
+
+GIF's native palette stores at most **256 indexed colors per frame** and **binary** transparency. When re-encoding GIF, exact colors are preserved if a frame has no more than 255 different nontransparent RGB colors; more complex pictures are quantized to an RGB 3:3:2 palette, and alpha below 128 is made transparent. GIF's LZW encoder favors simple, deterministic interoperable output over maximum compression efficiency. APNG uses full lossless RGBA8; converting GIF to APNG does not introduce new quantization.
+
+### BMP
+
+The BMP decoder accepts OS/2 BITMAPCORE and Windows BITMAPINFO/V4/V5 DIB headers, top-down or bottom-up scanlines, indexed 1/4/8-bit color, RGB555/RGB565 and other nonoverlapping 16/32-bit bitfield masks, uncompressed 24/32-bit color, and BI_RLE4/BI_RLE8. BMP encoding for resizing and watermarking always emits a portable top-down **32-bit BGRA BITMAPV4HEADER** with explicit RGBA masks to retain alpha. Embedded JPEG/PNG compression inside BMP, RLE24, and exotic OS/2-only codecs are not supported.
+
+### JPEG and PNG
+
+- PNG: all legal color types and bit depths including grayscale, indexed transparency, 8/16-bit samples, all five filter types, and Adam7 interlacing. Input APNG is recognized and handled as animated rather than accidentally discarding frames.
+- JPEG: 8-bit baseline and progressive Huffman encoding; grayscale, RGB/YCrCb, Adobe CMYK/YCCK and restart markers. Arithmetic-coded, lossless and 12-bit JPEG are not supported.
+- JPEG downscaling returns managed baseline JPEG with fixed quantization/Huffman tables. There is no output quality setting yet.
+- PNG processing preserves alpha using premultiplied color interpolation, and watermarks use managed TrueType rendering.
+- Verdana itself is not distributed. The watermark renderer prefers installed Verdana, falls back to a system TrueType font or accepts the exact `.ttf` through `fontFilePath`.
+
+```csharp
+using Ecng.Drawing;
+
+byte[] animatedGif = await File.ReadAllBytesAsync("animation.gif");
+var size = animatedGif.GetImageSize();
+var frames = animatedGif.GetGifFrames();
+int loops = animatedGif.GetGifLoopCount(); // 0: infinite, -1: unspecified
+
+byte[] smallerGif = animatedGif.ResizeImage(320, 240);      // Still animated GIF
+byte[] markedGif = smallerGif.AddTextWatermark("StockSharp"); // Every frame
+byte[] animatedPng = animatedGif.ConvertToPng();             // All frames in APNG
+byte[] smallerApng = animatedPng.ResizeImage(320, 240);      // Still animated APNG
+
+byte[] bmp = await File.ReadAllBytesAsync("picture.bmp");
+byte[] markedBmp = bmp.AddTextWatermark("StockSharp");       // BMP output
+```
+
+### Testing and coverage
+
+Dedicated [Drawing coverage CI](https://github.com/StockSharp/Ecng/actions/workflows/drawing-coverage.yml) instruments `Ecng.Drawing` with Coverlet, reports line/branch coverage for each codec, and uploads the Cobertura XML. It fails below **90% line / 85% branch coverage**.
+
+The tests use independent Pillow-created BMP/GIF fixtures plus programmatically constructed BMP palette/RLE/mask and interlaced GIF/LZW fixtures. Pixel oracles cover all 15 legal PNG color/depth pairs, JPEG baseline/progressive/CMYK/YCCK, BMP indexed and true-color samples, every composited GIF animation frame, APNG fdAT streams, frame delays, disposal/blending, and TrueType watermark alpha composition. Invalid/truncated images, GIF, PNG, JPEG, BMP, APNG and malformed font data are checked with deterministic mutations.
+
+As with any custom image parser, broad regression tests and passing coverage thresholds are not substitutes for a security audit or a comprehensive external fuzzing campaign. Memory and total frame budgets limit pathological inputs.
 
 ## Usage Examples
 
