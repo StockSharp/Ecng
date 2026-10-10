@@ -68,8 +68,7 @@ internal static class ApngEncoder
 			{
 				var payload = new byte[checked(compressed.Length + 4)];
 				Put(payload, 0, sequence++);
-				compressed.Position = 0;
-				compressed.ReadExactly(payload.AsSpan(4));
+				compressed.ToArray().CopyTo(payload, 4);
 				Chunk(png, "fdAT"u8, payload);
 			}
 		}
