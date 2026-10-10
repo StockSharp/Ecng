@@ -205,6 +205,53 @@ public class ImageExtendedTddTests : BaseTestClass
 		}
 	}
 
+
+	// Independently created Pillow/libjpeg fixture: four-component JPEG with
+	// Adobe APP14 transform=2 (YCCK). This is NOT an Adobe CMYK transform=0 file.
+	private static readonly byte[] _ycckFixture = Convert.FromBase64String(
+		"/9j/7gAOQWRvYmUAZAAAAAAC/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/8AAFAgACwAPBEMRAE0RAFkRAEsRAP/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/aAA4EQwBNAFkASwAAPwD2D9q34gf8fn7z1716b4u/bS+//p//AI/TPF/7Y3ir4lareaZ4Q0zWPFWpRQtcyWeiWct5MkQZVMhSNWIUM6DdjGWA7in6x+0N8Ufj3cyR+AvDWseIrd5pbY6hDH5djHKkfmNHJdSFYY22FTtdwTuQDJZQfEP+Cf3gaHxV8XPFXxV1OO4+z+FEXT9IdoZFhkvblXWZ1lDBWaKDKtGQ3F4jHaQhPi3ir9tL5z/p/f8Av1BYfs5/FfxzPez/ABC8U6f8MbSNmSGHfHq15M4MZVtkMwiWIhpBuM28NHjy8MGqBv2ZP9Jvrj4u/E7+No7fT/BMvvGVle5uYf8ArqpiEP8AcbzOq0z9q2+n/wBM/et3r5x/Y28NWHxp/ax8E+DPGaTaz4b1L7f9rsvtMkHmeXYXEqfPEyuMPGh4YZxg8EivpjxfbWnw10q80zwhpuneFdNlma5ks9EsYbOF5SqqZCkaqCxVEG7GcKB2FexfGDxPqegaVHpmmXP9nabZQrbWtnaRrFDBEihUjRFACqqgAKAAAABXrf7H2iWfh/8AYw8KX+nxNb3euajqOoahJ5jN5863klsHwSQv7m2hXC4HyZxkkn9Vz+yr8HPB+i2+kWHww8K3Fpbltkmq6TDqFwdzljvnuFklfljjcxwMAYAAHxx8XfHOv+e//E0n+96j1r8+Pjb498Q/aX/4mtx9/wBR6/Sv/9k=");
+
+	private const string YcckLibjpegRgba =
+		"eJwV0V1I01EYx/HHub9ubnNzbrb958uWsjnzbYHzBdEEa6XMNjHFauBqqMnCpIgioggqqZCwG6GL8iIIichACoqoMIPywpsIFELqQqibvI76drz48JwHnh+Hcx65Icgt5aYyo+z000KpqlWXhbZLwv6LDhKTOsfGKhlMhRkejmDPUXOjyogyoaSFvHHBlRFqTggt6QJiRz309ZcR76miL1bDoc5aopEQdlHz3cpBZb+g9QpBdd7TrRHtcnKgXaerzU9npJKuxhCRqgB+3YdV5bSdbJ1gUNwRIVAvhOqttIbdNNeW0RQspzngp7G0goBbx2l1YNJM3BedxxLEpKucV6goK6DBV0yD7qHO6yPq8RN26ui2YuwmG6Lu2Z7dZkH2Iol2ZCiBXpBHqc1Gtc1N5Q5LCUGrF7tmwWI08y/zi+3sNpsTm+xbX0eiMWUAaR3DZ3BQYXCy21iC1+jElVuIlmPkT8cPtjq28GxsULO2Rmx5meOLi4hvGCk/hVSfxitFuMSOWfL5a3nHb9ca8uYbthdf0V+v0rz0lvjCUwbn55H8NGIbQxwTWIuy5IvGd3nOT/mEzK0qXyic/Uj43iuaZp7Qe/sBQ1fukrl6Xb05Ta7hJDZjCreWRKbeI5MryJnPyIUVPNlnhKYeEc3OER+9w0DmGqmRs6TG7WguweFWf6vqriK1o74PSPIluUeW8PQ/JJKcoyUxTc954fA5oX/ESjxpwWwWChWHSbDnCxZN+A/l6hnb";
+
+	[TestMethod]
+	public void YcckJpeg_AdobeTransform2_DecodesPixelForPixelAgainstLibjpeg()
+	{
+		var png = _ycckFixture.ConvertToPng();
+		var actual = ReadPngRgba8(png, 15, 11);
+		using var compressed = new MemoryStream(Convert.FromBase64String(YcckLibjpegRgba));
+		using var zlib = new ZLibStream(compressed, CompressionMode.Decompress);
+		using var reference = new MemoryStream();
+		zlib.CopyTo(reference);
+		var expected = reference.ToArray();
+		actual.Length.AssertEqual(expected.Length);
+		var count = 0;
+		var peak = 0;
+		for (var i = 0; i < actual.Length; i++)
+		{
+			var difference = Math.Abs(actual[i] - expected[i]);
+			if (difference > peak) peak = difference;
+			if (difference > 4) count++;
+		}
+		if (count != 0)
+			Assert.Fail($"YCCK: {count} RGBA channels deviate > 4, peak={peak}; " +
+				$"at (0,0) actual=({actual[0]},{actual[1]},{actual[2]}) vs " +
+				$"reference=({expected[0]},{expected[1]},{expected[2]}).");
+	}
+
+	[TestMethod]
+	public void YcckJpeg_ResizePreservesJpeg_AndWatermarkPreservesImageSize()
+	{
+		_ycckFixture.GetImageSize().Width.AssertEqual(15);
+		_ycckFixture.GetImageSize().Height.AssertEqual(11);
+		var resized = _ycckFixture.ResizeImage(8, 8);
+		(resized[0] == 0xFF && resized[1] == 0xD8).AssertTrue();
+		resized.GetImageSize().Width.AssertEqual(8);
+		var marked = _ycckFixture.AddTextWatermark("Hello",opacity:0,margin:0);
+		marked.GetImageSize().Width.AssertEqual(15);
+		marked.GetImageSize().Height.AssertEqual(11);
+	}
+
 	[TestMethod]
 	public void ProgressiveJpeg_CompareAllRgbPixelsAgainstLibjpeg()
 		=> CompareReference(_progressive, ProgressiveReference, 5);
