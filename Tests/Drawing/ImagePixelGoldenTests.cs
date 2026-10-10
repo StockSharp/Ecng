@@ -440,4 +440,89 @@ public class ImagePixelGoldenTests : BaseTestClass
 		ComparePixels(pixelBytes, Pixels(output, 32, 16), 32, 16);
 	}
 
+
+	[TestMethod]
+	public void Watermark_MalformedTrueTypeTableAndGlyphHeaders_FailWithControlledExceptions()
+	{
+		var font = BuildTestTrueType();
+		var path = Path.Combine(Path.GetTempPath(), $"ecng-font-invalid-{Guid.NewGuid():N}.ttf");
+		var source = CreateRgbaPng(64, 48, new byte[64*48*4]);
+		var head = TestFontTableOffset(font,"head");
+		var hhea = TestFontTableOffset(font,"hhea");
+		var maxp = TestFontTableOffset(font,"maxp");
+		var cmap = TestFontTableOffset(font,"cmap");
+		var loca = TestFontTableOffset(font,"loca");
+
+		void MustReject(Action<byte[]> mutate)
+		{
+			var copy = (byte[])font.Clone();
+			mutate(copy);
+			File.WriteAllBytes(path,copy);
+			try
+			{
+				source.AddTextWatermark("I",fontSize:18,margin:8,fontFilePath:path);
+				Assert.Fail("A malformed TrueType font was accepted.");
+			}
+			catch(InvalidDataException) {}
+			catch(NotSupportedException) {}
+		}
+
+		try
+		{
+			MustReject(bytes=>bytes[0]=0);
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(4,2),0));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(head+18,2),0));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(head+50,2),3));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(hhea+34,2),0));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(maxp+4,2),0));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(loca+4,2),0xFFFF));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(cmap+8,4),0x7FFFFFFF));
+			MustReject(bytes=>BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(12+8,4),0x7FFFFFFF));
+		}
+		finally { File.Delete(path); }
+	}
+
+	[TestMethod]
+	public void Watermark_FuzzHundredsOfMalformedTrueTypeFiles_NoRuntimeCrashes()
+	{
+		var font=BuildTestTrueType();
+		var rng=new Random(420071);
+		var path=Path.Combine(Path.GetTempPath(),$"ecng-ttf-fuzz-{Guid.NewGuid():N}.ttf");
+		var input=CreateRgbaPng(64,48,new byte[64*48*4]);
+
+		try
+		{
+			for(var iteration=0;iteration<300;iteration++)
+			{
+				var data=(byte[])font.Clone();
+				var corruptionCount=1+rng.Next(4);
+				for(var j=0;j<corruptionCount;j++)
+					data[rng.Next(data.Length)]^=(byte)(1<<rng.Next(8));
+				File.WriteAllBytes(path,data);
+
+				try
+				{
+					var output=input.AddTextWatermark("I",fontSize:18,margin:8,fontFilePath:path);
+					output.GetPngSize().Width.AssertEqual(64);
+				}
+				catch(InvalidDataException) {}
+				catch(NotSupportedException) {}
+				catch(ArgumentException) {}
+			}
+		}
+		finally { File.Delete(path); }
+	}
+
+	private static int TestFontTableOffset(byte[] font,string name)
+	{
+		var count=BinaryPrimitives.ReadUInt16BigEndian(font.AsSpan(4,2));
+		for(var i=0;i<count;i++)
+		{
+			var position=12+i*16;
+			if(Encoding.ASCII.GetString(font,position,4)==name)
+				return checked((int)BinaryPrimitives.ReadUInt32BigEndian(font.AsSpan(position+8,4)));
+		}
+		throw new InvalidDataException($"Synthetic TTF table {name} absent.");
+	}
+
 }
