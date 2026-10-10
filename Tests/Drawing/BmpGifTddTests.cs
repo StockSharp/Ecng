@@ -127,6 +127,39 @@ public class BmpGifTddTests : BaseTestClass
 	}
 
 
+
+	[TestMethod]
+	public void Apng_OutputFromGif_ResizeMustPreserveAllFourFramesAndDelays()
+	{
+		var apng = _animated.ConvertToPng();
+		var resized = apng.ResizeImage(2, 2);
+		var chunks = ReadPngChunks(resized);
+		var acTl = chunks.Single(x=>x.tag=="acTL").data;
+		BinaryPrimitives.ReadUInt32BigEndian(acTl.AsSpan(0,4)).AssertEqual((uint)4);
+		BinaryPrimitives.ReadUInt32BigEndian(acTl.AsSpan(4,4)).AssertEqual((uint)2);
+		chunks.Count(x=>x.tag=="fcTL").AssertEqual(4);
+		chunks.Count(x=>x.tag=="fdAT").AssertEqual(3);
+		resized.GetImageSize().Width.AssertEqual(2);
+		resized.GetImageSize().Height.AssertEqual(2);
+		var delays = new[]{5,12,20,7};
+		var controls = chunks.Where(x=>x.tag=="fcTL").ToArray();
+		for (var i=0;i<4;i++)
+			BinaryPrimitives.ReadUInt16BigEndian(controls[i].data.AsSpan(20,2))
+				.AssertEqual((ushort)delays[i]);
+	}
+
+	[TestMethod]
+	public void Apng_OutputFromGif_InvisibleWatermarkMustNotDiscardAnyFrame()
+	{
+		var apng = _animated.ConvertToPng();
+		var output = apng.AddTextWatermark("Invisible",opacity:0,margin:0);
+		var before = ReadPngChunks(apng);
+		var after = ReadPngChunks(output);
+		before.Count(x=>x.tag=="fcTL").AssertEqual(after.Count(x=>x.tag=="fcTL"));
+		after.Count(x=>x.tag=="fcTL").AssertEqual(4);
+		after.Count(x=>x.tag=="fdAT").AssertEqual(3);
+	}
+
 	[TestMethod]
 	public void Gif_ApngExport_CheckEveryFramePayloadAndControlAgainstIndependentColors()
 	{
