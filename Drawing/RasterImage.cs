@@ -31,13 +31,13 @@ internal sealed class RasterImage
 			var fy = (y + 0.5) * sy - 0.5;
 			var y0 = Math.Clamp((int)Math.Floor(fy), 0, Height - 1);
 			var y1 = Math.Clamp(y0 + 1, 0, Height - 1);
-			var ty = Math.Clamp(fy, 0, 1);
+			var ty = Math.Clamp(fy - y0, 0, 1);
 			for (var x = 0; x < width; x++)
 			{
 				var fx = (x + 0.5) * sx - 0.5;
 				var x0 = Math.Clamp((int)Math.Floor(fx), 0, Width - 1);
 				var x1 = Math.Clamp(x0 + 1, 0, Width - 1);
-				var tx = Math.Clamp(fx, 0, 1);
+				var tx = Math.Clamp(fx - x0, 0, 1);
 
 				var a = (y0 * Width + x0) * 4;
 				var b = (y0 * Width + x1) * 4;
