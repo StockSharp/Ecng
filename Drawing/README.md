@@ -282,30 +282,37 @@ Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
 ## Image Processing (fully managed C#)
 
-No third-party NuGet image packages, GDI+, P/Invoke or native graphics engines are required. All four features run on Windows, Linux and macOS on both net6.0 and net10.0.
+No third-party NuGet imaging packages, GDI+, P/Invoke, SkiaSharp, or native graphics engines are used. The image pipeline runs on Windows, Linux, and macOS with .NET 6 / .NET 10.
 
-- `GetImageSize`: gets PNG or JPEG dimensions from the header without decompressing pixels.
-- `ResizeImage`: decodes PNG or **baseline 8-bit JPEG**, shrinks without upscaling while retaining aspect ratio, and encodes the result as PNG. Bilinear resampling is alpha-correct.
-- `ConvertToPng`: decodes supported images into RGBA8 and writes a lossless PNG, preserving transparency.
-- `AddTextWatermark`: reads TrueType outlines from an installed Verdana .ttf (or another supplied .ttf) and rasterizes anti-aliased white text with configurable opacity and margins; output is PNG.
+- `GetImageSize`: inspect PNG / JPEG dimensions without allocating the full pixel buffer.
+- `ResizeImage`: downscale while preserving the aspect ratio and **input format**. PNG remains PNG; JPEG is re-encoded using a managed baseline JPEG encoder with 4:4:4 YCbCr sampling. Images which already fit are returned unchanged (as a new byte array). Alpha is resampled in premultiplied form for PNG.
+- `ConvertToPng`: decode JPEG (baseline, progressive, grayscale, YCbCr, CMYK/YCCK) or PNG and emit lossless RGBA8 PNG with transparency.
+- `AddTextWatermark`: anti-aliased white TrueType text with configurable opacity and margins. By default chooses installed Verdana; if Verdana is unavailable, it tries alternative system TrueType fonts (such as DejaVu Sans, Arial, Liberation Sans and Noto Sans). You can pin the exact font with `fontFilePath`. Watermarked output is PNG.
 
 ```csharp
 using Ecng.Drawing;
 
 byte[] jpeg = await File.ReadAllBytesAsync("photo.jpg");
+
 var size = jpeg.GetImageSize();
-byte[] thumbnailPng = jpeg.ResizeImage(640, 480);
+byte[] thumbnailJpeg = jpeg.ResizeImage(640, 480); // JPEG remains JPEG
 byte[] png = jpeg.ConvertToPng();
-byte[] watermarked = png.AddTextWatermark("StockSharp"); // Installed Verdana
+byte[] watermarked = png.AddTextWatermark("StockSharp");
 await File.WriteAllBytesAsync("marked.png", watermarked);
 
-// On systems without installed Verdana, supply an appropriate font file:
+// For byte-for-byte consistent Verdana typography across environments:
 // png.AddTextWatermark("StockSharp", fontFilePath: "/path/to/Verdana.ttf");
 ```
 
-The supported input formats for full image processing are PNG (standard color types including palette transparency, 16-bit samples and Adam7 interlace) and **baseline sequential JPEG** (grayscale and YCbCr). Progressive JPEG, CMYK JPEG, GIF, TIFF and BMP are not decoded; unsupported inputs fail explicitly. The maximum decoded image size is 25 megapixels. Resize output **always uses PNG**, including for JPEG input; JPEG encoding is intentionally not implemented.
+Input PNG supports the standard color modes (including indexed transparency), scanline filters 0–4, 1/2/4/8/16-bit samples and Adam7 interlace. Input JPEG supports 8-bit sequential and progressive Huffman-coded scans, restart markers, grayscale, YCbCr and Adobe CMYK/YCCK. Arithmetic-coded, lossless and 12-bit JPEG are not supported. GIF, BMP and TIFF are not decoded. Invalid data throws rather than producing pixel buffers from incomplete files. Decoded images are limited to 25 megapixels; additional bounded checks protect intermediate buffers.
 
-Verdana is a separately licensed font and is **not** bundled with this repository. For consistent typography, install it on the host or supply its .ttf via `fontFilePath`. The renderer supports standard TrueType quadratic and composite `glyf` outlines; CFF/OpenType collections and advanced text shaping are not supported. The default font family is Verdana.
+JPEG output from `ResizeImage` is intentionally lossy. It uses built-in fixed quantization/Huffman tables rather than an external JPEG quality parameter. PNG output is lossless. The JPEG format and original bytes are retained when no resize is needed.
+
+Verdana is a separately licensed font and is **not** included in the library. The managed TrueType renderer supports quadratic `glyf` outlines, basic composite glyphs and Unicode cmap format 4/12, but not CFF font collections or advanced text shaping. If the host has no TrueType font, you must supply an appropriate `.ttf`; exact Verdana output requires a Verdana file.
+
+### Testing
+
+`Tests/Drawing` contains pixel-by-pixel golden fixtures generated independently of the implementation, progressive/CMYK JPEG fixtures with full libjpeg-decoded RGBA reference buffers, exact transparency/resizing calculations, an independently generated deterministic TrueType glyph, PNG Adam7/filter stress tests, randomized PNG roundtrips and malformed-input tests. Test-only reference data uses Pillow/libjpeg; runtime code and the CI test project do not require Python or imaging NuGet packages.
 
 ## Usage Examples
 
