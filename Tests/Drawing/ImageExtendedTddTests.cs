@@ -73,6 +73,37 @@ public class ImageExtendedTddTests : BaseTestClass
 		_cmyk.ResizeImage(8, 8).GetImageSize().Width.AssertEqual(8);
 	}
 
+
+	[TestMethod]
+	public void Watermark_OnEverySupportedJpegMode_ChangesPixelsAndPreservesOutsideRegion()
+	{
+		var path = Path.Combine(Path.GetTempPath(), $"ecng-jpeg-watermark-{Guid.NewGuid():N}.ttf");
+		File.WriteAllBytes(path, ImagePixelGoldenTests.BuildTestTrueType());
+		try
+		{
+			foreach (var source in new[] { _baseline, _progressive, _grayProgressive, _cmyk })
+			{
+				var input = (byte[])source.Clone();
+				var reference = ReadPngRgba8(source.ConvertToPng(), 16, 16);
+				var marked = source.AddTextWatermark("I", fontSize: 12,
+					opacity: 255, margin: 1, fontFilePath: path);
+				(marked.Length > 8 && marked[0] == 137 && marked[1] == 80).AssertTrue();
+				var actual = ReadPngRgba8(marked, 16, 16);
+				actual.Length.AssertEqual(reference.Length);
+				var differences = 0;
+				for (var i = 0; i < actual.Length; i++)
+					if (actual[i] != reference[i])
+						differences++;
+
+				(differences > 0).AssertTrue();
+				for (var i = 0; i < 4; i++)
+					actual[i].AssertEqual(reference[i]); // top-left unaffected
+				source.SequenceEqual(input).AssertTrue(); // input never mutated
+			}
+		}
+		finally { File.Delete(path); }
+	}
+
 	[TestMethod]
 	public void Watermark_UnknownFamilyFallbackWithoutPrivateTtf()
 	{
