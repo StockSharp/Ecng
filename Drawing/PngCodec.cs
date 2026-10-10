@@ -362,7 +362,7 @@ internal static class PngCodec
 		{
 			var c = i;
 			for (var j = 0; j < 8; j++)
-				c = c & 1 == 1 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+				c = (c & 1) == 1 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
 			table[i] = c;
 		}
 		return table;
