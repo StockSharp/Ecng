@@ -140,6 +140,9 @@ internal static class JpegCodec
 
 	public static RasterImage Decode(byte[] data)
 	{
+		if (JpegProgressiveCodec.IsProgressive(data))
+			return JpegProgressiveCodec.Decode(data);
+
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("JPEG input exceeds the supported size.");
 
