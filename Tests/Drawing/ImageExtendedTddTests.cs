@@ -83,6 +83,40 @@ public class ImageExtendedTddTests : BaseTestClass
 		output.GetPngSize().Height.AssertEqual(16);
 	}
 
+
+	[TestMethod]
+	public void Red_JpegMustRejectMissingEndOfImageNotSilentlyReturnPixels()
+	{
+		ThrowsExactly<InvalidDataException>(() => _baseline[..^2].ConvertToPng());
+		ThrowsExactly<InvalidDataException>(() => _cmyk[..^2].ConvertToPng());
+	}
+
+	[TestMethod]
+	public void Fuzz_MalformedJpegMustFailCleanly_NotCrashWithUnexpectedRuntimeErrors()
+	{
+		var seed = new Random(809123);
+		var originals = new[] { _baseline, _progressive, _cmyk, _grayProgressive };
+		foreach (var source in originals)
+		{
+			for (var iteration = 0; iteration < 80; iteration++)
+			{
+				var corrupted = (byte[])source.Clone();
+				var index = seed.Next(2, corrupted.Length - 2);
+				corrupted[index] ^= (byte)(1 << seed.Next(8));
+				try
+				{
+					var png = corrupted.ConvertToPng();
+					var size = png.GetPngSize();
+					size.Width.AssertEqual(16);
+					size.Height.AssertEqual(16);
+				}
+				catch (InvalidDataException) { }
+				catch (NotSupportedException) { }
+				catch (IOException) { }
+			}
+		}
+	}
+
 	[TestMethod]
 	public void InvalidJpeg_TruncatedProgressiveDoesNotReturnValidPixels()
 	{
