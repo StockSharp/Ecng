@@ -108,9 +108,10 @@ public static class ImageHelper
 		if (string.IsNullOrWhiteSpace(fontFamily))
 			throw new ArgumentException("A font family is required.", nameof(fontFamily));
 
-		if (GifCodec.IsGif(data))
+		if (GifCodec.IsGif(data) || ApngDecoder.IsApng(data))
 		{
-			var animation = GifCodec.Decode(data);
+			var isGif = GifCodec.IsGif(data);
+			var animation = isGif ? GifCodec.Decode(data) : ApngDecoder.Decode(data);
 			if (2L * margin >= animation.Width || 2L * margin >= animation.Height)
 				throw new ArgumentOutOfRangeException(nameof(margin), "Margins leave no room for text.");
 			if (opacity == 0) return isGif ? GifCodec.Encode(animation) : ApngEncoder.Encode(animation);
