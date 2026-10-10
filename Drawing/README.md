@@ -280,22 +280,32 @@ if (picture.TryGetPngSize(out var read))
 
 Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
-## Image Processing (no third-party libraries)
+## Image Processing (fully managed C#)
 
-The image helper has **no NuGet imaging or font dependencies**. It uses built-in Windows GDI+ for decoding, resizing, PNG output and installed Verdana text rendering. The project still builds on Linux/macOS, but those operating systems can only read PNG dimensions using the separate managed `PngHelper`. Rendering methods throw `PlatformNotSupportedException` outside Windows; .NET 6 and .NET 10 have no universal platform-independent image decoder or TrueType renderer in their base class libraries.
+No third-party NuGet image packages, GDI+, P/Invoke or native graphics engines are required. All four features run on Windows, Linux and macOS on both net6.0 and net10.0.
+
+- `GetImageSize`: gets PNG or JPEG dimensions from the header without decompressing pixels.
+- `ResizeImage`: decodes PNG or **baseline 8-bit JPEG**, shrinks without upscaling while retaining aspect ratio, and encodes the result as PNG. Bilinear resampling is alpha-correct.
+- `ConvertToPng`: decodes supported images into RGBA8 and writes a lossless PNG, preserving transparency.
+- `AddTextWatermark`: reads TrueType outlines from an installed Verdana .ttf (or another supplied .ttf) and rasterizes anti-aliased white text with configurable opacity and margins; output is PNG.
 
 ```csharp
 using Ecng.Drawing;
 
-byte[] original = await File.ReadAllBytesAsync("photo.jpg");
-var dimensions = original.GetImageSize();
-byte[] smaller = original.ResizeImage(640, 480); // Windows; preserves aspect ratio and format
-byte[] png = smaller.ConvertToPng();             // Windows; PNG output
-byte[] watermarked = png.AddTextWatermark("StockSharp"); // Windows; Verdana
-await File.WriteAllBytesAsync("watermarked.png", watermarked);
+byte[] jpeg = await File.ReadAllBytesAsync("photo.jpg");
+var size = jpeg.GetImageSize();
+byte[] thumbnailPng = jpeg.ResizeImage(640, 480);
+byte[] png = jpeg.ConvertToPng();
+byte[] watermarked = png.AddTextWatermark("StockSharp"); // Installed Verdana
+await File.WriteAllBytesAsync("marked.png", watermarked);
+
+// On systems without installed Verdana, supply an appropriate font file:
+// png.AddTextWatermark("StockSharp", fontFilePath: "/path/to/Verdana.ttf");
 ```
 
-PNG dimensions can be read on any OS without decoding via `GetPngSize` or `GetImageSize`. On Windows the supported formats are PNG, JPEG, GIF and BMP. GIF processing flattens animation to the first frame. Image methods return new arrays and do not modify their source. The Windows watermark defaults to white, 24 pt, 160/255 opacity and a 12-pixel margin. It requires Verdana to be installed; pass another installed `fontFamily` to override it.
+The supported input formats for full image processing are PNG (standard color types including palette transparency, 16-bit samples and Adam7 interlace) and **baseline sequential JPEG** (grayscale and YCbCr). Progressive JPEG, CMYK JPEG, GIF, TIFF and BMP are not decoded; unsupported inputs fail explicitly. The maximum decoded image size is 25 megapixels. Resize output **always uses PNG**, including for JPEG input; JPEG encoding is intentionally not implemented.
+
+Verdana is a separately licensed font and is **not** bundled with this repository. For consistent typography, install it on the host or supply its .ttf via `fontFilePath`. The renderer supports standard TrueType quadratic and composite `glyf` outlines; CFF/OpenType collections and advanced text shaping are not supported. The default font family is Verdana.
 
 ## Usage Examples
 
