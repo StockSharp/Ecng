@@ -296,6 +296,110 @@ public class BmpGifTddTests : BaseTestClass
 		}
 	}
 
+
+	[TestMethod]
+	public void Apng_ReimportEveryGifFrame_AgreesWithIndependentPillowPixelOracle()
+	{
+		var animation=_animated.ConvertToPng();
+		var frames=animation.GetAnimationFrames();
+		frames.Count.AssertEqual(4);
+		animation.GetAnimationLoopCount().AssertEqual(2);
+		var original=_animated.GetGifFrames();
+		for(var i=0;i<4;i++)
+		{
+			frames[i].delayMilliseconds.AssertEqual(original[i].delayMilliseconds);
+			Compare(Pixels(original[i].png,4,4),Pixels(frames[i].png,4,4));
+		}
+	}
+
+	[TestMethod]
+	public void Apng_FullFrameBlendSourceAndBlendOver_RespectTransparentPixels()
+	{
+		var source=ReadPngChunks(_animated.ConvertToPng());
+		var controls=0;
+		foreach(var i in Enumerable.Range(0,source.Length))
+			if(source[i].tag=="fcTL")
+			{
+				// First frame retains red column; second frame should composite
+				// green over red instead of wiping transparent pixels.
+				if(controls==1)source[i].data[25]=1;
+				controls++;
+			}
+		var apng=BuildApngChunks(source);
+		var frames=apng.GetAnimationFrames();
+		var second=Pixels(frames[1].png,4,4);
+		for(var y=0;y<4;y++)
+		{
+			Compare([255,0,0,255],second.AsSpan((y*4+0)*4,4).ToArray());
+			Compare([0,255,0,255],second.AsSpan((y*4+1)*4,4).ToArray());
+			Compare([0,0,0,0],second.AsSpan((y*4+2)*4,4).ToArray());
+		}
+	}
+
+	[TestMethod]
+	public void Apng_AllThreeDisposalModes_RenderExpectedFramePixels()
+	{
+		for(var disposal=0;disposal<3;disposal++)
+		{
+			var chunks=ReadPngChunks(_animated.ConvertToPng());
+			var first=Array.FindIndex(chunks,c=>c.tag=="fcTL");
+			chunks[first].data[24]=(byte)disposal;
+			var second=Array.FindIndex(chunks,first+1,c=>c.tag=="fcTL");
+			chunks[second].data[25]=1; // overlay on previous canvas
+			var frames=BuildApngChunks(chunks).GetAnimationFrames();
+			var next=Pixels(frames[1].png,4,4);
+			// NONE preserves red; BACKGROUND and PREVIOUS clear/restore it.
+			for(var y=0;y<4;y++)
+				next[(y*4)*4+3].AssertEqual((byte)(disposal==0?255:0));
+		}
+	}
+
+	[TestMethod]
+	public void Apng_MalformedFrameSequenceDimensionsCrcOrMetadata_FailsClosed()
+	{
+		var bytes=_animated.ConvertToPng();
+		var changed=(byte[])bytes.Clone();
+		changed[changed.Length-24]^=0x80;
+		ThrowsExactly<InvalidDataException>(()=>changed.GetAnimationFrames());
+
+		void Reject(Action<(string tag,byte[] data)[]> change)
+		{
+			var chunks=ReadPngChunks(bytes);
+			change(chunks);
+			ThrowsExactly<InvalidDataException>(()=>BuildApngChunks(chunks).GetAnimationFrames());
+		}
+		Reject(chunks=>BinaryPrimitives.WriteUInt32BigEndian(chunks.Single(c=>c.tag=="acTL").data.AsSpan(0,4),8));
+		Reject(chunks=>BinaryPrimitives.WriteUInt32BigEndian(chunks.First(c=>c.tag=="fcTL").data.AsSpan(0,4),100));
+		Reject(chunks=>BinaryPrimitives.WriteUInt32BigEndian(chunks.First(c=>c.tag=="fdAT").data.AsSpan(0,4),100));
+		Reject(chunks=>BinaryPrimitives.WriteUInt32BigEndian(chunks.First(c=>c.tag=="fcTL").data.AsSpan(4,4),5));
+		Reject(chunks=>chunks.First(c=>c.tag=="fcTL").data[24]=3);
+		Reject(chunks=>chunks.First(c=>c.tag=="fcTL").data[25]=2);
+		Reject(chunks=>chunks.First(c=>c.tag=="fdAT").data=Array.Empty<byte>());
+	}
+
+	private static byte[] BuildApngChunks((string tag,byte[] data)[] chunks)
+	{
+		using var output=new MemoryStream();
+		output.Write([137,80,78,71,13,10,26,10]);
+		foreach(var(tag,payload) in chunks)
+		{
+			Span<byte> number=stackalloc byte[4];
+			BinaryPrimitives.WriteUInt32BigEndian(number,(uint)payload.Length);
+			output.Write(number);
+			var name=Encoding.ASCII.GetBytes(tag);
+			output.Write(name);output.Write(payload);
+			uint crc=0xFFFFFFFF;
+			foreach(var b in name.Concat(payload))
+			{
+				crc^=b;
+				for(var i=0;i<8;i++)crc=(crc&1)!=0?(crc>>1)^0xEDB88320:crc>>1;
+			}
+			BinaryPrimitives.WriteUInt32BigEndian(number,~crc);
+			output.Write(number);
+		}
+		return output.ToArray();
+	}
+
 	private static void Compare(byte[] expected,byte[] actual)
 	{
 		expected.Length.AssertEqual(actual.Length);
