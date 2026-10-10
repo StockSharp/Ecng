@@ -296,10 +296,11 @@ public class ImageHelperTests : BaseTestClass
 			if (string.IsNullOrWhiteSpace(option) || !Directory.Exists(option)) continue;
 			try
 			{
-				return Directory.EnumerateFiles(option, "*.ttf", SearchOption.AllDirectories)
+				var found = Directory.EnumerateFiles(option, "*.ttf", SearchOption.AllDirectories)
 					.FirstOrDefault(x => Path.GetFileName(x).Contains("Verdana", StringComparison.OrdinalIgnoreCase)
 						|| Path.GetFileName(x).Contains("DejaVuSans", StringComparison.OrdinalIgnoreCase)
 						|| Path.GetFileName(x).Contains("Arial", StringComparison.OrdinalIgnoreCase));
+				if (found != null) return found;
 			}
 			catch (UnauthorizedAccessException) { }
 			catch (IOException) { }
