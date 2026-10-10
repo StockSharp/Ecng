@@ -469,7 +469,7 @@ public class ImagePixelGoldenTests : BaseTestClass
 
 		try
 		{
-			MustReject(bytes=>bytes[0]=0);
+			MustReject(bytes=>bytes[0]=0xff);
 			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(4,2),0));
 			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(head+18,2),0));
 			MustReject(bytes=>BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(head+50,2),3));

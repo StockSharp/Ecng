@@ -100,8 +100,8 @@ internal sealed class TrueTypeFont
 		{
 			var pos = 12 + i * 16;
 			var tag = Encoding.ASCII.GetString(_file, pos, 4);
-			var offset = checked((int)U32(pos + 8));
-			var length = checked((int)U32(pos + 12));
+			var offset = SafeU32(U32(pos + 8));
+			var length = SafeU32(U32(pos + 12));
 			Require(offset, length);
 			_tables[tag] = (offset, length);
 		}
@@ -269,8 +269,8 @@ internal sealed class TrueTypeFont
 
 		var glyph = new Glyph { Advance = U16(_hmtx + Math.Min(glyphId, _metricsCount - 1) * 4) };
 		var offset = _loca + glyphId * (_locaFormat == 0 ? 2 : 4);
-		var start = _locaFormat == 0 ? U16(offset) * 2 : checked((int)U32(offset));
-		var end = _locaFormat == 0 ? U16(offset + 2) * 2 : checked((int)U32(offset + 4));
+		var start = _locaFormat == 0 ? U16(offset) * 2 : SafeU32(U32(offset));
+		var end = _locaFormat == 0 ? U16(offset + 2) * 2 : SafeU32(U32(offset + 4));
 
 		if (start == end) { _cache[glyphId] = glyph; return glyph; }
 		if (end < start || end > _tables["glyf"].length)
@@ -415,7 +415,7 @@ internal sealed class TrueTypeFont
 			var pos = cmap + 4 + i * 8;
 			var platform = U16(pos);
 			var encoding = U16(pos + 2);
-			var location = checked((int)U32(pos + 4));
+			var location = SafeU32(U32(pos + 4));
 			var candidate = cmap + location;
 			if (candidate < 0 || candidate + 2 > _file.Length || !(platform == 0 || (platform == 3 && encoding is 1 or 10)))
 				continue;
@@ -439,8 +439,9 @@ internal sealed class TrueTypeFont
 		var format = U16(_cmap);
 		if (format == 12)
 		{
-			var count = checked((int)U32(_cmap + 12));
-			Require(_cmap + 16, checked(count * 12));
+			var count = SafeU32(U32(_cmap + 12));
+			if (count > int.MaxValue / 12) throw new InvalidDataException("TrueType cmap group count exceeds supported size.");
+			Require(_cmap + 16, count * 12);
 			var lo = 0;
 			var hi = count - 1;
 			while (lo <= hi)
@@ -451,7 +452,13 @@ internal sealed class TrueTypeFont
 				var last = U32(at + 4);
 				if (codepoint < first) hi = i - 1;
 				else if (codepoint > last) lo = i + 1;
-				else return checked((int)(U32(at + 8) + codepoint - first));
+				else
+				{
+					var mapped = (long)U32(at + 8) + codepoint - first;
+					if (mapped < 0 || mapped > int.MaxValue)
+						throw new InvalidDataException("TrueType cmap glyph index overflows.");
+					return (int)mapped;
+				}
 			}
 			return 0;
 		}
@@ -494,6 +501,13 @@ internal sealed class TrueTypeFont
 	{
 		if (pos < 0 || len < 0 || pos > _file.Length || len > _file.Length - pos)
 			throw new InvalidDataException("Truncated TrueType font data.");
+	}
+
+	private static int SafeU32(uint value)
+	{
+		if (value > int.MaxValue)
+			throw new InvalidDataException("TrueType table offsets and counts must fit a signed 32-bit value.");
+		return (int)value;
 	}
 
 	private ushort U16(int at) { Require(at, 2); return BinaryPrimitives.ReadUInt16BigEndian(_file.AsSpan(at, 2)); }
