@@ -439,7 +439,7 @@ public class PngCodecStressTests : BaseTestClass
 	public void Png_IendMustBeLastChunk_NotSilentlyIgnoreAppendedData()
 	{
 		var source=Pack(2,2,Pattern(2,2),0,false);
-		ThrowsExactly<InvalidDataException>(() => source.Concat([1,2,3,4]).ToArray().ConvertToPng());
+		ThrowsExactly<InvalidDataException>(() => source.Concat(new byte[] { 1, 2, 3, 4 }).ToArray().ConvertToPng());
 	}
 
 	private static byte[] PackSamples(ReadOnlySpan<int> samples,int depth)
