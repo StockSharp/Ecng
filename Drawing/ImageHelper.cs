@@ -40,9 +40,10 @@ public static class ImageHelper
 		if (maxWidth <= 0) throw new ArgumentOutOfRangeException(nameof(maxWidth));
 		if (maxHeight <= 0) throw new ArgumentOutOfRangeException(nameof(maxHeight));
 
-		if (GifCodec.IsGif(data))
+		if (GifCodec.IsGif(data) || ApngDecoder.IsApng(data))
 		{
-			var animation = GifCodec.Decode(data);
+			var isGif = GifCodec.IsGif(data);
+			var animation = isGif ? GifCodec.Decode(data) : ApngDecoder.Decode(data);
 			var gifRatio = Math.Min((double)maxWidth / animation.Width, (double)maxHeight / animation.Height);
 			if (gifRatio >= 1) return (byte[])data.Clone();
 			var gifWidth = Math.Max(1, (int)Math.Floor(animation.Width * gifRatio));
@@ -51,7 +52,7 @@ public static class ImageHelper
 			foreach (var frame in animation.Frames)
 				resizedAnimation.Frames.Add(new GifFrame(frame.Image.Downscale(gifWidth, gifHeight),
 					frame.DelayCentiseconds));
-			return GifCodec.Encode(resizedAnimation);
+			return isGif ? GifCodec.Encode(resizedAnimation) : ApngEncoder.Encode(resizedAnimation);
 		}
 
 		var image = Decode(data);
@@ -72,7 +73,13 @@ public static class ImageHelper
 	public static byte[] ConvertToPng(this byte[] data)
 	{
 		ArgumentNullException.ThrowIfNull(data);
-		return GifCodec.IsGif(data) ? ApngEncoder.Encode(GifCodec.Decode(data)) : PngCodec.Encode(Decode(data));
+		if (GifCodec.IsGif(data)) return ApngEncoder.Encode(GifCodec.Decode(data));
+		if (ApngDecoder.IsApng(data))
+		{
+			_ = ApngDecoder.Decode(data); // validate every frame instead of silently discarding animation
+			return (byte[])data.Clone();
+		}
+		return PngCodec.Encode(Decode(data));
 	}
 
 	/// <summary>
@@ -106,11 +113,11 @@ public static class ImageHelper
 			var animation = GifCodec.Decode(data);
 			if (2L * margin >= animation.Width || 2L * margin >= animation.Height)
 				throw new ArgumentOutOfRangeException(nameof(margin), "Margins leave no room for text.");
-			if (opacity == 0) return GifCodec.Encode(animation);
+			if (opacity == 0) return isGif ? GifCodec.Encode(animation) : ApngEncoder.Encode(animation);
 			var font = new TrueTypeFont(TrueTypeFont.ResolveFontFile(fontFamily, fontFilePath));
 			foreach (var frame in animation.Frames)
 				font.Draw(frame.Image, text, fontSize, opacity, margin);
-			return GifCodec.Encode(animation);
+			return isGif ? GifCodec.Encode(animation) : ApngEncoder.Encode(animation);
 		}
 
 		var image = Decode(data);
@@ -136,6 +143,28 @@ public static class ImageHelper
 		for (var i = 0; i < frames.Length; i++)
 			frames[i] = (PngCodec.Encode(animation.Frames[i].Image), animation.Frames[i].DelayCentiseconds * 10);
 		return frames;
+	}
+
+	/// <summary>All displayed frames of GIF or APNG as full-canvas RGBA8 PNG images.</summary>
+	public static System.Collections.Generic.IReadOnlyList<(byte[] png, int delayMilliseconds)> GetAnimationFrames(this byte[] data)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		var animation = GifCodec.IsGif(data) ? GifCodec.Decode(data) :
+			ApngDecoder.IsApng(data) ? ApngDecoder.Decode(data) :
+			throw new NotSupportedException("Only GIF and APNG animations are supported.");
+		var frames = new (byte[] png, int delayMilliseconds)[animation.Frames.Count];
+		for (var i = 0; i < frames.Length; i++)
+			frames[i] = (PngCodec.Encode(animation.Frames[i].Image), animation.Frames[i].DelayCentiseconds * 10);
+		return frames;
+	}
+
+	/// <summary>Return animation loop count (0=infinite) for GIF or APNG.</summary>
+	public static int GetAnimationLoopCount(this byte[] data)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		if (GifCodec.IsGif(data)) return GifCodec.Decode(data).LoopCount;
+		if (ApngDecoder.IsApng(data)) return ApngDecoder.Decode(data).LoopCount;
+		throw new NotSupportedException("Only GIF and APNG animations are supported.");
 	}
 
 	/// <summary>NETSCAPE loop count: 0 for infinite; -1 if no loop extension exists.</summary>
