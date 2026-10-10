@@ -46,20 +46,42 @@ internal sealed class TrueTypeFont
 			"/Library/Fonts", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".fonts"),
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library/Fonts")]);
 
+		var files = new List<string>();
 		foreach (var dir in dirs.Distinct(StringComparer.OrdinalIgnoreCase))
 		{
 			if (!Directory.Exists(dir)) continue;
 			try
 			{
+				// Enumerate first and choose by exact font file name. This provides
+				// a deterministic fallback even if Verdana isn't installed.
 				foreach (var file in Directory.EnumerateFiles(dir, "*.ttf", SearchOption.AllDirectories))
-					if (string.Equals(Path.GetFileNameWithoutExtension(file), family, StringComparison.OrdinalIgnoreCase))
-						return file;
+					files.Add(file);
 			}
 			catch (UnauthorizedAccessException) { }
 			catch (IOException) { }
 		}
 
-		throw new InvalidOperationException($"TrueType font '{family}' is not installed. Supply fontFilePath to an installed .ttf.");
+		var preferred = new[]
+		{
+			family, "Verdana", "DejaVuSans", "Arial", "LiberationSans-Regular",
+			"NotoSans-Regular", "FreeSans", "Helvetica"
+		};
+
+		foreach (var name in preferred)
+		{
+			var match = files.FirstOrDefault(file =>
+				string.Equals(Path.GetFileNameWithoutExtension(file), name, StringComparison.OrdinalIgnoreCase));
+			if (match != null) return match;
+		}
+
+		// Last resort: any installed TrueType font is preferable to failing an
+		// otherwise valid watermark request. Caller can still request exact
+		// Verdana via the explicit fontFilePath argument.
+		var fallback = files.OrderBy(file => file, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+		if (fallback != null) return fallback;
+
+		throw new InvalidOperationException(
+			"No TrueType fonts are installed. Supply a .ttf using fontFilePath.");
 	}
 
 	public TrueTypeFont(string path)
