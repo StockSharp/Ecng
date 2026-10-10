@@ -387,9 +387,9 @@ internal static class JpegProgressiveCodec
 					{
 						var cb = b - 128;
 						var cr = c - 128;
-						result.Pixels[offset] = RasterImage.ToByte((a + 1.402 * cr) * k / 255.0);
-						result.Pixels[offset + 1] = RasterImage.ToByte((a - 0.344136 * cb - 0.714136 * cr) * k / 255.0);
-						result.Pixels[offset + 2] = RasterImage.ToByte((a + 1.772 * cb) * k / 255.0);
+						result.Pixels[offset] = RasterImage.ToByte((255 - RasterImage.ToByte(a + 1.402 * cr)) * k / 255.0);
+						result.Pixels[offset + 1] = RasterImage.ToByte((255 - RasterImage.ToByte(a - 0.344136 * cb - 0.714136 * cr)) * k / 255.0);
+						result.Pixels[offset + 2] = RasterImage.ToByte((255 - RasterImage.ToByte(a + 1.772 * cb)) * k / 255.0);
 					}
 					else if (adobeTransform == 0)
 					{

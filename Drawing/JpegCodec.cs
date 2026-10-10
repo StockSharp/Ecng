@@ -389,9 +389,9 @@ internal static class JpegCodec
 					{
 						var cb = Value(components[1], x, y, maxH, maxV) - 128;
 						var cr = Value(components[2], x, y, maxH, maxV) - 128;
-						result.Pixels[off] = RasterImage.ToByte((yy + 1.402 * cr) * k / 255.0);
-						result.Pixels[off + 1] = RasterImage.ToByte((yy - 0.344136 * cb - 0.714136 * cr) * k / 255.0);
-						result.Pixels[off + 2] = RasterImage.ToByte((yy + 1.772 * cb) * k / 255.0);
+						result.Pixels[off] = RasterImage.ToByte((255 - RasterImage.ToByte(yy + 1.402 * cr)) * k / 255.0);
+						result.Pixels[off + 1] = RasterImage.ToByte((255 - RasterImage.ToByte(yy - 0.344136 * cb - 0.714136 * cr)) * k / 255.0);
+						result.Pixels[off + 2] = RasterImage.ToByte((255 - RasterImage.ToByte(yy + 1.772 * cb)) * k / 255.0);
 					}
 					else if (adobeTransform == 0) // Adobe inverted CMYK
 					{
