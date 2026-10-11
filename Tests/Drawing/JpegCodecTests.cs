@@ -51,6 +51,30 @@ public class JpegCodecTests : BaseTestClass
 	private const byte _adobeMarker = 0xEE;
 
 	[TestMethod]
+	[DataRow(false)]
+	[DataRow(true)]
+	public void InterleavedComponents_WithValidScanIds_AreDecoded(bool progressive)
+	{
+		// The independently checked fixture is a constant RGB picture, also decoded by libjpeg-turbo.
+		var expected = Rgba(8, 8, (_, _) => (208, 80, 144, 255));
+
+		AssertPixels(expected, ReadPng(FlatRgb(progressive, "RGB").ConvertToPng(), 8, 8), 8);
+	}
+
+	[TestMethod]
+	[DataRow(false, "BRG")]
+	[DataRow(false, "RRG")]
+	[DataRow(true, "BRG")]
+	[DataRow(true, "RRG")]
+	public void InterleavedComponents_WithReorderedOrRepeatedScanIds_AreRefused(bool progressive, string scanIds)
+	{
+		var jpeg = FlatRgb(progressive, scanIds);
+
+		ThrowsExactly<InvalidDataException>(() => jpeg.ConvertToPng());
+		ThrowsExactly<InvalidDataException>(() => jpeg.ResizeImage(8, 8));
+	}
+
+	[TestMethod]
 	public void Progressive_RunOfSixteenZerosInARefinementScan_DecodesAsLibjpegDoes()
 	{
 		AssertGray(_progressiveGrayA, _progressiveGrayAPixels, 32, 24);
@@ -167,6 +191,29 @@ public class JpegCodecTests : BaseTestClass
 			var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 			(allocated < 1_000_000).AssertTrue($"{allocated} bytes were allocated for a file of {jpeg.Length}");
 		}
+	}
+
+	// One MCU with DC coefficients 640, -384 and 128 under a unit quantizer: RGB (208, 80, 144).
+	// Both baseline and DC-only progressive versions were verified with libjpeg-turbo through Pillow.
+	private static byte[] FlatRgb(bool progressive, string scanIds)
+	{
+		byte[] entropy = progressive ? [0xA8, 0x04, 0xFE, 0x40, 0x7F] : [0xA8, 0x02, 0x7F, 0x10, 0x0F];
+
+		return
+		[
+			0xFF, 0xD8,
+			0xFF, 0xEE, 0x00, 0x0E, .. "Adobe"u8.ToArray(), 0, 100, 0, 0, 0, 0, 0,
+			0xFF, 0xDB, 0x00, 0x43, 0, .. Enumerable.Repeat((byte)1, 64),
+			0xFF, (byte)(progressive ? 0xC2 : 0xC0), 0x00, 0x11, 8, 0, 8, 0, 8, 3,
+			(byte)'R', 0x11, 0, (byte)'G', 0x11, 0, (byte)'B', 0x11, 0,
+			0xFF, 0xC4, 0x00, 0x28, 0, 0, 3, .. new byte[14], 8, 9, 10,
+			0x10, 1, .. new byte[15], 0,
+			0xFF, 0xDA, 0x00, 0x0C, 3,
+			(byte)scanIds[0], 0, (byte)scanIds[1], 0, (byte)scanIds[2], 0,
+			0, (byte)(progressive ? 0 : 63), 0,
+			.. entropy,
+			0xFF, 0xD9,
+		];
 	}
 
 	private static byte[] WithSamplingFactors(byte[] jpeg, byte factors)

@@ -141,6 +141,131 @@ public class ApngCodecTests : BaseTestClass
 		ThrowsExactly<InvalidDataException>(() => WriteChunks(chunks).ConvertToPng());
 	}
 
+	[TestMethod]
+	public void NonconsecutiveIdatChunks_AreRefused()
+	{
+		AssertInvalidAnimation(SplitFirstIdat(interrupted: true));
+	}
+
+	[TestMethod]
+	public void ConsecutiveIdatChunks_AreDecoded()
+	{
+		var apng = SplitFirstIdat(interrupted: false);
+		var expected = Rgba(4, 4, (x, y) => ((byte)(x * 60), (byte)(y * 60), 90, 255));
+		var frames = apng.GetAnimationFrames();
+
+		frames.Count.AssertEqual(4);
+		foreach (var frame in frames)
+			AssertPixels(expected, ReadPng(frame.png, 4, 4), 4);
+		apng.ConvertToPng().AssertEqual(apng);
+	}
+
+	[TestMethod]
+	public void DefaultImageData_IsRequired()
+	{
+		var apng = Apng(1, 1, 0, (0, 0, 1, 1, _disposeNone, _blendSource, Rgba(1, 1, (_, _) => _red)));
+
+		// The animation frame is complete, but the PNG default image is missing.
+		AssertInvalidAnimation(WriteChunks(ReadChunks(apng).Where(c => c.tag != "IDAT")));
+	}
+
+	[TestMethod]
+	public void DefaultFrame_CannotMixIdatAndFdat()
+	{
+		var data = FrameData(1, 1, Rgba(1, 1, (_, _) => _red));
+
+		AssertInvalidAnimation(WriteChunks(
+		[
+			("IHDR", Header(1, 1, 8, 6)),
+			("acTL", Counts(1, 0)),
+			("fcTL", FrameControl(0, 1, 1, 0, 0, 1, 10, _disposeNone, _blendSource)),
+			("IDAT", data[..(data.Length / 2)]),
+			("fdAT", Sequenced(1, data[(data.Length / 2)..])),
+			("IEND", []),
+		]));
+	}
+
+	[TestMethod]
+	public void DefaultFrame_MustCoverTheCanvas()
+	{
+		AssertInvalidAnimation(WriteChunks(
+		[
+			("IHDR", Header(2, 1, 8, 6)),
+			("acTL", Counts(1, 0)),
+			("fcTL", FrameControl(0, 1, 1, 1, 0, 1, 10, _disposeNone, _blendSource)),
+			("IDAT", FrameData(1, 1, Rgba(1, 1, (_, _) => _red))),
+			("IEND", []),
+		]));
+	}
+
+	[TestMethod]
+	[DataRow("PLTE")]
+	[DataRow("tRNS")]
+	public void FrameColorChunks_MustPrecedeIdat(string tag)
+	{
+		var chunks = new List<(string tag, byte[] data)>
+		{
+			("IHDR", Header(1, 1, 8, 3)),
+			("acTL", Counts(1, 0)),
+		};
+
+		if (tag == "tRNS")
+			chunks.Add(("PLTE", [255, 0, 0]));
+
+		chunks.Add(("fcTL", FrameControl(0, 1, 1, 0, 0, 1, 10, _disposeNone, _blendSource)));
+		chunks.Add(("IDAT", Deflate([0, 0])));
+		chunks.Add((tag, tag == "PLTE" ? [255, 0, 0] : [128]));
+		chunks.Add(("IEND", []));
+
+		AssertInvalidAnimation(WriteChunks(chunks));
+	}
+
+	[TestMethod]
+	public void FdatChunks_WithAncillaryChunksBetweenThem_AreDecoded()
+	{
+		var expected = Rgba(1, 1, (_, _) => _red);
+		var chunks = ReadChunks(Apng(1, 1, 0, (0, 0, 1, 1, _disposeNone, _blendSource, expected))).ToList();
+		var index = chunks.FindIndex(c => c.tag == "fdAT");
+		var data = chunks[index].data[4..];
+
+		chunks.RemoveAt(index);
+		chunks.InsertRange(index,
+		[
+			("fdAT", Sequenced(1, data[..(data.Length / 2)])),
+			("tEXt", "Comment\0between frame chunks"u8.ToArray()),
+			("fdAT", Sequenced(2, data[(data.Length / 2)..])),
+		]);
+
+		var apng = WriteChunks(chunks);
+		var frames = apng.GetAnimationFrames();
+
+		frames.Count.AssertEqual(1);
+		AssertPixels(expected, ReadPng(frames[0].png, 1, 1), 1);
+		apng.ConvertToPng().AssertEqual(apng);
+	}
+
+	private static void AssertInvalidAnimation(byte[] apng)
+	{
+		ThrowsExactly<InvalidDataException>(() => apng.GetAnimationFrames());
+		ThrowsExactly<InvalidDataException>(() => apng.ConvertToPng());
+		ThrowsExactly<InvalidDataException>(() => apng.ResizeImage(10, 10));
+	}
+
+	private static byte[] SplitFirstIdat(bool interrupted)
+	{
+		var chunks = ReadChunks(Timed()).ToList();
+		var index = chunks.FindIndex(c => c.tag == "IDAT");
+		var data = chunks[index].data;
+
+		chunks.RemoveAt(index);
+		chunks.Insert(index, ("IDAT", data[(data.Length / 2)..]));
+		if (interrupted)
+			chunks.Insert(index, ("tEXt", "Comment\0between image chunks"u8.ToArray()));
+		chunks.Insert(index, ("IDAT", data[..(data.Length / 2)]));
+
+		return WriteChunks(chunks);
+	}
+
 	// Four 4x4 frames with delays of 1/30 s, 1/1000 s, 700 s and 3/0.
 	private static byte[] Timed()
 	{

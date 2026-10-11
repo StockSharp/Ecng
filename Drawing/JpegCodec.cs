@@ -116,12 +116,10 @@ internal static class JpegCodec
 					for (var i = 0; i < components.Length; i++)
 					{
 						var id = segment[1 + 2 * i];
-						JpegComponent part = null;
-						foreach (var c in components)
-							if (c.Id == id) part = c;
+						var part = components[i];
 
-						if (part == null)
-							throw new InvalidDataException("Invalid JPEG scan component.");
+						if (part.Id != id)
+							throw new InvalidDataException("JPEG scan component order differs from the frame.");
 
 						var selector = segment[2 + 2 * i];
 						part.DcTable = selector >> 4;

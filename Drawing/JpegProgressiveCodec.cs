@@ -110,14 +110,17 @@ internal static class JpegProgressiveCodec
 						throw new InvalidDataException("Invalid progressive JPEG scan.");
 
 					var scan = new JpegComponent[scanCount];
+					var previousComponent = -1;
 					for (var i = 0; i < scanCount; i++)
 					{
 						var id = payload[1 + 2 * i];
 						JpegComponent matched = null;
 						foreach (var c in components)
 							if (c.Id == id) { matched = c; break; }
-						if (matched == null || Array.IndexOf(scan, matched) >= 0)
-							throw new InvalidDataException("Repeated or unknown JPEG scan component.");
+						var componentIndex = matched == null ? -1 : Array.IndexOf(components, matched);
+						if (componentIndex <= previousComponent)
+							throw new InvalidDataException("Repeated, unknown or out-of-order JPEG scan component.");
+						previousComponent = componentIndex;
 						var selectors = payload[2 + 2 * i];
 						matched.DcTable = selectors >> 4;
 						matched.AcTable = selectors & 15;

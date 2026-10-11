@@ -6,6 +6,8 @@ using System.IO.Compression;
 using Ecng.Drawing;
 using Ecng.IO;
 
+using StbImageSharp;
+
 /// <summary>
 /// Builds and reads pictures for the Drawing tests without going through the codecs under test.
 /// </summary>
@@ -180,7 +182,11 @@ internal static class ImageTestHelper
 	public static (int width, int height, byte[] rgba) ReadPng(byte[] png)
 	{
 		var (width, height, raw) = ReadScanlines(png);
-		return (width, height, Unfilter(raw, width, height));
+		raw.Length.AssertEqual(height * (1 + width * 4), "PNG scanline data length");
+		var image = ImageResult.FromMemory(png, ColorComponents.RedGreenBlueAlpha);
+		image.Width.AssertEqual(width, "independent PNG width");
+		image.Height.AssertEqual(height, "independent PNG height");
+		return (width, height, image.Data);
 	}
 
 	/// <summary>
@@ -241,7 +247,13 @@ internal static class ImageTestHelper
 			if (frame is null)
 				return;
 
-			frame.Rgba = Unfilter(Inflate([.. data]), frame.Width, frame.Height);
+			var png = WriteChunks(
+			[
+				("IHDR", Header(frame.Width, frame.Height, 8, 6)),
+				("IDAT", [.. data]),
+				("IEND", []),
+			]);
+			frame.Rgba = ReadPng(png, frame.Width, frame.Height);
 			file.Frames.Add(frame);
 			data.Clear();
 		}
@@ -608,42 +620,6 @@ internal static class ImageTestHelper
 		size.Height.AssertEqual(height, "PNG height as the library reads it");
 
 		return (width, height, Inflate(chunks.Where(c => c.tag == "IDAT").SelectMany(c => c.data).ToArray()));
-	}
-
-	private static byte[] Unfilter(byte[] raw, int width, int height)
-	{
-		const int bpp = 4;
-		var stride = width * bpp;
-		raw.Length.AssertEqual(height * (stride + 1), "PNG scanline data length");
-
-		var result = new byte[height * stride];
-
-		for (var y = 0; y < height; y++)
-		{
-			var filter = raw[y * (stride + 1)];
-			var row = y * stride;
-
-			for (var i = 0; i < stride; i++)
-			{
-				int left = i >= bpp ? result[row + i - bpp] : 0;
-				int up = y > 0 ? result[row - stride + i] : 0;
-				int upLeft = y > 0 && i >= bpp ? result[row - stride + i - bpp] : 0;
-
-				var prediction = filter switch
-				{
-					0 => 0,
-					1 => left,
-					2 => up,
-					3 => (left + up) / 2,
-					4 => Paeth(left, up, upLeft),
-					_ => throw new InvalidDataException($"PNG filter type {filter}."),
-				};
-
-				result[row + i] = unchecked((byte)(raw[y * (stride + 1) + 1 + i] + prediction));
-			}
-		}
-
-		return result;
 	}
 
 	private static uint Crc(ReadOnlySpan<byte> data)

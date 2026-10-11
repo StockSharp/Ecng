@@ -53,5 +53,6 @@
     <SharpCompressVer>1.*</SharpCompressVer>
     <NpgsqlVer>10.*</NpgsqlVer>
     <SmartFormatVer>3.*</SmartFormatVer>
+    <StbImageSharpVer>2.30.16</StbImageSharpVer>
   </PropertyGroup>
 </Project>

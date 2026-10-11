@@ -15,6 +15,7 @@ public static class PngHelper
 	private const int _signatureLength = 8;
 	private const int _chunkLengthSize = sizeof(uint);
 	private const int _chunkNameSize = 4;
+	private const int _headerChunkLength = 13;
 	private const int _chunkNameOffset = _signatureLength + _chunkLengthSize;
 	private const int _widthOffset = _chunkNameOffset + _chunkNameSize;
 	private const int _heightOffset = _widthOffset + sizeof(int);
@@ -40,16 +41,21 @@ public static class PngHelper
 	/// </summary>
 	/// <param name="data">The picture, or as much of its beginning as holds the header.</param>
 	/// <param name="size">The size of the picture, in pixels.</param>
-	/// <returns><see langword="false"/> if the data does not begin with a PNG header.</returns>
+	/// <returns><see langword="false"/> if the PNG header is missing or its length or dimensions are invalid.</returns>
 	public static bool TryGetPngSize(this ReadOnlySpan<byte> data, out Size size)
 	{
-		if (data.Length < _headerLength || !IsPng(data) || !data.Slice(_chunkNameOffset, _chunkNameSize).SequenceEqual(HeaderChunkName))
-		{
-			size = default;
+		size = default;
+		if (data.Length < _headerLength || !IsPng(data) || !data.Slice(_chunkNameOffset, _chunkNameSize).SequenceEqual(HeaderChunkName) ||
+			BinaryPrimitives.ReadUInt32BigEndian(data.Slice(_signatureLength)) != _headerChunkLength)
 			return false;
-		}
 
-		size = new(BinaryPrimitives.ReadInt32BigEndian(data.Slice(_widthOffset)), BinaryPrimitives.ReadInt32BigEndian(data.Slice(_heightOffset)));
+		var width = BinaryPrimitives.ReadInt32BigEndian(data.Slice(_widthOffset));
+		var height = BinaryPrimitives.ReadInt32BigEndian(data.Slice(_heightOffset));
+
+		if (width <= 0 || height <= 0)
+			return false;
+
+		size = new(width, height);
 		return true;
 	}
 
@@ -62,7 +68,7 @@ public static class PngHelper
 	/// </summary>
 	/// <param name="data">The picture, or as much of its beginning as holds the header.</param>
 	/// <returns>The size of the picture, in pixels.</returns>
-	/// <exception cref="InvalidDataException">The data does not begin with a PNG header.</exception>
+	/// <exception cref="InvalidDataException">The PNG header is missing or its length or dimensions are invalid.</exception>
 	public static Size GetPngSize(this ReadOnlySpan<byte> data)
 		=> TryGetPngSize(data, out var size) ? size : throw new InvalidDataException("The data does not begin with a PNG header.");
 

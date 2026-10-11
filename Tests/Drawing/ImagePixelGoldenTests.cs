@@ -7,9 +7,8 @@ using Ecng.Drawing;
 using static ImageTestHelper;
 
 /// <summary>
-/// Pixel-for-pixel regression tests with an independent PNG fixture builder and
-/// reader. These don't compare one production code path against another.
-/// No imaging, font, or native packages are used in test execution.
+/// Pixel-for-pixel regression tests with an independent PNG fixture builder,
+/// StbImageSharp decoding and synthetic fonts.
 /// </summary>
 [TestClass]
 public class ImagePixelGoldenTests : BaseTestClass

@@ -114,10 +114,12 @@ internal static class ApngDecoder
 		var plays = 1;
 		var expectedSequence = 0u;
 		var seenIdat = false;
+		var idatClosed = false;
 		var seenActl = false;
 		var ended = false;
 		var frames = new List<RawFrame>();
 		RawFrame active = null;
+		RawFrame defaultFrame = null;
 
 		while (position + 12 <= data.Length)
 		{
@@ -132,6 +134,9 @@ internal static class ApngDecoder
 
 			if (PngCodec.Crc(bytes.Slice(position + 4, (int)size + 4)) != crc)
 				throw new InvalidDataException("APNG chunk CRC mismatch.");
+
+			if (seenIdat && !chunk.SequenceEqual("IDAT"u8))
+				idatClosed = true;
 
 			if (chunk.SequenceEqual("IHDR"u8))
 			{
@@ -148,9 +153,19 @@ internal static class ApngDecoder
 				RasterImage.EnsureDecodable(width, height);
 			}
 			else if (chunk.SequenceEqual("PLTE"u8))
+			{
+				if (seenIdat)
+					throw new InvalidDataException("APNG palette must precede IDAT.");
+
 				palette = content.ToArray();
+			}
 			else if (chunk.SequenceEqual("tRNS"u8))
+			{
+				if (seenIdat)
+					throw new InvalidDataException("APNG transparency must precede IDAT.");
+
 				transparency = content.ToArray();
+			}
 			else if (chunk.SequenceEqual("acTL"u8))
 			{
 				if (seenActl || seenIdat || header.Length == 0 || content.Length != 8)
@@ -171,7 +186,7 @@ internal static class ApngDecoder
 			}
 			else if (chunk.SequenceEqual("fcTL"u8))
 			{
-				if (!seenActl || content.Length != 26 || frames.Count == expectedCount)
+				if (!seenActl || content.Length != 26 || frames.Count == expectedCount || (!seenIdat && frames.Count != 0))
 					throw new InvalidDataException("Invalid APNG frame control.");
 
 				var sequence = BinaryPrimitives.ReadUInt32BigEndian(content[..4]);
@@ -186,6 +201,9 @@ internal static class ApngDecoder
 
 				if (w == 0 || h == 0 || w > width || h > height || x > width - w || y > height - h)
 					throw new InvalidDataException("APNG frame rectangle exceeds canvas.");
+
+				if (!seenIdat && (w != width || h != height || x != 0 || y != 0))
+					throw new InvalidDataException("APNG default frame must cover the canvas.");
 
 				var numerator = BinaryPrimitives.ReadUInt16BigEndian(content.Slice(20, 2));
 				var denominator = BinaryPrimitives.ReadUInt16BigEndian(content.Slice(22, 2));
@@ -212,19 +230,20 @@ internal static class ApngDecoder
 			}
 			else if (chunk.SequenceEqual("IDAT"u8))
 			{
-				if (!seenActl)
-					throw new InvalidDataException("APNG control must precede IDAT.");
-
-				seenIdat = true;
+				if (!seenActl || idatClosed)
+					throw new InvalidDataException("APNG IDAT chunks must follow the control and be consecutive.");
 
 				// With fcTL preceding IDAT the default image is frame zero.
 				// Otherwise IDAT is a static poster, not part of the animation.
-				if (active != null && frames.Count == 1)
-					active.Compressed.Write(content);
+				if (!seenIdat)
+					defaultFrame = active;
+
+				seenIdat = true;
+				defaultFrame?.Compressed.Write(content);
 			}
 			else if (chunk.SequenceEqual("fdAT"u8))
 			{
-				if (!seenActl || active == null || content.Length < 4)
+				if (!seenActl || !seenIdat || active == null || active == defaultFrame || content.Length < 4)
 					throw new InvalidDataException("Orphaned APNG frame data.");
 
 				var sequence = BinaryPrimitives.ReadUInt32BigEndian(content[..4]);
@@ -248,7 +267,7 @@ internal static class ApngDecoder
 			position += 12 + (int)size;
 		}
 
-		if (!ended || !seenActl || frames.Count != expectedCount || header.Length != 13)
+		if (!ended || !seenActl || !seenIdat || frames.Count != expectedCount || header.Length != 13)
 			throw new InvalidDataException("Incomplete APNG animation.");
 
 		foreach (var frame in frames)

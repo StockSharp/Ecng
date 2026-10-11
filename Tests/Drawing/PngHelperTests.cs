@@ -1,5 +1,6 @@
 namespace Ecng.Tests.Drawing;
 
+using System.Buffers.Binary;
 using System.Drawing;
 
 using Ecng.Drawing;
@@ -75,6 +76,43 @@ public class PngHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
+	[DataRow(0, 2)]
+	[DataRow(3, 0)]
+	[DataRow(-1, 2)]
+	[DataRow(3, -1)]
+	public void TryGetPngSize_RefusesInvalidDimensions(int width, int height)
+	{
+		var header = _small[..24];
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(16), width);
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(20), height);
+
+		AssertInvalidHeader(header);
+	}
+
+	[TestMethod]
+	[DataRow(0)]
+	[DataRow(12)]
+	[DataRow(14)]
+	[DataRow(-1)]
+	public void TryGetPngSize_RefusesInvalidHeaderChunkLength(int length)
+	{
+		var header = _small[..24];
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(8), length);
+
+		AssertInvalidHeader(header);
+	}
+
+	[TestMethod]
+	public void GetPngSize_LargeDimensions_DoNotRequireDecoding()
+	{
+		var header = _small[..24];
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(16), int.MaxValue);
+		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(20), int.MaxValue);
+
+		header.GetPngSize().AssertEqual(new Size(int.MaxValue, int.MaxValue));
+	}
+
+	[TestMethod]
 	public void GetPngSize_OfWhatIsNotAPng_Throws()
 	{
 		ThrowsExactly<InvalidDataException>(() => _jpeg.GetPngSize());
@@ -89,5 +127,16 @@ public class PngHelperTests : BaseTestClass
 		ThrowsExactly<ArgumentNullException>(() => nothing.IsPng());
 		ThrowsExactly<ArgumentNullException>(() => nothing.TryGetPngSize(out _));
 		ThrowsExactly<ArgumentNullException>(() => nothing.GetPngSize());
+	}
+
+	private static void AssertInvalidHeader(byte[] header)
+	{
+		header.TryGetPngSize(out var size).AssertFalse();
+		size.AssertEqual(Size.Empty);
+		((ReadOnlySpan<byte>)header).TryGetPngSize(out size).AssertFalse();
+		size.AssertEqual(Size.Empty);
+
+		ThrowsExactly<InvalidDataException>(() => header.GetPngSize());
+		ThrowsExactly<InvalidDataException>(() => ((ReadOnlySpan<byte>)header).GetPngSize());
 	}
 }

@@ -4,6 +4,8 @@ using System.Buffers.Binary;
 
 using Ecng.Drawing;
 
+using StbImageSharp;
+
 using static ImageTestHelper;
 
 /// <summary>
@@ -130,6 +132,9 @@ public class PngCodecStressTests : BaseTestClass
 		var image = PngCodec.Decode(png);
 
 		(image.Width, image.Height).AssertEqual((width, height), "the size of the decoded picture");
+		var reference = ImageResult.FromMemory(png, ColorComponents.RedGreenBlueAlpha);
+		(reference.Width, reference.Height).AssertEqual((width, height), "the size from the independent decoder");
+		AssertPixels(reference.Data, image.Pixels, width);
 		AssertPixels(image.Pixels, ReadPng(png.ConvertToPng(), width, height), width);
 
 		return image.Pixels;
