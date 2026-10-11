@@ -16,6 +16,9 @@ public class BmpGifTddTests : BaseTestClass
 	private static readonly byte[] _rgbaBmp = Convert.FromBase64String("Qk1OAAAAAAAAADYAAAAoAAAAAwAAAAIAAAABACAAAAAAABgAAADEDgAAxA4AAAAAAAAAAAAAAP//ZP//AAD/AP/cAAD//wD/AP//AAD/");
 	// GIF89a, four independently encoded indexed frames, durations 50/120/200/70ms,
 	// loop=2, disposal modes 2/3/2/1. Generated using Pillow, not Ecng codec.
+	internal static byte[] AnimatedFixture => _animated;
+	internal static byte[] WatermarkFixture => _watermarkGif;
+
 	private static readonly byte[] _animated = Convert.FromBase64String(
 		"R0lGODlhBAAEAIEAAAAAAP8AAAAAAAAAACH/C05FVFNDQVBFMi4wAwECAAAh+QQJBQAAACwAAAAABAAEAAAIDQADABgokOBAAAUBBAQAIfkEDQwAAAAsAQAAAAEABACBAAAAAP8AAAAAAAAACAYAAwgMEBAAIfkECRQAAAAsAQAAAAIABACBAAAAAAD/AAAAAAAACAgAAQQQSDBAQAAh+QQFBwAAACwDAAAAAQAEAIEAAAD//wAAAAAAAAAIBgADCAwQEAA7");
 	private static readonly byte[] _watermarkGif = Convert.FromBase64String(
@@ -352,36 +355,6 @@ public class BmpGifTddTests : BaseTestClass
 	}
 
 
-	[TestMethod]
-	public void Gif_DeltaFrames_ExportForPillowCrossValidation()
-	{
-		// Independent Python/Pillow CI step checks every displayed pixel,
-		// frame duration and loop count on the original and encoded GIFs.
-		var directory = Environment.GetEnvironmentVariable("ECNG_GIF_PILLOW_DIR");
-		if (string.IsNullOrEmpty(directory))
-			return;
-
-		Directory.CreateDirectory(directory);
-		const int width = 200, height = 120;
-		var screen = new GifBuilder(width, height, GifBuilder.Palette((0, 0, 0), (255, 0, 0)))
-			.Loop(0)
-			.Frame(0, 0, width, height, new byte[width * height], delay: 4);
-
-		for (var index = 0; index < 60; index++)
-			screen.Frame(index * 3, index % 35, 1, 1, [1], delay: 2 + index % 7);
-
-		foreach (var (name, original) in new[]
-		{
-			("four-frame-disposals", _animated),
-			("three-frame-large", _watermarkGif),
-			("sixty-frame-screen-capture", screen.Build())
-		})
-		{
-			File.WriteAllBytes(Path.Combine(directory, name + ".original.gif"), original);
-			File.WriteAllBytes(Path.Combine(directory, name + ".delta.gif"),
-				GifCodec.Encode(GifCodec.Open(original)));
-		}
-	}
 
 	private static void CompareNonEqual(byte[] expected, byte[] actual)
 	{
