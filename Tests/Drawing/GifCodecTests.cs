@@ -501,6 +501,41 @@ public class GifCodecTests : BaseTestClass
 		return [.. pictures];
 	}
 
+
+	[TestMethod]
+	public void DifferenceFrames_IndependentDecoderChecksAllFramesInStoredGifFixtures()
+	{
+		// Encoded source fixtures are checked using the test-only GIF reader,
+		// LZW decoder and compositor, not the production decoder. No external
+		// Python process, runtime dependency or environment variable required.
+		foreach (var (name, original) in new[]
+		{
+			("four-frame-disposals", BmpGifTddTests.AnimatedFixture),
+			("three-frame-large", BmpGifTddTests.WatermarkFixture)
+		})
+		{
+			var before = GifFile.Read(original);
+			var compressedBytes = Reencode(original);
+			var after = GifFile.Read(compressedBytes);
+
+			after.Width.AssertEqual(before.Width, name + " width");
+			after.Height.AssertEqual(before.Height, name + " height");
+			after.LoopCount.AssertEqual(before.LoopCount, name + " loop count");
+			after.Frames.Count.AssertEqual(before.Frames.Count, name + " frame count");
+
+			for (var i = 0; i < before.Frames.Count; i++)
+			{
+				after.Frames[i].Delay.AssertEqual(before.Frames[i].Delay,
+					name + " frame " + i + " delay");
+				after.Frames[i].HasEndCode.AssertTrue(name + " frame " + i + " missing LZW EOI");
+			}
+
+			AssertEveryFrameLikeSource(before, after);
+			(compressedBytes.Length <= original.Length).AssertTrue(
+				$"{name}: re-encoded GIF increased from {original.Length} to {compressedBytes.Length} bytes.");
+		}
+	}
+
 	// Sixteen one-pixel frames on a 3000x3000 screen.
 	private static byte[] Huge(int loop)
 	{

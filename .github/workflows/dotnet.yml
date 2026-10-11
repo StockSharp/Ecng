@@ -47,19 +47,6 @@ jobs:
           NUGET_PRIVATE_PACKAGE_VERSION: ${{ secrets.NUGET_PRIVATE_PACKAGE_VERSION }}
         run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure&TestCategory!=Integration"
 
-      - name: Cross-check delta GIF frames using independent Pillow decoder
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        env:
-          ECNG_GIF_PILLOW_DIR: ${{ runner.temp }}/ecng-gif-pillow
-        run: |
-          mkdir -p "$ECNG_GIF_PILLOW_DIR"
-          dotnet test Tests/Tests.csproj -f net10.0 --no-build --configuration Release \
-            --filter "FullyQualifiedName~Gif_DeltaFrames_ExportForPillowCrossValidation"
-          python3 -m venv "${RUNNER_TEMP}/gif-pillow-venv"
-          "${RUNNER_TEMP}/gif-pillow-venv/bin/python" -m pip install "Pillow==12.3.0"
-          "${RUNNER_TEMP}/gif-pillow-venv/bin/python" Tests/Drawing/verify_gif_pillow.py "$ECNG_GIF_PILLOW_DIR"
-
   database:
     name: Database Integration
     runs-on: ubuntu-latest
