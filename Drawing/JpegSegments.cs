@@ -127,9 +127,14 @@ internal static class JpegSegments
 	/// Reads a frame header: the size of the picture and its components with their block grids.
 	/// </summary>
 	public static JpegComponent[] ReadFrame(ReadOnlySpan<byte> segment, out int width, out int height)
+		=> ReadFrame(segment, out width, out height, 1);
+
+	public static JpegComponent[] ReadFrame(ReadOnlySpan<byte> segment, out int width, out int height, int scale, bool isLossless = false)
 	{
-		if (segment.Length < 6 || segment[0] != 8)
-			throw new NotSupportedException("Only 8-bit JPEG is supported.");
+		if (segment.Length < 6)
+			throw new InvalidDataException("Truncated JPEG frame.");
+		if (isLossless ? segment[0] is < 2 or > 16 : segment[0] is not (8 or 12))
+			throw new NotSupportedException("Only 8-bit and 12-bit DCT JPEG are supported.");
 
 		height = BinaryPrimitives.ReadUInt16BigEndian(segment[1..]);
 		width = BinaryPrimitives.ReadUInt16BigEndian(segment[3..]);
@@ -137,7 +142,7 @@ internal static class JpegSegments
 		if (width == 0 || height == 0)
 			throw new InvalidDataException("JPEG frame has no size.");
 
-		RasterImage.EnsureDecodable(width, height);
+		RasterImage.EnsureDecodable((width + scale - 1) / scale, (height + scale - 1) / scale);
 
 		var count = segment[5];
 
@@ -165,7 +170,10 @@ internal static class JpegSegments
 			if (count == 1)
 				h = v = 1;
 
-			components[i] = new() { Id = segment[at], H = h, V = v, QuantTable = table };
+			for (var j = 0; j < i; j++)
+				if (components[j].Id == segment[at])
+					throw new InvalidDataException("Repeated JPEG frame component.");
+			components[i] = new() { Id = segment[at], H = h, V = v, QuantTable = table, Precision = segment[0], Scale = scale };
 			maxH = Math.Max(maxH, h);
 			maxV = Math.Max(maxV, v);
 		}

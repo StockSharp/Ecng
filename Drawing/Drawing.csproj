@@ -9,5 +9,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Fonts\DejaVuSans.ttf" LogicalName="Ecng.Drawing.Fonts.DejaVuSans.ttf" />
     <None Include="Fonts\DejaVuSans-LICENSE.txt" Pack="true" PackagePath="licenses\" />
+    <None Include="Codecs\*LICENSE.txt;Codecs\*NOTICES.md" Pack="true" PackagePath="licenses\" />
+    <None Include="Codecs\README.md" Pack="true" PackagePath="licenses\CodecSources.md" />
   </ItemGroup>
 </Project>

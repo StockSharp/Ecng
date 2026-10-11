@@ -1,6 +1,9 @@
 namespace Ecng.Drawing;
 
 using System;
+using System.Runtime.InteropServices;
+
+using Ecng.Drawing.Codecs.Jpeg;
 
 /// <summary>
 /// The arithmetic both JPEG decoders share: the inverse DCT and the conversion of decoded components to RGBA.
@@ -10,6 +13,7 @@ internal static class JpegTransforms
 	// _basis[x * 8 + u] = C(u) * cos((2x + 1) * u * pi / 16) / 2: the two passes of the transform
 	// give the 1/4 of its definition between them.
 	private static readonly double[] _basis = CreateBasis();
+	private static readonly double[][] _scaledBasis = [CreateScaledBasis(2), CreateScaledBasis(4)];
 
 	/// <summary>
 	/// Position in a block of each coefficient, in the zigzag order coefficients are coded in.
@@ -31,48 +35,70 @@ internal static class JpegTransforms
 	/// <param name="left">Column of the block in the plane.</param>
 	/// <param name="top">Row of the block in the plane.</param>
 	public static void InverseDct(ReadOnlySpan<int> block, byte[] samples, int stride, int left, int top)
+		=> InverseDct(block, samples, stride, left, top, 1, 8);
+
+	public static void InverseDct(ReadOnlySpan<int> block, byte[] samples, int stride, int left, int top, int scale, int precision)
 	{
+		var size = 8 / scale;
+		var divisor = 1 << (precision - 8);
+		var center = 1 << (precision - 1);
 		var flat = true;
 
 		for (var i = 1; i < 64 && flat; i++)
 			flat = block[i] == 0;
 
-		if (flat)
+		if (flat || size == 1)
 		{
 			// Nothing but the DC coefficient: every sample of the block is the same.
-			var value = RasterImage.ToByte(block[0] / 8.0 + 128);
+			var value = RasterImage.ToByte((block[0] / 8.0 + center) / divisor);
 
-			for (var y = 0; y < 8; y++)
-				samples.AsSpan((top + y) * stride + left, 8).Fill(value);
+			for (var y = 0; y < size; y++)
+				samples.AsSpan((top + y) * stride + left, size).Fill(value);
 
 			return;
 		}
 
+		if (scale == 1 && precision == 8)
+		{
+			var source = new JpegBlock8x8F();
+			var decoded = new JpegBlock8x8F();
+			var scratch = new JpegBlock8x8F();
+			var input = MemoryMarshal.CreateSpan(ref source.V0L.X, 64);
+			for (var i = 0; i < 64; i++) input[i] = block[i];
+			FastFloatingPointDCT.TransformIDCT(ref source, ref decoded, ref scratch);
+			var output = MemoryMarshal.CreateReadOnlySpan(ref decoded.V0L.X, 64);
+			for (var y = 0; y < 8; y++)
+				for (var x = 0; x < 8; x++)
+					samples[(top + y) * stride + left + x] = RasterImage.ToByte(output[y * 8 + x] + 128);
+			return;
+		}
+
+		var basis = scale == 1 ? _basis : _scaledBasis[scale == 2 ? 0 : 1];
 		Span<double> columns = stackalloc double[64];
 
 		for (var u = 0; u < 8; u++)
-			for (var y = 0; y < 8; y++)
+			for (var y = 0; y < size; y++)
 			{
 				var sum = 0.0;
 
 				for (var v = 0; v < 8; v++)
-					sum += block[v * 8 + u] * _basis[y * 8 + v];
+					sum += block[v * 8 + u] * basis[y * 8 + v];
 
 				columns[y * 8 + u] = sum;
 			}
 
-		for (var y = 0; y < 8; y++)
+		for (var y = 0; y < size; y++)
 		{
 			var row = (top + y) * stride + left;
 
-			for (var x = 0; x < 8; x++)
+			for (var x = 0; x < size; x++)
 			{
 				var sum = 0.0;
 
 				for (var u = 0; u < 8; u++)
-					sum += columns[y * 8 + u] * _basis[x * 8 + u];
+					sum += columns[y * 8 + u] * basis[x * 8 + u];
 
-				samples[row + x] = RasterImage.ToByte(sum + 128);
+				samples[row + x] = RasterImage.ToByte((sum + center) / divisor);
 			}
 		}
 	}
@@ -211,6 +237,16 @@ internal static class JpegTransforms
 			for (var u = 0; u < 8; u++)
 				basis[x * 8 + u] = (u == 0 ? 1 / Math.Sqrt(2) : 1) * Math.Cos((2 * x + 1) * u * Math.PI / 16) / 2;
 
+		return basis;
+	}
+
+	private static double[] CreateScaledBasis(int scale)
+	{
+		var basis = new double[8 / scale * 8];
+		for (var x = 0; x < 8 / scale; x++)
+			for (var u = 0; u < 8; u++)
+				for (var i = 0; i < scale; i++)
+					basis[x * 8 + u] += _basis[(x * scale + i) * 8 + u] / scale;
 		return basis;
 	}
 }

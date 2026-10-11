@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Net\Schemas\*.xsd" LogicalName="Schemas.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Drawing\Fixtures\*.jpg;Drawing\Fixtures\*.webp;Drawing\Fixtures\*.tiff;Drawing\Fixtures\*.avif;Drawing\Fixtures\*.png" LogicalName="Drawing.Fixtures.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net10.0' ">
     <Compile Remove="Nuget\**" />

@@ -55,9 +55,17 @@ internal static class PngCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, 0, 0);
+
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height)
+		=> Decode(data, width, height);
+
+	private static RasterImage Decode(byte[] data, int targetWidth, int targetHeight)
 	{
 		var (width, height) = ReadSize(data);
-		RasterImage.EnsureDecodable(width, height);
+		var isDownscaled = targetWidth != 0;
+		if (!isDownscaled)
+			RasterImage.EnsureDecodable(width, height);
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("PNG input exceeds the supported size.");
 
@@ -128,8 +136,6 @@ internal static class PngCodec
 			else if (tag.SequenceEqual("IEND"u8))
 			{
 				if (length != 0) throw new InvalidDataException("Invalid IEND.");
-				if (offset + 12 != data.Length)
-					throw new InvalidDataException("PNG contains bytes after the IEND chunk.");
 				ended = true;
 				break;
 			}
@@ -149,7 +155,10 @@ internal static class PngCodec
 			throw new InvalidDataException("Invalid PNG transparency.");
 
 		var channels = color switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => throw new InvalidDataException() };
-		var rowBytes = (int)(((long)width * channels * depth + 7) / 8);
+		var rowSize = ((long)width * channels * depth + 7) / 8;
+		if (rowSize > 128 * 1024 * 1024 || (long)width * 4 > 128 * 1024 * 1024)
+			throw new InvalidDataException("PNG scanline exceeds the supported size.");
+		var rowBytes = (int)rowSize;
 		var needed = interlace == 0 ? checked((long)(rowBytes + 1) * height) : 0L;
 
 		if (interlace == 1)
@@ -166,27 +175,16 @@ internal static class PngCodec
 		if (needed > compressed.Length * _maxDeflateRatio)
 			throw new InvalidDataException("PNG scanlines have an invalid length.");
 
-		var raw = new byte[needed];
+		if (isDownscaled && interlace != 0)
+			return Decode(data).Downscale(targetWidth, targetHeight);
+
+		var downscaler = isDownscaled ? new ImageDownscaler(width, height, targetWidth, targetHeight) : null;
+		var result = downscaler?.Image ?? new RasterImage(width, height);
 		compressed.Position = 0;
-		using (var zlib = new ZLibStream(compressed, CompressionMode.Decompress, leaveOpen: true))
-		{
-			for (var filled = 0; filled < raw.Length;)
-			{
-				var read = zlib.Read(raw, filled, raw.Length - filled);
-				if (read == 0)
-					throw new InvalidDataException("PNG scanlines have an invalid length.");
-				filled += read;
-			}
-
-			if (zlib.ReadByte() >= 0)
-				throw new InvalidDataException("PNG decompression exceeded expected row data.");
-		}
-
-		var result = new RasterImage(width, height);
-		var cursor = 0;
+		using var zlib = new ZLibStream(compressed, CompressionMode.Decompress, leaveOpen: true);
 
 		if (interlace == 0)
-			DecodePass(result, raw, ref cursor, width, height, 0, 0, 1, 1,
+			DecodePass(result, downscaler, zlib, width, height, 0, 0, 1, 1,
 				channels, depth, color, palette, transparency);
 		else
 			foreach (var (px, py, dx, dy) in _passes)
@@ -194,9 +192,12 @@ internal static class PngCodec
 				var w = PassSize(width, px, dx);
 				var h = PassSize(height, py, dy);
 				if (w != 0 && h != 0)
-					DecodePass(result, raw, ref cursor, w, h, px, py, dx, dy,
+					DecodePass(result, null, zlib, w, h, px, py, dx, dy,
 						channels, depth, color, palette, transparency);
 			}
+
+		if (zlib.ReadByte() >= 0)
+			throw new InvalidDataException("PNG decompression exceeded expected row data.");
 
 		return result;
 	}
@@ -466,7 +467,7 @@ internal static class PngCodec
 	private static int Magnitude(int value)
 		=> value < 128 ? value : 256 - value;
 
-	private static void DecodePass(RasterImage image, byte[] raw, ref int cursor,
+	private static void DecodePass(RasterImage image, ImageDownscaler downscaler, Stream raw,
 		int width, int height, int px, int py, int dx, int dy,
 		int channels, int depth, int color, byte[] palette, byte[] transparency)
 	{
@@ -474,78 +475,92 @@ internal static class PngCodec
 		var stride = Math.Max(1, (channels * depth + 7) / 8);
 		var previous = new byte[rowLen];
 		var row = new byte[rowLen];
+		var rowPixels = downscaler is null ? null : new byte[width * 4];
+		var pixels = rowPixels ?? image.Pixels;
 
 		for (var y = 0; y < height; y++)
 		{
-			var filter = raw[cursor++];
-			Array.Copy(raw, cursor, row, 0, rowLen);
-			cursor += rowLen;
-
-			for (var i = 0; i < rowLen; i++)
+			var filter = raw.ReadByte();
+			if (filter is < 0 or > 4)
+				throw new InvalidDataException("Unsupported or missing PNG scanline filter.");
+			for (var filled = 0; filled < row.Length;)
 			{
-				var a = i >= stride ? row[i - stride] : 0;
-				var b = previous[i];
-				var c = i >= stride ? previous[i - stride] : 0;
-				var prediction = filter switch
-				{
-					0 => 0,
-					1 => a,
-					2 => b,
-					3 => (a + b) / 2,
-					4 => Paeth(a, b, c),
-					_ => throw new InvalidDataException("Unsupported PNG scanline filter."),
-				};
-				row[i] = unchecked((byte)(row[i] + prediction));
+				var read = raw.Read(row, filled, row.Length - filled);
+				if (read == 0)
+					throw new InvalidDataException("PNG scanlines have an invalid length.");
+				filled += read;
 			}
 
-			for (var x = 0; x < width; x++)
-			{
-				var dest = ((py + y * dy) * image.Width + px + x * dx) * 4;
-				var sample = x * channels;
-				switch (color)
+			if (filter != 0)
+				for (var i = 0; i < rowLen; i++)
 				{
-					case 0:
-						var grayRaw = Sample(row, sample, depth);
-						var gray = Normalize(grayRaw, depth);
-						var ga = transparency.Length == 2 &&
-							grayRaw == BinaryPrimitives.ReadUInt16BigEndian(transparency) ? (byte)0 : (byte)255;
-						Assign(image.Pixels, dest, gray, gray, gray, ga);
-						break;
-
-					case 2:
-						var rr = Sample(row, sample, depth);
-						var gg = Sample(row, sample + 1, depth);
-						var bb = Sample(row, sample + 2, depth);
-						var ra = transparency.Length == 6 &&
-							rr == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(0, 2)) &&
-							gg == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(2, 2)) &&
-							bb == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(4, 2)) ? (byte)0 : (byte)255;
-						Assign(image.Pixels, dest, Normalize(rr, depth), Normalize(gg, depth), Normalize(bb, depth), ra);
-						break;
-
-					case 3:
-						var index = Sample(row, x, depth);
-						if (index >= palette.Length / 3)
-							throw new InvalidDataException("PNG palette index outside palette.");
-						Assign(image.Pixels, dest, palette[index * 3], palette[index * 3 + 1],
-							palette[index * 3 + 2], index < transparency.Length ? transparency[index] : (byte)255);
-						break;
-
-					case 4:
-						var l = Normalize(Sample(row, sample, depth), depth);
-						Assign(image.Pixels, dest, l, l, l, Normalize(Sample(row, sample + 1, depth), depth));
-						break;
-
-					case 6:
-						Assign(image.Pixels, dest,
-							Normalize(Sample(row, sample, depth), depth),
-							Normalize(Sample(row, sample + 1, depth), depth),
-							Normalize(Sample(row, sample + 2, depth), depth),
-							Normalize(Sample(row, sample + 3, depth), depth));
-						break;
+					var a = i >= stride ? row[i - stride] : 0;
+					var b = previous[i];
+					var c = i >= stride ? previous[i - stride] : 0;
+					var prediction = filter switch
+					{
+						0 => 0,
+						1 => a,
+						2 => b,
+						3 => (a + b) / 2,
+						4 => Paeth(a, b, c),
+						_ => throw new InvalidDataException("Unsupported PNG scanline filter."),
+					};
+					row[i] = unchecked((byte)(row[i] + prediction));
 				}
-			}
 
+			if (color == 6 && depth == 8 && dx == 1)
+				row.CopyTo(pixels, downscaler is null ? ((py + y * dy) * image.Width + px) * 4 : 0);
+			else
+				for (var x = 0; x < width; x++)
+				{
+					var dest = downscaler is null ? ((py + y * dy) * image.Width + px + x * dx) * 4 : x * 4;
+					var sample = x * channels;
+					switch (color)
+					{
+						case 0:
+							var grayRaw = Sample(row, sample, depth);
+							var gray = Normalize(grayRaw, depth);
+							var ga = transparency.Length == 2 &&
+								grayRaw == BinaryPrimitives.ReadUInt16BigEndian(transparency) ? (byte)0 : (byte)255;
+							Assign(pixels, dest, gray, gray, gray, ga);
+							break;
+
+						case 2:
+							var rr = Sample(row, sample, depth);
+							var gg = Sample(row, sample + 1, depth);
+							var bb = Sample(row, sample + 2, depth);
+							var ra = transparency.Length == 6 &&
+								rr == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(0, 2)) &&
+								gg == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(2, 2)) &&
+								bb == BinaryPrimitives.ReadUInt16BigEndian(transparency.AsSpan(4, 2)) ? (byte)0 : (byte)255;
+							Assign(pixels, dest, Normalize(rr, depth), Normalize(gg, depth), Normalize(bb, depth), ra);
+							break;
+
+						case 3:
+							var index = Sample(row, x, depth);
+							if (index >= palette.Length / 3)
+								throw new InvalidDataException("PNG palette index outside palette.");
+							Assign(pixels, dest, palette[index * 3], palette[index * 3 + 1],
+								palette[index * 3 + 2], index < transparency.Length ? transparency[index] : (byte)255);
+							break;
+
+						case 4:
+							var l = Normalize(Sample(row, sample, depth), depth);
+							Assign(pixels, dest, l, l, l, Normalize(Sample(row, sample + 1, depth), depth));
+							break;
+
+						case 6:
+							Assign(pixels, dest,
+								Normalize(Sample(row, sample, depth), depth),
+								Normalize(Sample(row, sample + 1, depth), depth),
+								Normalize(Sample(row, sample + 2, depth), depth),
+								Normalize(Sample(row, sample + 3, depth), depth));
+							break;
+					}
+				}
+
+			downscaler?.AddRow(rowPixels);
 			(row, previous) = (previous, row);
 		}
 	}

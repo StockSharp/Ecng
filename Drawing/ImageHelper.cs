@@ -21,7 +21,7 @@ public static class ImageHelper
 	private const int _maxWatermarkLength = 1024;
 
 	/// <summary>
-	/// Reads the size of a PNG, JPEG, BMP or GIF picture off its header, without decoding the picture.
+	/// Reads the display size of a supported image without decoding pixels.
 	/// </summary>
 	/// <param name="data">The picture.</param>
 	/// <returns>
@@ -29,7 +29,7 @@ public static class ImageHelper
 	/// side that is the size after turning it upright.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
-	/// <exception cref="NotSupportedException">The data is none of the four formats.</exception>
+	/// <exception cref="NotSupportedException">The format or header feature is unsupported.</exception>
 	/// <exception cref="InvalidDataException">The header is damaged.</exception>
 	public static Size GetImageSize(this byte[] data)
 		=> GetImageSize((ReadOnlySpan<byte>)(data ?? throw new ArgumentNullException(nameof(data))));
@@ -41,16 +41,65 @@ public static class ImageHelper
 			JpegCodec.IsJpeg(data) ? JpegCodec.ReadSize(data) :
 			BmpCodec.IsBmp(data) ? BmpCodec.ReadSize(data) :
 			GifCodec.IsGif(data) ? GifCodec.ReadSize(data) :
-			throw new NotSupportedException("Only PNG, JPEG, BMP and GIF images are supported.");
+			IconCodec.IsIcon(data) ? IconCodec.ReadSize(data) :
+			WebpCodec.IsWebp(data) ? WebpCodec.ReadSize(data) :
+			TiffCodec.IsTiff(data) ? TiffCodec.ReadSize(data) :
+			AvifCodec.IsAvif(data) ? AvifCodec.ReadSize(data) :
+			throw new NotSupportedException("Supported images are PNG, JPEG, BMP, GIF, WebP, ICO, TIFF and AVIF.");
 
 		return new Size(width, height);
+	}
+
+	/// <summary>
+	/// Identifies a supported file signature without decoding pixels or validating the complete file.
+	/// </summary>
+	/// <param name="data">The image bytes.</param>
+	/// <returns>The detected format, or <see cref="ImageFormats.Unknown"/>.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="data"/> is null.</exception>
+	public static ImageFormats GetImageFormat(this byte[] data)
+		=> GetImageFormat((ReadOnlySpan<byte>)(data ?? throw new ArgumentNullException(nameof(data))));
+
+	/// <inheritdoc cref="GetImageFormat(byte[])"/>
+	public static ImageFormats GetImageFormat(this ReadOnlySpan<byte> data)
+		=> PngCodec.IsPng(data) ? ImageFormats.Png :
+			JpegCodec.IsJpeg(data) ? ImageFormats.Jpeg :
+			BmpCodec.IsBmp(data) ? ImageFormats.Bmp :
+			GifCodec.IsGif(data) ? ImageFormats.Gif :
+			IconCodec.IsIcon(data) ? ImageFormats.Icon :
+			WebpCodec.IsWebp(data) ? ImageFormats.Webp :
+			TiffCodec.IsTiff(data) ? ImageFormats.Tiff :
+			AvifCodec.IsAvif(data) ? ImageFormats.Avif : ImageFormats.Unknown;
+
+	/// <summary>
+	/// Tries to read the display dimensions from an image header without decoding pixels.
+	/// A readable header does not guarantee that pixel decoding will succeed.
+	/// </summary>
+	/// <param name="data">The image bytes; null is treated as unreadable.</param>
+	/// <param name="size">The display size, or <see cref="Size.Empty"/> on failure.</param>
+	/// <returns>Whether the format and dimensions could be read.</returns>
+	public static bool TryGetImageSize(this byte[] data, out Size size)
+		=> TryGetImageSize((ReadOnlySpan<byte>)data, out size);
+
+	/// <inheritdoc cref="TryGetImageSize(byte[], out Size)"/>
+	public static bool TryGetImageSize(this ReadOnlySpan<byte> data, out Size size)
+	{
+		size = Size.Empty;
+		try
+		{
+			size = GetImageSize(data);
+			return true;
+		}
+		catch (Exception error) when (error is InvalidDataException or NotSupportedException)
+		{
+			return false;
+		}
 	}
 
 	/// <summary>
 	/// Reduces a picture to fit the given bounds, keeping its proportions. A picture that fits already is
 	/// returned as it is; none is ever enlarged.
 	/// </summary>
-	/// <param name="data">A PNG, JPEG, BMP or GIF picture.</param>
+	/// <param name="data">A PNG, JPEG, BMP, GIF, WebP, ICO, TIFF or AVIF picture.</param>
 	/// <param name="maxWidth">The most the result may be wide, in pixels.</param>
 	/// <param name="maxHeight">The most the result may be high, in pixels.</param>
 	/// <param name="jpegQuality">
@@ -59,43 +108,63 @@ public static class ImageHelper
 	/// </param>
 	/// <returns>
 	/// The picture as it came, if it fits already. Otherwise the picture in the format it came in: PNG,
-	/// baseline JPEG, 32-bit BMP, or - every frame of it - an animated GIF or PNG with its timing and
+	/// baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing and
 	/// loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
 	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
 	/// <exception cref="ArgumentOutOfRangeException">A bound is not positive, or the quality is not from 1 to 100.</exception>
 	/// <exception cref="NotSupportedException">The format, or a feature of it the picture uses, is not supported.</exception>
 	/// <exception cref="InvalidDataException">The picture is damaged, or larger than is decoded.</exception>
 	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, null, jpegQuality);
+
+	/// <summary>Reduces a picture to fit the bounds and writes it in the requested format.</summary>
+	/// <param name="data">The source image.</param>
+	/// <param name="maxWidth">Maximum output width.</param>
+	/// <param name="maxHeight">Maximum output height.</param>
+	/// <param name="outputFormat">PNG, JPEG, BMP, GIF, WebP or ICO. Animated output requires PNG, GIF or WebP.</param>
+	/// <param name="jpegQuality">JPEG quality from 1 to 100.</param>
+	/// <returns>The resized or converted image, retaining all animation frames.</returns>
+	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageFormats outputFormat, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality);
+
+	private static byte[] Resize(byte[] data, int maxWidth, int maxHeight, ImageFormats? outputFormat, int jpegQuality)
 	{
 		ArgumentNullException.ThrowIfNull(data);
 		if (maxWidth <= 0) throw new ArgumentOutOfRangeException(nameof(maxWidth));
 		if (maxHeight <= 0) throw new ArgumentOutOfRangeException(nameof(maxHeight));
 		ValidateQuality(jpegQuality);
+		ValidateOutput(outputFormat);
 
 		if (OpenAnimation(data) is { } animation)
 		{
 			if (!TryFit(animation.Width, animation.Height, maxWidth, maxHeight, out var frameWidth, out var frameHeight))
 			{
+				if (!IsSameFormat(data, outputFormat)) return EncodeAnimation(data, animation, outputFormat, jpegQuality);
 				Validate(animation);
 				return (byte[])data.Clone();
 			}
 
-			return EncodeAnimation(data, animation.Select(frameWidth, frameHeight, frame => frame.Downscale(frameWidth, frameHeight)));
+			return EncodeAnimation(data, animation.Select(frameWidth, frameHeight, frame => frame.Downscale(frameWidth, frameHeight)), outputFormat, jpegQuality);
 		}
 
-		var image = Decode(data);
-		if (!TryFit(image.Width, image.Height, maxWidth, maxHeight, out var width, out var height))
-			return (byte[])data.Clone();
+		var size = data.GetImageSize();
+		if (JpegCodec.IsJpeg(data))
+			JpegCodec.ValidateScanHeader(data);
+		if (!TryFit(size.Width, size.Height, maxWidth, maxHeight, out var width, out var height))
+			return IsSameFormat(data, outputFormat) ? (byte[])data.Clone() : Encode(data, Decode(data), jpegQuality, outputFormat);
 
-		return Encode(data, image.Downscale(width, height), jpegQuality);
+		var image = PngCodec.IsPng(data) ? PngCodec.DecodeDownscaled(data, width, height) :
+			JpegCodec.IsJpeg(data) ? JpegCodec.DecodeDownscaled(data, width, height) : Decode(data).Downscale(width, height);
+		return Encode(data, image, jpegQuality, outputFormat);
 	}
 
 	/// <summary>
 	/// Converts a picture to PNG.
 	/// </summary>
-	/// <param name="data">A PNG, JPEG, BMP or GIF picture.</param>
+	/// <param name="data">A PNG, JPEG, BMP, GIF, WebP, ICO, TIFF or AVIF picture.</param>
 	/// <returns>
 	/// An RGBA8 PNG. A GIF becomes an animated PNG with all its frames, delays and as many plays; a PNG
 	/// that is animated already is checked and returned as it is. The ICC profile of a JPEG or a PNG
@@ -113,6 +182,8 @@ public static class ImageHelper
 			Validate(ApngDecoder.Open(data));
 			return (byte[])data.Clone();
 		}
+		if (WebpCodec.IsWebp(data) && WebpCodec.Open(data) is { } animation)
+			return ApngEncoder.Encode(animation, []);
 		return PngCodec.Encode(Decode(data), ColorChunks(data));
 	}
 
@@ -125,7 +196,7 @@ public static class ImageHelper
 	/// returned as it came. A text that is laid on and cannot be told from what is under it - white on
 	/// white - is drawn, and the picture is written again.
 	/// </summary>
-	/// <param name="data">A PNG, JPEG, BMP or GIF picture.</param>
+	/// <param name="data">A PNG, JPEG, BMP, GIF, WebP, ICO, TIFF or AVIF picture.</param>
 	/// <param name="text">Single-line watermark text, 1024 characters at most.</param>
 	/// <param name="fontSize">Maximum font size in points. A size below 6 pixels to the em is kept as it is.</param>
 	/// <param name="opacity">
@@ -144,9 +215,10 @@ public static class ImageHelper
 	/// </param>
 	/// <returns>
 	/// The picture as it came, if nothing is drawn on it. Otherwise the picture in the format it came in:
-	/// PNG, baseline JPEG, 32-bit BMP, or - every frame of it - an animated GIF or PNG with its timing
+	/// PNG, baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing
 	/// and loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
 	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
 	/// <exception cref="ArgumentException">
@@ -178,7 +250,7 @@ public static class ImageHelper
 	/// its resources, for instance - where the other overload looks for a font by family or by path.
 	/// The text is placed, made smaller and left out the same way.
 	/// </summary>
-	/// <param name="data">A PNG, JPEG, BMP or GIF picture.</param>
+	/// <param name="data">A PNG, JPEG, BMP, GIF, WebP, ICO, TIFF or AVIF picture.</param>
 	/// <param name="text">Single-line watermark text, 1024 characters at most.</param>
 	/// <param name="font">A TrueType .ttf file. It is only read, and not at all with an opacity of 0.</param>
 	/// <param name="fontSize">Maximum font size in points. A size below 6 pixels to the em is kept as it is.</param>
@@ -190,9 +262,10 @@ public static class ImageHelper
 	/// </param>
 	/// <returns>
 	/// The picture as it came, if nothing is drawn on it. Otherwise the picture in the format it came in:
-	/// PNG, baseline JPEG, 32-bit BMP, or - every frame of it - an animated GIF or PNG with its timing
+	/// PNG, baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing
 	/// and loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
 	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> or <paramref name="font"/> is <see langword="null"/>.</exception>
 	/// <exception cref="ArgumentException">
@@ -215,6 +288,48 @@ public static class ImageHelper
 		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font));
 	}
 
+	/// <summary>Renders a watermark and writes the requested image format.</summary>
+	/// <param name="data">The source image.</param>
+	/// <param name="text">Single-line watermark text.</param>
+	/// <param name="outputFormat">PNG, JPEG, BMP, GIF, WebP or ICO.</param>
+	/// <param name="fontSize">Maximum font size.</param>
+	/// <param name="opacity">Text opacity from 0 to 255.</param>
+	/// <param name="margin">Margin around the text.</param>
+	/// <param name="fontFamily">Installed font family.</param>
+	/// <param name="fontFilePath">Optional TrueType font file.</param>
+	/// <param name="jpegQuality">JPEG quality from 1 to 100.</param>
+	/// <returns>The image in the requested format, retaining all animation frames.</returns>
+	public static byte[] AddTextWatermark(this byte[] data, string text, ImageFormats outputFormat,
+		float fontSize = 24, byte opacity = 160, int margin = 12, string fontFamily = "Verdana", string fontFilePath = null, int jpegQuality = DefaultJpegQuality)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		ValidateWatermark(text, fontSize, margin, jpegQuality);
+		ValidateOutput(outputFormat);
+		if (string.IsNullOrWhiteSpace(fontFamily)) throw new ArgumentException("A font family is required.", nameof(fontFamily));
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality,
+			() => fontFilePath is null ? TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily) : TrueTypeFont.FromFile(fontFilePath), outputFormat);
+	}
+
+	/// <summary>Renders a watermark with supplied font bytes and writes the requested image format.</summary>
+	/// <param name="data">The source image.</param>
+	/// <param name="text">Single-line watermark text.</param>
+	/// <param name="font">TrueType font bytes; not read when opacity is zero.</param>
+	/// <param name="outputFormat">PNG, JPEG, BMP, GIF, WebP or ICO.</param>
+	/// <param name="fontSize">Maximum font size.</param>
+	/// <param name="opacity">Text opacity from 0 to 255.</param>
+	/// <param name="margin">Margin around the text.</param>
+	/// <param name="jpegQuality">JPEG quality from 1 to 100.</param>
+	/// <returns>The image in the requested format, retaining all animation frames.</returns>
+	public static byte[] AddTextWatermark(this byte[] data, string text, byte[] font, ImageFormats outputFormat,
+		float fontSize = 24, byte opacity = 160, int margin = 12, int jpegQuality = DefaultJpegQuality)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		ArgumentNullException.ThrowIfNull(font);
+		ValidateWatermark(text, fontSize, margin, jpegQuality);
+		ValidateOutput(outputFormat);
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font), outputFormat);
+	}
+
 	/// <summary>
 	/// Decodes every frame of a GIF.
 	/// </summary>
@@ -231,9 +346,9 @@ public static class ImageHelper
 	}
 
 	/// <summary>
-	/// Decodes every frame of a GIF or of an animated PNG.
+	/// Decodes every displayed frame of a GIF, APNG or animated WebP.
 	/// </summary>
-	/// <param name="data">A GIF or an animated PNG.</param>
+	/// <param name="data">A GIF, APNG or animated WebP.</param>
 	/// <returns>The frames as they are shown - the whole canvas, as an RGBA8 PNG - each with the time it is shown for.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
 	/// <exception cref="NotSupportedException">The data is neither, or uses a feature that is not supported.</exception>
@@ -241,13 +356,13 @@ public static class ImageHelper
 	public static IReadOnlyList<(byte[] png, int delayMilliseconds)> GetAnimationFrames(this byte[] data)
 	{
 		ArgumentNullException.ThrowIfNull(data);
-		return ToFrames(data, OpenAnimation(data) ?? throw new NotSupportedException("Only GIF and APNG animations are supported."));
+		return ToFrames(data, OpenAnimation(data) ?? throw new NotSupportedException("Supported animations are GIF, APNG and WebP."));
 	}
 
 	/// <summary>
-	/// Reads how many times a GIF or an animated PNG plays, without decoding its frames.
+	/// Reads how many times a GIF, APNG or animated WebP plays, without decoding pixels.
 	/// </summary>
-	/// <param name="data">A GIF or an animated PNG.</param>
+	/// <param name="data">A GIF, APNG or animated WebP.</param>
 	/// <returns>The number of plays, 0 for endlessly. A GIF without a loop extension plays once.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
 	/// <exception cref="NotSupportedException">The data is neither.</exception>
@@ -264,7 +379,8 @@ public static class ImageHelper
 		}
 
 		if (ApngDecoder.IsApng(data)) return ApngDecoder.ReadPlays(data);
-		throw new NotSupportedException("Only GIF and APNG animations are supported.");
+		if (WebpCodec.IsWebp(data)) return WebpCodec.ReadPlays(data);
+		throw new NotSupportedException("Supported animations are GIF, APNG and WebP.");
 	}
 
 	/// <summary>
@@ -311,7 +427,7 @@ public static class ImageHelper
 		=> character is >= '\n' and <= '\r' or '\u0085' or '\u2028' or '\u2029';
 
 	// The font is opened only if there is a text to draw with it.
-	private static byte[] Watermark(byte[] data, string text, float fontSize, byte opacity, int margin, int jpegQuality, Func<TrueTypeFont> openFont)
+	private static byte[] Watermark(byte[] data, string text, float fontSize, byte opacity, int margin, int jpegQuality, Func<TrueTypeFont> openFont, ImageFormats? outputFormat = null)
 	{
 		// False if nothing is to be drawn: the text is invisible, or a picture of that size has no room for it
 		// or would show no pixel of it.
@@ -326,6 +442,7 @@ public static class ImageHelper
 		{
 			if (!TryRender(animation.Width, animation.Height, out var frameMask))
 			{
+				if (!IsSameFormat(data, outputFormat)) return EncodeAnimation(data, animation, outputFormat, jpegQuality);
 				Validate(animation);
 				return (byte[])data.Clone();
 			}
@@ -334,31 +451,63 @@ public static class ImageHelper
 			{
 				frameMask.Draw(frame);
 				return frame;
-			}));
+			}), outputFormat, jpegQuality);
 		}
 
 		var image = Decode(data);
 
 		if (!TryRender(image.Width, image.Height, out var mask))
-			return (byte[])data.Clone();
+			return IsSameFormat(data, outputFormat) ? (byte[])data.Clone() : Encode(data, image, jpegQuality, outputFormat);
 
 		mask.Draw(image);
 
-		return Encode(data, image, jpegQuality);
+		return Encode(data, image, jpegQuality, outputFormat);
 	}
 
-	// Null if the picture is neither a GIF nor an animated PNG.
+	// Null for static images.
 	private static Animation OpenAnimation(byte[] data)
-		=> GifCodec.IsGif(data) ? GifCodec.Open(data) : ApngDecoder.IsApng(data) ? ApngDecoder.Open(data) : null;
+		=> GifCodec.IsGif(data) ? GifCodec.Open(data) : ApngDecoder.IsApng(data) ? ApngDecoder.Open(data) : WebpCodec.IsWebp(data) ? WebpCodec.Open(data) : null;
 
 	// Writes a picture in the format its source came in, with the color profile the source has.
-	private static byte[] Encode(byte[] source, RasterImage image, int jpegQuality)
-		=> JpegCodec.IsJpeg(source) ? JpegEncoder.Encode(image, jpegQuality, JpegSegments.ReadProfile(source)) :
-			BmpCodec.IsBmp(source) ? BmpCodec.Encode(image) : PngCodec.Encode(image, ColorChunks(source));
+	private static byte[] Encode(byte[] source, RasterImage image, int jpegQuality, ImageFormats? outputFormat = null)
+		=> (outputFormat ?? DefaultOutput(source)) switch
+		{
+			ImageFormats.Jpeg => JpegEncoder.Encode(image, jpegQuality, JpegCodec.IsJpeg(source) ? JpegSegments.ReadProfile(source) : []),
+			ImageFormats.Bmp => BmpCodec.Encode(image),
+			ImageFormats.Icon => IconCodec.Encode(image),
+			ImageFormats.Webp => WebpEncoder.Encode(image),
+			ImageFormats.Gif => GifCodec.Encode(new(image.Width, image.Height, 1, 1, [new(image, 0, 100)])),
+			_ => PngCodec.Encode(image, ColorChunks(source)),
+		};
 
 	// Writes an animation in the format its source came in.
-	private static byte[] EncodeAnimation(byte[] source, Animation animation)
-		=> GifCodec.IsGif(source) ? GifCodec.Encode(animation) : ApngEncoder.Encode(animation, ColorChunks(source));
+	private static byte[] EncodeAnimation(byte[] source, Animation animation, ImageFormats? outputFormat = null, int jpegQuality = DefaultJpegQuality)
+	{
+		var format = outputFormat ?? DefaultOutput(source);
+		if (format == ImageFormats.Gif) return GifCodec.Encode(animation);
+		if (format == ImageFormats.Webp) return WebpEncoder.Encode(animation);
+		if (format == ImageFormats.Png) return ApngEncoder.Encode(animation, ColorChunks(source));
+		if (animation.FrameCount != 1) throw new NotSupportedException("The output format cannot retain animation frames.");
+		foreach (var frame in animation.Frames) return Encode(source, frame.Image, jpegQuality, format);
+		throw new InvalidDataException("Animation has no frames.");
+	}
+
+	private static bool IsSameFormat(byte[] source, ImageFormats? outputFormat)
+		=> !outputFormat.HasValue || outputFormat.Value == source.GetImageFormat();
+
+	private static ImageFormats DefaultOutput(byte[] source)
+		=> source.GetImageFormat() switch
+		{
+			ImageFormats.Avif or ImageFormats.Tiff => ImageFormats.Png,
+			var format => format,
+		};
+
+	private static void ValidateOutput(ImageFormats? outputFormat)
+	{
+		if (!outputFormat.HasValue) return;
+		if (outputFormat is ImageFormats.Avif or ImageFormats.Tiff) throw new NotSupportedException("TIFF and AVIF encoding is not supported. Choose PNG, JPEG, BMP, GIF, WebP or ICO.");
+		if (outputFormat < ImageFormats.Png || outputFormat > ImageFormats.Icon) throw new ArgumentOutOfRangeException(nameof(outputFormat));
+	}
 
 	// What a PNG made of a picture says of its colors: what the picture says of them itself.
 	private static byte[] ColorChunks(byte[] source)
@@ -416,6 +565,10 @@ public static class ImageHelper
 		if (PngCodec.IsPng(data)) return PngCodec.Decode(data);
 		if (JpegCodec.IsJpeg(data)) return JpegCodec.Decode(data);
 		if (BmpCodec.IsBmp(data)) return BmpCodec.Decode(data);
-		throw new NotSupportedException("Only PNG, supported 8-bit JPEG, BMP and GIF are supported.");
+		if (IconCodec.IsIcon(data)) return IconCodec.Decode(data);
+		if (WebpCodec.IsWebp(data)) return WebpCodec.Decode(data);
+		if (TiffCodec.IsTiff(data)) return TiffCodec.Decode(data);
+		if (AvifCodec.IsAvif(data)) return AvifCodec.Decode(data);
+		throw new NotSupportedException("Supported images are PNG, JPEG, BMP, GIF, WebP, ICO, TIFF and AVIF.");
 	}
 }

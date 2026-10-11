@@ -7,7 +7,7 @@ using System.IO;
 /// <summary>
 /// Pure C# progressive (SOF2) JPEG decoder: coefficient buffers, successive
 /// approximation, EOB runs, per-scan Huffman tables and restart markers.
-/// Supports 8-bit grayscale, YCbCr, RGB and Adobe CMYK/YCCK.
+/// Supports 8/12-bit grayscale, YCbCr, RGB and Adobe CMYK/YCCK, normalized to RGBA8.
 /// </summary>
 internal static class JpegProgressiveCodec
 {
@@ -176,7 +176,7 @@ internal static class JpegProgressiveCodec
 					var offset = (by * c.BlocksWide + bx) * 64;
 					for (var i = 0; i < 64; i++)
 						block[i] = c.Coefficients[offset + i] * q[i];
-					JpegTransforms.InverseDct(block, c.Samples, c.Stride, bx * 8, by * 8);
+					JpegTransforms.InverseDct(block, c.Samples, c.Stride, bx * 8, by * 8, 1, c.Precision);
 				}
 		}
 
@@ -236,7 +236,7 @@ internal static class JpegProgressiveCodec
 								if (ah == 0)
 								{
 									var size = dc[c.DcTable].Decode(bits);
-									if (size > 11)
+									if (size > c.Precision + 3)
 										throw new InvalidDataException("Invalid progressive JPEG DC magnitude.");
 									c.Prediction += bits.ReadSigned(size);
 									coeff[offset] = Coefficient((long)c.Prediction << al);
@@ -245,7 +245,7 @@ internal static class JpegProgressiveCodec
 									coeff[offset] |= (short)(1 << al);
 							}
 							else if (ah == 0)
-								AcFirst(bits, ac[c.AcTable], coeff, offset, ss, se, al, ref eobRun);
+								AcFirst(bits, ac[c.AcTable], coeff, offset, ss, se, al, c.Precision, ref eobRun);
 							else
 								AcRefine(bits, ac[c.AcTable], coeff, offset, ss, se, al, ref eobRun);
 						}
@@ -255,7 +255,7 @@ internal static class JpegProgressiveCodec
 	}
 
 	private static void AcFirst(JpegBitReader bits, JpegHuffmanTable table, short[] coeff,
-		int offset, int ss, int se, int al, ref int eobRun)
+		int offset, int ss, int se, int al, int precision, ref int eobRun)
 	{
 		if (eobRun != 0) { eobRun--; return; }
 
@@ -271,7 +271,7 @@ internal static class JpegProgressiveCodec
 				return;
 			}
 
-			if (size > 10 || (k += run) > se)
+			if (size > precision + 2 || (k += run) > se)
 				throw new InvalidDataException("Malformed progressive JPEG AC coefficient.");
 
 			coeff[offset + JpegTransforms.ZigZag[k++]] = Coefficient((long)bits.ReadSigned(size) << al);

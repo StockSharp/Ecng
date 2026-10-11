@@ -408,10 +408,11 @@ public class PngCodecStressTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Png_IendMustBeLastChunk_NotSilentlyIgnoreAppendedData()
+	public void Png_StopsAtIend_WithoutChangingDecodedPixels()
 	{
 		var source = Pack(2, 2, Pattern(2, 2), 0, false);
-		ThrowsExactly<InvalidDataException>(() => source.Concat(new byte[] { 1, 2, 3, 4 }).ToArray().ConvertToPng());
+		var output = source.Concat(new byte[] { 1, 2, 3, 4 }).ToArray().ConvertToPng();
+		AssertPixels(Pattern(2, 2), ReadPng(output, 2, 2), 2);
 	}
 
 	private static byte[] PackSamples(ReadOnlySpan<int> samples, int depth)

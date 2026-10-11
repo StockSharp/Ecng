@@ -137,7 +137,7 @@ public class ImageHelperTests : BaseTestClass
 	public void NoJpegOrTiffSilentlyGuessedFromArbitraryBytes()
 	{
 		ThrowsExactly<NotSupportedException>(() => new byte[] { 3, 2, 1 }.ConvertToPng());
-		ThrowsExactly<NotSupportedException>(() => new byte[] { (byte)'I', (byte)'I', 42, 0 }.ResizeImage(5, 5));
+		ThrowsExactly<InvalidDataException>(() => new byte[] { (byte)'I', (byte)'I', 42, 0 }.ResizeImage(5, 5));
 		byte[] missing = null;
 		ThrowsExactly<ArgumentNullException>(() => missing.ConvertToPng());
 	}

@@ -40,6 +40,10 @@ internal sealed class JpegComponent
 	/// </summary>
 	public int Prediction;
 
+	public int Precision;
+	public int Scale = 1;
+	public bool IsDecoded;
+
 	/// <summary>
 	/// Width of the component in 8x8 blocks, padded to whole MCUs.
 	/// </summary>
@@ -63,5 +67,7 @@ internal sealed class JpegComponent
 	/// <summary>
 	/// Length of a row of <see cref="Samples"/>.
 	/// </summary>
-	public int Stride => BlocksWide * 8;
+	public int BlockSize => 8 / Scale;
+
+	public int Stride => BlocksWide * BlockSize;
 }

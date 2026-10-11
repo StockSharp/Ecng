@@ -41,62 +41,10 @@ internal sealed class RasterImage
 	/// </summary>
 	public RasterImage Downscale(int width, int height)
 	{
-		var result = new RasterImage(width, height);
-
-		var scaleX = (double)Width / width;
-		var scaleY = (double)Height / height;
-		var area = scaleX * scaleY;
-
-		// Sums over the source area of each pixel of the row being built: alpha, then colors times alpha.
-		var sums = new double[width * 4];
-
-		for (var y = 0; y < height; y++)
-		{
-			var top = y * scaleY;
-			var bottom = Math.Min(Height, (y + 1) * scaleY);
-
-			Array.Clear(sums);
-
-			for (var sourceY = (int)top; sourceY < bottom; sourceY++)
-			{
-				var weightY = Math.Min(bottom, sourceY + 1) - Math.Max(top, sourceY);
-				var row = sourceY * Width * 4;
-
-				for (var x = 0; x < width; x++)
-				{
-					var left = x * scaleX;
-					var right = Math.Min(Width, (x + 1) * scaleX);
-
-					for (var sourceX = (int)left; sourceX < right; sourceX++)
-					{
-						var at = row + sourceX * 4;
-						var alpha = Pixels[at + 3] * weightY * (Math.Min(right, sourceX + 1) - Math.Max(left, sourceX));
-
-						sums[x * 4] += alpha;
-						sums[x * 4 + 1] += Pixels[at] * alpha;
-						sums[x * 4 + 2] += Pixels[at + 1] * alpha;
-						sums[x * 4 + 3] += Pixels[at + 2] * alpha;
-					}
-				}
-			}
-
-			for (var x = 0; x < width; x++)
-			{
-				var alpha = sums[x * 4];
-				var to = (y * width + x) * 4;
-
-				if (alpha > 0)
-				{
-					result.Pixels[to] = ToByte(sums[x * 4 + 1] / alpha);
-					result.Pixels[to + 1] = ToByte(sums[x * 4 + 2] / alpha);
-					result.Pixels[to + 2] = ToByte(sums[x * 4 + 3] / alpha);
-				}
-
-				result.Pixels[to + 3] = ToByte(alpha / area);
-			}
-		}
-
-		return result;
+		var downscaler = new ImageDownscaler(Width, Height, width, height);
+		for (var y = 0; y < Height; y++)
+			downscaler.AddRow(Pixels.AsSpan(y * Width * 4, Width * 4));
+		return downscaler.Image;
 	}
 
 	/// <summary>

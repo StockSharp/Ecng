@@ -282,23 +282,32 @@ Each of the three takes a `byte[]` or a `ReadOnlySpan<byte>`.
 
 ### Image Processing
 
-The `ImageHelper` class reads, reduces, converts and watermarks pictures. It is pure managed .NET: no third-party imaging packages, GDI+, SkiaSharp, P/Invoke or native codecs. Tested on Windows, Linux and macOS.
+The `ImageHelper` class reads, reduces, converts and watermarks pictures in managed .NET, without native codecs or third-party imaging NuGet dependencies. Selected internal decoder sources are included under MIT and Apache 2.0; see [source provenance and licenses](Codecs/README.md).
 
 | Input | GetImageSize | ResizeImage | ConvertToPng | AddTextWatermark |
 |---|---|---|---|---|
 | PNG | Yes | PNG | PNG | PNG |
 | APNG (animated PNG) | Yes | **APNG, all frames** | APNG unchanged | **APNG, all frames** |
-| JPEG (8-bit baseline / progressive; gray, YCbCr, RGB, CMYK, YCCK) | Yes | JPEG | PNG | JPEG |
+| JPEG (sequential, progressive, arithmetic, lossless) | Yes | JPEG | PNG | JPEG |
 | BMP (indexed, RGB, bitfields and RLE) | Yes | BMP | PNG | BMP |
 | GIF87a / GIF89a | Yes | **animated GIF, all frames** | **APNG, all frames** | **animated GIF, all frames** |
+| WebP (VP8, VP8L, alpha, animation) | Yes | **WebP, all frames** | **PNG/APNG, all frames** | **WebP, all frames** |
+| ICO (PNG or DIB frames) | Yes | ICO | PNG | ICO |
+| TIFF (supported first page) | Yes | PNG when modified | PNG | PNG when modified |
+| AVIF (supported 8/10-bit still image) | Yes | PNG when modified | PNG | PNG when modified |
 
 A picture is handled the way it is shown. A JPEG whose Exif orientation lays it on its side is turned upright when it is decoded, `GetImageSize` reports the size it is shown with, and a picture that is written again carries no orientation of its own; one that is returned as it came keeps the orientation it had.
 
-`ResizeImage` never enlarges and returns a picture that already fits as it came. `AddTextWatermark` puts its text - one line of 1024 characters at most - into the bottom right corner. The margin is a quarter of the smaller side of the picture at most, and the text is made smaller to fit between the margins, down to 6 pixels to the em. What is fitted is the line as it is drawn: a mark that reaches beyond the advance of its letter, or above and below what the font gives as its height, stays between the margins too. A text that has no room even then is not drawn. A picture nothing is drawn on - for want of room, with an opacity of 0, or because the text would lay no opacity on any pixel, being too small to reach a point a pixel is sampled at or too faint for the part of a pixel it covers - is returned as it came. A text that is laid on and cannot be told from what is under it, white on white, still has the picture written again. Reducing averages the whole source area of every pixel, with colors weighted by alpha, so thin lines keep their share of brightness and transparent pixels lend no color to their neighbors.
+`ResizeImage` never enlarges. With the default output format, a static picture that already fits is returned as a copy after reading its header, without decoding pixels; animation still validates every frame. This shortcut does not certify the pixel stream. `AddTextWatermark` puts its text - one line of 1024 characters at most - into the bottom right corner. The margin is a quarter of the smaller side of the picture at most, and the text is made smaller to fit between the margins, down to 6 pixels to the em. A text that has no room is not drawn. With the default output format, a picture nothing is drawn on is returned as it came. Reducing averages the whole source area of every pixel, with colors weighted by alpha.
+
+`GetImageFormat` identifies a signature and returns `ImageFormats.Unknown` for unrecognized data. `TryGetImageSize` returns false for an unsupported or unreadable header. Neither guarantees that decoding will succeed. The `byte[]` and `ReadOnlySpan<byte>` overloads avoid allocating a pixel canvas.
+
+`ResizeImage` and both font variants of `AddTextWatermark` also accept an explicit `ImageFormats` output: PNG, JPEG, BMP, GIF, WebP or ICO. An explicit format converts even an already-fitting picture or an opacity-zero watermark. TIFF/AVIF encoding is unsupported. Multiple animation frames require PNG (APNG), GIF or WebP output and are never silently discarded.
 
 #### Limits
 
-- A picture of more than **25 megapixels** is not decoded (`InvalidDataException`). `GetImageSize` reads a header and has no such limit.
+- Full-resolution decoding is limited to **25 megapixels** (`InvalidDataException`). A non-interlaced PNG can instead be reduced row by row; sequential Huffman JPEG can use DCT scales 1/2, 1/4 or 1/8. Tests cover 8000×6000 inputs reduced to thumbnails without a full RGBA canvas. Large Adam7 PNG, progressive/arithmetic/lossless JPEG and the other full-resolution decoders retain the cap. These limits are not caller-configurable.
+- Header reading does not decode pixels. Container validation and input limits still apply; AVIF header parsing also enforces its decoder dimension cap.
 - An animation is decoded up to **512 frames** and **100 megapixels** of canvas, all frames together. Frames are decoded one at a time, so a long animation does not hold all its canvases in memory at once.
 - `GetGifLoopCount` and `GetAnimationLoopCount` read the file without decoding frames.
 - Input that is damaged gives `InvalidDataException`; a format, or a feature of one, that is not supported gives `NotSupportedException`.
@@ -309,7 +318,7 @@ GIF processing preserves **every displayed frame**, its delay and its looping, a
 
 - `GetGifFrames()` returns a list of `(byte[] png, int delayMilliseconds)` for all displayed GIF frames. Each `png` is a *full-canvas* composited RGBA8 PNG.
 - `GetGifLoopCount()` returns the NETSCAPE loop count as the file states it: the number of repetitions after the first run (0 means infinite; -1 means no loop extension).
-- `GetAnimationFrames()` and `GetAnimationLoopCount()` take a GIF or an **APNG**. `GetAnimationLoopCount()` returns the number of plays (0 means infinite): a GIF without a loop extension plays once, a GIF with a loop count of N plays N + 1 times.
+- `GetAnimationFrames()` and `GetAnimationLoopCount()` take GIF, **APNG** or **animated WebP**. `GetAnimationLoopCount()` returns the number of plays (0 means infinite): a GIF without a loop extension plays once, a GIF with a loop count of N plays N + 1 times.
 - Resizing GIF/APNG resizes **every displayed frame**. Animation timings and looping remain unchanged: an APNG delay is kept as the fraction of a second the file states.
 - Adding a watermark to GIF/APNG draws the text **on every frame**, retaining the animation.
 - `ConvertToPng` on GIF yields **APNG**, not a frozen first frame. APNG carries the complete animation, timings and the same number of plays. Calling the other methods on that APNG is also animation-preserving.
@@ -324,7 +333,8 @@ The BMP decoder accepts OS/2 BITMAPCORE and Windows BITMAPINFO/V4/V5 DIB headers
 #### JPEG and PNG
 
 - PNG: all legal color types and bit depths including grayscale, indexed transparency, 8/16-bit samples, all five filter types, and Adam7 interlacing. Input APNG is recognized and handled as animated rather than accidentally discarding frames. Output is always RGBA8 and not interlaced. Its scanlines are packed twice - every row with the filter that leaves it the smallest values, which is the heuristic of libpng, and all rows unfiltered - and the shorter result is kept: filtering takes a sixth to two fifths off a photograph and most of a gradient, and often adds to a screenshot, whose rows repeat one another. Each frame of an APNG is packed that way on its own.
-- JPEG: 8-bit baseline and progressive Huffman encoding; grayscale, YCbCr, RGB, Adobe CMYK/YCCK and restart markers. Arithmetic-coded, lossless, 12-bit, extended sequential (SOF1) and multi-scan baseline JPEG are not supported.
+- JPEG decoding: 8/12-bit sequential (SOF0/SOF1), multi-scan and progressive Huffman data, arithmetic sequential/progressive data, and lossless predictors 1–7 with point transforms. Grayscale, YCbCr, RGB, Adobe CMYK/YCCK and restart markers are supported; lossless restart intervals must cover full MCU rows. Output is normalized to RGBA8.
+- PNG bytes following a valid IEND are ignored. Chunk CRC, ordering, compressed scanline and animation checks remain in place.
 - A JPEG that is reduced or watermarked comes back as a baseline JPEG without chroma subsampling: a second, lossy generation of the picture. How lossy is set by `jpegQuality`, from 1 to 100 on the scale of libjpeg - the quantization tables of the standard, scaled - and is `ImageHelper.DefaultJpegQuality`, 90, unless another is asked for. The Huffman tables are built for the picture, which makes a file about as large as libjpeg writes it at the same quality with optimized tables and no subsampling.
 - The ICC profile of a JPEG or a PNG stays with the picture that is made of it - reduced, watermarked or converted to PNG - if it is a profile for RGB of 4 MB at most. A JPEG keeps it in its APP2 segments, a PNG made of a JPEG gets an iCCP chunk, and a PNG, animated or not, keeps the chunks that say what its colors are - iCCP or sRGB, gAMA, cHRM - as they were. A profile for CMYK or for gray is left behind: what is written is RGB whatever was read, and such a profile no longer describes it. Exif and other metadata are not carried over.
 
@@ -356,6 +366,11 @@ byte[] thumbnail = photo.ResizeImage(160, 160, jpegQuality: 75);
 
 byte[] bmp = await File.ReadAllBytesAsync("picture.bmp");
 byte[] markedBmp = bmp.AddTextWatermark("StockSharp");       // BMP output
+byte[] pngPreview = bmp.ResizeImage(100, 100, ImageFormats.Png);
+byte[] webpPreview = photo.ResizeImage(160, 160, ImageFormats.Webp);
+
+if (photo.TryGetImageSize(out var dimensions))
+    Console.WriteLine($"{photo.GetImageFormat()}: {dimensions}");
 
 byte[] font = await File.ReadAllBytesAsync("brand.ttf");
 byte[] branded = bmp.AddTextWatermark("StockSharp", font);   // A font of your own, as bytes
@@ -368,6 +383,8 @@ The Drawing tests run entirely on .NET, without Python, Pillow, external process
 APNG chunks, sequence numbers, CRCs and timing are checked by the C# test reader. Each IDAT/fdAT frame payload is wrapped as a standalone PNG and decoded by StbImageSharp; composition, blending and disposal are checked against expected RGBA buffers constructed in C#. StbImageSharp is not used as an APNG animation decoder.
 
 Checked-in independent BMP/GIF/JPEG fixtures and pixel buffers supplement programmatically constructed PNG color/depth/filter/Adam7, BMP palette/RLE/mask and interlaced GIF/LZW fixtures. Pixel oracles cover all 15 legal PNG color/depth pairs, JPEG baseline/progressive/CMYK/YCCK, BMP indexed and true-color samples, every composited GIF animation frame, APNG fdAT streams, frame delays, disposal/blending, and TrueType watermark alpha composition. JPEG files are also checked against recorded libjpeg-turbo pixels, and JPEG encoding against recorded size and fidelity at the same quality. These references do not require regenerating fixtures to run the tests. Invalid/truncated images, malformed animation chunks and malformed font data are checked with deterministic mutations; fonts are assembled in the tests so glyph rasterization is independent of installed fonts.
+
+[Additional frozen fixtures](../Tests/Drawing/Fixtures/README.md) compare colored lossless/arithmetic/12-bit JPEG, WebP with alpha, TIFF and 8/10-bit AVIF against independent decoded PNGs. Lossless JPEG, lossless WebP, TIFF and 8-bit AVIF are exact RGBA comparisons; lossy JPEG/WebP allow two channel levels and 10-bit AVIF one level. Opt-in tests compare transformations with an existing pre-migration site build; the real site's GIF/BMP export remains a separate required input.
 
 As with any custom image parser, regression tests are not a substitute for a security audit or a comprehensive external fuzzing campaign.
 
