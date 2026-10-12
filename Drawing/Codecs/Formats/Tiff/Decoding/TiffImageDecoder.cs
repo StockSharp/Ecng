@@ -12,22 +12,41 @@ using Ecng.Drawing.Codecs.Formats.Tiff.Internal;
 
 internal static class TiffImageDecoder
 {
-	public static Image Decode(Stream stream)
+	public static Image Decode(Stream stream, ImageProcessingLimits limits)
+		=> Decode(TiffStreamHelpers.BufferStream(stream), limits);
+
+	public static Image Decode(byte[] fileData, ImageProcessingLimits limits)
 	{
-		byte[] fileData = TiffStreamHelpers.BufferStream(stream);
 		var header = TiffHeaderReader.Read(fileData);
 		var reader = new TiffReader(fileData, header.ByteOrder);
 		var ifd = TiffIfdReader.Read(reader, header.FirstIfdOffset);
-		var descriptor = TiffValidation.Validate(ifd);
+		var descriptor = TiffValidation.Validate(ifd, limits);
 
 		byte[] palette = descriptor.Photometric == 3
 			? TiffPalette.Resolve(descriptor.ColorMap, descriptor.BitsPerSample)
 			: [];
 
-		var image = Image.Create(descriptor.Width, descriptor.Height, descriptor.PixelFormat);
-		DecodeStrips(reader, descriptor, palette, image);
+		var image = Image.Create(descriptor.Width, descriptor.Height, descriptor.PixelFormat, limits);
+		DecodeStrips(reader, descriptor, palette, image, limits);
 		ReadIccProfile(ifd, image);
 		return image;
+	}
+
+	public static RasterImage DecodeDownscaled(byte[] fileData, int width, int height, ImageProcessingLimits limits)
+	{
+		var header = TiffHeaderReader.Read(fileData);
+		var reader = new TiffReader(fileData, header.ByteOrder);
+		var ifd = TiffIfdReader.Read(reader, header.FirstIfdOffset);
+		var descriptor = TiffValidation.Validate(ifd, limits, true);
+		var palette = descriptor.Photometric == 3 ? TiffPalette.Resolve(descriptor.ColorMap, descriptor.BitsPerSample) : [];
+		var downscaler = new ImageDownscaler(descriptor.Width, descriptor.Height, width, height, limits);
+		var rgba = new byte[checked(descriptor.Width * 4)];
+		ReadRows(reader, descriptor, palette, limits, (_, native) =>
+		{
+			Image.WriteRgba(native, descriptor.PixelFormat, rgba);
+			downscaler.AddRow(rgba);
+		});
+		return downscaler.Image;
 	}
 
 	private static void ReadIccProfile(TiffIfd ifd, Image image)
@@ -39,7 +58,10 @@ internal static class TiffImageDecoder
 		}
 	}
 
-	private static void DecodeStrips(TiffReader reader, TiffImageDescriptor descriptor, byte[] palette, Image image)
+	private static void DecodeStrips(TiffReader reader, TiffImageDescriptor descriptor, byte[] palette, Image image, ImageProcessingLimits limits)
+		=> ReadRows(reader, descriptor, palette, limits, (y, row) => row.AsSpan().CopyTo(image.GetRowSpan(y)));
+
+	private static void ReadRows(TiffReader reader, TiffImageDescriptor descriptor, byte[] palette, ImageProcessingLimits limits, Action<int, byte[]> consume)
 	{
 		int width = descriptor.Width;
 		int height = descriptor.Height;
@@ -49,7 +71,12 @@ internal static class TiffImageDecoder
 
 		int paddedRowByteCount = GetPaddedRowByteCount(width, samplesPerPixel, bitDepth);
 		int sampleCount = width * samplesPerPixel;
+		limits.EnsureWorkingMemory((long)paddedRowByteCount + (long)sampleCount * 2 +
+			(long)width * (Image.BytesPerPixel(descriptor.PixelFormat) + 4) +
+			(descriptor.Compression == 5 ? 4096L * 4 : 0));
 		var samples = new ushort[sampleCount];
+		var packedRow = new byte[paddedRowByteCount];
+		var nativeRow = new byte[checked(width * Image.BytesPerPixel(descriptor.PixelFormat))];
 
 		int rowsDecoded = 0;
 		for (int stripIndex = 0; rowsDecoded < height; stripIndex++)
@@ -60,7 +87,7 @@ internal static class TiffImageDecoder
 			}
 
 			int rowsInThisStrip = Math.Min(rowsPerStrip, height - rowsDecoded);
-			int stripByteLength = paddedRowByteCount * rowsInThisStrip;
+			long stripByteLength = (long)paddedRowByteCount * rowsInThisStrip;
 
 			uint declaredByteCount = descriptor.StripByteCounts[stripIndex];
 			if (declaredByteCount > TiffDecodingLimits.MaxDeclaredStripByteCount)
@@ -68,50 +95,21 @@ internal static class TiffImageDecoder
 				throw new TiffDecodingException($"TIFF strip {stripIndex} declares {declaredByteCount} bytes, exceeding the supported maximum.");
 			}
 
-			var compressed = reader.ReadSpan(CheckedInt(descriptor.StripOffsets[stripIndex], "strip offset"), CheckedInt(declaredByteCount, "strip byte count"));
-			byte[] decompressed = DecompressStrip(compressed, descriptor.Compression, stripByteLength);
-			var decompressedSpan = decompressed.AsSpan(0, stripByteLength);
-
-			if (descriptor.Predictor == 2)
-			{
-				UndoPredictor(decompressedSpan, paddedRowByteCount, rowsInThisStrip, samplesPerPixel, bitDepth, reader.ByteOrder);
-			}
+			var offset = CheckedInt(descriptor.StripOffsets[stripIndex], "strip offset");
+			var count = CheckedInt(declaredByteCount, "strip byte count");
+			_ = reader.ReadSpan(offset, count);
+			var decompressor = new TiffStripReader(reader.Data.AsMemory(offset, count), descriptor.Compression, stripByteLength);
 
 			for (int row = 0; row < rowsInThisStrip; row++)
 			{
-				var rowBytes = decompressedSpan.Slice(row * paddedRowByteCount, paddedRowByteCount);
-				TiffBitUnpacker.Unpack(rowBytes, bitDepth, sampleCount, reader.ByteOrder, samples);
-
-				var destRow = image.GetRowSpan(rowsDecoded + row);
-				TiffSampleWriter.WriteRow(samples, descriptor, palette, destRow);
+				decompressor.Read(packedRow);
+				if (descriptor.Predictor == 2) UndoPredictor(packedRow, paddedRowByteCount, 1, samplesPerPixel, bitDepth, reader.ByteOrder);
+				TiffBitUnpacker.Unpack(packedRow, bitDepth, sampleCount, reader.ByteOrder, samples);
+				TiffSampleWriter.WriteRow(samples, descriptor, palette, nativeRow);
+				consume(rowsDecoded + row, nativeRow);
 			}
 
 			rowsDecoded += rowsInThisStrip;
-		}
-	}
-
-	private static byte[] DecompressStrip(ReadOnlySpan<byte> compressed, int compression, int expectedLength)
-	{
-		var output = new byte[expectedLength];
-
-		switch (compression)
-		{
-			case 1: // None.
-				if (compressed.Length < expectedLength)
-					throw new TiffDecodingException("Truncated uncompressed TIFF strip.");
-				compressed[..expectedLength].CopyTo(output);
-				return output;
-
-			case 5: // LZW.
-				TiffLzwDecoder.Decode(compressed, output);
-				return output;
-
-			case 32773: // PackBits.
-				TiffPackBitsDecoder.Decode(compressed, output);
-				return output;
-
-			default:
-				throw new TiffDecodingException($"Unreachable: compression {compression} should have been rejected during validation.");
 		}
 	}
 

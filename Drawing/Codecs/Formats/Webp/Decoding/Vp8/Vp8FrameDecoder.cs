@@ -9,6 +9,7 @@ using PixelFormat = Ecng.Drawing.Codecs.CodecPixelFormats;
 using ImageOrientation = Ecng.Drawing.Codecs.ImageOrientations;
 using MetadataProfileKind = Ecng.Drawing.Codecs.MetadataProfileKinds;
 using System.Runtime.InteropServices;
+using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Alpha;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Vp8.ColorConversion;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Vp8.Dct;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Vp8.LoopFilter;
@@ -19,19 +20,23 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 {
 	public static IWebpLossyBitstreamDecoder Instance { get; } = new Vp8FrameDecoder();
 
-	public Vp8DecodedFrame Decode(ReadOnlyMemory<byte> vp8Bytes, byte[] alphaPlane)
+	public Vp8DecodedFrame Decode(ReadOnlyMemory<byte> vp8Bytes, byte[] alphaPlane, ImageProcessingLimits limits)
+		=> DecodeCore(vp8Bytes, alphaPlane, null, limits, 0, 0);
+
+	public static Vp8DecodedFrame DecodeDownscaled(ReadOnlyMemory<byte> bytes, WebpAlphaRows alpha, int width, int height, ImageProcessingLimits limits)
+		=> ((Vp8FrameDecoder)Instance).DecodeCore(bytes, null, alpha, limits, width, height);
+
+	private Vp8DecodedFrame DecodeCore(ReadOnlyMemory<byte> vp8Bytes, byte[] alphaPlane, WebpAlphaRows alphaRows, ImageProcessingLimits limits, int outputWidth, int outputHeight)
 	{
-		// Vp8BoolDecoder/Vp8Partitions need a real byte[] (a ref struct can't be an array element, so the
-		// partitions need a persistent array reference, not a Span) -- but vp8Bytes is already array-backed
-		// exactly once, by WebpChunkReader.ReadPayload, so recover that array directly via
-		// MemoryMarshal.TryGetArray instead of unconditionally re-copying it with ToArray().
-		byte[] data = MemoryMarshal.TryGetArray(vp8Bytes, out ArraySegment<byte> segment) && segment.Offset == 0 && segment.Count == segment.Array!.Length
-			? segment.Array
-			: vp8Bytes.ToArray();
+		var isArray = MemoryMarshal.TryGetArray(vp8Bytes, out ArraySegment<byte> segment) && segment.Array is not null;
+		var data = isArray ? segment.Array : vp8Bytes.ToArray();
+		var start = isArray ? segment.Offset : 0;
+		var end = start + vp8Bytes.Length;
+		Vp8FrameHeader frameHeader = Vp8FrameHeader.Parse(data.AsSpan(start, end - start), limits, outputWidth > 0);
+		var buffered = outputWidth > 0;
+		if (buffered) limits.EnsureWorkingMemory(Vp8ThumbnailBuffer.EstimateWorkingBytes(frameHeader.Width, outputWidth, outputHeight) + (alphaRows?.WorkingBytes ?? 0));
 
-		Vp8FrameHeader frameHeader = Vp8FrameHeader.Parse(data);
-
-		var partition0 = new Vp8BoolDecoder(data, frameHeader.HeaderByteLength, frameHeader.FirstPartitionLength);
+		var partition0 = new Vp8BoolDecoder(data, start + frameHeader.HeaderByteLength, frameHeader.FirstPartitionLength);
 
 		partition0.GetFlag(); // color_space - ignored, always treated as standard studio-range YUV.
 		partition0.GetFlag(); // clamping_type - ignored, reconstructed pixels are always clamped to [0,255].
@@ -40,8 +45,8 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 		Vp8LoopFilterHeader loopFilterHeader = Vp8LoopFilterHeader.Parse(partition0);
 
 		int numPartitions = 1 << (int)partition0.GetValue(2);
-		int partition0End = frameHeader.HeaderByteLength + frameHeader.FirstPartitionLength;
-		Vp8BoolDecoder[] coefficientPartitions = Vp8Partitions.Build(data, partition0End, numPartitions);
+		int partition0End = start + frameHeader.HeaderByteLength + frameHeader.FirstPartitionLength;
+		Vp8BoolDecoder[] coefficientPartitions = Vp8Partitions.Build(data, partition0End, numPartitions, end);
 
 		Vp8QuantIndices quantIndices = Vp8QuantIndices.Parse(partition0);
 		Vp8QuantMatrix[] quantMatrices = Vp8Dequantizer.Resolve(quantIndices, segmentHeader);
@@ -57,9 +62,9 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 		int mbRows = (frameHeader.Height + 15) / 16;
 
 		int yStride = (mbCols * 16) + 1;
-		int yPaddedHeight = (mbRows * 16) + 1;
+		int yPaddedHeight = buffered ? 33 : (mbRows * 16) + 1;
 		int uvStride = (mbCols * 8) + 1;
-		int uvPaddedHeight = (mbRows * 8) + 1;
+		int uvPaddedHeight = buffered ? 17 : (mbRows * 8) + 1;
 
 		byte[] yPlane = WebpBufferPool.Shared.Rent(yStride * yPaddedHeight);
 		byte[] uPlane = WebpBufferPool.Shared.Rent(uvStride * uvPaddedHeight);
@@ -71,16 +76,20 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 			InitializeBorders(uPlane, uvStride, uvPaddedHeight);
 			InitializeBorders(vPlane, uvStride, uvPaddedHeight);
 
-			int YOff(int x, int y) => ((y + 1) * yStride) + x + 1;
-			int UOff(int x, int y) => ((y + 1) * uvStride) + x + 1;
+			var yBase = 0;
+			var uvBase = 0;
+			int YOff(int x, int y) => ((y + yBase + 1) * yStride) + x + 1;
+			int UOff(int x, int y) => ((y + uvBase + 1) * uvStride) + x + 1;
+			var thumbnail = buffered ? new Vp8ThumbnailBuffer(yPlane, uPlane, vPlane, yStride, uvStride,
+				frameHeader.Width, frameHeader.Height, outputWidth, outputHeight, alphaRows, limits) : null;
 
 			var modeDecoder = new Vp8ModeDecoder(mbCols, segmentHeader, useSkipProbability, skipFalseProbability);
 			var coeffContext = new Vp8CoefficientContext(mbCols);
 			var modes = new Vp8MacroblockModes();
 
-			var segmentAtMb = new int[mbCols * mbRows];
-			var isI4x4AtMb = new bool[mbCols * mbRows];
-			var innerFilterAtMb = new bool[mbCols * mbRows];
+			var segmentAtMb = new int[mbCols * (buffered ? 1 : mbRows)];
+			var isI4x4AtMb = new bool[segmentAtMb.Length];
+			var innerFilterAtMb = new bool[segmentAtMb.Length];
 
 			Span<short> coeffs = stackalloc short[25 * 16];
 			Span<short> y2Coeffs = stackalloc short[16];
@@ -92,6 +101,12 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 
 			for (int mbY = 0; mbY < mbRows; mbY++)
 			{
+				if (buffered)
+				{
+					yBase = 16 - mbY * 16;
+					uvBase = 8 - mbY * 8;
+					thumbnail.BeginRow(mbY);
+				}
 				modeDecoder.StartRow();
 				coeffContext.StartRow();
 				Vp8BoolDecoder tokenBr = coefficientPartitions[mbY % numPartitions];
@@ -124,7 +139,7 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 							coeffs, y2Coeffs, blockDc, colY, colU, colV, out nonZeroBlocks, out acBlocks);
 					}
 
-					int mbIndex = (mbY * mbCols) + mbX;
+					int mbIndex = buffered ? mbX : (mbY * mbCols) + mbX;
 					segmentAtMb[mbIndex] = modes.Segment;
 					isI4x4AtMb[mbIndex] = modes.IsI4x4;
 
@@ -197,10 +212,18 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 						}
 					}
 				}
+				if (buffered)
+				{
+					thumbnail.EndPrediction(mbY);
+					ApplyLoopFilter(yPlane, yStride, uPlane, vPlane, uvStride, mbCols, mbY, mbY + 1, true,
+						loopFilterHeader, filterStrengths, segmentAtMb, isI4x4AtMb, innerFilterAtMb, YOff, UOff);
+					thumbnail.CommitRow(mbY);
+				}
 			}
+			if (buffered) return thumbnail.Complete();
 
 			ApplyLoopFilter(
-				yPlane, yStride, uPlane, vPlane, uvStride, mbCols, mbRows,
+				yPlane, yStride, uPlane, vPlane, uvStride, mbCols, 0, mbRows, false,
 				loopFilterHeader, filterStrengths, segmentAtMb, isI4x4AtMb, innerFilterAtMb, YOff, UOff);
 
 			return ProduceRgbFrame(yPlane, yStride, uPlane, vPlane, uvStride, mbCols, mbRows, frameHeader.Width, frameHeader.Height, YOff, UOff, alphaPlane);
@@ -437,7 +460,9 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 		byte[] vPlane,
 		int uvStride,
 		int mbCols,
-		int mbRows,
+		int firstRow,
+		int endRow,
+		bool buffered,
 		Vp8LoopFilterHeader header,
 		Vp8FilterStrength[,] filterStrengths,
 		int[] segmentAtMb,
@@ -451,11 +476,11 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 			return;
 		}
 
-		for (int mbY = 0; mbY < mbRows; mbY++)
+		for (int mbY = firstRow; mbY < endRow; mbY++)
 		{
 			for (int mbX = 0; mbX < mbCols; mbX++)
 			{
-				int mbIndex = (mbY * mbCols) + mbX;
+				int mbIndex = buffered ? mbX : (mbY * mbCols) + mbX;
 				Vp8FilterStrength strength = filterStrengths[segmentAtMb[mbIndex], isI4x4AtMb[mbIndex] ? 1 : 0];
 				if (!strength.IsFilteringEnabled)
 				{
@@ -602,7 +627,7 @@ internal sealed class Vp8FrameDecoder : IWebpLossyBitstreamDecoder
 		{
 			Width = width,
 			Height = height,
-			PixelFormat = alphaPlane is null ? PixelFormat.Rgb24 : PixelFormat.Rgba32,
+			PixelFormat = alphaPlane is not null ? PixelFormat.Rgba32 : PixelFormat.Rgb24,
 			Pixels = output,
 		};
 	}

@@ -28,56 +28,25 @@ internal static class Vp8LColorIndexingTransform
 
 		return palette;
 	}
-	public static uint[] ApplyInverse(ReadOnlySpan<uint> src, Vp8LTransform transform, bool rentFromPool = false)
+	public static uint[] ApplyInverse(ReadOnlySpan<uint> source, Vp8LTransform transform, bool rentFromPool = false)
 	{
-		int fullWidth = transform.Xsize;
-		int height = transform.Ysize;
-		int bits = transform.Bits;
-		var palette = transform.Data!;
-		int bitsPerPixel = 8 >> bits;
-
-		long pixelCount = (long)fullWidth * height;
-		var dst = rentFromPool ? WebpBufferPool.SharedUInt32.Rent((int)pixelCount) : new uint[pixelCount];
-
-		if (bitsPerPixel == 8)
+		var width = transform.Xsize;
+		var packedWidth = Vp8LMetaHuffmanImage.SubSampleSize(width, transform.Bits);
+		var count = checked(width * transform.Ysize);
+		var destination = rentFromPool ? WebpBufferPool.SharedUInt32.Rent(count) : new uint[count];
+		for (var y = 0; y < transform.Ysize; y++)
+			ApplyInverseRow(source.Slice(y * packedWidth, packedWidth), destination.AsSpan(y * width, width), transform);
+		return destination;
+	}
+	public static void ApplyInverseRow(ReadOnlySpan<uint> source, Span<uint> destination, Vp8LTransform transform)
+	{
+		var bitsPerPixel = 8 >> transform.Bits;
+		var mask = (1u << bitsPerPixel) - 1;
+		for (var x = 0; x < destination.Length; x++)
 		{
-			// No packing: exactly one index per pixel, same width as the destination. Bounded by pixelCount,
-			// not dst.Length -- a pool-rented dst may come back larger than pixelCount (an ArrayPool
-			// contract), and src (always exactly pixelCount long) would throw past that bound anyway.
-			for (int i = 0; i < pixelCount; i++)
-			{
-				int index = (int)((src[i] >> 8) & 0xFF);
-				dst[i] = palette[index];
-			}
-
-			return dst;
+			var packed = source[x >> transform.Bits] >> 8;
+			var index = (packed >> ((x & ((1 << transform.Bits) - 1)) * bitsPerPixel)) & mask;
+			destination[x] = transform.Data[index];
 		}
-
-		int pixelsPerByte = 1 << bits;
-		uint bitMask = (uint)((1 << bitsPerPixel) - 1);
-		int srcWidth = Vp8LMetaHuffmanImage.SubSampleSize(fullWidth, bits);
-
-		for (int y = 0; y < height; y++)
-		{
-			int srcRowBase = y * srcWidth;
-			int dstRowBase = y * fullWidth;
-			uint packed = 0;
-			int srcX = 0;
-
-			for (int x = 0; x < fullWidth; x++)
-			{
-				if (x % pixelsPerByte == 0)
-				{
-					packed = (src[srcRowBase + srcX] >> 8) & 0xFF;
-					srcX++;
-				}
-
-				int index = (int)(packed & bitMask);
-				dst[dstRowBase + x] = palette[index];
-				packed >>= bitsPerPixel;
-			}
-		}
-
-		return dst;
 	}
 }

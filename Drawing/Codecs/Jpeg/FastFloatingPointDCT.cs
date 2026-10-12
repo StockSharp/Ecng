@@ -41,6 +41,7 @@ internal static class FastFloatingPointDCT
 	private static readonly Vector4 InvSqrt2 = new Vector4(0.707107f);
 	public static void TransformIDCT(ref JpegBlock8x8F src, ref JpegBlock8x8F dest, ref JpegBlock8x8F temp)
 	{
+		if (JpegVectorDct.TryTransform(ref src, ref dest, ref temp, true, false)) return;
 		// TODO: Transpose is a bottleneck now. We need full AVX support to optimize it:
 		// https://github.com/dotnet/corefx/issues/22940
 		src.TransposeInto(ref temp);
@@ -156,6 +157,7 @@ internal static class FastFloatingPointDCT
 		d.V3R = my3 + mb3;
 		d.V4R = my3 - mb3;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	public static void FDCT8x4_LeftPart(ref JpegBlock8x8F s, ref JpegBlock8x8F d)
 	{
 		Vector4 c0 = s.V0L;
@@ -212,6 +214,7 @@ internal static class FastFloatingPointDCT
 		d.V1L = c0 + c3;
 		d.V7L = c0 - c3;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	public static void FDCT8x4_RightPart(ref JpegBlock8x8F s, ref JpegBlock8x8F d)
 	{
 		Vector4 c0 = s.V0R;
@@ -267,12 +270,14 @@ internal static class FastFloatingPointDCT
 		d.V1R = c0 + c3;
 		d.V7R = c0 - c3;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	public static void TransformFDCT(
 		ref JpegBlock8x8F src,
 		ref JpegBlock8x8F dest,
 		ref JpegBlock8x8F temp,
 		bool offsetSourceByNeg128)
 	{
+		if (JpegVectorDct.TryTransform(ref src, ref dest, ref temp, false, offsetSourceByNeg128)) return;
 		src.TransposeInto(ref temp);
 		if (offsetSourceByNeg128)
 		{
@@ -290,11 +295,13 @@ internal static class FastFloatingPointDCT
 		dest.MultiplyInplace(C_0_125);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	public static void TransformFDCT(
 				ref JpegBlock8x8F src,
 				ref JpegBlock8x8F dest,
 				ref JpegBlock8x8F temp)
 	{
+		if (JpegVectorDct.TryTransform(ref src, ref dest, ref temp, false, false)) return;
 		src.TransposeInto(ref temp);
 
 		FDCT8x4_LeftPart(ref temp, ref dest);

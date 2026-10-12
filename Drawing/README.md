@@ -306,11 +306,37 @@ A picture is handled the way it is shown. A JPEG whose Exif orientation lays it 
 
 #### Limits
 
-- Full-resolution decoding is limited to **25 megapixels** (`InvalidDataException`). A non-interlaced PNG can instead be reduced row by row; sequential Huffman JPEG can use DCT scales 1/2, 1/4 or 1/8. Tests cover 8000×6000 inputs reduced to thumbnails without a full RGBA canvas. Large Adam7 PNG, progressive/arithmetic/lossless JPEG and the other full-resolution decoders retain the cap. These limits are not caller-configurable.
+- Full-resolution decoding defaults to **25 megapixels** (`InvalidDataException`). Static thumbnails budget the destination separately: PNG (including Adam7), sequential/multi-scan/progressive/arithmetic/lossless JPEG, BMP and supported TIFF process rows into a direct area average. Tests cover 8000×6000 sequential and progressive JPEG thumbnails without full source pixel or coefficient arrays.
+- WebP thumbnails retain bounded VP8 macroblock bands or a VP8L history window of at most 1,048,456 pixels, with row-wise transforms and alpha. A tighter working budget scans the VP8L commands to retain only the longest required backward distance. AVIF grid thumbnails decode one color/alpha tile pair at a time and retain only the active destination rows; a single coded AV1 tile must fit the working budget. Estimated decoder working buffers default to **256 MiB**. ICO frames are at most 256×256. This working budget is an allocation guard, not a limit on total process memory or cumulative allocations.
 - Header reading does not decode pixels. Container validation and input limits still apply; AVIF header parsing also enforces its decoder dimension cap.
-- An animation is decoded up to **512 frames** and **100 megapixels** of canvas, all frames together. Frames are decoded one at a time, so a long animation does not hold all its canvases in memory at once.
+- An animation defaults to **512 frames** and **100 megapixels** of canvas across all frames. Frames are decoded one at a time. `ImageProcessingLimits` overloads of `ResizeImage`, `ConvertToPng`, `AddTextWatermark` and `GetAnimationFrames` let callers set explicit pixel, frame, total-work and decoder working-buffer budgets for an operation; the three-argument constructor retains the default working budget. Format dimension and encoded-file limits still apply.
 - `GetGifLoopCount` and `GetAnimationLoopCount` read the file without decoding frames.
 - Input that is damaged gives `InvalidDataException`; a format, or a feature of one, that is not supported gives `NotSupportedException`.
+
+```cs
+var limits = new ImageProcessingLimits(
+    maxImagePixels: 25_000_000,
+    maxAnimationFrames: 512,
+    maxAnimationPixels: 160_000_000,
+    maxWorkingMemoryBytes: 256L * 1024 * 1024);
+byte[] preview = animation.ResizeImage(600, 600, limits);
+byte[] apng = animation.ConvertToPng(limits);
+```
+
+#### WebP compression and quality
+
+Existing overloads write lossless VP8L. Select lossy VP8 explicitly with
+`WebpEncodingOptions`; quality is 0–100 and affects color fidelity. Alpha remains
+lossless in either mode. Both modes preserve animation frames, delays and looping.
+Explicit lossy settings re-encode WebP even when it already fits or watermark opacity is zero.
+`jpegQuality` continues to affect JPEG output only.
+
+```cs
+var webp = new WebpEncodingOptions(WebpCompressionModes.Lossy, quality: 85);
+byte[] preview = picture.ResizeImage(600, 600, ImageFormats.Webp, webp);
+byte[] marked = picture.AddTextWatermark("StockSharp", ImageFormats.Webp, webp);
+byte[] exact = picture.ResizeImage(600, 600, ImageFormats.Webp, WebpEncodingOptions.Lossless);
+```
 
 #### Animated GIF and APNG
 
@@ -322,7 +348,7 @@ GIF processing preserves **every displayed frame**, its delay and its looping, a
 - Resizing GIF/APNG resizes **every displayed frame**. Animation timings and looping remain unchanged: an APNG delay is kept as the fraction of a second the file states.
 - Adding a watermark to GIF/APNG draws the text **on every frame**, retaining the animation.
 - `ConvertToPng` on GIF yields **APNG**, not a frozen first frame. APNG carries the complete animation, timings and the same number of plays. Calling the other methods on that APNG is also animation-preserving.
-- APNG decoding handles per-frame rectangles, SOURCE/OVER blending, and NONE/BACKGROUND/PREVIOUS disposal.
+- APNG decoding handles per-frame rectangles, SOURCE/OVER blending, and NONE/BACKGROUND/PREVIOUS disposal. Encoding writes the first full canvas followed by the smallest changed rectangles, with SOURCE replacement so transparent changes clear previous pixels. Identical frames use a one-pixel rectangle and retain their delay.
 
 The palette of a GIF frame holds at most **256 indexed colors**, and its transparency is **binary**. When re-encoding GIF, a frame keeps its exact colors if it has no more than 256 of them (255 beside transparent pixels); a frame with more is reduced to that many by median cut, without dithering, and alpha below 128 is made transparent. When re-encoding GIF, unchanged pixels are not stored again: each frame normally uses the smallest rectangle of changed pixels, with a transparent index for unchanged pixels inside that rectangle and disposal method 1 (leave the underlying canvas in place). If the next frame needs formerly opaque pixels to become transparent, the preceding frame is written full-screen with disposal method 2 (restore transparent background). This also accounts for the last-to-first transition of a looping animation. Identical consecutive frames emit a single transparent pixel to preserve the frame delay. Every rectangle has its own color table and LZW compression. APNG uses full lossless RGBA8; converting GIF to APNG does not introduce new quantization.
 
@@ -363,6 +389,8 @@ byte[] smallerApng = animatedPng.ResizeImage(320, 240);      // Still animated A
 byte[] photo = await File.ReadAllBytesAsync("photo.jpg");
 byte[] preview = photo.ResizeImage(1280, 1280);              // JPEG at the default quality of 90
 byte[] thumbnail = photo.ResizeImage(160, 160, jpegQuality: 75);
+byte[] png = await File.ReadAllBytesAsync("picture.png");
+byte[] compactJpeg = png.ResizeImage(1280, 1280, ImageFormats.Jpeg, jpegQuality: 85);
 
 byte[] bmp = await File.ReadAllBytesAsync("picture.bmp");
 byte[] markedBmp = bmp.AddTextWatermark("StockSharp");       // BMP output
@@ -376,6 +404,15 @@ byte[] font = await File.ReadAllBytesAsync("brand.ttf");
 byte[] branded = bmp.AddTextWatermark("StockSharp", font);   // A font of your own, as bytes
 ```
 
+`jpegQuality` accepts 1 through 100; 90 is the default. It controls JPEG
+quantization when a new JPEG is encoded, including an explicitly selected JPEG
+output. Quality 100 still uses lossy color conversion and rounding. If an image
+already fits the requested bounds and keeps its format, `ResizeImage` returns
+a copy without encoding, so changing the quality alone does not recompress it.
+PNG, BMP and the current WebP writer preserve pixels and do not use this JPEG
+setting. WebP currently supports lossless writing only, without a compression
+effort setting; GIF has its separate palette and binary-alpha limits above.
+
 #### Testing
 
 The Drawing tests run entirely on .NET, without Python, Pillow, external processes or native imaging dependencies. StbImageSharp is referenced only by the test project and independently decodes PNG pixels, BMP output, JPEG output and every frame of emitted GIF animations. PNG/BMP pixels are compared byte for byte; the JPEG cross-check permits a difference of at most two channel levels for inverse-DCT and color-conversion rounding. GIF frames are compared byte for byte, including their individual delays.
@@ -384,7 +421,16 @@ APNG chunks, sequence numbers, CRCs and timing are checked by the C# test reader
 
 Checked-in independent BMP/GIF/JPEG fixtures and pixel buffers supplement programmatically constructed PNG color/depth/filter/Adam7, BMP palette/RLE/mask and interlaced GIF/LZW fixtures. Pixel oracles cover all 15 legal PNG color/depth pairs, JPEG baseline/progressive/CMYK/YCCK, BMP indexed and true-color samples, every composited GIF animation frame, APNG fdAT streams, frame delays, disposal/blending, and TrueType watermark alpha composition. JPEG files are also checked against recorded libjpeg-turbo pixels, and JPEG encoding against recorded size and fidelity at the same quality. These references do not require regenerating fixtures to run the tests. Invalid/truncated images, malformed animation chunks and malformed font data are checked with deterministic mutations; fonts are assembled in the tests so glyph rasterization is independent of installed fonts.
 
-[Additional frozen fixtures](../Tests/Drawing/Fixtures/README.md) compare colored lossless/arithmetic/12-bit JPEG, WebP with alpha, TIFF and 8/10-bit AVIF against independent decoded PNGs. Lossless JPEG, lossless WebP, TIFF and 8-bit AVIF are exact RGBA comparisons; lossy JPEG/WebP allow two channel levels and 10-bit AVIF one level. Opt-in tests compare transformations with an existing pre-migration site build; the real site's GIF/BMP export remains a separate required input.
+[Additional frozen fixtures](../Tests/Drawing/Fixtures/README.md) compare colored lossless/arithmetic/12-bit JPEG, WebP with alpha, TIFF and 8/10-bit AVIF against independent decoded PNGs. Lossless JPEG, lossless WebP, TIFF and 8-bit AVIF are exact RGBA comparisons; lossy JPEG/WebP allow two channel levels and 10-bit AVIF one level. The opt-in private site corpus checks size, both thumbnail bounds, conversion and watermarking against an independent ImageSharp decoder, including explicit checks of the existing animation cap and WebP output sizes. Visitors' images stay outside Git.
+
+[Generated image comparisons](../Tests/Drawing/Benchmarking.md) exercise 72
+deterministic encoded inputs and 106 size/fidelity/timing cases against an existing
+ImageSharp assembly, without downloading a corpus or adding a production
+dependency. They cover JPEG qualities 30 through 100, lossless output, PNG/JPEG
+normalization and thumbnails with matching output format and geometry. CSV and
+JSON measurements include PSNR, luminance SSIM, alpha error, file size, serial
+median/P90 time and managed allocations. Metric and independent resize-reference
+tests run in the ordinary suite on both target frameworks.
 
 As with any custom image parser, regression tests are not a substitute for a security audit or a comprehensive external fuzzing campaign.
 

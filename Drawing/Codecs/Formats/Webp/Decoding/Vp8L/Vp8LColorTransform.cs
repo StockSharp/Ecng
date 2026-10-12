@@ -16,27 +16,22 @@ internal static class Vp8LColorTransform
 	{
 		int width = transform.Xsize;
 		int height = transform.Ysize;
-		int bits = transform.Bits;
-		int tileWidth = 1 << bits;
-		var tileData = transform.Data!;
-		int tilesPerRow = Vp8LMetaHuffmanImage.SubSampleSize(width, bits);
-		var kernel = Vp8LTransformKernelSelector.Instance;
-
 		for (int y = 0; y < height; y++)
 		{
-			var row = pixels.Slice(y * width, width);
-			var tileRow = tileData.AsSpan((y >> bits) * tilesPerRow, tilesPerRow);
+			ApplyInverseRow(pixels.Slice(y * width, width), y, transform);
+		}
+	}
 
-			int x = 0;
-			int tileIndex = 0;
-			while (x < width)
-			{
-				int runLength = Math.Min(tileWidth, width - x);
-				var (greenToRed, greenToBlue, redToBlue) = ExtractMultipliers(tileRow[tileIndex]);
-				kernel.ColorTransformInverse(row.Slice(x, runLength), greenToRed, greenToBlue, redToBlue);
-				x += runLength;
-				tileIndex++;
-			}
+	public static void ApplyInverseRow(Span<uint> row, int y, Vp8LTransform transform)
+	{
+		var tileWidth = 1 << transform.Bits;
+		var tilesPerRow = Vp8LMetaHuffmanImage.SubSampleSize(transform.Xsize, transform.Bits);
+		var tileRow = transform.Data.AsSpan((y >> transform.Bits) * tilesPerRow, tilesPerRow);
+		var kernel = Vp8LTransformKernelSelector.Instance;
+		for (var x = 0; x < row.Length; x += tileWidth)
+		{
+			var (greenToRed, greenToBlue, redToBlue) = ExtractMultipliers(tileRow[x >> transform.Bits]);
+			kernel.ColorTransformInverse(row.Slice(x, Math.Min(tileWidth, row.Length - x)), greenToRed, greenToBlue, redToBlue);
 		}
 	}
 

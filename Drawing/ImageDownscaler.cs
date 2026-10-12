@@ -8,69 +8,42 @@ internal sealed class ImageDownscaler
 {
 	private readonly int _sourceWidth;
 	private readonly int _sourceHeight;
-	private readonly int[] _starts;
-	private readonly int[] _ends;
-	private readonly int[] _firstWeights;
-	private readonly int[] _lastWeights;
-	private readonly double[] _horizontal;
+	private readonly ImageAreaRow _row;
 	private readonly double[] _sums;
 	private int _nextRow;
+	private bool _isRowStarted;
 
 	public ImageDownscaler(int sourceWidth, int sourceHeight, int width, int height)
+		: this(sourceWidth, sourceHeight, width, height, ImageProcessingLimits.Default)
+	{
+	}
+
+	public ImageDownscaler(int sourceWidth, int sourceHeight, int width, int height, ImageProcessingLimits limits)
 	{
 		if (sourceWidth < width || sourceHeight < height || width < 1 || height < 1)
 			throw new ArgumentOutOfRangeException(nameof(width));
 
 		_sourceWidth = sourceWidth;
 		_sourceHeight = sourceHeight;
-		Image = new RasterImage(width, height);
-		_starts = new int[width];
-		_ends = new int[width];
-		_firstWeights = new int[width];
-		_lastWeights = new int[width];
-		_horizontal = new double[width * 4];
+		limits.EnsureWorkingMemory((long)width * height * 4 + (long)sourceWidth * 4 + (long)width * 80);
+		Image = new RasterImage(width, height, limits);
+		_row = new(sourceWidth, width);
 		_sums = new double[width * 4];
-
-		for (var x = 0; x < width; x++)
-		{
-			var left = (long)x * sourceWidth;
-			var right = left + sourceWidth;
-			var first = _starts[x] = (int)(left / width);
-			var end = _ends[x] = (int)((right + width - 1) / width);
-			_firstWeights[x] = (int)(Math.Min(right, (long)(first + 1) * width) - left);
-			_lastWeights[x] = (int)(right - (long)(end - 1) * width);
-		}
 	}
 
 	public RasterImage Image { get; }
 
 	public void AddRow(ReadOnlySpan<byte> pixels)
+		=> AddRow(pixels, false);
+
+	public void AddRow(ReadOnlySpan<byte> pixels, bool isRepeated)
 	{
 		if (pixels.Length != (long)_sourceWidth * 4 || _nextRow >= _sourceHeight)
 			throw new InvalidDataException("Invalid image row supplied for downscaling.");
 
-		var width = Image.Width;
-		for (var x = 0; x < width; x++)
-		{
-			double alpha = 0, red = 0, green = 0, blue = 0;
-			var first = _starts[x];
-			var end = _ends[x];
-			for (var sourceX = first; sourceX < end; sourceX++)
-			{
-				var at = sourceX * 4;
-				var weight = sourceX == first ? _firstWeights[x] : sourceX == end - 1 ? _lastWeights[x] : width;
-				var a = (double)pixels[at + 3] * weight;
-				alpha += a;
-				red += pixels[at] * a;
-				green += pixels[at + 1] * a;
-				blue += pixels[at + 2] * a;
-			}
-			var to = x * 4;
-			_horizontal[to] = alpha;
-			_horizontal[to + 1] = red;
-			_horizontal[to + 2] = green;
-			_horizontal[to + 3] = blue;
-		}
+		if (!isRepeated || _nextRow == 0)
+			_row.Sum(pixels, 0, 1);
+		var horizontal = _row.Sums;
 
 		var top = (long)_nextRow++ * Image.Height;
 		var bottom = top + Image.Height;
@@ -79,8 +52,8 @@ internal sealed class ImageDownscaler
 			var destinationY = (int)(top / _sourceHeight);
 			var end = Math.Min(bottom, (long)(destinationY + 1) * _sourceHeight);
 			var weight = end - top;
-			for (var i = 0; i < _sums.Length; i++)
-				_sums[i] += _horizontal[i] * weight;
+			ImageAreaWeights.Add(horizontal, _sums, weight, !_isRowStarted);
+			_isRowStarted = true;
 
 			if (end == (long)(destinationY + 1) * _sourceHeight)
 				WriteRow(destinationY);
@@ -92,18 +65,7 @@ internal sealed class ImageDownscaler
 	{
 		var area = (double)_sourceWidth * _sourceHeight;
 		var pixels = Image.Pixels.AsSpan(y * Image.Width * 4, Image.Width * 4);
-		for (var x = 0; x < Image.Width; x++)
-		{
-			var at = x * 4;
-			var alpha = _sums[at];
-			if (alpha > 0)
-			{
-				pixels[at] = RasterImage.ToByte(_sums[at + 1] / alpha);
-				pixels[at + 1] = RasterImage.ToByte(_sums[at + 2] / alpha);
-				pixels[at + 2] = RasterImage.ToByte(_sums[at + 3] / alpha);
-			}
-			pixels[at + 3] = RasterImage.ToByte(alpha / area);
-		}
-		Array.Clear(_sums);
+		ImageAreaWeights.WriteRow(_sums, pixels, area);
+		_isRowStarted = false;
 	}
 }

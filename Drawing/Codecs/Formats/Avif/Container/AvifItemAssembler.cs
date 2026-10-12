@@ -43,11 +43,6 @@ internal static class AvifItemAssembler
 			throw new AvifDecodingException($"AVIF image dimensions {color.Width}x{color.Height} are invalid or exceed the supported maximum of {AvifDecodingLimits.MaxDimension}.");
 		}
 
-		if ((long)color.Width * color.Height > AvifDecodingLimits.MaxPixelCount)
-		{
-			throw new AvifDecodingException($"AVIF image pixel count exceeds the supported maximum of {AvifDecodingLimits.MaxPixelCount}.");
-		}
-
 		var (exif, xmp) = CaptureMetadataItems(data, meta);
 
 		return new AvifAssembledImage

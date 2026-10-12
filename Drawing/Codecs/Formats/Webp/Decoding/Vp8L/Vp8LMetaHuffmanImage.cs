@@ -23,7 +23,8 @@ internal sealed class Vp8LMetaHuffmanImage
 		_subsampleBits = subsampleBits;
 	}
 	public int GetGroupIndex(int x, int y) => _groupIndexPerTile[(_tileXSize * (y >> _subsampleBits)) + (x >> _subsampleBits)];
-	public static Vp8LHuffmanGroup[] ReadGroups(Vp8LBitReader reader, int xsize, int ysize, int colorCacheBits, bool allowRecursion, out Vp8LMetaHuffmanImage metaImage)
+	public long WorkingBytes => (long)_groupIndexPerTile.Length * 4;
+	public static Vp8LHuffmanGroup[] ReadGroups(Vp8LBitReader reader, int xsize, int ysize, int colorCacheBits, bool allowRecursion, ImageProcessingLimits limits, out Vp8LMetaHuffmanImage metaImage)
 	{
 		if (allowRecursion && reader.ReadBits(1) != 0)
 		{
@@ -33,7 +34,7 @@ internal sealed class Vp8LMetaHuffmanImage
 			int tileXSize = SubSampleSize(xsize, subsampleBits);
 			int tileYSize = SubSampleSize(ysize, subsampleBits);
 
-			uint[] tilePixels = Vp8LPixelDecoder.DecodeImageStream(reader, tileXSize, tileYSize, allowRecursion: false);
+			uint[] tilePixels = Vp8LPixelDecoder.DecodeImageStream(reader, tileXSize, tileYSize, allowRecursion: false, limits);
 
 			int tileCount = tileXSize * tileYSize;
 			var groupIndexPerTile = new int[tileCount];

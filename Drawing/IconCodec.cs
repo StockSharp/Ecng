@@ -20,6 +20,9 @@ internal static class IconCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
 	{
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("Icon input exceeds the supported size.");
@@ -27,7 +30,7 @@ internal static class IconCodec
 		if (ReadSize(data) != (width, height))
 			throw new InvalidDataException("Invalid icon dimensions.");
 		if (PngCodec.IsPng(frame))
-			return PngCodec.Decode(frame.ToArray());
+			return PngCodec.Decode(frame.ToArray(), limits);
 
 		var header = BinaryPrimitives.ReadInt32LittleEndian(frame);
 		var bits = BinaryPrimitives.ReadUInt16LittleEndian(frame[14..]);
@@ -55,7 +58,7 @@ internal static class IconCodec
 		BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(10), 14 + pixelOffset);
 		frame[..maskOffset].CopyTo(bmp.AsSpan(14));
 		BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(22), height);
-		var image = BmpCodec.Decode(bmp);
+		var image = BmpCodec.Decode(bmp, limits);
 		var hasAlpha = false;
 		if (bits == 32 && compression == 0)
 			for (var y = 0; y < height; y++)

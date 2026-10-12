@@ -25,6 +25,18 @@ internal static class Av1YuvToRgbConverter
 		int alphaWidth,
 		int outWidth,
 		int outHeight)
+		=> ConvertCore(colorPlanes, colorWidths, monoChrome, subsamplingX, subsamplingY, matrixCoefficients,
+			colorRangeFull, bitDepth, alphaPlane, alphaWidth, outWidth, outHeight, null);
+
+	public static void ConvertRows(int[][] colorPlanes, int[] colorWidths, bool monoChrome, bool subsamplingX, bool subsamplingY,
+		int matrixCoefficients, bool colorRangeFull, int bitDepth, int[] alphaPlane, int alphaWidth,
+		int outWidth, int outHeight, Action<byte[]> consume)
+		=> _ = ConvertCore(colorPlanes, colorWidths, monoChrome, subsamplingX, subsamplingY, matrixCoefficients,
+			colorRangeFull, bitDepth, alphaPlane, alphaWidth, outWidth, outHeight, consume);
+
+	private static byte[] ConvertCore(int[][] colorPlanes, int[] colorWidths, bool monoChrome, bool subsamplingX, bool subsamplingY,
+		int matrixCoefficients, bool colorRangeFull, int bitDepth, int[] alphaPlane, int alphaWidth,
+		int outWidth, int outHeight, Action<byte[]> consume)
 	{
 		bool hasAlpha = alphaPlane is not null;
 		bool output16Bit = bitDepth > 8;
@@ -33,7 +45,7 @@ internal static class Av1YuvToRgbConverter
 		int bytesPerChannel = output16Bit ? 2 : 1;
 		int channels = monoChrome ? (hasAlpha ? 4 : 1) : hasAlpha ? 4 : 3;
 
-		var pixels = new byte[outWidth * outHeight * channels * bytesPerChannel];
+		var pixels = new byte[checked(outWidth * (consume is null ? outHeight : 1) * channels * bytesPerChannel)];
 
 		void WriteChannel(int byteOffset, int value)
 		{
@@ -59,7 +71,7 @@ internal static class Av1YuvToRgbConverter
 				for (int col = 0; col < outWidth; col++)
 				{
 					int gray = ScaleSample(yPlane[(row * yStride) + col], srcMax, outMax);
-					int idx = ((row * outWidth) + col) * channels * bytesPerChannel;
+					int idx = (((consume is null ? row : 0) * outWidth) + col) * channels * bytesPerChannel;
 					if (hasAlpha)
 					{
 						WriteChannel(idx, gray);
@@ -72,6 +84,7 @@ internal static class Av1YuvToRgbConverter
 						WriteChannel(idx, gray);
 					}
 				}
+				consume?.Invoke(pixels);
 			}
 
 			return pixels;
@@ -161,7 +174,7 @@ internal static class Av1YuvToRgbConverter
 					var g = (yn - (krVec256 * r) - (kbVec256 * b)) / kgVec256;
 
 					int channelStride = channels * bytesPerChannel;
-					int idx0 = ((row * outWidth) + col) * channelStride;
+					int idx0 = (((consume is null ? row : 0) * outWidth) + col) * channelStride;
 					WriteChannel(idx0, ClampToRange(r[0], outMax));
 					WriteChannel(idx0 + bytesPerChannel, ClampToRange(g[0], outMax));
 					WriteChannel(idx0 + (2 * bytesPerChannel), ClampToRange(b[0], outMax));
@@ -219,7 +232,7 @@ internal static class Av1YuvToRgbConverter
 					var b = yn + (twoKb * cbn);
 					var g = (yn - (krVec * r) - (kbVec * b)) / kgVec;
 
-					int idx0 = ((row * outWidth) + col) * channels * bytesPerChannel;
+					int idx0 = (((consume is null ? row : 0) * outWidth) + col) * channels * bytesPerChannel;
 					WriteChannel(idx0, ClampToRange(r[0], outMax));
 					WriteChannel(idx0 + bytesPerChannel, ClampToRange(g[0], outMax));
 					WriteChannel(idx0 + (2 * bytesPerChannel), ClampToRange(b[0], outMax));
@@ -270,7 +283,7 @@ internal static class Av1YuvToRgbConverter
 					bOut = ClampToRange(b, outMax);
 				}
 
-				int idx = ((row * outWidth) + col) * channels * bytesPerChannel;
+				int idx = (((consume is null ? row : 0) * outWidth) + col) * channels * bytesPerChannel;
 				WriteChannel(idx, rOut);
 				WriteChannel(idx + bytesPerChannel, gOut);
 				WriteChannel(idx + (2 * bytesPerChannel), bOut);
@@ -279,6 +292,7 @@ internal static class Av1YuvToRgbConverter
 					WriteChannel(idx + (3 * bytesPerChannel), ScaleSample(alphaPlane![alphaRowBase + col], srcMax, outMax));
 				}
 			}
+			consume?.Invoke(pixels);
 		}
 
 		return pixels;

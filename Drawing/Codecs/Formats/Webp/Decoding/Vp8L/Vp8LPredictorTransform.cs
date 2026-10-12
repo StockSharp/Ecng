@@ -54,6 +54,28 @@ internal static class Vp8LPredictorTransform
 		}
 	}
 
+	public static void ApplyInverseRow(Span<uint> pixels, int width, int y, Vp8LTransform transform)
+	{
+		var row = pixels.Slice(width, width);
+		if (y == 0)
+		{
+			row[0] = Vp8LPixelMath.AddWrapping(row[0], 0xFF000000u);
+			for (var x = 1; x < width; x++) row[x] = Vp8LPixelMath.AddWrapping(row[x], row[x - 1]);
+			return;
+		}
+		row[0] = Vp8LPixelMath.AddWrapping(row[0], pixels[0]);
+		var tilesPerRow = Vp8LMetaHuffmanImage.SubSampleSize(width, transform.Bits);
+		var kernel = Vp8LTransformKernelSelector.Instance;
+		for (var x = 1; x < width;)
+		{
+			var tileX = x >> transform.Bits;
+			var mode = (int)((transform.Data[(y >> transform.Bits) * tilesPerRow + tileX] >> 8) & 15);
+			var end = Math.Min((tileX + 1) << transform.Bits, width);
+			ApplyRun(pixels, kernel, width, width, x, end - x, mode);
+			x = end;
+		}
+	}
+
 	private static void ApplyRun(Span<uint> pixels, IVp8LTransformKernel kernel, int width, int rowBase, int xStart, int runLength, int mode)
 	{
 		if (mode == 2)

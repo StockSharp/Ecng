@@ -2,10 +2,10 @@ namespace Ecng.Drawing;
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 /// <summary>
-/// A JPEG Huffman table: codes are assigned in order of length, so a code is found by comparing
-/// it with the largest code of every length in turn.
+/// Canonical JPEG Huffman codes with an eight-bit lookup and compact tables for longer prefixes.
 /// </summary>
 internal sealed class JpegHuffmanTable
 {
@@ -16,6 +16,10 @@ internal sealed class JpegHuffmanTable
 	private readonly int[] _maxCode = new int[_maxLength + 1];
 	private readonly int[] _firstSymbol = new int[_maxLength + 1];
 	private readonly byte[] _symbols;
+	private readonly ushort[] _shortCodes = new ushort[256];
+	private readonly byte[] _longBits = new byte[256];
+	private readonly int[] _longOffsets = new int[256];
+	private readonly ushort[] _longCodes;
 
 	/// <param name="counts">How many codes there are of each length from 1 to 16.</param>
 	/// <param name="symbols">The symbols, in order of their codes.</param>
@@ -39,9 +43,41 @@ internal sealed class JpegHuffmanTable
 
 			if (code > 1 << length)
 				throw new InvalidDataException("JPEG Huffman table has more codes than its lengths allow.");
+			if (index > _symbols.Length)
+				throw new InvalidDataException("JPEG Huffman table has fewer symbols than its code lengths declare.");
+
+			if (length <= 8)
+				for (var i = 0; i < count; i++)
+				{
+					var prefix = (_minCode[length] + i) << (8 - length);
+					for (var tail = 0; tail < 1 << (8 - length); tail++)
+					{
+						_shortCodes[prefix + tail] = (ushort)(length << 8 | _symbols[_firstSymbol[length] + i]);
+					}
+				}
 
 			code <<= 1;
 		}
+		for (var length = 9; length <= _maxLength; length++)
+			for (var i = 0; i < counts[length - 1]; i++)
+				_longBits[(_minCode[length] + i) >> (length - 8)] = (byte)(length - 8);
+		var longCount = 0;
+		for (var prefix = 0; prefix < _longBits.Length; prefix++)
+		{
+			_longOffsets[prefix] = longCount;
+			if (_longBits[prefix] != 0) longCount += 1 << _longBits[prefix];
+		}
+		_longCodes = new ushort[longCount];
+		for (var length = 9; length <= _maxLength; length++)
+			for (var i = 0; i < counts[length - 1]; i++)
+			{
+				var value = _minCode[length] + i;
+				var prefix = value >> (length - 8);
+				var padding = _longBits[prefix] - (length - 8);
+				var offset = _longOffsets[prefix] + ((value & ((1 << (length - 8)) - 1)) << padding);
+				for (var tail = 0; tail < 1 << padding; tail++)
+					_longCodes[offset + tail] = (ushort)(length << 8 | _symbols[_firstSymbol[length] + i]);
+			}
 	}
 
 	/// <summary>
@@ -159,7 +195,59 @@ internal sealed class JpegHuffmanTable
 		return symbols;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Decode(JpegBitReader bits)
+	{
+		if (bits.TryPeek(8, out var prefix))
+		{
+			var code = _shortCodes[prefix];
+			var length = code >> 8;
+			if (length != 0)
+			{
+				bits.Skip(length);
+				return code & 255;
+			}
+			var extra = _longBits[prefix];
+			if (extra != 0 && bits.TryPeek(8 + extra, out var window))
+			{
+				code = _longCodes[_longOffsets[prefix] + (window & ((1 << extra) - 1))];
+				length = code >> 8;
+				if (length != 0)
+				{
+					bits.Skip(length);
+					return code & 255;
+				}
+			}
+		}
+		return DecodeLong(bits);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int DecodeValue(JpegBitReader bits, out int value)
+	{
+		if (bits.TryPeek(16, out var window))
+		{
+			var code = _shortCodes[window >> 8];
+			var length = code >> 8;
+			var symbol = code & 255;
+			var magnitude = symbol & 15;
+			var total = length + magnitude;
+			if (length != 0 && total <= 16)
+			{
+				bits.Skip(total);
+				var mask = (1 << magnitude) - 1;
+				value = (window >> (16 - total)) & mask;
+				value -= ((value - ((mask + 1) >> 1)) >> 31) & mask;
+				return symbol;
+			}
+		}
+		var decoded = Decode(bits);
+		value = bits.ReadSigned(decoded & 15);
+		return decoded;
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private int DecodeLong(JpegBitReader bits)
 	{
 		var code = 0;
 
@@ -167,7 +255,7 @@ internal sealed class JpegHuffmanTable
 		{
 			code = code << 1 | bits.ReadBit();
 
-			if (code <= _maxCode[length])
+			if (code >= _minCode[length] && code <= _maxCode[length])
 				return _symbols[_firstSymbol[length] + code - _minCode[length]];
 		}
 

@@ -14,14 +14,22 @@ internal sealed class RasterImage
 	public int Width { get; }
 	public int Height { get; }
 	public byte[] Pixels { get; }
+	public ImageProcessingLimits Limits { get; }
 
 	public RasterImage(int width, int height)
+		: this(width, height, ImageProcessingLimits.Default)
 	{
-		if (width < 1 || height < 1 || (long)width * height > MaxPixels)
-			throw new ArgumentOutOfRangeException(nameof(width), "Image dimensions exceed the supported 25-megapixel limit.");
+	}
+
+	public RasterImage(int width, int height, ImageProcessingLimits limits)
+	{
+		ArgumentNullException.ThrowIfNull(limits);
+		if (width < 1 || height < 1 || (long)width * height > limits.MaxImagePixels)
+			throw new ArgumentOutOfRangeException(nameof(width), $"Image dimensions exceed the {limits.MaxImagePixels}-pixel limit.");
 
 		Width = width;
 		Height = height;
+		Limits = limits;
 		Pixels = new byte[checked(width * height * 4)];
 	}
 
@@ -30,9 +38,13 @@ internal sealed class RasterImage
 	/// </summary>
 	/// <exception cref="InvalidDataException">The picture is too large to be decoded.</exception>
 	public static void EnsureDecodable(int width, int height)
+		=> EnsureDecodable(width, height, ImageProcessingLimits.Default);
+
+	public static void EnsureDecodable(int width, int height, ImageProcessingLimits limits)
 	{
-		if ((long)width * height > MaxPixels)
-			throw new InvalidDataException($"The picture is {width}x{height}: more than the 25 megapixels that can be decoded.");
+		limits.EnsureWorkingMemory((long)width * height * 4);
+		if ((long)width * height > limits.MaxImagePixels)
+			throw new InvalidDataException($"The picture is {width}x{height}: more than the {limits.MaxImagePixels} pixels that can be decoded.");
 	}
 
 	/// <summary>
@@ -41,7 +53,7 @@ internal sealed class RasterImage
 	/// </summary>
 	public RasterImage Downscale(int width, int height)
 	{
-		var downscaler = new ImageDownscaler(Width, Height, width, height);
+		var downscaler = new ImageDownscaler(Width, Height, width, height, Limits);
 		for (var y = 0; y < Height; y++)
 			downscaler.AddRow(Pixels.AsSpan(y * Width * 4, Width * 4));
 		return downscaler.Image;
@@ -57,7 +69,7 @@ internal sealed class RasterImage
 			return this;
 
 		// Orientations 5 to 8 lay the rows of the stored picture along the vertical of the shown one.
-		var result = orientation >= 5 ? new RasterImage(Height, Width) : new RasterImage(Width, Height);
+		var result = orientation >= 5 ? new RasterImage(Height, Width, Limits) : new RasterImage(Width, Height, Limits);
 
 		for (var y = 0; y < result.Height; y++)
 			for (var x = 0; x < result.Width; x++)

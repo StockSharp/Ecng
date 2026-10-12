@@ -24,16 +24,41 @@ internal static class Av1TileComposer
 		public int NumPlanes { get; init; }
 	}
 
-	public static CompositedFrame Composite(IReadOnlyList<byte[]> tiles, int gridRows, int gridColumns, int outWidth, int outHeight)
+	public static CompositedFrame Composite(IReadOnlyList<byte[]> tiles, int gridRows, int gridColumns, int outWidth, int outHeight, ImageProcessingLimits limits)
+		=> Composite(tiles, gridRows, gridColumns, outWidth, outHeight, limits, false);
+
+	public static CompositedFrame Composite(IReadOnlyList<byte[]> tiles, int gridRows, int gridColumns, int outWidth, int outHeight, ImageProcessingLimits limits, bool thumbnail)
 	{
-		var frames = new Av1FrameDecodeResult[tiles.Count];
+		long retained = 0, temporary = 0;
+		foreach (var tile in tiles)
+		{
+			var estimate = Av1FrameDecoder.EstimateBuffers(tile);
+			retained += estimate.planes;
+			temporary = Math.Max(temporary, estimate.working - estimate.planes);
+		}
+		limits.EnsureWorkingMemory(retained + temporary + (tiles.Count == 1 ? 0 : (long)outWidth * outHeight * 24));
+		var frames = new Av1DecodedFrame[tiles.Count];
 		for (int i = 0; i < tiles.Count; i++)
 		{
-			frames[i] = Av1FrameDecoder.Decode(tiles[i]);
+			frames[i] = Av1FrameDecoder.Decode(tiles[i], limits, thumbnail);
 		}
 
 		var seq = frames[0].Sequence;
 		int numPlanes = seq.MonoChrome ? 1 : 3;
+		if (tiles.Count == 1 && gridRows == 1 && gridColumns == 1 &&
+			frames[0].PlaneWidths[0] >= outWidth && frames[0].PlaneHeights[0] >= outHeight)
+			return new CompositedFrame
+			{
+				Planes = frames[0].Planes,
+				Widths = frames[0].PlaneWidths,
+				Heights = frames[0].PlaneHeights,
+				Sequence = seq,
+				NumPlanes = numPlanes,
+			};
+		long heldBytes = (long)outWidth * outHeight * 12;
+		foreach (var frame in frames)
+			foreach (var plane in frame.Planes) if (plane is not null) heldBytes += (long)plane.Length * 4;
+		limits.EnsureWorkingMemory(heldBytes);
 
 		// Rented, not `new`'d: this buffer's lifetime ends when Av1YuvToRgbConverter.Convert finishes
 		// reading it (see AvifDecoder.Decode, which returns it via ReturnPlanes right after). A rented

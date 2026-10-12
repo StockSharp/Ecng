@@ -18,49 +18,74 @@ internal static class WebpCodec
 
 	public static (int width, int height) ReadSize(ReadOnlySpan<byte> data)
 	{
-		var file = Read(data.ToArray());
+		var file = Read(data.ToArray(), ImageProcessingLimits.Default);
 		return (file.Width, file.Height);
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
 	{
-		var file = Read(data);
+		var file = Read(data, limits);
 		if (file.IsAnimated)
 		{
-			using var frames = Open(file).Frames.GetEnumerator();
+			using var frames = Open(file, limits).Frames.GetEnumerator();
 			if (!frames.MoveNext()) throw new InvalidDataException("WebP animation has no frames.");
 			return frames.Current.Image;
 		}
-		return Decode(file.Bitstream, file.Alpha, file.IsLossless, file.Width, file.Height);
+		return Decode(file.Bitstream, file.Alpha, file.IsLossless, file.Width, file.Height, limits);
+	}
+
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height, ImageProcessingLimits limits)
+	{
+		var file = Read(data, limits);
+		if (file.IsAnimated) throw new NotSupportedException("Animated WebP uses the animation pipeline.");
+		try
+		{
+			if (file.IsLossless) return Vp8LDecoder.DecodeDownscaled(file.Bitstream, width, height, limits);
+			var reserved = Vp8ThumbnailBuffer.EstimateWorkingBytes(file.Width, width, height);
+			var alpha = file.Alpha.IsEmpty ? null : new WebpAlphaRows(file.Alpha, file.Width, file.Height, limits, reserved);
+			var frame = Vp8FrameDecoder.DecodeDownscaled(file.Bitstream, alpha, width, height, limits);
+			using var decoded = CodecImage.FromBuffer(frame.Width, frame.Height, frame.PixelFormat, frame.Pixels, false, limits);
+			return decoded.ToRaster();
+		}
+		catch (Exception error) when (error is ImageFormatException or ArgumentException or IndexOutOfRangeException or OverflowException)
+		{
+			throw new InvalidDataException("Invalid WebP thumbnail.", error);
+		}
 	}
 
 	public static Animation Open(byte[] data)
+		=> Open(data, ImageProcessingLimits.Default);
+
+	public static Animation Open(byte[] data, ImageProcessingLimits limits)
 	{
-		var file = Read(data);
-		return file.IsAnimated ? Open(file) : null;
+		var file = Read(data, limits);
+		return file.IsAnimated ? Open(file, limits) : null;
 	}
 
 	public static int ReadPlays(byte[] data)
 	{
-		var file = Read(data);
+		var file = Read(data, ImageProcessingLimits.Default);
 		if (!file.IsAnimated) throw new NotSupportedException("WebP is not animated.");
 		return file.Plays;
 	}
 
-	private static Animation Open(WebpFile file)
+	private static Animation Open(WebpFile file, ImageProcessingLimits limits)
 	{
-		RasterImage.EnsureDecodable(file.Width, file.Height);
-		Animation.EnsureWithinBudget(file.Frames.Count, (long)file.Width * file.Height * file.Frames.Count);
-		return new(file.Width, file.Height, file.Plays, file.Frames.Count, Frames(file));
+		RasterImage.EnsureDecodable(file.Width, file.Height, limits);
+		Animation.EnsureWithinBudget(file.Frames.Count, (long)file.Width * file.Height * file.Frames.Count, limits);
+		return new(file.Width, file.Height, file.Plays, file.Frames.Count, Frames(file, limits), limits);
 	}
 
-	private static IEnumerable<AnimationFrame> Frames(WebpFile file)
+	private static IEnumerable<AnimationFrame> Frames(WebpFile file, ImageProcessingLimits limits)
 	{
-		var canvas = new RasterImage(file.Width, file.Height);
+		var canvas = new RasterImage(file.Width, file.Height, limits);
 		Fill(canvas, 0, 0, file.Width, file.Height, file.Background);
 		foreach (var frame in file.Frames)
 		{
-			var image = Decode(frame.Bitstream, frame.Alpha, frame.IsLossless, frame.Width, frame.Height);
+			var image = Decode(frame.Bitstream, frame.Alpha, frame.IsLossless, frame.Width, frame.Height, limits);
 			for (var y = 0; y < frame.Height; y++)
 			{
 				for (var x = 0; x < frame.Width; x++)
@@ -72,7 +97,7 @@ internal static class WebpCodec
 						canvas.BlendPixel(x + frame.X, y + frame.Y, image.Pixels[pixel], image.Pixels[pixel + 1], image.Pixels[pixel + 2], image.Pixels[pixel + 3]);
 				}
 			}
-			var result = new RasterImage(canvas.Width, canvas.Height);
+			var result = new RasterImage(canvas.Width, canvas.Height, limits);
 			canvas.Pixels.CopyTo(result.Pixels, 0);
 			yield return new(result, frame.Delay, 1000);
 			if (frame.IsDisposeToBackground)
@@ -95,18 +120,18 @@ internal static class WebpCodec
 		}
 	}
 
-	private static RasterImage Decode(ReadOnlyMemory<byte> bitstream, ReadOnlyMemory<byte> alpha, bool isLossless, int width, int height)
+	private static RasterImage Decode(ReadOnlyMemory<byte> bitstream, ReadOnlyMemory<byte> alpha, bool isLossless, int width, int height, ImageProcessingLimits limits)
 	{
-		RasterImage.EnsureDecodable(width, height);
+		RasterImage.EnsureDecodable(width, height, limits);
 		try
 		{
 			if (isLossless)
 			{
-				using var image = Vp8LDecoder.Decode(bitstream);
+				using var image = Vp8LDecoder.Decode(bitstream, limits);
 				return image.ToRaster();
 			}
-			var frame = Vp8FrameDecoder.Instance.Decode(bitstream, alpha.IsEmpty ? null : WebpAlphaDecoder.Decode(alpha, width, height));
-			using var decoded = CodecImage.FromBuffer(frame.Width, frame.Height, frame.PixelFormat, frame.Pixels, false);
+			var frame = Vp8FrameDecoder.Instance.Decode(bitstream, alpha.IsEmpty ? null : WebpAlphaDecoder.Decode(alpha, width, height, limits), limits);
+			using var decoded = CodecImage.FromBuffer(frame.Width, frame.Height, frame.PixelFormat, frame.Pixels, false, limits);
 			return decoded.ToRaster();
 		}
 		catch (Exception error) when (error is ImageFormatException or ArgumentException or IndexOutOfRangeException or OverflowException)
@@ -115,7 +140,7 @@ internal static class WebpCodec
 		}
 	}
 
-	private static WebpFile Read(byte[] data)
+	private static WebpFile Read(byte[] data, ImageProcessingLimits limits)
 	{
 		if (!IsWebp(data)) throw new InvalidDataException("Expected a WebP RIFF container.");
 		var length = (long)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(4)) + 8;
@@ -156,7 +181,7 @@ internal static class WebpCodec
 						throw new InvalidDataException("WebP frame lies outside its canvas.");
 					var (stream, alpha, lossless) = ReadFrame(data, offset + 8 + 16, offset + 8 + payload.Length, width, height);
 					file.Frames.Add(new(x, y, width, height, Read24(bytes[12..]), (bytes[15] & 2) != 0, (bytes[15] & 1) != 0, lossless, stream, alpha));
-					Animation.EnsureWithinBudget(file.Frames.Count, (long)file.Width * file.Height * file.Frames.Count);
+					Animation.EnsureWithinBudget(file.Frames.Count, (long)file.Width * file.Height * file.Frames.Count, limits);
 					break;
 				case 0x48504c41: // ALPH.
 					if (file.IsAnimated || !file.Alpha.IsEmpty || !file.Bitstream.IsEmpty || payload.IsEmpty)

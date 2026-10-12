@@ -12,7 +12,7 @@ using Ecng.Drawing.Codecs.Formats.Webp.Internal;
 
 internal static class Vp8LTransformReader
 {
-	public static List<Vp8LTransform> ReadTransforms(Vp8LBitReader reader, ref int xsize, int ysize)
+	public static List<Vp8LTransform> ReadTransforms(Vp8LBitReader reader, ref int xsize, int ysize, ImageProcessingLimits limits)
 	{
 		var transforms = new List<Vp8LTransform>();
 		int seenMask = 0;
@@ -41,9 +41,9 @@ internal static class Vp8LTransformReader
 			Vp8LTransform transform = type switch
 			{
 				Vp8LTransformTypes.Predictor or Vp8LTransformTypes.CrossColor =>
-					ReadTileParameterTransform(reader, type, entryXsize, entryYsize),
+					ReadTileParameterTransform(reader, type, entryXsize, entryYsize, limits),
 				Vp8LTransformTypes.ColorIndexing =>
-					ReadColorIndexingTransform(reader, entryXsize, entryYsize, ref xsize),
+					ReadColorIndexingTransform(reader, entryXsize, entryYsize, ref xsize, limits),
 				Vp8LTransformTypes.SubtractGreen =>
 					new Vp8LTransform { Type = type, Xsize = entryXsize, Ysize = entryYsize },
 				_ => throw new WebpDecodingException($"Unknown VP8L transform type {(int)type}."),
@@ -55,17 +55,17 @@ internal static class Vp8LTransformReader
 		return transforms;
 	}
 
-	private static Vp8LTransform ReadTileParameterTransform(Vp8LBitReader reader, Vp8LTransformTypes type, int xsize, int ysize)
+	private static Vp8LTransform ReadTileParameterTransform(Vp8LBitReader reader, Vp8LTransformTypes type, int xsize, int ysize, ImageProcessingLimits limits)
 	{
 		int bits = 2 + (int)reader.ReadBits(3);
 		int blockXsize = Vp8LMetaHuffmanImage.SubSampleSize(xsize, bits);
 		int blockYsize = Vp8LMetaHuffmanImage.SubSampleSize(ysize, bits);
-		var data = Vp8LPixelDecoder.DecodeImageStream(reader, blockXsize, blockYsize, allowRecursion: false);
+		var data = Vp8LPixelDecoder.DecodeImageStream(reader, blockXsize, blockYsize, allowRecursion: false, limits);
 
 		return new Vp8LTransform { Type = type, Xsize = xsize, Ysize = ysize, Bits = bits, Data = data };
 	}
 
-	private static Vp8LTransform ReadColorIndexingTransform(Vp8LBitReader reader, int xsize, int ysize, ref int outerXsize)
+	private static Vp8LTransform ReadColorIndexingTransform(Vp8LBitReader reader, int xsize, int ysize, ref int outerXsize, ImageProcessingLimits limits)
 	{
 		int numColors = (int)reader.ReadBits(8) + 1;
 		int bits = numColors switch
@@ -76,7 +76,7 @@ internal static class Vp8LTransformReader
 			_ => 3,
 		};
 
-		var rawPalette = Vp8LPixelDecoder.DecodeImageStream(reader, numColors, 1, allowRecursion: false);
+		var rawPalette = Vp8LPixelDecoder.DecodeImageStream(reader, numColors, 1, allowRecursion: false, limits);
 		var palette = Vp8LColorIndexingTransform.ExpandPalette(rawPalette, numColors, bits);
 
 		// From this point on, the main pixel stream (and any transform declared after this one) is decoded

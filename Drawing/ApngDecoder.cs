@@ -99,6 +99,9 @@ internal static class ApngDecoder
 	/// Reads the chunks of the file - everything but the pixels - and prepares its frames for decoding.
 	/// </summary>
 	public static Animation Open(byte[] data)
+		=> Open(data, ImageProcessingLimits.Default);
+
+	public static Animation Open(byte[] data, ImageProcessingLimits limits)
 	{
 		if (!PngCodec.IsPng(data) || data.Length > _maxInputLength)
 			throw new InvalidDataException("Invalid APNG input.");
@@ -150,7 +153,7 @@ internal static class ApngDecoder
 				if (width < 1 || height < 1)
 					throw new InvalidDataException("APNG has no size.");
 
-				RasterImage.EnsureDecodable(width, height);
+				RasterImage.EnsureDecodable(width, height, limits);
 			}
 			else if (chunk.SequenceEqual("PLTE"u8))
 			{
@@ -179,7 +182,7 @@ internal static class ApngDecoder
 					throw new InvalidDataException("Invalid APNG frame or loop count.");
 
 				// Every frame is composited onto the whole canvas, whatever rectangle it covers itself.
-				Animation.EnsureWithinBudget((int)count, (long)count * width * height);
+				Animation.EnsureWithinBudget((int)count, (long)count * width * height, limits);
 
 				expectedCount = (int)count;
 				plays = (int)loops;
@@ -276,12 +279,12 @@ internal static class ApngDecoder
 				throw new InvalidDataException("APNG frame data is missing.");
 		}
 
-		return new(width, height, plays, frames.Count, Compose(width, height, header, palette, transparency, frames));
+		return new(width, height, plays, frames.Count, Compose(width, height, header, palette, transparency, frames, limits), limits);
 	}
 
-	private static IEnumerable<AnimationFrame> Compose(int width, int height, byte[] header, byte[] palette, byte[] transparency, List<RawFrame> frames)
+	private static IEnumerable<AnimationFrame> Compose(int width, int height, byte[] header, byte[] palette, byte[] transparency, List<RawFrame> frames, ImageProcessingLimits limits)
 	{
-		var canvas = new RasterImage(width, height);
+		var canvas = new RasterImage(width, height, limits);
 		RawFrame previous = null;
 
 		// The canvas as it was before the previous frame, if that frame is to be taken back.
@@ -299,10 +302,10 @@ internal static class ApngDecoder
 
 			saved = frame.Disposal == _disposePrevious ? (byte[])canvas.Pixels.Clone() : null;
 
-			Draw(canvas, DecodeFrame(header, palette, transparency, frame), frame);
+			Draw(canvas, DecodeFrame(header, palette, transparency, frame, limits), frame);
 			previous = frame;
 
-			var composited = new RasterImage(width, height);
+			var composited = new RasterImage(width, height, limits);
 			canvas.Pixels.CopyTo(composited.Pixels, 0);
 
 			yield return new(composited, frame.DelayNumerator, frame.DelayDenominator);
@@ -326,7 +329,7 @@ internal static class ApngDecoder
 	}
 
 	// A frame is a PNG of its own once it gets the header of the file with its own size in it.
-	private static RasterImage DecodeFrame(byte[] originalHeader, byte[] palette, byte[] transparency, RawFrame frame)
+	private static RasterImage DecodeFrame(byte[] originalHeader, byte[] palette, byte[] transparency, RawFrame frame, ImageProcessingLimits limits)
 	{
 		using var output = new MemoryStream();
 		output.Write(PngCodec.Signature);
@@ -345,6 +348,6 @@ internal static class ApngDecoder
 		PngCodec.WriteChunk(output, "IDAT"u8, frame.Compressed.GetBuffer().AsSpan(0, (int)frame.Compressed.Length));
 		PngCodec.WriteChunk(output, "IEND"u8, []);
 
-		return PngCodec.Decode(output.ToArray());
+		return PngCodec.Decode(output.ToArray(), limits);
 	}
 }

@@ -22,12 +22,17 @@ internal class JpegDecoder
 
 	private JpegBlockOutputWriter _outputWriter;
 	private JpegScanDecoder _scanDecoder;
+	private JpegBlockAllocator _rowAllocator;
+	private JpegPartialScanlineAllocator _rowLosslessAllocator;
+	private JpegMarkers _rowFrame;
+	private readonly List<(JpegScanDecoder decoder, IEnumerator<int> rows)> _rowScans = [];
 
 	private List<JpegQuantizationTable> _quantizationTables;
 	private List<JpegHuffmanDecodingTable> _huffmanTables;
 	private List<JpegArithmeticDecodingTable> _arithmeticTables;
 	public MemoryPool<byte> MemoryPool { get; set; }
 	public JpegMarkers StartOfFrame { get; set; }
+	public bool BufferRows { get; set; }
 	public void SetInput(ReadOnlyMemory<byte> input)
 		=> SetInput(new ReadOnlySequence<byte>(input));
 	public void SetInput(ReadOnlySequence<byte> input)
@@ -431,11 +436,33 @@ internal class JpegDecoder
 
 				toContinue = ProcessMarkerForDecode(marker, ref reader);
 			}
+			if (_rowFrame != 0)
+			{
+				if (toContinue || _rowScans.Count == 0) ThrowInvalidDataException("Arithmetic JPEG has no complete scan data.");
+				var height = GetFrameHeader().NumberOfLines;
+				var step = GetMaximumVerticalSampling() * (_rowFrame == JpegMarkers.StartOfFrame3 ? 1 : 8);
+				for (var top = 0; top < height; top += step)
+				{
+					foreach (var scan in _rowScans)
+						if (!scan.rows.MoveNext()) ThrowInvalidDataException("Arithmetic JPEG scan does not cover every row.");
+					if (_rowScans[0].decoder is JpegArithmeticProgressiveScanDecoder progressive)
+						progressive.ReconstructRow(top / step);
+				}
+				foreach (var scan in _rowScans)
+					if (scan.rows.MoveNext()) ThrowInvalidDataException("Arithmetic JPEG scan exceeds its frame.");
+			}
 		}
 		finally
 		{
 			_scanDecoder?.Dispose();
 			_scanDecoder = null;
+			foreach (var scan in _rowScans) { scan.rows.Dispose(); scan.decoder.Dispose(); }
+			_rowScans.Clear();
+			_rowAllocator?.Dispose();
+			_rowAllocator = null;
+			_rowLosslessAllocator?.Dispose();
+			_rowLosslessAllocator = null;
+			_rowFrame = 0;
 		}
 	}
 	protected virtual bool ProcessMarkerForDecode(JpegMarkers marker, ref JpegReader reader)
@@ -449,7 +476,21 @@ internal class JpegDecoder
 			case JpegMarkers.StartOfFrame9:
 			case JpegMarkers.StartOfFrame10:
 				ProcessFrameHeader(ref reader, false, true);
-				_scanDecoder = JpegScanDecoder.Create(marker, this, _frameHeader.GetValueOrDefault());
+				if (BufferRows && marker is JpegMarkers.StartOfFrame3 or JpegMarkers.StartOfFrame9 or JpegMarkers.StartOfFrame10)
+				{
+					_rowFrame = marker;
+					if (marker == JpegMarkers.StartOfFrame10)
+					{
+						_rowAllocator = new JpegBlockAllocator(MemoryPool);
+						_rowAllocator.Allocate(_frameHeader.GetValueOrDefault(), true);
+					}
+					else if (marker == JpegMarkers.StartOfFrame3)
+					{
+						_rowLosslessAllocator = new JpegPartialScanlineAllocator(_outputWriter, MemoryPool);
+						_rowLosslessAllocator.Allocate(_frameHeader.GetValueOrDefault());
+					}
+				}
+				else _scanDecoder = JpegScanDecoder.Create(marker, this, _frameHeader.GetValueOrDefault());
 				break;
 			case JpegMarkers.StartOfFrame5:
 			case JpegMarkers.StartOfFrame6:
@@ -473,6 +514,22 @@ internal class JpegDecoder
 				ProcessDefineRestartInterval(ref reader);
 				break;
 			case JpegMarkers.StartOfScan:
+				if (_rowFrame != 0)
+				{
+					var rowHeader = ProcessScanHeader(ref reader, false);
+					if (_rowScans.Count >= 256) ThrowInvalidDataException("Too many arithmetic JPEG scans.");
+					JpegScanDecoder rowDecoder = _rowFrame switch
+					{
+						JpegMarkers.StartOfFrame10 => new JpegArithmeticProgressiveScanDecoder(this, _frameHeader.GetValueOrDefault(), _rowAllocator),
+						JpegMarkers.StartOfFrame3 => new JpegHuffmanLosslessScanDecoder(this, _frameHeader.GetValueOrDefault(), _rowLosslessAllocator),
+						_ => new JpegArithmeticSequentialScanDecoder(this, _frameHeader.GetValueOrDefault()),
+					};
+					_rowScans.Add((rowDecoder, rowDecoder.ReadRows(reader, rowHeader).GetEnumerator()));
+					if (!reader.RemainingBytes.IsSingleSegment) ThrowInvalidDataException("Row-buffered JPEG requires contiguous scan data.");
+					var scanLength = JpegSegments.FindScanEnd(reader.RemainingBytes.FirstSpan, 0);
+					if (!reader.TryAdvance(scanLength)) ThrowInvalidDataException("Truncated arithmetic JPEG scan.");
+					break;
+				}
 				if (_scanDecoder is null)
 				{
 					ThrowInvalidDataException(reader.ConsumedByteCount, "Scan header appears before frame header.");

@@ -40,10 +40,19 @@ internal static class BmpCodec
 	}
 
 	public static RasterImage Decode(byte[] bytes)
+		=> Decode(bytes, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] bytes, ImageProcessingLimits limits)
+		=> DecodeCore(bytes, 0, 0, limits);
+
+	public static RasterImage DecodeDownscaled(byte[] bytes, int width, int height, ImageProcessingLimits limits)
+		=> DecodeCore(bytes, width, height, limits);
+
+	private static RasterImage DecodeCore(byte[] bytes, int outputWidth, int outputHeight, ImageProcessingLimits limits)
 	{
 		var data = bytes.AsSpan();
 		var (width, height) = ReadSize(data);
-		RasterImage.EnsureDecodable(width, height);
+		if (outputWidth == 0) RasterImage.EnsureDecodable(width, height, limits);
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("BMP is too large.");
 
@@ -129,71 +138,92 @@ internal static class BmpCodec
 			cursor += stride;
 		}
 
-		var result = new RasterImage(width, height);
+		var strideBytes = checked((int)(((long)width * bits + 31) / 32 * 4));
+		if (compression is not (1 or 2) && (long)pixelOffset + (long)strideBytes * height > data.Length)
+			throw new InvalidDataException("Truncated BMP pixel array.");
+		limits.EnsureWorkingMemory(outputWidth == 0 ? (long)width * height * 4 :
+			(long)width * 4 + (long)outputWidth * outputHeight * 36 + (long)outputWidth * 48);
+		var result = outputWidth == 0 ? new RasterImage(width, height, limits) : null;
+		var downscaler = outputWidth == 0 ? null : new ImageAreaAccumulator(width, height, outputWidth, outputHeight, limits);
+		var row = outputWidth == 0 ? null : new byte[checked(width * 4)];
 		if (compression is 1 or 2)
 		{
-			DecodeRle(data[pixelOffset..], result, bits, palette);
-			return result;
+			DecodeRle(data[pixelOffset..], result, downscaler, row, width, height, bits, palette);
+			if (downscaler is not null) downscaler.Complete();
+			return result ?? downscaler.Image;
 		}
-
-		var strideBytes = checked((int)(((long)width * bits + 31) / 32 * 4));
-		if ((long)pixelOffset + (long)strideBytes * height > data.Length)
-			throw new InvalidDataException("Truncated BMP pixel array.");
 
 		for (var y = 0; y < height; y++)
 		{
 			var sourceRow = pixelOffset + (topDown ? y : height - 1 - y) * strideBytes;
+			var pixels = row ?? result.Pixels;
 			for (var x = 0; x < width; x++)
 			{
-				var dest = (y * width + x) * 4;
+				var dest = (downscaler is null ? y * width + x : x) * 4;
 				if (bits <= 8)
 				{
 					var packed = data[sourceRow + x * bits / 8];
 					var index = (packed >> (8 - bits - (x * bits & 7))) & ((1 << bits) - 1);
-					CopyPalette(index, result.Pixels, dest, palette);
+					CopyPalette(index, pixels, dest, palette);
 				}
 				else if (bits == 24)
 				{
 					var src = sourceRow + x * 3;
-					result.Pixels[dest] = data[src + 2];
-					result.Pixels[dest + 1] = data[src + 1];
-					result.Pixels[dest + 2] = data[src];
-					result.Pixels[dest + 3] = 255;
+					pixels[dest] = data[src + 2];
+					pixels[dest + 1] = data[src + 1];
+					pixels[dest + 2] = data[src];
+					pixels[dest + 3] = 255;
 				}
 				else
 				{
 					var src = sourceRow + x * (bits / 8);
 					uint value = bits == 16 ? U16(data, src) : U32(data, src);
-					result.Pixels[dest] = Channel(value, rMask);
-					result.Pixels[dest + 1] = Channel(value, gMask);
-					result.Pixels[dest + 2] = Channel(value, bMask);
+					pixels[dest] = Channel(value, rMask);
+					pixels[dest + 1] = Channel(value, gMask);
+					pixels[dest + 2] = Channel(value, bMask);
 					// Without a mask of its own alpha has no place in a pixel: the fourth byte of
 					// uncompressed 32-bit pixels is reserved, and writers leave anything in it.
-					result.Pixels[dest + 3] = aMask == 0 ? (byte)255 : Channel(value, aMask);
+					pixels[dest + 3] = aMask == 0 ? (byte)255 : Channel(value, aMask);
 				}
 			}
+			if (downscaler is not null) downscaler.AddRow(row, 0, y, 1);
 		}
 
-		return result;
+		if (downscaler is not null) downscaler.Complete();
+		return result ?? downscaler.Image;
 	}
 
-	private static void DecodeRle(ReadOnlySpan<byte> input, RasterImage image, int bits, byte[] palette)
+	private static void DecodeRle(ReadOnlySpan<byte> input, RasterImage image, ImageAreaAccumulator downscaler,
+		byte[] row, int width, int height, int bits, byte[] palette)
 	{
 		var x = 0;
-		var y = image.Height - 1;
+		var y = height - 1;
 		var position = 0;
+		var pixels = row ?? image.Pixels;
 		// Skipped pixels and unwritten rows use palette index zero.
-		for (var i = 0; i < image.Width * image.Height; i++)
-			CopyPalette(0, image.Pixels, i * 4, palette);
+		for (var i = 0; i < pixels.Length / 4; i++) CopyPalette(0, pixels, i * 4, palette);
+
+		void FinishRows(int nextY)
+		{
+			while (y > nextY)
+			{
+				if (downscaler is not null)
+				{
+					downscaler.AddRow(row, 0, y, 1);
+					for (var i = 0; i < width; i++) CopyPalette(0, row, i * 4, palette);
+				}
+				y--;
+			}
+		}
 
 		// A run that goes on past the end of its row is cut there, as other decoders cut it.
 		void Write(int idx)
 		{
 			if (y < 0)
 				throw new InvalidDataException("BMP RLE writes beyond image bounds.");
-			if (x >= image.Width)
+			if (x >= width)
 				return;
-			CopyPalette(idx, image.Pixels, (y * image.Width + x) * 4, palette);
+			CopyPalette(idx, pixels, (downscaler is null ? y * width + x : x) * 4, palette);
 			x++;
 		}
 
@@ -210,16 +240,17 @@ internal static class BmpCodec
 				continue;
 			}
 
-			if (code == 0) { x = 0; y--; continue; }
+			if (code == 0) { x = 0; FinishRows(y - 1); continue; }
 			if (code == 1) break;
 			if (code == 2)
 			{
 				if (input.Length - position < 2)
 					throw new InvalidDataException("Truncated BMP RLE delta.");
 				x += input[position++];
-				y -= input[position++];
-				if (x > image.Width || y < 0)
+				var nextY = y - input[position++];
+				if (x > width || nextY < 0)
 					throw new InvalidDataException("BMP RLE delta outside image.");
+				FinishRows(nextY);
 				continue;
 			}
 
@@ -233,6 +264,7 @@ internal static class BmpCodec
 			}
 			position += byteCount + (byteCount & 1);
 		}
+		FinishRows(-1);
 	}
 
 	public static byte[] Encode(RasterImage image)

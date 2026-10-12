@@ -2,21 +2,17 @@ namespace Ecng.Drawing.Codecs.Jpeg.ScanDecoder;
 
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 internal class JpegArithmeticSequentialScanDecoder : JpegArithmeticScanDecoder
 {
 	private readonly JpegFrameHeader _frameHeader;
 
-	private readonly int _maxHorizontalSampling;
-	private readonly int _maxVerticalSampling;
-
-	private readonly ushort _restartInterval;
+	private JpegBitReader _rowBits;
 	private readonly int _mcusPerLine;
 	private readonly int _mcusPerColumn;
 	private readonly int _levelShift;
-
-	private readonly JpegArithmeticDecodingComponent[] _components;
 
 	public JpegArithmeticSequentialScanDecoder(JpegDecoder decoder, JpegFrameHeader frameHeader) : base(decoder)
 	{
@@ -30,151 +26,92 @@ internal class JpegArithmeticSequentialScanDecoder : JpegArithmeticScanDecoder
 			maxHorizontalSampling = Math.Max(maxHorizontalSampling, currentFrameComponent.HorizontalSamplingFactor);
 			maxVerticalSampling = Math.Max(maxVerticalSampling, currentFrameComponent.VerticalSamplingFactor);
 		}
-		_maxHorizontalSampling = maxHorizontalSampling;
-		_maxVerticalSampling = maxVerticalSampling;
-
-		_restartInterval = decoder.GetRestartInterval();
 		_mcusPerLine = (frameHeader.SamplesPerLine + 8 * maxHorizontalSampling - 1) / (8 * maxHorizontalSampling);
 		_mcusPerColumn = (frameHeader.NumberOfLines + 8 * maxVerticalSampling - 1) / (8 * maxVerticalSampling);
 		_levelShift = 1 << (frameHeader.SamplePrecision - 1);
-
-		// Pre-allocate the JpegDecodeComponent instances
-		_components = new JpegArithmeticDecodingComponent[frameHeader.NumberOfComponents];
-		for (int i = 0; i < _components.Length; i++)
-		{
-			_components[i] = new JpegArithmeticDecodingComponent();
-		}
 	}
 
 	public override void ProcessScan(ref JpegReader reader, JpegScanHeader scanHeader)
 	{
-		JpegFrameHeader frameHeader = _frameHeader;
-		JpegBlockOutputWriter outputWriter = Decoder.GetOutputWriter();
+		foreach (var _ in ReadRows(reader, scanHeader)) { }
+		var bits = _rowBits;
+		bits.AdvanceAlignByte();
+		var consumed = reader.RemainingByteCount - bits.RemainingBits / 8;
+		if (bits.TryPeekMarker() != 0 && !bits.TryPeekMarker().IsRestartMarker()) consumed -= 2;
+		if (!reader.TryAdvance(consumed)) ThrowInvalidDataException("Truncated arithmetic JPEG scan.");
+	}
 
-		if (frameHeader.Components is null)
-		{
-			ThrowInvalidDataException("Component parameters are missing in JPEG frame header.");
-		}
-		if (scanHeader.Components is null)
-		{
-			ThrowInvalidDataException("Component parameters are missing in JPEG scan header.");
-		}
-		if (outputWriter is null)
-		{
-			throw new InvalidOperationException("Output writer is not specified.");
-		}
-
-		// Resolve each component
-		Span<JpegArithmeticDecodingComponent> components = _components.AsSpan(0, InitDecodeComponents(frameHeader, scanHeader, _components));
-
-		foreach (JpegArithmeticDecodingComponent component in _components)
+	public override IEnumerable<int> ReadRows(JpegReader reader, JpegScanHeader scanHeader)
+	{
+		if (_frameHeader.Components is null || scanHeader.Components is null || Decoder.GetOutputWriter() is null)
+			ThrowInvalidDataException("JPEG frame, scan or output parameters are missing.");
+		var components = InitDecodeComponents(_frameHeader, scanHeader);
+		foreach (var component in components)
 		{
 			component.DcPredictor = 0;
 			component.DcContext = 0;
 			component.DcStatistics?.Reset();
 			component.AcStatistics?.Reset();
 		}
-
 		Reset();
+		return ReadRowsCore(reader, components, Decoder.GetRestartInterval());
+	}
 
-		// Prepare
-		int maxHorizontalSampling = _maxHorizontalSampling;
-		int maxVerticalSampling = _maxVerticalSampling;
-		int mcusBeforeRestart = _restartInterval;
-		int mcusPerLine = _mcusPerLine;
-		int mcusPerColumn = _mcusPerColumn;
-		int levelShift = _levelShift;
-		JpegBitReader bitReader = new JpegBitReader(reader.RemainingBytes);
-
-		// DCT Block
-		Unsafe.SkipInit(out JpegBlock8x8F blockFBuffer);
-		Unsafe.SkipInit(out JpegBlock8x8F outputFBuffer);
-		Unsafe.SkipInit(out JpegBlock8x8F tempFBuffer);
-
-		JpegBlock8x8 outputBuffer;
-
-		for (int rowMcu = 0; rowMcu < mcusPerColumn; rowMcu++)
+	private IEnumerable<int> ReadRowsCore(JpegReader reader, JpegArithmeticDecodingComponent[] components, int restartInterval)
+	{
+		var bits = _rowBits = new JpegBitReader(reader.RemainingBytes);
+		var interleaved = components.Length > 1;
+		var single = components[0];
+		var columns = interleaved ? _mcusPerLine : (_frameHeader.SamplesPerLine + single.HorizontalSubsamplingFactor * 8 - 1) / (single.HorizontalSubsamplingFactor * 8);
+		var rows = interleaved ? _mcusPerColumn : (_frameHeader.NumberOfLines + single.VerticalSubsamplingFactor * 8 - 1) / (single.VerticalSubsamplingFactor * 8);
+		var remaining = restartInterval;
+		var restartNumber = 0;
+		for (var row = 0; row < rows; row++)
 		{
-			int offsetY = rowMcu * maxVerticalSampling;
-			for (int colMcu = 0; colMcu < mcusPerLine; colMcu++)
+			for (var col = 0; col < columns; col++)
 			{
-				int offsetX = colMcu * maxHorizontalSampling;
-
-				// Scan an interleaved mcu... process components in order
-				foreach (JpegArithmeticDecodingComponent component in components)
-				{
-					int index = component.ComponentIndex;
-					int h = component.HorizontalSamplingFactor;
-					int v = component.VerticalSamplingFactor;
-					int hs = component.HorizontalSubsamplingFactor;
-					int vs = component.VerticalSubsamplingFactor;
-
-					for (int y = 0; y < v; y++)
-					{
-						int blockOffsetY = (offsetY + y) * 8;
-						for (int x = 0; x < h; x++)
+				foreach (var component in components)
+					for (var y = 0; y < (interleaved ? component.VerticalSamplingFactor : 1); y++)
+						for (var x = 0; x < (interleaved ? component.HorizontalSamplingFactor : 1); x++)
 						{
-							// Read MCU
-							outputBuffer = default;
-							ReadBlock(ref bitReader, component, ref outputBuffer);
-
-							// Dequantization
-							DequantizeBlockAndUnZigZag(component.QuantizationTable, ref outputBuffer, ref blockFBuffer);
-
-							// IDCT
-							FastFloatingPointDCT.TransformIDCT(ref blockFBuffer, ref outputFBuffer, ref tempFBuffer);
-
-							// Level shift
-							ShiftDataLevel(ref outputFBuffer, ref outputBuffer, levelShift);
-
-							// CopyToOutput
-							WriteBlock(outputWriter, ref Unsafe.As<JpegBlock8x8, short>(ref outputBuffer), index, (offsetX + x) * 8, blockOffsetY, hs, vs);
+							var bx = interleaved ? col * component.HorizontalSamplingFactor + x : col;
+							var by = interleaved ? row * component.VerticalSamplingFactor + y : row;
+							ReadAndWriteBlock(bits, component, bx, by);
 						}
-					}
-				}
-
-				// Handle restart
-				if (_restartInterval > 0 && (--mcusBeforeRestart) == 0)
+				if (restartInterval > 0 && --remaining == 0 && (row != rows - 1 || col != columns - 1))
 				{
-					bitReader.AdvanceAlignByte();
-
-					JpegMarkers marker = bitReader.TryReadMarker();
-					if (marker == JpegMarkers.EndOfImage)
-					{
-						int bytesConsumedEoi = reader.RemainingByteCount - bitReader.RemainingBits / 8;
-						reader.TryAdvance(bytesConsumedEoi - 2);
-						return;
-					}
-					if (!marker.IsRestartMarker())
-					{
-						ThrowInvalidDataException("Restart marker is expected.");
-					}
-
-					mcusBeforeRestart = _restartInterval;
-
-					foreach (JpegArithmeticDecodingComponent component in components)
+					bits.AdvanceAlignByte();
+					var marker = bits.TryReadMarker();
+					if (marker != (JpegMarkers)((int)JpegMarkers.DefineRestart0 + (restartNumber++ & 7)))
+						ThrowInvalidDataException("Arithmetic JPEG restart marker is out of order.");
+					remaining = restartInterval;
+					foreach (var component in components)
 					{
 						component.DcPredictor = 0;
 						component.DcContext = 0;
 						component.DcStatistics?.Reset();
 						component.AcStatistics?.Reset();
 					}
-
 					Reset();
 				}
 			}
+			if (interleaved || (row + 1) % single.VerticalSamplingFactor == 0 || row + 1 == rows) yield return row;
 		}
+	}
 
-		bitReader.AdvanceAlignByte();
-		int bytesConsumed = reader.RemainingByteCount - bitReader.RemainingBits / 8;
-		if (bitReader.TryPeekMarker() != 0)
-		{
-			if (!bitReader.TryPeekMarker().IsRestartMarker())
-			{
-				bytesConsumed -= 2;
-			}
-		}
-		reader.TryAdvance(bytesConsumed);
+	private void ReadAndWriteBlock(JpegBitReader bits, JpegArithmeticDecodingComponent component, int x, int y)
+	{
+		var block = new JpegBlock8x8();
+		var values = new JpegBlock8x8F();
+		var output = new JpegBlock8x8F();
+		var scratch = new JpegBlock8x8F();
+		ReadBlock(ref bits, component, ref block);
+		DequantizeBlockAndUnZigZag(component.QuantizationTable, ref block, ref values);
+		FastFloatingPointDCT.TransformIDCT(ref values, ref output, ref scratch);
+		ShiftDataLevel(ref output, ref block, _levelShift);
+		WriteBlock(Decoder.GetOutputWriter(), ref Unsafe.As<JpegBlock8x8, short>(ref block), component.ComponentIndex,
+			x * component.HorizontalSubsamplingFactor * 8, y * component.VerticalSubsamplingFactor * 8,
+			component.HorizontalSubsamplingFactor, component.VerticalSubsamplingFactor);
 	}
 
 	private void ReadBlock(ref JpegBitReader reader, JpegArithmeticDecodingComponent component, ref JpegBlock8x8 destinationBlock)

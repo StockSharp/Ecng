@@ -15,7 +15,7 @@ using Ecng.Drawing.Codecs.Internal;
 internal static class Vp8LDecoder
 {
 	private const byte Signature = 0x2F;
-	public static Image Decode(ReadOnlyMemory<byte> vp8LBytes)
+	public static Image Decode(ReadOnlyMemory<byte> vp8LBytes, ImageProcessingLimits limits)
 	{
 		var (data, offset, end) = GetBounds(vp8LBytes);
 
@@ -30,14 +30,14 @@ internal static class Vp8LDecoder
 		bool alphaIsUsed = reader.ReadBits(1) != 0;
 		reader.ReadBits(3); // version_number -- always 0, nothing to branch on.
 
-		ValidateDimensions(width, height);
+		ValidateDimensions(width, height, limits);
 
-		var (argb, pixelCount, isPooled) = DecodeCore(reader, width, height, rentFromPool: true);
+		var (argb, pixelCount, isPooled) = DecodeCore(reader, width, height, limits, rentFromPool: true);
 		try
 		{
 			var pixelFormat = alphaIsUsed ? PixelFormat.Rgba32 : PixelFormat.Rgb24;
 			byte[] packed = PackPixels(argb.AsSpan(0, pixelCount), pixelFormat);
-			return Image.FromBuffer(width, height, pixelFormat, packed, owned: true);
+			return Image.FromBuffer(width, height, pixelFormat, packed, owned: true, limits);
 		}
 		finally
 		{
@@ -47,22 +47,22 @@ internal static class Vp8LDecoder
 			}
 		}
 	}
-	public static uint[] DecodeAlphaSubstream(ReadOnlyMemory<byte> bytes, int width, int height, out bool isPooled)
+	public static uint[] DecodeAlphaSubstream(ReadOnlyMemory<byte> bytes, int width, int height, ImageProcessingLimits limits, out bool isPooled)
 	{
-		ValidateDimensions(width, height);
+		ValidateDimensions(width, height, limits, true);
 
 		var (data, offset, end) = GetBounds(bytes);
 		var reader = new Vp8LBitReader(data, offset, end);
-		var (pixels, _, pooled) = DecodeCore(reader, width, height, rentFromPool: true);
+		var (pixels, _, pooled) = DecodeCore(reader, width, height, limits, rentFromPool: true);
 		isPooled = pooled;
 		return pixels;
 	}
-	private static (uint[] Pixels, int PixelCount, bool IsPooled) DecodeCore(Vp8LBitReader reader, int width, int height, bool rentFromPool)
+	private static (uint[] Pixels, int PixelCount, bool IsPooled) DecodeCore(Vp8LBitReader reader, int width, int height, ImageProcessingLimits limits, bool rentFromPool)
 	{
 		int transformXsize = width;
-		var transforms = Vp8LTransformReader.ReadTransforms(reader, ref transformXsize, height);
+		var transforms = Vp8LTransformReader.ReadTransforms(reader, ref transformXsize, height, limits);
 
-		uint[] pixels = Vp8LPixelDecoder.DecodeImageStream(reader, transformXsize, height, allowRecursion: true, rentFromPool);
+		uint[] pixels = Vp8LPixelDecoder.DecodeImageStream(reader, transformXsize, height, allowRecursion: true, limits, rentFromPool);
 		bool isPooled = rentFromPool;
 		int pixelCount = transformXsize * height;
 
@@ -103,14 +103,54 @@ internal static class Vp8LDecoder
 		return (pixels, pixelCount, isPooled);
 	}
 
-	private static void ValidateDimensions(int width, int height)
+	public static RasterImage DecodeDownscaled(ReadOnlyMemory<byte> bytes, int outputWidth, int outputHeight, ImageProcessingLimits limits)
+	{
+		var (data, offset, end) = GetBounds(bytes);
+		if (end - offset < 5 || data[offset] != Signature) throw new WebpDecodingException("Invalid VP8L signature.");
+		var reader = new Vp8LBitReader(data, offset + 1, end);
+		var width = (int)reader.ReadBits(14) + 1;
+		var height = (int)reader.ReadBits(14) + 1;
+		reader.ReadBits(1);
+		if (reader.ReadBits(3) != 0) throw new WebpDecodingException("Unsupported VP8L version.");
+		ValidateDimensions(width, height, limits, true);
+		var reserved = (long)outputWidth * outputHeight * 4 + (long)outputWidth * 80 + (long)width * 4;
+		var pixels = new Vp8LRowDecoder(reader, width, height, limits, reserved);
+		var downscaler = new ImageDownscaler(width, height, outputWidth, outputHeight, limits);
+		var row = new byte[checked(width * 4)];
+		for (var y = 0; y < height; y++)
+		{
+			var source = pixels.ReadRow();
+			for (var x = 0; x < width; x++)
+			{
+				var argb = source[x];
+				row[x * 4] = (byte)(argb >> 16);
+				row[x * 4 + 1] = (byte)(argb >> 8);
+				row[x * 4 + 2] = (byte)argb;
+				row[x * 4 + 3] = (byte)(argb >> 24);
+			}
+			downscaler.AddRow(row);
+		}
+		return downscaler.Image;
+	}
+
+	public static Vp8LRowDecoder OpenAlphaRows(ReadOnlyMemory<byte> bytes, int width, int height, ImageProcessingLimits limits, long reservedBytes)
+	{
+		ValidateDimensions(width, height, limits, true);
+		var (data, offset, end) = GetBounds(bytes);
+		return new Vp8LRowDecoder(new Vp8LBitReader(data, offset, end), width, height, limits, reservedBytes);
+	}
+
+	private static void ValidateDimensions(int width, int height, ImageProcessingLimits limits)
+		=> ValidateDimensions(width, height, limits, false);
+
+	private static void ValidateDimensions(int width, int height, ImageProcessingLimits limits, bool thumbnail)
 	{
 		if (width <= 0 || height <= 0 || width > WebpDecodingLimits.MaxDimension || height > WebpDecodingLimits.MaxDimension)
 		{
 			throw new WebpDecodingException($"Invalid VP8L image dimensions {width}x{height}.");
 		}
 
-		if ((long)width * height > WebpDecodingLimits.MaxPixelCount)
+		if (!thumbnail && (long)width * height > limits.MaxImagePixels)
 		{
 			throw new WebpDecodingException($"VP8L image {width}x{height} exceeds the maximum supported pixel count.");
 		}

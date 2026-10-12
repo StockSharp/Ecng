@@ -12,10 +12,35 @@ using System.Buffers;
 
 internal static class Av1FrameDecoder
 {
-	public static Av1FrameDecodeResult Decode(byte[] tileBytes)
+	public static Av1DecodedFrame Decode(byte[] tileBytes, ImageProcessingLimits limits)
+		=> Decode(tileBytes, limits, false);
+
+	public static Av1DecodedFrame Decode(byte[] tileBytes, ImageProcessingLimits limits, bool thumbnail)
 	{
 		var parsed = ParseFrameHeader(tileBytes);
+		if (!thumbnail) RasterImage.EnsureDecodable(parsed.Frame.FrameWidth, parsed.Frame.FrameHeight, limits);
+		limits.EnsureWorkingMemory(EstimateBuffers(parsed).working);
 		return DecodeTileGroup(tileBytes, parsed.Sequence, parsed.Frame, parsed.TileGroupOffset, parsed.TileGroupLength);
+	}
+
+	public static (long planes, long working, long retained) EstimateBuffers(byte[] tileBytes) => EstimateBuffers(ParseFrameHeader(tileBytes));
+
+	private static (long planes, long working, long retained) EstimateBuffers(Av1ParsedFrameHeader parsed)
+	{
+		var step = parsed.Sequence.Use128x128Superblock ? 128 : 64;
+		var width = (parsed.Frame.MiCols * 4 + step - 1) / step * step;
+		var height = (parsed.Frame.MiRows * 4 + step - 1) / step * step;
+		long planeBytes = 0;
+		for (var plane = 0; plane < parsed.Sequence.NumPlanes; plane++)
+		{
+			var pixels = (long)(plane > 0 && parsed.Sequence.SubsamplingX ? width / 2 : width) *
+				(plane > 0 && parsed.Sequence.SubsamplingY ? height / 2 : height);
+			long capacity = 16;
+			while (capacity < pixels) capacity <<= 1;
+			planeBytes += capacity * 4;
+		}
+		var maps = (long)parsed.Frame.MiRows * parsed.Frame.MiCols * 160;
+		return (planeBytes, planeBytes * 3 + maps, planeBytes);
 	}
 	public static Av1ParsedFrameHeader ParseFrameHeader(byte[] tileBytes)
 	{
@@ -69,7 +94,7 @@ internal static class Av1FrameDecoder
 
 		throw new AvifDecodingException("AV1 bitstream is missing a sequence header or frame header OBU.");
 	}
-	private static Av1FrameDecodeResult DecodeTileGroup(byte[] data, Av1SequenceHeader sequence, Av1FrameHeader frame, int tileGroupOffset, int tileGroupLength)
+	private static Av1DecodedFrame DecodeTileGroup(byte[] data, Av1SequenceHeader sequence, Av1FrameHeader frame, int tileGroupOffset, int tileGroupLength)
 	{
 		var tileRanges = Av1TileGroupObu.Parse(data, tileGroupOffset, tileGroupLength, frame.TileInfo);
 
@@ -259,7 +284,7 @@ internal static class Av1FrameDecoder
 		Av1Cdef.Apply(result);
 		Av1LoopRestoration.Apply(result, deblockedPlanes);
 
-		return result;
+		return new Av1DecodedFrame(sequence, frame, result.Planes, planeWidths, planeHeights);
 	}
 
 	private static int Round2(int x, int n) => n == 0 ? x : (x + (1 << (n - 1))) >> n;

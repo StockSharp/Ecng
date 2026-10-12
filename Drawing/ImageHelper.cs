@@ -118,7 +118,7 @@ public static class ImageHelper
 	/// <exception cref="NotSupportedException">The format, or a feature of it the picture uses, is not supported.</exception>
 	/// <exception cref="InvalidDataException">The picture is damaged, or larger than is decoded.</exception>
 	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, int jpegQuality = DefaultJpegQuality)
-		=> Resize(data, maxWidth, maxHeight, null, jpegQuality);
+		=> Resize(data, maxWidth, maxHeight, null, jpegQuality, ImageProcessingLimits.Default);
 
 	/// <summary>Reduces a picture to fit the bounds and writes it in the requested format.</summary>
 	/// <param name="data">The source image.</param>
@@ -128,37 +128,94 @@ public static class ImageHelper
 	/// <param name="jpegQuality">JPEG quality from 1 to 100.</param>
 	/// <returns>The resized or converted image, retaining all animation frames.</returns>
 	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageFormats outputFormat, int jpegQuality = DefaultJpegQuality)
-		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality);
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality, ImageProcessingLimits.Default);
 
-	private static byte[] Resize(byte[] data, int maxWidth, int maxHeight, ImageFormats? outputFormat, int jpegQuality)
+	/// <summary>Reduces an image or animation with explicit limits and retains its format.</summary>
+	/// <param name="data">Encoded source image.</param>
+	/// <param name="maxWidth">Positive maximum width.</param>
+	/// <param name="maxHeight">Positive maximum height.</param>
+	/// <param name="limits">Limits on decoded images and animation work.</param>
+	/// <param name="jpegQuality">JPEG encoding quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining animation frames.</returns>
+	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageProcessingLimits limits, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, null, jpegQuality, limits);
+
+	/// <summary>Reduces an image or animation with explicit limits and an explicit output format.</summary>
+	/// <param name="data">Encoded source image.</param>
+	/// <param name="maxWidth">Positive maximum width.</param>
+	/// <param name="maxHeight">Positive maximum height.</param>
+	/// <param name="outputFormat">PNG, JPEG, BMP, GIF, WebP or ICO.</param>
+	/// <param name="limits">Limits on decoded images and animation work.</param>
+	/// <param name="jpegQuality">JPEG encoding quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining animation when the format supports it.</returns>
+	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageFormats outputFormat, ImageProcessingLimits limits, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality, limits);
+
+	private static byte[] Resize(byte[] data, int maxWidth, int maxHeight, ImageFormats? outputFormat, int jpegQuality, ImageProcessingLimits limits)
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality, limits, WebpEncodingOptions.Lossless);
+
+	/// <summary>Reduces or converts a picture with explicit WebP compression settings.</summary>
+	/// <param name="data">Encoded source image or animation.</param>
+	/// <param name="maxWidth">Positive maximum output width.</param>
+	/// <param name="maxHeight">Positive maximum output height.</param>
+	/// <param name="outputFormat">Requested output format.</param>
+	/// <param name="webpOptions">WebP mode and quality, used for WebP output.</param>
+	/// <param name="jpegQuality">JPEG quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining all animation frames.</returns>
+	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageFormats outputFormat,
+		WebpEncodingOptions webpOptions, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality, ImageProcessingLimits.Default, webpOptions);
+
+	/// <summary>Reduces or converts a picture with explicit processing limits and WebP settings.</summary>
+	/// <param name="data">Encoded source image or animation.</param>
+	/// <param name="maxWidth">Positive maximum output width.</param>
+	/// <param name="maxHeight">Positive maximum output height.</param>
+	/// <param name="outputFormat">Requested output format.</param>
+	/// <param name="limits">Explicit image and animation processing budgets.</param>
+	/// <param name="webpOptions">WebP mode and quality, used for WebP output.</param>
+	/// <param name="jpegQuality">JPEG quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining all animation frames.</returns>
+	public static byte[] ResizeImage(this byte[] data, int maxWidth, int maxHeight, ImageFormats outputFormat,
+		ImageProcessingLimits limits, WebpEncodingOptions webpOptions, int jpegQuality = DefaultJpegQuality)
+		=> Resize(data, maxWidth, maxHeight, outputFormat, jpegQuality, limits, webpOptions);
+
+	private static byte[] Resize(byte[] data, int maxWidth, int maxHeight, ImageFormats? outputFormat, int jpegQuality,
+		ImageProcessingLimits limits, WebpEncodingOptions webpOptions)
 	{
 		ArgumentNullException.ThrowIfNull(data);
+		ArgumentNullException.ThrowIfNull(limits);
+		ArgumentNullException.ThrowIfNull(webpOptions);
 		if (maxWidth <= 0) throw new ArgumentOutOfRangeException(nameof(maxWidth));
 		if (maxHeight <= 0) throw new ArgumentOutOfRangeException(nameof(maxHeight));
 		ValidateQuality(jpegQuality);
 		ValidateOutput(outputFormat);
+		var rewriteWebp = (outputFormat ?? DefaultOutput(data)) == ImageFormats.Webp && webpOptions.Mode == WebpCompressionModes.Lossy;
 
-		if (OpenAnimation(data) is { } animation)
+		if (OpenAnimation(data, limits) is { } animation)
 		{
 			if (!TryFit(animation.Width, animation.Height, maxWidth, maxHeight, out var frameWidth, out var frameHeight))
 			{
-				if (!IsSameFormat(data, outputFormat)) return EncodeAnimation(data, animation, outputFormat, jpegQuality);
+				if (!IsSameFormat(data, outputFormat) || rewriteWebp) return EncodeAnimation(data, animation, outputFormat, jpegQuality, webpOptions);
 				Validate(animation);
 				return (byte[])data.Clone();
 			}
 
-			return EncodeAnimation(data, animation.Select(frameWidth, frameHeight, frame => frame.Downscale(frameWidth, frameHeight)), outputFormat, jpegQuality);
+			return EncodeAnimation(data, animation.Select(frameWidth, frameHeight, frame => frame.Downscale(frameWidth, frameHeight)), outputFormat, jpegQuality, webpOptions);
 		}
 
 		var size = data.GetImageSize();
 		if (JpegCodec.IsJpeg(data))
 			JpegCodec.ValidateScanHeader(data);
 		if (!TryFit(size.Width, size.Height, maxWidth, maxHeight, out var width, out var height))
-			return IsSameFormat(data, outputFormat) ? (byte[])data.Clone() : Encode(data, Decode(data), jpegQuality, outputFormat);
+			return IsSameFormat(data, outputFormat) && !rewriteWebp ? (byte[])data.Clone() : Encode(data, Decode(data, limits), jpegQuality, outputFormat, webpOptions);
 
-		var image = PngCodec.IsPng(data) ? PngCodec.DecodeDownscaled(data, width, height) :
-			JpegCodec.IsJpeg(data) ? JpegCodec.DecodeDownscaled(data, width, height) : Decode(data).Downscale(width, height);
-		return Encode(data, image, jpegQuality, outputFormat);
+		var image = PngCodec.IsPng(data) ? PngCodec.DecodeDownscaled(data, width, height, limits) :
+			JpegCodec.IsJpeg(data) ? JpegCodec.DecodeDownscaled(data, width, height, limits) :
+			BmpCodec.IsBmp(data) ? BmpCodec.DecodeDownscaled(data, width, height, limits) :
+			TiffCodec.IsTiff(data) ? TiffCodec.DecodeDownscaled(data, width, height, limits) :
+			WebpCodec.IsWebp(data) ? WebpCodec.DecodeDownscaled(data, width, height, limits) :
+			AvifCodec.IsAvif(data) ? AvifCodec.DecodeDownscaled(data, width, height, limits) : Decode(data, limits).Downscale(width, height);
+		return Encode(data, image, jpegQuality, outputFormat, webpOptions);
 	}
 
 	/// <summary>
@@ -174,17 +231,28 @@ public static class ImageHelper
 	/// <exception cref="NotSupportedException">The format, or a feature of it the picture uses, is not supported.</exception>
 	/// <exception cref="InvalidDataException">The picture is damaged, or larger than is decoded.</exception>
 	public static byte[] ConvertToPng(this byte[] data)
+		=> ConvertToPng(data, ImageProcessingLimits.Default);
+
+	/// <summary>Converts every displayed animation frame, or a static picture, to PNG under explicit limits.</summary>
+	/// <param name="data">Encoded image data.</param>
+	/// <param name="limits">Limits on decoded images and animation work.</param>
+	/// <returns>RGBA8 PNG or APNG, preserving frame timing and supported color profiles.</returns>
+	/// <exception cref="ArgumentNullException">Data or limits are null.</exception>
+	/// <exception cref="InvalidDataException">The image is damaged or exceeds a processing limit.</exception>
+	/// <exception cref="NotSupportedException">The image uses an unsupported format or feature.</exception>
+	public static byte[] ConvertToPng(this byte[] data, ImageProcessingLimits limits)
 	{
 		ArgumentNullException.ThrowIfNull(data);
-		if (GifCodec.IsGif(data)) return ApngEncoder.Encode(GifCodec.Open(data), []);
+		ArgumentNullException.ThrowIfNull(limits);
+		if (GifCodec.IsGif(data)) return ApngEncoder.Encode(GifCodec.Open(data, limits), []);
 		if (ApngDecoder.IsApng(data))
 		{
-			Validate(ApngDecoder.Open(data));
+			Validate(ApngDecoder.Open(data, limits));
 			return (byte[])data.Clone();
 		}
-		if (WebpCodec.IsWebp(data) && WebpCodec.Open(data) is { } animation)
+		if (WebpCodec.IsWebp(data) && WebpCodec.Open(data, limits) is { } animation)
 			return ApngEncoder.Encode(animation, []);
-		return PngCodec.Encode(Decode(data), ColorChunks(data));
+		return PngCodec.Encode(Decode(data, limits), ColorChunks(data));
 	}
 
 	/// <summary>
@@ -242,7 +310,7 @@ public static class ImageHelper
 
 		// The installed fonts are listed only if one of them is asked for.
 		return Watermark(data, text, fontSize, opacity, margin, jpegQuality,
-			() => fontFilePath is null ? TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily) : TrueTypeFont.FromFile(fontFilePath));
+			() => fontFilePath is null ? TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily) : TrueTypeFont.FromFile(fontFilePath), ImageProcessingLimits.Default);
 	}
 
 	/// <summary>
@@ -285,7 +353,7 @@ public static class ImageHelper
 		ArgumentNullException.ThrowIfNull(font);
 		ValidateWatermark(text, fontSize, margin, jpegQuality);
 
-		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font));
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font), ImageProcessingLimits.Default);
 	}
 
 	/// <summary>Renders a watermark and writes the requested image format.</summary>
@@ -307,7 +375,7 @@ public static class ImageHelper
 		ValidateOutput(outputFormat);
 		if (string.IsNullOrWhiteSpace(fontFamily)) throw new ArgumentException("A font family is required.", nameof(fontFamily));
 		return Watermark(data, text, fontSize, opacity, margin, jpegQuality,
-			() => fontFilePath is null ? TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily) : TrueTypeFont.FromFile(fontFilePath), outputFormat);
+			() => fontFilePath is null ? TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily) : TrueTypeFont.FromFile(fontFilePath), ImageProcessingLimits.Default, outputFormat);
 	}
 
 	/// <summary>Renders a watermark with supplied font bytes and writes the requested image format.</summary>
@@ -327,7 +395,27 @@ public static class ImageHelper
 		ArgumentNullException.ThrowIfNull(font);
 		ValidateWatermark(text, fontSize, margin, jpegQuality);
 		ValidateOutput(outputFormat);
-		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font), outputFormat);
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => new TrueTypeFont(font), ImageProcessingLimits.Default, outputFormat);
+	}
+
+	/// <summary>Renders a text watermark under explicit image and animation limits.</summary>
+	/// <param name="data">Encoded source image.</param>
+	/// <param name="text">Single-line text.</param>
+	/// <param name="limits">Limits on decoded images and animation work.</param>
+	/// <param name="fontSize">Positive maximum font size.</param>
+	/// <param name="opacity">Text opacity, 0 through 255.</param>
+	/// <param name="margin">Nonnegative margin.</param>
+	/// <param name="fontFamily">Installed font family or the built-in DejaVu Sans.</param>
+	/// <param name="jpegQuality">JPEG encoding quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining animation frames and timing.</returns>
+	public static byte[] AddTextWatermark(this byte[] data, string text, ImageProcessingLimits limits,
+		float fontSize = 24, byte opacity = 160, int margin = 12, string fontFamily = "Verdana", int jpegQuality = DefaultJpegQuality)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		ArgumentNullException.ThrowIfNull(limits);
+		ValidateWatermark(text, fontSize, margin, jpegQuality);
+		if (string.IsNullOrWhiteSpace(fontFamily)) throw new ArgumentException("A font family is required.", nameof(fontFamily));
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily), limits);
 	}
 
 	/// <summary>
@@ -354,9 +442,17 @@ public static class ImageHelper
 	/// <exception cref="NotSupportedException">The data is neither, or uses a feature that is not supported.</exception>
 	/// <exception cref="InvalidDataException">The picture is damaged, or larger than is decoded.</exception>
 	public static IReadOnlyList<(byte[] png, int delayMilliseconds)> GetAnimationFrames(this byte[] data)
+		=> GetAnimationFrames(data, ImageProcessingLimits.Default);
+
+	/// <summary>Decodes every displayed animation frame under explicit processing limits.</summary>
+	/// <param name="data">GIF, APNG or animated WebP bytes.</param>
+	/// <param name="limits">Limits on decoded images and animation work.</param>
+	/// <returns>Full displayed frames as PNG, each with its delay in milliseconds.</returns>
+	public static IReadOnlyList<(byte[] png, int delayMilliseconds)> GetAnimationFrames(this byte[] data, ImageProcessingLimits limits)
 	{
 		ArgumentNullException.ThrowIfNull(data);
-		return ToFrames(data, OpenAnimation(data) ?? throw new NotSupportedException("Supported animations are GIF, APNG and WebP."));
+		ArgumentNullException.ThrowIfNull(limits);
+		return ToFrames(data, OpenAnimation(data, limits) ?? throw new NotSupportedException("Supported animations are GIF, APNG and WebP."));
 	}
 
 	/// <summary>
@@ -426,9 +522,37 @@ public static class ImageHelper
 	private static bool IsLineBreak(char character)
 		=> character is >= '\n' and <= '\r' or '\u0085' or '\u2028' or '\u2029';
 
-	// The font is opened only if there is a text to draw with it.
-	private static byte[] Watermark(byte[] data, string text, float fontSize, byte opacity, int margin, int jpegQuality, Func<TrueTypeFont> openFont, ImageFormats? outputFormat = null)
+	/// <summary>Renders a watermark with explicit WebP mode and quality.</summary>
+	/// <param name="data">Encoded source image or animation.</param>
+	/// <param name="text">Single-line watermark text.</param>
+	/// <param name="outputFormat">Requested output format.</param>
+	/// <param name="webpOptions">WebP mode and quality.</param>
+	/// <param name="fontSize">Positive maximum font size.</param>
+	/// <param name="opacity">Text opacity, 0 through 255.</param>
+	/// <param name="margin">Nonnegative margin.</param>
+	/// <param name="fontFamily">Font family, including the bundled DejaVu Sans.</param>
+	/// <param name="jpegQuality">JPEG quality, 1 through 100.</param>
+	/// <returns>Encoded output retaining all animation frames.</returns>
+	public static byte[] AddTextWatermark(this byte[] data, string text, ImageFormats outputFormat, WebpEncodingOptions webpOptions,
+		float fontSize = 24, byte opacity = 160, int margin = 12, string fontFamily = "Verdana", int jpegQuality = DefaultJpegQuality)
 	{
+		ArgumentNullException.ThrowIfNull(data);
+		ArgumentNullException.ThrowIfNull(webpOptions);
+		ValidateWatermark(text, fontSize, margin, jpegQuality);
+		ValidateOutput(outputFormat);
+		if (string.IsNullOrWhiteSpace(fontFamily)) throw new ArgumentException("A font family is required.", nameof(fontFamily));
+		return Watermark(data, text, fontSize, opacity, margin, jpegQuality, () => TrueTypeFont.OfFamily(FontCatalog.Installed, fontFamily),
+			ImageProcessingLimits.Default, outputFormat, webpOptions);
+	}
+
+	// The font is opened only if there is a text to draw with it.
+	private static byte[] Watermark(byte[] data, string text, float fontSize, byte opacity, int margin, int jpegQuality, Func<TrueTypeFont> openFont, ImageProcessingLimits limits, ImageFormats? outputFormat = null)
+		=> Watermark(data, text, fontSize, opacity, margin, jpegQuality, openFont, limits, outputFormat, WebpEncodingOptions.Lossless);
+
+	private static byte[] Watermark(byte[] data, string text, float fontSize, byte opacity, int margin, int jpegQuality,
+		Func<TrueTypeFont> openFont, ImageProcessingLimits limits, ImageFormats? outputFormat, WebpEncodingOptions webpOptions)
+	{
+		var rewriteWebp = (outputFormat ?? DefaultOutput(data)) == ImageFormats.Webp && webpOptions.Mode == WebpCompressionModes.Lossy;
 		// False if nothing is to be drawn: the text is invisible, or a picture of that size has no room for it
 		// or would show no pixel of it.
 		bool TryRender(int width, int height, out TextMask rendered)
@@ -438,11 +562,11 @@ public static class ImageHelper
 			return opacity != 0 && openFont().TryRender(width, height, text, fontSize, margin, opacity, out rendered);
 		}
 
-		if (OpenAnimation(data) is { } animation)
+		if (OpenAnimation(data, limits) is { } animation)
 		{
 			if (!TryRender(animation.Width, animation.Height, out var frameMask))
 			{
-				if (!IsSameFormat(data, outputFormat)) return EncodeAnimation(data, animation, outputFormat, jpegQuality);
+				if (!IsSameFormat(data, outputFormat) || rewriteWebp) return EncodeAnimation(data, animation, outputFormat, jpegQuality, webpOptions);
 				Validate(animation);
 				return (byte[])data.Clone();
 			}
@@ -451,44 +575,53 @@ public static class ImageHelper
 			{
 				frameMask.Draw(frame);
 				return frame;
-			}), outputFormat, jpegQuality);
+			}), outputFormat, jpegQuality, webpOptions);
 		}
 
-		var image = Decode(data);
+		var image = Decode(data, limits);
 
 		if (!TryRender(image.Width, image.Height, out var mask))
-			return IsSameFormat(data, outputFormat) ? (byte[])data.Clone() : Encode(data, image, jpegQuality, outputFormat);
+			return IsSameFormat(data, outputFormat) && !rewriteWebp ? (byte[])data.Clone() : Encode(data, image, jpegQuality, outputFormat, webpOptions);
 
 		mask.Draw(image);
 
-		return Encode(data, image, jpegQuality, outputFormat);
+		return Encode(data, image, jpegQuality, outputFormat, webpOptions);
 	}
 
 	// Null for static images.
 	private static Animation OpenAnimation(byte[] data)
-		=> GifCodec.IsGif(data) ? GifCodec.Open(data) : ApngDecoder.IsApng(data) ? ApngDecoder.Open(data) : WebpCodec.IsWebp(data) ? WebpCodec.Open(data) : null;
+		=> OpenAnimation(data, ImageProcessingLimits.Default);
+
+	private static Animation OpenAnimation(byte[] data, ImageProcessingLimits limits)
+		=> GifCodec.IsGif(data) ? GifCodec.Open(data, limits) : ApngDecoder.IsApng(data) ? ApngDecoder.Open(data, limits) : WebpCodec.IsWebp(data) ? WebpCodec.Open(data, limits) : null;
 
 	// Writes a picture in the format its source came in, with the color profile the source has.
 	private static byte[] Encode(byte[] source, RasterImage image, int jpegQuality, ImageFormats? outputFormat = null)
+		=> Encode(source, image, jpegQuality, outputFormat, WebpEncodingOptions.Lossless);
+
+	private static byte[] Encode(byte[] source, RasterImage image, int jpegQuality, ImageFormats? outputFormat, WebpEncodingOptions webpOptions)
 		=> (outputFormat ?? DefaultOutput(source)) switch
 		{
 			ImageFormats.Jpeg => JpegEncoder.Encode(image, jpegQuality, JpegCodec.IsJpeg(source) ? JpegSegments.ReadProfile(source) : []),
 			ImageFormats.Bmp => BmpCodec.Encode(image),
 			ImageFormats.Icon => IconCodec.Encode(image),
-			ImageFormats.Webp => WebpEncoder.Encode(image),
+			ImageFormats.Webp => WebpEncoder.Encode(image, webpOptions),
 			ImageFormats.Gif => GifCodec.Encode(new(image.Width, image.Height, 1, 1, [new(image, 0, 100)])),
 			_ => PngCodec.Encode(image, ColorChunks(source)),
 		};
 
 	// Writes an animation in the format its source came in.
 	private static byte[] EncodeAnimation(byte[] source, Animation animation, ImageFormats? outputFormat = null, int jpegQuality = DefaultJpegQuality)
+		=> EncodeAnimation(source, animation, outputFormat, jpegQuality, WebpEncodingOptions.Lossless);
+
+	private static byte[] EncodeAnimation(byte[] source, Animation animation, ImageFormats? outputFormat, int jpegQuality, WebpEncodingOptions webpOptions)
 	{
 		var format = outputFormat ?? DefaultOutput(source);
 		if (format == ImageFormats.Gif) return GifCodec.Encode(animation);
-		if (format == ImageFormats.Webp) return WebpEncoder.Encode(animation);
+		if (format == ImageFormats.Webp) return WebpEncoder.Encode(animation, webpOptions);
 		if (format == ImageFormats.Png) return ApngEncoder.Encode(animation, ColorChunks(source));
 		if (animation.FrameCount != 1) throw new NotSupportedException("The output format cannot retain animation frames.");
-		foreach (var frame in animation.Frames) return Encode(source, frame.Image, jpegQuality, format);
+		foreach (var frame in animation.Frames) return Encode(source, frame.Image, jpegQuality, format, webpOptions);
 		throw new InvalidDataException("Animation has no frames.");
 	}
 
@@ -560,15 +693,20 @@ public static class ImageHelper
 	}
 
 	private static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	private static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
 	{
 		if (data.Length == 0) throw new InvalidDataException("Image data is empty.");
-		if (PngCodec.IsPng(data)) return PngCodec.Decode(data);
-		if (JpegCodec.IsJpeg(data)) return JpegCodec.Decode(data);
-		if (BmpCodec.IsBmp(data)) return BmpCodec.Decode(data);
-		if (IconCodec.IsIcon(data)) return IconCodec.Decode(data);
-		if (WebpCodec.IsWebp(data)) return WebpCodec.Decode(data);
-		if (TiffCodec.IsTiff(data)) return TiffCodec.Decode(data);
-		if (AvifCodec.IsAvif(data)) return AvifCodec.Decode(data);
+		if (PngCodec.IsPng(data)) return PngCodec.Decode(data, limits);
+		var size = data.GetImageSize();
+		RasterImage.EnsureDecodable(size.Width, size.Height, limits);
+		if (JpegCodec.IsJpeg(data)) return JpegCodec.Decode(data, limits);
+		if (BmpCodec.IsBmp(data)) return BmpCodec.Decode(data, limits);
+		if (IconCodec.IsIcon(data)) return IconCodec.Decode(data, limits);
+		if (WebpCodec.IsWebp(data)) return WebpCodec.Decode(data, limits);
+		if (TiffCodec.IsTiff(data)) return TiffCodec.Decode(data, limits);
+		if (AvifCodec.IsAvif(data)) return AvifCodec.Decode(data, limits);
 		throw new NotSupportedException("Supported images are PNG, JPEG, BMP, GIF, WebP, ICO, TIFF and AVIF.");
 	}
 }

@@ -4,6 +4,8 @@ using System;
 using System.Buffers.Binary;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 /// <summary>Managed PNG decoder/encoder (all standard color types, 1/2/4/8/16-bit samples, Adam7).</summary>
@@ -55,17 +57,23 @@ internal static class PngCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
-		=> Decode(data, 0, 0);
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
+		=> Decode(data, 0, 0, limits);
 
 	public static RasterImage DecodeDownscaled(byte[] data, int width, int height)
-		=> Decode(data, width, height);
+		=> Decode(data, width, height, ImageProcessingLimits.Default);
 
-	private static RasterImage Decode(byte[] data, int targetWidth, int targetHeight)
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height, ImageProcessingLimits limits)
+		=> Decode(data, width, height, limits);
+
+	private static RasterImage Decode(byte[] data, int targetWidth, int targetHeight, ImageProcessingLimits limits)
 	{
 		var (width, height) = ReadSize(data);
 		var isDownscaled = targetWidth != 0;
 		if (!isDownscaled)
-			RasterImage.EnsureDecodable(width, height);
+			RasterImage.EnsureDecodable(width, height, limits);
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("PNG input exceeds the supported size.");
 
@@ -79,6 +87,8 @@ internal static class PngCodec
 		var dataClosed = false;
 		var ended = false;
 		using var compressed = new MemoryStream();
+		var firstDataOffset = -1;
+		var firstDataLength = 0;
 		var offset = 8;
 
 		while (offset <= data.Length - 12)
@@ -131,7 +141,17 @@ internal static class PngCodec
 				if (!gotHeader)
 					throw new InvalidDataException("PNG data precedes header.");
 				gotData = true;
-				compressed.Write(content);
+				if (firstDataOffset < 0)
+				{
+					firstDataOffset = offset + 8;
+					firstDataLength = content.Length;
+				}
+				else
+				{
+					if (compressed.Length == 0)
+						compressed.Write(data.AsSpan(firstDataOffset, firstDataLength));
+					compressed.Write(content);
+				}
 			}
 			else if (tag.SequenceEqual("IEND"u8))
 			{
@@ -154,6 +174,10 @@ internal static class PngCodec
 			(color != 0 && color != 2 && color != 3 && transparency.Length != 0))
 			throw new InvalidDataException("Invalid PNG transparency.");
 
+		// A single IDAT can be read from the validated input; only split streams need concatenation.
+		using var singleChunk = compressed.Length == 0 ? new MemoryStream(data, firstDataOffset, firstDataLength, writable: false) : null;
+		var payload = singleChunk ?? compressed;
+
 		var channels = color switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => throw new InvalidDataException() };
 		var rowSize = ((long)width * channels * depth + 7) / 8;
 		if (rowSize > 128 * 1024 * 1024 || (long)width * 4 > 128 * 1024 * 1024)
@@ -172,19 +196,23 @@ internal static class PngCodec
 
 		// The scanlines are unpacked straight into a buffer of the size the header calls for, so the
 		// header is not taken at its word: data too short to expand to that size is refused first.
-		if (needed > compressed.Length * _maxDeflateRatio)
+		if (needed > payload.Length * _maxDeflateRatio)
 			throw new InvalidDataException("PNG scanlines have an invalid length.");
 
-		if (isDownscaled && interlace != 0)
-			return Decode(data).Downscale(targetWidth, targetHeight);
+		var workingBytes = rowSize * 2 + (long)(isDownscaled ? targetWidth : width) * (isDownscaled ? targetHeight : height) * 4;
+		if (isDownscaled)
+			workingBytes += (long)width * 4 + (long)targetWidth * (interlace == 0 ? 80 : 48) +
+				(interlace == 0 ? 0 : (long)targetWidth * targetHeight * 32);
+		limits.EnsureWorkingMemory(workingBytes);
 
-		var downscaler = isDownscaled ? new ImageDownscaler(width, height, targetWidth, targetHeight) : null;
-		var result = downscaler?.Image ?? new RasterImage(width, height);
-		compressed.Position = 0;
-		using var zlib = new ZLibStream(compressed, CompressionMode.Decompress, leaveOpen: true);
+		var downscaler = isDownscaled && interlace == 0 ? new ImageDownscaler(width, height, targetWidth, targetHeight, limits) : null;
+		var accumulator = isDownscaled && interlace != 0 ? new ImageAreaAccumulator(width, height, targetWidth, targetHeight, limits) : null;
+		var result = downscaler?.Image ?? accumulator?.Image ?? new RasterImage(width, height, limits);
+		payload.Position = 0;
+		using var zlib = new ZLibStream(payload, CompressionMode.Decompress, leaveOpen: true);
 
 		if (interlace == 0)
-			DecodePass(result, downscaler, zlib, width, height, 0, 0, 1, 1,
+			DecodePass(result, downscaler, null, zlib, width, height, 0, 0, 1, 1,
 				channels, depth, color, palette, transparency);
 		else
 			foreach (var (px, py, dx, dy) in _passes)
@@ -192,13 +220,14 @@ internal static class PngCodec
 				var w = PassSize(width, px, dx);
 				var h = PassSize(height, py, dy);
 				if (w != 0 && h != 0)
-					DecodePass(result, null, zlib, w, h, px, py, dx, dy,
+					DecodePass(result, null, accumulator, zlib, w, h, px, py, dx, dy,
 						channels, depth, color, palette, transparency);
 			}
 
 		if (zlib.ReadByte() >= 0)
 			throw new InvalidDataException("PNG decompression exceeded expected row data.");
 
+		accumulator?.Complete();
 		return result;
 	}
 
@@ -370,14 +399,14 @@ internal static class PngCodec
 	{
 		// A filter is chosen for a row by the row alone, and that suits a photograph. The rows of a
 		// screenshot repeat one another, and those often pack better left as they are.
-		var filtered = Pack(image, isFiltered: true);
-		var plain = Pack(image, isFiltered: false);
+		var filtered = Pack(image, isFiltered: true, int.MaxValue);
+		var plain = Pack(image, isFiltered: false, filtered.Length);
 
-		return filtered.Length < plain.Length ? filtered : plain;
+		return plain is null || filtered.Length < plain.Length ? filtered : plain;
 	}
 
 	// Packs the scanlines each filtered the way that leaves it the smallest values, or all of them as they are.
-	private static byte[] Pack(RasterImage image, bool isFiltered)
+	private static byte[] Pack(RasterImage image, bool isFiltered, int maximumLength)
 	{
 		var rowBytes = image.Width * _pixel;
 
@@ -402,6 +431,8 @@ internal static class PngCodec
 				if (filled + rowBytes + 1 > block.Length)
 				{
 					zlib.Write(block, 0, filled);
+					if (compressed.Length > maximumLength)
+						return null;
 					filled = 0;
 				}
 
@@ -431,6 +462,11 @@ internal static class PngCodec
 
 		for (var i = 0; i < row.Length; i++)
 		{
+			if (i == _pixel)
+			{
+				i = PngRowFilter.SumVectors(row, above, candidates, i, ref none, ref subWeight, ref upWeight, ref averageWeight, ref paethWeight);
+				if (i == row.Length) break;
+			}
 			int value = row[i];
 			int top = above[i];
 			var left = 0;
@@ -467,7 +503,7 @@ internal static class PngCodec
 	private static int Magnitude(int value)
 		=> value < 128 ? value : 256 - value;
 
-	private static void DecodePass(RasterImage image, ImageDownscaler downscaler, Stream raw,
+	private static void DecodePass(RasterImage image, ImageDownscaler downscaler, ImageAreaAccumulator accumulator, Stream raw,
 		int width, int height, int px, int py, int dx, int dy,
 		int channels, int depth, int color, byte[] palette, byte[] transparency)
 	{
@@ -475,7 +511,7 @@ internal static class PngCodec
 		var stride = Math.Max(1, (channels * depth + 7) / 8);
 		var previous = new byte[rowLen];
 		var row = new byte[rowLen];
-		var rowPixels = downscaler is null ? null : new byte[width * 4];
+		var rowPixels = downscaler is null && accumulator is null ? null : new byte[width * 4];
 		var pixels = rowPixels ?? image.Pixels;
 
 		for (var y = 0; y < height; y++)
@@ -510,11 +546,11 @@ internal static class PngCodec
 				}
 
 			if (color == 6 && depth == 8 && dx == 1)
-				row.CopyTo(pixels, downscaler is null ? ((py + y * dy) * image.Width + px) * 4 : 0);
+				row.CopyTo(pixels, rowPixels is null ? ((py + y * dy) * image.Width + px) * 4 : 0);
 			else
 				for (var x = 0; x < width; x++)
 				{
-					var dest = downscaler is null ? ((py + y * dy) * image.Width + px + x * dx) * 4 : x * 4;
+					var dest = rowPixels is null ? ((py + y * dy) * image.Width + px + x * dx) * 4 : x * 4;
 					var sample = x * channels;
 					switch (color)
 					{
@@ -560,7 +596,8 @@ internal static class PngCodec
 					}
 				}
 
-			downscaler?.AddRow(rowPixels);
+			downscaler?.AddRow(rowPixels, y > 0 && row.AsSpan().SequenceEqual(previous));
+			accumulator?.AddRow(rowPixels, px, py + y * dy, dx);
 			(row, previous) = (previous, row);
 		}
 	}
@@ -631,20 +668,40 @@ internal static class PngCodec
 
 	private static uint Crc(uint crc, ReadOnlySpan<byte> content)
 	{
+		ref uint table = ref MemoryMarshal.GetArrayDataReference(_crcTable);
+		while (content.Length >= 8)
+		{
+			var first = BinaryPrimitives.ReadUInt32LittleEndian(content) ^ crc;
+			var second = BinaryPrimitives.ReadUInt32LittleEndian(content[4..]);
+			crc = Unsafe.Add(ref table, 1792 + (byte)first) ^ Unsafe.Add(ref table, 1536 + (byte)(first >> 8))
+				^ Unsafe.Add(ref table, 1280 + (byte)(first >> 16)) ^ Unsafe.Add(ref table, 1024 + (byte)(first >> 24))
+				^ Unsafe.Add(ref table, 768 + (byte)second) ^ Unsafe.Add(ref table, 512 + (byte)(second >> 8))
+				^ Unsafe.Add(ref table, 256 + (byte)(second >> 16)) ^ Unsafe.Add(ref table, (byte)(second >> 24));
+			content = content[8..];
+		}
 		foreach (var b in content)
-			crc = _crcTable[(byte)(crc ^ b)] ^ (crc >> 8);
+			crc = Unsafe.Add(ref table, (byte)(crc ^ b)) ^ (crc >> 8);
 		return crc;
 	}
 
 	private static uint[] CreateCrcTable()
 	{
-		var table = new uint[256];
-		for (uint i = 0; i < table.Length; i++)
+		var table = new uint[8 * 256];
+		for (uint i = 0; i < 256; i++)
 		{
 			var c = i;
 			for (var j = 0; j < 8; j++)
 				c = (c & 1) == 1 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
 			table[i] = c;
+		}
+		for (var i = 0; i < 256; i++)
+		{
+			var c = table[i];
+			for (var slice = 1; slice < 8; slice++)
+			{
+				c = table[(byte)c] ^ (c >> 8);
+				table[slice * 256 + i] = c;
+			}
 		}
 		return table;
 	}

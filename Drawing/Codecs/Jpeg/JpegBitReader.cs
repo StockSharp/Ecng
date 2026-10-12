@@ -6,10 +6,10 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-internal ref struct JpegBitReader
+internal sealed class JpegBitReader
 {
 	private ReadOnlySequence<byte> _data;
-	private ReadOnlySpan<byte> _firstSpan;
+	private ReadOnlyMemory<byte> _firstMemory;
 	private ulong _buffer; // right-justified bit buffer
 	private byte _bitsInBuffer;
 	private JpegMarkers _nextMarker; // _nextMarker==0: No marker is encountered in the stream; otherwise the next marker in the stream after the bits read in the buffer.
@@ -17,13 +17,13 @@ internal ref struct JpegBitReader
 	public JpegBitReader(ReadOnlySequence<byte> data)
 	{
 		_data = data;
-		_firstSpan = default;
+		_firstMemory = default;
 		_buffer = 0;
 		_bitsInBuffer = 0;
 		_nextMarker = 0;
 	}
 
-	public int RemainingBits => 8 * (int)(_data.Length + _firstSpan.Length) + _bitsInBuffer;
+	public int RemainingBits => 8 * (int)(_data.Length + _firstMemory.Length) + _bitsInBuffer;
 
 	public void AdvanceAlignByte()
 	{
@@ -34,19 +34,15 @@ internal ref struct JpegBitReader
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private bool TryLoadFirstSpan()
 	{
-		Debug.Assert(_firstSpan.IsEmpty);
+		Debug.Assert(_firstMemory.IsEmpty);
 
 		if (_data.IsEmpty)
 		{
 			return false;
 		}
 
-#if NO_READONLYSEQUENCE_FISTSPAN
-		_firstSpan = _data.First.Span;
-#else
-		_firstSpan = _data.FirstSpan;
-#endif
-		_data = _data.Slice(_firstSpan.Length);
+		_firstMemory = _data.First;
+		_data = _data.Slice(_firstMemory.Length);
 
 		return true;
 	}
@@ -54,7 +50,7 @@ internal ref struct JpegBitReader
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool TryReadNextByte(out byte byteRead)
 	{
-		if (_firstSpan.IsEmpty)
+		if (_firstMemory.IsEmpty)
 		{
 			if (!TryLoadFirstSpan())
 			{
@@ -63,16 +59,16 @@ internal ref struct JpegBitReader
 			}
 		}
 
-		Debug.Assert(!_firstSpan.IsEmpty);
-		byteRead = _firstSpan[0];
-		_firstSpan = _firstSpan.Slice(1);
+		Debug.Assert(!_firstMemory.IsEmpty);
+		byteRead = _firstMemory.Span[0];
+		_firstMemory = _firstMemory.Slice(1);
 		return true;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool TryPeekNextByte(out byte bytePeeked)
 	{
-		if (_firstSpan.IsEmpty)
+		if (_firstMemory.IsEmpty)
 		{
 			if (!TryLoadFirstSpan())
 			{
@@ -81,8 +77,8 @@ internal ref struct JpegBitReader
 			}
 		}
 
-		Debug.Assert(!_firstSpan.IsEmpty);
-		bytePeeked = _firstSpan[0];
+		Debug.Assert(!_firstMemory.IsEmpty);
+		bytePeeked = _firstMemory.Span[0];
 		return true;
 	}
 	[MethodImpl(MethodImplOptions.NoInlining)]

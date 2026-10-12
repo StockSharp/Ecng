@@ -13,7 +13,6 @@ using MetadataProfileKind = Ecng.Drawing.Codecs.MetadataProfileKinds;
 internal static class WebpDecodingLimits
 {
 	public const int MaxDimension = 16_384;
-	public const long MaxPixelCount = RasterImage.MaxPixels;
 	public const int MaxHuffmanCodeLength = 15;
 	public const int MaxColorCacheBits = 11;
 	public const int MaxGreenAlphabetSize = 256 + 24 + (1 << MaxColorCacheBits);

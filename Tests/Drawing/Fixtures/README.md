@@ -17,6 +17,17 @@ is 8000x6000. They were generated from binary PPM/PGM using the official
 | 12bit.jpg | `-quality 100 -precision 12` |
 | 12bit-progressive.jpg | `-quality 100 -precision 12 -progressive`, independently tests precision beyond the SOF1 restriction |
 | large-48mp.jpg | `-quality 90 -optimize`, grayscale PGM |
+| large-progressive-48mp.jpg | `jpegtran -progressive large-48mp.jpg`, coefficient-preserving conversion of the same 8000x6000 black image |
+
+`color-arithmetic-multiscan-tall.jpg` and `color-lossless-multiscan-tall.jpg` are
+64x96 gradients generated from a binary RGB PPM: R=(3x+y)%256, G=(x+2y)%256,
+B=(2x+3y)%256. The first uses `cjpeg -quality 90 -arithmetic -scans sequential.scans`
+with `0; 1; 2;`. The second uses `-lossless 1,0` and scans
+`0: 1 0 0 0; 1: 1 0 0 0; 2: 1 0 0 0;`. Their PNG references come from `djpeg -png`,
+with `-nosmooth` for arithmetic JPEG to match nearest-neighbor chroma expansion.
+They cover component-separated scans over several thumbnail row-buffer windows.
+The corresponding `*-multiscan-restart-tall` files add `-restart 2B` for arithmetic
+and `-restart 1` (one complete MCU row) for lossless coding, with the same PNG references.
 
 Every small JPEG was decoded with `djpeg -png` and its output pixels checked:
 all RGB channels are zero. The SOF1 fixture also passed that independent decoder.
@@ -36,6 +47,24 @@ The source PNGs were written by Windows GDI+, independently of Ecng:
 `dwebp` decoded the static WebP fixtures back to the expected RGBA pixels.
 `webpmux -info` verified the animated canvas, loop count, two frames and delays.
 `black.tiff` is a 32x24 opaque black TIFF saved with Windows GDI+.
+
+The `tall-*` fixtures use a synthetic soft-alpha gradient, enlarged to 512x4096
+by libwebp. `tall-alpha-lossless.webp` uses `cwebp -lossless -exact -resize 512 4096 -m 6`.
+The filtered VP8 files use `-q 90 -f 60 -m 4`, with `-noalpha` for
+`tall-filtered-lossy.webp` and `-alpha_filter best` for `tall-filtered-alpha.webp`.
+Each adjacent PNG is frozen output from `dwebp`; the tests need no native tools.
+They cover history wraps, predictor rows, normal loop filtering, chroma-band
+boundaries and compressed alpha while retaining the full-decode rejection.
+
+The AVIF `grid-alpha-*` fixtures use the same synthetic gradient at 512x384
+or 512x4096. libavif `avifenc` uses `--grid 4x3` or `--grid 4x32`, 8-bit 4:4:4
+color/alpha at quality 100, one job and speed 10. `grid-alpha-420-10bit.avif`
+uses a 4x3 grid, 10-bit 4:2:0 color at quality 90 and alpha at quality 100.
+CDEF, restoration and quantizer matrices are explicitly disabled in these fixtures
+to isolate supported tile decoding. Adjacent PNG references come from `avifdec`
+(with `-d 8` for the 10-bit input). The 128-tile image checks that the working
+set is bounded by a tile pair and active destination rows, with RGB error at
+most two levels and alpha MAE at most one against independent area averaging.
 
 The ICO inputs and the 1-bit grayscale 48-megapixel PNG are assembled directly
 in C# in the test class. ICO has one 32x24 frame: either RGBA PNG, or a 32-bit
@@ -97,20 +126,59 @@ These cases also run on net6.0 and are included in the ordinary Drawing filter.
 is a positive control: a readable header still requires error handling when
 actual pixel decoding fails. A Try-size API cannot replace that error handling.
 
-`ImageDebtPerformanceTests` and `ImageDebtCorpusTests` are opt-in integration
-checks on net10.0. They add no ImageSharp package reference. Set the runsettings
+`ImageDebtPerformanceTests` is an opt-in integration suite on net10.0. It adds
+no ImageSharp package reference. Set the runsettings
 parameter `ImageSharpReferencePath` to an existing site build directory containing
 `StockSharp.Web.Api.Data.dll` and its dependencies, from before the migration.
 Keep the `<MSTest><Timeout>10000</Timeout></MSTest>` setting. Select the relevant
 class with `--filter`, use the same hang/session timeouts, and run timing cases
 alone with `MSTest.Parallelize.Workers=1`.
 
-For corpus checks, set the process environment variable `ECNG_DRAWING_CORPUS_PATH`
-to the administrative API export directory containing GIF/BMP files with their
-correct extensions. Discovery creates a case for each file and each of the four
-operations. If the export is absent or empty, the integration test fails with a
-setup message; it does not claim that corpus coverage passed. The local smoke
-run uses two generated GDI+ files and does not establish coverage of site files.
+`ImageDebtCorpusTests` now checks the complete private corpus directly against
+`SixLabors.ImageSharp.dll`; it does not need the old site assembly. Set
+`ImageSharpReferencePath` to the directory containing that DLL, and set the
+process environment variable `ECNG_DRAWING_CORPUS_PATH` to the corpus directory.
+Discovery creates five cases per file: size, resize within 100 and 600 pixels,
+PNG conversion and watermarking. Formats are detected from content, so misleading
+file extensions do not select the wrong codec. PNG conversion compares the first
+displayed frame's pixels with the independent decoder (exact lossless pixels,
+two channel levels for JPEG/WebP rounding). Every transformed output is independently
+decoded and checked for format, size and resize bounds.
+40-byte BI_RGB32 BMP uses stb for its RGB oracle: ImageSharp 4.1.3 treats
+`108522.bmp` as transparent, while its fourth byte is reserved rather than alpha
+under the [Windows BMP specification](https://learn.microsoft.com/en-us/windows/win32/wmdm/-bitmapinfoheader).
+stb also reads these unused bytes as alpha by default, so the oracle explicitly
+requests RGB and supplies opaque alpha as specified. Declared BMP alpha remains
+checked against ImageSharp normally.
+
+The four site GIFs over the default 100-million-pixel animation budget retain
+explicit rejection checks for both resizes, conversion and watermarking. Sixteen
+additional cases run those operations with an explicit 160-million-pixel budget
+and independently check output dimensions and frame counts. Reduced lossless WebP
+is compared pixel-for-pixel and by size with equivalent PNG; the CSV also records
+an independently encoded lossless WebP of those same pixels. Original files may use
+lossy compression, so their size is recorded separately from the lossless comparison.
+
+The 632 files from `configs/TECH-DEBT.files/ecng-drawing/sample/` were copied to
+`_reviewResults/drawing-site-corpus-20261011/sample/` and verified by SHA-256.
+They are visitors' private images and stay outside Git. `manifest.csv` records
+the hashes; the earlier CSV reports and the list of slow cases are beside the
+copy. No Python script, downloaded tool or separate project is needed.
+Set `ImageCorpusOutputPath` to a fresh artifact directory for `site-corpus.csv`,
+which records detected formats, output sizes, operation times and limit outcomes.
+Those timings are single diagnostic samples, not warm benchmark medians.
+Missing or empty input fails with a setup message. Use one worker, a filtered
+run and a timeout; for the full private corpus use a 30-second per-test timeout
+and a 20-minute session limit.
+
+```powershell
+$env:ECNG_DRAWING_CORPUS_PATH = "D:\stocksharp\Ecng\_reviewResults\drawing-site-corpus-20261011\sample"
+dotnet test Tests/Tests.csproj --no-build --no-restore -c Release -f net10.0 `
+  --settings _reviewResults/drawing-site-corpus-20261011/corpus.runsettings `
+  --filter "FullyQualifiedName~ImageDebtCorpusTests" `
+  --blame-hang-timeout 60s --blame-hang-dump-type none `
+  -- RunConfiguration.TestSessionTimeout=1200000 MSTest.Parallelize.Workers=1
+```
 
 Timing compares the old site's transformations with Ecng on a generated gradient.
 The old site writes resized JPEG inputs as PNG; Ecng preserves JPEG. Resize

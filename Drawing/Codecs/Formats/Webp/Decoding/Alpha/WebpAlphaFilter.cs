@@ -13,43 +13,11 @@ internal static class WebpAlphaFilter
 {
 	public static void Reverse(WebpAlphaFilterMethods method, Span<byte> plane, int width, int height)
 	{
-		if (width <= 0 || height <= 0 || method == WebpAlphaFilterMethods.None)
+		if (width <= 0 || height <= 0 || method == WebpAlphaFilterMethods.None) return;
+		for (var y = 0; y < height; y++)
 		{
-			return;
-		}
-
-		switch (method)
-		{
-			case WebpAlphaFilterMethods.Horizontal:
-				for (int y = 0; y < height; y++)
-				{
-					var row = plane.Slice(y * width, width);
-					byte initialPredictor = y == 0 ? (byte)0 : plane[(y - 1) * width];
-					ReverseHorizontalRow(row, initialPredictor);
-				}
-
-				return;
-
-			case WebpAlphaFilterMethods.Vertical:
-				ReverseHorizontalRow(plane[..width], 0);
-				for (int y = 1; y < height; y++)
-				{
-					var row = plane.Slice(y * width, width);
-					var previousRow = plane.Slice((y - 1) * width, width);
-					for (var x = 0; x < width; x++)
-						row[x] = unchecked((byte)(row[x] + previousRow[x]));
-				}
-
-				return;
-
-			case WebpAlphaFilterMethods.Gradient:
-				ReverseHorizontalRow(plane[..width], 0);
-				for (int y = 1; y < height; y++)
-				{
-					ReverseGradientRow(plane, width, y);
-				}
-
-				return;
+			var previous = y == 0 ? ReadOnlySpan<byte>.Empty : plane.Slice((y - 1) * width, width);
+			ReverseRow(method, plane.Slice(y * width, width), previous, y == 0);
 		}
 	}
 	private static void ReverseHorizontalRow(Span<byte> row, byte initialPredictor)
@@ -61,23 +29,27 @@ internal static class WebpAlphaFilter
 			predictor = row[x];
 		}
 	}
-	private static void ReverseGradientRow(Span<byte> plane, int width, int y)
+	public static void ReverseRow(WebpAlphaFilterMethods method, Span<byte> row, ReadOnlySpan<byte> previous, bool first)
 	{
-		var row = plane.Slice(y * width, width);
-		var previousRow = plane.Slice((y - 1) * width, width);
-
-		byte left = previousRow[0];
-		byte topLeft = previousRow[0];
-
-		for (int x = 0; x < width; x++)
+		if (method == WebpAlphaFilterMethods.None) return;
+		if (first || method == WebpAlphaFilterMethods.Horizontal)
 		{
-			byte top = previousRow[x];
-			int predicted = Clip255(left + top - topLeft);
-			row[x] = (byte)(row[x] + predicted);
+			ReverseHorizontalRow(row, first ? (byte)0 : previous[0]);
+			return;
+		}
+		if (method == WebpAlphaFilterMethods.Vertical)
+		{
+			for (var x = 0; x < row.Length; x++) row[x] = unchecked((byte)(row[x] + previous[x]));
+			return;
+		}
+		byte left = previous[0], topLeft = previous[0];
+		for (var x = 0; x < row.Length; x++)
+		{
+			var top = previous[x];
+			row[x] = unchecked((byte)(row[x] + Clip255(left + top - topLeft)));
 			left = row[x];
 			topLeft = top;
 		}
 	}
-
 	private static byte Clip255(int value) => (byte)Math.Clamp(value, 0, 255);
 }

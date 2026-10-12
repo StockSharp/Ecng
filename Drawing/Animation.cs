@@ -23,12 +23,18 @@ internal sealed class Animation
 	public const long MaxPixels = 100_000_000;
 
 	public Animation(int width, int height, int plays, int frameCount, IEnumerable<AnimationFrame> frames)
+		: this(width, height, plays, frameCount, frames, ImageProcessingLimits.Default)
+	{
+	}
+
+	public Animation(int width, int height, int plays, int frameCount, IEnumerable<AnimationFrame> frames, ImageProcessingLimits limits)
 	{
 		Width = width;
 		Height = height;
 		Plays = plays;
 		FrameCount = frameCount;
 		Frames = frames ?? throw new ArgumentNullException(nameof(frames));
+		Limits = limits ?? throw new ArgumentNullException(nameof(limits));
 	}
 
 	public int Width { get; }
@@ -40,6 +46,7 @@ internal sealed class Animation
 	public int Plays { get; }
 
 	public int FrameCount { get; }
+	public ImageProcessingLimits Limits { get; }
 
 	/// <summary>
 	/// The frames in order. Enumerating decodes them; each comes as a picture of its own that the caller may change.
@@ -50,7 +57,7 @@ internal sealed class Animation
 	/// The same animation with every frame replaced by what <paramref name="change"/> makes of it.
 	/// </summary>
 	public Animation Select(int width, int height, Func<RasterImage, RasterImage> change)
-		=> new(width, height, Plays, FrameCount, Frames.Select(frame => frame.WithImage(change(frame.Image))));
+		=> new(width, height, Plays, FrameCount, Frames.Select(frame => frame.WithImage(change(frame.Image))), Limits);
 
 	/// <summary>
 	/// Refuses an animation that takes more work than the decoders do for one file.
@@ -59,11 +66,14 @@ internal sealed class Animation
 	/// <param name="pixels">Pixels to decode and composite, all frames together.</param>
 	/// <exception cref="InvalidDataException">The animation is beyond <see cref="MaxFrames"/> or <see cref="MaxPixels"/>.</exception>
 	public static void EnsureWithinBudget(int frames, long pixels)
-	{
-		if (frames > MaxFrames)
-			throw new InvalidDataException($"The animation has {frames} frames: more than the {MaxFrames} that are decoded.");
+		=> EnsureWithinBudget(frames, pixels, ImageProcessingLimits.Default);
 
-		if (pixels > MaxPixels)
-			throw new InvalidDataException($"The animation takes {pixels} pixels to decode: more than the {MaxPixels} that are decoded.");
+	public static void EnsureWithinBudget(int frames, long pixels, ImageProcessingLimits limits)
+	{
+		if (frames > limits.MaxAnimationFrames)
+			throw new InvalidDataException($"The animation has {frames} frames: more than the {limits.MaxAnimationFrames} that are decoded.");
+
+		if (pixels > limits.MaxAnimationPixels)
+			throw new InvalidDataException($"The animation takes {pixels} pixels to decode: more than the {limits.MaxAnimationPixels} that are decoded.");
 	}
 }

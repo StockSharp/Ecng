@@ -12,7 +12,6 @@ using MetadataProfileKind = Ecng.Drawing.Codecs.MetadataProfileKinds;
 
 internal static class TiffDecodingLimits
 {
-	public const long MaxPixelCount = RasterImage.MaxPixels;
 	public const long MaxDeclaredStripByteCount = 128L * 1024 * 1024;
 	public const int MaxIfdEntryCount = 65_535;
 	public const long MaxFileSize = 128L * 1024 * 1024;

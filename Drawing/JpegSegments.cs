@@ -10,6 +10,20 @@ using System.IO;
 /// </summary>
 internal static class JpegSegments
 {
+	public static int FindScanEnd(ReadOnlySpan<byte> data, int position)
+	{
+		while (position < data.Length)
+		{
+			if (data[position] != 0xff) { position++; continue; }
+			var marker = position;
+			while (position < data.Length && data[position] == 0xff) position++;
+			if (position == data.Length) break;
+			var value = data[position++];
+			if (value != 0 && value is not (>= 0xd0 and <= 0xd7)) return marker;
+		}
+		throw new InvalidDataException("JPEG scan has no closing marker.");
+	}
+
 	/// <summary>
 	/// APP0: the JFIF header.
 	/// </summary>
@@ -130,6 +144,12 @@ internal static class JpegSegments
 		=> ReadFrame(segment, out width, out height, 1);
 
 	public static JpegComponent[] ReadFrame(ReadOnlySpan<byte> segment, out int width, out int height, int scale, bool isLossless = false)
+		=> ReadFrame(segment, out width, out height, scale, isLossless, false);
+
+	public static JpegComponent[] ReadFrame(ReadOnlySpan<byte> segment, out int width, out int height, int scale, bool isLossless, bool isRowBuffered)
+		=> ReadFrame(segment, out width, out height, scale, isLossless, isRowBuffered, ImageProcessingLimits.Default);
+
+	public static JpegComponent[] ReadFrame(ReadOnlySpan<byte> segment, out int width, out int height, int scale, bool isLossless, bool isRowBuffered, ImageProcessingLimits limits)
 	{
 		if (segment.Length < 6)
 			throw new InvalidDataException("Truncated JPEG frame.");
@@ -142,7 +162,7 @@ internal static class JpegSegments
 		if (width == 0 || height == 0)
 			throw new InvalidDataException("JPEG frame has no size.");
 
-		RasterImage.EnsureDecodable((width + scale - 1) / scale, (height + scale - 1) / scale);
+		if (!isRowBuffered) RasterImage.EnsureDecodable((width + scale - 1) / scale, (height + scale - 1) / scale, limits);
 
 		var count = segment[5];
 

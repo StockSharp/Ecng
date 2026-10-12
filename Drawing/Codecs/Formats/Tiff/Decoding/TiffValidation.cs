@@ -12,12 +12,15 @@ using Ecng.Drawing.Codecs.Formats.Tiff.Internal;
 
 internal static class TiffValidation
 {
-	public static TiffImageDescriptor Validate(TiffIfd ifd)
+	public static TiffImageDescriptor Validate(TiffIfd ifd, ImageProcessingLimits limits)
+		=> Validate(ifd, limits, false);
+
+	public static TiffImageDescriptor Validate(TiffIfd ifd, ImageProcessingLimits limits, bool rowBuffered)
 	{
 		int width = RequireDimension(ifd.RequireUInt32(TiffTags.ImageWidth), "ImageWidth");
 		int height = RequireDimension(ifd.RequireUInt32(TiffTags.ImageLength), "ImageLength");
 
-		if ((long)width * height > TiffDecodingLimits.MaxPixelCount)
+		if (!rowBuffered && (long)width * height > limits.MaxImagePixels)
 		{
 			throw new TiffDecodingException($"TIFF dimensions {width}x{height} exceed the maximum supported pixel count.");
 		}

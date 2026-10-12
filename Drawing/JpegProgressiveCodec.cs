@@ -2,6 +2,7 @@ namespace Ecng.Drawing;
 
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
 
 /// <summary>
@@ -31,6 +32,15 @@ internal static class JpegProgressiveCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
+		=> DecodeCore(data, 0, 0, limits);
+
+	public static RasterImage DecodeRows(byte[] data, int width, int height, ImageProcessingLimits limits)
+		=> DecodeCore(data, width, height, limits);
+
+	private static RasterImage DecodeCore(byte[] data, int outputWidth, int outputHeight, ImageProcessingLimits limits)
 	{
 		if (data.Length > 128 * 1024 * 1024)
 			throw new InvalidDataException("JPEG input is too large.");
@@ -47,6 +57,8 @@ internal static class JpegProgressiveCodec
 		var position = 2;
 		var scans = 0;
 		var reachedEnd = false;
+		var rowBuffered = outputWidth > 0;
+		var readers = new List<IEnumerator<int>>();
 
 		while (position < data.Length)
 		{
@@ -94,11 +106,14 @@ internal static class JpegProgressiveCodec
 					if (components != null)
 						throw new InvalidDataException("JPEG has more than one frame.");
 
-					components = JpegSegments.ReadFrame(payload, out width, out height);
+					components = JpegSegments.ReadFrame(payload, out width, out height, 1, false, rowBuffered, limits);
 					JpegSegments.EnsureEnoughData(width, height, data.Length - position);
+					long workingBytes = (long)width * 4 + (rowBuffered ? (long)outputWidth * outputHeight * 4 + (long)outputWidth * 80 : (long)width * height * 4);
+					foreach (var c in components) workingBytes += (long)c.BlocksWide * (rowBuffered ? c.V : c.BlocksHigh) * (64 * 2 + 8 * 8);
+					limits.EnsureWorkingMemory(workingBytes);
 
 					foreach (var component in components)
-						component.Coefficients = new short[checked(component.BlocksWide * component.BlocksHigh * 64)];
+						component.Coefficients = new short[checked(component.BlocksWide * (rowBuffered ? component.V : component.BlocksHigh) * 64)];
 					break;
 
 				case 0xDA:
@@ -146,8 +161,20 @@ internal static class JpegProgressiveCodec
 							throw new InvalidDataException("Progressive JPEG requires missing tables.");
 
 					var bits = new JpegBitReader(data, position);
-					ReadScan(bits, components, scan, dc, ac, ss, se, ah, al, restartInterval, width, height);
-					position = bits.Position;
+					var scanEnd = rowBuffered ? JpegSegments.FindScanEnd(data, position) : -1;
+					var scanRows = ReadScan(bits, components, scan, (JpegHuffmanTable[])dc.Clone(), (JpegHuffmanTable[])ac.Clone(),
+						Array.ConvertAll(scan, c => c.DcTable), Array.ConvertAll(scan, c => c.AcTable),
+						ss, se, ah, al, restartInterval, width, height, rowBuffered, scanEnd);
+					if (rowBuffered)
+					{
+						readers.Add(scanRows.GetEnumerator());
+						position = scanEnd;
+					}
+					else
+					{
+						foreach (var _ in scanRows) { }
+						position = bits.Position;
+					}
 					scans++;
 					if (scans > 256)
 						throw new InvalidDataException("Too many progressive JPEG scans.");
@@ -162,6 +189,13 @@ internal static class JpegProgressiveCodec
 
 		if (!reachedEnd || scans == 0)
 			throw new InvalidDataException("JPEG scan data or end marker is missing.");
+
+		if (rowBuffered)
+		{
+			foreach (var c in components) c.Samples = new byte[checked(c.Stride * c.V * 8)];
+			return JpegThumbnailOutput.Read(width, height, outputWidth, outputHeight, components, readers,
+				JpegTransforms.ResolveColorModel(components, hasJfif, adobeTransform), limits, () => ReconstructRows(components, qtables));
+		}
 
 		Span<int> block = stackalloc int[64];
 
@@ -180,14 +214,15 @@ internal static class JpegProgressiveCodec
 				}
 		}
 
-		return JpegTransforms.ToImage(width, height, components, JpegTransforms.ResolveColorModel(components, hasJfif, adobeTransform));
+		return JpegTransforms.ToImage(width, height, components, JpegTransforms.ResolveColorModel(components, hasJfif, adobeTransform), limits);
 	}
 
-	private static void ReadScan(
+	private static IEnumerable<int> ReadScan(
 		JpegBitReader bits, JpegComponent[] components, JpegComponent[] scan,
 		JpegHuffmanTable[] dc, JpegHuffmanTable[] ac,
+		int[] dcSelectors, int[] acSelectors,
 		int ss, int se, int ah, int al, int restartInterval,
-		int width, int height)
+		int width, int height, bool rowBuffered, int expectedEnd)
 	{
 		var maxH = 1;
 		var maxV = 1;
@@ -207,9 +242,17 @@ internal static class JpegProgressiveCodec
 
 		var eobRun = 0;
 		var unitIndex = 0;
+		var predictions = new int[scan.Length];
 		foreach (var c in scan) c.Prediction = 0;
 
 		for (var by = 0; by < unitsY; by++)
+		{
+			for (var i = 0; i < scan.Length; i++)
+			{
+				scan[i].Prediction = predictions[i];
+				scan[i].DcTable = dcSelectors[i];
+				scan[i].AcTable = acSelectors[i];
+			}
 			for (var bx = 0; bx < unitsX; bx++)
 			{
 				if (restartInterval > 0 && unitIndex > 0 && unitIndex % restartInterval == 0)
@@ -228,7 +271,7 @@ internal static class JpegProgressiveCodec
 						{
 							var x = interleaved ? bx * c.H + subX : bx;
 							var y = interleaved ? by * c.V + subY : by;
-							var offset = (y * c.BlocksWide + x) * 64;
+							var offset = ((rowBuffered ? y % c.V : y) * c.BlocksWide + x) * 64;
 							var coeff = c.Coefficients;
 
 							if (ss == 0)
@@ -252,6 +295,28 @@ internal static class JpegProgressiveCodec
 				}
 				unitIndex++;
 			}
+			for (var i = 0; i < scan.Length; i++) predictions[i] = scan[i].Prediction;
+			if (!rowBuffered || (by + 1) % (interleaved ? 1 : scan[0].V) == 0 || by + 1 == unitsY)
+				yield return by;
+		}
+		if (expectedEnd >= 0 && bits.Position != expectedEnd) throw new InvalidDataException("JPEG scan has unconsumed entropy bytes.");
+	}
+
+	private static void ReconstructRows(JpegComponent[] components, int[][] qtables)
+	{
+		Span<int> block = stackalloc int[64];
+		foreach (var c in components)
+		{
+			var q = qtables[c.QuantTable] ?? throw new InvalidDataException("Missing JPEG quantization table.");
+			for (var by = 0; by < c.V; by++)
+				for (var bx = 0; bx < c.BlocksWide; bx++)
+				{
+					var offset = (by * c.BlocksWide + bx) * 64;
+					for (var i = 0; i < 64; i++) block[i] = c.Coefficients[offset + i] * q[i];
+					JpegTransforms.InverseDct(block, c.Samples, c.Stride, bx * 8, by * 8, 1, c.Precision);
+				}
+			Array.Clear(c.Coefficients);
+		}
 	}
 
 	private static void AcFirst(JpegBitReader bits, JpegHuffmanTable table, short[] coeff,

@@ -44,22 +44,33 @@ internal static class JpegCodec
 	/// Decodes the picture and turns it the way its Exif orientation asks for it to be shown.
 	/// </summary>
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
 	{
-		var image = JpegExtendedCodec.IsExtended(data) ? JpegExtendedCodec.Decode(data) :
-			JpegProgressiveCodec.IsProgressive(data) ? JpegProgressiveCodec.Decode(data) : JpegSequentialCodec.Decode(data, 1);
+		var image = JpegExtendedCodec.IsExtended(data) ? JpegExtendedCodec.Decode(data, limits) :
+			JpegProgressiveCodec.IsProgressive(data) ? JpegProgressiveCodec.Decode(data, limits) : JpegSequentialCodec.Decode(data, 1, limits);
 		return image.Orient(JpegSegments.ReadOrientation(data));
 	}
 
 	public static RasterImage DecodeDownscaled(byte[] data, int width, int height)
+		=> DecodeDownscaled(data, width, height, ImageProcessingLimits.Default);
+
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height, ImageProcessingLimits limits)
 	{
-		if (JpegExtendedCodec.IsExtended(data) || JpegProgressiveCodec.IsProgressive(data))
-			return Decode(data).Downscale(width, height);
+		var orientation = JpegSegments.ReadOrientation(data);
+		if (JpegExtendedCodec.IsExtended(data))
+			return JpegExtendedCodec.DecodeRows(data, orientation >= 5 ? height : width, orientation >= 5 ? width : height, limits).Orient(orientation);
+		if (JpegProgressiveCodec.IsProgressive(data))
+			return JpegProgressiveCodec.DecodeRows(data, orientation >= 5 ? height : width, orientation >= 5 ? width : height, limits).Orient(orientation);
+		if (JpegSequentialCodec.CanDecodeRows(data))
+			return JpegSequentialCodec.DecodeRows(data, orientation >= 5 ? height : width, orientation >= 5 ? width : height, limits).Orient(orientation);
 		var (sourceWidth, sourceHeight) = ReadSize(data);
 		var scale = 1;
 		while (scale < 8 && (sourceWidth + scale * 2 - 1) / (scale * 2) >= width &&
 			(sourceHeight + scale * 2 - 1) / (scale * 2) >= height)
 			scale *= 2;
-		var image = JpegSequentialCodec.Decode(data, scale).Orient(JpegSegments.ReadOrientation(data));
+		var image = JpegSequentialCodec.Decode(data, scale, limits).Orient(JpegSegments.ReadOrientation(data));
 		return image.Width == width && image.Height == height ? image : image.Downscale(width, height);
 	}
 

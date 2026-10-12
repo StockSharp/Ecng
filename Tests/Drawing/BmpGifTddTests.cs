@@ -167,21 +167,25 @@ public class BmpGifTddTests : BaseTestClass
 		];
 
 		apng.Frames.Count.AssertEqual(4);
+		var canvas = new byte[4 * 4 * 4];
 
 		for (var index = 0; index < 4; index++)
 		{
 			var frame = apng.Frames[index];
-			frame.Width.AssertEqual(4);
-			frame.Height.AssertEqual(4);
+			(frame.Width > 0 && frame.Left + frame.Width <= 4).AssertTrue();
+			(frame.Height > 0 && frame.Top + frame.Height <= 4).AssertTrue();
 			frame.DelayNumerator.AssertEqual((ushort)expectedDurations[index]);
 			frame.DelayDenominator.AssertEqual((ushort)100);
 			frame.Disposal.AssertEqual((byte)0);
 			frame.Blend.AssertEqual((byte)0);
+			for (var y = 0; y < frame.Height; y++)
+				frame.Rgba.AsSpan(y * frame.Width * 4, frame.Width * 4)
+					.CopyTo(canvas.AsSpan(((frame.Top + y) * 4 + frame.Left) * 4));
 
 			// The frame is its own color in the column of its number and transparent elsewhere.
 			var column = index;
 			var color = colors[index];
-			AssertPixels(Rgba(4, 4, (x, _) => x == column ? (color[0], color[1], color[2], color[3]) : default), frame.Rgba, 4);
+			AssertPixels(Rgba(4, 4, (x, _) => x == column ? (color[0], color[1], color[2], color[3]) : default), canvas, 4);
 		}
 	}
 

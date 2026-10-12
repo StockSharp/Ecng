@@ -31,13 +31,33 @@ internal static class TiffCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
 	{
 		try
 		{
 			var (_, orientation) = ReadDirectory(data);
-			using var stream = new MemoryStream(data, false);
-			using var image = TiffImageDecoder.Decode(stream);
+			using var image = TiffImageDecoder.Decode(data, limits);
 			return image.ToRaster().Orient(orientation);
+		}
+		catch (TiffUnsupportedFeatureException error)
+		{
+			throw new NotSupportedException(error.Message, error);
+		}
+		catch (Exception error) when (error is ImageFormatException or ArgumentException or IndexOutOfRangeException or OverflowException)
+		{
+			throw new InvalidDataException("Invalid TIFF image.", error);
+		}
+	}
+
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height, ImageProcessingLimits limits)
+	{
+		try
+		{
+			var (_, orientation) = ReadDirectory(data);
+			return TiffImageDecoder.DecodeDownscaled(data, orientation >= 5 ? height : width,
+				orientation >= 5 ? width : height, limits).Orient(orientation);
 		}
 		catch (TiffUnsupportedFeatureException error)
 		{

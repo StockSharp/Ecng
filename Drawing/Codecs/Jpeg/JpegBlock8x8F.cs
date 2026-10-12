@@ -5,6 +5,8 @@ using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 internal struct JpegBlock8x8F
 {
@@ -221,6 +223,19 @@ internal struct JpegBlock8x8F
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void TransposeInto(ref JpegBlock8x8F d)
 	{
+		if (Avx.IsSupported)
+		{
+			JpegVectorDct.Transpose(ref this, ref d);
+			return;
+		}
+		if (Sse.IsSupported)
+		{
+			TransposeQuadrant(ref V0L, ref V1L, ref V2L, ref V3L, ref d.V0L, ref d.V1L, ref d.V2L, ref d.V3L);
+			TransposeQuadrant(ref V0R, ref V1R, ref V2R, ref V3R, ref d.V4L, ref d.V5L, ref d.V6L, ref d.V7L);
+			TransposeQuadrant(ref V4L, ref V5L, ref V6L, ref V7L, ref d.V0R, ref d.V1R, ref d.V2R, ref d.V3R);
+			TransposeQuadrant(ref V4R, ref V5R, ref V6R, ref V7R, ref d.V4R, ref d.V5R, ref d.V6R, ref d.V7R);
+			return;
+		}
 		d.V0L.X = V0L.X;
 		d.V1L.X = V0L.Y;
 		d.V2L.X = V0L.Z;
@@ -292,6 +307,24 @@ internal struct JpegBlock8x8F
 		d.V5R.W = V7R.Y;
 		d.V6R.W = V7R.Z;
 		d.V7R.W = V7R.W;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void TransposeQuadrant(ref Vector4 a, ref Vector4 b, ref Vector4 c, ref Vector4 e,
+		ref Vector4 o0, ref Vector4 o1, ref Vector4 o2, ref Vector4 o3)
+	{
+		var av = Unsafe.As<Vector4, Vector128<float>>(ref a);
+		var bv = Unsafe.As<Vector4, Vector128<float>>(ref b);
+		var cv = Unsafe.As<Vector4, Vector128<float>>(ref c);
+		var ev = Unsafe.As<Vector4, Vector128<float>>(ref e);
+		var low0 = Sse.UnpackLow(av, bv);
+		var high0 = Sse.UnpackHigh(av, bv);
+		var low1 = Sse.UnpackLow(cv, ev);
+		var high1 = Sse.UnpackHigh(cv, ev);
+		Unsafe.As<Vector4, Vector128<float>>(ref o0) = Sse.MoveLowToHigh(low0, low1);
+		Unsafe.As<Vector4, Vector128<float>>(ref o1) = Sse.MoveHighToLow(low1, low0);
+		Unsafe.As<Vector4, Vector128<float>>(ref o2) = Sse.MoveLowToHigh(high0, high1);
+		Unsafe.As<Vector4, Vector128<float>>(ref o3) = Sse.MoveHighToLow(high1, high0);
 	}
 
 	private static void ThrowArgumentOutOfRangeException(string paramName)

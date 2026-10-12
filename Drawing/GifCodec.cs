@@ -57,6 +57,7 @@ internal static class GifCodec
 	private sealed class Reader
 	{
 		private readonly byte[] _data;
+		private readonly ImageProcessingLimits _limits;
 		private readonly int _globalPaletteStart;
 		private readonly int _globalPaletteLength;
 		private int _position;
@@ -64,8 +65,9 @@ internal static class GifCodec
 		private int _delay;
 		private int _disposal;
 
-		public Reader(byte[] data)
+		public Reader(byte[] data, ImageProcessingLimits limits)
 		{
+			_limits = limits;
 			(Width, Height) = ReadSize(data);
 
 			if (data.Length > _maxInputLength)
@@ -203,7 +205,7 @@ internal static class GifCodec
 			if (image.Width == 0 || image.Height == 0)
 				throw new InvalidDataException("GIF image has no size.");
 
-			RasterImage.EnsureDecodable(image.Width, image.Height);
+			RasterImage.EnsureDecodable(image.Width, image.Height, _limits);
 
 			image.IsInterlaced = (flags & 0x40) != 0;
 
@@ -287,26 +289,30 @@ internal static class GifCodec
 	/// </summary>
 	/// <returns>The loop count, or -1 if the file has no such extension.</returns>
 	public static int ReadLoopCount(byte[] data)
-		=> Scan(data, out _, out _).LoopCount;
+		=> Scan(data, ImageProcessingLimits.Default, out _, out _).LoopCount;
 
 	/// <summary>
 	/// Reads what the file says about itself and prepares its frames for decoding.
 	/// </summary>
 	public static Animation Open(byte[] data)
-	{
-		var reader = Scan(data, out var frames, out var pixels);
+		=> Open(data, ImageProcessingLimits.Default);
 
-		RasterImage.EnsureDecodable(reader.Width, reader.Height);
-		Animation.EnsureWithinBudget(frames, pixels);
+	public static Animation Open(byte[] data, ImageProcessingLimits limits)
+	{
+		var reader = Scan(data, limits, out var frames, out var pixels);
+
+		RasterImage.EnsureDecodable(reader.Width, reader.Height, limits);
+		Animation.EnsureWithinBudget(frames, pixels, limits);
 
 		// The extension counts repetitions: a file without it plays once, a file with N plays N + 1 times.
 		var plays = reader.LoopCount < 0 ? 1 : reader.LoopCount == 0 ? 0 : reader.LoopCount + 1;
 
-		return new(reader.Width, reader.Height, plays, frames, ReadFrames(data));
+		return new(reader.Width, reader.Height, plays, frames, ReadFrames(data, limits), limits);
 	}
 
 	public static byte[] Encode(Animation animation)
 	{
+		Animation.EnsureWithinBudget(animation.FrameCount, (long)animation.Width * animation.Height * animation.FrameCount, animation.Limits);
 		using var output = new MemoryStream();
 		output.Write("GIF89a"u8);
 		Word(output, animation.Width);
@@ -366,9 +372,9 @@ internal static class GifCodec
 
 	// Walks the whole file without unpacking a pixel: checks its structure, counts the frames and
 	// the pixels they take to composite.
-	private static Reader Scan(byte[] data, out int frames, out long pixels)
+	private static Reader Scan(byte[] data, ImageProcessingLimits limits, out int frames, out long pixels)
 	{
-		var reader = new Reader(data);
+		var reader = new Reader(data, limits);
 		var canvas = (long)reader.Width * reader.Height;
 		frames = 0;
 		pixels = 0;
@@ -387,10 +393,10 @@ internal static class GifCodec
 
 	// The canvas starts transparent and stays so wherever no frame has drawn: the background color
 	// of the logical screen is not used, the way browsers do not use it.
-	private static IEnumerable<AnimationFrame> ReadFrames(byte[] data)
+	private static IEnumerable<AnimationFrame> ReadFrames(byte[] data, ImageProcessingLimits limits)
 	{
-		var reader = new Reader(data);
-		var canvas = new RasterImage(reader.Width, reader.Height);
+		var reader = new Reader(data, limits);
+		var canvas = new RasterImage(reader.Width, reader.Height, limits);
 		Image previous = null;
 
 		// The canvas as it was before the previous frame, if that frame is to be taken back.
@@ -408,7 +414,7 @@ internal static class GifCodec
 			Draw(data, canvas, image);
 			previous = image;
 
-			var frame = new RasterImage(canvas.Width, canvas.Height);
+			var frame = new RasterImage(canvas.Width, canvas.Height, limits);
 			canvas.Pixels.CopyTo(frame.Pixels, 0);
 
 			yield return new(frame, image.Delay, 100);
@@ -538,7 +544,7 @@ internal static class GifCodec
 				top = minY;
 				width = maxX - minX + 1;
 				height = maxY - minY + 1;
-				image = new RasterImage(width, height);
+				image = new RasterImage(width, height, frame.Image.Limits);
 
 				for (var y = 0; y < height; y++)
 					for (var x = 0; x < width; x++)

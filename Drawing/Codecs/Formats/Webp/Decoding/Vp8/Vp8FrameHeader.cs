@@ -24,7 +24,10 @@ internal sealed class Vp8FrameHeader
 	public int Height { get; init; }
 	public int HeaderByteLength { get; init; }
 
-	public static Vp8FrameHeader Parse(ReadOnlySpan<byte> data)
+	public static Vp8FrameHeader Parse(ReadOnlySpan<byte> data, ImageProcessingLimits limits)
+		=> Parse(data, limits, false);
+
+	public static Vp8FrameHeader Parse(ReadOnlySpan<byte> data, ImageProcessingLimits limits, bool thumbnail)
 	{
 		// 3-byte uncompressed frame tag + 3-byte start code + 2x 2-byte dimension fields.
 		const int UncompressedHeaderLength = 10;
@@ -64,10 +67,12 @@ internal sealed class Vp8FrameHeader
 			throw new WebpDecodingException($"VP8 frame dimensions {width}x{height} exceed the maximum supported dimension of {WebpDecodingLimits.MaxDimension}.");
 		}
 
-		if ((long)width * height > WebpDecodingLimits.MaxPixelCount)
+		if (!thumbnail && (long)width * height > limits.MaxImagePixels)
 		{
-			throw new WebpDecodingException($"VP8 frame pixel count {(long)width * height} exceeds the maximum supported pixel count of {WebpDecodingLimits.MaxPixelCount}.");
+			throw new WebpDecodingException($"VP8 frame pixel count {(long)width * height} exceeds the maximum supported pixel count of {limits.MaxImagePixels}.");
 		}
+
+		if (!thumbnail) limits.EnsureWorkingMemory((long)(width + 32) * (height + 32) * 6);
 
 		if (UncompressedHeaderLength + firstPartitionLength > data.Length)
 		{

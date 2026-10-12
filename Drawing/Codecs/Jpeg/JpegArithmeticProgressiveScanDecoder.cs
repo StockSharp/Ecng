@@ -1,6 +1,7 @@
 namespace Ecng.Drawing.Codecs.Jpeg.ScanDecoder;
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -18,8 +19,14 @@ internal class JpegArithmeticProgressiveScanDecoder : JpegArithmeticScanDecoder
 	private readonly JpegBlockOutputWriter _outputWriter;
 	private readonly JpegBlockAllocator _allocator;
 	private readonly JpegArithmeticDecodingComponent[] _components;
+	private readonly bool _ownsAllocator;
 
-	public JpegArithmeticProgressiveScanDecoder(JpegDecoder decoder, JpegFrameHeader frameHeader) : base(decoder)
+	public JpegArithmeticProgressiveScanDecoder(JpegDecoder decoder, JpegFrameHeader frameHeader)
+		: this(decoder, frameHeader, null)
+	{
+	}
+
+	public JpegArithmeticProgressiveScanDecoder(JpegDecoder decoder, JpegFrameHeader frameHeader, JpegBlockAllocator allocator) : base(decoder)
 	{
 		_frameHeader = frameHeader;
 
@@ -42,8 +49,9 @@ internal class JpegArithmeticProgressiveScanDecoder : JpegArithmeticScanDecoder
 			ThrowInvalidDataException("Output writer is not set.");
 		}
 		_outputWriter = outputWriter;
-		_allocator = new JpegBlockAllocator(decoder.MemoryPool);
-		_allocator.Allocate(frameHeader);
+		_ownsAllocator = allocator is null;
+		_allocator = allocator ?? new JpegBlockAllocator(decoder.MemoryPool);
+		if (_ownsAllocator) _allocator.Allocate(frameHeader);
 
 		// Pre-allocate the JpegDecodeComponent instances
 		_components = new JpegArithmeticDecodingComponent[frameHeader.NumberOfComponents];
@@ -51,6 +59,70 @@ internal class JpegArithmeticProgressiveScanDecoder : JpegArithmeticScanDecoder
 		{
 			_components[i] = new JpegArithmeticDecodingComponent();
 		}
+	}
+
+	public override IEnumerable<int> ReadRows(JpegReader reader, JpegScanHeader header)
+	{
+		var components = InitDecodeComponents(_frameHeader, header);
+		_restartInterval = Decoder.GetRestartInterval();
+		_mcusBeforeRestart = _restartInterval;
+		Reset();
+		return ReadRowsCore(reader, header, components);
+	}
+
+	private IEnumerable<int> ReadRowsCore(JpegReader reader, JpegScanHeader header, JpegArithmeticDecodingComponent[] components)
+	{
+		var bits = new JpegBitReader(reader.RemainingBytes);
+		var interleaved = components.Length > 1;
+		var single = components[0];
+		var columns = interleaved ? _mcusPerLine : (_frameHeader.SamplesPerLine + single.HorizontalSubsamplingFactor * 8 - 1) / (single.HorizontalSubsamplingFactor * 8);
+		var rows = interleaved ? _mcusPerColumn : (_frameHeader.NumberOfLines + single.VerticalSubsamplingFactor * 8 - 1) / (single.VerticalSubsamplingFactor * 8);
+		for (var row = 0; row < rows; row++)
+		{
+			for (var col = 0; col < columns; col++)
+			{
+				foreach (var component in components)
+					for (var y = 0; y < (interleaved ? component.VerticalSamplingFactor : 1); y++)
+						for (var x = 0; x < (interleaved ? component.HorizontalSamplingFactor : 1); x++)
+						{
+							var bx = interleaved ? col * component.HorizontalSamplingFactor + x : col;
+							var by = interleaved ? row * component.VerticalSamplingFactor + y : row;
+							ReadBlockAt(bits, component, header, bx, by);
+						}
+				if (row != rows - 1 || col != columns - 1)
+					if (!HandleRestart(ref bits, ref reader, ref header, ref components[0], components.Length))
+						ThrowInvalidDataException("Arithmetic JPEG scan ends before its last block.");
+			}
+			if (interleaved || (row + 1) % single.VerticalSamplingFactor == 0 || row + 1 == rows) yield return row;
+		}
+	}
+
+	private void ReadBlockAt(JpegBitReader bits, JpegArithmeticDecodingComponent component, JpegScanHeader header, int x, int y)
+	{
+		ref var block = ref _allocator.GetBlockReference(component.ComponentIndex, x, y);
+		if (header.StartOfSpectralSelection == 0) ReadBlockProgressiveDC(ref bits, component, header, ref block);
+		else ReadBlockProgressiveAC(ref bits, component, header, ref block);
+	}
+
+	public void ReconstructRow(int rowIndex)
+	{
+		var block = new JpegBlock8x8F();
+		var output = new JpegBlock8x8F();
+		var scratch = new JpegBlock8x8F();
+		for (var i = 0; i < _frameHeader.Components.Length; i++)
+		{
+			var component = _frameHeader.Components[i];
+			var quant = Decoder.GetQuantizationTable(component.QuantizationTableSelector);
+			for (var y = 0; y < component.VerticalSamplingFactor; y++)
+				for (var x = 0; x < _mcusPerLine * component.HorizontalSamplingFactor; x++)
+				{
+					ref var coefficients = ref _allocator.GetBlockReference(i, x, rowIndex * component.VerticalSamplingFactor + y);
+					DequantizeBlockAndUnZigZag(quant, ref coefficients, ref block);
+					FastFloatingPointDCT.TransformIDCT(ref block, ref output, ref scratch);
+					ShiftDataLevel(ref output, ref coefficients, _levelShift);
+				}
+		}
+		_allocator.FlushRow(_outputWriter, rowIndex);
 	}
 
 	public override void ProcessScan(ref JpegReader reader, JpegScanHeader scanHeader)
@@ -470,6 +542,7 @@ internal class JpegArithmeticProgressiveScanDecoder : JpegArithmeticScanDecoder
 
 	public override void Dispose()
 	{
+		if (!_ownsAllocator) return;
 		JpegBlockAllocator allocator = _allocator;
 
 		int mcusPerColumn = _mcusPerColumn;

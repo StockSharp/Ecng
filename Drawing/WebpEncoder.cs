@@ -4,31 +4,32 @@ using System;
 using System.Buffers.Binary;
 using System.IO;
 
-/// <summary>Lossless VP8L literal coding with canonical Huffman trees and RIFF animation frames.</summary>
+using Ecng.Drawing.Codecs.Formats.Webp.Encoding.Vp8;
+
+/// <summary>Lossless VP8L and explicit-quality VP8 compression with alpha and RIFF animation frames.</summary>
 internal static class WebpEncoder
 {
-	private static readonly byte[] _reversed = ReverseBytes();
-
-	public static byte[] Encode(RasterImage image)
+	public static byte[] Encode(RasterImage image, WebpEncodingOptions options)
 	{
+		ArgumentNullException.ThrowIfNull(image);
+		ArgumentNullException.ThrowIfNull(options);
 		using var stream = new MemoryStream();
 		using var writer = Header(stream);
-		Chunk(writer, 0x4c385056, Bitstream(image));
+		if (options.Mode == WebpCompressionModes.Lossy && HasAlpha(image))
+			Chunk(writer, 0x58385056, ExtendedHeader(image.Width, image.Height, 0x10));
+		WriteImage(writer, image, options);
 		return Finish(writer);
 	}
 
-	public static byte[] Encode(Animation animation)
+	public static byte[] Encode(Animation animation, WebpEncodingOptions options)
 	{
+		ArgumentNullException.ThrowIfNull(options);
 		if (animation.Plays is < 0 or > ushort.MaxValue)
 			throw new NotSupportedException("WebP loop count must fit in 16 bits.");
-		Animation.EnsureWithinBudget(animation.FrameCount, (long)animation.Width * animation.Height * animation.FrameCount);
+		Animation.EnsureWithinBudget(animation.FrameCount, (long)animation.Width * animation.Height * animation.FrameCount, animation.Limits);
 		using var stream = new MemoryStream();
 		using var writer = Header(stream);
-		var extended = new byte[10];
-		extended[0] = 0x12; // Animation with an alpha channel.
-		Write24(extended.AsSpan(4), animation.Width - 1);
-		Write24(extended.AsSpan(7), animation.Height - 1);
-		Chunk(writer, 0x58385056, extended);
+		Chunk(writer, 0x58385056, ExtendedHeader(animation.Width, animation.Height, 0x12));
 		var control = new byte[6];
 		BinaryPrimitives.WriteUInt16LittleEndian(control.AsSpan(4), (ushort)animation.Plays);
 		Chunk(writer, 0x4d494e41, control);
@@ -45,7 +46,7 @@ internal static class WebpEncoder
 			Write24(header.AsSpan(12), frame.DelayMilliseconds);
 			header[15] = 2; // A full canvas replaces the preceding one.
 			frameWriter.Write(header);
-			Chunk(frameWriter, 0x4c385056, Bitstream(frame.Image));
+			WriteImage(frameWriter, frame.Image, options);
 			Chunk(writer, 0x464d4e41, payload.ToArray());
 			count++;
 		}
@@ -53,49 +54,61 @@ internal static class WebpEncoder
 		return Finish(writer);
 	}
 
+	public static byte[] Encode(RasterImage image) => Encode(image, WebpEncodingOptions.Lossless);
+	public static byte[] Encode(Animation animation) => Encode(animation, WebpEncodingOptions.Lossless);
+
+	private static void WriteImage(BinaryWriter writer, RasterImage image, WebpEncodingOptions options)
+	{
+		if (options.Mode == WebpCompressionModes.Lossless)
+		{
+			Chunk(writer, 0x4c385056, Bitstream(image));
+			return;
+		}
+		if (image.Width > 16383 || image.Height > 16383) throw new NotSupportedException("VP8 dimensions cannot exceed 16383.");
+		var rgb = new byte[checked(image.Width * image.Height * 3)];
+		for (var i = 0; i < image.Pixels.Length / 4; i++)
+		{
+			rgb[i * 3] = image.Pixels[i * 4];
+			rgb[i * 3 + 1] = image.Pixels[i * 4 + 1];
+			rgb[i * 3 + 2] = image.Pixels[i * 4 + 2];
+		}
+		if (HasAlpha(image))
+		{
+			var channel = new RasterImage(image.Width, image.Height, image.Limits);
+			for (var i = 0; i < channel.Pixels.Length; i += 4)
+			{
+				channel.Pixels[i + 1] = image.Pixels[i + 3];
+				channel.Pixels[i + 3] = 255;
+			}
+			var compressed = WebpLosslessEncoder.Encode(channel);
+			var alpha = new byte[compressed.Length - 4];
+			alpha[0] = 1;
+			compressed.AsSpan(5).CopyTo(alpha.AsSpan(1));
+			Chunk(writer, 0x48504c41, alpha);
+		}
+		Chunk(writer, 0x20385056, Vp8ImageEncoder.Encode(rgb, image.Width, image.Height, options.Quality));
+	}
+
+	private static bool HasAlpha(RasterImage image)
+	{
+		for (var i = 3; i < image.Pixels.Length; i += 4) if (image.Pixels[i] != 255) return true;
+		return false;
+	}
+
+	private static byte[] ExtendedHeader(int width, int height, byte flags)
+	{
+		var header = new byte[10];
+		header[0] = flags;
+		Write24(header.AsSpan(4), width - 1);
+		Write24(header.AsSpan(7), height - 1);
+		return header;
+	}
+
 	private static byte[] Bitstream(RasterImage image)
 	{
 		if (image.Width > 16384 || image.Height > 16384)
 			throw new NotSupportedException("VP8L dimensions cannot exceed 16384.");
-		using var bits = new WebpBitWriter();
-		bits.Write(0x2f, 8);
-		bits.Write((uint)(image.Width - 1), 14);
-		bits.Write((uint)(image.Height - 1), 14);
-		bits.Write(1, 1);
-		bits.Write(0, 3);
-		bits.Write(0, 1); // No transforms.
-		bits.Write(0, 1); // No color cache.
-		bits.Write(0, 1); // One Huffman group.
-		var pixels = image.Pixels;
-		bool[] uniform = [true, true, true, true];
-		for (var offset = 4; offset < pixels.Length; offset += 4)
-			for (var channel = 0; channel < 4; channel++)
-				uniform[channel] &= pixels[offset + channel] == pixels[channel];
-		int[] order = [1, 0, 2, 3];
-		foreach (var channel in order)
-			Tree(bits, uniform[channel], pixels[channel], channel == 1 ? 280 : 256);
-		Tree(bits, true, 0, 40); // Distance tree; literal coding emits no backward references.
-		for (var offset = 0; offset < pixels.Length; offset += 4)
-			foreach (var channel in order)
-				if (!uniform[channel]) bits.Write(_reversed[pixels[offset + channel]], 8);
-		return bits.Finish();
-	}
-
-	private static void Tree(WebpBitWriter bits, bool uniform, byte value, int alphabet)
-	{
-		if (uniform)
-		{
-			bits.Write(1, 1);
-			bits.Write(0, 1); // One symbol.
-			bits.Write(value > 1 ? 1u : 0u, 1);
-			bits.Write(value, value > 1 ? 8 : 1);
-			return;
-		}
-		bits.Write(0, 1);
-		bits.Write(8, 4); // Twelve code-length symbols, through symbol 8 in the VP8L ordering.
-		for (var index = 0; index < 12; index++) bits.Write(index is 2 or 11 ? 1u : 0u, 3);
-		bits.Write(0, 1); // Lengths for the entire alphabet.
-		for (var symbol = 0; symbol < alphabet; symbol++) bits.Write(symbol < 256 ? 1u : 0u, 1);
+		return WebpLosslessEncoder.Encode(image);
 	}
 
 	private static BinaryWriter Header(MemoryStream stream)
@@ -133,11 +146,4 @@ internal static class WebpEncoder
 		destination[2] = (byte)(value >> 16);
 	}
 
-	private static byte[] ReverseBytes()
-	{
-		var reversed = new byte[256];
-		for (var value = 0; value < reversed.Length; value++)
-			for (var bit = 0; bit < 8; bit++) reversed[value] |= (byte)(((value >> bit) & 1) << (7 - bit));
-		return reversed;
-	}
 }

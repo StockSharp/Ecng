@@ -11,5 +11,5 @@ using MetadataProfileKind = Ecng.Drawing.Codecs.MetadataProfileKinds;
 
 internal interface IWebpLossyBitstreamDecoder
 {
-	Vp8DecodedFrame Decode(ReadOnlyMemory<byte> vp8Bytes, byte[] alphaPlane);
+	Vp8DecodedFrame Decode(ReadOnlyMemory<byte> vp8Bytes, byte[] alphaPlane, ImageProcessingLimits limits);
 }

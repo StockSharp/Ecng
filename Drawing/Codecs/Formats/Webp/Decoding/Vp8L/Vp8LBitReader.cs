@@ -30,6 +30,7 @@ internal sealed class Vp8LBitReader
 		_totalBits = (long)(endOffset - startOffset) * 8;
 	}
 	public bool IsOverBudget => _bitPosition - _bitCount > _totalBits;
+	public Vp8LBitReader Clone() => (Vp8LBitReader)MemberwiseClone();
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public uint PeekBits(int bitCount)
 	{

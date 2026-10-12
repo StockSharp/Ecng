@@ -13,7 +13,7 @@ using Ecng.Drawing.Codecs.Formats.Webp.Internal;
 
 internal static class WebpAlphaDecoder
 {
-	public static byte[] Decode(ReadOnlyMemory<byte> alphBytes, int width, int height)
+	public static byte[] Decode(ReadOnlyMemory<byte> alphBytes, int width, int height, ImageProcessingLimits limits)
 	{
 		if (alphBytes.Length < 1)
 		{
@@ -26,7 +26,7 @@ internal static class WebpAlphaDecoder
 		byte[] plane = header.CompressionMethod switch
 		{
 			WebpAlphaCompressionMethods.Uncompressed => DecodeUncompressed(payload.Span, width, height),
-			WebpAlphaCompressionMethods.Lossless => DecodeLossless(payload, width, height),
+			WebpAlphaCompressionMethods.Lossless => DecodeLossless(payload, width, height, limits),
 			_ => throw new WebpDecodingException($"Unsupported WebP alpha compression method {header.CompressionMethod}."),
 		};
 
@@ -45,9 +45,9 @@ internal static class WebpAlphaDecoder
 		return payload[..(int)expected].ToArray();
 	}
 
-	private static byte[] DecodeLossless(ReadOnlyMemory<byte> payload, int width, int height)
+	private static byte[] DecodeLossless(ReadOnlyMemory<byte> payload, int width, int height, ImageProcessingLimits limits)
 	{
-		uint[] argb = Vp8LDecoder.DecodeAlphaSubstream(payload, width, height, out bool isPooled);
+		uint[] argb = Vp8LDecoder.DecodeAlphaSubstream(payload, width, height, limits, out bool isPooled);
 		try
 		{
 			byte[] plane = new byte[(long)width * height <= int.MaxValue ? width * height : throw new WebpDecodingException("WebP alpha plane too large.")];

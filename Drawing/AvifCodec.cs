@@ -33,26 +33,47 @@ internal static class AvifCodec
 	}
 
 	public static RasterImage Decode(byte[] data)
+		=> Decode(data, ImageProcessingLimits.Default);
+
+	public static RasterImage Decode(byte[] data, ImageProcessingLimits limits)
+		=> DecodeCore(data, 0, 0, limits);
+
+	public static RasterImage DecodeDownscaled(byte[] data, int width, int height, ImageProcessingLimits limits)
+		=> DecodeCore(data, width, height, limits);
+
+	private static RasterImage DecodeCore(byte[] data, int outputWidth, int outputHeight, ImageProcessingLimits limits)
 	{
 		Av1TileComposer.CompositedFrame color = null, alpha = null;
 		try
 		{
 			var container = ReadContainer(data);
-			RasterImage.EnsureDecodable(container.Width, container.Height);
-			color = Av1TileComposer.Composite(container.ColorTiles, container.GridRows, container.GridColumns, container.Width, container.Height);
+			if (outputWidth > 0) return AvifThumbnailDecoder.Decode(container, outputWidth, outputHeight, limits);
+			RasterImage.EnsureDecodable(container.Width, container.Height, limits);
+			color = Av1TileComposer.Composite(container.ColorTiles, container.GridRows, container.GridColumns, container.Width, container.Height, limits);
 			if (container.HasAlpha)
-				alpha = Av1TileComposer.Composite(container.AlphaTiles, container.GridRows, container.GridColumns, container.Width, container.Height);
+			{
+				long colorBytes = 0, alphaBytes = 0, alphaTemporary = 0;
+				foreach (var plane in color.Planes) if (plane is not null) colorBytes += (long)plane.Length * 4;
+				foreach (var tile in container.AlphaTiles)
+				{
+					var estimate = Av1FrameDecoder.EstimateBuffers(tile);
+					alphaBytes += estimate.planes;
+					alphaTemporary = Math.Max(alphaTemporary, estimate.working - estimate.planes);
+				}
+				limits.EnsureWorkingMemory(colorBytes + alphaBytes + alphaTemporary);
+				alpha = Av1TileComposer.Composite(container.AlphaTiles, container.GridRows, container.GridColumns, container.Width, container.Height, limits);
+			}
 
 			var sequence = color.Sequence;
-			var pixels = Av1YuvToRgbConverter.Convert(color.Planes, color.Widths, sequence.MonoChrome,
-				sequence.SubsamplingX, sequence.SubsamplingY, sequence.MatrixCoefficients, sequence.ColorRange,
-				sequence.BitDepth, alpha?.Planes[0], alpha?.Widths[0] ?? 0, container.Width, container.Height);
 			var format = container.HasAlpha
 				? sequence.BitDepth > 8 ? CodecPixelFormats.Rgba64 : CodecPixelFormats.Rgba32
 				: sequence.MonoChrome
 					? sequence.BitDepth > 8 ? CodecPixelFormats.Gray16 : CodecPixelFormats.Gray8
 					: sequence.BitDepth > 8 ? CodecPixelFormats.Rgb48 : CodecPixelFormats.Rgb24;
-			using var image = CodecImage.FromBuffer(container.Width, container.Height, format, pixels, false);
+			var pixels = Av1YuvToRgbConverter.Convert(color.Planes, color.Widths, sequence.MonoChrome,
+				sequence.SubsamplingX, sequence.SubsamplingY, sequence.MatrixCoefficients, sequence.ColorRange,
+				sequence.BitDepth, alpha?.Planes[0], alpha?.Widths[0] ?? 0, container.Width, container.Height);
+			using var image = CodecImage.FromBuffer(container.Width, container.Height, format, pixels, false, limits);
 			return image.ToRaster().Orient((int)container.Orientation);
 		}
 		catch (AvifUnsupportedFeatureException error)

@@ -2,6 +2,7 @@ namespace Ecng.Drawing.Codecs.Jpeg.ScanDecoder;
 
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -11,6 +12,9 @@ using System.Runtime.InteropServices;
 internal abstract class JpegScanDecoder : IDisposable
 {
 	public abstract void ProcessScan(ref JpegReader reader, JpegScanHeader scanHeader);
+
+	public virtual IEnumerable<int> ReadRows(JpegReader reader, JpegScanHeader scanHeader)
+		=> throw new NotSupportedException("This JPEG scan decoder does not support row output.");
 
 	public abstract void Dispose();
 

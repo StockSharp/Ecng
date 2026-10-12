@@ -2,6 +2,9 @@ namespace Ecng.Drawing;
 
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 using Ecng.Drawing.Codecs.Jpeg;
 
@@ -60,16 +63,24 @@ internal static class JpegTransforms
 
 		if (scale == 1 && precision == 8)
 		{
-			var source = new JpegBlock8x8F();
-			var decoded = new JpegBlock8x8F();
-			var scratch = new JpegBlock8x8F();
+			Unsafe.SkipInit(out JpegBlock8x8F source);
+			Unsafe.SkipInit(out JpegBlock8x8F decoded);
+			Unsafe.SkipInit(out JpegBlock8x8F scratch);
 			var input = MemoryMarshal.CreateSpan(ref source.V0L.X, 64);
-			for (var i = 0; i < 64; i++) input[i] = block[i];
+			if (Avx.IsSupported)
+			{
+				ref int start = ref MemoryMarshal.GetReference(block);
+				for (var i = 0; i < 64; i += 8)
+				{
+					var values = Unsafe.ReadUnaligned<Vector256<int>>(ref Unsafe.As<int, byte>(ref Unsafe.Add(ref start, i)));
+					Unsafe.WriteUnaligned(ref Unsafe.As<float, byte>(ref input[i]), Avx.ConvertToVector256Single(values));
+				}
+			}
+			else
+				for (var i = 0; i < 64; i++) input[i] = block[i];
 			FastFloatingPointDCT.TransformIDCT(ref source, ref decoded, ref scratch);
 			var output = MemoryMarshal.CreateReadOnlySpan(ref decoded.V0L.X, 64);
-			for (var y = 0; y < 8; y++)
-				for (var x = 0; x < 8; x++)
-					samples[(top + y) * stride + left + x] = RasterImage.ToByte(output[y * 8 + x] + 128);
+			JpegRasterSamples.Write(output, samples, stride, left, top);
 			return;
 		}
 
@@ -143,91 +154,16 @@ internal static class JpegTransforms
 	/// Builds the picture out of the decoded sample planes.
 	/// </summary>
 	public static RasterImage ToImage(int width, int height, JpegComponent[] components, JpegColorModels model)
+		=> ToImage(width, height, components, model, ImageProcessingLimits.Default);
+
+	public static RasterImage ToImage(int width, int height, JpegComponent[] components, JpegColorModels model, ImageProcessingLimits limits)
 	{
-		var maxH = 1;
-		var maxV = 1;
-
-		foreach (var component in components)
-		{
-			maxH = Math.Max(maxH, component.H);
-			maxV = Math.Max(maxV, component.V);
-		}
-
-		// A subsampled component repeats each of its samples over the pixels it covers.
-		var columns = new int[components.Length][];
-
-		for (var i = 0; i < components.Length; i++)
-		{
-			columns[i] = new int[width];
-
-			for (var x = 0; x < width; x++)
-				columns[i][x] = x * components[i].H / maxH;
-		}
-
-		var image = new RasterImage(width, height);
-		var pixels = image.Pixels;
-		Span<int> rows = stackalloc int[components.Length];
-		Span<int> values = stackalloc int[components.Length];
-
+		var image = new RasterImage(width, height, limits);
+		var converter = new JpegColorConverter(width, components, model);
 		for (var y = 0; y < height; y++)
-		{
-			for (var i = 0; i < components.Length; i++)
-				rows[i] = y * components[i].V / maxV * components[i].Stride;
-
-			for (var x = 0; x < width; x++)
-			{
-				for (var i = 0; i < components.Length; i++)
-					values[i] = components[i].Samples[rows[i] + columns[i][x]];
-
-				var at = (y * width + x) * 4;
-
-				switch (model)
-				{
-					case JpegColorModels.Gray:
-						pixels[at] = pixels[at + 1] = pixels[at + 2] = (byte)values[0];
-						break;
-
-					case JpegColorModels.Rgb:
-						pixels[at] = (byte)values[0];
-						pixels[at + 1] = (byte)values[1];
-						pixels[at + 2] = (byte)values[2];
-						break;
-
-					case JpegColorModels.YCbCr:
-						pixels[at] = Red(values[0], values[2]);
-						pixels[at + 1] = Green(values[0], values[1], values[2]);
-						pixels[at + 2] = Blue(values[0], values[1]);
-						break;
-
-					case JpegColorModels.Cmyk:
-						pixels[at] = RasterImage.ToByte(values[0] * values[3] / 255.0);
-						pixels[at + 1] = RasterImage.ToByte(values[1] * values[3] / 255.0);
-						pixels[at + 2] = RasterImage.ToByte(values[2] * values[3] / 255.0);
-						break;
-
-					default:
-						// The color transform was applied to cyan, magenta and yellow before they were inverted.
-						pixels[at] = RasterImage.ToByte((255 - Red(values[0], values[2])) * values[3] / 255.0);
-						pixels[at + 1] = RasterImage.ToByte((255 - Green(values[0], values[1], values[2])) * values[3] / 255.0);
-						pixels[at + 2] = RasterImage.ToByte((255 - Blue(values[0], values[1])) * values[3] / 255.0);
-						break;
-				}
-
-				pixels[at + 3] = 255;
-			}
-		}
-
+			converter.WriteRow(y, image.Pixels.AsSpan(y * width * 4, width * 4));
 		return image;
 	}
-
-	private static byte Red(int y, int cr)
-		=> RasterImage.ToByte(y + 1.402 * (cr - 128));
-
-	private static byte Green(int y, int cb, int cr)
-		=> RasterImage.ToByte(y - 0.344136 * (cb - 128) - 0.714136 * (cr - 128));
-
-	private static byte Blue(int y, int cb)
-		=> RasterImage.ToByte(y + 1.772 * (cb - 128));
 
 	private static double[] CreateBasis()
 	{

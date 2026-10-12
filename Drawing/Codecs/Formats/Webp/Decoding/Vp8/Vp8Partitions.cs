@@ -12,7 +12,7 @@ using Ecng.Drawing.Codecs.Formats.Webp.Internal;
 
 internal static class Vp8Partitions
 {
-	public static Vp8BoolDecoder[] Build(byte[] data, int partition0End, int partitionCount)
+	public static Vp8BoolDecoder[] Build(byte[] data, int partition0End, int partitionCount, int end)
 	{
 		if (partitionCount < 1 || partitionCount > WebpDecodingLimits.MaxVp8Partitions)
 		{
@@ -20,7 +20,7 @@ internal static class Vp8Partitions
 		}
 
 		int sizeTableBytes = 3 * (partitionCount - 1);
-		if (partition0End + sizeTableBytes > data.Length)
+		if (partition0End + sizeTableBytes > end || end > data.Length)
 		{
 			throw new WebpDecodingException("VP8 coefficient partition size table exceeds the available chunk data.");
 		}
@@ -34,7 +34,7 @@ internal static class Vp8Partitions
 			int size = data[sizeTablePos] | (data[sizeTablePos + 1] << 8) | (data[sizeTablePos + 2] << 16);
 			sizeTablePos += 3;
 
-			if (dataPos + size > data.Length)
+			if (dataPos + size > end)
 			{
 				throw new WebpDecodingException("VP8 coefficient partition size exceeds the available chunk data.");
 			}
@@ -44,7 +44,7 @@ internal static class Vp8Partitions
 		}
 
 		// The last partition consumes whatever bytes remain in the chunk.
-		int lastSize = data.Length - dataPos;
+		int lastSize = end - dataPos;
 		partitions[partitionCount - 1] = new Vp8BoolDecoder(data, dataPos, lastSize);
 
 		return partitions;

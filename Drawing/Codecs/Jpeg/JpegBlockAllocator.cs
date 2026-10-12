@@ -11,6 +11,7 @@ internal sealed class JpegBlockAllocator : IDisposable
 	private readonly MemoryPool<byte> _memoryPool;
 	private IMemoryOwner<byte> _bufferHandle;
 	private ComponentAllocation[] _components;
+	private bool _rowBuffered;
 	public JpegBlockAllocator(MemoryPool<byte> memoryPool = null)
 	{
 		_memoryPool = memoryPool ?? MemoryPool<byte>.Shared;
@@ -18,7 +19,11 @@ internal sealed class JpegBlockAllocator : IDisposable
 		_components = null;
 	}
 	public void Allocate(JpegFrameHeader frameHeader)
+		=> Allocate(frameHeader, false);
+
+	public void Allocate(JpegFrameHeader frameHeader, bool rowBuffered)
 	{
+		_rowBuffered = rowBuffered;
 		if (_bufferHandle is not null)
 		{
 			throw new InvalidOperationException();
@@ -50,6 +55,7 @@ internal sealed class JpegBlockAllocator : IDisposable
 			{
 				HorizontalComponentBlock = horizontalComponentBlockCount,
 				VerticalComponentBlock = verticalComponentBlockCount,
+				StoredRows = rowBuffered ? component.VerticalSamplingFactor : verticalComponentBlockCount,
 				HorizontalSubsamplingFactor = horizontalSubsamplingFactor,
 				VerticalSubsamplingFactor = verticalSubsamplingFactor,
 			};
@@ -60,10 +66,10 @@ internal sealed class JpegBlockAllocator : IDisposable
 		for (int i = 0; i < componentAllocations.Length; i++)
 		{
 			componentAllocations[i].ComponentBlockOffset = index;
-			index += componentAllocations[i].HorizontalComponentBlock * componentAllocations[i].VerticalComponentBlock;
+			index = checked(index + componentAllocations[i].HorizontalComponentBlock * componentAllocations[i].StoredRows);
 		}
 
-		int length = index * Unsafe.SizeOf<JpegBlock8x8>();
+		int length = checked(index * Unsafe.SizeOf<JpegBlock8x8>());
 		IMemoryOwner<byte> bufferHandle = _bufferHandle = _memoryPool.Rent(length);
 		bufferHandle.Memory.Span.Slice(0, length).Clear();
 	}
@@ -87,7 +93,29 @@ internal sealed class JpegBlockAllocator : IDisposable
 			return ref blockRef;
 		}
 
-		return ref Unsafe.Add(ref blockRef, component.ComponentBlockOffset + blockY * component.HorizontalComponentBlock + blockX);
+		return ref Unsafe.Add(ref blockRef, component.ComponentBlockOffset +
+			(_rowBuffered ? blockY % component.StoredRows : blockY) * component.HorizontalComponentBlock + blockX);
+	}
+
+	public void FlushRow(JpegBlockOutputWriter outputWriter, int rowIndex)
+	{
+		if (!_rowBuffered) throw new InvalidOperationException("JPEG block storage is not row buffered.");
+		for (var i = 0; i < _components.Length; i++)
+		{
+			var component = _components[i];
+			for (var row = 0; row < component.StoredRows; row++)
+			{
+				var sourceRow = rowIndex * component.StoredRows + row;
+				if (sourceRow >= component.VerticalComponentBlock) continue;
+				for (var col = 0; col < component.HorizontalComponentBlock; col++)
+				{
+					ref var block = ref GetBlockReference(i, col, sourceRow);
+					WriteBlock(outputWriter, block, i, col * component.HorizontalSubsamplingFactor * 8,
+						sourceRow * component.VerticalSubsamplingFactor * 8, component.HorizontalSubsamplingFactor, component.VerticalSubsamplingFactor);
+				}
+			}
+		}
+		_bufferHandle.Memory.Span.Clear();
 	}
 	public void Flush(JpegBlockOutputWriter outputWriter)
 	{
@@ -176,5 +204,6 @@ internal sealed class JpegBlockAllocator : IDisposable
 		public int HorizontalComponentBlock;
 		public int VerticalComponentBlock;
 		public int ComponentBlockOffset;
+		public int StoredRows;
 	}
 }
