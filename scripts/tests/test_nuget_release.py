@@ -122,6 +122,7 @@ class MetadataTests(unittest.TestCase):
                 "title": "Ecng.Common",
                 "description": "Core & common <helpers>",
                 "authors": "StockSharp Platform LLC",
+                "copyright": "Copyright StockSharp 2026",
                 "licenseUrl": "https://stocksharp.com/en/products/eula/",
                 "tags": "REST WebSockets JSON",
                 "iconUrl": "https://stocksharp.com/logo.png",
@@ -141,6 +142,8 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(values["PackageVersion"], "1.0.275")
             self.assertEqual(values["Description"], "Core & common <helpers>")
             self.assertEqual(values["PackageLicenseUrl"], "https://stocksharp.com/en/products/eula/")
+            self.assertEqual(values["GenerateAssemblyCopyrightAttribute"], "false")
+            self.assertEqual(values["Copyright"], "Copyright StockSharp 2026")
             self.assertEqual(values["IncludeSymbols"], "true")
             self.assertEqual(values["SymbolPackageFormat"], "snupkg")
             self.assertEqual(values["RepositoryCommit"], "f" * 40)
