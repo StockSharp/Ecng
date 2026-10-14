@@ -5,6 +5,7 @@ Run: python -m unittest discover -s scripts/tests -p "test_nuget_release.py"
 import importlib.util
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -147,6 +148,18 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(values["IncludeSymbols"], "true")
             self.assertEqual(values["SymbolPackageFormat"], "snupkg")
             self.assertEqual(values["RepositoryCommit"], "f" * 40)
+
+    def test_sdk_nuspec_retains_previous_owner_without_changing_package_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package = Path(temporary) / "Ecng.Common.1.0.275.nupkg"
+            with zipfile.ZipFile(package, "w") as z:
+                z.writestr("Ecng.Common.nuspec", """<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"><metadata><id>Ecng.Common</id><version>1.0.275</version><authors>Example</authors><description>Test</description></metadata></package>""")
+                z.writestr("lib/net10.0/Ecng.Common.dll", b"unchanged test binary")
+            release.preserve_legacy_owner(package, "StockSharp Platform LLC")
+            with zipfile.ZipFile(package) as z:
+                self.assertEqual(z.read("lib/net10.0/Ecng.Common.dll"), b"unchanged test binary")
+                parsed = release.parse_nuspec(z.read("Ecng.Common.nuspec"), "1.0.275")
+                self.assertEqual(parsed["metadata"]["owners"], "StockSharp Platform LLC")
 
     def test_roslyn_analyzer_symbol_layout_matches_analyzer_dll(self):
         with tempfile.TemporaryDirectory() as temporary:
