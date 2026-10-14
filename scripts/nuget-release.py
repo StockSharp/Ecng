@@ -208,7 +208,10 @@ def has_newer_internal_dep(snapshot: dict | None, refs: frozenset[str], publishe
     for ref in refs:
         expected = published[ref]["version"] if published[ref] else None
         ranges = snapshot["dependencies"].get(("Ecng." + ref).lower(), [])
-        if not expected or not ranges or any(not range_has_floor(r, expected) for r in ranges):
+        # Compile-time analyzer references may not be declared as NuGet dependencies.
+        # Adding a PackageReference changes the csproj and is detected by Git;
+        # absence from an old nuspec must not trigger endless republishing.
+        if ranges and (not expected or any(not range_has_floor(r, expected) for r in ranges)):
             return True
     return False
 
@@ -248,7 +251,7 @@ def create_plan(all_projects: dict[str, Project], published: dict[str, dict | No
                 raise RuntimeError(f"{name}: unpublished dependency {ref} was not planned")
     return {"order": order, "direct": sorted(direct), "versions": versions,
             "baseline": {name: published[name] for name in all_projects},
-            "repo": REPO, "commit": run("git", "rev-parse", "HEAD")}
+            "sample": "Common", "repo": REPO, "commit": run("git", "rev-parse", "HEAD")}
 
 
 def xml_escape(value: str) -> str:
@@ -264,7 +267,7 @@ def write_targets(plan: dict, path: Path) -> None:
         lines.append(f'  <PropertyGroup Condition="\'$(MSBuildProjectName)\' == \'{xml_escape(name)}\'">')
         lines.append(f"    <Version>{xml_escape(version)}</Version>")
         lines.append(f"    <PackageVersion>{xml_escape(version)}</PackageVersion>")
-        if name in plan["order"]:
+        if name in plan["order"] or name == plan.get("sample"):
             previous = plan["baseline"][name]
             meta = previous["metadata"] if previous is not None else {}
             if previous is None:
@@ -294,7 +297,7 @@ def write_targets(plan: dict, path: Path) -> None:
             if (ROOT / name / "README.md").is_file():
                 lines.append("    <PackageReadmeFile>README.md</PackageReadmeFile>")
         lines.append("  </PropertyGroup>")
-        if name in plan["order"] and (ROOT / name / "README.md").is_file():
+        if (name in plan["order"] or name == plan.get("sample")) and (ROOT / name / "README.md").is_file():
             lines.append(f'  <ItemGroup Condition="\'$(MSBuildProjectName)\' == \'{xml_escape(name)}\'">')
             lines.append('    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="/" />')
             lines.append("  </ItemGroup>")
@@ -327,7 +330,8 @@ def pack(args: argparse.Namespace) -> None:
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
     dest = Path(args.directory)
     dest.mkdir(parents=True, exist_ok=True)
-    for name in plan["order"]:
+    targets = list(dict.fromkeys([*plan["order"], plan.get("sample", "Common")]))
+    for name in targets:
         cmd = ["dotnet", "pack", f"{name}/{name}.csproj", "-c", "Release",
                "--no-build", "--no-restore", "-o", str(dest.resolve())]
         print("+", " ".join(cmd), flush=True)
@@ -339,14 +343,16 @@ def read_archived_nuspec(path: Path) -> dict:
         specs = [n for n in z.namelist() if n.lower().endswith(".nuspec")]
         if len(specs) != 1:
             raise AssertionError(f"{path}: expected one nuspec, got {specs}")
-        return parse_nuspec(z.read(specs[0]), path.stem.rsplit(".", 3)[-3] if False else "")
+        return parse_nuspec(z.read(specs[0]), "")
 
 
 def verify(args: argparse.Namespace) -> None:
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
     out = Path(args.directory)
     failures = []
-    for name in plan["order"]:
+    targets = list(dict.fromkeys([*plan["order"], plan.get("sample", "Common")]))
+    all_projects = projects()
+    for name in targets:
         pkg_id = "Ecng." + name
         ver = plan["versions"][name]
         package = out / f"{pkg_id}.{ver}.nupkg"
@@ -365,7 +371,7 @@ def verify(args: argparse.Namespace) -> None:
                     actual = spec["metadata"][field]
                     if expected and actual != expected:
                         raise AssertionError(f"{pkg_id}: metadata {field} changed: {expected!r} -> {actual!r}")
-            for ref in projects()[name].refs:
+            for ref in all_projects[name].refs:
                 expected = plan["versions"][ref]
                 ranges = spec["dependencies"].get(("Ecng." + ref).lower(), [])
                 if not ranges or not all(range_has_floor(v, expected) for v in ranges):
