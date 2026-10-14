@@ -470,7 +470,7 @@ def push(args: argparse.Namespace) -> None:
     import os
     key = os.environ.get("NUGET_API_KEY")
     if not key:
-        raise RuntimeError("NUGET_API_KEY secret is missing; no packages pushed")
+        raise RuntimeError("NUGET_API_KEY is missing (NuGet Trusted Publishing login did not supply a temporary key); no packages pushed")
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
     verify(args)
     for name in plan["order"]:
