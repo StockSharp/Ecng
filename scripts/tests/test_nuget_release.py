@@ -148,6 +148,24 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(values["SymbolPackageFormat"], "snupkg")
             self.assertEqual(values["RepositoryCommit"], "f" * 40)
 
+    def test_roslyn_analyzer_symbol_layout_matches_analyzer_dll(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "Directory.Build.targets"
+            plan = {
+                "order": ["Analyzers"],
+                "versions": {"Analyzers": "1.0.4"},
+                "baseline": {"Analyzers": sample("1.0.3")},
+                "commit": "d" * 40,
+            }
+            release.write_targets(plan, output)
+            root = release.ET.parse(output).getroot()
+            group = root.find("PropertyGroup")
+            properties = {p.tag: p.text for p in group}
+            self.assertEqual(properties["IncludeBuildOutput"], "true")
+            self.assertEqual(properties["BuildOutputTargetFolder"], "analyzers/dotnet/cs")
+            self.assertTrue(any(item.tag == "None" and "Remove" in item.attrib
+                                for group in root.findall("ItemGroup") for item in group))
+
     def test_version_increment(self):
         self.assertEqual(release.next_version("1.0.274"), "1.0.275")
         self.assertEqual(release.next_version(None), "1.0.0")
