@@ -24,7 +24,7 @@ permissions:
 # are re-read from nuget.org and only missing dependents are selected.
 concurrency:
   group: ecng-nuget-release
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   planner-tests:
