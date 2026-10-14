@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import heapq
 import json
+import os
 import re
 import subprocess
 import sys
@@ -353,6 +354,45 @@ def make_plan(args: argparse.Namespace) -> None:
         print(f"  Ecng.{name} {plan['versions'][name]}")
 
 
+def preserve_legacy_owner(package: Path, owner: str) -> None:
+    """SDK pack cannot emit the deprecated nuspec owners field.
+
+    Old Ecng packages include it, so retain metadata parity without replacing
+    NuGet.org account ownership (which is controlled independently).
+    """
+    if not owner:
+        return
+    replacement = package.with_name(package.name + ".tmp")
+    try:
+        with zipfile.ZipFile(package, "r") as src, zipfile.ZipFile(replacement, "w") as dest:
+            if any(n.lower().endswith(".signature.p7s") for n in src.namelist()):
+                raise ValueError(f"Refusing to modify signed package: {package}")
+            for entry in src.infolist():
+                data = src.read(entry.filename)
+                if entry.filename.lower().endswith(".nuspec"):
+                    root = ET.fromstring(data)
+                    metadata = root.find("{*}metadata")
+                    if metadata is None:
+                        raise ValueError("Package nuspec has no metadata")
+                    authors = metadata.find("{*}authors")
+                    if authors is None:
+                        raise ValueError("Package nuspec has no authors")
+                    old = metadata.find("{*}owners")
+                    ns = metadata.tag.split("}")[0].lstrip("{") if "}" in metadata.tag else ""
+                    if ns:
+                        ET.register_namespace("", ns)
+                    if old is None:
+                        old = ET.Element(f"{{{ns}}}owners" if ns else "owners")
+                        metadata.insert(list(metadata).index(authors) + 1, old)
+                    old.text = owner
+                    data = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+                dest.writestr(entry, data)
+        os.replace(replacement, package)
+    finally:
+        if replacement.exists():
+            replacement.unlink()
+
+
 def pack(args: argparse.Namespace) -> None:
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
     dest = Path(args.directory)
@@ -363,6 +403,10 @@ def pack(args: argparse.Namespace) -> None:
                "--no-build", "--no-restore", "-o", str(dest.resolve())]
         print("+", " ".join(cmd), flush=True)
         subprocess.run(cmd, cwd=ROOT, check=True)
+        previous = plan["baseline"][name]
+        if previous:
+            preserve_legacy_owner(dest / f"Ecng.{name}.{plan['versions'][name]}.nupkg",
+                                  previous["metadata"].get("owners", ""))
 
 
 def read_archived_nuspec(path: Path) -> dict:
