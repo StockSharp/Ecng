@@ -109,6 +109,40 @@ public class SchemaMigratorSqlTests : BaseTestClass
 			$"Expected the FK constraint on DnsProvider.Picture, got: {sql}");
 	}
 
+	/// <summary>SQL Server must see a new column before compiling an index filtered by it.</summary>
+	[TestMethod]
+	[DataRow(true)]
+	[DataRow(false)]
+	public void NewForeignKeyColumn_FilteredIndexIsCompiledInALaterBatch(bool isNullable)
+	{
+		var (provider, file) = BuildSchemas();
+		var indexed = new Schema
+		{
+			TableName = provider.TableName,
+			EntityType = provider.EntityType,
+			Identity = provider.Identity,
+			Columns = [provider.Columns.Single() with
+			{
+				IsNullable = isNullable,
+				Indexes = [new(null, 0, true, "{Picture} IS NOT NULL")],
+			}],
+			Factory = provider.Factory,
+		};
+		var dialect = SqlServerDialect.Instance;
+		DbColumnInfo[] columns =
+		[
+			new(provider.TableName, "Id", "bigint", false, null, null, null),
+			new(file.TableName, "Id", "bigint", false, null, null, null),
+		];
+		var diffs = SchemaMigrator.Compare([indexed, file], columns, dialect, skipComputed: false, dbIndexes: []);
+		var sql = SchemaMigrator.GenerateMigrationSql(dialect, diffs, [indexed, file]);
+		var batches = Regex.Split(sql, @"(?im)^\s*GO\s*$");
+		var columnBatch = Array.FindIndex(batches, b => b.Contains("ADD [Picture]"));
+		var indexBatch = Array.FindIndex(batches, b => b.Contains("CREATE UNIQUE INDEX"));
+		IsTrue(columnBatch >= 0, sql);
+		IsTrue(indexBatch > columnBatch, sql);
+	}
+
 	private sealed class FkParent
 	{
 		public long Id { get; set; }

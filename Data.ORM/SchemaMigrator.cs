@@ -1268,6 +1268,10 @@ public static class SchemaMigrator
 						sb.AppendLine(";");
 					}
 
+					// SQL Server binds index filters against the schema at the start of a batch.
+					if (!dialect.BatchSeparator.IsEmpty())
+						sb.AppendLine(dialect.BatchSeparator);
+
 					// if the new column is a foreign key, append ALTER TABLE ADD CONSTRAINT
 					if (col.ReferencedEntityType is not null && dialect.SupportsAddForeignKeyViaAlter)
 					{
