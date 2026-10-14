@@ -279,6 +279,10 @@ def write_targets(plan: dict, path: Path) -> None:
             for nuspec_name, prop in METADATA.items():
                 if meta.get(nuspec_name):
                     lines.append(f"    <{prop}>{xml_escape(meta[nuspec_name])}</{prop}>")
+            # common.props already writes AssemblyCopyrightAttribute manually;
+            # passing Copyright to SDK pack must not create a duplicate attribute.
+            if meta.get("copyright"):
+                lines.append("    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>")
             repo_url = previous["repo_url"] if previous and previous["repo_url"] else REPO
             repo_type = previous["repo_type"] if previous and previous["repo_type"] else "git"
             lines += [
