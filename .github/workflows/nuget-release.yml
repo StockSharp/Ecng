@@ -38,10 +38,8 @@ jobs:
   build-pack-verify:
     name: Pack and validate against live NuGet metadata
     needs: planner-tests
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    environment: nuget
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,8 +79,21 @@ jobs:
             nuget-release-artifacts/*.snupkg
           if-no-files-found: error
 
-      - name: Publish packages and symbols in topological order
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+  publish:
+    name: Push packages and symbols to NuGet.org
+    needs: build-pack-verify
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    environment: nuget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: ecng-nuget-preview
+      - name: Validate archives again and publish in dependency order
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: python3 scripts/nuget-release.py push
