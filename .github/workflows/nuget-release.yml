@@ -1,0 +1,88 @@
+name: Ecng NuGet release
+
+on:
+  pull_request:
+    paths:
+      - "scripts/nuget-release.py"
+      - "scripts/tests/test_nuget_release.py"
+      - ".github/workflows/nuget-release.yml"
+      - "nuget-release.md"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish packages to nuget.org after build + verification?"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+# A failed/partially completed publish can be rerun; packages already published
+# are re-read from nuget.org and only missing dependents are selected.
+concurrency:
+  group: ecng-nuget-release
+  cancel-in-progress: false
+
+jobs:
+  planner-tests:
+    name: Planner regression tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test dependency closure and metadata generation
+        run: python3 -m unittest discover -s scripts/tests -p "test_nuget_release.py" -v
+
+  build-pack-verify:
+    name: Pack and validate against live NuGet metadata
+    needs: planner-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: nuget
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            10.0.x
+
+      - name: Plan releases from published nuspecs, Git changes and dependencies
+        run: python3 scripts/nuget-release.py plan
+
+      - name: Restore
+        run: dotnet restore Ecng.slnx
+
+      - name: Build
+        run: dotnet build Ecng.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure&TestCategory!=Integration"
+
+      - name: Pack only changed packages and their consumers
+        run: python3 scripts/nuget-release.py pack
+
+      - name: Check nuspec against published metadata, dependencies and portable PDBs
+        run: python3 scripts/nuget-release.py verify
+
+      - name: Upload packages for inspection (no publication required)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecng-nuget-preview
+          path: |
+            nuget-release-plan.json
+            nuget-release-artifacts/*.nupkg
+            nuget-release-artifacts/*.snupkg
+          if-no-files-found: error
+
+      - name: Publish packages and symbols in topological order
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: python3 scripts/nuget-release.py push
