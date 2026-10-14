@@ -104,7 +104,8 @@ def parse_nuspec(data: bytes, version: str) -> dict:
     for dep in meta.findall("./{*}dependencies/{*}dependency"):
         deps.setdefault(dep.attrib["id"].lower(), set()).add(dep.attrib.get("version", ""))
     return {
-        "version": version,
+        "id": value("id"),
+        "version": value("version") or version,
         "metadata": {name: value(name) for name in METADATA},
         "readme": value("readme"),
         "repo_url": repo.attrib.get("url", "") if repo is not None else "",
@@ -298,13 +299,35 @@ def write_targets(plan: dict, path: Path) -> None:
                 "    <EmbedUntrackedSources>true</EmbedUntrackedSources>",
                 f"    <PackageReleaseNotes>Built from {xml_escape(plan['commit'])}</PackageReleaseNotes>",
             ]
+            # Roslyn components manually pack DLLs into analyzers/dotnet/cs
+            # with IncludeBuildOutput=false. The SDK then has NO build-output
+            # symbols to put in the .snupkg (NU5017). Pack the managed output
+            # in the *same* analyzer path, removing the old duplicate None item.
+            project_file = (ROOT / name / f"{name}.csproj").read_text(encoding="utf-8-sig")
+            is_analyzer_package = (
+                "<IncludeBuildOutput>false</IncludeBuildOutput>" in project_file
+                and 'PackagePath="analyzers/dotnet/cs"' in project_file
+            )
+            if is_analyzer_package:
+                lines.append("    <IncludeBuildOutput>true</IncludeBuildOutput>")
+                lines.append("    <BuildOutputTargetFolder>analyzers/dotnet/cs</BuildOutputTargetFolder>")
             if (ROOT / name / "README.md").is_file():
                 lines.append("    <PackageReadmeFile>README.md</PackageReadmeFile>")
         lines.append("  </PropertyGroup>")
-        if (name in plan["order"] or name == plan.get("sample")) and (ROOT / name / "README.md").is_file():
-            lines.append(f'  <ItemGroup Condition="\'$(MSBuildProjectName)\' == \'{xml_escape(name)}\'">')
-            lines.append('    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="/" />')
-            lines.append("  </ItemGroup>")
+        if name in plan["order"] or name == plan.get("sample"):
+            project_file = (ROOT / name / f"{name}.csproj").read_text(encoding="utf-8-sig")
+            is_analyzer_package = (
+                "<IncludeBuildOutput>false</IncludeBuildOutput>" in project_file
+                and 'PackagePath="analyzers/dotnet/cs"' in project_file
+            )
+            has_readme = (ROOT / name / "README.md").is_file()
+            if has_readme or is_analyzer_package:
+                lines.append(f'  <ItemGroup Condition="\'$(MSBuildProjectName)\' == \'{xml_escape(name)}\'">')
+                if has_readme:
+                    lines.append('    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="/" />')
+                if is_analyzer_package:
+                    lines.append(r'    <None Remove="bin\$(Configuration)\netstandard2.0\$(AssemblyName).dll" />')
+                lines.append("  </ItemGroup>")
     lines.append("</Project>")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -365,6 +388,8 @@ def verify(args: argparse.Namespace) -> None:
             if not package.is_file() or not symbols.is_file():
                 raise AssertionError(f"{pkg_id}: missing .nupkg or .snupkg")
             spec = read_archived_nuspec(package)
+            if spec["id"].lower() != pkg_id.lower() or spec["version"] != ver:
+                raise AssertionError(f"{pkg_id}: packaged nuspec identity {spec['id']} {spec['version']} != {ver}")
             if spec["repo_url"].rstrip("/") != (plan["baseline"][name]["repo_url"] if plan["baseline"][name] and plan["baseline"][name]["repo_url"] else REPO).rstrip("/"):
                 raise AssertionError(f"{pkg_id}: repository URL changed")
             if spec["commit"] != plan["commit"]:
