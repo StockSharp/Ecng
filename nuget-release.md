@@ -9,9 +9,38 @@ independent replacement for the private Web Publisher for Ecng only.
 * Published GitHub releases: build, validate, push to nuget.org.
 * Manual workflow_dispatch: preview by default; opt in to publish.
 
-Configure the NUGET_API_KEY secret in the protected GitHub environment named
-nuget. Scope the NuGet.org key narrowly to Ecng package push permissions.
-No secrets are needed for pull request verification.
+## Trusted Publishing (OIDC, no long-lived API key)
+
+Ecng publishes through NuGet.org Trusted Publishing. No GitHub secret named
+NUGET_API_KEY is needed: NuGet/login@v1 exchanges the publishing job's GitHub
+OIDC token for a short-lived API key just before pushing packages.
+
+In the NuGet.org account that owns the existing Ecng packages (StockSharp),
+create a Trusted Publishing policy with:
+
+* Provider: GitHub Actions
+* NuGet.org policy owner / NuGet login user: StockSharp
+* Repository owner: StockSharp
+* Repository: Ecng
+* Workflow filename: nuget-release.yml (filename only, not the full path)
+* Environment: nuget
+* Scope: push new package versions for Ecng.*; also enable new packages if
+  you intend to publish previously nonexistent Ecng packages
+
+The policy owner must have rights to all packages being published. The NuGet
+package owner displayed for Ecng.Common is StockSharp.
+
+In GitHub StockSharp/Ecng > Settings > Environments, create an environment
+named nuget. Consider requiring manual approval for this environment before
+production pushes. If setting deployment-branch/tag restrictions, account for
+the fact that published GitHub releases run on refs/tags/... rather than master.
+
+On a published GitHub release or an explicitly opted-in manual dispatch, the
+publish job requests id-token: write; NuGet/login@v1 obtains a 1-hour key and
+passes it to the existing publishing script. Tests, previews and PR runs do
+not request a NuGet token or publish packages.
+
+Official docs: https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing
 
 ## Cascade
 
