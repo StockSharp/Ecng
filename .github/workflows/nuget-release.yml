@@ -96,11 +96,19 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: ecng-nuget-preview
+      - name: Verify NuGet.org username configuration
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::Set the repository Actions variable NUGET_USER to your personal NuGet.org username authorized by the Trusted Publishing policy."
+            exit 1
+          fi
       - name: Obtain short-lived NuGet.org key via Trusted Publishing
         uses: NuGet/login@v1
         id: login
         with:
-          user: StockSharp
+          user: ${{ vars.NUGET_USER }}
       - name: Validate archives again and publish in dependency order
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
