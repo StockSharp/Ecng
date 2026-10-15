@@ -5,7 +5,7 @@ on:
     paths:
       - "scripts/nuget-release.py"
       - "scripts/tests/test_nuget_release.py"
-      - ".github/workflows/nuget-release.yml"
+      - ".github/workflows/release.yml"
       - "nuget-release.md"
   release:
     types: [published]

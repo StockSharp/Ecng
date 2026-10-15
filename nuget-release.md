@@ -1,6 +1,6 @@
 # Ecng NuGet releases
 
-The GitHub Actions workflow at .github/workflows/nuget-release.yml is an
+The GitHub Actions workflow at .github/workflows/release.yml is an
 independent replacement for the private Web Publisher for Ecng only.
 
 ## Triggers
@@ -22,8 +22,12 @@ create a Trusted Publishing policy with:
 * NuGet.org package owner: StockSharp
 * Repository owner: StockSharp
 * Repository: Ecng
-* Workflow filename: nuget-release.yml (filename only, not the full path)
+* Workflow filename: release.yml (filename only, not the full path)
 * Environment: nuget
+
+**Important:** If the NuGet.org Trusted Publishing policy was previously configured
+for `nuget-release.yml`, change its workflow filename to `release.yml` before
+publishing. NuGet.org matches this filename exactly; otherwise OIDC login fails.
 * Scope: push new package versions for Ecng.*; also enable new packages if
   you intend to publish previously nonexistent Ecng packages
 
