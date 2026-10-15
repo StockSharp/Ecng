@@ -19,7 +19,7 @@ In the NuGet.org account that owns the existing Ecng packages (StockSharp),
 create a Trusted Publishing policy with:
 
 * Provider: GitHub Actions
-* NuGet.org policy owner / NuGet login user: StockSharp
+* NuGet.org package owner: StockSharp
 * Repository owner: StockSharp
 * Repository: Ecng
 * Workflow filename: nuget-release.yml (filename only, not the full path)
@@ -27,8 +27,15 @@ create a Trusted Publishing policy with:
 * Scope: push new package versions for Ecng.*; also enable new packages if
   you intend to publish previously nonexistent Ecng packages
 
-The policy owner must have rights to all packages being published. The NuGet
-package owner displayed for Ecng.Common is StockSharp.
+Create the policy while signed in as a personal NuGet.org user who can publish
+packages owned by StockSharp. On GitHub, set the repository Actions variable
+`NUGET_USER` (Settings > Secrets and variables > Actions > Variables) to that
+personal NuGet.org username, just as in StockSharp/Odysseus. Do not put the
+organization/package owner name here unless it is the actual NuGet login name.
+This is an ordinary Actions variable, not an API secret.
+
+The publishing user must have rights to all packages being published. The
+NuGet package owner displayed for Ecng.Common is StockSharp.
 
 In GitHub StockSharp/Ecng > Settings > Environments, create an environment
 named nuget. Consider requiring manual approval for this environment before
