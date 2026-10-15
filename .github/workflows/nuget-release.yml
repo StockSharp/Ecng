@@ -1,0 +1,115 @@
+name: Ecng NuGet release
+
+on:
+  pull_request:
+    paths:
+      - "scripts/nuget-release.py"
+      - "scripts/tests/test_nuget_release.py"
+      - ".github/workflows/nuget-release.yml"
+      - "nuget-release.md"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish packages to nuget.org after build + verification?"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+# A failed/partially completed publish can be rerun; packages already published
+# are re-read from nuget.org and only missing dependents are selected.
+concurrency:
+  group: ecng-nuget-release
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  planner-tests:
+    name: Planner regression tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test dependency closure and metadata generation
+        run: python3 -m unittest discover -s scripts/tests -p "test_nuget_release.py" -v
+
+  build-pack-verify:
+    name: Pack and validate against live NuGet metadata
+    needs: planner-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            6.0.x
+            10.0.x
+
+      - name: Plan releases from published nuspecs, Git changes and dependencies
+        run: python3 scripts/nuget-release.py plan
+
+      - name: Restore
+        run: dotnet restore Ecng.slnx
+
+      - name: Build
+        run: dotnet build Ecng.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Ecng.slnx --no-build --configuration Release --settings Tests/test.runsettings --filter "FullyQualifiedName!~Azure&TestCategory!=Integration"
+
+      - name: Pack only changed packages and their consumers
+        run: python3 scripts/nuget-release.py pack
+
+      - name: Check nuspec against published metadata, dependencies and portable PDBs
+        run: python3 scripts/nuget-release.py verify
+
+      - name: Upload packages for inspection (no publication required)
+        uses: actions/upload-artifact@v7
+        with:
+          name: ecng-nuget-preview
+          path: |
+            nuget-release-plan.json
+            nuget-release-artifacts/*.nupkg
+            nuget-release-artifacts/*.snupkg
+          if-no-files-found: error
+
+  publish:
+    name: Push packages and symbols to NuGet.org
+    permissions:
+      contents: read
+      id-token: write
+    needs: build-pack-verify
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    environment: nuget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v8
+        with:
+          name: ecng-nuget-preview
+      - name: Verify NuGet.org username configuration
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::Set the repository Actions variable NUGET_USER to your personal NuGet.org username authorized by the Trusted Publishing policy."
+            exit 1
+          fi
+      - name: Obtain short-lived NuGet.org key via Trusted Publishing
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - name: Validate archives again and publish in dependency order
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: python3 scripts/nuget-release.py push

@@ -192,3 +192,8 @@ AGENTS.md
 .tabnine*
 nul
 /_reviewResults
+
+# Generated only during NuGet release planning
+/Directory.Build.targets
+/nuget-release-plan.json
+/nuget-release-artifacts/
