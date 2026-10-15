@@ -15,36 +15,30 @@ Ecng publishes through NuGet.org Trusted Publishing. No GitHub secret named
 NUGET_API_KEY is needed: NuGet/login@v1 exchanges the publishing job's GitHub
 OIDC token for a short-lived API key just before pushing packages.
 
-In the NuGet.org account that owns the existing Ecng packages (StockSharp),
-create a Trusted Publishing policy with:
+In the personal NuGet.org account permitted to publish StockSharp's Ecng
+packages, create a Trusted Publishing policy with:
 
 * Provider: GitHub Actions
 * NuGet.org package owner: StockSharp
 * Repository owner: StockSharp
 * Repository: Ecng
 * Workflow filename: release.yml (filename only, not the full path)
-* Environment: nuget
-
-**Important:** If the NuGet.org Trusted Publishing policy was previously configured
-for `nuget-release.yml`, change its workflow filename to `release.yml` before
-publishing. NuGet.org matches this filename exactly; otherwise OIDC login fails.
+* Environment: **leave empty** (the workflow does not use a GitHub environment)
 * Scope: push new package versions for Ecng.*; also enable new packages if
   you intend to publish previously nonexistent Ecng packages
 
-Create the policy while signed in as a personal NuGet.org user who can publish
-packages owned by StockSharp. On GitHub, set the repository Actions variable
-`NUGET_USER` (Settings > Secrets and variables > Actions > Variables) to that
-personal NuGet.org username, just as in StockSharp/Odysseus. Do not put the
-organization/package owner name here unless it is the actual NuGet login name.
-This is an ordinary Actions variable, not an API secret.
+If you previously configured the policy for `nuget-release.yml` or the `nuget`
+environment, update the policy: set workflow filename to `release.yml` and
+clear its Environment field. NuGet.org matches the GitHub OIDC identity
+against these policy fields, so mismatches prevent authentication.
 
-The publishing user must have rights to all packages being published. The
-NuGet package owner displayed for Ecng.Common is StockSharp.
+On GitHub, set the repository Actions variable `NUGET_USER`
+(Settings > Secrets and variables > Actions > Variables) to the **personal**
+NuGet.org username authorized by that policy, as in StockSharp/Odysseus.
+Do not use the organization/package owner name unless it is also the user's
+actual login. This is an ordinary variable, not an API secret.
 
-In GitHub StockSharp/Ecng > Settings > Environments, create an environment
-named nuget. Consider requiring manual approval for this environment before
-production pushes. If setting deployment-branch/tag restrictions, account for
-the fact that published GitHub releases run on refs/tags/... rather than master.
+The publishing user must have rights to all Ecng packages being published.
 
 On a published GitHub release or an explicitly opted-in manual dispatch, the
 publish job requests id-token: write; NuGet/login@v1 obtains a 1-hour key and

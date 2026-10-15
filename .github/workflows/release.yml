@@ -86,7 +86,6 @@ jobs:
       id-token: write
     needs: build-pack-verify
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
-    environment: nuget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
