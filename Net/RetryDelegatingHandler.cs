@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 /// <summary>
 /// <see cref="DelegatingHandler"/> that retries transient HTTP failures with exponential
-/// backoff. Rate-limit / unavailable responses (429 / 503) are always retried; other 5xx
-/// responses are retried only for idempotent methods (GET / HEAD), as are network errors
-/// and timeouts.
+/// backoff and server Retry-After delays. By default, 429 / 503 responses and network
+/// failures are retried for all methods; other 5xx responses are retried only for GET / HEAD.
+/// Set <see cref="RetryOnlyReadMethods"/> to limit all retries to GET / HEAD.
 /// </summary>
 public class RetryDelegatingHandler : DelegatingHandler
 {
@@ -31,25 +31,36 @@ public class RetryDelegatingHandler : DelegatingHandler
 		_baseDelay = TimeSpan.FromMilliseconds(baseDelayMs);
 	}
 
+	/// <summary>
+	/// Gets or sets whether retries are limited to GET and HEAD requests.
+	/// </summary>
+	public bool RetryOnlyReadMethods { get; set; }
+
 	/// <inheritdoc />
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
 		var attempt = 0;
+		var canRetry = !RetryOnlyReadMethods || request.Method == HttpMethod.Get || request.Method == HttpMethod.Head;
 
 		while (true)
 		{
+			TimeSpan? retryAfter = null;
 			try
 			{
 				var response = await base.SendAsync(request, cancellationToken);
 
-				if (!ShouldRetry(request.Method, response.StatusCode) || attempt >= _maxRetries)
+				if (!canRetry || !ShouldRetry(request.Method, response.StatusCode) || attempt >= _maxRetries)
 					return response;
+
+				var header = response.Headers.RetryAfter;
+				retryAfter = header?.Delta ?? (header?.Date - DateTimeOffset.UtcNow);
+				response.Dispose();
 			}
-			catch (HttpRequestException) when (attempt < _maxRetries)
+			catch (HttpRequestException) when (canRetry && attempt < _maxRetries)
 			{
 				// Network error — retry.
 			}
-			catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested && attempt < _maxRetries)
+			catch (TaskCanceledException) when (canRetry && !cancellationToken.IsCancellationRequested && attempt < _maxRetries)
 			{
 				// Timeout (not caller cancellation) — retry.
 			}
@@ -57,6 +68,8 @@ public class RetryDelegatingHandler : DelegatingHandler
 			attempt++;
 
 			var delay = TimeSpan.FromMilliseconds(_baseDelay.TotalMilliseconds * Math.Pow(2, attempt - 1));
+			if (retryAfter > delay)
+				delay = retryAfter.Value;
 			await Task.Delay(delay, cancellationToken);
 		}
 	}

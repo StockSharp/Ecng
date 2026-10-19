@@ -78,6 +78,7 @@ public static class RestSharpHelper
 			{
 				UserAgent = $"{prod}/{ver}",
 				Authenticator = new AuthenticatorWrapper(),
+				ConfigureMessageHandler = handler => new RetryDelegatingHandler { InnerHandler = handler, RetryOnlyReadMethods = true },
 			});
 		});
 	}
