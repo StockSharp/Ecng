@@ -6,8 +6,20 @@ independent replacement for the private Web Publisher for Ecng only.
 ## Triggers
 
 * Pull requests: offline tests, dry-run packing and metadata validation.
+* Pushed `nuget-*` tags: build, validate, push to nuget.org.
 * Published GitHub releases: build, validate, push to nuget.org.
 * Manual workflow_dispatch: preview by default; opt in to publish.
+
+After pushing the workflow changes, tag the commit to publish and push that tag:
+
+```powershell
+git tag nuget-20261019-1
+git push origin nuget-20261019-1
+```
+
+Use a new tag name for each release. The tag marks the source commit; package
+versions are calculated independently by the release planner. Ordinary branch
+pushes and tag deletions do not publish packages.
 
 ## Trusted Publishing (OIDC, no long-lived API key)
 
@@ -40,10 +52,11 @@ actual login. This is an ordinary variable, not an API secret.
 
 The publishing user must have rights to all Ecng packages being published.
 
-On a published GitHub release or an explicitly opted-in manual dispatch, the
-publish job requests id-token: write; NuGet/login@v1 obtains a 1-hour key and
-passes it to the existing publishing script. Tests, previews and PR runs do
-not request a NuGet token or publish packages.
+On a pushed `nuget-*` tag, a published GitHub release, or an explicitly opted-in
+manual dispatch, the publish job requests id-token: write;
+NuGet/login@v1 obtains a 1-hour key and passes it to the existing publishing
+script. Tests, previews and PR runs do not request a NuGet token or publish
+packages.
 
 Official docs: https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing
 
