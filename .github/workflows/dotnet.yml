@@ -1,6 +1,7 @@
 name: .NET Tests
 
 on:
+  workflow_call:
   push:
     branches: [ master ]
   pull_request:
@@ -25,10 +26,10 @@ jobs:
             10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Ecng.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Ecng.slnx --no-restore --configuration Release
 
       - name: Run tests
         env:
@@ -75,7 +76,7 @@ jobs:
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -Q 'SELECT 1'"
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -b -Q 'SELECT 1'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -90,26 +91,18 @@ jobs:
             6.0.x
             10.0.x
 
-      - name: Wait for SQL Server and create test database
+      - name: Create SQL Server test database
+        env:
+          SQLSERVER_CONTAINER: ${{ job.services.sqlserver.id }}
         run: |
-          # Install sqlcmd
-          curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
-          echo "$(curl -sSL https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list)" | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
-          sudo apt-get update -qq
-          sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 > /dev/null 2>&1 || true
-
-          # Wait for SQL Server to be ready and create database
-          for i in $(seq 1 30); do
-            /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EcngTest_CI_2024!' -C -Q "CREATE DATABASE ecng_test" 2>/dev/null && echo "Database created" && break
-            echo "Waiting for SQL Server... ($i)"
-            sleep 2
-          done
+          docker exec "$SQLSERVER_CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P 'EcngTest_CI_2024!' -C -b -Q "CREATE DATABASE ecng_test"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Ecng.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Ecng.slnx --no-restore --configuration Release
 
       - name: Run database integration tests
         env:
@@ -139,10 +132,10 @@ jobs:
           sleep 3
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Ecng.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Ecng.slnx --no-restore --configuration Release
 
       - name: Run Azure test (Azurite)
         env:

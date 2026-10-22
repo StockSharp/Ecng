@@ -7,7 +7,8 @@ on:
   pull_request:
     paths:
       - "scripts/nuget-release.py"
-      - "scripts/tests/test_nuget_release.py"
+      - "scripts/tests/**"
+      - ".github/workflows/dotnet.yml"
       - ".github/workflows/release.yml"
       - "nuget-release.md"
   release:
@@ -30,17 +31,24 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  checks:
+    name: Required CI checks
+    uses: ./.github/workflows/dotnet.yml
+    secrets: inherit
+
   planner-tests:
-    name: Planner regression tests
+    name: Release regression tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Install workflow test dependencies
+        run: python3 -m pip install -r scripts/tests/requirements.txt
       - name: Test dependency closure and metadata generation
-        run: python3 -m unittest discover -s scripts/tests -p "test_nuget_release.py" -v
+        run: python3 -m unittest discover -s scripts/tests -p "test_*.py" -v
 
   build-pack-verify:
     name: Pack and validate against live NuGet metadata
-    needs: planner-tests
+    needs: [planner-tests, checks]
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -87,7 +95,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    needs: build-pack-verify
+    needs: [build-pack-verify, checks]
     if: >-
       github.event_name == 'release' ||
       (github.event_name == 'push' && !github.event.deleted && startsWith(github.ref, 'refs/tags/nuget-')) ||

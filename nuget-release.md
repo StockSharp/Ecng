@@ -21,6 +21,17 @@ Use a new tag name for each release. The tag marks the source commit; package
 versions are calculated independently by the release planner. Ordinary branch
 pushes and tag deletions do not publish packages.
 
+## Required checks
+
+Every release invokes `.github/workflows/dotnet.yml` as a reusable workflow
+from the same source commit. Its Linux, Windows and macOS tests, PostgreSQL and
+SQL Server integration tests, and Azure tests with Azurite must all succeed.
+Packing and publication depend on this workflow; failed, cancelled or skipped
+checks prevent publication for tags, GitHub releases and manual runs.
+
+The SQL Server service health check verifies readiness. Database setup runs
+the `sqlcmd` already installed inside that container, and SQL errors fail the job.
+
 ## Trusted Publishing (OIDC, no long-lived API key)
 
 Ecng publishes through NuGet.org Trusted Publishing. No GitHub secret named
@@ -92,12 +103,13 @@ The aim is metadata parity, not byte-identical packages.
 
 ## Local preview
 
-1. python3 -m unittest discover -s scripts/tests -p test_nuget_release.py -v
-2. python3 scripts/nuget-release.py plan
-3. dotnet restore Ecng.slnx
-4. dotnet build Ecng.slnx -c Release --no-restore
-5. python3 scripts/nuget-release.py pack
-6. python3 scripts/nuget-release.py verify
+1. python3 -m pip install -r scripts/tests/requirements.txt
+2. python3 -m unittest discover -s scripts/tests -p "test_*.py" -v
+3. python3 scripts/nuget-release.py plan
+4. dotnet restore Ecng.slnx
+5. dotnet build Ecng.slnx -c Release --no-restore
+6. python3 scripts/nuget-release.py pack
+7. python3 scripts/nuget-release.py verify
 
 Use the push command only for a deliberately approved production release.
 If a publish fails halfway through, rerun it after fixing the cause: NuGet
