@@ -8,12 +8,18 @@ using System.Threading.Tasks;
 
 /// <summary>
 /// <see cref="DelegatingHandler"/> that retries transient HTTP failures with exponential
-/// backoff and server Retry-After delays. By default, 429 / 503 responses and network
+/// backoff and server Retry-After delays shared with other clients. By default, 429 / 503 responses and network
 /// failures are retried for all methods; other 5xx responses are retried only for GET / HEAD.
 /// Set <see cref="RetryOnlyReadMethods"/> to limit all retries to GET / HEAD.
 /// </summary>
-public class RetryDelegatingHandler : DelegatingHandler
+public class RetryDelegatingHandler : HttpRateLimitHandler
 {
+	/// <summary>
+	/// Request option that can disable automatic replay, for example for expiring signed requests.
+	/// Server pauses are still recorded and enforced when this option is false.
+	/// </summary>
+	public static readonly HttpRequestOptionsKey<bool> IsRetryAllowed = new("Ecng.Net.RetryAllowed");
+
 	private readonly int _maxRetries;
 	private readonly TimeSpan _baseDelay;
 
@@ -21,11 +27,14 @@ public class RetryDelegatingHandler : DelegatingHandler
 	/// Initializes a new instance of the <see cref="RetryDelegatingHandler"/> class.
 	/// </summary>
 	/// <param name="maxRetries">Maximum number of retries after the first attempt.</param>
-	/// <param name="baseDelayMs">Base backoff delay in milliseconds (doubled each attempt).</param>
+	/// <param name="baseDelayMs">Non-negative base backoff delay in milliseconds (doubled each attempt).</param>
+	/// <exception cref="ArgumentOutOfRangeException">A retry count or delay is negative.</exception>
 	public RetryDelegatingHandler(int maxRetries = 3, int baseDelayMs = 500)
 	{
 		if (maxRetries < 0)
 			throw new ArgumentOutOfRangeException(nameof(maxRetries), maxRetries, "Invalid value.");
+		if (baseDelayMs < 0)
+			throw new ArgumentOutOfRangeException(nameof(baseDelayMs), baseDelayMs, "Invalid value.");
 
 		_maxRetries = maxRetries;
 		_baseDelay = TimeSpan.FromMilliseconds(baseDelayMs);
@@ -40,11 +49,11 @@ public class RetryDelegatingHandler : DelegatingHandler
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
 		var attempt = 0;
-		var canRetry = !RetryOnlyReadMethods || request.Method == HttpMethod.Get || request.Method == HttpMethod.Head;
+		var canRetry = (!request.Options.TryGetValue(IsRetryAllowed, out var isAllowed) || isAllowed) &&
+			(!RetryOnlyReadMethods || request.Method == HttpMethod.Get || request.Method == HttpMethod.Head);
 
 		while (true)
 		{
-			TimeSpan? retryAfter = null;
 			try
 			{
 				var response = await base.SendAsync(request, cancellationToken);
@@ -52,8 +61,6 @@ public class RetryDelegatingHandler : DelegatingHandler
 				if (!canRetry || !ShouldRetry(request.Method, response.StatusCode) || attempt >= _maxRetries)
 					return response;
 
-				var header = response.Headers.RetryAfter;
-				retryAfter = header?.Delta ?? (header?.Date - DateTimeOffset.UtcNow);
 				response.Dispose();
 			}
 			catch (HttpRequestException) when (canRetry && attempt < _maxRetries)
@@ -68,8 +75,6 @@ public class RetryDelegatingHandler : DelegatingHandler
 			attempt++;
 
 			var delay = TimeSpan.FromMilliseconds(_baseDelay.TotalMilliseconds * Math.Pow(2, attempt - 1));
-			if (retryAfter > delay)
-				delay = retryAfter.Value;
 			await Task.Delay(delay, cancellationToken);
 		}
 	}

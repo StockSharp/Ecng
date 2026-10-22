@@ -250,6 +250,8 @@ Args:
 {3}", [request.Method, url, formatHeaders(request.Parameters), formatParams(request.Parameters)]);
 		}
 
+		await HttpRateLimitHandler.WaitAsync(url, token).NoWait();
+
 		var client = GetClient(caller);
 		using var _ = ((AuthenticatorWrapper)client.Options.Authenticator).RegisterRequest(request, auth);
 
@@ -261,6 +263,8 @@ Args:
 		// https://restsharp.dev/usage/exceptions.html
 		if(response.ResponseStatus != ResponseStatus.Completed)
 		{
+			token.ThrowIfCancellationRequested();
+
 			if (logVerbose is not null)
 				logVerbose("failed to complete request: status={0}, msg={1}, err={2}", [response.ResponseStatus, response.ErrorMessage, response.ErrorException]);
 
