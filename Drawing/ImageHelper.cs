@@ -110,7 +110,7 @@ public static class ImageHelper
 	/// The picture as it came, if it fits already. Otherwise the picture in the format it came in: PNG,
 	/// baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing and
 	/// loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
-	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// profile of a JPEG, a PNG or a WebP stays with the picture if it is one for RGB; other metadata does not.
 	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
@@ -224,8 +224,8 @@ public static class ImageHelper
 	/// <param name="data">A PNG, JPEG, BMP, GIF, WebP, ICO, TIFF or AVIF picture.</param>
 	/// <returns>
 	/// An RGBA8 PNG. A GIF becomes an animated PNG with all its frames, delays and as many plays; a PNG
-	/// that is animated already is checked and returned as it is. The ICC profile of a JPEG or a PNG
-	/// stays with the picture if it is one for RGB.
+	/// that is animated already is checked and returned as it is. The ICC profile of a JPEG, a PNG or a
+	/// WebP stays with the picture if it is one for RGB.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
 	/// <exception cref="NotSupportedException">The format, or a feature of it the picture uses, is not supported.</exception>
@@ -251,7 +251,7 @@ public static class ImageHelper
 			return (byte[])data.Clone();
 		}
 		if (WebpCodec.IsWebp(data) && WebpCodec.Open(data, limits) is { } animation)
-			return ApngEncoder.Encode(animation, []);
+			return ApngEncoder.Encode(animation, ColorChunks(data));
 		return PngCodec.Encode(Decode(data, limits), ColorChunks(data));
 	}
 
@@ -285,7 +285,7 @@ public static class ImageHelper
 	/// The picture as it came, if nothing is drawn on it. Otherwise the picture in the format it came in:
 	/// PNG, baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing
 	/// and loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
-	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// profile of a JPEG, a PNG or a WebP stays with the picture if it is one for RGB; other metadata does not.
 	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
@@ -332,7 +332,7 @@ public static class ImageHelper
 	/// The picture as it came, if nothing is drawn on it. Otherwise the picture in the format it came in:
 	/// PNG, baseline JPEG, 32-bit BMP, ICO, WebP, or all frames of an animated GIF or PNG with its timing
 	/// and loop count. A JPEG that had an Exif orientation is then turned upright and has none. The ICC
-	/// profile of a JPEG or a PNG stays with the picture if it is one for RGB; other metadata does not.
+	/// profile of a JPEG, a PNG or a WebP stays with the picture if it is one for RGB; other metadata does not.
 	/// Modified TIFF and AVIF inputs are written as PNG.
 	/// </returns>
 	/// <exception cref="ArgumentNullException"><paramref name="data"/> or <paramref name="font"/> is <see langword="null"/>.</exception>
@@ -605,7 +605,7 @@ public static class ImageHelper
 			ImageFormats.Jpeg => JpegEncoder.Encode(image, jpegQuality, JpegCodec.IsJpeg(source) ? JpegSegments.ReadProfile(source) : []),
 			ImageFormats.Bmp => BmpCodec.Encode(image),
 			ImageFormats.Icon => IconCodec.Encode(image),
-			ImageFormats.Webp => WebpEncoder.Encode(image, webpOptions),
+			ImageFormats.Webp => WebpEncoder.Encode(image, webpOptions, Profile(source)),
 			ImageFormats.Gif => GifCodec.Encode(new(image.Width, image.Height, 1, 1, [new(image, 0, 100)])),
 			_ => PngCodec.Encode(image, ColorChunks(source)),
 		};
@@ -618,7 +618,7 @@ public static class ImageHelper
 	{
 		var format = outputFormat ?? DefaultOutput(source);
 		if (format == ImageFormats.Gif) return GifCodec.Encode(animation);
-		if (format == ImageFormats.Webp) return WebpEncoder.Encode(animation, webpOptions);
+		if (format == ImageFormats.Webp) return WebpEncoder.Encode(animation, webpOptions, Profile(source));
 		if (format == ImageFormats.Png) return ApngEncoder.Encode(animation, ColorChunks(source));
 		if (animation.FrameCount != 1) throw new NotSupportedException("The output format cannot retain animation frames.");
 		foreach (var frame in animation.Frames) return Encode(source, frame.Image, jpegQuality, format, webpOptions);
@@ -644,8 +644,13 @@ public static class ImageHelper
 
 	// What a PNG made of a picture says of its colors: what the picture says of them itself.
 	private static byte[] ColorChunks(byte[] source)
-		=> PngCodec.IsPng(source) ? PngCodec.ReadColorChunks(source) :
-			JpegCodec.IsJpeg(source) ? PngCodec.ProfileChunk(JpegSegments.ReadProfile(source)) : [];
+		=> PngCodec.IsPng(source) ? PngCodec.ReadColorChunks(source) : PngCodec.ProfileChunk(Profile(source));
+
+	// The ICC profile of a picture, if it has one for RGB; empty otherwise.
+	private static byte[] Profile(byte[] source)
+		=> PngCodec.IsPng(source) ? PngCodec.ReadProfile(source) :
+			JpegCodec.IsJpeg(source) ? JpegSegments.ReadProfile(source) :
+			WebpCodec.IsWebp(source) ? WebpCodec.ReadProfile(source) : [];
 
 	// Frames are decoded as they are asked for: asking for all of them is what proves the file sound.
 	private static void Validate(Animation animation)

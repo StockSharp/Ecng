@@ -23,6 +23,11 @@ public class ColorProfileTests : BaseTestClass
 	// The largest profile that is carried over.
 	private const int _limit = 4 * 1024 * 1024;
 
+	// The flags of the extended header of a WebP that say it has a profile, alpha, an animation.
+	private const byte _profileFlag = 0x20;
+	private const byte _alphaFlag = 0x10;
+	private const byte _animationFlag = 0x02;
+
 	// 16x16 baseline JPEG files written by libjpeg-turbo: three components, one, and four.
 	private static readonly byte[] _rgbJpeg = Convert.FromBase64String(
 		"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAQABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwBPD8Oo6Hq+ua/qd7GbyMmGyto32pEVXb8uOygqgx32e9M06PUfDPhK/wBdvrpJNVv28q3hLcknJZuc4HzcZ6B1/u1T8OaDp3iLxXc6nf6nINBsYyVJbb5xXkY/3mYnPYFD2q1Y6Lp/iCLWdX1S8I0/TixSL7oJIzt9hg8jsGf+7XRiKjq1ZTrXb93mfLrrqoLra/S9ktEtOY3qXhNpqyXteb972+GC9Vv/AJaH/9k=");
@@ -345,8 +350,198 @@ public class ColorProfileTests : BaseTestClass
 		Tags(CreatePng(8, 8, new byte[8 * 8 * 4]).ResizeImage(4, 4)).AssertEqual(["IHDR", "IDAT", "IEND"]);
 	}
 
-	// A profile as far as the library looks into one: a header with the length of the profile, the color
-	// space of the samples it is for and its signature.
+	[TestMethod]
+	[DataRow(WebpCompressionModes.Lossless, false)]
+	[DataRow(WebpCompressionModes.Lossless, true)]
+	[DataRow(WebpCompressionModes.Lossy, false)]
+	[DataRow(WebpCompressionModes.Lossy, true)]
+	public void Png_ProfileGoesIntoTheWebpMadeOfIt(WebpCompressionModes mode, bool isTransparent)
+	{
+		// Of an odd length: the chunk that holds it is padded.
+		var profile = Profile("RGB ", 3001);
+		var plain = CreatePng(24, 16, Rgba(24, 16, (x, y) => ((byte)(x * 10), (byte)(y * 15), 90, (byte)(isTransparent ? 40 + x * 9 : 255))));
+		var options = new WebpEncodingOptions(mode, 80);
+
+		var webp = WithChunks(plain, ("iCCP", ProfileChunk("Display P3", profile))).ResizeImage(12, 8, ImageFormats.Webp, options);
+
+		// The header that announces the profile, the profile, and then the samples: those of the same picture
+		// without a profile.
+		string[] samples = mode == WebpCompressionModes.Lossless ? ["VP8L"] : isTransparent ? ["ALPH", "VP8 "] : ["VP8 "];
+		var chunks = ReadWebpChunks(webp);
+
+		chunks.Select(chunk => chunk.tag).ToArray().AssertEqual(["VP8X", "ICCP", .. samples]);
+		ReadExtendedHeader(chunks[0].data).AssertEqual(((byte)(_profileFlag | (isTransparent ? _alphaFlag : 0)), 12, 8));
+		chunks[1].data.AssertEqual(profile);
+		chunks.Skip(2).Select(chunk => chunk.data).AssertEqual(ReadWebpChunks(plain.ResizeImage(12, 8, ImageFormats.Webp, options))
+			.Where(chunk => samples.Contains(chunk.tag)).Select(chunk => chunk.data));
+
+		// The library reads it back: the PNG made of the WebP has it.
+		ReadPngProfile(webp.ConvertToPng()).AssertEqual(profile);
+	}
+
+	[TestMethod]
+	public void Jpeg_ProfileGoesIntoTheWebpMadeOfIt()
+	{
+		var profile = Profile("RGB ", 150_000);
+		var jpeg = WithProfile(_rgbJpeg, profile);
+
+		foreach (var mode in new[] { WebpCompressionModes.Lossless, WebpCompressionModes.Lossy })
+			ReadWebpProfile(jpeg.ResizeImage(8, 8, ImageFormats.Webp, new WebpEncodingOptions(mode, 80))).AssertEqual(profile, mode.ToString());
+	}
+
+	[TestMethod]
+	[DataRow(WebpCompressionModes.Lossless)]
+	[DataRow(WebpCompressionModes.Lossy)]
+	public void AnimatedPng_ProfileGoesIntoTheWebpMadeOfIt(WebpCompressionModes mode)
+	{
+		var profile = Profile("RGB ", 600);
+		var apng = WithChunks(TwoFrames().ConvertToPng(), ("iCCP", ProfileChunk("Display", profile)));
+
+		var webp = apng.ResizeImage(4, 4, ImageFormats.Webp, new WebpEncodingOptions(mode, 80));
+
+		// The profile is said before the animation is.
+		var chunks = ReadWebpChunks(webp);
+
+		chunks.Select(chunk => chunk.tag).ToArray().AssertEqual(["VP8X", "ICCP", "ANIM", "ANMF", "ANMF"]);
+		ReadExtendedHeader(chunks[0].data).AssertEqual(((byte)(_profileFlag | _alphaFlag | _animationFlag), 4, 4));
+		chunks[1].data.AssertEqual(profile);
+		webp.GetAnimationLoopCount().AssertEqual(apng.GetAnimationLoopCount());
+
+		// The animation keeps it when it is made smaller, and the pictures made of it have it.
+		ReadWebpProfile(webp.ResizeImage(2, 2)).AssertEqual(profile);
+		ReadPngProfile(webp.ConvertToPng()).AssertEqual(profile);
+
+		foreach (var (png, _) in webp.GetAnimationFrames())
+			ReadPngProfile(png).AssertEqual(profile);
+	}
+
+	[TestMethod]
+	public void Webp_KeepsItsProfileWhenItIsMadeSmallerOrMarked()
+	{
+		var profile = Profile("RGB ", 600);
+		var webp = WithChunks(CreatePng(64, 48, BlackRgba(64, 48)), ("iCCP", ProfileChunk("Display", profile))).ResizeImage(64, 48, ImageFormats.Webp);
+		var font = new TestFont().MapLetterI().Build();
+
+		var marked = webp.AddTextWatermark("I", font, fontSize: 18, opacity: 255, margin: 8);
+		marked.SequenceEqual(webp).AssertFalse("the text is not drawn");
+
+		ReadWebpProfile(marked).AssertEqual(profile);
+		ReadWebpProfile(webp.ResizeImage(32, 24)).AssertEqual(profile);
+		ReadWebpProfile(webp.ResizeImage(64, 48, ImageFormats.Webp, new WebpEncodingOptions(WebpCompressionModes.Lossy, 75))).AssertEqual(profile);
+		ReadPngProfile(webp.ConvertToPng()).AssertEqual(profile);
+	}
+
+	[TestMethod]
+	public void WebpProfile_IsTakenIfItsHeaderAnnouncesItAndItIsForRgb()
+	{
+		var rgb = Profile("RGB ", 600);
+		var gray = Profile("GRAY", 600);
+		var samples = ReadWebpChunks(CreatePng(8, 8, BlackRgba(8, 8)).ResizeImage(8, 8, ImageFormats.Webp)).Single();
+		samples.tag.AssertEqual("VP8L");
+
+		byte[] WebpWith(byte flags, params byte[][] profiles)
+			=> WriteWebpChunks([("VP8X", ExtendedHeader(flags, 8, 8)), .. profiles.Select(profile => ("ICCP", profile)), samples]);
+
+		ReadPngProfile(WebpWith(_profileFlag, rgb).ConvertToPng()).AssertEqual(rgb);
+		ReadWebpProfile(WebpWith(_profileFlag, rgb).ResizeImage(4, 4)).AssertEqual(rgb);
+
+		// A reader goes by the header: a browser shows a picture whose header does not announce the profile
+		// as if it had none.
+		ReadPngProfile(WebpWith(0, rgb).ConvertToPng()).AssertNull();
+		ReadWebpProfile(WebpWith(0, rgb).ResizeImage(4, 4)).AssertNull();
+
+		// A file is to have one; the first is the one that counts, and it is to be for RGB.
+		ReadPngProfile(WebpWith(_profileFlag, gray).ConvertToPng()).AssertNull();
+		ReadWebpProfile(WebpWith(_profileFlag, gray).ResizeImage(4, 4)).AssertNull();
+		ReadPngProfile(WebpWith(_profileFlag, gray, rgb).ConvertToPng()).AssertNull();
+		ReadPngProfile(WebpWith(_profileFlag, rgb, gray).ConvertToPng()).AssertEqual(rgb);
+	}
+
+	[TestMethod]
+	public void PictureWithoutAProfile_GetsAWebpWithoutOne()
+	{
+		var lossy = new WebpEncodingOptions(WebpCompressionModes.Lossy, 80);
+		var opaque = CreatePng(16, 12, Rgba(16, 12, (x, y) => ((byte)(x * 16), (byte)(y * 20), 70, 255)));
+		var transparent = CreatePng(16, 12, Rgba(16, 12, (x, y) => ((byte)(x * 16), (byte)(y * 20), 70, (byte)(x * 16))));
+
+		// With nothing to announce a picture is written in the simple format - a lossless one has its alpha in
+		// its samples - and the extended header is there for the alpha of a lossy one and for an animation.
+		WebpTags(opaque.ResizeImage(16, 12, ImageFormats.Webp)).AssertEqual(["VP8L"]);
+		WebpTags(transparent.ResizeImage(16, 12, ImageFormats.Webp)).AssertEqual(["VP8L"]);
+		WebpTags(opaque.ResizeImage(16, 12, ImageFormats.Webp, lossy)).AssertEqual(["VP8 "]);
+
+		var chunks = ReadWebpChunks(transparent.ResizeImage(16, 12, ImageFormats.Webp, lossy));
+		chunks.Select(chunk => chunk.tag).ToArray().AssertEqual(["VP8X", "ALPH", "VP8 "]);
+		ReadExtendedHeader(chunks[0].data).AssertEqual((_alphaFlag, 16, 12));
+
+		chunks = ReadWebpChunks(TwoFrames().ResizeImage(8, 8, ImageFormats.Webp));
+		chunks.Select(chunk => chunk.tag).ToArray().AssertEqual(["VP8X", "ANIM", "ANMF", "ANMF"]);
+		ReadExtendedHeader(chunks[0].data).AssertEqual(((byte)(_alphaFlag | _animationFlag), 8, 8));
+
+		// What says something of the colors and is not carried leaves no trace: the WebP is the one of the
+		// picture without it.
+		(string tag, byte[] data)[] uncarried =
+		[
+			("iCCP", ProfileChunk("Gray", Profile("GRAY", 600))),
+			("iCCP", ProfileChunk("Broken", Profile("RGB ", 127))),
+			("sRGB", [1]),
+			("gAMA", [0, 0, 0xB1, 0x8F]),
+		];
+
+		foreach (var chunk in uncarried)
+			WithChunks(transparent, chunk).ResizeImage(16, 12, ImageFormats.Webp, lossy).AssertEqual(transparent.ResizeImage(16, 12, ImageFormats.Webp, lossy), chunk.tag);
+
+		WithProfile(_cmykJpeg, Profile("CMYK", 3000)).ResizeImage(16, 16, ImageFormats.Webp).AssertEqual(_cmykJpeg.ResizeImage(16, 16, ImageFormats.Webp));
+		ReadWebpProfile(_rgbJpeg.ResizeImage(16, 16, ImageFormats.Webp)).AssertNull();
+	}
+
+#if NET10_0
+	[TestMethod]
+	[TestCategory("Integration")]
+	[DataRow(WebpCompressionModes.Lossless, false)]
+	[DataRow(WebpCompressionModes.Lossless, true)]
+	[DataRow(WebpCompressionModes.Lossy, false)]
+	[DataRow(WebpCompressionModes.Lossy, true)]
+	public void WebpProfile_IsReadByAnIndependentDecoder(WebpCompressionModes mode, bool isTransparent)
+	{
+		using var reference = new ImageSharpCodecReference(TestContext);
+
+		// A profile is a whole number of four-byte words long, so its chunk is not padded: ImageSharp reads the
+		// padding of an odd chunk as a part of the profile.
+		var profile = Profile("RGB ", 3144);
+		var plain = CreatePng(24, 16, Rgba(24, 16, (x, y) => ((byte)(x * 10), (byte)(y * 15), 90, (byte)(isTransparent ? 40 + x * 9 : 255))));
+		var options = new WebpEncodingOptions(mode, 80);
+
+		var webp = WithChunks(plain, ("iCCP", ProfileChunk("Display P3", profile))).ResizeImage(24, 16, ImageFormats.Webp, options);
+
+		reference.ReadProfile(webp).AssertEqual(profile);
+
+		// The profile changes nothing in the picture it decodes: that of the same picture without a profile.
+		var pixels = reference.Decode(webp, out var size);
+		size.AssertEqual(new Size(24, 16));
+		AssertPixels(reference.Decode(plain.ResizeImage(24, 16, ImageFormats.Webp, options), out _), pixels, 24);
+	}
+
+	[TestMethod]
+	[TestCategory("Integration")]
+	[DataRow(WebpCompressionModes.Lossless)]
+	[DataRow(WebpCompressionModes.Lossy)]
+	public void AnimationWithAProfile_IsDecodedByAnIndependentDecoder(WebpCompressionModes mode)
+	{
+		using var reference = new ImageSharpCodecReference(TestContext);
+		var plain = TwoFrames().ConvertToPng();
+		var options = new WebpEncodingOptions(mode, 80);
+
+		var webp = WithChunks(plain, ("iCCP", ProfileChunk("Display P3", Profile("RGB ", 3144)))).ResizeImage(8, 8, ImageFormats.Webp, options);
+
+		// ImageSharp keeps no profile of an animation: it drops what it reads before the ANIM chunk, and the
+		// container has the profile there. The frames it decodes are those of the animation without a profile.
+		reference.DecodeFrames(webp).AssertEqual(reference.DecodeFrames(plain.ResizeImage(8, 8, ImageFormats.Webp, options)));
+	}
+#endif
+
+	// A profile as far as a reader looks into one: a header with the length of the profile, the color space of
+	// the samples it is for and the one it connects them to, its signature and its rendering intent.
 	private static byte[] Profile(string space, int length)
 	{
 		var profile = new byte[length];
@@ -358,11 +553,58 @@ public class ColorProfileTests : BaseTestClass
 		{
 			BinaryPrimitives.WriteInt32BigEndian(profile, length);
 			Encoding.ASCII.GetBytes(space).CopyTo(profile, 16);
+			"XYZ "u8.CopyTo(profile.AsSpan(20));
 			"acsp"u8.CopyTo(profile.AsSpan(36));
 		}
 
+		if (length >= 68)
+			BinaryPrimitives.WriteInt32BigEndian(profile.AsSpan(64), 0);
+
 		return profile;
 	}
+
+	// Two frames of 8x8 that play three times.
+	private static byte[] TwoFrames()
+		=> new GifBuilder(8, 8, GifBuilder.GrayPalette(4)).Loop(2)
+			.Frame(0, 0, 8, 8, Enumerable.Repeat((byte)1, 64).ToArray(), delay: 5)
+			.Frame(0, 0, 8, 8, Enumerable.Repeat((byte)2, 64).ToArray(), delay: 5)
+			.Build();
+
+	// The ten bytes of a VP8X chunk: the flags, three reserved bytes, the canvas less one in 24 bits each.
+	private static byte[] ExtendedHeader(byte flags, int width, int height)
+		=> [flags, 0, 0, 0, (byte)(width - 1), (byte)((width - 1) >> 8), (byte)((width - 1) >> 16), (byte)(height - 1), (byte)((height - 1) >> 8), (byte)((height - 1) >> 16)];
+
+	private static (byte flags, int width, int height) ReadExtendedHeader(byte[] header)
+	{
+		header.Length.AssertEqual(10, "VP8X length");
+		(header[1] | header[2] | header[3]).AssertEqual(0, "VP8X reserved bytes");
+		return (header[0], (header[4] | header[5] << 8 | header[6] << 16) + 1, (header[7] | header[8] << 8 | header[9] << 16) + 1);
+	}
+
+	// The profile a WebP holds, checked to be where the container has it - right after the header that
+	// announces it; null if it holds none.
+	private static byte[] ReadWebpProfile(byte[] webp)
+	{
+		var chunks = ReadWebpChunks(webp);
+		var count = chunks.Count(chunk => chunk.tag == "ICCP");
+		var isAnnounced = chunks[0].tag == "VP8X" && (ReadExtendedHeader(chunks[0].data).flags & _profileFlag) != 0;
+
+		isAnnounced.AssertEqual(count != 0, "the profile flag of the header");
+
+		if (count == 0)
+			return null;
+
+		count.AssertEqual(1, "profiles");
+		chunks[1].tag.AssertEqual("ICCP", "the chunk after the header");
+		return chunks[1].data;
+	}
+
+	// The profile of a PNG, unpacked from its iCCP chunk; null if it has none.
+	private static byte[] ReadPngProfile(byte[] png)
+		=> ReadChunks(png).Where(chunk => chunk.tag == "iCCP").Select(chunk => ReadProfileChunk(chunk.data).profile).SingleOrDefault();
+
+	private static string[] WebpTags(byte[] webp)
+		=> [.. ReadWebpChunks(webp).Select(chunk => chunk.tag)];
 
 	// One APP2 segment of a profile: its signature, its number, the number of parts, the part.
 	private static byte[] ProfilePart(byte[] profile, int number, int count, int size)

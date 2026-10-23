@@ -536,6 +536,63 @@ internal static class ImageTestHelper
 	}
 
 	/// <summary>
+	/// Splits a WebP file into its chunks, checking the RIFF header and that a chunk of an odd length is
+	/// followed by a zero byte of padding.
+	/// </summary>
+	public static (string tag, byte[] data)[] ReadWebpChunks(byte[] webp)
+	{
+		(webp.Length >= 12 && webp.AsSpan(0, 4).SequenceEqual("RIFF"u8) && webp.AsSpan(8, 4).SequenceEqual("WEBP"u8)).AssertTrue("WebP signature");
+		BinaryPrimitives.ReadUInt32LittleEndian(webp.AsSpan(4)).AssertEqual((uint)webp.Length - 8, "RIFF size");
+
+		var chunks = new List<(string tag, byte[] data)>();
+
+		for (var at = 12; at < webp.Length;)
+		{
+			(webp.Length - at >= 8).AssertTrue($"WebP chunk header at {at}");
+
+			var length = BinaryPrimitives.ReadUInt32LittleEndian(webp.AsSpan(at + 4));
+			(length <= webp.Length - at - 8).AssertTrue($"WebP chunk length at {at}");
+
+			chunks.Add((Encoding.ASCII.GetString(webp, at, 4), webp.AsSpan(at + 8, (int)length).ToArray()));
+			at += 8 + (int)length;
+
+			if (length % 2 == 1)
+			{
+				(at < webp.Length && webp[at] == 0).AssertTrue($"WebP chunk padding at {at}");
+				at++;
+			}
+		}
+
+		return [.. chunks];
+	}
+
+	/// <summary>
+	/// Assembles a WebP file from chunks, padding a chunk of an odd length.
+	/// </summary>
+	public static byte[] WriteWebpChunks(IEnumerable<(string tag, byte[] data)> chunks)
+	{
+		using var output = new MemoryStream();
+		output.Write("RIFF\0\0\0\0WEBP"u8);
+
+		var number = new byte[4];
+
+		foreach (var (tag, data) in chunks)
+		{
+			output.Write(Encoding.ASCII.GetBytes(tag));
+			BinaryPrimitives.WriteInt32LittleEndian(number, data.Length);
+			output.Write(number);
+			output.Write(data);
+
+			if (data.Length % 2 == 1)
+				output.WriteByte(0);
+		}
+
+		var webp = output.ToArray();
+		BinaryPrimitives.WriteInt32LittleEndian(webp.AsSpan(4), webp.Length - 8);
+		return webp;
+	}
+
+	/// <summary>
 	/// Builds an APP1 payload holding an Exif block with nothing but the orientation tag.
 	/// </summary>
 	public static byte[] ExifOrientation(ushort orientation, bool bigEndian = true)

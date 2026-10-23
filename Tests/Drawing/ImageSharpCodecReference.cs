@@ -115,6 +115,16 @@ internal sealed class ImageSharpCodecReference : IDisposable
 		return frames.Cast<object>().Count();
 	}
 
+	// The ICC profile the decoder takes from the file, or null if it takes none.
+	public byte[] ReadProfile(byte[] data)
+	{
+		using var stream = new MemoryStream(data, false);
+		var info = _identify(stream);
+		var metadata = info.GetType().GetProperty("Metadata").GetValue(info);
+		var profile = metadata.GetType().GetProperty("IccProfile").GetValue(metadata);
+		return (byte[])profile?.GetType().GetMethod("ToByteArray").Invoke(profile, null);
+	}
+
 	public object Encoder(ImageFormats format, int quality = 90, bool isLossless = true)
 	{
 		var encoder = Activator.CreateInstance(Type("SixLabors.ImageSharp.Formats." + (format switch

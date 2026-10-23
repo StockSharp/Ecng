@@ -10,6 +10,7 @@ using Ecng.Drawing.Codecs.Formats.Webp.Decoding;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Alpha;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Vp8;
 using Ecng.Drawing.Codecs.Formats.Webp.Decoding.Vp8L;
+using Ecng.Drawing.Codecs.Formats.Webp.Internal;
 
 internal static class WebpCodec
 {
@@ -20,6 +21,41 @@ internal static class WebpCodec
 	{
 		var file = Read(data.ToArray(), ImageProcessingLimits.Default);
 		return (file.Width, file.Height);
+	}
+
+	/// <summary>
+	/// Reads the ICC profile of a WebP: the first ICCP chunk of a file whose extended header says it has one.
+	/// </summary>
+	/// <returns>
+	/// The profile if it is one that can go into a re-encoded picture (see <see cref="IccProfile.IsRgb"/>);
+	/// otherwise - and if the file has none, or its chunks cannot be followed - empty.
+	/// </returns>
+	public static byte[] ReadProfile(ReadOnlySpan<byte> data)
+	{
+		// The extended header comes first. A file whose header does not announce a profile is shown without one
+		// by libwebp, and so by a browser, whatever chunks it holds.
+		if (!IsWebp(data) || data.Length < 30 || BinaryPrimitives.ReadUInt32LittleEndian(data[12..]) != 0x58385056 || (data[20] & Vp8XFlags.IccBit) == 0)
+			return [];
+
+		var end = (int)Math.Min(BinaryPrimitives.ReadUInt32LittleEndian(data[4..]) + 8L, data.Length);
+
+		for (var offset = 12; offset <= end - 8;)
+		{
+			var size = BinaryPrimitives.ReadUInt32LittleEndian(data[(offset + 4)..]);
+
+			if (size > end - offset - 8)
+				break;
+
+			if (BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]) == 0x50434349) // ICCP.
+			{
+				var profile = data.Slice(offset + 8, (int)size);
+				return IccProfile.IsRgb(profile) ? profile.ToArray() : [];
+			}
+
+			offset += 8 + (int)size + (int)(size & 1);
+		}
+
+		return [];
 	}
 
 	public static RasterImage Decode(byte[] data)

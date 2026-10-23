@@ -5,31 +5,52 @@ using System.Buffers.Binary;
 using System.IO;
 
 using Ecng.Drawing.Codecs.Formats.Webp.Encoding.Vp8;
+using Ecng.Drawing.Codecs.Formats.Webp.Internal;
 
-/// <summary>Lossless VP8L and explicit-quality VP8 compression with alpha and RIFF animation frames.</summary>
+/// <summary>Lossless VP8L and explicit-quality VP8 compression with alpha, RIFF animation frames and an ICC profile.</summary>
 internal static class WebpEncoder
 {
-	public static byte[] Encode(RasterImage image, WebpEncodingOptions options)
+	/// <summary>Writes a still picture.</summary>
+	/// <param name="image">The picture.</param>
+	/// <param name="options">How it is compressed.</param>
+	/// <param name="profile">The ICC profile its samples are in, written whole into an ICCP chunk; empty for none.</param>
+	/// <returns>The WebP file.</returns>
+	public static byte[] Encode(RasterImage image, WebpEncodingOptions options, byte[] profile)
 	{
 		ArgumentNullException.ThrowIfNull(image);
 		ArgumentNullException.ThrowIfNull(options);
+		ArgumentNullException.ThrowIfNull(profile);
 		using var stream = new MemoryStream();
 		using var writer = Header(stream);
-		if (options.Mode == WebpCompressionModes.Lossy && HasAlpha(image))
-			Chunk(writer, 0x58385056, ExtendedHeader(image.Width, image.Height, 0x10));
+		// The extended header is there for a profile, which the simple format has no place for, and for the alpha chunk
+		// of a lossy picture; a lossless bitstream has its alpha in it. Where the header is, it says whether there is alpha.
+		var flags = profile.Length == 0 ? 0 : Vp8XFlags.IccBit;
+		if ((flags != 0 || options.Mode == WebpCompressionModes.Lossy) && HasAlpha(image))
+			flags |= Vp8XFlags.AlphaBit;
+		if (flags != 0)
+			Chunk(writer, 0x58385056, ExtendedHeader(image.Width, image.Height, (byte)flags));
+		WriteProfile(writer, profile);
 		WriteImage(writer, image, options);
 		return Finish(writer);
 	}
 
-	public static byte[] Encode(Animation animation, WebpEncodingOptions options)
+	/// <summary>Writes every frame of an animation.</summary>
+	/// <param name="animation">The animation.</param>
+	/// <param name="options">How each frame is compressed.</param>
+	/// <param name="profile">The ICC profile its samples are in, written whole into an ICCP chunk; empty for none.</param>
+	/// <returns>The WebP file.</returns>
+	public static byte[] Encode(Animation animation, WebpEncodingOptions options, byte[] profile)
 	{
 		ArgumentNullException.ThrowIfNull(options);
+		ArgumentNullException.ThrowIfNull(profile);
 		if (animation.Plays is < 0 or > ushort.MaxValue)
 			throw new NotSupportedException("WebP loop count must fit in 16 bits.");
 		Animation.EnsureWithinBudget(animation.FrameCount, (long)animation.Width * animation.Height * animation.FrameCount, animation.Limits);
 		using var stream = new MemoryStream();
 		using var writer = Header(stream);
-		Chunk(writer, 0x58385056, ExtendedHeader(animation.Width, animation.Height, 0x12));
+		var flags = Vp8XFlags.AlphaBit | Vp8XFlags.AnimationBit | (profile.Length == 0 ? 0 : Vp8XFlags.IccBit);
+		Chunk(writer, 0x58385056, ExtendedHeader(animation.Width, animation.Height, (byte)flags));
+		WriteProfile(writer, profile);
 		var control = new byte[6];
 		BinaryPrimitives.WriteUInt16LittleEndian(control.AsSpan(4), (ushort)animation.Plays);
 		Chunk(writer, 0x4d494e41, control);
@@ -54,8 +75,12 @@ internal static class WebpEncoder
 		return Finish(writer);
 	}
 
-	public static byte[] Encode(RasterImage image) => Encode(image, WebpEncodingOptions.Lossless);
-	public static byte[] Encode(Animation animation) => Encode(animation, WebpEncodingOptions.Lossless);
+	// The container has the profile right after the extended header, before the animation and the samples.
+	private static void WriteProfile(BinaryWriter writer, byte[] profile)
+	{
+		if (profile.Length != 0)
+			Chunk(writer, 0x50434349, profile);
+	}
 
 	private static void WriteImage(BinaryWriter writer, RasterImage image, WebpEncodingOptions options)
 	{

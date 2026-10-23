@@ -304,7 +304,7 @@ internal static class PngCodec
 					_primaries => length == 32,
 					_gamma => length == 4,
 					_standard => length == 1,
-					_ => IsRgbProfile(content),
+					_ => UnpackProfile(content).Length != 0,
 				};
 
 				if (isSound)
@@ -333,6 +333,31 @@ internal static class PngCodec
 	}
 
 	/// <summary>
+	/// Reads the ICC profile of a PNG, unpacked from the iCCP chunk that <see cref="ReadColorChunks"/> carries over.
+	/// </summary>
+	/// <returns>
+	/// The profile if it is one that can go into a re-encoded picture (see <see cref="IccProfile.IsRgb"/>);
+	/// otherwise - and if the file has none - empty.
+	/// </returns>
+	public static byte[] ReadProfile(ReadOnlySpan<byte> data)
+	{
+		ReadOnlySpan<byte> chunks = ReadColorChunks(data);
+
+		// Whole chunks one after another: the length, the tag, the content and the checksum.
+		for (var offset = 0; offset < chunks.Length;)
+		{
+			var length = (int)BinaryPrimitives.ReadUInt32BigEndian(chunks[offset..]);
+
+			if (chunks.Slice(offset + 4, 4).SequenceEqual("iCCP"u8))
+				return UnpackProfile(chunks.Slice(offset + 8, length));
+
+			offset += 12 + length;
+		}
+
+		return [];
+	}
+
+	/// <summary>
 	/// Makes the iCCP chunk that holds an ICC profile.
 	/// </summary>
 	/// <param name="profile">The profile; empty for none.</param>
@@ -356,13 +381,14 @@ internal static class PngCodec
 		return chunk.ToArray();
 	}
 
-	// The content of an iCCP chunk: a name of 1 to 79 characters, a zero, the compression method, the profile deflated.
-	private static bool IsRgbProfile(ReadOnlySpan<byte> content)
+	// The profile the content of an iCCP chunk holds - a name of 1 to 79 characters, a zero, the compression method,
+	// the profile deflated - if it is one for RGB; empty otherwise.
+	private static byte[] UnpackProfile(ReadOnlySpan<byte> content)
 	{
 		var name = content.IndexOf((byte)0);
 
 		if (name is < 1 or > 79 || content.Length < name + 2 || content[name + 1] != 0)
-			return false;
+			return [];
 
 		// One byte beyond the largest profile that is carried is enough to tell that it is too large.
 		var profile = new byte[Math.Min(IccProfile.MaxLength + 1L, (long)(content.Length - name - 2) * _maxDeflateRatio)];
@@ -385,10 +411,10 @@ internal static class PngCodec
 		catch (InvalidDataException)
 		{
 			// What does not unpack is no profile: the picture is whole without it.
-			return false;
+			return [];
 		}
 
-		return IccProfile.IsRgb(profile.AsSpan(0, filled));
+		return IccProfile.IsRgb(profile.AsSpan(0, filled)) ? profile.AsSpan(0, filled).ToArray() : [];
 	}
 
 	/// <summary>
