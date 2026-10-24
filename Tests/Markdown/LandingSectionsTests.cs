@@ -173,6 +173,30 @@ public class LandingSectionsTests : BaseTestClass
 	}
 
 	[TestMethod]
+	public void Pillar_LinkParagraphIsItsSmallButtons()
+	{
+		var html = ToHtml("""
+			::::pillar {#web}
+			## Web
+
+			What it does.
+
+			:::tags
+			- Alpha
+			:::
+
+			[Open the terminal](https://stand.example/trader/) [Designer](/store/designer/)
+			::::
+			""");
+
+		InOrder(html,
+			"<p class=\"ss-pillar__lede\">What it does.</p>",
+			"<div class=\"ss-tag-row\">",
+			"<div class=\"ss-section-actions\"><a href=\"https://stand.example/trader/\" class=\"ss-cta ss-cta--solid ss-cta--sm no-underline\">Open the terminal</a><a href=\"/store/designer/\" class=\"ss-cta ss-cta--sm no-underline\">Designer</a></div>",
+			"</div></div></div></section>");
+	}
+
+	[TestMethod]
 	public void Pillar_DiagramFigureIsLabelledByItsCaption()
 	{
 		var html = ToHtml("::::pillar\n^^^\n```diagram\n{\"version\":1,\"nodes\":[]}\n```\n^^^ Order path\n\n## Core\n::::");
@@ -220,11 +244,17 @@ public class LandingSectionsTests : BaseTestClass
 
 			[Out](https://example.org/out)
 			:::
+
+			:::pillar
+			## Part
+
+			[Try](https://example.org/try)
+			:::
 			""";
 
 		var anchors = Regex.Matches(ToHtml(text, allowHtml), @"<a\b[^>]*>").Select(m => m.Value).ToArray();
 
-		anchors.Length.AreEqual(4);
+		anchors.Length.AreEqual(5);
 
 		foreach (var anchor in anchors)
 			anchor.StartsWith("<a href=\"", StringComparison.Ordinal).AssertTrue(anchor);

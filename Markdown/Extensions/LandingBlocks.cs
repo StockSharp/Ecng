@@ -11,8 +11,9 @@ using Markdig.Syntax.Inlines;
 /// </summary>
 static class LandingBlocks
 {
-	private const string _ctaClass = "ss-cta no-underline";
-	private const string _primaryCtaClass = "ss-cta ss-cta--solid no-underline";
+	private const string _ctaClass = "ss-cta";
+	private const string _primaryCtaClass = "ss-cta ss-cta--solid";
+	private const string _smallCtaClass = " ss-cta--sm";
 
 	/// <summary>A paragraph of links and nothing else, which a section shows as buttons.</summary>
 	public static bool IsLinkOnly(Block block)
@@ -44,8 +45,9 @@ static class LandingBlocks
 		renderer.Write($"</{tag}>");
 	}
 
-	/// <summary>Writes the links of a link-only paragraph as buttons, the first one solid.</summary>
-	public static void WriteActions(HtmlRenderer renderer, ParagraphBlock paragraph, string wrapperClass, bool withArrow)
+	/// <summary>Writes the links of a link-only paragraph as buttons, the first one solid; small ones where they
+	/// are not the main call of the page.</summary>
+	public static void WriteActions(HtmlRenderer renderer, ParagraphBlock paragraph, string wrapperClass, bool withArrow, bool isSmall)
 	{
 		renderer.Write($"<div class=\"{wrapperClass}\">");
 
@@ -56,7 +58,7 @@ static class LandingBlocks
 			// href first: a host's link policy (away page, nofollow, new tab) rewrites only anchors that open with it.
 			renderer.Write("<a href=\"");
 			renderer.WriteEscapeUrl(GetUrl(link));
-			renderer.Write($"\" class=\"{(isFirst ? _primaryCtaClass : _ctaClass)}\">");
+			renderer.Write($"\" class=\"{(isFirst ? _primaryCtaClass : _ctaClass)}{(isSmall ? _smallCtaClass : string.Empty)} no-underline\">");
 			renderer.WriteChildren(link);
 
 			if (isFirst && withArrow)

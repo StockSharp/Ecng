@@ -13,7 +13,8 @@ using Markdig.Syntax.Inlines;
 /// :::pillar [band] [flip] {#anchor} — one numbered part of a landing: a picture or a diagram on one side, the
 /// text on the other. Picture paragraphs fill the media side (the first picture large, the rest as a strip),
 /// as does a ```diagram fence, bare or in a ^^^ figure whose caption labels it. On the text side a paragraph
-/// above the heading is the eyebrow, the paragraph after the heading the lede and the first list the features.
+/// above the heading is the eyebrow, the paragraph after the heading the lede, the first list the features and a
+/// paragraph of links alone the buttons.
 /// </summary>
 public class PillarSection : ISectionBlock
 {
@@ -60,6 +61,9 @@ public class PillarSection : ISectionBlock
 				case HeadingBlock heading when !hasTitle:
 					LandingBlocks.WriteHeading(renderer, heading, "h2", "ss-display ss-display--md");
 					hasTitle = true;
+					break;
+				case ParagraphBlock paragraph when LandingBlocks.IsLinkOnly(paragraph):
+					LandingBlocks.WriteActions(renderer, paragraph, "ss-section-actions", false, true);
 					break;
 				case ParagraphBlock paragraph when !hasTitle:
 					LandingBlocks.WriteText(renderer, paragraph, "span", "ss-eyebrow");

@@ -51,7 +51,7 @@ public class LandingSection : ISectionBlock
 		for (var i = start; i < block.Count; i++)
 		{
 			if (block[i] is ParagraphBlock paragraph && LandingBlocks.IsLinkOnly(paragraph))
-				LandingBlocks.WriteActions(renderer, paragraph, "ss-section-actions", false);
+				LandingBlocks.WriteActions(renderer, paragraph, "ss-section-actions", false, false);
 			else
 				renderer.Write(block[i]);
 		}

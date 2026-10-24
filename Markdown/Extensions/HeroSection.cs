@@ -39,7 +39,7 @@ public class HeroSection : ISectionBlock
 					LandingBlocks.WriteText(renderer, paragraph, "span", "ss-eyebrow");
 					break;
 				case ParagraphBlock paragraph when LandingBlocks.IsLinkOnly(paragraph):
-					LandingBlocks.WriteActions(renderer, paragraph, "ss-hero-actions", true);
+					LandingBlocks.WriteActions(renderer, paragraph, "ss-hero-actions", true, false);
 					isNote = true;
 					break;
 				case ParagraphBlock paragraph:
