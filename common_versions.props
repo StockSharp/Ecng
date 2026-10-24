@@ -31,8 +31,6 @@
     <EcngVer>1.0.*</EcngVer>
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
-    <SystemReflectionEmitLightweightVer>4.*</SystemReflectionEmitLightweightVer>
-    <SystemMemoryVer>4.*</SystemMemoryVer>
     <NewtonJsonVer>13.*</NewtonJsonVer>
     <RestSharpVer>112.*</RestSharpVer>
     <NDdeVer>4.*</NDdeVer>
