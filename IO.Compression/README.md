@@ -153,6 +153,31 @@ await compressedStream.UncompressAsync<GZipStream>(
 
 ### 2. ZIP Archive Handling
 
+`UnzipAsync` accepts a stream or byte array and returns entry streams through
+`IAsyncEnumerable`. The filter receives each entry's file name; the returned name
+includes its directory. Read an entry before advancing the enumerator: advancing,
+stopping or failing enumeration closes that entry stream. The input is closed too,
+unless `leaveOpen` is `true`.
+
+```csharp
+using Ecng.Common;
+using Ecng.IO.Compression;
+
+using var timeout = cancellationToken.CreateChildToken(TimeSpan.FromMinutes(2)).cts;
+await using var zipStream = await httpClient.GetStreamAsync(archiveUrl, timeout.Token);
+
+await foreach (var (name, body) in zipStream.UnzipAsync(leaveOpen: true, cancellationToken: timeout.Token))
+    await ProcessEntryAsync(name, body, timeout.Token);
+```
+
+.NET 10 uses `ZipArchive.CreateAsync` and `ZipArchiveEntry.OpenAsync`. On .NET 6,
+non-seekable input is copied asynchronously to memory before opening the archive.
+Non-seekable ZIP input still requires buffering the complete archive; use a
+seekable file stream for large archives that must not be buffered in memory.
+Supply a token with a deadline for network input: `HttpClient.GetStreamAsync`'s own timeout ends
+after the response headers. Pass cancellation to entry reads as well.
+`UnzipToAsync` also uses asynchronous archive enumeration when extracting files.
+
 ```csharp
 using Ecng.IO;
 

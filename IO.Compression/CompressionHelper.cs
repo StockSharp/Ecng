@@ -2,6 +2,7 @@
 
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 using Nito.AsyncEx;
 
@@ -122,6 +123,86 @@ public static class CompressionHelper
 			throw new ArgumentNullException(nameof(input));
 
 		return new ZipEntries(input, leaveOpen, filter ?? (_ => true));
+	}
+
+	/// <summary>
+	/// Extracts entries from a ZIP archive contained in the specified byte array asynchronously.
+	/// </summary>
+	/// <param name="input">The byte array containing the ZIP archive.</param>
+	/// <param name="filter">An optional predicate for entry file names without directory components.</param>
+	/// <param name="cancellationToken">A token to monitor while opening and enumerating the archive.</param>
+	/// <returns>An asynchronous sequence of full entry names and streams. Read each stream before advancing the enumerator.</returns>
+	/// <remarks>Entry streams are disposed when enumeration advances or ends. Pass a cancellation token to reads from the returned streams as well.</remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
+	/// <exception cref="InvalidDataException">The input is not a valid ZIP archive.</exception>
+	/// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+	public static IAsyncEnumerable<(string name, Stream body)> UnzipAsync(this byte[] input, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
+	{
+		if (input is null)
+			throw new ArgumentNullException(nameof(input));
+
+		return input.To<MemoryStream>().UnzipAsync(filter: filter, cancellationToken: cancellationToken);
+	}
+
+	/// <summary>
+	/// Extracts entries from a ZIP archive contained in the specified stream asynchronously.
+	/// </summary>
+	/// <param name="input">The stream containing the ZIP archive.</param>
+	/// <param name="leaveOpen">Whether to leave the input stream open when enumeration completes, fails or is canceled.</param>
+	/// <param name="filter">An optional predicate for entry file names without directory components.</param>
+	/// <param name="cancellationToken">A token to monitor while opening and enumerating the archive.</param>
+	/// <returns>An asynchronous sequence of full entry names and streams. Read each stream before advancing the enumerator.</returns>
+	/// <remarks>
+	/// Non-seekable input is buffered in memory asynchronously before entries are returned.
+	/// Entry streams are disposed when enumeration advances or ends. Pass a cancellation token to reads from the returned streams as well.
+	/// The input stream is owned by the enumerator after enumeration starts, unless <paramref name="leaveOpen"/> is true.
+	/// </remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
+	/// <exception cref="InvalidDataException">The input is not a valid ZIP archive.</exception>
+	/// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+	public static IAsyncEnumerable<(string name, Stream body)> UnzipAsync(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
+	{
+		if (input is null)
+			throw new ArgumentNullException(nameof(input));
+
+		return UnzipAsyncCore(input, leaveOpen, filter, cancellationToken);
+	}
+
+	private static async IAsyncEnumerable<(string name, Stream body)> UnzipAsyncCore(Stream input, bool leaveOpen, Func<string, bool> filter, [EnumeratorCancellation] CancellationToken cancellationToken)
+	{
+		await using var ownedInput = leaveOpen ? null : input;
+		cancellationToken.ThrowIfCancellationRequested();
+
+#if NET10_0_OR_GREATER
+		await using var archive = await ZipArchive.CreateAsync(input, ZipArchiveMode.Read, leaveOpen: true, entryNameEncoding: null, cancellationToken);
+#else
+		await using var buffer = input.CanSeek ? null : new MemoryStream();
+		var source = input;
+
+		if (buffer is not null)
+		{
+			await input.CopyToAsync(buffer, cancellationToken);
+			buffer.Position = 0;
+			source = buffer;
+		}
+
+		using var archive = new ZipArchive(source, ZipArchiveMode.Read, leaveOpen: true);
+#endif
+
+		foreach (var entry in archive.Entries)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+
+			if (filter is not null && !filter(entry.Name))
+				continue;
+
+#if NET10_0_OR_GREATER
+			await using var body = await entry.OpenAsync(cancellationToken);
+#else
+			await using var body = entry.Open();
+#endif
+			yield return (entry.FullName, body);
+		}
 	}
 
 	/// <summary>

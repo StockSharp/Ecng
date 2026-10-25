@@ -103,18 +103,14 @@ public static class FileSystemZipExtensions
 
 		fs.CreateDirectory(destPath);
 
-		using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
-
-		foreach (var entry in archive.Entries)
+		await foreach (var (name, entryStream) in zipStream.UnzipAsync(leaveOpen: true, cancellationToken: cancellationToken))
 		{
-			cancellationToken.ThrowIfCancellationRequested();
-
-			var fullPath = GetSafeExtractPath(destPath, entry.FullName);
+			var fullPath = GetSafeExtractPath(destPath, name);
 			if (fullPath is null)
 				continue; // Skip dangerous entries
 
 			// Create directory if entry is a directory
-			if (entry.FullName.EndsWith("/") || entry.FullName.EndsWith("\\"))
+			if (name.EndsWith("/") || name.EndsWith("\\"))
 			{
 				fs.CreateDirectory(fullPath);
 				continue;
@@ -128,8 +124,7 @@ public static class FileSystemZipExtensions
 			if (!overwrite && fs.FileExists(fullPath))
 				continue;
 
-			using var entryStream = entry.Open();
-			using var fileStream = fs.OpenWrite(fullPath);
+			await using var fileStream = fs.OpenWrite(fullPath);
 			await entryStream.CopyToAsync(fileStream, cancellationToken);
 		}
 	}
