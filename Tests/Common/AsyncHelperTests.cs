@@ -688,17 +688,20 @@ public class AsyncHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task PeriodicTimerWithInitialDelay()
 	{
-		var count = 0;
-		var timer = AsyncHelper.CreatePeriodicTimer(() => count++);
+		var initialDelay = TimeSpan.FromMilliseconds(300);
+		// An OS timer may fire a scheduler tick early; an ignored delay would fire at once or after the 100 ms interval.
+		var timerSlack = TimeSpan.FromMilliseconds(20);
 
-		// Start(interval, start) - start is initial delay
-		timer.Start(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(300));
+		var sw = new Stopwatch();
+		var firstRun = new TaskCompletionSource<TimeSpan>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var timer = AsyncHelper.CreatePeriodicTimer(() => firstRun.TrySetResult(sw.Elapsed));
 
-		await Task.Delay(150, CancellationToken);
-		count.AssertEqual(0); // Initial delay not passed (300ms)
+		sw.Start();
+		timer.Start(TimeSpan.FromMilliseconds(100), initialDelay);
 
-		await Task.Delay(300, CancellationToken); // Wait longer to ensure at least one execution (total 450ms > 300ms)
-		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
+		// The first run is timed rather than raced against a sleep: a slow machine can only make it later.
+		var elapsed = await firstRun.Task.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken);
+		(elapsed >= initialDelay - timerSlack).AssertTrue($"The first run came after {elapsed.TotalMilliseconds} ms, before the {initialDelay.TotalMilliseconds} ms initial delay.");
 
 		timer.Dispose();
 	}
