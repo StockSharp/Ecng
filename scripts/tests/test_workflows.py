@@ -69,6 +69,18 @@ class ReleaseWorkflowTests(unittest.TestCase):
                     if step.get("uses", "").startswith("actions/checkout@"):
                         self.assertNotIn("ref", step.get("with", {}), "Checks must use the release's source commit.")
 
+    def test_publication_refuses_a_commit_whose_tests_failed_in_another_run(self):
+        publish = self.release["jobs"]["publish"]
+        self.assertEqual(publish["permissions"].get("actions"), "read")
+        steps = publish["steps"]
+        gates = [i for i, step in enumerate(steps) if "nuget-release.py ci-gate" in step.get("run", "")]
+        logins = [i for i, step in enumerate(steps) if step.get("uses", "").startswith("NuGet/login@")]
+        self.assertEqual(len(gates), 1, "The publish job must run the CI gate once.")
+        self.assertEqual(len(logins), 1)
+        self.assertLess(gates[0], logins[0], "The gate must run before a NuGet key is obtained.")
+        self.assertEqual(steps[gates[0]]["env"]["GITHUB_TOKEN"], "${{ github.token }}")
+        self.assertNotEqual(steps[gates[0]].get("continue-on-error", "false"), "true")
+
     def test_workflow_changes_and_regression_tests_are_checked_in_pull_requests(self):
         paths = self.release["on"]["pull_request"]["paths"]
         self.assertIn(".github/workflows/dotnet.yml", paths)

@@ -186,5 +186,52 @@ class MetadataTests(unittest.TestCase):
             release.next_version("1.0.274-beta")
 
 
+def workflow_run(number, path, status, conclusion=None):
+    return {"id": number, "run_number": number, "name": path.rsplit("/", 1)[-1], "path": path,
+            "status": status, "conclusion": conclusion, "html_url": f"https://github.test/runs/{number}"}
+
+
+CI = ".github/workflows/dotnet.yml"
+
+
+class CiGateTests(unittest.TestCase):
+    def gate(self, *answers, wait_seconds=600):
+        replies = iter(answers)
+        pauses = []
+        release.ci_gate(lambda: next(replies), pauses.append, wait_seconds=wait_seconds, poll_seconds=30)
+        return pauses
+
+    def test_a_failed_ci_run_of_the_commit_blocks_publication(self):
+        with self.assertRaises(RuntimeError) as error:
+            self.gate([workflow_run(747, CI, "completed", "failure")])
+        self.assertIn("https://github.test/runs/747", str(error.exception))
+
+    def test_a_timed_out_ci_run_blocks_publication(self):
+        with self.assertRaises(RuntimeError):
+            self.gate([workflow_run(5, CI, "completed", "timed_out")])
+
+    def test_a_green_ci_run_lets_publication_through(self):
+        self.assertEqual(self.gate([workflow_run(1, CI, "completed", "success")]), [])
+
+    def test_other_workflows_and_cancelled_ci_runs_do_not_block(self):
+        runs = [workflow_run(1, ".github/workflows/release.yml", "completed", "failure"),
+                workflow_run(2, ".github/workflows/release.yml", "in_progress"),
+                workflow_run(3, CI, "completed", "cancelled")]
+        self.assertEqual(self.gate(runs), [])
+
+    def test_an_unfinished_ci_run_is_waited_for_and_its_failure_blocks(self):
+        with self.assertRaises(RuntimeError):
+            self.gate([workflow_run(1, CI, "in_progress")], [workflow_run(1, CI, "completed", "failure")])
+
+    def test_an_unfinished_ci_run_is_waited_for_and_its_success_lets_through(self):
+        pauses = self.gate([workflow_run(1, CI, "queued")], [workflow_run(1, CI, "completed", "success")])
+        self.assertEqual(pauses, [30])
+
+    def test_a_ci_run_that_never_finishes_blocks_publication(self):
+        unfinished = [workflow_run(1, CI, "in_progress")]
+        with self.assertRaises(RuntimeError):
+            self.gate(*[unfinished] * 4, wait_seconds=60)
+
+
 if __name__ == "__main__":
     unittest.main()

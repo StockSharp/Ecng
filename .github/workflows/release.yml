@@ -94,6 +94,7 @@ jobs:
     name: Push packages and symbols to NuGet.org
     permissions:
       contents: read
+      actions: read
       id-token: write
     needs: [build-pack-verify, checks]
     if: >-
@@ -103,6 +104,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Refuse a commit whose tests failed in another CI run
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/nuget-release.py ci-gate
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x

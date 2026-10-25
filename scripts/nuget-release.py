@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -39,6 +40,8 @@ REPO = "https://github.com/StockSharp/Ecng"
 GLOBAL_FILES = ("common.props",)
 PACKAGE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.\d+)?$")
+CI_WORKFLOW = ".github/workflows/dotnet.yml"
+CI_FAILURES = frozenset({"failure", "timed_out", "startup_failure"})
 
 
 def run(*args: str) -> str:
@@ -482,6 +485,57 @@ def push(args: argparse.Namespace) -> None:
         subprocess.run(cmd, cwd=ROOT, check=True)
 
 
+def ci_verdict(runs: list[dict]) -> tuple[list[str], list[str]]:
+    """Splits the CI workflow runs of a commit into failed and unfinished ones; other workflows are ignored."""
+    failed, pending = [], []
+    for run in runs:
+        if not run.get("path", "").startswith(CI_WORKFLOW):
+            continue
+        label = f"{run.get('name')} #{run.get('run_number')} {run.get('html_url')}"
+        if run.get("status") != "completed":
+            pending.append(label)
+        elif run.get("conclusion") in CI_FAILURES:
+            failed.append(f"{label}: {run['conclusion']}")
+    return failed, pending
+
+
+def ci_gate(fetch_runs, sleep=time.sleep, wait_seconds: int = 1800, poll_seconds: int = 30) -> None:
+    """Refuses publication while any CI run of the commit is red, waiting for unfinished runs to decide.
+
+    A flaky test can pass in the release's own checks and fail in the run started by the push, so the
+    release alone is not proof that the commit's tests pass.
+    """
+    waited = 0
+    while True:
+        failed, pending = ci_verdict(fetch_runs())
+        if failed:
+            raise RuntimeError("Tests of this commit failed in another CI run; no packages pushed:\n" + "\n".join(failed))
+        if not pending:
+            return
+        if waited >= wait_seconds:
+            raise RuntimeError("CI runs of this commit did not finish in time; no packages pushed:\n" + "\n".join(pending))
+        print(f"Waiting for {len(pending)} unfinished CI run(s) of this commit", flush=True)
+        sleep(poll_seconds)
+        waited += poll_seconds
+
+
+def ci_gate_command(args: argparse.Namespace) -> None:
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN is missing, so the CI runs of this commit cannot be checked; no packages pushed")
+    url = (f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}/repos/{os.environ['GITHUB_REPOSITORY']}"
+           f"/actions/runs?head_sha={os.environ['GITHUB_SHA']}&per_page=100")
+
+    def fetch_runs() -> list[dict]:
+        req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json",
+                                                   "Authorization": f"Bearer {token}",
+                                                   "User-Agent": "EcngNuGetRelease/1.0"})
+        with urllib.request.urlopen(req, timeout=25) as response:
+            return json.load(response)["workflow_runs"]
+
+    ci_gate(fetch_runs, wait_seconds=args.wait_minutes * 60)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -495,6 +549,9 @@ def main() -> None:
         p.add_argument("--plan", default="nuget-release-plan.json")
         p.add_argument("--directory", default="nuget-release-artifacts")
         p.set_defaults(func=action)
+    p = sub.add_parser("ci-gate", help="Refuse a commit whose tests failed in another CI run")
+    p.add_argument("--wait-minutes", type=int, default=30)
+    p.set_defaults(func=ci_gate_command)
     args = parser.parse_args()
     args.func(args)
 

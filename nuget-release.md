@@ -29,6 +29,13 @@ SQL Server integration tests, and Azure tests with Azurite must all succeed.
 Packing and publication depend on this workflow; failed, cancelled or skipped
 checks prevent publication for tags, GitHub releases and manual runs.
 
+The release's own checks are not the only test run of a commit: the push to
+master runs `dotnet.yml` too, and a flaky test can pass in one run and fail in
+the other. Before it asks for a NuGet key, the publish job runs
+`nuget-release.py ci-gate`, which reads every `dotnet.yml` run of the commit and
+stops publication on a failed or timed-out one. It waits up to 30 minutes for
+unfinished runs, and a run that is still unfinished then stops publication too.
+
 The SQL Server service health check verifies readiness. Database setup runs
 the `sqlcmd` already installed inside that container, and SQL errors fail the job.
 
