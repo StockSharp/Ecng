@@ -92,19 +92,6 @@ public static class IOHelper
 		return path.ReplaceIgnoreCase(DocsVar, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 	}
 
-	/// <summary>
-	/// Gets the timestamp of the specified assembly.
-	/// </summary>
-	/// <param name="assembly">The assembly.</param>
-	/// <returns>The timestamp when the assembly was built.</returns>
-	public static DateTime GetTimestamp(this Assembly assembly)
-	{
-		if (assembly is null)
-			throw new ArgumentNullException(nameof(assembly));
-
-		return LocalFileSystem.Instance.GetTimestamp(assembly.Location);
-	}
-
 	private const string _buildTimestampFormat = "yyyyMMddHHmmss";
 
 	/// <summary>
@@ -123,13 +110,12 @@ public static class IOHelper
 	}
 
 	/// <summary>
-	/// Gets the build moment of the specified assembly, from the stamp inside it rather than from the
-	/// file it was loaded from. A single file or NativeAOT build has no such file, so an assembly whose
-	/// build writes the stamp can still be dated there.
+	/// Gets the build moment of the specified assembly from the stamp its build writes into the
+	/// informational version.
 	/// </summary>
 	/// <param name="assembly">The assembly.</param>
 	/// <returns>The build moment, in UTC.</returns>
-	/// <exception cref="InvalidOperationException">The assembly carries neither a stamp nor a file to read it from.</exception>
+	/// <exception cref="InvalidOperationException">The assembly carries no build stamp.</exception>
 	public static DateTime GetBuildTimestamp(this Assembly assembly)
 	{
 		if (assembly is null)
@@ -140,11 +126,8 @@ public static class IOHelper
 		if (informational.TryParseBuildTimestamp(out var timestamp))
 			return timestamp;
 
-		// An assembly built by someone else carries no stamp of ours, so fall back to its file.
-		if (assembly.Location.IsEmpty())
-			throw new InvalidOperationException($"Assembly '{assembly.FullName}' has no build stamp and no file to date it by.");
-
-		return assembly.GetTimestamp();
+		// A deterministic build leaves only a hash in the PE header, so the stamp is the only moment there is.
+		throw new InvalidOperationException($"Assembly '{assembly.FullName}' carries no build stamp in its informational version '{informational}'.");
 	}
 
 	/// <summary>

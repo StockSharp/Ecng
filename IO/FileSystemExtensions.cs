@@ -519,37 +519,6 @@ public static class FileSystemExtensions
 	}
 
 	/// <summary>
-	/// Gets the timestamp of the specified file using provided file system.
-	/// </summary>
-	/// <param name="fs">The file system to use.</param>
-	/// <param name="filePath">The file path to inspect.</param>
-	/// <returns>The timestamp representing the build time of the file (based on PE header), in local time.</returns>
-	public static DateTime GetTimestamp(this IFileSystem fs, string filePath)
-	{
-		if (fs is null) throw new ArgumentNullException(nameof(fs));
-
-		var b = new byte[2048];
-
-		// Read up to the header window, not exactly 2048 bytes: the PE header lives near the start,
-		// and requiring a full 2048-byte read would throw for any file shorter than that.
-		using (var s = fs.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-		{
-			var offset = 0;
-			int read;
-
-			while (offset < b.Length && (read = s.Read(b, offset, b.Length - offset)) > 0)
-				offset += read;
-		}
-
-		const int peHeaderOffset = 60;
-		const int linkerTimestampOffset = 8;
-		var i = BitConverter.ToInt32(b, peHeaderOffset);
-		var secondsSince1970 = (long)BitConverter.ToInt32(b, i + linkerTimestampOffset);
-
-		return secondsSince1970.FromUnix().ToLocalTime();
-	}
-
-	/// <summary>
 	/// Determines whether the file specified by the path is locked by another process.
 	/// </summary>
 	/// <param name="fs">The file system to use.</param>

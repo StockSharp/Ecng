@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Tests.IO;
 
+using System.Reflection.Emit;
+
 using Ecng.IO;
 
 [TestClass]
@@ -779,12 +781,33 @@ public class IOHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void GetBuildTimestamp_Unstamped_FallsBackToTheFile()
+	public void TryParseBuildTimestamp_NamePrefixed_DoesNotParse()
 	{
+		"S#.Binance+v20261023223617".TryParseBuildTimestamp(out _).AssertFalse();
+	}
+
+	[TestMethod]
+	public void GetBuildTimestamp_Unstamped_Throws()
+	{
+		// Loaded from a file but stamped with a semantic version: a deterministic build leaves only a hash in the
+		// PE header, so there is no moment to report.
 		var assembly = typeof(IOHelper).Assembly;
 
-		// This assembly carries a semantic version rather than a stamp, so the file is all there is.
-		assembly.GetBuildTimestamp().AssertEqual(assembly.GetTimestamp());
+		assembly.Location.IsEmpty().AssertFalse();
+		Throws<InvalidOperationException>(() => assembly.GetBuildTimestamp());
+	}
+
+	[TestMethod]
+	public void GetBuildTimestamp_Stamped_ReadsTheStamp()
+	{
+		var builder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("StampedBuild"), AssemblyBuilderAccess.Run);
+		builder.SetCustomAttribute(new CustomAttributeBuilder(
+			typeof(AssemblyInformationalVersionAttribute).GetConstructor([typeof(string)]), ["20260819213045+9f1c2d3"]));
+
+		var timestamp = builder.GetBuildTimestamp();
+
+		timestamp.AssertEqual(new DateTime(2026, 8, 19, 21, 30, 45, DateTimeKind.Utc));
+		timestamp.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
