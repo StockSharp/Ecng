@@ -8,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 /// <summary>
 /// Provides helper methods for JSON serialization and deserialization.
 /// </summary>
-public static class JsonHelper
+public static partial class JsonHelper
 {
 	/// <summary>
 	/// Provides a UTF-8 encoding without a byte order mark (BOM).
