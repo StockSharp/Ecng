@@ -45,7 +45,8 @@ public static class Converter
 	/// </summary>
 	public static void RegisterTypeName(string name, Type type)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(name);
+		if (string.IsNullOrWhiteSpace(name))
+			throw new ArgumentException("A type name is required.", nameof(name));
 		ArgumentNullException.ThrowIfNull(type);
 
 		var key = name.ToLowerInvariant();
