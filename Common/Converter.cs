@@ -34,6 +34,26 @@ public static class Converter
 	public static Func<string, Type> TypeFallback { get; set; }
 
 	/// <summary>
+	/// Pre-registers a name for a statically referenced type, bypassing dynamic assembly discovery.
+	/// This is useful for AOT apps that know their serializable/configuration types at build time.
+	/// </summary>
+	public static void RegisterTypeName<T>(string name)
+		=> RegisterTypeName(name, typeof(T));
+
+	/// <summary>
+	/// Pre-registers a name for a known CLR type.
+	/// </summary>
+	public static void RegisterTypeName(string name, Type type)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(name);
+		ArgumentNullException.ThrowIfNull(type);
+
+		var key = name.ToLowerInvariant();
+		if (!_typeCache.TryAdd(key, type) && _typeCache[key] != type)
+			throw new InvalidOperationException($"Type name '{name}' is already registered for another type.");
+	}
+
+	/// <summary>
 	/// Fallback handler for Enum conversion from string when value is not found.
 	/// Returns the resolved enum value, or null to throw exception.
 	/// </summary>
