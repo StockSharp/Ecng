@@ -1,5 +1,7 @@
 namespace Ecng.AotSmoke;
 
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 using Ecng.Common;
