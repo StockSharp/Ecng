@@ -1,6 +1,8 @@
 namespace Ecng.Common;
 
 using System.Dynamic;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 /// <summary>
@@ -9,6 +11,45 @@ using System.Security.Cryptography;
 public static class TypeHelper
 {
 	private static readonly Type _enumType = typeof(Enum);
+
+	// Explicitly registered constructors and closed generic types can be used by
+	// Native AOT without runtime discovery or generation. The JIT fallback stays intact.
+	private static readonly ConcurrentDictionary<Type, Func<object[], object>> _registeredFactories = new();
+	private static readonly object _registeredGenericsSync = new();
+	private static readonly Dictionary<Type, List<Type>> _registeredGenerics = [];
+
+	/// <summary>
+	/// Registers an AOT-safe factory for a known type. Registration must happen at startup.
+	/// </summary>
+	public static void RegisterFactory<T>(Func<object[], T> factory)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+
+		if (!_registeredFactories.TryAdd(typeof(T), args => factory(args)))
+			throw new InvalidOperationException($"A factory for '{typeof(T)}' is already registered.");
+	}
+
+	/// <summary>
+	/// Registers a constructed generic type that can be resolved without runtime generic instantiation.
+	/// </summary>
+	public static void RegisterConstructedGenericType(Type constructedType)
+	{
+		ArgumentNullException.ThrowIfNull(constructedType);
+
+		if (!constructedType.IsConstructedGenericType)
+			throw new ArgumentException("Expected a closed generic type.", nameof(constructedType));
+
+		var definition = constructedType.GetGenericTypeDefinition();
+
+		lock (_registeredGenericsSync)
+		{
+			if (!_registeredGenerics.TryGetValue(definition, out var types))
+				_registeredGenerics.Add(definition, types = []);
+
+			if (!types.Contains(constructedType))
+				types.Add(constructedType);
+		}
+	}
 
 	/// <summary>
 	/// Creates an instance of the specified type using the given arguments.
@@ -34,9 +75,11 @@ public static class TypeHelper
 		if (args is null)
 			throw new ArgumentNullException(nameof(args));
 
-		var obj = type is ITypeConstructor ctor
-			? ctor.CreateInstance(args)
-			: Activator.CreateInstance(type, args);
+		var obj = _registeredFactories.TryGetValue(type, out var factory)
+			? factory(args)
+			: type is ITypeConstructor ctor
+				? ctor.CreateInstance(args)
+				: Activator.CreateInstance(type, args);
 
 		return obj.To<T>();
 	}
@@ -54,6 +97,37 @@ public static class TypeHelper
 
 		if (args is null)
 			throw new ArgumentNullException(nameof(args));
+
+
+		lock (_registeredGenericsSync)
+		{
+			if (_registeredGenerics.TryGetValue(type, out var types))
+			{
+				foreach (var candidate in types)
+				{
+					var candidateArgs = candidate.GenericTypeArguments;
+					if (candidateArgs.Length != args.Length)
+						continue;
+
+					var matches = true;
+					for (var i = 0; i < args.Length; i++)
+					{
+						if (candidateArgs[i] != args[i])
+						{
+							matches = false;
+							break;
+						}
+					}
+
+					if (matches)
+						return candidate;
+				}
+			}
+		}
+
+		// Preserve normal JIT behavior, but give a useful diagnostic on Native AOT.
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+			throw new NotSupportedException($"Generic instantiation '{type}' is not registered. Call RegisterConstructedGenericType with the closed type before using Make.");
 
 		return type.MakeGenericType(args);
 	}
