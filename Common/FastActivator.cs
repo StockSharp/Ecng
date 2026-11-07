@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Common;
 
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// <see cref="FastActivator{T}"/> isn't supported.
@@ -34,7 +35,7 @@ public static class FastActivator<T>
 		var objType = typeof(T);
 		var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-		if ((NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
+		if (!RuntimeFeature.IsDynamicCodeSupported || (NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
 		{
 			CreateObject = Activator.CreateInstance<T>;
 		}
