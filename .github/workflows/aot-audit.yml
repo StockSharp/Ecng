@@ -21,10 +21,15 @@ jobs:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            6.0.x
+            10.0.x
 
       - name: Install native AOT prerequisites
         run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
+      - name: Compile legacy net6 target
+        run: dotnet build Serialization/Serialization.csproj -c Release -f net6.0
 
       - name: Analyze Ecng.Common
         shell: bash
