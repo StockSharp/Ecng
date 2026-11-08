@@ -9,6 +9,31 @@ public static class ArrayHelper
 {
 	private static readonly ConcurrentDictionary<Type, Func<int, Array>> _registeredArrayFactories = new();
 
+	static ArrayHelper()
+	{
+		// Common arrays exist as closed generic instantiations in the native binary.
+		// Avoid Array.CreateInstance(Type, int) for standard wire/message value types.
+		RegisterArrayType<object>();
+		RegisterArrayType<string>();
+		RegisterArrayType<bool>();
+		RegisterArrayType<byte>();
+		RegisterArrayType<sbyte>();
+		RegisterArrayType<char>();
+		RegisterArrayType<short>();
+		RegisterArrayType<ushort>();
+		RegisterArrayType<int>();
+		RegisterArrayType<uint>();
+		RegisterArrayType<long>();
+		RegisterArrayType<ulong>();
+		RegisterArrayType<float>();
+		RegisterArrayType<double>();
+		RegisterArrayType<decimal>();
+		RegisterArrayType<DateTime>();
+		RegisterArrayType<DateTimeOffset>();
+		RegisterArrayType<TimeSpan>();
+		RegisterArrayType<Guid>();
+	}
+
 	/// <summary>
 	/// Registers a statically compiled array factory for <typeparamref name="T"/>.
 	/// This avoids runtime array type construction on Native AOT.
