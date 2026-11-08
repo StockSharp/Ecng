@@ -120,6 +120,7 @@ public class AotCompatibilityTests : BaseTestClass
 		storage.GetValue<PersistedPayload>("payload").Value.AssertEqual(42);
 	}
 
+#if NET7_0_OR_GREATER
 	[TestMethod]
 	public void SourceGeneratedNonGenericJsonRoundTrip()
 	{
@@ -129,6 +130,8 @@ public class AotCompatibilityTests : BaseTestClass
 		var restored = (SampleOrder)json.FromJson(metadata);
 		restored.AssertEqual(original);
 	}
+
+#endif
 
 	[TestMethod]
 	public void SourceGeneratedJsonRoundTrip()
