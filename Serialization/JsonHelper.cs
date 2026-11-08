@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -218,7 +219,7 @@ public static partial class JsonHelper
 		return str;
 	}
 
-	internal static FieldInfo[] GetJsonFields(this Type type)
+	internal static FieldInfo[] GetJsonFields([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] this Type type)
 	{
 		return [.. type
 			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
