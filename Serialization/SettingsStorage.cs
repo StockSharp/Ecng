@@ -151,7 +151,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 
 			var t = type.GetUnderlyingType() ?? type;
 
-			var obj = Activator.CreateInstance(t);
+			var obj = t.CreateInstance();
 
 			if (obj is IAsyncPersistable asyncPer)
 				AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
@@ -174,7 +174,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 					if (storage is null)
 						return null;
 
-					var per = Activator.CreateInstance(elemType);
+					var per = elemType.CreateInstance();
 
 					if (per is IAsyncPersistable asyncPer)
 						AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
@@ -286,7 +286,7 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 
 	private static async ValueTask<object> LoadPersistableAsync(Type type, SettingsStorage storage, CancellationToken cancellationToken)
 	{
-		var obj = Activator.CreateInstance(type);
+		var obj = type.CreateInstance();
 
 		if (obj is IAsyncPersistable asyncPer)
 			await asyncPer.LoadAsync(storage, cancellationToken).NoWait();
