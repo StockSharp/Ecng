@@ -1,10 +1,21 @@
 ﻿namespace Ecng.Common;
 
+using System.Collections.Concurrent;
+
 /// <summary>
 /// Utility class for common array operations.
 /// </summary>
 public static class ArrayHelper
 {
+	private static readonly ConcurrentDictionary<Type, Func<int, Array>> _registeredArrayFactories = new();
+
+	/// <summary>
+	/// Registers a statically compiled array factory for <typeparamref name="T"/>.
+	/// This avoids runtime array type construction on Native AOT.
+	/// </summary>
+	public static void RegisterArrayType<T>()
+		=> _registeredArrayFactories.TryAdd(typeof(T), static length => new T[length]);
+
 	/// <summary>
 	/// Sets all of the elements in the specified <see cref="Array"/> to zero, false, or null, depending on the element type.
 	/// </summary>
@@ -38,7 +49,14 @@ public static class ArrayHelper
 	/// <returns>A new array of the specified type and length.</returns>
 	public static Array CreateArray(this Type type, int count)
 	{
-		return Array.CreateInstance(type, count);
+		ArgumentNullException.ThrowIfNull(type);
+
+		if (count < 0)
+			throw new ArgumentOutOfRangeException(nameof(count));
+
+		return _registeredArrayFactories.TryGetValue(type, out var factory)
+			? factory(count)
+			: Array.CreateInstance(type, count);
 	}
 
 	/// <summary>
