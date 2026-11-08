@@ -42,6 +42,23 @@ public static class ReflectionHelper
 	/// </summary>
 	public const BindingFlags AllMembers = AllStaticMembers | AllInstanceMembers;
 
+	// Native AOT cannot discover arbitrary implementations by enumerating assemblies.
+	// Statically referenced registration lets existing discovery callers retain their API.
+	private static readonly ConcurrentDictionary<(Assembly assembly, Type contract), ConcurrentDictionary<Type, byte>> _registeredImplementations = new();
+
+	/// <summary>
+	/// Registers a statically known implementation for Native AOT type discovery.
+	/// </summary>
+	public static void RegisterImplementation<TContract, TImplementation>()
+		where TImplementation : TContract
+	{
+		var implementation = typeof(TImplementation);
+		var key = (implementation.Assembly, typeof(TContract));
+		_registeredImplementations
+			.GetOrAdd(key, static _ => new ConcurrentDictionary<Type, byte>())
+			.TryAdd(implementation, 0);
+	}
+
 	#region Public Methods
 
 	/// <summary>
@@ -1054,6 +1071,19 @@ public static class ReflectionHelper
 			throw new ArgumentNullException(nameof(assembly));
 
 		extraFilter ??= t => true;
+
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+		{
+			if (!_registeredImplementations.TryGetValue((assembly, typeof(T)), out var registered))
+				return [];
+
+			return registered.Keys.Where(t =>
+				!t.IsAbstract && !t.IsInterface &&
+				(showNonPublic || t.IsPublic || t.IsNestedPublic) &&
+				(showObsolete || !t.IsObsolete()) &&
+				(showNonBrowsable || t.IsBrowsable()) &&
+				extraFilter(t));
+		}
 
 		return assembly
 			.GetTypes()
