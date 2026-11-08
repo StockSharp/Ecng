@@ -15,8 +15,23 @@ public static class TypeHelper
 	// Explicitly registered constructors and closed generic types can be used by
 	// Native AOT without runtime discovery or generation. The JIT fallback stays intact.
 	private static readonly ConcurrentDictionary<Type, Func<object[], object>> _registeredFactories = new();
-	private static readonly object _registeredGenericsSync = new();
-	private static readonly Dictionary<Type, List<Type>> _registeredGenerics = [];
+	private sealed class TypeArgumentsComparer : IEqualityComparer<Type[]>
+	{
+		public bool Equals(Type[] x, Type[] y)
+			=> ReferenceEquals(x, y) || (x is not null && y is not null && x.AsSpan().SequenceEqual(y));
+
+		public int GetHashCode(Type[] arguments)
+		{
+			var hash = new HashCode();
+			foreach (var argument in arguments)
+				hash.Add(argument);
+			return hash.ToHashCode();
+		}
+	}
+
+	// Structural type-argument lookup avoids scanning generic candidates and
+	// allocating GenericTypeArguments arrays on every invocation of Make.
+	private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type[], Type>> _registeredGenerics = new();
 
 	/// <summary>
 	/// Registers an AOT-safe factory for a known type. Registration must happen at startup.
@@ -41,14 +56,10 @@ public static class TypeHelper
 
 		var definition = constructedType.GetGenericTypeDefinition();
 
-		lock (_registeredGenericsSync)
-		{
-			if (!_registeredGenerics.TryGetValue(definition, out var types))
-				_registeredGenerics.Add(definition, types = []);
+		var types = _registeredGenerics.GetOrAdd(definition,
+			static _ => new ConcurrentDictionary<Type[], Type>(new TypeArgumentsComparer()));
 
-			if (!types.Contains(constructedType))
-				types.Add(constructedType);
-		}
+		types.TryAdd(constructedType.GenericTypeArguments, constructedType);
 	}
 
 	/// <summary>
@@ -99,31 +110,9 @@ public static class TypeHelper
 			throw new ArgumentNullException(nameof(args));
 
 
-		lock (_registeredGenericsSync)
-		{
-			if (_registeredGenerics.TryGetValue(type, out var types))
-			{
-				foreach (var candidate in types)
-				{
-					var candidateArgs = candidate.GenericTypeArguments;
-					if (candidateArgs.Length != args.Length)
-						continue;
-
-					var matches = true;
-					for (var i = 0; i < args.Length; i++)
-					{
-						if (candidateArgs[i] != args[i])
-						{
-							matches = false;
-							break;
-						}
-					}
-
-					if (matches)
-						return candidate;
-				}
-			}
-		}
+		if (_registeredGenerics.TryGetValue(type, out var registered) &&
+			registered.TryGetValue(args, out var constructedType))
+			return constructedType;
 
 		// Preserve normal JIT behavior, but give a useful diagnostic on Native AOT.
 		if (!RuntimeFeature.IsDynamicCodeSupported)
