@@ -109,6 +109,9 @@ internal static class Program
 			throw new InvalidOperationException("Existing collection serializer path failed.");
 
 		// The legacy Newtonsoft field setter must not attempt Reflection.Emit on AOT.
+		JArrayToObjectConverter<WireQuoteRow>.RegisterAotFields(
+			(typeof(decimal), row => row.Price, (row, value) => row.Price = (decimal)value),
+			(typeof(decimal), row => row.Volume, (row, value) => row.Volume = (decimal)value));
 		using var reader = new JsonTextReader(new StringReader("[101.25,2.5]"));
 		reader.Read();
 		var row = (WireQuoteRow)new JArrayToObjectConverter<WireQuoteRow>()
