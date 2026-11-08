@@ -159,6 +159,15 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 
 	static JArrayToObjectConverter()
 	{
+		// Native AOT reflection may not expose MetadataToken, which
+		// GetJsonFields/OrderByDeclaration depends on. Never evaluate it
+		// during native static initialization; explicit wire metadata is required.
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+		{
+			_fields = [];
+			return;
+		}
+
 		_fields = [.. typeof(T)
 			.GetJsonFields()
 			.Select(f => (f, CreateFieldSetter(f)))];
@@ -205,6 +214,9 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 			return existingValue;
 		}
 
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+			throw new NotSupportedException($"AOT JSON fields for '{typeof(T)}' are not registered. Call RegisterAotFields before deserializing.");
+
 		if (array.Count < _fields.Length)
 			throw new JsonSerializationException($"JSON array has {array.Count} elements but type '{typeof(T).Name}' requires {_fields.Length}.");
 
@@ -248,6 +260,9 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 		}
 		else
 		{
+			if (!RuntimeFeature.IsDynamicCodeSupported)
+				throw new NotSupportedException($"AOT JSON fields for '{typeof(T)}' are not registered. Call RegisterAotFields before serializing.");
+
 			foreach (var (f, _) in _fields)
 				serializer.Serialize(writer, f.GetValue(value));
 		}
