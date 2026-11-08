@@ -92,6 +92,32 @@ public class JArrayToObjectConverter : JsonConverter
 public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] T> : JsonConverter
 	where T : new()
 {
+	// Native AOT: explicit, statically compiled field accessors and stable wire order.
+	// JIT callers may continue to use the original reflection/IL-emit path.
+	private static (Type fieldType, Func<T, object> getter, Action<T, object> setter)[] _registeredFields;
+
+	/// <summary>
+	/// Registers field metadata and precompiled accessors in JSON wire order.
+	/// Use this instead of relying on reflected fields for Native AOT models.
+	/// Must be called before reading or writing the first payload.
+	/// </summary>
+	public static void RegisterAotFields(params (Type fieldType, Func<T, object> getter, Action<T, object> setter)[] fields)
+	{
+		ArgumentNullException.ThrowIfNull(fields);
+		if (fields.Length == 0)
+			throw new ArgumentException("At least one field must be registered.", nameof(fields));
+
+		foreach (var field in fields)
+		{
+			ArgumentNullException.ThrowIfNull(field.fieldType);
+			ArgumentNullException.ThrowIfNull(field.getter);
+			ArgumentNullException.ThrowIfNull(field.setter);
+		}
+
+		if (Interlocked.CompareExchange(ref _registeredFields, [.. fields], null) is not null)
+			throw new InvalidOperationException($"AOT JSON fields for '{typeof(T)}' are already registered.");
+	}
+
 	private static Action<T, object> CreateFieldSetter(FieldInfo fieldInfo)
 	{
 		// Reflection.Emit is unavailable in Native AOT. Use retained field metadata
@@ -163,6 +189,21 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 
 		var array = JArray.Load(reader);
 
+		var registered = Volatile.Read(ref _registeredFields);
+		if (registered is not null)
+		{
+			if (array.Count < registered.Length)
+				throw new JsonSerializationException($"JSON array has {array.Count} elements but type '{typeof(T).Name}' requires {registered.Length}.");
+
+			for (var i = 0; i < registered.Length; i++)
+			{
+				var field = registered[i];
+				field.setter(typed, array[i].ToObject(field.fieldType));
+			}
+
+			return existingValue;
+		}
+
 		if (array.Count < _fields.Length)
 			throw new JsonSerializationException($"JSON array has {array.Count} elements but type '{typeof(T).Name}' requires {_fields.Length}.");
 
@@ -198,8 +239,17 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 
 		writer.WriteStartArray();
 
-		foreach (var (f, _) in _fields)
-			serializer.Serialize(writer, f.GetValue(value));
+		var registered = Volatile.Read(ref _registeredFields);
+		if (registered is not null)
+		{
+			foreach (var field in registered)
+				serializer.Serialize(writer, field.getter((T)value));
+		}
+		else
+		{
+			foreach (var (f, _) in _fields)
+				serializer.Serialize(writer, f.GetValue(value));
+		}
 
 		writer.WriteEndArray();
 	}
