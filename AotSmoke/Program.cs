@@ -81,7 +81,8 @@ internal static class Program
 		if (typedArray is not QuoteSnapshot[] || typedArray.Length != 2)
 			throw new InvalidOperationException("Registered array allocation failed.");
 
-		ArrayHelper.RegisterArrayType<int>();
+		if (typeof(int).CreateArray(3) is not int[] { Length: 3 })
+			throw new InvalidOperationException("Standard array factory failed.");
 		TypeHelper.RegisterConstructedGenericType(typeof(List<int>));
 		TypeHelper.RegisterFactory<List<int>>(_ => new List<int>());
 		var listType = typeof(List<>).Make(typeof(int));
