@@ -53,6 +53,70 @@ public class AotCompatibilityTests : BaseTestClass
 		ThrowsExactly<ArgumentException>(() => TypeHelper.RegisterConstructedGenericType(typeof(Dictionary<,>)));
 	}
 
+	private sealed class ArrayPayload
+	{
+	}
+
+	private sealed class PrivateConstructor
+	{
+		private PrivateConstructor() { }
+		public int Value { get; private set; }
+		public static PrivateConstructor Create(int value) => new() { Value = value };
+	}
+
+#pragma warning disable CS0618 // Verify the existing legacy persistence path.
+	private sealed class PersistedPayload : IPersistable
+	{
+		public int Value { get; private set; }
+		public void Load(SettingsStorage storage) => Value = storage.GetValue<int>("value");
+		public void Save(SettingsStorage storage) => storage.Set("value", Value);
+	}
+#pragma warning restore CS0618
+
+	[TestMethod]
+	public void RegisteredArrayFactoryIsUsedByExistingCreateArray()
+	{
+		var callCount = 0;
+		ArrayHelper.RegisterArrayFactory<ArrayPayload>(length =>
+		{
+			callCount++;
+			return new ArrayPayload[length];
+		});
+
+		var result = typeof(ArrayPayload).CreateArray(3);
+		(result is ArrayPayload[]).AssertTrue();
+		result.Length.AssertEqual(3);
+		callCount.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void ExistingFastActivatorSupportsExplicitFactories()
+	{
+		FastActivator<PrivateConstructor>.RegisterFactory(() => PrivateConstructor.Create(42));
+		FastActivator<PrivateConstructor>.CreateObject().Value.AssertEqual(42);
+	}
+
+	[TestMethod]
+	public void ExistingSettingsStorageUsesRegisteredFactory()
+	{
+		TypeHelper.RegisterFactory<PersistedPayload>(_ => new PersistedPayload());
+
+		var nested = new SettingsStorage().Set("value", 42);
+		var storage = new SettingsStorage().Set("payload", nested);
+
+		storage.GetValue<PersistedPayload>("payload").Value.AssertEqual(42);
+	}
+
+	[TestMethod]
+	public void SourceGeneratedNonGenericJsonRoundTrip()
+	{
+		var original = new SampleOrder(4, 112.50m);
+		System.Text.Json.Serialization.Metadata.JsonTypeInfo metadata = TestAotJsonContext.Default.SampleOrder;
+		var json = ((object)original).ToJson(metadata);
+		var restored = (SampleOrder)json.FromJson(metadata);
+		restored.AssertEqual(original);
+	}
+
 	[TestMethod]
 	public void SourceGeneratedJsonRoundTrip()
 	{
