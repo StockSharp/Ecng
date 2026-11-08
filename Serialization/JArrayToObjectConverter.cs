@@ -1,6 +1,7 @@
 namespace Ecng.Serialization;
 
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 using Newtonsoft.Json.Linq;
 
@@ -92,6 +93,12 @@ public class JArrayToObjectConverter<T> : JsonConverter
 {
 	private static Action<T, object> CreateFieldSetter(FieldInfo fieldInfo)
 	{
+		// Reflection.Emit is unavailable in Native AOT. Use retained field metadata
+		// for the legacy Newtonsoft path instead of failing in the static constructor.
+		// For reflection-free AOT payloads, use JsonHelper's source-generated overloads.
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+			return (target, value) => fieldInfo.SetValue(target, value);
+
 		var method = new DynamicMethod(
 			"Set" + fieldInfo.Name,
 			typeof(void),
