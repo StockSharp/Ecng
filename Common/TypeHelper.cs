@@ -18,7 +18,21 @@ public static class TypeHelper
 	private sealed class TypeArgumentsComparer : IEqualityComparer<Type[]>
 	{
 		public bool Equals(Type[] x, Type[] y)
-			=> ReferenceEquals(x, y) || (x is not null && y is not null && x.AsSpan().SequenceEqual(y));
+		{
+			if (ReferenceEquals(x, y))
+				return true;
+
+			if (x is null || y is null || x.Length != y.Length)
+				return false;
+
+			for (var i = 0; i < x.Length; i++)
+			{
+				if (x[i] != y[i])
+					return false;
+			}
+
+			return true;
+		}
 
 		public int GetHashCode(Type[] arguments)
 		{
