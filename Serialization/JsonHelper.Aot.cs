@@ -9,6 +9,25 @@ using System.Text.Json.Serialization.Metadata;
 public static partial class JsonHelper
 {
 	/// <summary>
+	/// Deserializes using non-generic, source-generated metadata known at build time.
+	/// The type information replaces dynamic CLR type inspection.
+	/// </summary>
+	public static object FromJson(this string json, JsonTypeInfo typeInfo)
+	{
+		ArgumentNullException.ThrowIfNull(typeInfo);
+		return System.Text.Json.JsonSerializer.Deserialize(json, typeInfo);
+	}
+
+	/// <summary>
+	/// Serializes an object with non-generic, source-generated metadata.
+	/// </summary>
+	public static string ToJson(this object value, JsonTypeInfo typeInfo)
+	{
+		ArgumentNullException.ThrowIfNull(typeInfo);
+		return System.Text.Json.JsonSerializer.Serialize(value, typeInfo);
+	}
+
+	/// <summary>
 	/// Deserializes with a source-generated JSON contract, without runtime contract discovery.
 	/// </summary>
 	public static T FromJson<T>(this string json, JsonTypeInfo<T> typeInfo)
