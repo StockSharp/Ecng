@@ -45,10 +45,18 @@ public static class FastActivator<T>
 
 	static FastActivator()
 	{
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+		{
+			// Do not inspect constructors or emit IL in native images.
+			// RegisterFactory can still supply a precompiled constructor delegate.
+			_createObject = Activator.CreateInstance<T>;
+			return;
+		}
+
 		var objType = typeof(T);
 		var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-		if (!RuntimeFeature.IsDynamicCodeSupported || (NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
+		if ((NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
 		{
 			_createObject = Activator.CreateInstance<T>;
 		}
