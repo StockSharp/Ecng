@@ -34,6 +34,27 @@ public static class Converter
 	public static Func<string, Type> TypeFallback { get; set; }
 
 	/// <summary>
+	/// Pre-registers a name for a statically referenced type, bypassing dynamic assembly discovery.
+	/// This is useful for AOT apps that know their serializable/configuration types at build time.
+	/// </summary>
+	public static void RegisterTypeName<T>(string name)
+		=> RegisterTypeName(name, typeof(T));
+
+	/// <summary>
+	/// Pre-registers a name for a known CLR type.
+	/// </summary>
+	public static void RegisterTypeName(string name, Type type)
+	{
+		if (string.IsNullOrWhiteSpace(name))
+			throw new ArgumentException("A type name is required.", nameof(name));
+		ArgumentNullException.ThrowIfNull(type);
+
+		var key = name.ToLowerInvariant();
+		if (!_typeCache.TryAdd(key, type) && _typeCache[key] != type)
+			throw new InvalidOperationException($"Type name '{name}' is already registered for another type.");
+	}
+
+	/// <summary>
 	/// Fallback handler for Enum conversion from string when value is not found.
 	/// Returns the resolved enum value, or null to throw exception.
 	/// </summary>
@@ -835,7 +856,7 @@ public static class Converter
 		if (destinationType.IsArray)
 		{
 			var elemType = destinationType.GetElementType();
-			var destArr = Array.CreateInstance(elemType, source.Length);
+			var destArr = elemType.CreateArray(source.Length);
 
 			for (var i = 0; i < source.Length; i++)
 				destArr.SetValue(source.GetValue(i).To(elemType), i);

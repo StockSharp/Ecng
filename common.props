@@ -67,6 +67,14 @@
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Diagnostic only. Normal NuGet builds and net6.0 keep their previous behavior.
+       Do not claim IsAotCompatible until all reachable IL2xxx/IL3xxx warnings are resolved. -->
+  <PropertyGroup Condition="'$(EcngAotAudit)' == 'true' and '$(TargetFramework)' == 'net10.0'">
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+  </PropertyGroup>
+
   <!-- Release had none, and without a pdb there is no .snupkg to publish beside the package. -->
   <PropertyGroup>
     <DebugType>portable</DebugType>

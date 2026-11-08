@@ -343,7 +343,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 			var itemType = type.GetItemType();
 
-			var col = (IList)Activator.CreateInstance(typeof(List<>).Make(itemType));
+			var col = (IList)typeof(List<>).Make(itemType).CreateInstance();
 
 			while (true)
 			{
@@ -360,7 +360,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			if (!type.IsArray)
 				return col;
 
-			var arr = Array.CreateInstance(itemType, col.Count);
+			var arr = itemType.CreateArray(col.Count);
 			var idx = 0;
 
 			foreach (var item in col)

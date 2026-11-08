@@ -1,10 +1,58 @@
 ﻿namespace Ecng.Common;
 
+using System.Collections.Concurrent;
+
 /// <summary>
 /// Utility class for common array operations.
 /// </summary>
 public static class ArrayHelper
 {
+	private static readonly ConcurrentDictionary<Type, Func<int, Array>> _registeredArrayFactories = new();
+
+	static ArrayHelper()
+	{
+		// Common arrays exist as closed generic instantiations in the native binary.
+		// Avoid Array.CreateInstance(Type, int) for standard wire/message value types.
+		RegisterArrayType<object>();
+		RegisterArrayType<string>();
+		RegisterArrayType<bool>();
+		RegisterArrayType<byte>();
+		RegisterArrayType<sbyte>();
+		RegisterArrayType<char>();
+		RegisterArrayType<short>();
+		RegisterArrayType<ushort>();
+		RegisterArrayType<int>();
+		RegisterArrayType<uint>();
+		RegisterArrayType<long>();
+		RegisterArrayType<ulong>();
+		RegisterArrayType<float>();
+		RegisterArrayType<double>();
+		RegisterArrayType<decimal>();
+		RegisterArrayType<DateTime>();
+		RegisterArrayType<DateTimeOffset>();
+		RegisterArrayType<TimeSpan>();
+		RegisterArrayType<Guid>();
+	}
+
+	/// <summary>
+	/// Registers a statically compiled array factory for <typeparamref name="T"/>.
+	/// This avoids runtime array type construction on Native AOT.
+	/// </summary>
+	public static void RegisterArrayType<T>()
+		=> _registeredArrayFactories.TryAdd(typeof(T), static length => new T[length]);
+
+	/// <summary>
+	/// Registers a custom statically compiled factory for one-dimensional arrays.
+	/// Only one factory may be registered for each element type.
+	/// </summary>
+	public static void RegisterArrayFactory<T>(Func<int, T[]> factory)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+
+		if (!_registeredArrayFactories.TryAdd(typeof(T), length => factory(length)))
+			throw new InvalidOperationException($"An array factory for '{typeof(T)}' is already registered.");
+	}
+
 	/// <summary>
 	/// Sets all of the elements in the specified <see cref="Array"/> to zero, false, or null, depending on the element type.
 	/// </summary>
@@ -38,7 +86,14 @@ public static class ArrayHelper
 	/// <returns>A new array of the specified type and length.</returns>
 	public static Array CreateArray(this Type type, int count)
 	{
-		return Array.CreateInstance(type, count);
+		ArgumentNullException.ThrowIfNull(type);
+
+		if (count < 0)
+			throw new ArgumentOutOfRangeException(nameof(count));
+
+		return _registeredArrayFactories.TryGetValue(type, out var factory)
+			? factory(count)
+			: Array.CreateInstance(type, count);
 	}
 
 	/// <summary>

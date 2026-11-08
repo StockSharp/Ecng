@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Common;
 
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// <see cref="FastActivator{T}"/> isn't supported.
@@ -27,16 +28,37 @@ public static class FastActivator<T>
 	/// <summary>
 	/// Create object handler.
 	/// </summary>
-	public static Func<T> CreateObject { get; }
+	private static Func<T> _createObject;
+
+	/// <summary>Factory used by the fast activator.</summary>
+	public static Func<T> CreateObject => Volatile.Read(ref _createObject);
+
+	/// <summary>
+	/// Replaces the reflection/IL-emit factory with a statically compiled delegate.
+	/// Use this to support constructors unavailable to Native AOT reflection.
+	/// </summary>
+	public static void RegisterFactory(Func<T> factory)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+		Volatile.Write(ref _createObject, factory);
+	}
 
 	static FastActivator()
 	{
+		if (!RuntimeFeature.IsDynamicCodeSupported)
+		{
+			// Do not inspect constructors or emit IL in native images.
+			// RegisterFactory can still supply a precompiled constructor delegate.
+			_createObject = Activator.CreateInstance<T>;
+			return;
+		}
+
 		var objType = typeof(T);
 		var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
 		if ((NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
 		{
-			CreateObject = Activator.CreateInstance<T>;
+			_createObject = Activator.CreateInstance<T>;
 		}
 		else
 		{
@@ -49,14 +71,14 @@ public static class FastActivator<T>
 			catch (PlatformNotSupportedException)
 			{
 				NotSupported = true;
-				CreateObject = Activator.CreateInstance<T>;
+				_createObject = Activator.CreateInstance<T>;
 				return;
 			}
 
 			ILGenerator ilGen = dynMethod.GetILGenerator();
 			ilGen.Emit(OpCodes.Newobj, cinfo);
 			ilGen.Emit(OpCodes.Ret);
-			CreateObject = (Func<T>)dynMethod.CreateDelegate(typeof(Func<T>));
+			_createObject = (Func<T>)dynMethod.CreateDelegate(typeof(Func<T>));
 		}
 	}
 }

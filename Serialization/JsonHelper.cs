@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -8,7 +9,7 @@ using Newtonsoft.Json.Serialization;
 /// <summary>
 /// Provides helper methods for JSON serialization and deserialization.
 /// </summary>
-public static class JsonHelper
+public static partial class JsonHelper
 {
 	/// <summary>
 	/// Provides a UTF-8 encoding without a byte order mark (BOM).
@@ -218,7 +219,7 @@ public static class JsonHelper
 		return str;
 	}
 
-	internal static FieldInfo[] GetJsonFields(this Type type)
+	internal static FieldInfo[] GetJsonFields([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] this Type type)
 	{
 		return [.. type
 			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
