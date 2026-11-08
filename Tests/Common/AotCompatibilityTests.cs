@@ -3,6 +3,7 @@ namespace Ecng.Tests.Common;
 using System.Text.Json.Serialization;
 
 using Ecng.Serialization;
+using Ecng.Reflection;
 
 [TestClass]
 public class AotCompatibilityTests : BaseTestClass
@@ -51,6 +52,18 @@ public class AotCompatibilityTests : BaseTestClass
 		// Duplicate registration is harmless.
 		TypeHelper.RegisterConstructedGenericType(typeof(Dictionary<string, SampleOrder>));
 		ThrowsExactly<ArgumentException>(() => TypeHelper.RegisterConstructedGenericType(typeof(Dictionary<,>)));
+	}
+
+	private interface IDiscoveryProbe { }
+	private sealed class DiscoveryProbe : IDiscoveryProbe { }
+
+	[TestMethod]
+	public void StaticallyRegisteredImplementationsRemainDiscoverable()
+	{
+		ReflectionHelper.RegisterImplementation<IDiscoveryProbe, DiscoveryProbe>();
+		var implementations = typeof(DiscoveryProbe).Assembly
+			.FindImplementations<IDiscoveryProbe>(showNonPublic: true);
+		implementations.Contains(typeof(DiscoveryProbe)).AssertTrue();
 	}
 
 	private sealed class ArrayPayload
