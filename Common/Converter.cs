@@ -856,7 +856,7 @@ public static class Converter
 		if (destinationType.IsArray)
 		{
 			var elemType = destinationType.GetElementType();
-			var destArr = Array.CreateInstance(elemType, source.Length);
+			var destArr = elemType.CreateArray(source.Length);
 
 			for (var i = 0; i < source.Length; i++)
 				destArr.SetValue(source.GetValue(i).To(elemType), i);
