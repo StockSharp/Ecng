@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 
 using Ecng.Common;
 using Ecng.Serialization;
+using Ecng.Reflection;
 
 using Newtonsoft.Json;
 
@@ -26,6 +27,9 @@ internal sealed class StoredQuote : IPersistable
 	public void Save(SettingsStorage storage) => storage.Set("quantity", Quantity);
 }
 #pragma warning restore CS0618
+
+internal interface IDiscoveryProbe { }
+internal sealed class DiscoveryProbe : IDiscoveryProbe { }
 
 internal sealed class WireQuoteRow
 {
@@ -63,6 +67,12 @@ internal static class Program
 		var copy = json.FromJson(AotJsonContext.Default.QuoteSnapshot);
 		if (copy != quote)
 			throw new InvalidOperationException("Source-generated JSON round trip failed.");
+
+		ReflectionHelper.RegisterImplementation<IDiscoveryProbe, DiscoveryProbe>();
+		var implementations = typeof(DiscoveryProbe).Assembly
+			.FindImplementations<IDiscoveryProbe>(showNonPublic: true);
+		if (!implementations.Contains(typeof(DiscoveryProbe)))
+			throw new InvalidOperationException("AOT implementation discovery failed.");
 
 		// Existing array allocation and generic construction paths, not only new APIs.
 		ArrayHelper.RegisterArrayType<QuoteSnapshot>();
