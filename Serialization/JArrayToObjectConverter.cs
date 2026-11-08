@@ -114,7 +114,8 @@ public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAcce
 			ArgumentNullException.ThrowIfNull(field.setter);
 		}
 
-		if (Interlocked.CompareExchange(ref _registeredFields, [.. fields], null) is not null)
+		var snapshot = fields.ToArray();
+		if (Interlocked.CompareExchange(ref _registeredFields, snapshot, null) is not null)
 			throw new InvalidOperationException($"AOT JSON fields for '{typeof(T)}' are already registered.");
 	}
 
