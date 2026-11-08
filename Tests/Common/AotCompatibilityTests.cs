@@ -87,6 +87,14 @@ public class AotCompatibilityTests : BaseTestClass
 #pragma warning restore CS0618
 
 	[TestMethod]
+	public void CommonArrayTypesHaveStaticNativeFactories()
+	{
+		(typeof(int).CreateArray(4) is int[] { Length: 4 }).AssertTrue();
+		(typeof(decimal).CreateArray(2) is decimal[] { Length: 2 }).AssertTrue();
+		(typeof(Guid).CreateArray(1) is Guid[] { Length: 1 }).AssertTrue();
+	}
+
+	[TestMethod]
 	public void RegisteredArrayFactoryIsUsedByExistingCreateArray()
 	{
 		var callCount = 0;
