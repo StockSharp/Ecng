@@ -2,6 +2,7 @@ namespace Ecng.Serialization;
 
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 using Newtonsoft.Json.Linq;
 
@@ -88,7 +89,7 @@ public class JArrayToObjectConverter : JsonConverter
 /// in declaration order using compiled IL for performance.
 /// </summary>
 /// <typeparam name="T">The type of the object to convert to. Must have a parameterless constructor.</typeparam>
-public class JArrayToObjectConverter<T> : JsonConverter
+public class JArrayToObjectConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] T> : JsonConverter
 	where T : new()
 {
 	private static Action<T, object> CreateFieldSetter(FieldInfo fieldInfo)
