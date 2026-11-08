@@ -17,6 +17,18 @@ public static class ArrayHelper
 		=> _registeredArrayFactories.TryAdd(typeof(T), static length => new T[length]);
 
 	/// <summary>
+	/// Registers a custom statically compiled factory for one-dimensional arrays.
+	/// Only one factory may be registered for each element type.
+	/// </summary>
+	public static void RegisterArrayFactory<T>(Func<int, T[]> factory)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+
+		if (!_registeredArrayFactories.TryAdd(typeof(T), length => factory(length)))
+			throw new InvalidOperationException($"An array factory for '{typeof(T)}' is already registered.");
+	}
+
+	/// <summary>
 	/// Sets all of the elements in the specified <see cref="Array"/> to zero, false, or null, depending on the element type.
 	/// </summary>
 	/// <param name="array">The array whose elements need to be cleared.</param>
