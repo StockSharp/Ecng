@@ -8,6 +8,38 @@ using Newtonsoft.Json.Linq;
 [TestClass]
 public class JsonConvertersTests : BaseTestClass
 {
+	private sealed class AotPriceRow
+	{
+		public decimal Price;
+		public decimal Size;
+	}
+
+	[TestMethod]
+	public void RegisteredAotJsonArrayFieldsReadAndWriteInWireOrder()
+	{
+		JArrayToObjectConverter<AotPriceRow>.RegisterAotFields(
+			(typeof(decimal), row => row.Price, (row, v) => row.Price = (decimal)v),
+			(typeof(decimal), row => row.Size, (row, v) => row.Size = (decimal)v));
+
+		var converter = new JArrayToObjectConverter<AotPriceRow>();
+		using var reader = new JsonTextReader(new StringReader("[101.5,3.25]"));
+		reader.Read();
+
+		var row = (AotPriceRow)converter.ReadJson(reader, typeof(AotPriceRow), null, JsonSerializer.CreateDefault());
+		row.Price.AssertEqual(101.5m);
+		row.Size.AssertEqual(3.25m);
+
+		using var writerOutput = new StringWriter();
+		using (var writer = new JsonTextWriter(writerOutput))
+		{
+			converter.WriteJson(writer, row, JsonSerializer.CreateDefault());
+			writer.Flush();
+		}
+
+		writerOutput.ToString().AssertEqual("[101.5,3.25]");
+	}
+
+
 	[TestMethod]
 	public void BoolConverter_ReadWrite()
 	{
